@@ -23,6 +23,8 @@ const TYPES = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
   ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 };
 
@@ -55,7 +57,7 @@ function depotAutorise(chemin) {
 // range comme un fichier, et le dépôt n'en garde que le chemin.
 function vignetteAutorisee(chemin) {
   if (chemin.includes("..")) return false;
-  return /(?:^|\/)assets\/review\/[a-zA-Z0-9._/-]+\.(jpg|jpeg|png|webp)$/i.test(chemin);
+  return /(?:^|\/)assets\/review\/[a-zA-Z0-9._/-]+\.(jpg|jpeg|png|webp|mp4|webm)$/i.test(chemin);
 }
 
 function lireCorps(requete) {
@@ -96,10 +98,10 @@ const serveur = createServer(async (requete, reponse) => {
       if (estVignette) {
         // Le navigateur envoie une donnée « data:image/… ;base64,… » : elle se
         // range en fichier binaire, pas en texte.
-        const m = texte.match(/^data:image\/[a-z+]+;base64,([A-Za-z0-9+/=\s]+)$/i);
+        const m = texte.match(/^data:(?:image|video)\/[a-z0-9+.-]+;base64,([A-Za-z0-9+/=\s]+)$/i);
         if (!m) {
           reponse.writeHead(400, { "Content-Type": "application/json" })
-            .end(JSON.stringify({ ok: false, quoi: "ce n'est pas une image en base64" }));
+            .end(JSON.stringify({ ok: false, quoi: "ce n'est pas une image ni une vidéo en base64" }));
           return;
         }
         contenu = Buffer.from(m[1].replace(/\s+/g, ""), "base64");

@@ -125,12 +125,17 @@ window.IMAGE = (function () {
     return VIDEOS.indexOf(x) !== -1;
   }
 
-  /* Le fichier qu'on regarde : la production quand elle est lisible par un
-   * navigateur, la revue sinon, la vignette en dernier. */
+  /* Le fichier qu'on regarde : le rendu de REVUE d'abord.
+   *
+   * C'est la règle du titulaire : le dépôt local porte les fichiers de
+   * production, pour son usage privé ; les rendus compressés sont les
+   * fichiers de revue. Servi ailleurs, le master n'est pas là — et c'est
+   * voulu. On regarde donc la revue, et la production reste un lien vers le
+   * master pour celui qui l'a sous la main. */
   function source(objet) {
     if (!objet) return null;
-    if (estVideo(objet.production)) return objet.production;
     if (estVideo(objet.review)) return objet.review;
+    if (estVideo(objet.production)) return objet.production;
     return objet.review || objet.vignette || null;
   }
 
