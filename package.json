@@ -1,0 +1,13 @@
+{
+  "name": "la-barre",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LA BARRE — le poste de travail du directeur de la création. Du brief au livrable, et les talents qui les font.",
+  "type": "module",
+  "scripts": {
+    "start": "node servir.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

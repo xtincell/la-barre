@@ -1,0 +1,751 @@
+/* base.css — la coque sombre : barre latérale, contenu, rail droit.
+ *
+ * Trois colonnes. À gauche ce qui ne bouge jamais, au centre ce qu'on regarde,
+ * à droite ce qui attend. La mémoire du geste vaut plus que la souplesse.
+ */
+
+:root {
+  /* ═══════════ DESIGN SYSTEM 2.0 ═══════════
+   *
+   * 02 · COULEURS SÉMANTIQUES
+   *
+   * Cinq intentions, et rien d'autre. Une couleur ne décore pas : elle dit ce
+   * qu'on attend du lecteur. Et jamais seule — §14 : chaque état porte aussi
+   * un signe ou un mot, sinon il n'existe pas pour qui ne distingue pas les
+   * rouges des verts. */
+  --bloquant:  #FF4D4F;   /* intervention immédiate — la marque : filet, pastille, fond */
+  --bloquant-txt: #FF8082;/* la même, portée par du texte : 5,6:1 sur la surface
+                           * la plus élevée, là où #FF4D4F tombe à 4,48 et manque
+                           * le minimum AA du §14 d'un centième */
+  --arbitrage: #FFB020;   /* demande un jugement */
+  --succes:    #22C55E;   /* validé, terminé */
+  --info:      #3B82F6;   /* à consulter */
+  --neutre:    #64748B;   /* par défaut */
+
+  /* Les neutres. #64748B est le pas 500 de la famille ardoise : l'échelle en
+   * découle. N950 prolonge la série vers le bas — la toile du produit est plus
+   * profonde que N900, c'est ce qui donne sa tenue au sombre. */
+  --n950: #080C14;
+  --n900: #0F172A;
+  --n800: #1E293B;
+  --n700: #334155;
+  --n600: #475569;
+  --n500: #64748B;
+  --n400: #94A3B8;
+  --n300: #CBD5E1;
+  --n200: #E2E8F0;
+  --n100: #F1F5F9;
+
+  /* La marque. L'ambre reste l'action première : c'est elle qui porte
+   * « Décider », et elle n'est pas un état — on ne la lit pas, on la clique. */
+  --or: #FFB020;
+  --accent: #C7501F;
+  --violet: #8B6FD4;
+
+  /* 05 · SURFACES & ÉLÉVATION
+   *
+   * Quatre plans. Ce qui est en avant est plus clair, ce qui est en retrait est
+   * plus sombre — l'inverse du réflexe, et c'est ce qui marche en sombre. */
+  --surface-1: #1E293B;   /* élevée   — ce qui flotte : panneau, menu, modale */
+  --surface-2: #172033;   /* standard — la carte, le bloc */
+  --surface-3: #111A2B;   /* en retrait — le creux, le champ */
+  --surface-4: #080C14;   /* sombre   — la toile */
+
+  --elev-0: none;
+  --elev-1: 0 1px 2px rgba(0,0,0,.28);
+  --elev-2: 0 2px 8px rgba(0,0,0,.34);
+  --elev-3: 0 8px 24px rgba(0,0,0,.42);
+  --elev-4: 0 16px 48px rgba(0,0,0,.55);
+
+  /* Les traits : deux seulement, et ils ne servent qu'à répondre à une
+   * question — jamais à border une carte que son fond sépare déjà. */
+  --trait: #263449;
+  --trait-clair: #334155;
+
+  /* Les encres */
+  --clair: #F1F5F9;
+  --clair-doux: #CBD5E1;
+  --clair-terne: #94A3B8;
+
+  /* Papier, pour les documents compilés — ils s'impriment. */
+  --papier: #F3F1EC;
+  --papier-encre: #1C2320;
+  /* Le gris atténué des fonds sombres tombe à 2,3:1 sur le papier crème. Une
+   * mention discrète reste une mention lisible : elle a sa propre encre. */
+  --papier-terne: #5A625C;
+
+  /* ═══════════ 03 · TYPOGRAPHIE ═══════════
+   *
+   * Satoshi Variable. Sept pas, chacun avec son interligne et son approche —
+   * une taille sans son interligne n'est pas un pas de gamme, c'est un chiffre.
+   *
+   * --t-micro prolonge la gamme d'un cran sous Caption : il ne porte jamais de
+   * texte à lire, seulement des libellés en capitales espacées, qui se lisent
+   * plus grands que leur taille. */
+  --t-display: 2.5rem;    --lh-display: 1.2;    --ls-display: -.02em;
+  --t-ecran:   2rem;      --lh-ecran:   1.25;   --ls-ecran:   -.01em;
+  --t-h2:      1.5rem;    --lh-h2:      1.333;  --ls-h2:      -.01em;
+  --t-titre:   1.25rem;   --lh-titre:   1.4;    --ls-titre:   0;
+  --t-lire:    1rem;      --lh-lire:    1.55;   --ls-lire:    0;
+  --t-meta:    .9375rem;  --lh-meta:    1.5;    --ls-meta:    .005em;
+  --t-eti:     .8125rem;  --lh-eti:     1.45;   --ls-eti:     .01em;
+  --t-micro:   .75rem;    --lh-micro:   1.4;    --ls-micro:   .04em;
+
+  /* Les grands chiffres se lisent de loin : ils prennent le pas Display. */
+  --t-nombre: var(--t-display); --lh-nombre: 1; --ls-nombre: -.02em;
+
+  /* ═══════════ 04 · ESPACEMENT & RAYONS ═══════════
+   *
+   * Base 4. Treize pas, pas quarante — un espacement hors gamme se voit. */
+  --e1: 4px;    --e2: 8px;    --e3: 12px;   --e4: 16px;
+  --e5: 20px;   --e6: 24px;   --e7: 32px;   --e8: 40px;
+  --e9: 48px;   --e10: 64px;  --e11: 80px;  --e12: 96px;  --e13: 128px;
+
+  --r-xs: 4px;   --r-s: 6px;   --r-m: 8px;
+  --r-l: 12px;   --r-xl: 24px; --r-pilule: 999px;
+
+  /* ═══════════ 13 · INTERACTIONS & MOUVEMENT ═══════════ */
+  --tr-rapide:   150ms;  /* changements d'état */
+  --tr-standard: 200ms;  /* la plupart des choses */
+  --tr-lente:    300ms;  /* les entrées et sorties */
+  --easing: cubic-bezier(0, 0, .2, 1);   /* ease-out */
+  --pressed: .98;
+
+  /* ═══════════ 14 · ACCESSIBILITÉ ═══════════ */
+  --cible: 44px;         /* la plus petite cible tactile */
+  --focus: 2px;          /* l'anneau */
+  --focus-offset: 2px;
+
+  /* ————— La mesure —————
+   *
+   * Une ligne de texte qui traverse un écran de deux mille pixels ne se lit
+   * pas : l'œil perd le début de la ligne suivante. On plafonne. */
+  --mesure: 72ch;        /* la prose */
+  --mesure-large: 96ch;  /* les listes et les tableaux */
+  --contenu: 1180px;     /* la colonne de travail, centrée au-delà */
+
+  /* Satoshi n'est pas une police système : déposer les fichiers dans
+   * styles/polices/ et la déclarer en @font-face pour qu'elle prenne. Tant
+   * qu'elle n'est pas là, la pile de repli tient la même largeur d'œil. */
+  --affichage: "Satoshi Variable", "Satoshi", "Avenir Next", "Segoe UI Variable",
+    "Segoe UI", system-ui, -apple-system, sans-serif;
+  --main: "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive;
+  --lecture: Georgia, "Iowan Old Style", "Times New Roman", serif;
+
+  --rail: 218px;
+  --droite: 320px;
+
+  /* ————— Les anciens noms, tenus comme alias —————
+   *
+   * Soixante-cinq modules les emploient. Les faire pointer sur la nouvelle
+   * gamme recolore tout le produit d'un coup, sans toucher une ligne de vue —
+   * et laisse le temps de migrer les noms sans jamais casser un écran. */
+  --nuit: var(--surface-4);
+  --nuit-panneau: var(--surface-3);
+  --nuit-carte: var(--surface-2);
+  --nuit-relief: var(--surface-1);
+  --alerte: var(--bloquant);
+  --attente: var(--arbitrage);
+  --vert: var(--succes);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--nuit);
+  color: var(--clair);
+  font-family: var(--affichage);
+  font-size: 16px;
+  line-height: 1.55;
+  display: grid;
+  grid-template-columns: var(--rail) 1fr;
+  min-height: 100vh;
+}
+
+/* ————————————————————— Barre latérale ————————————————————— */
+
+.rail {
+  background: var(--nuit-panneau);
+  border-right: 1px solid var(--trait);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.rail-marque {
+  padding: 1.1rem 1rem .9rem;
+  border-bottom: 1px solid var(--trait);
+  text-align: center;
+}
+.rail-marque .couronne { color: var(--or); font-size: var(--t-lire); letter-spacing: var(--ls-lire); line-height: 1; }
+.rail-marque h1 {
+  font-family: var(--main);
+  font-size: var(--t-ecran); line-height: var(--lh-ecran);
+  font-weight: 400;
+  letter-spacing: .02em;
+  margin-top: .1rem;
+}
+.rail-marque .os {
+  font-size: var(--t-micro); line-height: var(--lh-micro);
+  letter-spacing: .22em;
+  color: var(--clair-terne);
+  margin-top: .15rem;
+}
+
+.rail-nav { padding: .6rem 0; }
+.rail-nav a {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  /* Une intention se vise au doigt comme au curseur : 38 px n'était pas une
+   * cible, c'était un pari. */
+  min-height: var(--cible);
+  padding: .48rem 1rem;
+  color: var(--clair-doux);
+  text-decoration: none;
+  font-size: var(--t-meta); line-height: var(--lh-meta);
+  letter-spacing: .04em;
+  border-left: 2px solid transparent;
+}
+.rail-nav a:hover { background: var(--nuit-carte); color: var(--clair); }
+.rail-nav a[aria-current] {
+  background: var(--nuit-carte);
+  color: var(--or);
+  border-left-color: var(--or);
+}
+.rail-nav a .ico { width: 1rem; text-align: center; opacity: .85; font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); }
+.rail-nav a .compte.alerte { background: var(--alerte); color: var(--clair); }
+.rail-nav a .compte.attente { background: var(--attente); color: var(--nuit); }
+.rail-nav a .compte {
+  margin-left: auto;
+  background: var(--alerte);
+  color: #fff;
+  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  padding: .05rem .32rem;
+  border-radius: 2px;
+}
+
+.rail-titre {
+  font-size: var(--t-micro); line-height: var(--lh-micro);
+  letter-spacing: .18em;
+  color: var(--clair-terne);
+  padding: .9rem 1rem .35rem;
+}
+
+.rail-projets a { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: .34rem 1rem .34rem 1.1rem; }
+.rail-projets a .puce {
+  width: .5rem; height: .5rem; border-radius: 50%;
+  background: var(--or); flex: 0 0 auto;
+}
+/* ————————————————————— Le dossier ouvert ————————————————————— */
+
+.bloc-projets { padding: 0 .5rem .6rem; }
+.bloc-projets .rail-titre { display: flex; align-items: baseline; justify-content: space-between;
+  padding-left: .3rem; padding-right: .1rem; }
+.rd-changer { background: none; border: 0; color: var(--clair-terne); font: inherit;
+  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .06em; cursor: pointer;
+  /* 17 px de haut n'est pas une cible : on garde la discrétion du texte et on
+   * rend la zone cliquable au doigt. */
+  min-height: var(--cible); padding: 0 .4rem; }
+.rd-changer:hover { color: var(--or); }
+
+.rd {
+  display: grid; gap: .12rem; text-decoration: none; color: inherit;
+  background: var(--nuit-carte); border: 1px solid var(--trait);
+  border-left: 2px solid var(--trait-clair); padding: 0 0 .45rem;
+}
+.rd:hover { border-color: var(--trait-clair); }
+.bloc-projets.ici .rd { border-left-color: var(--or); }
+
+.rd-vig { display: block; height: 68px; overflow: hidden; margin-bottom: .35rem; }
+.rd-vig .vignette { height: 68px; }
+.rd-vig .vignette img { height: 100%; object-fit: cover; }
+
+.rd-nom { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.25; padding: 0 .5rem; }
+.rd-ref { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); padding: 0 .5rem; }
+.rd-etat { display: flex; gap: .3rem; flex-wrap: wrap; padding: .25rem .5rem 0; }
+.rde { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); padding: 0 .25rem; border: 1px solid currentColor; }
+.rde.alerte { color: var(--bloquant-txt); }
+.rde.attente { color: var(--attente); }
+.rde.vert { color: var(--vert); }
+.rd-ech { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); padding: .2rem .5rem 0; }
+.rd-ech.alerte { color: var(--bloquant-txt); }
+.rd-ech.attente { color: var(--attente); }
+
+/* Les sections : la couleur dit l'état, le clic emmène. Pas une liste de liens
+ * qui redouble les onglets — une jauge navigable. */
+.rd-pips { display: flex; flex-wrap: wrap; gap: 2px; margin-top: .3rem; }
+.rdp {
+  flex: 1 1 auto; min-width: 10px; height: 14px; position: relative;
+  background: var(--trait); text-decoration: none; display: block;
+}
+.rdp span { position: absolute; left: -9999px; }
+.rdp.partiel { background: var(--attente); }
+.rdp.plein { background: var(--vert); }
+.rdp.vide { background: var(--trait); }
+.rdp:hover { outline: 1px solid var(--or); outline-offset: -1px; }
+.rdp.ici { box-shadow: inset 0 -3px 0 var(--or); }
+/* Une jauge navigable doit rester fine : 14 px, c'est son dessin. Mais 14 px
+ * n'est pas une cible. On étend la zone touchable sous le trait, sans rien
+ * changer à ce qu'on voit. */
+.rdp::after { content: ""; position: absolute; inset: -15px 0; }
+
+.rail-outils { padding: .2rem 0 .8rem; }
+.rail-outils button {
+  display: flex; align-items: center; gap: .6rem; width: 100%;
+  background: none; border: 0; color: var(--clair-doux);
+  font: inherit; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .38rem 1rem; cursor: pointer;
+  text-align: left;
+  /* Ces quatre gestes sont les plus fréquents du produit : ils se visent. */
+  min-height: var(--cible);
+}
+.rail-outils button:hover { background: var(--nuit-carte); color: var(--clair); }
+.rail-outils .touche {
+  margin-left: auto; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne);
+  border: 1px solid var(--trait-clair); padding: 0 .25rem; border-radius: 3px;
+}
+
+.rail-pied {
+  margin-top: auto;
+  padding: .9rem 1rem 1rem;
+  border-top: 1px solid var(--trait);
+}
+.rail-pied .qui { display: flex; align-items: center; gap: .55rem; }
+.rail-pied .portrait {
+  width: 2.1rem; height: 2.1rem; border-radius: 50%;
+  background: var(--nuit-relief); border: 1px solid var(--trait-clair);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--or); flex: 0 0 auto;
+}
+.rail-pied .nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
+.rail-pied .poste { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.rail-pied .version { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); margin-top: .6rem; }
+.rail-pied .sauvegarde { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); margin-top: .15rem; }
+.rail-pied .sauvegarde.ok { color: var(--vert); }
+.rail-pied .sauvegarde.alerte { color: var(--attente); }
+
+/* ————————————————————— Contenu ————————————————————— */
+
+.corps { display: flex; flex-direction: column; min-width: 0; }
+
+.chapeau {
+  display: flex; align-items: center; gap: 1rem;
+  padding: .7rem 1.4rem;
+  border-bottom: 1px solid var(--trait);
+  position: sticky; top: 0; z-index: 20;
+  background: var(--nuit);
+}
+.fil { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); }
+.fil a { color: var(--clair-terne); text-decoration: none; }
+.fil a:hover { color: var(--clair); }
+.fil b { color: var(--clair); font-weight: 400; }
+
+.chapeau-outils { margin-left: auto; display: flex; align-items: center; gap: .5rem; position: relative; }
+.chapeau-outils input {
+  font: inherit; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); background: var(--nuit-carte);
+  color: var(--clair); border: 1px solid var(--trait); padding: .32rem .6rem; width: 13rem;
+}
+.chapeau-outils input::placeholder { color: var(--clair-terne); }
+.chapeau-outils input:focus { outline: 1px solid var(--or); border-color: var(--or); }
+
+/* La zone de travail se centre au-delà de sa largeur utile. Étirer un écran
+ * jusqu'au bord parce qu'il y a de la place, c'est du responsive irresponsable :
+ * on gagne du vide et on perd la lecture. */
+.zone { padding: 1.6rem 1.6rem 4rem; display: grid; gap: 1.4rem;
+  width: 100%; max-width: calc(var(--contenu) + var(--droite) + 3.2rem); margin: 0 auto; }
+.zone:not(.avec-rail) { max-width: calc(var(--contenu) + 3.2rem); }
+.zone.avec-rail { grid-template-columns: minmax(0, 1fr) var(--droite); align-items: start; }
+/* Sans min-width: 0, une colonne de grille prend la largeur de son contenu le
+ * plus large : un rang d'onglets qui devait défiler fait défiler la page. */
+.zone > * { min-width: 0; }
+
+/* ————————————————————— Titres ————————————————————— */
+
+.titre-ecran { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.titre-ecran h2 {
+  font-family: var(--main);
+  font-size: clamp(1.6rem, 3vw, 2.15rem);
+  font-weight: 400;
+  letter-spacing: .01em;
+  line-height: 1.1;
+}
+.titre-ecran .devise { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); margin-top: .2rem; }
+.titre-ecran .actions { margin-left: auto; display: flex; gap: .45rem; align-items: center; }
+
+.section-titre {
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .14em; color: var(--clair-terne);
+  display: flex; align-items: center; gap: .6rem; margin-bottom: .6rem;
+}
+.section-titre .n { color: var(--or); }
+.section-titre .compte { color: var(--clair-terne); }
+/* Une taille n'est pas une priorité : « 9 supports » est un inventaire, « 7
+ * décisions » est une réclamation. Deux sens, deux classes — sinon la règle du
+ * silence ne se mesure plus. */
+.taille { color: var(--clair-terne); font-size: var(--t-eti); }
+.section-titre .taille { color: var(--clair-terne); }
+/* Une taille n'est pas une priorité : « 9 supports » est un inventaire, « 7
+ * décisions » est une réclamation. Deux sens, deux classes — sinon la règle du
+ * silence ne se mesure plus. */
+.taille { color: var(--clair-terne); font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
+.section-titre .taille { color: var(--clair-terne); }
+.section-titre .droite { margin-left: auto; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
+
+/* ————————————————————— Cartes de compteur ————————————————————— */
+
+.compteurs { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .55rem; }
+.kpi {
+ background: var(--nuit-carte); 
+ padding: .7rem .85rem .8rem; text-align: left;
+}
+.kpi b { display: block; font-size: var(--t-ecran); letter-spacing: var(--ls-ecran); line-height: 1; font-weight: 400; }
+.kpi span { display: block; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .3rem; }
+.kpi.or b { color: var(--or); }
+.kpi.alerte b { color: var(--bloquant-txt); }
+.kpi.vert b { color: var(--vert); }
+.kpi.attente b { color: var(--attente); }
+
+/* ————————————————————— Boutons ————————————————————— */
+
+.b {
+  font: inherit; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); background: var(--nuit-relief); color: var(--clair);
+  border: 1px solid var(--trait-clair); padding: .38rem .7rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap;
+}
+.b:hover { border-color: var(--or); color: var(--or); }
+.b.or { background: var(--or); color: #1a1408; border-color: var(--or); font-weight: 600; }
+.b.or:hover { background: #f0b355; color: #1a1408; }
+.b.vert { background: var(--vert); color: #06180e; border-color: var(--vert); font-weight: 600; }
+.b.vert:hover { background: #4cb87b; color: #06180e; }
+.b.nu { background: none; border-color: transparent; color: var(--clair-terne); }
+.b.nu:hover { color: var(--clair); border-color: var(--trait); }
+.b:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ————————————————————— Chips ————————————————————— */
+
+.chips { display: flex; gap: .35rem; flex-wrap: wrap; }
+.chip {
+  font: inherit; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); background: var(--nuit-carte); color: var(--clair-doux);
+  border: 1px solid var(--trait); padding: .28rem .6rem; cursor: pointer;
+}
+.chip:hover { border-color: var(--trait-clair); color: var(--clair); }
+.chip[aria-pressed="true"] { background: var(--or); color: #1a1408; border-color: var(--or); font-weight: 600; }
+.chip .n { opacity: .7; margin-left: .3rem; }
+
+/* ————————————————————— Étiquettes ————————————————————— */
+
+.eti {
+  display: inline-block; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .06em; text-transform: uppercase;
+  padding: .12rem .38rem; border: 1px solid currentColor;
+}
+.eti.plein { color: #12100c; border-color: transparent; }
+.eti.vert { color: var(--vert); }
+.eti.attente { color: var(--attente); }
+.eti.alerte { color: var(--bloquant-txt); }
+.eti.or { color: var(--or); }
+.eti.terne { color: var(--clair-terne); }
+
+/* ————————————————————— Rail droit ————————————————————— */
+
+.aside { display: grid; gap: .8rem; align-content: start; }
+.panneau-lat {
+  background: var(--nuit-carte); border: 1px solid var(--trait); padding: .8rem .85rem .9rem;
+}
+.panneau-lat h3 {
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .14em; color: var(--clair-terne);
+  display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem;
+}
+.panneau-lat h3 .droite { margin-left: auto; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
+
+.regle {
+  background: #efe4c8; color: #2a2418; padding: 1rem .9rem 1.1rem;
+  border: 1px solid #d9c9a3;
+}
+.regle .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .16em; color: #8a7a55; }
+.regle .texte { font-family: var(--main); font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.25; margin-top: .4rem; }
+.regle .signe { text-align: right; font-family: var(--main); font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: #8a7a55; margin-top: .4rem; }
+
+/* ————————————————————— Vignettes ————————————————————— */
+
+.vignette {
+  background: var(--nuit-relief); border: 1px solid var(--trait);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex: 0 0 auto; position: relative;
+}
+.vignette img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vignette .absente { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); text-align: center; padding: .3rem; }
+.vignette.v-ligne { width: 100%; max-width: 118px; height: 74px; }
+.vignette.v-carte { width: 100%; height: 128px; }
+.vignette.v-mini { width: 44px; height: 44px; }
+.vignette.v-grande { width: 100%; height: 260px; }
+.vignette.v-planche { width: 100%; height: 100%; border: 0; }
+
+/* ————————————————————— Panneau modal ————————————————————— */
+
+.voile { position: fixed; inset: 0; background: rgba(0,0,0,.62); z-index: 50; }
+.panneau {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(700px, 100%);
+  background: var(--nuit-panneau); z-index: 51; display: flex; flex-direction: column;
+  border-left: 1px solid var(--trait);
+}
+.panneau-tete {
+  padding: .85rem 1rem; border-bottom: 1px solid var(--trait);
+  display: flex; align-items: center; gap: .7rem; background: var(--nuit-carte);
+}
+.panneau-tete h2 { font-size: var(--t-lire); letter-spacing: var(--ls-lire); font-weight: 400; line-height: 1.2; }
+.panneau-tete .etat { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--or); margin-left: auto; white-space: nowrap; }
+.panneau-fermer { background: none; border: 1px solid var(--trait-clair); color: var(--clair-doux);
+  font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: .15rem .4rem; cursor: pointer; }
+.panneau-fermer:hover { background: var(--alerte); color: #fff; border-color: var(--alerte); }
+.panneau-corps { overflow-y: auto; padding: 1rem; }
+
+.ligne { display: grid; grid-template-columns: 8.5rem 1fr; gap: .6rem; padding: .4rem 0;
+  border-bottom: 1px solid var(--trait); font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
+.ligne .etiq { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.ligne .val { line-height: 1.45; }
+.ligne .val.vide { color: var(--bloquant-txt); font-style: italic; }
+
+.sousbloc { margin-top: 1rem; }
+.sousbloc h3 { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em; color: var(--clair-terne); margin-bottom: .4rem; }
+
+ul.puces { list-style: none; }
+ul.puces li { position: relative; padding: .18rem 0 .18rem .8rem; font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; }
+ul.puces li::before { content: ""; position: absolute; left: 0; top: .68rem; width: 4px; height: 4px; background: var(--or); }
+
+/* ————————————————————— Bannières ————————————————————— */
+
+.prix {
+  background: rgba(217, 154, 43, .1); border: 1px solid rgba(217, 154, 43, .35);
+  border-left: 3px solid var(--attente);
+  padding: .55rem .75rem; font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; color: #e5c88c;
+  display: flex; gap: .55rem; align-items: flex-start;
+}
+.prix .signe { color: var(--attente); flex: 0 0 auto; }
+.prix.rouge { background: rgba(217, 83, 74, .1); border-color: rgba(217, 83, 74, .35);
+  border-left-color: var(--bloquant-txt); color: #eaa9a3; }
+.prix.vert { background: rgba(63, 160, 106, .1); border-color: rgba(63, 160, 106, .3);
+  border-left-color: var(--vert); color: #9fd4b6; }
+
+.rien { color: var(--clair-terne); font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: .8rem 0; font-style: italic; }
+
+/* ————————————————————— Formulaires ————————————————————— */
+
+.form { display: grid; gap: .75rem; }
+.champ label { display: block; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); margin-bottom: .2rem; }
+.champ .indice { font-size: var(--t-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-bottom: .25rem; line-height: 1.35; }
+.champ input, .champ textarea, .champ select {
+  width: 100%; font: inherit; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); background: var(--nuit);
+  border: 1px solid var(--trait); color: var(--clair); padding: .4rem .55rem;
+}
+.champ textarea { min-height: 4.5rem; resize: vertical; }
+.champ input:focus, .champ textarea:focus, .champ select:focus { outline: 1px solid var(--or); border-color: var(--or); }
+.champ.critique label::after { content: " · critique"; color: var(--bloquant-txt); font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
+.form-actions { display: flex; gap: .45rem; margin-top: .7rem; flex-wrap: wrap; align-items: center; }
+
+.avertissement { border-left: 3px solid var(--alerte); background: rgba(217,83,74,.1);
+  color: #eaa9a3; padding: .5rem .7rem; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); margin: .4rem 0; }
+
+/* ————————————————————— Capture ————————————————————— */
+
+.capture-fond { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 60;
+  display: flex; align-items: flex-start; justify-content: center; padding-top: 16vh; }
+.capture-boite { background: var(--nuit-panneau); width: min(620px, 92%);
+  border: 1px solid var(--trait); border-top: 2px solid var(--or); }
+.capture-boite input { width: 100%; font: inherit; font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); background: none;
+  border: 0; color: var(--clair); padding: 1rem 1.1rem; }
+.capture-boite input:focus { outline: none; }
+.capture-pied { display: flex; justify-content: space-between; padding: .5rem .9rem;
+  border-top: 1px solid var(--trait); font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+
+/* ————————————————————— Recherche ————————————————————— */
+
+.resultats { position: absolute; top: 2.3rem; right: 0; width: min(440px, 92vw);
+  background: var(--nuit-panneau); border: 1px solid var(--trait); z-index: 45;
+  max-height: 60vh; overflow-y: auto; }
+.resultats button { display: block; width: 100%; text-align: left; font: inherit;
+  background: none; border: 0; border-bottom: 1px solid var(--trait);
+  padding: .5rem .7rem; cursor: pointer; color: var(--clair); }
+.resultats button:hover { background: var(--nuit-carte); }
+.resultats .quoi { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
+.resultats .ou { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+
+/* ————————————————————— Adaptations ————————————————————— */
+
+@media (max-width: 1280px) {
+  :root { --droite: 280px; }
+}
+
+@media (max-width: 1120px) {
+  /* minmax(0, …) : sans lui, la colonne prend la largeur de son contenu le plus
+   * large et c'est toute la page qui défile de côté. */
+  .zone.avec-rail { grid-template-columns: minmax(0, 1fr); }
+  .aside { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); display: grid; }
+}
+
+@media (max-width: 820px) {
+  body { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; height: auto; flex-direction: row; flex-wrap: wrap;
+    align-items: center; border-right: 0; border-bottom: 1px solid var(--trait); }
+  .rail-marque { border-bottom: 0; padding: .5rem .8rem; text-align: left; }
+  .rail-marque h1 { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre); }
+  .rail-marque .os, .rail-titre, .rail-pied { display: none; }
+  .rail .rail-projets, .rail .bloc-projets { display: none !important; }
+  .rail-nav a .compte { min-width: 15px; }
+  .rail-nav { display: flex; overflow-x: auto; padding: 0; flex: 1; }
+  .rail-nav a { border-left: 0; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .rail-nav a[aria-current] { border-left-color: transparent; border-bottom-color: var(--or); }
+  .rail-outils { display: none; }
+  .chapeau-outils input { width: 8rem; }
+  .panneau { top: 0; }
+  .ligne { grid-template-columns: 1fr; gap: .1rem; }
+}
+
+@media print {
+  body { grid-template-columns: 1fr; background: #fff; color: #111; }
+  .rail, .chapeau-outils, .b, .voile, .panneau { display: none !important; }
+  .kpi, .panneau-lat, .carte-livrable { border-color: #ccc; background: #fff; color: #111; }
+}
+
+/* ————————————————————— Barres de défilement, en sombre ————————————————————— */
+
+* { scrollbar-width: thin; scrollbar-color: var(--trait-clair) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--trait); border-radius: 4px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--trait-clair); }
+.onglets::-webkit-scrollbar { height: 3px; }
+
+/* ═══════════════════ DESIGN SYSTEM 2.0 — LES COUCHES SYSTÉMATIQUES ═══════════════════
+ *
+ * Ce qui suit ne dessine aucun écran : ce sont les quatre règles que tout
+ * élément interactif suit, partout, sans exception. Les écrire une fois ici
+ * est la seule façon qu'elles tiennent sur soixante-cinq modules.
+ */
+
+/* ————————————————————— 04 · Rayons, par famille ————————————————————— */
+
+/* Un rayon dit la nature de l'objet : petit pour ce qui se clique, moyen pour
+ * ce qui se lit, grand pour ce qui flotte au-dessus du reste. */
+.b, .champ input, .champ select, .champ textarea,
+.chapeau-outils input, .ju-rech input, .fmb-q select,
+input[type="text"], input[type="search"], input[type="number"],
+input[type="date"], select, textarea { border-radius: var(--r-s); }
+
+.eti, .rde, .compte, .egc-bloc, .egc-ok, .eqpd, .juj,
+.badge, .chip { border-radius: var(--r-xs); }
+
+.kpi, .pi-k, .rv-kpi, .stat-c, .carte-n, .eg-c, .eq-p, .ju-cr, .ju-g, .ju-fc,
+.carte-projet, .piece, .piece-c, .obj, .reglage, .ref-carte, .at-i, .bic,
+.dm-d, .as-c, .br-c, .mq-s, .cs-o, .rc-idee, .br-bloc, .br-verbatim, .bi-idee,
+.mk-c, .pr-p, .col-msg, .ou-en, .attente-l, .cmd-ressources, .rv-piece,
+.carte-phrase, .graphe-boite, .pi-fb, .pi-au, .pr-apres, .pr-band, .at-f,
+.mur-panneau, .co-doc { border-radius: var(--r-m); }
+
+.panneau, .resultats, .capture-boite, .panneau-lat, .recev { border-radius: var(--r-l); }
+
+.egc-barre, .egc-barre span, .eqdc-b, .eqdc-b i, .csl-b, .csl-b i,
+.b-charge, .cso-j, .cso-j i { border-radius: var(--r-pilule); }
+
+/* ————————————————————— 05 · Élévation ————————————————————— */
+
+/* Ce qui flotte porte son ombre ; ce qui est à plat n'en porte aucune. Une
+ * ombre sur un élément qui ne survole rien est une décoration. */
+.panneau { box-shadow: var(--elev-4); }
+.resultats, .capture-boite, .menu-contextuel { box-shadow: var(--elev-3); }
+.voile { backdrop-filter: blur(2px); }
+
+/* ————————————————————— 13 · Mouvement ————————————————————— */
+
+/* Rapide pour un changement d'état, standard pour tout le reste. Rien ne
+ * s'anime au chargement : une interface de décision ne fait pas de spectacle. */
+.b, .eti, .dcm, .jul, .fmb, .rail-i, .eqp-tete, .jucr-t, .cs-o, .bic, .dm-d,
+.eg-c, .eq-p, .ju-cr, .at-i, .rt-c, .pil, .plc-visuel, .bic-v,
+button, a, input, select, textarea, summary {
+  transition: background-color var(--tr-rapide) var(--easing),
+              border-color var(--tr-rapide) var(--easing),
+              color var(--tr-rapide) var(--easing),
+              box-shadow var(--tr-standard) var(--easing),
+              opacity var(--tr-rapide) var(--easing),
+              transform var(--tr-rapide) var(--easing);
+}
+
+/* Hover : un cran d'élévation, et rien de plus — pas de saut, pas de zoom. */
+.eg-c:hover, .eq-p:hover, .ju-cr:hover, .dm-d:hover, .cs-o:hover, .at-i:hover {
+  box-shadow: var(--elev-2);
+}
+
+/* Pressed : la pression tactile, à l'échelle et à l'opacité. */
+.b:active, .cs-o:active, .eg-c:active, .dcm:active, .jul:active, .fmb:active,
+.eqp-tete:active, .jucr-t:active, .bic-v:active {
+  transform: scale(var(--pressed)); opacity: .8;
+}
+
+/* Qui préfère moins de mouvement n'en reçoit aucun. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 1ms !important; animation-duration: 1ms !important;
+  }
+  .b:active, .cs-o:active, .eg-c:active { transform: none; }
+}
+
+/* ————————————————————— 13 · Focus, et 14 · Navigation clavier ————————————————————— */
+
+/* L'anneau ne se retire jamais. Un outil qui se tient au clavier — vingt
+ * secondes par geste — se perd dès qu'on ne voit plus où l'on est. */
+:focus-visible {
+  outline: var(--focus) solid var(--or);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--r-xs);
+}
+.champ input:focus-visible, .champ textarea:focus-visible, .champ select:focus-visible,
+.chapeau-outils input:focus-visible, .ju-rech input:focus-visible {
+  outline-offset: 0; border-color: var(--or);
+}
+/* La souris ne déclenche pas l'anneau ; le clavier, toujours. */
+:focus:not(:focus-visible) { outline: none; }
+
+/* ————————————————————— 14 · Cibles d'interaction ————————————————————— */
+
+/* Quarante-quatre pixels. Les vrais boutons les prennent en hauteur ; les
+ * boutons de texte en ligne, qui vivent dans des lignes denses, les prennent
+ * par une zone invisible — la cible grandit, la ligne non. */
+.b { min-height: var(--cible); }
+.b.nu, .b.petit, .pip-plus, .fil a, .pirc-n, .jul, .jucas-p, .rail-i {
+  min-height: 0; position: relative;
+}
+.b.nu::after, .b.petit::after, .pip-plus::after, .fil a::after,
+.pirc-n::after, .jul::after, .jucas-p::after, .rail-i::after {
+  content: ""; position: absolute; left: 0; right: 0;
+  top: 50%; transform: translateY(-50%);
+  min-height: var(--cible); height: 100%;
+}
+
+/* Les contrôles qui ont la place la prennent en vrai : c'est plus honnête
+ * qu'une zone invisible, et ça sert la lisibilité autant que l'accessibilité. */
+.rg-l, .rc-v, .res-proteger, .mat-manque, .chip, .eng, .fmb, .pld, .dcm, .jul {
+  min-height: var(--cible);
+}
+.res-proteger, .fmb, .chip { display: inline-flex; align-items: center; justify-content: center; }
+.mat-manque { align-items: center; }
+/* Et ceux qui vivent dans une ligne dense gardent leur zone invisible. */
+.pip-nom { min-height: 0; position: relative; }
+.pip-nom::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  transform: translateY(-50%); min-height: var(--cible); height: 100%;
+}
+
+/* ————————————————————— 14 · Jamais la couleur seule ————————————————————— */
+
+/* Un état encodé par la seule couleur n'existe pas pour qui ne la distingue
+ * pas. Chaque étiquette d'état porte donc un signe, avant son texte. */
+.eti.alerte::before, .eti.attente::before, .eti.vert::before,
+.rde.alerte::before, .rde.attente::before, .rde.vert::before {
+  margin-right: .3em; font-size: .9em;
+}
+.eti.alerte::before, .rde.alerte::before { content: "●"; }
+.eti.attente::before, .rde.attente::before { content: "◐"; }
+.eti.vert::before, .rde.vert::before { content: "✓"; }

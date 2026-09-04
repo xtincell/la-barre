@@ -1,0 +1,294 @@
+/* systeme.css — les seize composants, et eux seuls.
+ *
+ * Aucune règle propre à un écran ici. Aucune couleur littérale : tout vient des
+ * jetons de base.css.
+ */
+
+/* ————————————————————— 1 · Icônes ————————————————————— */
+
+.ico-svg { display: block; flex: 0 0 auto; }
+.rail-nav a .ico { display: flex; align-items: center; justify-content: center; }
+
+/* ————————————————————— 2 · Avatar ————————————————————— */
+
+.avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: 1px solid var(--trait-clair);
+  background: var(--nuit-relief); flex: 0 0 auto; letter-spacing: .02em;
+}
+.avatar.vide { color: var(--clair-terne); border-style: dashed; }
+
+.avatars { display: flex; }
+.avatars .avatar + .avatar { margin-left: -.4rem; }
+
+/* ————————————————————— 3 · Drapeau de marché ————————————————————— */
+
+.drapeau {
+  display: inline-flex; align-items: baseline; gap: .3rem;
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux);
+}
+.drapeau .code {
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .06em; background: var(--nuit-relief);
+  border: 1px solid var(--trait-clair); padding: .06rem .28rem; color: var(--clair);
+}
+.drapeau .nom-m { color: var(--clair-doux); }
+.drapeau .langue { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); text-transform: uppercase; }
+.drapeau.vide { color: var(--clair-terne); }
+
+.drapeaux { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+/* ————————————————————— 4 · Anneau ————————————————————— */
+
+.anneau-boite { position: relative; display: inline-grid; justify-items: center; }
+.anneau { display: block; }
+.anneau-val {
+  position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-58%);
+  text-align: center; font-variant-numeric: tabular-nums;
+}
+.anneau-lib { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .25rem; text-align: center; }
+
+/* ————————————————————— 5 · Barre ————————————————————— */
+
+.barre-l { display: grid; grid-template-columns: 1fr auto; gap: .3rem .5rem; align-items: center; margin-bottom: .3rem; }
+.barre-l .b-lib { grid-column: 1 / -1; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); }
+.barre-l .b-piste { height: 5px; background: var(--trait); position: relative; overflow: hidden; }
+.barre-l .b-piste i { position: absolute; inset: 0 auto 0 0; }
+.barre-l .b-val { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+
+/* ————————————————————— 6 · Sparkline ————————————————————— */
+
+.sparkline { display: block; }
+.sparkline.vide { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); font-style: italic; }
+
+/* ————————————————————— 7 · Répartition ————————————————————— */
+
+.repartition { display: flex; gap: .9rem; align-items: center; flex-wrap: wrap; }
+.rep-legende { display: grid; gap: .22rem; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); min-width: 9rem; }
+.rep-l { display: flex; align-items: center; gap: .4rem; }
+.rep-l .pastille { width: .5rem; height: .5rem; border-radius: 50%; flex: 0 0 auto; }
+.rep-l .rep-nom { color: var(--clair-doux); }
+.rep-l .rep-val { margin-left: auto; color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+
+/* ————————————————————— 8 · Fil d'étapes ————————————————————— */
+
+.fil-etapes { margin-top: .5rem; }
+.fil-etapes .points { display: flex; align-items: center; }
+.fil-etapes .rond {
+  width: .5rem; height: .5rem; border-radius: 50%; flex: 0 0 auto;
+  border: 1px solid var(--trait-clair); background: var(--nuit);
+}
+.fil-etapes .rond.faite { background: var(--vert); border-color: var(--vert); }
+.fil-etapes .rond.ici { background: var(--or); border-color: var(--or); box-shadow: 0 0 0 3px rgba(232,163,61,.18); }
+.fil-etapes .lien { height: 1px; background: var(--trait); flex: 1 1 auto; min-width: .8rem; }
+.fil-etapes .ou { display: block; font-size: var(--t-eti); line-height: var(--lh-eti); color: var(--or); margin-top: .3rem; letter-spacing: .04em; }
+
+.fil-etapes.grand { margin: .2rem 0 .4rem; }
+.fil-etapes.grand .points { align-items: flex-start; }
+.fil-etapes.grand .etape-g { display: grid; justify-items: center; gap: .35rem; flex: 0 0 auto; }
+.fil-etapes.grand .etape-g .rond { width: .95rem; height: .95rem; }
+.fil-etapes.grand .etape-g .nom {
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em; text-transform: uppercase; color: var(--clair-terne);
+}
+.fil-etapes.grand .etape-g.faite .rond { background: var(--vert); border-color: var(--vert); }
+.fil-etapes.grand .etape-g.faite .nom { color: var(--clair-doux); }
+.fil-etapes.grand .etape-g.ici .rond { background: var(--or); border-color: var(--or); box-shadow: 0 0 0 4px rgba(232,163,61,.18); }
+.fil-etapes.grand .etape-g.ici .nom { color: var(--or); }
+.fil-etapes.grand .lien { margin-top: .45rem; }
+
+/* ————————————————————— 9 · Carte de statistique ————————————————————— */
+
+.stat-c { background: var(--nuit-carte); padding: .65rem .8rem .75rem; }
+.stat-c .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
+.stat-c .v { font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.1; margin-top: .25rem; font-variant-numeric: tabular-nums; }
+.stat-c .s { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .15rem; }
+.stat-c.alerte { border-color: rgba(217,83,74,.4); }
+.stat-c.alerte .v { color: var(--bloquant-txt); }
+.stat-c.vert .v { color: var(--vert); }
+.stat-c.or .v { color: var(--or); }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .55rem; }
+
+/* ————————————————————— 10 · Bannière ————————————————————— */
+
+.banniere {
+  display: flex; gap: .6rem; align-items: flex-start;
+  background: rgba(217, 154, 43, .1); border: 1px solid rgba(217, 154, 43, .35);
+  border-left: 3px solid var(--attente); padding: .6rem .8rem; color: #e5c88c;
+}
+.banniere .b-ico { color: var(--attente); padding-top: .1rem; }
+.banniere .b-corps { flex: 1; min-width: 0; }
+.banniere .b-texte { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; }
+.banniere.rouge { background: rgba(217,83,74,.1); border-color: rgba(217,83,74,.35);
+  border-left-color: var(--bloquant-txt); color: #eaa9a3; }
+.banniere.rouge .b-ico { color: var(--bloquant-txt); }
+.banniere.vert { background: rgba(63,160,106,.1); border-color: rgba(63,160,106,.3);
+  border-left-color: var(--vert); color: #9fd4b6; }
+.banniere.vert .b-ico { color: var(--vert); }
+
+/* ————————————————————— 11 · Mur de vignettes ————————————————————— */
+
+.mur { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .7rem; }
+.mur-panneau { background: var(--nuit-carte); padding: .7rem; }
+.mur-tete { display: flex; align-items: baseline; gap: .5rem; margin-bottom: .55rem; }
+.mur-nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: .1em; text-transform: uppercase; }
+.mur-compte { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-left: auto; }
+.mur-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.mur-case { background: none; border: 0; padding: 0; cursor: pointer; position: relative; display: block; }
+.mur-case .vignette { height: 76px; }
+.mur-case:hover .vignette { border-color: var(--or); }
+.mur-eti {
+  position: absolute; left: 0; bottom: 0; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); padding: .05rem .25rem;
+  background: rgba(14,15,17,.82); color: var(--clair-doux);
+}
+.mur-pied { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .5rem; }
+
+/* ————————————————————— 12 · Bande de vignettes ————————————————————— */
+
+.strip { display: flex; gap: 4px; flex-wrap: wrap; }
+.strip-case { background: none; border: 0; padding: 0; cursor: pointer; }
+.strip-case .vignette { border-width: 2px; }
+.strip-case.actif .vignette { border-color: var(--or); }
+.strip-case:hover .vignette { border-color: var(--clair-terne); }
+
+/* ————————————————————— 13 · Frise ————————————————————— */
+
+.frise { display: flex; align-items: flex-start; overflow-x: auto; padding-bottom: .3rem; }
+.frise-j { display: grid; justify-items: center; gap: .25rem; flex: 1 1 0; min-width: 5.5rem; position: relative; }
+.frise-lien { position: absolute; top: .42rem; right: 50%; left: -50%; height: 1px; background: var(--trait); }
+.frise-rond {
+  width: .85rem; height: .85rem; border-radius: 50%; z-index: 1;
+  border: 1px solid var(--trait-clair); background: var(--nuit);
+}
+.frise-j.faite .frise-rond { background: var(--vert); border-color: var(--vert); }
+.frise-j.ici .frise-rond { background: var(--or); border-color: var(--or); box-shadow: 0 0 0 4px rgba(232,163,61,.18); }
+.frise-date { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair); font-variant-numeric: tabular-nums; }
+.frise-nom { font-size: var(--t-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); text-align: center; line-height: 1.3; }
+.frise-j.ici .frise-date { color: var(--or); }
+
+/* ————————————————————— 14 · Carte numérotée ————————————————————— */
+
+.cartes-n { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: .7rem; align-items: start; }
+.carte-n { background: var(--nuit-carte); padding: .8rem .85rem .9rem; }
+.carte-n.vide { border-style: dashed; }
+.carte-n-tete { display: flex; align-items: baseline; gap: .4rem; margin-bottom: .55rem; }
+.carte-n-tete .n { color: var(--or); font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
+.carte-n-tete .t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em; text-transform: uppercase; color: var(--clair-doux); }
+.carte-n-corps { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.5; }
+.carte-n-corps .phrase-marque { font-family: var(--main); font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.3; color: var(--clair); }
+.carte-n-corps .accent { color: var(--or); }
+
+/* ————————————————————— 15 · Graphe ————————————————————— */
+
+.graphe { width: 100%; height: auto; display: block; }
+.graphe .g-nom { font-size: 8px; fill: var(--clair-doux); font-family: var(--affichage); }
+.graphe .g-centre { font-size: 9px; fill: var(--clair); font-family: var(--affichage); }
+
+/* ————————————————————— 16 · Onglets ————————————————————— */
+
+.onglets { display: flex; border-bottom: 1px solid var(--trait); overflow-x: auto; }
+.onglet {
+  font: inherit; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); background: none; border: 0;
+  border-bottom: 2px solid transparent; color: var(--clair-terne);
+  padding: .55rem .85rem; cursor: pointer; white-space: nowrap;
+  display: flex; align-items: center; gap: .4rem;
+}
+.onglet:hover { color: var(--clair); }
+.onglet[aria-current] { color: var(--or); border-bottom-color: var(--or); }
+.onglet .etat { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.onglet .etat.manque { color: var(--bloquant-txt); }
+
+/* ————————————————————— Communs ————————————————————— */
+
+.bande-meta {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px; background: var(--trait); border: 1px solid var(--trait);
+}
+.bande-meta .bloc { background: var(--nuit-carte); padding: .55rem .7rem; }
+.bande-meta .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
+.bande-meta .v { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); margin-top: .15rem; }
+.bande-meta .v.vide { color: var(--bloquant-txt); font-style: italic; }
+
+.file-item { display: flex; gap: .55rem; align-items: center; padding: .4rem 0;
+  border-bottom: 1px solid var(--trait); }
+.file-item:last-child { border-bottom: 0; }
+.file-item:hover .fi-nom { color: var(--or); }
+.fi-corps { min-width: 0; flex: 1; }
+.fi-nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
+.fi-meta { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.fi-eti { flex: 0 0 auto; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--clair-terne); border: 1px solid var(--trait); padding: .08rem .3rem; }
+
+@media (max-width: 820px) {
+  .fil-etapes.grand .etape-g .nom { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); }
+  .repartition { flex-direction: column; align-items: flex-start; }
+}
+
+/* ————————————————————— 17 · La bande de recevabilité ————————————————————— */
+
+.recev {
+  display: grid; gap: .6rem;
+  background: var(--nuit-carte); border: 1px solid var(--trait);
+  border-left: 3px solid var(--trait-clair); padding: .8rem .9rem .9rem;
+}
+.recev.tenu { border-left-color: var(--vert); }
+.recev.manque { border-left-color: var(--bloquant-txt); }
+.recev.flou { border-left-color: var(--attente); }
+
+.rv-question { display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; }
+.rq-t { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); }
+.rq-etat { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-left: auto; }
+.recev.manque .rq-etat { color: var(--bloquant-txt); }
+.recev.tenu .rq-etat { color: var(--vert); }
+
+.rv-controles { display: flex; gap: .45rem; flex-wrap: wrap; }
+.rc-i { display: flex; align-items: center; gap: .3rem; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--clair-terne); border: 1px solid var(--trait); padding: .18rem .45rem; }
+.rc-i .m { color: var(--bloquant-txt); }
+.rc-i.ok { color: var(--clair-doux); border-color: var(--trait-clair); }
+.rc-i.ok .m { color: var(--vert); }
+
+.rv-prix { display: flex; gap: .5rem; align-items: flex-start; font-size: var(--t-meta); letter-spacing: var(--ls-meta);
+  line-height: 1.45; color: #e5c88c; }
+.rv-prix svg { color: var(--attente); margin-top: .1rem; flex: 0 0 auto; }
+
+.rv-gestes { display: flex; gap: .45rem; flex-wrap: wrap; }
+
+/* ————————————————————— Tailles de vignette ————————————————————— */
+
+.vignette.v-case { width: 100%; height: 96px; }
+.vignette.v-toile { width: 100%; height: 100%; }
+
+/* ————————————————————— Panneau superposé ————————————————————— */
+
+.voile.voile-dessus { z-index: 52; background: rgba(0,0,0,.5); }
+.panneau.dessus { z-index: 53; width: min(520px, 100%); }
+
+/* ————————————————————— 18 · L'état et sa conséquence ————————————————————— */
+
+/* Le rendu par défaut d'un état : le nom court, puis ce qu'il produit ou
+ * empêche. La pastille seule reste l'exception, réservée aux places serrées —
+ * elle porte alors la conséquence en attribut title. */
+.etat-l, .bic-etat, .bii-etat, .ati-etat, .dmd-etat {
+  display: block; font-size: var(--t-eti); letter-spacing: var(--ls-eti); line-height: 1.4;
+  color: var(--clair-terne); max-width: var(--mesure);
+}
+.etat-l b, .bic-etat b, .bii-etat b, .ati-etat b, .dmd-etat b {
+  font-weight: 500; color: var(--clair-doux); margin-right: .4rem;
+}
+.etat-l.vert b, .bic-etat.vert b, .bii-etat.vert b,
+.ati-etat.vert b, .dmd-etat.vert b { color: var(--vert); }
+.etat-l.attente b, .bic-etat.attente b, .bii-etat.attente b,
+.ati-etat.attente b, .dmd-etat.attente b { color: var(--attente); }
+.etat-l.alerte b, .bic-etat.alerte b, .bii-etat.alerte b,
+.ati-etat.alerte b, .dmd-etat.alerte b { color: var(--bloquant-txt); }
+.etat-l.or b, .bic-etat.or b, .bii-etat.or b,
+.ati-etat.or b, .dmd-etat.or b { color: var(--or); }
+
+.bic-etat { padding: 0 .7rem .1rem; }
+.bii-etat, .ati-etat { margin-top: .3rem; }
+.dmd-etat { padding: 0 .8rem .15rem; }
+.critere-etat { display: block; font-size: var(--t-eti); letter-spacing: var(--ls-eti); line-height: 1.4;
+  color: var(--encre-terne, var(--clair-terne)); max-width: var(--mesure); }
+.critere-etat b { font-weight: 500; margin-right: .4rem; }
+.critere-etat.alerte b { color: var(--bloquant-txt); }
+.critere-etat.attente b { color: var(--attente); }

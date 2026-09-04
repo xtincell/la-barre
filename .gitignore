@@ -1,0 +1,23 @@
+# Le dépôt de données ne quitte pas la machine : il porte des clients, des
+# contacts nommés et des budgets. L'application le lit depuis le disque ;
+# en ligne, on l'importe par l'écran Réglages.
+depots/*.json
+depots/archive/
+
+# Les fichiers de production et de revue sont des actifs de marques tierces.
+assets/**
+!assets/.gitkeep
+!assets/production/.gitkeep
+!assets/review/.gitkeep
+
+# Les planches de refonte : 138 Mo de captures de travail.
+refonte/
+
+.DS_Store
+*.ecriture
+node_modules/
+
+# BEIGNET_PARADISE_deduction.md documente un dossier client réel.
+documents/BEIGNET_PARADISE_deduction.md
+outils/
+.claude/
