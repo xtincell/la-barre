@@ -1,0 +1,299 @@
+<!-- Outil d'intake — Direction Clientèle MATANGA -->
+<div id="app"></div>
+
+<style>
+  #app { --ink:#1F1512; --paper:#fff; --card:#F3EEE9; --line:#E2D7CE; --muted:#8C7B72;
+         --cl:#10646E; --pl:#4A5A93; --cr:#B02118; --da:#B07714; --ok:#2E7D4F;
+         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         color:var(--ink); background:var(--paper); line-height:1.5; }
+  #app *{box-sizing:border-box}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 4px}
+  .top{background:var(--ink);color:#fff;padding:22px 26px;border-radius:10px;margin-bottom:16px}
+  .top h1{margin:0 0 4px;font-size:22px;font-weight:700;letter-spacing:-.2px}
+  .top p{margin:0;color:#BFAFA6;font-size:13px}
+  .metagrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+  .metagrid input{width:100%;background:#33231D;border:1px solid #4A362E;color:#fff;
+    padding:8px 10px;border-radius:6px;font-size:13px;font-family:inherit}
+  .metagrid input::placeholder{color:#8A7770}
+  .tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:18px;flex-wrap:wrap}
+  .tab{padding:9px 14px;border:0;background:none;font:inherit;font-size:13.5px;font-weight:600;
+    color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px}
+  .tab.on{color:var(--cl);border-bottom-color:var(--cl)}
+  .gate{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:8px;margin-bottom:18px;font-size:13.5px}
+  .gate.no{background:#FBE9E7;color:#8C1D14}
+  .gate.yes{background:#E7F3EC;color:#1E5C39}
+  .gate b{font-weight:700}
+  .bar{flex:1;height:6px;background:#0002;border-radius:3px;overflow:hidden;min-width:80px}
+  .bar i{display:block;height:100%;background:currentColor;transition:width .25s}
+  .sec{margin-bottom:26px}
+  .sec h2{font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--cl);margin:0 0 2px}
+  .sec .lead{font-size:13px;color:var(--muted);margin:0 0 12px;font-style:italic}
+  .q{border:1px solid var(--line);border-radius:8px;padding:13px 15px;margin-bottom:9px;background:#fff}
+  .q.crit{border-left:4px solid var(--cr)}
+  .q.done{background:#FCFAF8}
+  .qh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .qh label{font-weight:650;font-size:14.5px;display:block}
+  .hint{font-size:12.5px;color:var(--muted);margin:3px 0 8px}
+  .hint b{color:var(--ink);font-weight:600}
+  textarea{width:100%;border:1px solid var(--line);border-radius:6px;padding:9px 11px;
+    font:inherit;font-size:13.5px;resize:vertical;min-height:52px;background:#FEFDFC}
+  textarea:focus{outline:2px solid var(--cl);outline-offset:-1px;background:#fff}
+  .srcs{display:flex;gap:4px;flex-shrink:0}
+  .src{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);background:#fff;
+    font:inherit;font-size:11.5px;font-weight:700;color:var(--muted);cursor:pointer;padding:0}
+  .src:hover{border-color:var(--muted)}
+  .src.on{color:#fff;border-color:transparent}
+  .src.on[data-s="D"]{background:var(--cl)} .src.on[data-s="F"]{background:var(--ok)}
+  .src.on[data-s="I"]{background:var(--da)} .src.on[data-s="V"]{background:var(--cr)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:16px}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px}
+  th{background:var(--ink);color:#fff;text-align:left;padding:8px 10px;font-size:12px;font-weight:600}
+  td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:top}
+  tr:nth-child(even) td{background:#FAF7F5}
+  .tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:700;color:#fff}
+  .empty{color:var(--cr);font-style:italic}
+  .out{background:var(--card);border-radius:8px;padding:18px 20px;font-size:13.5px;white-space:pre-wrap;
+    line-height:1.65;border:1px solid var(--line)}
+  .btn{border:0;border-radius:7px;padding:9px 15px;font:inherit;font-size:13px;font-weight:600;
+    cursor:pointer;background:var(--ink);color:#fff;margin:0 6px 10px 0}
+  .btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+  .btn:hover{opacity:.88}
+  .note{background:#FBF3E7;border-radius:8px;padding:13px 16px;font-size:13px;margin-bottom:18px;color:#5A4212}
+  .piece{display:flex;gap:8px;align-items:center;margin-bottom:7px;font-size:13.5px}
+  .piece select{border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:inherit;font-size:12.5px}
+  .piece span{flex:1}
+  .save{font-size:12px;color:var(--muted);margin-left:auto}
+  h3.blk{font-size:15px;margin:22px 0 8px;font-weight:700}
+</style>
+
+<script>
+(function(){
+  const SRC = {D:"Déclaré par le client", F:"Fourni (document)", I:"Inféré par l'agence", V:"À vérifier"};
+  const SRCCOL = {D:"#10646E", F:"#2E7D4F", I:"#B07714", V:"#B02118"};
+
+  const SECTIONS = [
+    { id:"gouv", t:"Les gens et la décision", lead:"À poser en premier. C'est ce qui gouverne tout le dispositif de validation en aval.", qs:[
+      {id:"interlo", l:"Qui est notre interlocuteur au quotidien ?", h:"Nom, fonction, niveau d'autonomie."},
+      {id:"decideur", l:"Qui tranche en dernier ressort ?", h:"Le nom, pas la fonction. <b>Champ critique</b> : conditionne toutes les portes de validation.", crit:true},
+      {id:"tueur", l:"Qui, dans l'organisation, peut tuer une idée déjà validée ?", h:"Directeur régional, siège international, comité de marque, actionnaire. Presque toujours quelqu'un — le client ne le dit pas spontanément.", crit:true},
+      {id:"circuit", l:"Quel est le circuit de validation, et combien de temps prend-il ?", h:"Nombre de passages, délai réel entre présentation et accord ferme.", crit:true},
+      {id:"histrel", l:"Avec quelles agences ont-ils travaillé, et pourquoi ça s'est arrêté ?", h:"Question dérangeante, à poser quand même. Révèle les attentes non dites."},
+    ]},
+    { id:"biz", t:"L'entreprise et les chiffres", lead:"Demander les documents plutôt que les réponses. Un client ne remplit pas un questionnaire, mais il transmet un rapport qui existe déjà.", qs:[
+      {id:"perf", l:"Comment se porte la marque ? Volumes, part de marché, évolution.", h:"Chiffres bruts. Noter la source de chaque nombre — panel, interne, déclaratif."},
+      {id:"saison", l:"Quelle est la saisonnalité réelle des ventes ?", h:"Meilleur mois, pire mois, et depuis quand c'est comme ça."},
+      {id:"segment", l:"Où la marque gagne et où elle perd, précisément ?", h:"Par circuit, par région, par occasion de consommation, par SKU. C'est là que se cache le vrai problème."},
+      {id:"objchiffre", l:"Quel résultat chiffré attendent-ils de cette campagne ?", h:"S'ils n'en ont pas, c'est l'information la plus importante de l'entretien.", crit:true},
+    ]},
+    { id:"hist", t:"L'historique des campagnes", lead:"La campagne précédente contient le diagnostic. Presque personne ne pense à la demander.", qs:[
+      {id:"lastcamp", l:"Qu'ont-ils fait l'an dernier, et qu'est-ce que ça a donné ?", h:"Demander les visuels, le film, et le bilan s'il existe."},
+      {id:"lastfail", l:"Qu'est-ce qui n'a pas marché, selon eux ?", h:"Puis reformuler : et selon les chiffres ?"},
+      {id:"fache", l:"Qu'est-ce qui les a fâchés avec la production précédente ?", h:"Délais, reprises, qualité, relation. Détermine leurs réflexes de méfiance."},
+    ]},
+    { id:"conc", t:"La concurrence telle qu'ils la voient", lead:"Écart entre leur perception et la réalité du marché : matière première du planning.", qs:[
+      {id:"concqui", l:"Qui considèrent-ils comme leur concurrent principal ?", h:"Souvent faux, et c'est utile."},
+      {id:"concfait", l:"Que fait ce concurrent qui les inquiète ?", h:"Prise de parole, prix, distribution, innovation."},
+      {id:"concbudget", l:"Quel est le rapport de force budgétaire ?", h:"À estimer si non déclaré — relevés d'affichage, présence média. Marquer <b>I</b>."},
+    ]},
+    { id:"prod", t:"Le produit et ses contraintes", lead:"Tout ce qui ne se négocie pas. Une contrainte découverte en production coûte une campagne.", qs:[
+      {id:"produit", l:"Sur quoi porte exactement la campagne ?", h:"Référence, gamme, format, packaging en vigueur."},
+      {id:"regl", l:"Quelles mentions ou contraintes réglementaires s'appliquent ?", h:"Mentions obligatoires, restrictions sectorielles, règles de packshot.", crit:true},
+      {id:"interdits", l:"Qu'est-ce que la marque ne dit jamais, ne montre jamais ?", h:"Interdits internes, sensibilités culturelles ou religieuses, historique de bad buzz.", crit:true},
+      {id:"charte", l:"Existe-t-il une charte de marque en vigueur, et est-elle opposable ?", h:"Demander le fichier. Vérifier qui l'a validée."},
+    ]},
+    { id:"dem", t:"La demande apparente", lead:"À noter mot pour mot, sans reformulation. C'est cette phrase que le brief qualifié devra dépasser.", qs:[
+      {id:"verbatim", l:"Verbatim de la demande", h:"Les mots du client, entre guillemets. Ne pas corriger, ne pas lisser.", crit:true},
+      {id:"leurdiag", l:"À quoi attribuent-ils le problème ?", h:"Leur diagnostic, à distinguer du vôtre."},
+      {id:"attendu", l:"Qu'attendent-ils précisément de l'agence ?", h:"Exécution, recommandation stratégique, ou les deux."},
+    ]},
+    { id:"cadre", t:"Le cadre : temps, argent, périmètre", lead:"Sans ces trois champs, aucun brief ne peut être qualifié.", qs:[
+      {id:"fenetre", l:"Quelles sont les dates non négociables ?", h:"Fenêtre média, événement, lancement, saison. Et ce qui les fixe.", crit:true},
+      {id:"budget", l:"Quel budget, et comment est-il ventilé ?", h:"Production / média / activation. S'ils refusent de le dire, noter le refus.", crit:true},
+      {id:"livrables", l:"Quels livrables attendent-ils, en quelle quantité ?", h:"Liste. Tout ce qui n'est pas listé est hors périmètre.", crit:true},
+      {id:"horsper", l:"Qu'est-ce qui est explicitement hors périmètre ?", h:"Packaging, identité, contenu permanent, autres marchés."},
+    ]},
+    { id:"diag", t:"Le problème réel — travail de l'agence", lead:"Rempli après l'entretien, pas pendant. C'est de l'inférence : elle se marque comme telle et se fait valider par la note de restitution.", qs:[
+      {id:"probleme", l:"Le problème réel, en trois phrases maximum", h:"Ce que le client n'a pas dit, ou n'a pas formulé ainsi.", crit:true},
+      {id:"hypo1", l:"Hypothèse 1 — à faire confirmer", h:"Marquer <b>I</b>. Ce qui la confirmerait ou l'infirmerait."},
+      {id:"hypo2", l:"Hypothèse 2 — à faire confirmer", h:"Marquer <b>I</b>."},
+      {id:"hypo3", l:"Hypothèse 3 — à faire confirmer", h:"Marquer <b>I</b>."},
+    ]},
+  ];
+
+  const PIECES = ["Plan marketing ou plan de marque en cours","Bilan de la dernière campagne","Données de vente / panel","Charte de marque et logotypes","Visuels et films des campagnes précédentes","Études consommateur disponibles","Calendrier commercial de l'année","Contraintes réglementaires écrites"];
+
+  const META = [["client","Client / Marque"],["campagne","Campagne"],["ref","Référence dossier"],["date","Date de l'entretien"],["interlocuteur","Interlocuteur rencontré"],["parqui","Entretien mené par"]];
+
+  const ALLQ = SECTIONS.flatMap(s=>s.qs.map(q=>({...q, sec:s.t})));
+  const CRIT = ALLQ.filter(q=>q.crit).map(q=>q.id);
+
+  let S = { meta:{}, a:{}, src:{}, pieces:{}, tab:"entretien" };
+
+  /* ---- persistance best-effort ---- */
+  async function save(){
+    try { if(window.storage) await window.storage.set("intake:courant", JSON.stringify(S)); } catch(e){}
+    const el=document.getElementById("savemsg"); if(el){ el.textContent="Enregistré"; setTimeout(()=>el.textContent="",1600); }
+  }
+  async function load(){
+    try { if(window.storage){ const r=await window.storage.get("intake:courant"); if(r&&r.value){ S=Object.assign(S,JSON.parse(r.value)); } } } catch(e){}
+  }
+
+  const esc = t => (t||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  const filled = id => (S.a[id]||"").trim().length>0;
+
+  function render(){
+    const done = ALLQ.filter(q=>filled(q.id)).length;
+    const critLeft = CRIT.filter(id=>!filled(id));
+    const pct = Math.round(done/ALLQ.length*100);
+
+    let h = `<div class="wrap">
+      <div class="top">
+        <h1>Intake client — Direction Clientèle</h1>
+        <p>Entretien guidé, fiche d'intake sourcée, note de restitution. Le guide ne s'envoie jamais au client.</p>
+        <div class="metagrid">${META.map(([k,l])=>`<input data-meta="${k}" placeholder="${l}" value="${esc(S.meta[k])}">`).join("")}</div>
+      </div>
+      <div class="tabs">
+        ${[["entretien","1 · Entretien"],["fiche","2 · Fiche d'intake"],["pieces","3 · Pièces"],["resti","4 · Note de restitution"]]
+          .map(([k,l])=>`<button class="tab ${S.tab===k?"on":""}" data-tab="${k}">${l}</button>`).join("")}
+        <span class="save" id="savemsg"></span>
+      </div>
+      <div class="gate ${critLeft.length?"no":"yes"}">
+        <div class="bar"><i style="width:${pct}%"></i></div>
+        <b>${done}/${ALLQ.length}</b>
+        <span>${critLeft.length
+          ? "Brief non qualifiable : "+critLeft.length+" champ"+(critLeft.length>1?"s":"")+" critique"+(critLeft.length>1?"s":"")+" manquant"+(critLeft.length>1?"s":"")+"."
+          : "Champs critiques complets. Le brief qualifié peut être rédigé."}</span>
+      </div>`;
+
+    if(S.tab==="entretien"){
+      h += `<div class="legend">${Object.keys(SRC).map(k=>`<span><i class="dot" style="background:${SRCCOL[k]}"></i>${k} — ${SRC[k]}</span>`).join("")}</div>`;
+      h += `<div class="note">Trame de conduite d'entretien, à usage interne. On pose, on écoute, on remplit après. Envoyer ces questions au client produit sa demande apparente — exactement ce que le brief qualifié doit dépasser.</div>`;
+      SECTIONS.forEach(s=>{
+        h += `<div class="sec"><h2>${s.t}</h2><p class="lead">${s.lead}</p>`;
+        s.qs.forEach(q=>{
+          h += `<div class="q ${q.crit?"crit":""} ${filled(q.id)?"done":""}">
+            <div class="qh"><div style="flex:1"><label>${q.l}${q.crit?' <span class="tag" style="background:#B02118">critique</span>':""}</label>
+            <div class="hint">${q.h}</div></div>
+            <div class="srcs">${Object.keys(SRC).map(k=>`<button class="src ${S.src[q.id]===k?"on":""}" data-s="${k}" data-q="${q.id}" title="${SRC[k]}">${k}</button>`).join("")}</div></div>
+            <textarea data-a="${q.id}" placeholder="Réponse, notes, chiffres…">${esc(S.a[q.id])}</textarea>
+          </div>`;
+        });
+        h += `</div>`;
+      });
+    }
+
+    if(S.tab==="fiche"){
+      h += `<div class="note">Document interne. La colonne <b>Source</b> est la raison d'être de cette fiche : elle empêche qu'une inférence de l'agence devienne indiscernable d'un fait client.</div>`;
+      SECTIONS.forEach(s=>{
+        h += `<h3 class="blk">${s.t}</h3><table><tr><th style="width:32%">Champ</th><th>Valeur</th><th style="width:110px">Source</th></tr>`;
+        s.qs.forEach(q=>{
+          const v = filled(q.id) ? esc(S.a[q.id]) : `<span class="empty">non renseigné${q.crit?" — critique":""}</span>`;
+          const sc = S.src[q.id];
+          h += `<tr><td><b>${q.l}</b></td><td>${v}</td><td>${sc?`<span class="tag" style="background:${SRCCOL[sc]}">${sc}</span> <span style="font-size:11px;color:#8C7B72">${SRC[sc]}</span>`:"—"}</td></tr>`;
+        });
+        h += `</table>`;
+      });
+      h += `<button class="btn" data-dl="fiche">Télécharger la fiche</button><button class="btn ghost" data-cp="fiche">Copier</button>`;
+    }
+
+    if(S.tab==="pieces"){
+      h += `<div class="note">Une part de l'intake n'est pas de l'interrogatoire : c'est de la collecte. Un client qui ne remplit pas un questionnaire transmet volontiers un document qui existe déjà. Un refus est une information sur la relation — il s'écrit.</div>`;
+      PIECES.forEach((p,i)=>{
+        const st = S.pieces[i]||"Non demandée";
+        h += `<div class="piece"><span>${p}</span>
+          <select data-p="${i}">${["Non demandée","Demandée","Reçue","Refusée","N'existe pas"].map(o=>`<option ${st===o?"selected":""}>${o}</option>`).join("")}</select></div>`;
+      });
+    }
+
+    if(S.tab==="resti"){
+      h += `<div class="note">Une page, envoyée au client sous 48 h. Elle convertit vos inférences en faits établis : une hypothèse non corrigée devient une hypothèse acceptée — donc opposable le jour où le client change d'avis.</div>`;
+      h += `<div class="out">${esc(restitution())}</div>
+        <div style="margin-top:12px"><button class="btn" data-dl="resti">Télécharger</button><button class="btn ghost" data-cp="resti">Copier</button></div>`;
+    }
+
+    h += `</div>`;
+    document.getElementById("app").innerHTML = h;
+    bind();
+  }
+
+  function restitution(){
+    const m=S.meta, g=id=>(S.a[id]||"").trim();
+    const hyps=["hypo1","hypo2","hypo3"].map(g).filter(Boolean);
+    const att=Object.entries(S.pieces).filter(([i,v])=>v==="Demandée").map(([i])=>PIECES[i]);
+    return `Objet : ce que nous avons compris — ${m.client||"[client]"} · ${m.campagne||"[campagne]"}
+
+Bonjour ${m.interlocuteur||"[interlocuteur]"},
+
+Merci pour le temps accordé le ${m.date||"[date]"}. Avant d'engager le travail, voici notre lecture de votre situation. Corrigez-nous : nous préférons une correction maintenant qu'une réorientation dans trois semaines.
+
+LE PROBLÈME TEL QUE NOUS LE COMPRENONS
+${g("probleme")||"[à formuler en trois phrases]"}
+
+CE QUE NOUS TENONS POUR ACQUIS
+· Objectif chiffré : ${g("objchiffre")||"[non communiqué]"}
+· Fenêtre : ${g("fenetre")||"[non communiquée]"}
+· Périmètre attendu : ${g("livrables")||"[non communiqué]"}
+· Décision finale : ${g("decideur")||"[non identifié]"}
+
+NOS HYPOTHÈSES — À CONFIRMER OU À CORRIGER
+${hyps.length?hyps.map((x,i)=>`${i+1}. ${x}`).join("\n"):"1. [à formuler]"}
+
+Sauf retour de votre part sous cinq jours ouvrés, nous travaillerons sur cette base.
+
+PIÈCES EN ATTENTE
+${att.length?att.map(p=>"· "+p).join("\n"):"· aucune"}
+
+PROCHAINE ÉTAPE
+Remise du brief créatif qualifié, puis présentation des routes créatives. Nous vous confirmerons la date une fois les pièces ci-dessus reçues.
+
+${m.parqui||"[nom]"}
+Direction Clientèle — MATANGA AGENCY`;
+  }
+
+  function fiche(){
+    const m=S.meta;
+    let t=`FICHE D'INTAKE — DOCUMENT INTERNE\n${m.client||""} · ${m.campagne||""} · réf. ${m.ref||""}\nEntretien du ${m.date||""} avec ${m.interlocuteur||""} — mené par ${m.parqui||""}\n\nSources : D déclaré · F fourni · I inféré par l'agence · V à vérifier\n`;
+    SECTIONS.forEach(s=>{
+      t+=`\n\n== ${s.t.toUpperCase()} ==\n`;
+      s.qs.forEach(q=>{
+        t+=`\n[${S.src[q.id]||"–"}] ${q.l}\n${(S.a[q.id]||"").trim()||"(non renseigné"+(q.crit?" — CRITIQUE":"")+")"}\n`;
+      });
+    });
+    t+=`\n\n== PIÈCES ==\n`;
+    PIECES.forEach((p,i)=>{ t+=`${p} : ${S.pieces[i]||"Non demandée"}\n`; });
+    const left=CRIT.filter(id=>!filled(id));
+    t+=`\n\n== CONTRÔLE ==\n${left.length?"Brief NON qualifiable — champs critiques manquants : "+left.length:"Champs critiques complets."}\n`;
+    return t;
+  }
+
+  function download(name, text){
+    const b=new Blob([text],{type:"text/plain;charset=utf-8"}), u=URL.createObjectURL(b);
+    const a=document.createElement("a"); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u);
+  }
+
+  function bind(){
+    const $=s=>document.querySelectorAll(s);
+    $("#app [data-tab]").forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;render();});
+    $("#app [data-meta]").forEach(i=>i.oninput=()=>{S.meta[i.dataset.meta]=i.value;save();});
+    $("#app [data-a]").forEach(t=>{
+      t.oninput=()=>{S.a[t.dataset.a]=t.value;};
+      t.onblur=()=>{save();render();};
+    });
+    $("#app .src").forEach(b=>b.onclick=()=>{
+      const q=b.dataset.q; S.src[q]=(S.src[q]===b.dataset.s)?null:b.dataset.s; save(); render();
+    });
+    $("#app [data-p]").forEach(s=>s.onchange=()=>{S.pieces[s.dataset.p]=s.value;save();render();});
+    $("#app [data-dl]").forEach(b=>b.onclick=()=>{
+      const k=b.dataset.dl, n=(S.meta.client||"intake").replace(/\W+/g,"_");
+      download(k==="fiche"?`Fiche_intake_${n}.txt`:`Note_restitution_${n}.txt`, k==="fiche"?fiche():restitution());
+    });
+    $("#app [data-cp]").forEach(b=>b.onclick=async()=>{
+      try{ await navigator.clipboard.writeText(b.dataset.cp==="fiche"?fiche():restitution()); b.textContent="Copié"; setTimeout(()=>b.textContent="Copier",1500);}catch(e){}
+    });
+  }
+
+  load().then(render);
+})();
+</script>

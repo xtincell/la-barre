@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MT-0020 — Ce qu'on fabrique</title>
+<style>
+  :root{
+    --dark:#241C18;
+    --dark-soft:#3A2E27;
+    --paper:#E6EAE7;
+    --paper-deep:#CFD6D1;
+    --accent:#C7501F;
+    --white:#FBFAF8;
+    --dim:#A2938B;
+    --ink:#1C2320;
+    --ink-dim:#5A6661;
+    --display:"Avenir Next","Futura","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+    --body:Georgia,"Iowan Old Style","Times New Roman",serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.5}
+
+  .dark{background:var(--dark);color:var(--white)}
+  .light{background:var(--paper);color:var(--ink)}
+  .band{padding:0 6vw}
+  .inner{max-width:940px;margin:0 auto}
+
+  /* ---------- hero ---------- */
+  .hero{padding:9vh 6vw 7vh}
+  .ref{font-family:var(--display);font-size:.78rem;letter-spacing:.16em;color:var(--dim);margin-bottom:3.2rem}
+  .hero h1{
+    font-family:var(--display);font-weight:700;
+    font-size:clamp(2.1rem,5.6vw,4.1rem);line-height:1.04;
+    letter-spacing:-.025em;max-width:16ch;
+  }
+  .hero h1 em{font-style:normal;color:var(--accent);display:block}
+  .hero .said{
+    margin-top:2.6rem;padding-left:1.1rem;border-left:2px solid var(--accent);
+    max-width:52ch;font-size:1.06rem;color:#D7CCC5;line-height:1.62;
+  }
+  .hero .said b{color:var(--white);font-weight:400;font-style:italic}
+
+  /* ---------- timeline ---------- */
+  .tl{padding:0 6vw 6vh}
+  .tl h2,.sec h2{
+    font-family:var(--display);font-weight:700;font-size:1.02rem;
+    letter-spacing:.01em;margin-bottom:1.5rem;
+  }
+  .tl h2{color:var(--dim)}
+  .track{display:flex;flex-wrap:wrap;gap:1px;background:var(--dark-soft)}
+  .beat{flex:1 1 118px;background:var(--dark);padding:.95rem .9rem 1.05rem}
+  .beat .t{font-family:var(--display);font-size:.82rem;color:var(--accent);letter-spacing:.04em}
+  .beat .d{margin-top:.35rem;font-size:.86rem;color:#CFC3BB;line-height:1.4}
+  .beat.pivot{background:var(--dark-soft)}
+  .beat.pivot .d{color:var(--white)}
+
+  /* ---------- shape note ---------- */
+  .sec{padding:0 6vw}
+  .shape{padding-bottom:6vh}
+  .shape p{max-width:56ch;font-size:1.04rem;line-height:1.68;color:#D7CCC5}
+  .shape p+p{margin-top:1rem}
+  .shape strong{color:var(--white);font-weight:400;background:linear-gradient(transparent 62%,rgba(199,80,31,.45) 62%)}
+
+  /* ---------- lists ---------- */
+  .list{list-style:none;counter-reset:n}
+  .list li{
+    counter-increment:n;display:grid;grid-template-columns:2.6rem 1fr;
+    gap:.4rem;padding:.72rem 0;align-items:baseline;
+  }
+  .list li::before{
+    content:counter(n,decimal-leading-zero);
+    font-family:var(--display);font-size:.82rem;letter-spacing:.04em;
+  }
+  .pain{padding-bottom:8vh}
+  .pain li{border-top:1px solid rgba(255,255,255,.11)}
+  .pain li::before{color:var(--dim)}
+  .pain li span{font-size:1.13rem;line-height:1.42;color:#EDE4DE}
+  .pain li:last-child{border-bottom:1px solid rgba(255,255,255,.11)}
+
+  /* ---------- pivot ---------- */
+  .pivot-band{background:var(--accent);color:var(--white);padding:7vh 6vw}
+  .pivot-band .stop{
+    font-family:var(--display);font-weight:700;letter-spacing:-.02em;
+    font-size:clamp(2rem,7vw,4.6rem);line-height:1;
+  }
+  .pivot-band .name{
+    margin-top:2.2rem;font-family:var(--display);font-size:clamp(1.1rem,2.6vw,1.6rem);
+    letter-spacing:.02em;
+  }
+  .pivot-band .name small{display:block;font-family:var(--body);font-style:italic;
+    font-size:.92rem;opacity:.82;margin-top:.35rem;letter-spacing:0}
+
+  /* ---------- answers ---------- */
+  .answers{padding:7vh 6vw 8vh}
+  .answers .mirror{font-size:.92rem;color:var(--ink-dim);margin-bottom:1.6rem;max-width:52ch}
+  .fix li{border-top:1px solid var(--paper-deep)}
+  .fix li::before{color:var(--accent)}
+  .fix li span{font-size:1.13rem;line-height:1.42}
+  .fix li:last-child{border-bottom:1px solid var(--paper-deep)}
+
+  /* ---------- vo ---------- */
+  .vo{padding:0 6vw 8vh}
+  .vo blockquote{
+    max-width:34ch;font-size:clamp(1.3rem,3.1vw,1.85rem);line-height:1.34;
+    font-style:italic;border-left:3px solid var(--accent);padding-left:1.3rem;
+  }
+  .vo .cap{margin-top:1rem;padding-left:1.4rem;font-family:var(--display);font-size:.82rem;color:var(--ink-dim)}
+
+  /* ---------- interdits ---------- */
+  .no{padding:0 6vw 8vh}
+  .no h2{color:var(--ink)}
+  .no ol{list-style:none;counter-reset:k}
+  .no li{
+    counter-increment:k;padding:1.05rem 0 1.05rem 3.4rem;position:relative;
+    border-bottom:1px solid var(--paper-deep);max-width:62ch;
+  }
+  .no li:first-child{border-top:1px solid var(--paper-deep)}
+  .no li::before{
+    content:"×";position:absolute;left:.9rem;top:1rem;
+    font-family:var(--display);font-size:1.25rem;color:var(--accent);line-height:1;
+  }
+  .no li b{font-weight:400;display:block;font-family:var(--display);font-size:1.02rem;margin-bottom:.18rem}
+  .no li span{font-size:.95rem;color:var(--ink-dim);line-height:1.55}
+
+  /* ---------- yours ---------- */
+  .yours{background:var(--dark);color:var(--white);padding:8vh 6vw}
+  .yours h2{color:var(--dim)}
+  .yours ul{list-style:none;margin:0 0 2.6rem}
+  .yours li{padding:.85rem 0;border-bottom:1px solid rgba(255,255,255,.11);font-size:1.08rem}
+  .yours li b{font-family:var(--display);font-weight:700;display:block;margin-bottom:.15rem}
+  .yours li em{font-style:normal;color:#CFC3BB;font-size:.95rem}
+  .yours .punch{
+    font-family:var(--display);font-weight:700;letter-spacing:-.02em;
+    font-size:clamp(1.5rem,4.2vw,2.7rem);line-height:1.12;max-width:20ch;
+  }
+  .yours .punch span{color:var(--accent)}
+
+  /* ---------- thursday ---------- */
+  .due{padding:8vh 6vw 10vh}
+  .due .head{font-family:var(--display);font-weight:700;font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:-.02em;margin-bottom:1.4rem}
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--paper-deep);margin-bottom:2.4rem}
+  .three div{background:var(--paper);padding:1.3rem 1.1rem 1.5rem}
+  .three .k{font-family:var(--display);font-size:.8rem;color:var(--accent);letter-spacing:.05em}
+  .three .v{margin-top:.5rem;font-size:1rem;line-height:1.45}
+  .due p{max-width:56ch;font-size:1rem;line-height:1.62;color:var(--ink-dim)}
+  .due p b{color:var(--ink);font-weight:400}
+  .need{margin-top:2.2rem;padding-top:1.4rem;border-top:2px solid var(--ink);max-width:56ch}
+  .need .lbl{font-family:var(--display);font-size:.95rem;margin-bottom:.5rem}
+
+  @media (max-width:720px){
+    .three{grid-template-columns:1fr}
+    .list li{grid-template-columns:2.1rem 1fr}
+    .beat{flex:1 1 100%}
+  }
+  @media print{
+    body{background:#fff}
+    .dark,.yours{background:#fff!important;color:#000!important}
+    .pivot-band{background:#fff!important;color:#000!important;border-block:2px solid #000}
+    .hero .said,.shape p,.pain li span,.yours li em{color:#000!important}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero dark">
+  <div class="inner">
+    <p class="ref">MT-0020 &nbsp;/&nbsp; vidéo Matanga People &nbsp;/&nbsp; pour Serge</p>
+    <h1>Une agence qui montre tout ce qu'elle fait. <em>Y compris ses retards.</em></h1>
+    <p class="said">Ce que le spectateur doit se dire en regardant&nbsp;: <b>mon agence actuelle ne me montre rien de tout ça.</b> Le prospect y voit un niveau, le client y voit une confirmation. Diffusion LinkedIn, sans son, dans un fil, sur un téléphone.</p>
+  </div>
+</header>
+
+<section class="tl dark">
+  <div class="inner">
+    <h2>Le déroulé, 75 secondes</h2>
+    <div class="track">
+      <div class="beat"><div class="t">00:00</div><div class="d">Une phrase seule, plein cadre</div></div>
+      <div class="beat"><div class="t">00:04</div><div class="d">Liste 1, huit lignes</div></div>
+      <div class="beat pivot"><div class="t">00:24</div><div class="d">Deux secondes de vide</div></div>
+      <div class="beat pivot"><div class="t">00:26</div><div class="d">Le nom, seul</div></div>
+      <div class="beat"><div class="t">00:34</div><div class="d">Liste 2, huit lignes</div></div>
+      <div class="beat"><div class="t">01:04</div><div class="d">La phrase qui expose l'agence</div></div>
+      <div class="beat"><div class="t">01:09</div><div class="d">Carton final</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec shape dark">
+  <div class="inner">
+    <h2 style="color:var(--dim)">La forme</h2>
+    <p><strong>Deux listes de même longueur, séparées par un seul mot.</strong> D'abord ce que le client ne fera plus. Puis le nom. Puis ce que l'espace fait, dans le même ordre et à la même cadence.</p>
+    <p>C'est tout le concept. La symétrie est la seule chose qui ne se négocie pas&nbsp;: si tu retires un item d'un côté, tu retires son jumeau de l'autre.</p>
+  </div>
+</section>
+
+<section class="sec pain dark">
+  <div class="inner">
+    <h2 style="color:var(--dim)">Liste 1, les douleurs</h2>
+    <ol class="list">
+      <li><span>Le fichier est dans un mail de trois semaines.</span></li>
+      <li><span>Le lien a expiré.</span></li>
+      <li><span>Trois versions circulent. Deux s'appellent <i>final</i>.</span></li>
+      <li><span>Personne ne sait qui a validé la v2.</span></li>
+      <li><span>Le brief et une facture dorment dans le même groupe WhatsApp.</span></li>
+      <li><span>Une réunion pour dire qu'on a eu la réunion.</span></li>
+      <li><span>Vous attendez, sans savoir si c'est en retard.</span></li>
+      <li><span>Quelqu'un part, l'historique part avec lui.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="pivot-band">
+  <div class="inner">
+    <p class="stop">Ça, plus jamais.</p>
+    <p class="name">Matanga People<small>l'espace client de Matanga Agency</small></p>
+  </div>
+</section>
+
+<section class="answers light">
+  <div class="inner">
+    <h2 style="font-family:var(--display);font-weight:700;font-size:1.02rem;margin-bottom:1rem">Liste 2, les réponses</h2>
+    <p class="mirror">Chaque ligne répond à celle qui porte le même numéro. Même ordre, même cadence, même durée.</p>
+    <ol class="list fix">
+      <li><span>Vos fichiers restent. Aucun lien n'expire.</span></li>
+      <li><span>Chaque version est datée.</span></li>
+      <li><span>Chaque validation porte un nom.</span></li>
+      <li><span>Le statut et l'échéance sont à l'écran. Toujours.</span></li>
+      <li><span>Un fil par projet. Le contexte reste accroché.</span></li>
+      <li><span>Les réunions se tiennent dedans. Le compte rendu aussi.</span></li>
+      <li><span>Le planning éditorial se valide avant parution.</span></li>
+      <li><span>Vous ouvrez et retirez les accès vous-même.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="vo light">
+  <div class="inner">
+    <blockquote>Et ce que vous voyez, c'est notre plateforme. Celle où nous travaillons vraiment. Retards compris.</blockquote>
+    <p class="cap">Voix off, 01:04. C'est la ligne qui fait le film&nbsp;: sans elle, c'est une vidéo de logiciel.</p>
+  </div>
+</section>
+
+<section class="no light">
+  <div class="inner">
+    <h2 style="font-family:var(--display);font-weight:700;font-size:1.02rem;margin-bottom:1.5rem">Cinq interdits</h2>
+    <ol>
+      <li><b>Aucune capture d'écran</b><span>L'interface se redessine en objets graphiques. Sinon le film est périmé dans six mois.</span></li>
+      <li><b>Rien qui sourit</b><span>Ni emoji, ni pictogramme rond, ni couleur joyeuse. On constate. On ne se plaint pas, on ne se réjouit pas.</span></li>
+      <li><b>Pas de musique montante</b><span>Ni rebond, ni ralenti, ni courbe élastique.</span></li>
+      <li><b>Aucun logo avant la 26<sup>e</sup> seconde</b><span>Le nom est le pivot du film. Il n'arrive pas avant son tour.</span></li>
+      <li><b>Les listes sont écrites à l'écran</b><span>Le film se comprend coupé, sans son. Sur LinkedIn, c'est la règle du jeu.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="yours">
+  <div class="inner">
+    <h2>Ce que tu décides, et que personne ne discutera</h2>
+    <ul>
+      <li><b>Tout le système graphique</b><em>Formes, palette, typographie, profondeur, façon dont les objets apparaissent et disparaissent.</em></li>
+      <li><b>Le rythme à l'intérieur de la cadence</b><em>Comment une ligne chasse la précédente.</em></li>
+      <li><b>Le son</b><em>Nappe, ponctuations, silences.</em></li>
+    </ul>
+    <p class="punch">Le concept et le copy sont fermés. <span>L'exécution est à toi, entièrement.</span></p>
+    <p style="margin-top:1.4rem;color:#CFC3BB;max-width:46ch">Ce qu'on reconnaîtra dans ce film, c'est ton travail.</p>
+  </div>
+</section>
+
+<section class="due light">
+  <div class="inner">
+    <p class="head">Pour jeudi</p>
+    <div class="three">
+      <div><div class="k">image 1</div><div class="v">Une ligne de la liste 1</div></div>
+      <div><div class="k">image 2</div><div class="v">Le carton de pivot</div></div>
+      <div><div class="k">image 3</div><div class="v">Une ligne de la liste 2</div></div>
+    </div>
+    <p>Trois images fixes, rien de plus. <b>Pas d'animation, pas de format décliné, pas de son.</b> On valide le parti pris, puis tu animes.</p>
+    <div class="need">
+      <p class="lbl">Dis-le-moi aujourd'hui si ça manque</p>
+      <p>Logos vectoriels des douze marques, palette et polices de la charte, jeu de données neutre de l'IT.</p>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

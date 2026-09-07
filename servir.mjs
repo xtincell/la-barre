@@ -26,6 +26,18 @@ const TYPES = {
   ".mp4": "video/mp4",
   ".webm": "video/webm",
   ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  /* Les polices auto-hébergées. Sans leur type, elles partaient en
+   * application/octet-stream : les navigateurs les acceptent quand même en
+   * @font-face, mais refusent de les précharger. */
+  ".woff2": "font/woff2",
+  ".woff": "font/woff",
+  /* Et les films de revue, qui partaient dans le même sac : sans type, la
+   * barre de lecture ne sait pas se placer et le timecode d'annotation
+   * tombe à zéro. */
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".mov": "video/quicktime",
+  ".m4v": "video/x-m4v",
 };
 
 // ————— Le dépôt vit sur disque, pas dans le navigateur —————

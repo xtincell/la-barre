@@ -1,0 +1,312 @@
+<!-- Poste de production — Direction de la Création · MATANGA -->
+<div id="app"></div>
+
+<style>
+  #app{--ink:#1F1512;--card:#F3EEE9;--line:#E2D7CE;--muted:#8C7B72;--cr:#B02118;--cl:#10646E;--da:#B07714;--ok:#2E7D4F;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff;line-height:1.5}
+  #app *{box-sizing:border-box}
+  .wrap{max-width:1020px;margin:0 auto;padding:0 4px}
+  .top{background:var(--ink);color:#fff;padding:20px 24px;border-radius:10px;margin-bottom:14px}
+  .top h1{margin:0 0 3px;font-size:21px;font-weight:700}
+  .top p{margin:0;color:#BFAFA6;font-size:12.5px}
+  .metagrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin-top:14px}
+  .metagrid input{width:100%;background:#33231D;border:1px solid #4A362E;color:#fff;padding:7px 10px;border-radius:6px;font-size:12.5px;font-family:inherit}
+  .metagrid input::placeholder{color:#8A7770}
+  .chain{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .step{flex:1;min-width:118px;border:1.5px solid var(--line);border-radius:8px;padding:8px 10px}
+  .step.on{border-color:var(--ok);background:#F1F8F3}.step.blk{border-color:var(--cr);background:#FDF1EF}
+  .step b{display:block;font-size:12.5px}.step span{font-size:11px;color:var(--muted)}
+  .step.on span{color:var(--ok)}.step.blk span{color:var(--cr)}
+  .tabs{display:flex;gap:2px;border-bottom:2px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+  .tab{padding:9px 12px;border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px}
+  .tab.on{color:var(--cr);border-bottom-color:var(--cr)}
+  .sec{margin-bottom:22px}
+  .sec h2{font-size:11.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--cr);margin:0 0 2px}
+  .sec .lead{font-size:12.5px;color:var(--muted);margin:0 0 11px;font-style:italic}
+  .fld{margin-bottom:10px}
+  .fld label{display:block;font-size:13px;font-weight:650;margin-bottom:2px}
+  .fld .h{font-size:12px;color:var(--muted);margin-bottom:5px}
+  .fld .h b{color:var(--ink)}
+  textarea,input.txt,select.sel{width:100%;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit;font-size:13px;background:#FEFDFC}
+  textarea{resize:vertical;min-height:46px}
+  textarea:focus,input.txt:focus{outline:2px solid var(--cr);outline-offset:-1px}
+  .wc{font-size:11.5px;font-weight:700;float:right}
+  .wc.ok{color:var(--ok)}.wc.no{color:var(--cr)}
+  .card{border:1px solid var(--line);border-radius:9px;padding:15px 17px;margin-bottom:12px}
+  .card.reco{border:2px solid var(--cr);background:#FEFAF9}
+  .card h4{margin:0 0 8px;font-size:16px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-bottom:8px}
+  .chk input{margin-top:3px}
+  .row{display:flex;gap:9px;align-items:center;font-size:13px;margin-bottom:7px;border-bottom:1px solid var(--line);padding-bottom:7px}
+  .row span{flex:1}
+  .note{background:#FBF3E7;border-radius:8px;padding:12px 15px;font-size:12.5px;margin-bottom:15px;color:#5A4212}
+  .alert{background:#FBE9E7;border-radius:8px;padding:12px 15px;font-size:13px;margin-bottom:15px;color:#8C1D14;font-weight:600}
+  .good{background:#E7F3EC;border-radius:8px;padding:12px 15px;font-size:13px;margin-bottom:15px;color:#1E5C39;font-weight:600}
+  .out{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 18px;font-size:12.5px;white-space:pre-wrap;line-height:1.6;max-height:500px;overflow:auto}
+  .btn{border:0;border-radius:7px;padding:8px 14px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;background:var(--ink);color:#fff;margin:0 6px 10px 0}
+  .btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+  .ctl{display:flex;gap:10px;align-items:flex-start;padding:10px 13px;border-radius:7px;margin-bottom:7px;font-size:13px;background:#FAF7F5}
+  .ctl.ko{background:#FBE9E7;color:#8C1D14}.ctl.ok{background:#F1F8F3;color:#1E5C39}
+  .ctl b{font-size:15px}
+  .save{font-size:11.5px;color:var(--muted);margin-left:auto;align-self:center}
+  .lvl{border:1px solid var(--line);border-radius:9px;padding:14px 16px;margin-bottom:13px;background:#FCFAF8}
+  .lvl h4{margin:0 0 6px;font-size:15px}
+  .lvl ul{margin:6px 0 0 18px;padding:0;font-size:12.5px;color:#3E322C}
+</style>
+
+<script>
+(function(){
+const BRIEF_REQ=[
+ ["verbatim","La demande client en verbatim"],["decideur","Le décideur final nommé"],["tueur","Qui peut annuler une idée validée"],
+ ["probleme","Le problème réel, distinct de la demande"],["sources","La source de chaque chiffre avancé"],["cible","Cible et tension"],
+ ["axe","Territoire et axe recommandé"],["benefice","Bénéfice à démontrer"],["rtb","Reason to believe"],["ton","Ton et interdits de marque"],
+ ["livrables","Périmètre de livrables chiffré"],["fenetre","Fenêtre et dates non négociables"],["budget","Budget et ventilation"],
+ ["succes","Critères de succès mesurables"],["propre","Aucun concept, accroche ni piste visuelle dans le brief"]];
+
+const CONF=[["lecture","Le problème tel que je le lis",'Reformulation en trois phrases maximum. Prouve que le brief a été compris — et fait remonter le désaccord ici, pas devant le client.',1],
+ ["desac","Point de désaccord avec le brief","Vide si aucun. S'il y en a un, il s'argumente et s'arbitre avant présentation, jamais après.",0],
+ ["repris","Contraintes du brief reprises telles quelles","Ce qui s'impose à la création et sera vérifié en contrôle.",1]];
+
+const IDEE=[["idee","L'idée, en une phrase",'Une seule phrase. Si elle en demande deux, ce n\'est pas encore une idée.',1],
+ ["nom","Nom de campagne","Deux à quatre mots. Évoque, n'explique pas.",1],
+ ["pourquoi","Pourquoi elle règle le problème","Le réflexe du marché, l'inversion que vous proposez, ce que le brief exigeait et qui est tenu.",1],
+ ["meca","La mécanique de campagne","Comment l'idée se déploie dans le temps et l'espace. C'est ce qui produit l'attribution.",1],
+ ["signature","Signature de campagne","",1],
+ ["vocab","Vocabulaire de la campagne / ce qu'elle ne dit jamais","",0]];
+
+const ACCR=[["a1","Accroche 1"],["a2","Accroche 2"],["a3","Accroche 3"]];
+
+const FRONT=[["nofera","Ce que l'idée ne fera pas","Frontière assumée, posée avant que le client ne la teste.",1],
+ ["condval","Condition de validité","Ce qui, retiré, n'ampute pas la campagne mais l'annule. C'est la clause qui vous protège d'un arbitrage média destructeur.",1],
+ ["valnow","À valider en séance","",1],["valafter","À valider plus tard","",1]];
+
+const FAIS=[["charge","Charge création"],["tournage","Tournage"],["post","Post-production"],["critique","Chemin critique"],["risq1","Risque principal"],["risq2","Risque secondaire"]];
+
+const NIVEAUX=[
+ {k:"0",n:"Étage 0 — Territoire",e:"~5 %",ok:["Aucun visuel","Travail écrit uniquement"],ko:["Toute production graphique"]},
+ {k:"1",n:"Étage 1 — Concept",e:"~15 %",ok:["3 routes maximum","1 visuel d'intention par route","Mention « non contractuel »"],ko:["Déclinaisons de format","Textes définitifs","Packshot retouché","Tournage, casting, repérage"]},
+ {k:"2",n:"Étage 2 — Master",e:"~35 % cumulés",ok:["Le KV maître de la route retenue","Storyboard ou animatic","Charte du système visuel"],ko:["Adaptations de format","Versions courtes","Livrables terrain"]},
+ {k:"3",n:"Étage 3 — Déploiement",e:"100 %",ok:["Tous les formats","Tournage","Déclinaisons et fichiers finaux"],ko:["Tout livrable hors brief initial"]}];
+
+const META=[["client","Client / Marque"],["campagne","Campagne"],["ref","Réf. brief reçu"],["recu","Brief reçu le"],["dc","Directeur de la Création"],["da","Directeur Artistique affecté"]];
+
+let S={meta:{},req:{},f:{},routes:[{},{},{}],reco:-1,niveau:"0",tab:"reception"};
+
+async function save(){try{if(window.storage)await window.storage.set("creation:dossier",JSON.stringify(S));}catch(e){}
+ const el=document.getElementById("sv");if(el){el.textContent="Enregistré";setTimeout(()=>el.textContent="",1500);}}
+async function load(){try{if(window.storage){const r=await window.storage.get("creation:dossier");if(r&&r.value)S=Object.assign(S,JSON.parse(r.value));}}catch(e){}}
+
+const esc=t=>(t||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const F=k=>(S.f[k]||"").trim();
+const wc=t=>(t||"").trim()?t.trim().split(/\s+/).length:0;
+const manquants=()=>BRIEF_REQ.filter(([k])=>S.req[k]!=="Présent");
+const routesOK=()=>S.routes.filter(r=>(r.nom||"").trim());
+const routesComplete=()=>routesOK().filter(r=>(r.sacrifie||"").trim()&&(r.arg||"").trim());
+const accrLong=()=>ACCR.filter(([k])=>wc(F(k))>5);
+
+function controles(){
+ return [
+  {t:"Brief reçu sans réserve ouverte",ok:manquants().length===0,ko:manquants().length+" point(s) manquant(s) dans le brief — envoyer le retour sous 24 h"},
+  {t:"Accusé de conformité rédigé",ok:!!F("lecture"),ko:"Le problème n'a pas été reformulé : rien ne prouve que le brief a été compris"},
+  {t:"Une idée en une phrase",ok:!!F("idee")&&!!F("nom"),ko:"Idée ou nom de campagne manquant"},
+  {t:"Mécanique explicite",ok:!!F("meca"),ko:"Sans mécanique, vous vendez une phrase, pas une campagne"},
+  {t:"Accroches de cinq mots maximum",ok:accrLong().length===0,ko:accrLong().length+" accroche(s) au-delà de 5 mots — c'est du print déguisé en billboard"},
+  {t:"Au moins deux routes construites",ok:routesOK().length>=2,ko:"Une seule route présentée revient à demander un accord, pas un choix"},
+  {t:"Chaque route porte son sacrifice et son argument",ok:routesOK().length>0&&routesComplete().length===routesOK().length,ko:"Une route sans arbitrage assumé est une variation de mise en page"},
+  {t:"Une seule route recommandée",ok:S.reco>=0&&!!(S.routes[S.reco]||{}).nom,ko:"Trois routes à égalité, c'est un menu — et un menu transfère la responsabilité créative au client"},
+  {t:"Condition de validité écrite",ok:!!F("condval"),ko:"Sans elle, un arbitrage média amputera la campagne et vous en porterez l'échec"},
+  {t:"Frontière posée : ce que l'idée ne fera pas",ok:!!F("nofera"),ko:"Frontière absente"},
+  {t:"Ce qui est à valider maintenant, et plus tard",ok:!!F("valnow")&&!!F("valafter"),ko:"Sans cette distinction, une validation partielle passera pour un accord complet"},
+  {t:"Faisabilité engagée",ok:!!F("charge")&&!!F("critique"),ko:"Charge ou chemin critique non renseigné"},
+  {t:"Un DA est affecté au dossier",ok:!!(S.meta.da||"").trim(),ko:"Aucun DA affecté : le Directeur de la Création tient le clavier de son équipe"},
+ ];
+}
+
+function chain(){
+ const m=manquants().length, c=controles(), ko=c.filter(x=>!x.ok).length;
+ return [
+  {n:"1 · Brief reçu",s:m?"blk":"on",m:m?m+" réserve(s) à envoyer":"sans réserve"},
+  {n:"2 · Conformité",s:F("lecture")?"on":"",m:F("lecture")?"reformulé":"non reformulé"},
+  {n:"3 · Idée",s:F("idee")&&F("meca")?"on":"",m:F("idee")?"posée":"en cours"},
+  {n:"4 · Routes",s:routesOK().length>=2&&S.reco>=0?"on":"",m:routesOK().length+" route(s) · "+(S.reco>=0?"1 recommandée":"aucune recommandée")},
+  {n:"5 · Contrôle",s:ko?"blk":"on",m:ko?ko+" point(s) bloquant(s)":"présentable"},
+  {n:"6 · Étage engagé",s:"",m:NIVEAUX.find(n=>n.k===S.niveau).n.split("—")[1].trim()+" · "+NIVEAUX.find(n=>n.k===S.niveau).e},
+ ];
+}
+
+function fldHTML(k,l,h,txt){return `<div class="fld"><label>${l}</label>${h?`<div class="h">${h}</div>`:""}
+ ${txt===false?`<input class="txt" data-f="${k}" value="${esc(S.f[k])}">`:`<textarea data-f="${k}">${esc(S.f[k])}</textarea>`}</div>`;}
+
+function render(){
+ let h=`<div class="wrap">
+ <div class="top"><h1>Poste de production — Direction de la Création</h1>
+ <p>Réception du brief · plateforme créative · routes · contrôle avant présentation. Pendant de l'outil Clientèle.</p>
+ <div class="metagrid">${META.map(([k,l])=>`<input data-meta="${k}" placeholder="${l}" value="${esc(S.meta[k])}">`).join("")}</div></div>
+ <div class="chain">${chain().map(s=>`<div class="step ${s.s}"><b>${s.n}</b><span>${s.m}</span></div>`).join("")}</div>
+ <div class="tabs">${[["reception","1 · Réception du brief"],["conf","2 · Conformité"],["idee","3 · L'idée"],["front","4 · Frontière"],["routes","5 · Routes"],["fais","6 · Faisabilité"],["ctl","7 · Contrôle"],["doc","8 · Plateforme"]]
+  .map(([k,l])=>`<button class="tab ${S.tab===k?"on":""}" data-tab="${k}">${l}</button>`).join("")}<span class="save" id="sv"></span></div>`;
+
+ if(S.tab==="reception"){
+  const m=manquants();
+  h+= m.length?`<div class="alert">${m.length} point(s) manquant(s). Le retour se fait sous 24 h : le délai de réponse créative ne court qu'à la levée des réserves.</div>`
+   :`<div class="good">Brief complet. L'horloge du délai de réponse court à compter de la réception.</div>`;
+  h+=`<div class="note">Le contrôle porte sur le brief tel qu'il a été transmis, pas sur ce qu'on vous a dit en réunion. Un point coché « Présent » vous engage : vous ne pourrez plus l'invoquer plus tard.</div>`;
+  BRIEF_REQ.forEach(([k,l])=>{const v=S.req[k]||"Manquant";
+   h+=`<div class="row"><span>${l}</span><select class="sel" style="width:150px" data-req="${k}">${["Manquant","Présent","Incomplet"].map(o=>`<option ${v===o?"selected":""}>${o}</option>`).join("")}</select></div>`;});
+  h+=`<div class="fld" style="margin-top:14px"><label>Précisions à joindre au retour</label><textarea data-f="reserves">${esc(S.f.reserves)}</textarea></div>
+   <button class="btn" data-dl="reserve">Télécharger le retour sous 24 h</button><button class="btn ghost" data-cp="reserve">Copier</button>`;
+ }
+
+ if(S.tab==="conf"){
+  h+=`<div class="note">Le désaccord se règle ici. Une idée conçue contre un brief qu'on n'a pas contesté est indéfendable en séance.</div>`;
+  CONF.forEach(([k,l,hh])=>h+=fldHTML(k,l,hh));
+ }
+
+ if(S.tab==="idee"){
+  h+=`<div class="sec"><h2>Le concept</h2><p class="lead">Ce bloc est verrouillé une fois présenté : personne d'autre ne le modifie sans votre arbitrage.</p>`;
+  IDEE.forEach(([k,l,hh])=>h+=fldHTML(k,l,hh,k!=="nom"&&k!=="signature"));
+  h+=`</div><div class="sec"><h2>Accroches OOH</h2><p class="lead">Cinq mots maximum. Au-delà, le message ne passe pas en trois secondes et le billboard est mort.</p>`;
+  ACCR.forEach(([k,l])=>{const n=wc(F(k));
+   h+=`<div class="fld"><label>${l} <span class="wc ${n>5?"no":"ok"}">${n} mot${n>1?"s":""}${n>5?" — trop long":""}</span></label>
+   <input class="txt" data-f="${k}" value="${esc(S.f[k])}"></div>`;});
+  h+=`</div>`;
+ }
+
+ if(S.tab==="front"){
+  h+=`<div class="note">La frontière n'est pas une précaution : c'est ce qui rend l'idée défendable. Une campagne sans condition de validité se fait amputer au premier arbitrage budgétaire.</div>`;
+  FRONT.forEach(([k,l,hh])=>h+=fldHTML(k,l,hh));
+ }
+
+ if(S.tab==="routes"){
+  h+=`<div class="note">Trois routes maximum, une seule recommandée. Chaque route doit porter ce qu'elle sacrifie et l'argument qui la soutient — un argument, jamais un goût.</div>`;
+  S.routes.forEach((r,i)=>{
+   h+=`<div class="card ${S.reco===i?"reco":""}"><h4>Route ${i+1}${S.reco===i?" — recommandée":""}</h4>
+    <div class="grid2"><div class="fld"><label>Nom de la route</label><input class="txt" data-r="${i}.nom" value="${esc(r.nom)}"></div>
+    <div class="fld"><label>Statut</label><select class="sel" data-reco="${i}"><option ${S.reco!==i?"selected":""}>Route alternative</option><option ${S.reco===i?"selected":""}>Route recommandée</option></select></div></div>
+    <div class="fld"><label>Principe</label><textarea data-r="${i}.principe">${esc(r.principe)}</textarea></div>
+    <div class="fld"><label>Ce qu'elle privilégie</label><textarea data-r="${i}.priv">${esc(r.priv)}</textarea></div>
+    <div class="fld"><label>Ce qu'elle sacrifie</label><textarea data-r="${i}.sacrifie">${esc(r.sacrifie)}</textarea></div>
+    <div class="fld"><label>L'argument</label><div class="h">Pourquoi ce sacrifice est le bon, au regard du problème posé au brief.</div><textarea data-r="${i}.arg">${esc(r.arg)}</textarea></div>
+    <div class="fld"><label>Produite par</label><div class="h">Si votre nom apparaît ici, vous tenez le clavier de votre équipe.</div><input class="txt" data-r="${i}.par" value="${esc(r.par)}"></div>
+   </div>`;});
+ }
+
+ if(S.tab==="fais"){
+  h+=`<div class="note">Ce que vous écrivez ici vous engage. Tout livrable ajouté après validation donne lieu à une réévaluation écrite, pas à un arrangement en réunion.</div>`;
+  FAIS.forEach(([k,l])=>h+=fldHTML(k,l,"",k.startsWith("risq")));
+ }
+
+ if(S.tab==="ctl"){
+  const c=controles(),ko=c.filter(x=>!x.ok);
+  h+= ko.length?`<div class="alert">${ko.length} point(s) bloquant(s). Présenter dans cet état, c'est accepter par avance la reprise.</div>`
+   :`<div class="good">Contrôle complet. Le dossier peut partir au montage Clientèle.</div>`;
+  c.forEach(x=>h+=`<div class="ctl ${x.ok?"ok":"ko"}"><b>${x.ok?"✓":"✕"}</b><div><b style="font-size:13px">${x.t}</b>${x.ok?"":"<br>"+x.ko}</div></div>`);
+  h+=`<h4 style="margin:22px 0 8px">Niveau de finition engagé</h4>
+   <div class="note">L'étage plafonne le travail perdu. On ne produit jamais au-delà de l'étage validé — c'est la seule protection réelle contre le virage à 360°.</div>
+   <select class="sel" style="max-width:320px;margin-bottom:12px" data-niv>${NIVEAUX.map(n=>`<option value="${n.k}" ${S.niveau===n.k?"selected":""}>${n.n} · ${n.e}</option>`).join("")}</select>`;
+  const N=NIVEAUX.find(n=>n.k===S.niveau);
+  h+=`<div class="lvl"><h4>${N.n} — effort engagé ${N.e}</h4>
+   <div style="font-size:12.5px;font-weight:650;color:var(--ok);margin-top:8px">Autorisé</div><ul>${N.ok.map(x=>`<li>${x}</li>`).join("")}</ul>
+   <div style="font-size:12.5px;font-weight:650;color:var(--cr);margin-top:10px">Interdit à ce stade</div><ul>${N.ko.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
+ }
+
+ if(S.tab==="doc"){
+  h+=`<div class="note">Document de sortie de création. Il part au montage Clientèle : les sections ci-dessous sont verrouillées et ne se modifient pas sans votre arbitrage.</div>
+   <div class="out">${esc(docTxt())}</div>
+   <div style="margin-top:11px"><button class="btn" data-dl="doc">Télécharger</button><button class="btn ghost" data-cp="doc">Copier</button></div>`;
+ }
+
+ h+=`</div>`;document.getElementById("app").innerHTML=h;bind();
+}
+
+function hdr(){const m=S.meta;return `${m.client||"[client]"} · ${m.campagne||"[campagne]"} · en réponse au brief ${m.ref||"[réf]"}`;}
+
+function reserveTxt(){const m=manquants();
+ return `RETOUR SUR BRIEF — RÉCEPTION SOUS RÉSERVE
+${hdr()}
+Brief reçu le ${S.meta.recu||"[date]"} · retour émis dans les 24 h
+
+La Direction de la Création accuse réception du brief et formule les réserves suivantes. Conformément au circuit en vigueur, le délai de réponse créative ne court qu'à compter de leur levée.
+
+POINTS MANQUANTS OU INCOMPLETS
+${m.length?m.map(([k,l])=>`· ${l} — ${S.req[k]==="Incomplet"?"incomplet":"absent"}`).join("\n"):"· aucun"}
+
+PRÉCISIONS
+${(S.f.reserves||"").trim()||"—"}
+
+Ces points relèvent de la Direction Clientèle et du Planning. Dès réception, la création engage l'étage 1 dans le délai convenu.
+
+${S.meta.dc||"[nom]"} — Direction de la Création, MATANGA AGENCY`;}
+
+function docTxt(){const R=S.routes,reco=S.reco;
+ const routeBlock=(r,i)=>`\n${i+1}. ${(r.nom||"[sans nom]")}${reco===i?"  — RECOMMANDÉE":""}\nPrincipe : ${(r.principe||"—")}\nPrivilégie : ${(r.priv||"—")}\nSacrifie : ${(r.sacrifie||"—")}\nArgument : ${(r.arg||"—")}\nProduite par : ${(r.par||"—")}\n`;
+ return `PLATEFORME CRÉATIVE — document de sortie de création
+${hdr()}
+Émetteur : Direction de la Création (${S.meta.dc||"—"}) · Contributeur : ${S.meta.da||"—"}
+Destinataire : Direction Clientèle, pour montage et présentation
+
+1. ACCUSÉ DE CONFORMITÉ AU BRIEF
+Le problème tel que je le lis : ${F("lecture")||"[manquant]"}
+Contraintes reprises : ${F("repris")||"—"}
+Désaccord : ${F("desac")||"aucun"}
+
+2. L'IDÉE
+${F("idee")||"[manquante]"}
+Nom de campagne : ${F("nom")||"[manquant]"}
+
+3. POURQUOI ELLE RÈGLE LE PROBLÈME
+${F("pourquoi")||"[manquant]"}
+
+4. LA MÉCANIQUE
+${F("meca")||"[manquante]"}
+
+5. SIGNATURE ET LANGAGE
+Signature : ${F("signature")||"[manquante]"}
+Accroches OOH : ${["a1","a2","a3"].map(k=>F(k)).filter(Boolean).map(x=>`« ${x} » (${wc(x)} mots)`).join(" · ")||"—"}
+Vocabulaire / jamais : ${F("vocab")||"—"}
+
+6. LES ROUTES
+${S.routes.map(routeBlock).filter(b=>!b.includes("[sans nom]")).join("")||"[aucune route construite]"}
+
+7. CE QUE CETTE IDÉE NE FERA PAS
+${F("nofera")||"[manquant]"}
+
+CONDITION DE VALIDITÉ
+${F("condval")||"[manquante]"}
+
+8. FAISABILITÉ ET ENGAGEMENT
+Charge : ${F("charge")||"—"} · Tournage : ${F("tournage")||"—"} · Post : ${F("post")||"—"}
+Chemin critique : ${F("critique")||"—"}
+Risques : ${F("risq1")||"—"} / ${F("risq2")||"—"}
+Ces délais sont tenables sur le périmètre du brief. Tout ajout donne lieu à une réévaluation écrite.
+
+9. À VALIDER
+En séance : ${F("valnow")||"[manquant]"}
+Plus tard : ${F("valafter")||"[manquant]"}
+Une validation partielle qui accepte l'exécution sans la mécanique est un refus déguisé.
+
+10. FRONTIÈRE DE CE DOCUMENT
+Ne contient ni prix, ni calendrier commercial, ni recommandation média : ces éléments relèvent de la Direction Clientèle.
+Ne se modifie pas sans arbitrage de la Direction de la Création. Le montage peut reformater, raccourcir, mettre en récit — pas altérer.
+Face à une demande de modification en séance : la réponse est un délai, jamais un accord immédiat.`;}
+
+function txtOf(k){return k==="reserve"?reserveTxt():docTxt();}
+function dl(n,t){const b=new Blob([t],{type:"text/plain;charset=utf-8"}),u=URL.createObjectURL(b);
+ const a=document.createElement("a");a.href=u;a.download=n;a.click();URL.revokeObjectURL(u);}
+
+function bind(){const $=s=>document.querySelectorAll(s);
+ $("#app [data-tab]").forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;render();});
+ $("#app [data-meta]").forEach(i=>{i.oninput=()=>{S.meta[i.dataset.meta]=i.value;};i.onblur=()=>{save();render();};});
+ $("#app [data-f]").forEach(t=>{t.oninput=()=>{S.f[t.dataset.f]=t.value;};t.onblur=()=>{save();render();};});
+ $("#app [data-req]").forEach(s=>s.onchange=()=>{S.req[s.dataset.req]=s.value;save();render();});
+ $("#app [data-r]").forEach(t=>{const[i,f]=t.dataset.r.split(".");
+  const set=()=>{S.routes[i]=S.routes[i]||{};S.routes[i][f]=t.value;};t.oninput=set;t.onblur=()=>{set();save();render();};});
+ $("#app [data-reco]").forEach(s=>s.onchange=()=>{const i=+s.dataset.reco;S.reco=(s.selectedIndex===1)?i:(S.reco===i?-1:S.reco);save();render();});
+ $("#app [data-niv]").forEach(s=>s.onchange=()=>{S.niveau=s.value;save();render();});
+ $("#app [data-dl]").forEach(b=>b.onclick=()=>{const n=(S.meta.client||"dossier").replace(/\W+/g,"_");dl(b.dataset.dl+"_"+n+".txt",txtOf(b.dataset.dl));});
+ $("#app [data-cp]").forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(txtOf(b.dataset.cp));b.textContent="Copié";setTimeout(()=>b.textContent="Copier",1400);}catch(e){}});
+}
+load().then(render);
+})();
+</script>

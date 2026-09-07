@@ -1,0 +1,407 @@
+<!-- Poste de pilotage — Direction Clientèle MATANGA -->
+<div id="app"></div>
+
+<style>
+  #app { --ink:#1F1512; --card:#F3EEE9; --line:#E2D7CE; --muted:#8C7B72;
+         --cl:#10646E; --cr:#B02118; --da:#B07714; --ok:#2E7D4F;
+         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         color:var(--ink); background:#fff; line-height:1.5; }
+  #app *{box-sizing:border-box}
+  .wrap{max-width:1020px;margin:0 auto;padding:0 4px}
+  .top{background:var(--ink);color:#fff;padding:20px 24px;border-radius:10px;margin-bottom:14px}
+  .top h1{margin:0 0 3px;font-size:21px;font-weight:700}
+  .top p{margin:0;color:#BFAFA6;font-size:12.5px}
+  .metagrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin-top:14px}
+  .metagrid input{width:100%;background:#33231D;border:1px solid #4A362E;color:#fff;padding:7px 10px;border-radius:6px;font-size:12.5px;font-family:inherit}
+  .metagrid input::placeholder{color:#8A7770}
+  .chain{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .step{flex:1;min-width:120px;border:1.5px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff}
+  .step.on{border-color:var(--ok);background:#F1F8F3}
+  .step.blk{border-color:var(--cr);background:#FDF1EF}
+  .step b{display:block;font-size:12.5px;font-weight:700}
+  .step span{font-size:11px;color:var(--muted)}
+  .step.on span{color:var(--ok)} .step.blk span{color:var(--cr)}
+  .tabs{display:flex;gap:2px;border-bottom:2px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+  .tab{padding:9px 12px;border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px}
+  .tab.on{color:var(--cl);border-bottom-color:var(--cl)}
+  .gate{display:flex;align-items:center;gap:12px;padding:11px 15px;border-radius:8px;margin-bottom:16px;font-size:13px}
+  .gate.no{background:#FBE9E7;color:#8C1D14} .gate.yes{background:#E7F3EC;color:#1E5C39}
+  .bar{flex:1;height:6px;background:#0002;border-radius:3px;overflow:hidden;min-width:70px}
+  .bar i{display:block;height:100%;background:currentColor}
+  .sec{margin-bottom:24px}
+  .sec h2{font-size:11.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--cl);margin:0 0 2px}
+  .sec .lead{font-size:12.5px;color:var(--muted);margin:0 0 11px;font-style:italic}
+  .q{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:8px}
+  .q.crit{border-left:4px solid var(--cr)}
+  .q.done{background:#FCFAF8}
+  .qh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .qh label{font-weight:650;font-size:14px}
+  .hint{font-size:12px;color:var(--muted);margin:3px 0 7px}
+  .hint b{color:var(--ink)}
+  textarea,input.txt,select.sel{width:100%;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:inherit;font-size:13px;background:#FEFDFC}
+  textarea{resize:vertical;min-height:48px}
+  textarea:focus,input.txt:focus{outline:2px solid var(--cl);outline-offset:-1px}
+  .srcs{display:flex;gap:4px;flex-shrink:0}
+  .src{width:25px;height:25px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font:inherit;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;padding:0}
+  .src.on{color:#fff;border-color:transparent}
+  .src.on[data-s="D"]{background:var(--cl)} .src.on[data-s="F"]{background:var(--ok)}
+  .src.on[data-s="I"]{background:var(--da)} .src.on[data-s="V"]{background:var(--cr)}
+  .legend{display:flex;gap:13px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-bottom:14px}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:16px}
+  th{background:var(--ink);color:#fff;text-align:left;padding:7px 9px;font-size:11.5px}
+  td{border-bottom:1px solid var(--line);padding:7px 9px;vertical-align:top}
+  tr:nth-child(even) td{background:#FAF7F5}
+  .tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10.5px;font-weight:700;color:#fff}
+  .empty{color:var(--cr);font-style:italic}
+  .out{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 18px;font-size:12.5px;white-space:pre-wrap;line-height:1.6;max-height:520px;overflow:auto}
+  .btn{border:0;border-radius:7px;padding:8px 14px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;background:var(--ink);color:#fff;margin:0 6px 10px 0}
+  .btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+  .note{background:#FBF3E7;border-radius:8px;padding:12px 15px;font-size:12.5px;margin-bottom:16px;color:#5A4212}
+  .alert{background:#FBE9E7;border-radius:8px;padding:12px 15px;font-size:13px;margin-bottom:16px;color:#8C1D14;font-weight:600}
+  .row{display:flex;gap:9px;margin-bottom:8px;align-items:center;font-size:13px}
+  .row span{flex:1}
+  .card{border:1px solid var(--line);border-radius:9px;padding:15px 17px;margin-bottom:13px}
+  .card h4{margin:0 0 3px;font-size:16px}
+  .card .sub{font-size:12px;color:var(--muted);margin-bottom:11px}
+  .fld{margin-bottom:9px}
+  .fld label{display:block;font-size:12px;font-weight:650;margin-bottom:3px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .chk{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-bottom:7px}
+  .chk input{margin-top:3px}
+  h3.blk{font-size:15px;margin:20px 0 7px}
+  .save{font-size:11.5px;color:var(--muted);margin-left:auto;align-self:center}
+</style>
+
+<script>
+(function(){
+const SRC={D:"Déclaré par le client",F:"Fourni (document)",I:"Inféré par l'agence",V:"À vérifier"};
+const SC={D:"#10646E",F:"#2E7D4F",I:"#B07714",V:"#B02118"};
+
+const SECTIONS=[
+ {t:"Les gens et la décision",lead:"À poser en premier : c'est ce qui gouverne tout le dispositif de validation en aval.",qs:[
+  {id:"interlo",l:"Qui est notre interlocuteur au quotidien ?",h:"Nom, fonction, niveau d'autonomie réelle."},
+  {id:"decideur",l:"Qui tranche en dernier ressort ?",h:"Le nom, pas la fonction. Alimente la section G de chaque fiche de validation.",crit:1},
+  {id:"tueur",l:"Qui peut tuer une idée déjà validée ?",h:"Siège international, comité de marque, actionnaire. Il y en a presque toujours un ; le client ne le dit pas spontanément.",crit:1},
+  {id:"circuit",l:"Quel circuit de validation, et combien de temps ?",h:"Nombre de passages, délai réel entre présentation et accord ferme.",crit:1},
+  {id:"histrel",l:"Quelles agences avant nous, et pourquoi ça s'est arrêté ?",h:"Question dérangeante, à poser quand même."}]},
+ {t:"L'entreprise et les chiffres",lead:"Demander les documents plutôt que les réponses.",qs:[
+  {id:"perf",l:"Volumes, part de marché, évolution",h:"Noter la source de chaque nombre : panel, interne, déclaratif."},
+  {id:"saison",l:"Saisonnalité réelle des ventes",h:"Meilleur mois, pire mois, depuis quand."},
+  {id:"segment",l:"Où la marque gagne et où elle perd, précisément",h:"Par circuit, région, occasion, SKU. C'est là que se cache le vrai problème."},
+  {id:"objchiffre",l:"Quel résultat chiffré attendent-ils ?",h:"S'ils n'en ont pas, c'est l'information la plus importante de l'entretien.",crit:1}]},
+ {t:"L'historique des campagnes",lead:"La campagne précédente contient le diagnostic. Presque personne ne la demande.",qs:[
+  {id:"lastcamp",l:"Qu'ont-ils fait l'an dernier, et qu'est-ce que ça a donné ?",h:"Demander les visuels, le film, le bilan."},
+  {id:"lastfail",l:"Qu'est-ce qui n'a pas marché, selon eux ?",h:"Puis : et selon les chiffres ?"},
+  {id:"fache",l:"Qu'est-ce qui les a fâchés avec la production précédente ?",h:"Détermine leurs réflexes de méfiance."}]},
+ {t:"La concurrence telle qu'ils la voient",lead:"L'écart entre leur perception et le marché réel est la matière du planning.",qs:[
+  {id:"concqui",l:"Qui est leur concurrent principal, selon eux ?",h:"Souvent faux, et c'est utile."},
+  {id:"concfait",l:"Que fait ce concurrent qui les inquiète ?",h:"Prise de parole, prix, distribution, innovation."},
+  {id:"concbudget",l:"Rapport de force budgétaire",h:"À estimer si non déclaré. Marquer <b>I</b>."}]},
+ {t:"Le produit et ses contraintes",lead:"Tout ce qui ne se négocie pas. Une contrainte découverte en production coûte une campagne.",qs:[
+  {id:"produit",l:"Sur quoi porte exactement la campagne ?",h:"Référence, gamme, format, packaging en vigueur."},
+  {id:"regl",l:"Mentions et contraintes réglementaires",h:"Mentions obligatoires, restrictions sectorielles, règles de packshot.",crit:1},
+  {id:"interdits",l:"Ce que la marque ne dit jamais, ne montre jamais",h:"Interdits internes, sensibilités, historique de bad buzz.",crit:1},
+  {id:"charte",l:"Charte de marque en vigueur, et opposable ?",h:"Demander le fichier, vérifier qui l'a validée."}]},
+ {t:"La demande apparente",lead:"À noter mot pour mot. C'est cette phrase que le brief qualifié devra dépasser.",qs:[
+  {id:"verbatim",l:"Verbatim de la demande",h:"Les mots du client. Ne pas corriger, ne pas lisser.",crit:1},
+  {id:"leurdiag",l:"À quoi attribuent-ils le problème ?",h:"Leur diagnostic, à distinguer du vôtre."},
+  {id:"attendu",l:"Qu'attendent-ils de l'agence ?",h:"Exécution, recommandation stratégique, ou les deux."}]},
+ {t:"Le cadre : temps, argent, périmètre",lead:"Sans ces champs, aucun brief ne peut être qualifié.",qs:[
+  {id:"fenetre",l:"Dates non négociables",h:"Fenêtre média, événement, lancement — et ce qui les fixe.",crit:1},
+  {id:"budget",l:"Budget et ventilation",h:"Production / média / activation. Un refus se note.",crit:1},
+  {id:"livrables",l:"Livrables attendus et quantités",h:"Tout ce qui n'est pas listé est hors périmètre.",crit:1},
+  {id:"horsper",l:"Ce qui est explicitement hors périmètre",h:"Packaging, identité, contenu permanent, autres marchés."}]},
+ {t:"Le problème réel — travail de l'agence",lead:"Rempli après l'entretien. C'est de l'inférence : elle se marque comme telle et se fait valider par la restitution.",qs:[
+  {id:"probleme",l:"Le problème réel, en trois phrases maximum",h:"Ce que le client n'a pas dit, ou n'a pas formulé ainsi.",crit:1},
+  {id:"hypo1",l:"Hypothèse 1 — à confirmer",h:"Marquer <b>I</b>. Préciser ce qui la confirmerait."},
+  {id:"hypo2",l:"Hypothèse 2 — à confirmer",h:"Marquer <b>I</b>."},
+  {id:"hypo3",l:"Hypothèse 3 — à confirmer",h:"Marquer <b>I</b>."}]},
+];
+const PIECES=["Plan marketing ou plan de marque","Bilan de la dernière campagne","Données de vente / panel","Charte de marque et logotypes","Visuels et films précédents","Études consommateur","Calendrier commercial","Contraintes réglementaires écrites"];
+const META=[["client","Client / Marque"],["campagne","Campagne"],["ref","Référence dossier"],["date","Date entretien"],["interlocuteur","Interlocuteur"],["parqui","Mené par"]];
+const BRIEF=[["cible","Cible principale : qui, où, comportement, tension"],["axe","Territoire et axe recommandé — rédigé par le Planning"],["benefice","Bénéfice à démontrer"],["rtb","Reason to believe"],["ton","Ton attendu et ce que la marque ne dit jamais"],["succes","Critères de succès mesurables"]];
+const ETAGES=[{k:"e1",n:"Étage 1 — Concept",d:"Routes créatives et planches d'intention · ~15 % de l'effort",
+  ok:["L'idée et sa formulation","Le nom de campagne","La mécanique de campagne","La signature","La route retenue","Les conditions de validité"],
+  no:["Textes définitifs","Casting et décor","Traitement final","Formats et déclinaisons","Budget de production détaillé"],
+  eng:"Équipe créative sur le master, réservation des fenêtres de production."},
+ {k:"e2",n:"Étage 2 — Master",d:"Visuel maître finalisé, animatic ou storyboard · ~35 % cumulés",
+  ok:["Le visuel maître","Le système visuel complet","Le traitement du pack","Le storyboard ou l'animatic","Casting et décor retenus"],
+  no:["Adaptations de format","Versions courtes","Contenus digitaux additionnels","Versions linguistiques","Livrables terrain"],
+  eng:"Casting, repérages, plateau, équipes de tournage, achats. ENGAGEMENTS FERMES AUPRÈS DE TIERS — non annulables sans frais."},
+ {k:"e3",n:"Étage 3 — Déploiement",d:"Tournage, formats, déclinaisons · 100 %",
+  ok:["Fichiers finaux listés","Conformité aux mentions obligatoires"],
+  no:["Tout livrable hors brief initial","Toute extension d'exploitation"],
+  eng:"Livraison finale, remise des fichiers, transfert d'exploitation."}];
+
+const ALLQ=SECTIONS.flatMap(s=>s.qs); const CRIT=ALLQ.filter(q=>q.crit).map(q=>q.id);
+let S={meta:{},a:{},src:{},pieces:{},brief:{},val:{},flags:{},cr:{},tab:"entretien"};
+
+async function save(){try{if(window.storage)await window.storage.set("clientele:dossier",JSON.stringify(S));}catch(e){}
+ const el=document.getElementById("sv");if(el){el.textContent="Enregistré";setTimeout(()=>el.textContent="",1500);}}
+async function load(){try{if(window.storage){const r=await window.storage.get("clientele:dossier");if(r&&r.value)S=Object.assign(S,JSON.parse(r.value));}}catch(e){}}
+
+const esc=t=>(t||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const g=id=>(S.a[id]||"").trim(); const gb=id=>(S.brief[id]||"").trim();
+const V=(e,f)=>((S.val[e]||{})[f]||"");
+const critLeft=()=>CRIT.filter(id=>!g(id));
+const briefLeft=()=>BRIEF.filter(([k])=>!gb(k)).length;
+function etatEtage(e){const d=V(e,"dec");if(!d||d==="—")return "attente";
+ if(d==="Non validé")return "refus"; if(V(e,"dfp")!=="Présent")return "suspendu"; return "ok";}
+
+function chain(){
+ const st=[];
+ st.push({n:"1 · Intake",s:critLeft().length?"blk":"on",m:critLeft().length?critLeft().length+" champ(s) critique(s)":"complet"});
+ st.push({n:"2 · Restitution",s:S.flags.resti?"on":"",m:S.flags.resti?"envoyée":"non envoyée"});
+ st.push({n:"3 · Brief qualifié",s:S.flags.brief?"on":(critLeft().length?"blk":""),m:S.flags.brief?"émis":(briefLeft()?briefLeft()+" champ(s) manquant(s)":"prêt à émettre")});
+ ETAGES.forEach(E=>{const e=etatEtage(E.k);
+  st.push({n:"4."+E.k.slice(1)+" · "+E.n.split("—")[1].trim(),s:e==="ok"?"on":(e==="attente"?"":"blk"),
+   m:{ok:"validé — étage suivant engagé",attente:"en attente",suspendu:"SUSPENDU — décideur absent",refus:"non validé"}[e]});});
+ return st;
+}
+
+function render(){
+ const done=ALLQ.filter(q=>g(q.id)).length,pct=Math.round(done/ALLQ.length*100),cl=critLeft();
+ let h=`<div class="wrap">
+ <div class="top"><h1>Poste de pilotage — Direction Clientèle</h1>
+ <p>Un dossier, cinq portes. Intake · restitution · brief qualifié · validations d'étage · comptes rendus.</p>
+ <div class="metagrid">${META.map(([k,l])=>`<input data-meta="${k}" placeholder="${l}" value="${esc(S.meta[k])}">`).join("")}</div></div>
+ <div class="chain">${chain().map(s=>`<div class="step ${s.s}"><b>${s.n}</b><span>${s.m}</span></div>`).join("")}</div>
+ <div class="tabs">${[["entretien","1 · Entretien"],["fiche","2 · Fiche d'intake"],["pieces","3 · Pièces"],["resti","4 · Restitution"],["brief","5 · Brief qualifié"],["valid","6 · Validations"],["cr","7 · Compte rendu"]]
+  .map(([k,l])=>`<button class="tab ${S.tab===k?"on":""}" data-tab="${k}">${l}</button>`).join("")}<span class="save" id="sv"></span></div>`;
+
+ if(S.tab==="entretien"){
+  h+=`<div class="gate ${cl.length?"no":"yes"}"><div class="bar"><i style="width:${pct}%"></i></div><b>${done}/${ALLQ.length}</b>
+   <span>${cl.length?"Brief non qualifiable : "+cl.length+" champ(s) critique(s) manquant(s).":"Champs critiques complets. Le brief peut être rédigé."}</span></div>
+   <div class="legend">${Object.keys(SRC).map(k=>`<span><i class="dot" style="background:${SC[k]}"></i>${k} — ${SRC[k]}</span>`).join("")}</div>
+   <div class="note">Trame interne. On pose, on écoute, on remplit après. Envoyer ces questions au client produit sa demande apparente — exactement ce que le brief doit dépasser.</div>`;
+  SECTIONS.forEach(s=>{h+=`<div class="sec"><h2>${s.t}</h2><p class="lead">${s.lead}</p>`;
+   s.qs.forEach(q=>{h+=`<div class="q ${q.crit?"crit":""} ${g(q.id)?"done":""}"><div class="qh"><div style="flex:1">
+    <label>${q.l}${q.crit?' <span class="tag" style="background:#B02118">critique</span>':""}</label><div class="hint">${q.h}</div></div>
+    <div class="srcs">${Object.keys(SRC).map(k=>`<button class="src ${S.src[q.id]===k?"on":""}" data-s="${k}" data-q="${q.id}" title="${SRC[k]}">${k}</button>`).join("")}</div></div>
+    <textarea data-a="${q.id}" placeholder="Réponse, notes, chiffres…">${esc(S.a[q.id])}</textarea></div>`;});
+   h+=`</div>`;});
+ }
+
+ if(S.tab==="fiche"){
+  h+=`<div class="note">Document interne. La colonne <b>Source</b> est la raison d'être de la fiche : elle empêche qu'une inférence de l'agence devienne indiscernable d'un fait client.</div>`;
+  SECTIONS.forEach(s=>{h+=`<h3 class="blk">${s.t}</h3><table><tr><th style="width:31%">Champ</th><th>Valeur</th><th style="width:105px">Source</th></tr>`;
+   s.qs.forEach(q=>{const v=g(q.id)?esc(g(q.id)):`<span class="empty">non renseigné${q.crit?" — critique":""}</span>`;const sc=S.src[q.id];
+    h+=`<tr><td><b>${q.l}</b></td><td>${v}</td><td>${sc?`<span class="tag" style="background:${SC[sc]}">${sc}</span>`:"—"}</td></tr>`;});
+   h+=`</table>`;});
+  h+=`<button class="btn" data-dl="fiche">Télécharger</button><button class="btn ghost" data-cp="fiche">Copier</button>`;
+ }
+
+ if(S.tab==="pieces"){
+  h+=`<div class="note">Une part de l'intake est de la collecte, pas de l'interrogatoire. Un client qui ne remplit pas un questionnaire transmet volontiers un document qui existe déjà. Un refus s'écrit : c'est une information sur la relation.</div>`;
+  PIECES.forEach((p,i)=>{const st=S.pieces[i]||"Non demandée";
+   h+=`<div class="row"><span>${p}</span><select class="sel" style="width:170px" data-p="${i}">${["Non demandée","Demandée","Reçue","Refusée","N'existe pas"].map(o=>`<option ${st===o?"selected":""}>${o}</option>`).join("")}</select></div>`;});
+ }
+
+ if(S.tab==="resti"){
+  h+=`<div class="note">Une page, envoyée sous 48 h. Elle convertit vos inférences en faits acceptés : une hypothèse non corrigée devient opposable le jour où le client change d'avis.</div>
+   <div class="chk"><input type="checkbox" data-flag="resti" ${S.flags.resti?"checked":""}><span>Note de restitution envoyée au client</span></div>
+   <div class="out">${esc(restiTxt())}</div>
+   <div style="margin-top:11px"><button class="btn" data-dl="resti">Télécharger</button><button class="btn ghost" data-cp="resti">Copier</button></div>`;
+ }
+
+ if(S.tab==="brief"){
+  if(cl.length)h+=`<div class="alert">Intake incomplet : ${cl.length} champ(s) critique(s) manquant(s). Le brief émis dans cet état sera retournable sous 24 h par la Création.</div>`;
+  h+=`<div class="note">Le brief se compose de l'intake plus six champs qui n'en viennent pas. Le territoire et l'axe sont rédigés par le Planning — la Clientèle les intègre, elle ne les écrit pas.</div>`;
+  BRIEF.forEach(([k,l])=>{h+=`<div class="fld"><label>${l}</label><textarea data-b="${k}">${esc(S.brief[k])}</textarea></div>`;});
+  h+=`<div class="chk"><input type="checkbox" data-flag="brief" ${S.flags.brief?"checked":""}><span>Brief qualifié émis et transmis à la Création</span></div>
+   <div class="out">${esc(briefTxt())}</div>
+   <div style="margin-top:11px"><button class="btn" data-dl="brief">Télécharger</button><button class="btn ghost" data-cp="brief">Copier</button></div>`;
+ }
+
+ if(S.tab==="valid"){
+  h+=`<div class="note">Une fiche par porte. Sans fiche signée par le décideur final, l'étage suivant n'est pas lancé — c'est la seule pièce qui rende une reprise imputable.</div>`;
+  ETAGES.forEach(E=>{const e=etatEtage(E.k);
+   h+=`<div class="card"><h4>${E.n}</h4><div class="sub">${E.d}</div>`;
+   if(e==="suspendu")h+=`<div class="alert">Validation suspendue : le décideur final n'était pas en séance. Aucune ressource de l'étage suivant ne s'engage avant son accord écrit.</div>`;
+   if(e==="ok")h+=`<div class="note" style="background:#E7F3EC;color:#1E5C39">Engagé à la signature : ${E.eng}</div>`;
+   h+=`<div class="grid2">
+    <div class="fld"><label>Date de séance</label><input class="txt" data-v="${E.k}.date" value="${esc(V(E.k,"date"))}"></div>
+    <div class="fld"><label>Décision</label><select class="sel" data-v="${E.k}.dec">${["—","Validé","Validé avec réserves","Non validé","Ajourné"].map(o=>`<option ${V(E.k,"dec")===o?"selected":""}>${o}</option>`).join("")}</select></div>
+    <div class="fld"><label>Décideur final</label><select class="sel" data-v="${E.k}.dfp">${["—","Présent","Absent — validation suspendue"].map(o=>`<option ${V(E.k,"dfp")===o?"selected":""}>${o}</option>`).join("")}</select></div>
+    <div class="fld"><label>Accord écrit attendu le</label><input class="txt" data-v="${E.k}.dfd" value="${esc(V(E.k,"dfd"))}"></div></div>
+    <div class="fld"><label>Éléments présentés (tout élément non listé n'a pas été présenté)</label><textarea data-v="${E.k}.elem">${esc(V(E.k,"elem"))}</textarea></div>
+    <div class="fld"><label>Réserves formulées — une réserve non écrite n'existe pas</label><textarea data-v="${E.k}.res">${esc(V(E.k,"res"))}</textarea></div>
+    <div class="chk"><input type="checkbox" data-vc="${E.k}.clause" ${V(E.k,"clause")?"checked":""}><span>Le client reconnaît la clause de reprise : toute remise en cause d'un élément validé constitue un nouveau brief, chiffré et re-planifié.</span></div>
+    <button class="btn" data-dl="v.${E.k}">Télécharger la fiche</button><button class="btn ghost" data-cp="v.${E.k}">Copier</button></div>`;});
+ }
+
+ if(S.tab==="cr"){
+  h+=`<div class="note">Compte rendu sous 48 h par la Clientèle, relu sous 24 h par la Création sur les points touchant l'idée. C'est le seul déclencheur d'une reprise créative : aucun échange verbal ne l'est.</div>
+   <div class="grid2"><div class="fld"><label>Étage concerné</label><select class="sel" data-cr="etage">${["Étage 1 — Concept","Étage 2 — Master","Étage 3 — Déploiement"].map(o=>`<option ${S.cr.etage===o?"selected":""}>${o}</option>`).join("")}</select></div>
+   <div class="fld"><label>Participants</label><input class="txt" data-cr="part" value="${esc(S.cr.part)}"></div></div>
+   <div class="fld"><label>Décisions actées</label><textarea data-cr="dec">${esc(S.cr.dec)}</textarea></div>
+   <div class="fld"><label>Points ouverts et responsable de chacun</label><textarea data-cr="ouv">${esc(S.cr.ouv)}</textarea></div>
+   <div class="fld"><label>Prochaine étape et date</label><textarea data-cr="next">${esc(S.cr.next)}</textarea></div>
+   <div class="out">${esc(crTxt())}</div>
+   <div style="margin-top:11px"><button class="btn" data-dl="cr">Télécharger</button><button class="btn ghost" data-cp="cr">Copier</button></div>`;
+ }
+
+ h+=`</div>`;document.getElementById("app").innerHTML=h;bind();
+}
+
+function hdr(){const m=S.meta;return `${m.client||"[client]"} · ${m.campagne||"[campagne]"} · réf. ${m.ref||"[réf]"}`;}
+
+function restiTxt(){const m=S.meta,hy=["hypo1","hypo2","hypo3"].map(g).filter(Boolean);
+ const att=Object.entries(S.pieces).filter(([i,v])=>v==="Demandée").map(([i])=>PIECES[i]);
+ return `Objet : ce que nous avons compris — ${hdr()}
+
+Bonjour ${m.interlocuteur||"[interlocuteur]"},
+
+Merci pour le temps accordé le ${m.date||"[date]"}. Avant d'engager le travail, voici notre lecture. Corrigez-nous : nous préférons une correction maintenant qu'une réorientation dans trois semaines.
+
+LE PROBLÈME TEL QUE NOUS LE COMPRENONS
+${g("probleme")||"[à formuler]"}
+
+CE QUE NOUS TENONS POUR ACQUIS
+· Objectif chiffré : ${g("objchiffre")||"[non communiqué]"}
+· Fenêtre : ${g("fenetre")||"[non communiquée]"}
+· Périmètre : ${g("livrables")||"[non communiqué]"}
+· Décision finale : ${g("decideur")||"[non identifié]"}
+
+NOS HYPOTHÈSES — À CONFIRMER OU À CORRIGER
+${hy.length?hy.map((x,i)=>`${i+1}. ${x}`).join("\n"):"1. [à formuler]"}
+
+Sauf retour de votre part sous cinq jours ouvrés, nous travaillerons sur cette base.
+
+PIÈCES EN ATTENTE
+${att.length?att.map(p=>"· "+p).join("\n"):"· aucune"}
+
+${S.meta.parqui||"[nom]"} — Direction Clientèle, MATANGA AGENCY`;}
+
+function briefTxt(){const m=S.meta;
+ return `BRIEF CLIENT QUALIFIÉ — document d'entrée en création
+${hdr()}
+Émetteur : Direction Clientèle · Contributeur : Planning · Destinataire : Direction de la Création
+
+1. CE QUE LE CLIENT A DEMANDÉ (verbatim)
+${g("verbatim")||"[manquant]"}
+Décideur final : ${g("decideur")||"[manquant]"} · Circuit : ${g("circuit")||"[manquant]"}
+Peut annuler une idée validée : ${g("tueur")||"[non identifié]"}
+
+2. LE PROBLÈME RÉEL
+${g("probleme")||"[manquant]"}
+Vérifié : ${g("perf")||"—"} | ${g("segment")||"—"}
+Hypothèses : ${["hypo1","hypo2","hypo3"].map(g).filter(Boolean).join(" / ")||"—"}
+
+3. CIBLE
+${gb("cible")||"[manquant]"}
+
+4. TERRITOIRE STRATÉGIQUE (rédigé par le Planning)
+Axe : ${gb("axe")||"[manquant]"}
+Bénéfice : ${gb("benefice")||"[manquant]"}
+Reason to believe : ${gb("rtb")||"[manquant]"}
+Ton et interdits : ${gb("ton")||"[manquant]"} | ${g("interdits")||""}
+
+5. CONCURRENCE
+${g("concqui")||"—"} — ${g("concfait")||"—"}
+Rapport de force budgétaire : ${g("concbudget")||"—"}
+Campagne précédente et résultats : ${g("lastcamp")||"—"} / ${g("lastfail")||"—"}
+
+6. PÉRIMÈTRE
+${g("livrables")||"[manquant]"}
+Hors périmètre : ${g("horsper")||"—"}
+
+7. CONTRAINTES
+Fenêtre : ${g("fenetre")||"[manquant]"} · Budget : ${g("budget")||"[manquant]"}
+Réglementaire : ${g("regl")||"—"} · Produit : ${g("produit")||"—"}
+
+8. CRITÈRES DE SUCCÈS
+${gb("succes")||"[manquant]"}
+
+9. CE QUE CE DOCUMENT NE CONTIENT PAS
+Aucun concept, titre, accroche, naming, piste visuelle, scénario ou promesse d'exécution.
+Test : si une phrase de ce document pouvait figurer sur une affiche, elle n'a rien à y faire.
+
+10. RÉCEPTION SOUS RÉSERVE
+La Création peut retourner ce brief sous 24 h. Le délai de réponse créative ne court qu'à la levée des réserves.`;}
+
+function valTxt(k){const E=ETAGES.find(x=>x.k===k),m=S.meta;
+ return `FICHE DE VALIDATION D'ÉTAGE — document contractuel de jalon
+${hdr()}
+${E.n} — ${E.d}
+Séance du ${V(k,"date")||"[date]"}
+
+A. ÉLÉMENTS PRÉSENTÉS
+${V(k,"elem")||"[à lister — tout élément non listé n'a pas été présenté]"}
+
+B. DÉCISION : ${V(k,"dec")||"[—]"}
+
+C. CETTE SIGNATURE VALIDE
+${E.ok.map(x=>"· "+x).join("\n")}
+
+D. ELLE NE VALIDE PAS
+${E.no.map(x=>"· "+x).join("\n")}
+
+E. RÉSERVES
+${V(k,"res")||"· aucune"}
+Une réserve non écrite ici n'existe pas et ne suspend pas l'engagement de l'étage suivant.
+
+F. CE QUE LA SIGNATURE DÉCLENCHE
+${E.eng}
+Toute modification portant sur un élément de la section C constitue un nouveau brief : chiffrage complémentaire avant reprise, révision du calendrier, prise en charge des engagements déjà contractés auprès de tiers.
+Clause reconnue par le client : ${V(k,"clause")?"OUI":"NON — à faire signer"}
+
+G. DÉCIDEUR FINAL
+${g("decideur")||"[non identifié]"} — ${V(k,"dfp")||"[—]"}
+${V(k,"dfp")==="Absent — validation suspendue"?"Validation SUSPENDUE. Effet à réception de l'accord écrit, au plus tard le "+(V(k,"dfd")||"[date]")+". Aucune ressource de l'étage suivant n'est engagée dans l'intervalle.":"Validation effective à la signature."}
+
+H. SIGNATURES
+Décideur final client · Interlocuteur projet · Directeur Clientèle · Directeur de la Création`;}
+
+function crTxt(){const m=S.meta;
+ return `COMPTE RENDU DE SÉANCE
+${hdr()} — ${S.cr.etage||"Étage 1 — Concept"}
+Participants : ${S.cr.part||"[à compléter]"}
+
+DÉCISIONS ACTÉES
+${S.cr.dec||"[à compléter]"}
+
+POINTS OUVERTS
+${S.cr.ouv||"· aucun"}
+
+PROCHAINE ÉTAPE
+${S.cr.next||"[à compléter]"}
+
+Transmis sous 48 h par la Direction Clientèle. Relecture de la Direction de la Création sous 24 h sur les points touchant l'idée.
+Ce compte rendu validé est le seul déclencheur d'une reprise créative. Aucun échange verbal ou message informel ne l'est.
+
+${m.parqui||"[nom]"} — Direction Clientèle, MATANGA AGENCY`;}
+
+function txtOf(k){if(k==="fiche")return ficheTxt();if(k==="resti")return restiTxt();if(k==="brief")return briefTxt();
+ if(k==="cr")return crTxt();if(k.startsWith("v."))return valTxt(k.slice(2));return "";}
+
+function ficheTxt(){let t=`FICHE D'INTAKE — DOCUMENT INTERNE\n${hdr()}\nEntretien du ${S.meta.date||""} avec ${S.meta.interlocuteur||""} — mené par ${S.meta.parqui||""}\nSources : D déclaré · F fourni · I inféré · V à vérifier\n`;
+ SECTIONS.forEach(s=>{t+=`\n\n== ${s.t.toUpperCase()} ==\n`;s.qs.forEach(q=>{t+=`\n[${S.src[q.id]||"–"}] ${q.l}\n${g(q.id)||"(non renseigné"+(q.crit?" — CRITIQUE":"")+")"}\n`;});});
+ t+=`\n\n== PIÈCES ==\n`;PIECES.forEach((p,i)=>{t+=`${p} : ${S.pieces[i]||"Non demandée"}\n`;});
+ t+=`\n== CONTRÔLE ==\n${critLeft().length?"Brief NON qualifiable — "+critLeft().length+" champ(s) critique(s) manquant(s)":"Champs critiques complets."}\n`;return t;}
+
+function dl(name,text){const b=new Blob([text],{type:"text/plain;charset=utf-8"}),u=URL.createObjectURL(b);
+ const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+
+function bind(){const $=s=>document.querySelectorAll(s);
+ $("#app [data-tab]").forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;render();});
+ $("#app [data-meta]").forEach(i=>{i.oninput=()=>{S.meta[i.dataset.meta]=i.value;};i.onblur=()=>{save();render();};});
+ $("#app [data-a]").forEach(t=>{t.oninput=()=>{S.a[t.dataset.a]=t.value;};t.onblur=()=>{save();render();};});
+ $("#app [data-b]").forEach(t=>{t.oninput=()=>{S.brief[t.dataset.b]=t.value;};t.onblur=()=>{save();render();};});
+ $("#app [data-cr]").forEach(t=>{t.oninput=()=>{S.cr[t.dataset.cr]=t.value;};t.onblur=()=>{save();render();};
+  if(t.tagName==="SELECT")t.onchange=()=>{S.cr[t.dataset.cr]=t.value;save();render();};});
+ $("#app [data-v]").forEach(t=>{const[e,f]=t.dataset.v.split(".");
+  const set=()=>{S.val[e]=S.val[e]||{};S.val[e][f]=t.value;};
+  t.oninput=set;t.onblur=()=>{set();save();render();};if(t.tagName==="SELECT")t.onchange=()=>{set();save();render();};});
+ $("#app [data-vc]").forEach(c=>c.onchange=()=>{const[e,f]=c.dataset.vc.split(".");S.val[e]=S.val[e]||{};S.val[e][f]=c.checked?"1":"";save();render();});
+ $("#app [data-flag]").forEach(c=>c.onchange=()=>{S.flags[c.dataset.flag]=c.checked;save();render();});
+ $("#app .src").forEach(b=>b.onclick=()=>{const q=b.dataset.q;S.src[q]=(S.src[q]===b.dataset.s)?null:b.dataset.s;save();render();});
+ $("#app [data-p]").forEach(s=>s.onchange=()=>{S.pieces[s.dataset.p]=s.value;save();render();});
+ $("#app [data-dl]").forEach(b=>b.onclick=()=>{const k=b.dataset.dl,n=(S.meta.client||"dossier").replace(/\W+/g,"_");dl(k.replace(".","_")+"_"+n+".txt",txtOf(k));});
+ $("#app [data-cp]").forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(txtOf(b.dataset.cp));b.textContent="Copié";setTimeout(()=>b.textContent="Copier",1400);}catch(e){}});
+}
+load().then(render);
+})();
+</script>
