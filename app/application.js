@@ -50,6 +50,7 @@ window.APP = (function () {
     standard: ["reporting", "indicateurs"],
     pipeline: ["planning", "ordre"],
     reglages: ["referentiel", "parametres"],
+    people: ["referentiel", "people"],
   };
 
   function piste() {

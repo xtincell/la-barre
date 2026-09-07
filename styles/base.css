@@ -725,10 +725,14 @@ button, a, input, select, textarea, summary {
 .pirc-n::after, .jul::after, .jucas-p::after, .rail-i::after,
 .smr-b::after, .pc-select::after, .cmd-b::after, .pld::after {
   content: ""; position: absolute;
-  /* La zone déborde de dix pixels de chaque côté : un bouton de deux mots
-     * faisait 24 px de large. La hauteur suffisait, la largeur non — et un
-   * pouce ne vise pas un mot, il vise une zone. */
-  left: -12px; right: -12px;
+  /* La zone s'étend en hauteur, jamais en largeur.
+   *
+   * Elle a débordé de douze pixels de chaque côté le temps d'une passe, pour
+   * porter les boutons de deux mots à 44 px de large. Partout où un tel bouton
+   * touchait le bord de son conteneur, la page gagnait douze pixels de défilement
+   * horizontal — sur tous les écrans. Un bouton de texte en ligne prend sa cible
+   * en hauteur ; sa largeur est celle de son mot, et c'est le contrat. */
+  left: 0; right: 0;
   top: 50%; transform: translateY(-50%);
   min-height: var(--cible); height: 100%;
 }

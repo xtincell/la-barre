@@ -10,7 +10,14 @@
 
 window.DEPOT = (function () {
   var CLE = "la-barre";
-  var VERSION_SCHEMA = 1;
+  /* 2 — septembre 2026. Deux changements sur le livrable et un au dépôt :
+   *   l.axes → l.points   les dix points de recevabilité ; « axe » est rendu
+   *                       à l'axe créatif, qui est autre chose
+   *   p.axesDA → champsDA les champs de direction artistique d'un KV
+   *   people              le relevé de Matanga People
+   * Sans incrément, le cache du navigateur ne relit jamais le fichier : la
+   * collection neuve serait sur le disque et invisible à l'écran. */
+  var VERSION_SCHEMA = 2;
 
   var etat = vide();
   var ecouteurs = [];
@@ -21,6 +28,13 @@ window.DEPOT = (function () {
       maison: MAISON.nom,
       machine: "",
       enregistre_le: null,
+      /* Une collection absente d'ici est silencieusement perdue au chargement :
+       * le fichier peut la porter, l'état ne la verra jamais. Elle est donc la
+       * liste de ce que le produit connaît, et rien d'autre.
+       *
+       * contacts, feedbacks et sku y figuraient jusqu'à sept fois — résidu
+       * d'une reconstruction. Sans effet sur le résultat, mais on ne lit pas
+       * une liste qui bégaie. */
       personnes: [],
       clients: [],
       marques: [],
@@ -29,14 +43,9 @@ window.DEPOT = (function () {
       contacts: [],
       feedbacks: [],
       sku: [],
-      contacts: [],
-      feedbacks: [],
-      sku: [],
-      sku: [],
-      sku: [],
-      sku: [],
-      sku: [],
-      sku: [],
+      /* Le relevé de Matanga People : ce qui existe là-bas, et dont on veut
+       * savoir s'il existe ici. Il se relève, il ne se saisit pas. */
+      people: [],
       critiques: [],
       engagementsTenus: [],
       criteresAjoutes: {},
@@ -274,7 +283,9 @@ window.DEPOT = (function () {
       var brut = window.localStorage.getItem(CLE);
       if (brut) {
         var lu = JSON.parse(brut);
-        if (lu && lu.schema === VERSION_SCHEMA) {
+        /* Un schéma antérieur se migre, il ne se jette pas : le cache peut
+         * porter une séance de travail que le fichier n'a pas encore. */
+        if (lu && lu.schema <= VERSION_SCHEMA) {
           etat = Object.assign(vide(), lu); migrer(etat); return true;
         }
       }
@@ -332,12 +343,40 @@ window.DEPOT = (function () {
           var lu = JSON.parse(t);
           var ici = (etat.projets || []).length;
           var la = (lu.projets || []).length;
-          /* Le fichier porte plus de dossiers que ce navigateur : c'est lui qui
-           * fait foi, et l'écraser ferait disparaître le travail d'ailleurs. */
-          if (la > ici && lu.schema === VERSION_SCHEMA) {
+
+          /* Trois raisons de reprendre le fichier, et une seule règle : le
+           * fichier est la base, le navigateur n'en est qu'un cache.
+           *
+           * Le volume ne suffisait pas. Une collection ajoutée au fichier — un
+           * relevé, un référentiel — n'ajoute aucun dossier : elle restait sur
+           * le disque, invisible à l'écran, sans que rien ne le dise. Et un
+           * dépôt migré ailleurs revenait dans son ancienne forme. */
+          /* Une collection que le fichier porte et que ce navigateur n'a pas.
+           * C'est le cas d'un relevé ajouté au fichier : ni dossier de plus,
+           * ni schéma neuf, ni horodatage touché — et pourtant le navigateur
+           * est en retard. Sans ça, la donnée dort sur le disque. */
+          var absente = null;
+          Object.keys(lu).forEach(function (k) {
+            if (!Array.isArray(lu[k]) || !lu[k].length) return;
+            if ((etat[k] || []).length === 0) absente = k;
+          });
+
+          var pourquoi = la > ici
+              ? "il contenait " + la + " dossiers, ce navigateur " + ici
+            : absente
+              ? "il porte « " + absente + " » (" + lu[absente].length
+                + " entrées) que ce navigateur n'a pas"
+            : (lu.schema || 0) > (etat.schema || 0)
+              ? "il a été migré au schéma " + lu.schema + ", ce navigateur en est au "
+                + (etat.schema || 0)
+            : lu.enregistre_le && etat.enregistre_le
+              && new Date(lu.enregistre_le) > new Date(etat.enregistre_le)
+              ? "il a été écrit après la copie de ce navigateur"
+            : null;
+
+          if (pourquoi && (lu.schema || 0) <= VERSION_SCHEMA) {
             importer(t); etat.reference = nom;
-            if (window.AVIS) AVIS.fait("Le fichier contenait " + la + " dossiers, ce navigateur "
-              + ici + " : le fichier fait foi et vient d'être rechargé.");
+            if (window.AVIS) AVIS.fait("La base fait foi et vient d'être rechargée : " + pourquoi + ".");
           }
         } catch (e) { /* illisible : on ne touche à rien, et on n'écrit pas non plus */ referenceLue = false; }
         if (apres) { var g = apres; apres = null; g(true); }
@@ -355,7 +394,7 @@ window.DEPOT = (function () {
     function verdict(ok, pourquoi) {
       if (rendu) return; rendu = true;
       if (!ok && pourquoi && window.AVIS) {
-        AVIS.refus("La base de référence n'a pas pu être lu : " + pourquoi
+        AVIS.refus("La base de référence n'a pas pu être lue : " + pourquoi
           + ". Ce que vous voyez est le jeu de démonstration, pas votre base.");
       }
       if (apres) apres(ok);
@@ -410,7 +449,14 @@ window.DEPOT = (function () {
   function importer(texte) {
     var lu = JSON.parse(texte);
     if (!lu || typeof lu !== "object") throw new Error("Fichier illisible.");
-    if (lu.schema !== VERSION_SCHEMA) throw new Error("Ce fichier vient d'une autre version du schéma.");
+    /* Un fichier plus ancien s'importe et se migre ; un fichier plus récent
+     * ne s'invente pas — on refuse plutôt que de perdre ce qu'on ne sait pas
+     * lire. */
+    if (lu.schema > VERSION_SCHEMA) {
+      throw new Error("Ce fichier vient d'une version plus récente du schéma (" + lu.schema
+        + " contre " + VERSION_SCHEMA + ") : cette version de LA BARRE ne sait pas le lire "
+        + "sans risquer d'en perdre une partie.");
+    }
     etat = Object.assign(vide(), lu);
     migrer(etat);
     enregistrer();
@@ -420,13 +466,24 @@ window.DEPOT = (function () {
   /* Les dépôts d'avant le modèle à trois niveaux n'ont pas de `niveau` sur
    * leurs livrables. On le déduit une fois, à l'import, plutôt que de le
    * recalculer à chaque lecture. */
+  /* La migration monte un dépôt d'une version de schéma à la suivante, sur
+   * place et sans rien perdre. Elle est idempotente : la relancer sur un dépôt
+   * déjà à jour ne fait rien. */
   function migrer(d) {
     (d.projets || []).forEach(function (p) {
+      /* 1 → le niveau d'un livrable se déduisait de sa forme. */
       (p.livrables || []).forEach(function (l) {
-        if (l.niveau) return;
-        l.niveau = l.kv ? (l.maitre ? "adaptation" : "maitre") : "declinaison";
+        if (!l.niveau) l.niveau = l.kv ? (l.maitre ? "adaptation" : "maitre") : "declinaison";
+        /* 2 → les dix axes de complétude sont devenus les points de
+         * recevabilité. L'ancienne clé se recopie et disparaît. */
+        if (l.axes && !l.points) l.points = l.axes;
+        if (l.axes) delete l.axes;
       });
+      if (p.axesDA && !p.champsDA) p.champsDA = p.axesDA;
+      if (p.axesDA) delete p.axesDA;
     });
+    if (!d.people) d.people = [];
+    d.schema = VERSION_SCHEMA;
   }
 
   function reinitialiser() {

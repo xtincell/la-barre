@@ -18,6 +18,9 @@ window.VUE_MAISON = (function () {
      * qui l'a écrit en premier. */
     { cle: "marques", nom: "MARQUES", quoi: "plateforme, catalogue, marchés — la bibliothèque de marque" },
     { cle: "marches", nom: "MARCHÉS & SUPPORTS", quoi: "marchés, supports, gabarits, éléments de marque" },
+    /* Le registre de l'autre outil. Il n'a pas sa place dans les projets : ce
+     * n'est pas du travail, c'est ce qui dit lequel manque. */
+    { cle: "people", nom: "MATANGA PEOPLE", quoi: "ce qui existe là-bas, et n'existe pas ici" },
     { cle: "parametres", nom: "PARAMÈTRES", quoi: "base, règles, équipe, journal" },
   ];
 
@@ -46,6 +49,7 @@ window.VUE_MAISON = (function () {
       el("div.dc-modes", {}, MODES.map(function (m) {
         var n = m.cle === "marques" ? vides + VAULT.orphelins().length
           : m.cle === "marches" ? trous
+          : m.cle === "people" ? REGISTRE.bilan().aveugles
           : (w.grave || (!w.surDisque && (age === null || age > 2))) ? 1 : 0;
         return el("button.dcm" + (mode === m.cle ? ".ici" : ""), { type: "button",
           onclick: function () { mode = m.cle; rendre(hote); } },
@@ -62,6 +66,7 @@ window.VUE_MAISON = (function () {
     var z = el("div");
     if (mode === "marques") VUE_VAULT.rendre(z);
     else if (mode === "marches") VUE_REFERENTIEL.rendre(z);
+    else if (mode === "people") REGISTRE.rendre(z, function () { rendre(hote); });
     else VUE_REGLAGES.rendre(z);
     return z;
   }
@@ -75,6 +80,7 @@ window.VUE_MAISON = (function () {
   function pire(mode, e) {
     if (mode === "parametres") return pireReglages(e);
     if (mode === "marques") return pireMarques(e);
+    if (mode === "people") return REGISTRE.pire();
     return pireReferentiel(e);
   }
 

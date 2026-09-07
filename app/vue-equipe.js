@@ -148,6 +148,33 @@ window.VUE_EQUIPE = (function () {
     return null;
   }
 
+  /* Sur quoi une relance serait un constat, et sur quoi elle serait un impair. */
+  function blocTrace(b) {
+    var t = TRACE.dePersonne(b.personne.id);
+    if (!t.total) return null;
+    var ph = TRACE.phrase(t, b.personne.nom.split(" ")[0]);
+
+    return el("div.eqd-bloc", {},
+      el("div.eqdb-t", {}, "SUR QUOI JE PEUX LE RELANCER"),
+      el("div.trc-p." + (ph.ton || ""), {}, el("b", {}, ph.t), el("span", {}, ph.q)),
+      el("div.trc-g", {},
+        chiffre(t.relancables + " / " + t.total, "relançables",
+          "responsable et date : la relance est un constat", t.relancables ? "vert" : "attente"),
+        t.vu ? chiffre(String(t.vu), "faits, non déposés",
+          "le visuel existe, la version manque — mon geste, pas le sien", "attente") : null,
+        t.muet ? chiffre(String(t.muet), "sans aucune trace",
+          "ni version, ni fichier, ni visuel — c'est là qu'une question se pose", "alerte") : null,
+        t.sansDate ? chiffre(String(t.sansDate), "sans date de remise",
+          "rien n'est exigible, donc rien n'est en retard", "attente") : null));
+  }
+
+  function chiffre(v, nom, quoi, ton) {
+    return el("div.trc-c" + (ton ? "." + ton : ""), {},
+      el("span.trcc-v", {}, v),
+      el("span.trcc-n", {}, nom),
+      el("span.trcc-q", {}, quoi));
+  }
+
   /* Ouvert, elle montre la matière — et de quoi la compléter. */
   function detail(b, crits, engs, cums, _hote, rafraichir) {
     var pe = b.personne;
@@ -173,6 +200,14 @@ window.VUE_EQUIPE = (function () {
             }))
           : null,
         ctrl ? el("div.eqd-ctrl", {}, "contrôle : " + ctrl.nom) : null),
+
+      /* Ce qu'on a le droit de lui reprocher.
+       *
+       * C'est le bloc qui protège de l'impair : avant de lire « 0 soumis »
+       * comme un défaut, il faut savoir combien de ses livrables sont seulement
+       * non instrumentés — et sur combien une relance serait un constat plutôt
+       * qu'une impression. */
+      blocTrace(b),
 
       /* Ce que sa fiche lui impose, avec son échéance. */
       el("div.eqd-bloc", {},

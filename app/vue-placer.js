@@ -77,6 +77,17 @@ window.VUE_PLACER = (function () {
    * retard « un peu » : elle est en retard de N jours, et ce nombre est le
    * seul qui appelle un geste. */
   function pireCharge(pieces, sansPlace) {
+    /* Avant le retard, la relançabilité. Un livrable sans date n'est jamais
+     * « en retard » — il est hors du compte, et c'est pire : personne ne le
+     * réclame et personne n'est en défaut. Le dire avant tout le reste évite
+     * de relancer quelqu'un sur ce qui n'est pas exigible. */
+    var t = TRACE.tous();
+    if (t.total && t.relancables * 3 < t.total) {
+      return { t: t.relancables + " livrables sur " + t.total + " sont relançables",
+        q: "Les autres n'ont pas de date de remise, ou pas de responsable : rien n'est "
+          + "exigible dessus, donc rien n'apparaît en retard. Relancer là-dessus serait "
+          + "une impression, pas un constat." };
+    }
     var enRetard = PLATEAU.pieces().filter(PLATEAU.estEnRetard);
     if (enRetard.length) {
       return { t: enRetard.length + (enRetard.length > 1 ? " livrables ont passé leur date" : " livrable a passé sa date"),
