@@ -310,7 +310,7 @@ window.FEEDBACK = (function () {
       O.vider(apercu);
       var dn = NIVEAUX[selPortee.value];
       apercu.appendChild(el("div.stats", {},
-        UI.stat("PIÈCES TOUCHÉES", String(i.assets), i.marches.length + " marchés", i.assets > 5 ? "alerte" : ""),
+        UI.stat("LIVRABLES TOUCHÉS", String(i.assets), i.marches.length + " marchés", i.assets > 5 ? "alerte" : ""),
         UI.stat("COÛT ESTIMÉ", i.jours + " j", "à mi-estimation par livrable", i.jours > 5 ? "alerte" : ""),
         i.enProduction ? UI.stat("DÉJÀ EN PRODUCTION", String(i.enProduction),
           "BAT signé — les rappeler coûte", "alerte") : null
@@ -411,7 +411,7 @@ window.FEEDBACK = (function () {
     PANNEAU.ouvrir("Trancher — " + O.joli(f.quand), p ? p.ref : "", el("div", {},
       el("div.fb-texte", {}, f.texte),
       el("div.stats", {},
-        UI.stat("PIÈCES", String(i.assets), i.marches.length + " marchés", ""),
+        UI.stat("LIVRABLES", String(i.assets), i.marches.length + " marchés", ""),
         UI.stat("COÛT", i.jours + " j", "de reprise estimée", i.jours > 5 ? "alerte" : ""),
         UI.stat("VERSIONS", String(i.assets), "s'ouvriront si on l'applique", "")
       ),

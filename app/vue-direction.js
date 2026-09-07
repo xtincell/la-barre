@@ -552,7 +552,7 @@ window.VUE_DIRECTION = (function () {
   function ondeAnnuler(sim) {
     return el("div", {},
       el("div.stats", {},
-        UI.stat("PIÈCES", sim.touches.length, "retirées du plan", "alerte"),
+        UI.stat("LIVRABLES", sim.touches.length, "retirées du plan", "alerte"),
         UI.stat("AIR LIBÉRÉ", (sim.libere || "—") + " j", sim.libere ? "rendus à l'équipe" : "charge inconnue", "vert")),
       sim.consequences.length
         ? el("div", { style: { "margin-top": ".8rem" } }, sim.consequences.map(function (c) { return UI.banniere("rouge", c); }))

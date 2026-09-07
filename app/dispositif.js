@@ -171,7 +171,7 @@ window.DISPOSITIF = (function () {
       var manq = manquantes(p, pi, faux);
       O.vider(onde);
       onde.appendChild(el("div.stats", {},
-        UI.stat("PIÈCES EXISTANTES", String(ls.length), "déjà au dossier", ""),
+        UI.stat("LIVRABLES EXISTANTS", String(ls.length), "déjà au dossier", ""),
         UI.stat("À CRÉER", String(manq.length),
           manq.length ? "croisements non couverts" : "rien ne manque",
           manq.length ? "alerte" : ""),

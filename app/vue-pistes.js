@@ -86,7 +86,7 @@ window.VUE_PISTES = (function () {
     { cle: "porteurs",   nom: "PORTEURS" },
     { cle: "dispositif", nom: "DISPOSITIF" },
     { cle: "delai",      nom: "DÉLAI" },
-    { cle: "pieces",     nom: "PIÈCES" },
+    { cle: "pieces",     nom: "LIVRABLES" },
   ];
   var LETTRES = "ABCDEF";
 

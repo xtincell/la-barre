@@ -343,7 +343,7 @@ window.VUE_ROUTE = (function () {
       el("div.stats", {},
         UI.stat("ACTIVITÉS", String(DISPOSITIF.liste(pi).length),
           "passent en production", DISPOSITIF.liste(pi).length ? "vert" : "alerte"),
-        UI.stat("PIÈCES À CRÉER", String(d.aCreer.length),
+        UI.stat("LIVRABLES À CRÉER", String(d.aCreer.length),
           d.aCreer.length ? "croisements du dispositif non couverts" : "tout existe déjà", ""),
         UI.stat("BAT MANQUANTS", String(d.sansBAT.length),
           d.sansBAT.length ? "sur les livrables existantes" : "tous posés",
