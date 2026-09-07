@@ -16,7 +16,7 @@ window.VUE_EQUIPE = (function () {
   function rendre(hote, rafraichir) {
     var gens = EQUIPE.encadres();
     if (!gens.length) {
-      return el("p.rien", {}, "Personne à encadrer au dépôt. Les postes rattachés à la "
+      return el("p.rien", {}, "Personne à encadrer à la base. Les postes rattachés à la "
         + "Direction de la Création s'ajoutent dans La maison › Les réglages › L'équipe.");
     }
 
@@ -163,7 +163,7 @@ window.VUE_EQUIPE = (function () {
           el("div.eqdc-t", {}, b.charge.jours + " j sur " + b.charge.capacite
             + (b.charge.cumul ? "  ·  capacité réduite de " + b.charge.cumul + " % par ses cumuls" : "")
             + (b.charge.part > 100 ? "  ·  au-delà du mur : le dépassement se paiera en délai"
-               : !b.pieces.length ? "  ·  aucune pièce ne lui est affectée : il n'y a rien à mesurer"
+               : !b.pieces.length ? "  ·  aucun livrable ne lui est affecté : il n'y a rien à mesurer"
                : ""))),
         cums.length
           ? el("div.eqd-cums", {}, cums.map(function (c) {
@@ -200,11 +200,11 @@ window.VUE_EQUIPE = (function () {
               var pris = b.retenu.some(function (r) { return r.objet === x.objet; });
               var ecarte = x.objet.statut === "ecartee";
               return el("div.eqd-pr" + (pris ? ".retenu" : ""), {},
-                el("span.eqdp-t", {}, x.type === "route" ? "route" : "idée"),
+                el("span.eqdp-t", {}, x.type === "piste" ? "piste" : "idée"),
                 el("span.eqdp-n", {}, String(x.nom).slice(0, 80)),
                 el("span.eqdp-e", {}, pris ? "retenue — elle fait autorité"
                   : ecarte ? "écartée — le motif est écrit"
-                  : x.type === "route" ? "en lice — rien ne se produit tant qu'aucune ne l'emporte"
+                  : x.type === "piste" ? "en lice — rien ne se produit tant qu'aucune ne l'emporte"
                   : "en lice — non arbitrée, elle ne compte dans aucun indicateur"));
             })))
         : null,
@@ -246,7 +246,7 @@ window.VUE_EQUIPE = (function () {
   /* ————————————————————— Noter une remarque ————————————————————— */
 
   function noter(pe, rafraichir) {
-    var quoi = el("input", { type: "text", placeholder: "Sur quoi — une pièce, une route, une attitude" });
+    var quoi = el("input", { type: "text", placeholder: "Sur quoi — un livrable, une piste, une attitude" });
     var texte = el("textarea", { rows: 3, placeholder: "Ce que je lui ai dit, et pourquoi" });
     var selT = el("select", {});
     [["note", "Une observation"], ["retenu", "Ce qui a bien marché"],

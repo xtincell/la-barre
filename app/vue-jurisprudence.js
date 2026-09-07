@@ -44,7 +44,7 @@ window.VUE_JURISPRUDENCE = (function () {
         { quoi: "Des arbitrages écrits", ok: e.total >= 5, poids: 5,
           cout: e.total
             ? "seulement " + e.total + (e.total > 1 ? " arbitrages motivés" : " arbitrage motivé")
-              + " au dépôt : trop peu pour qu'une ligne se dégage"
+              + " à la base : trop peu pour qu'une ligne se dégage"
             : "aucun arbitrage motivé : le poste ne se transmet pas, il se subit" },
         { quoi: "Adossés à un critère", ok: e.total > 0 && e.libres <= e.surCritere, poids: 4,
           cout: e.libres + " sur " + e.total + " tranchés au jugement seul, sans critère écrit — "
@@ -178,7 +178,7 @@ window.VUE_JURISPRUDENCE = (function () {
       sel.appendChild(o);
     });
     var champ = el("input", { type: "text",
-      placeholder: "En une phrase, ce qui rend la pièce refusable" });
+      placeholder: "En une phrase, ce qui rend le livrable refusable" });
 
     PANNEAU.ouvrir("Écrire un critère", g.cas.length + " cas le réclament", el("div", {},
       UI.banniere("", "Un critère se rédige comme un fait vérifiable, pas comme un goût : "
@@ -197,7 +197,7 @@ window.VUE_JURISPRUDENCE = (function () {
             AVIS.refus("Ce critère existe déjà sur " + sel.value + "."); return;
           }
           AVIS.fait("Critère ajouté à " + sel.value + ". Il apparaîtra dans la liste des "
-            + "motifs au prochain refus, et il part avec l'export du dépôt.");
+            + "motifs au prochain refus, et il part avec l'export de la base.");
           PANNEAU.fermer(); rafraichir();
         } }, "Écrire le critère"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))

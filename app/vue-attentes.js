@@ -62,7 +62,7 @@ window.VUE_ATTENTES = (function () {
     var echelle = Math.max(5, Math.ceil(pire / 5) * 5);
 
     if (!total) {
-      hote.appendChild(UI.banniere("vert", "Rien ne m'est dû. Les pièces tiennent le brief, "
+      hote.appendChild(UI.banniere("vert", "Rien ne m'est dû. Les livrables tiennent le brief, "
         + "la plateforme et les critères, et aucun renvoi n'attend de retour."));
       return;
     }
@@ -166,7 +166,7 @@ window.VUE_ATTENTES = (function () {
   }
 
   function lesPieces(x, hote) {
-    PANNEAU.ouvrir(x.niveau.nom + " — l'onde", x.onde.assets + " pièces", el("div", {},
+    PANNEAU.ouvrir(x.niveau.nom + " — l'onde", x.onde.assets + " livrables", el("div", {},
       el("div.fb-texte", {}, x.quoi),
       UI.banniere(x.niveau.ton === "alerte" ? "rouge" : "", x.niveau.onde + ".  " + x.niveau.avant),
       el("div.rt-mur", { style: { "margin-top": ".8rem" } }, x.onde.pieces.map(function (l) {

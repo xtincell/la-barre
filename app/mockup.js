@@ -1,11 +1,11 @@
 /* mockup.js — la mise en situation.
  *
  * Un KV posé sur un fond blanc ne se juge pas comme un KV sur un 4×3 au bord
- * d'une route. Le mockup n'est pas une décoration : c'est le seul endroit où
+ * d'une piste. Le mockup n'est pas une décoration : c'est le seul endroit où
  * l'on voit qu'une accroche ne tient pas à trente mètres.
  *
  * L'outil ne fabrique pas le mockup — Photoshop le fait. Il le porte, le
- * rattache à sa pièce et à son contexte, et le fait entrer dans la
+ * rattache à son livrable et à son contexte, et le fait entrer dans la
  * présentation sans qu'on le recolle à la main.
  */
 
@@ -37,7 +37,7 @@ window.MOCKUP = (function () {
     return (p.livrables || []).reduce(function (n, l) { return n + liste(l).length; }, 0);
   }
 
-  /* ————————————————————— Le bloc, posé sur une pièce ————————————————————— */
+  /* ————————————————————— Le bloc, posé sur un livrable ————————————————————— */
 
   function bloc(p, l, rafraichir) {
     var ms = liste(l);
@@ -93,7 +93,7 @@ window.MOCKUP = (function () {
     } }, "Poser");
 
     PANNEAU.sur("Mise en situation", l.nom, el("div", {},
-      UI.banniere("", "Le mockup se fabrique ailleurs. Ici il est rattaché à sa pièce et à sa version : le jour où le visuel repart en V2, on saura que ce mockup ne le montre plus."),
+      UI.banniere("", "Le mockup se fabrique ailleurs. Ici il est rattaché à son livrable et à sa version : le jour où le visuel repart en V2, on saura que ce mockup ne le montre plus."),
       el("div.form", {},
         el("div.champ", {}, el("label", {}, "Le contexte"),
           el("div.indice", {}, "Où on la voit. C'est ce qui sera écrit sous l'image en présentation."), champ),

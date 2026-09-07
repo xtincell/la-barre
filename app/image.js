@@ -1,6 +1,6 @@
 /* image.js — les vignettes.
  *
- * Dans ce métier l'objet est l'image : une pièce sans visuel ne se juge pas.
+ * Dans ce métier l'objet est l'image : un livrable sans visuel ne se juge pas.
  * On stocke une vignette compressée, et le lien vers le master à côté — le
  * dépôt local ne doit jamais porter un fichier de production.
  *
@@ -105,7 +105,7 @@ window.IMAGE = (function () {
 
   /* ————————————————————— L'affichage ————————————————————— */
 
-  /* ————————————————————— Une pièce qui dure ————————————————————— */
+  /* ————————————————————— Un livrable qui dure ————————————————————— */
 
   /* Un film n'est pas une image.
    *
@@ -139,7 +139,7 @@ window.IMAGE = (function () {
     return objet.review || objet.vignette || null;
   }
 
-  /* Le médium d'une pièce, rendu comme il doit l'être. Rend aussi le nœud
+  /* Le médium d'un livrable, rendu comme il doit l'être. Rend aussi le nœud
    * vidéo, pour que celui qui annote puisse lire son instant. */
   function media(objet, taille) {
     var classe = "vignette v-" + (taille || "ligne");
@@ -198,7 +198,7 @@ window.IMAGE = (function () {
   }
 
   /* Toutes les valeurs de vignette du dépôt, où qu'elles soient rangées —
-   * pièces, mockups, pistes, packs, éléments de marque, moodboard. Les compter
+   * livrables, mockups, pistes, packs, éléments de marque, moodboard. Les compter
    * à la main par collection, c'est en oublier une à chaque nouvel objet. */
   function parcourir(racine, quand) {
     var vus = [];

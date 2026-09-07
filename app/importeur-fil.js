@@ -157,7 +157,7 @@ window.IMPORT_FIL = (function () {
       ));
 
       if (Object.keys(noms).length) {
-        zone.appendChild(UI.banniere("", "Ces noms ne correspondent à personne du dépôt : leurs messages entreront sans auteur, et une idée sans auteur ne s'attribue pas. À rattacher ci-dessous."));
+        zone.appendChild(UI.banniere("", "Ces noms ne correspondent à personne de la base : leurs messages entreront sans auteur, et une idée sans auteur ne s'attribue pas. À rattacher ci-dessous."));
       }
 
       zone.appendChild(el("div.if-l", {}, msgs.map(function (m) {

@@ -21,7 +21,7 @@ window.CHAMPS = {
         { cle: "clientId", nom: "Client", type: "objet", source: "clients", requis: true,
           vide: "— quel annonceur ? —" },
         { cle: "marqueIds", nom: "Marques", type: "objets", requis: true,
-          aide: "Une campagne peut en porter plusieurs. Elles viennent du vault.",
+          aide: "Une campagne peut en porter plusieurs. Elles viennent de la bibliothèque de marque.",
           source: function (v) {
             var t = DEPOT.liste("marques");
             return v.clientId ? t.filter(function (m) { return m.clientId === v.clientId; }) : t;
@@ -64,7 +64,7 @@ window.CHAMPS = {
     },
     {
       cle: "socle",
-      nom: "Socle de marque",
+      nom: "Plateforme de marque",
       poste: "creation",
       partage: true,
       champs: [
@@ -76,7 +76,7 @@ window.CHAMPS = {
         { cle: "ton", nom: "Personnalité et ton", type: "long" },
         { cle: "jamais", nom: "La marque ne dit jamais", type: "puces" },
         { cle: "symboles", nom: "Symboles", type: "puces" },
-        { cle: "ne_fera_pas", nom: "Ce que le socle ne fera pas", type: "puces" },
+        { cle: "ne_fera_pas", nom: "Ce que la plateforme de marque ne fera pas", type: "puces" },
       ],
     },
     {
@@ -101,7 +101,7 @@ window.CHAMPS = {
         { cle: "campagne", nom: "Nom de campagne", type: "texte", requis: true },
         { cle: "auteur", nom: "Auteur de l'idée", type: "personne", requis: true, aide: "Constaté, pas attribué. Se saisit en séance, avant l'arbitrage." },
         { cle: "mecanique", nom: "La mécanique", type: "long", requis: true, aide: "Lisible indépendamment du média. Test : la reformuler sans nommer le support." },
-        { cle: "rattachement", nom: "Rattachement au socle", type: "long", requis: true, aide: "Explicite, ou justifier l'écart." },
+        { cle: "rattachement", nom: "Rattachement à la plateforme de marque", type: "long", requis: true, aide: "Explicite, ou justifier l'écart." },
         { cle: "signature", nom: "Signature de campagne", type: "texte" },
         { cle: "ton_campagne", nom: "Ton", type: "texte" },
         { cle: "phares", nom: "Éléments phares imposés", type: "puces", aide: "Leur absence est un motif de refus." },
@@ -114,7 +114,7 @@ window.CHAMPS = {
 
   /* Une piste créative. */
   piste: [
-    { cle: "titre", nom: "Titre de la route", type: "texte", requis: true },
+    { cle: "titre", nom: "Titre de la piste", type: "texte", requis: true },
     { cle: "auteurDA", nom: "Auteur — Direction Artistique", type: "personne", requis: true },
     { cle: "auteurCR", nom: "Auteur — Concepteur-rédacteur", type: "personne" },
     { cle: "concept", nom: "Le concept", type: "long", requis: true },
@@ -138,7 +138,7 @@ window.CHAMPS = {
     { cle: "publication", nom: "Publication", type: "date" },
     { cle: "estime", nom: "Estimé (jours)", type: "nombre" },
     { cle: "reel", nom: "Réel (jours)", type: "nombre" },
-    { cle: "toursVendus", nom: "Tours de révision vendus", type: "nombre" },
+    { cle: "toursVendus", nom: "Allers-retours de révision vendus", type: "nombre" },
   ],
 
   /* Utilitaires */

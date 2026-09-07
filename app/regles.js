@@ -28,8 +28,8 @@ window.REGLES = (function () {
     "bilan-absent": "Le projet suivant sur cette marque partira sans son diagnostic.",
     "infere-non-contresigne": "Utilisable pour travailler, pas opposable au client : le jour où il conteste, rien ne tient.",
     "brief-sans-porteur": "Personne ne répond de ce qui a été compris : au premier écart entre le dit et l'écrit, il n'y a pas d'arbitre.",
-    "adaptation-hors-da": "Une correction demandée par le marché arrivera chez quelqu'un qui n'a pas fait la route.",
-    "livrable-sans-route": "Elle se fabrique sans concept opposable : refusable par le goût seul, jamais sur un critère écrit.",
+    "adaptation-hors-da": "Une correction demandée par le marché arrivera chez quelqu'un qui n'a pas fait la piste.",
+    "livrable-sans-piste": "Elle se fabrique sans concept opposable : refusable par le goût seul, jamais sur un critère écrit.",
     "sku-hors-zone": "Un produit montré là où il n'est pas vendu se rappelle, et le rappel est pour l'agence.",
     "orthographe-diffusee": "La faute part sur toute la descendance, et se lit sur chaque support imprimé.",
     "packshot-cmyk": "Bon pour l'impression, faux à l'écran : les couleurs ne seront pas celles validées.",
@@ -60,7 +60,7 @@ window.REGLES = (function () {
 
       /* Socle avant big idea */
       if (aSection(p, "bigidea") && s.bigidea && s.bigidea.idee && !(s.socle && s.socle.idee_directrice)) {
-        pousser(trouves, p, "socle-absent", "Big idea ouverte sans socle de marque actif", "creation", "socle");
+        pousser(trouves, p, "socle-absent", "Big idea ouverte sans plateforme de marque active", "creation", "socle");
       }
 
       /* Auteur de l'idée */
@@ -81,14 +81,14 @@ window.REGLES = (function () {
       }
 
       /* Un produit montré là où il n'est pas vendu. Le contrôle ne peut se
-       * faire que sur les pièces qui déclarent leurs packs — les autres sont
+       * faire que sur les livrables qui déclarent leurs packs — les autres sont
        * muettes, et c'est une information aussi. */
       if (window.VAULT) {
         var horsZone = (p.livrables || []).filter(function (l) {
           return !l.annule && VAULT.packsHorsZone(l).hors.length; });
         if (horsZone.length) {
           pousser(trouves, p, "sku-hors-zone",
-            horsZone.length + (horsZone.length > 1 ? " pièces montrent un produit" : " pièce montre un produit")
+            horsZone.length + (horsZone.length > 1 ? " livrables montrent un produit" : " livrable montre un produit")
               + " non distribué sur son marché", "creation", "livrables");
         }
 
@@ -103,8 +103,8 @@ window.REGLES = (function () {
         });
         if (cmyk.length) {
           pousser(trouves, p, "packshot-cmyk",
-            cmyk.length + (cmyk.length > 1 ? " pièces digitales montrent un packshot CMYK"
-                                           : " pièce digitale montre un packshot CMYK"),
+            cmyk.length + (cmyk.length > 1 ? " livrables digitales montrent un packshot CMYK"
+                                           : " livrable digitale montre un packshot CMYK"),
             "creation", "livrables");
         }
       }
@@ -117,7 +117,7 @@ window.REGLES = (function () {
         if (fautives.length) {
           var f0 = VAULT.fautesSur(fautives[0])[0];
           pousser(trouves, p, "orthographe-diffusee",
-            fautives.length + (fautives.length > 1 ? " pièces portent « " : " pièce porte « ")
+            fautives.length + (fautives.length > 1 ? " livrables portent « " : " livrable porte « ")
               + f0.mauvais + " »" + (f0.bon ? " au lieu de « " + f0.bon + " »" : ""),
             "creation", "livrables");
         }
@@ -147,7 +147,7 @@ window.REGLES = (function () {
         if (maitres) {
           pousser(trouves, p, "logo-ombrelle-absent",
             "Logo " + p.campagne.ombrelle.nom + " absent des " + maitres
-              + " KV maîtres", "creation", "livrables");
+              + " KV masters", "creation", "livrables");
         }
       }
 
@@ -162,13 +162,13 @@ window.REGLES = (function () {
         }
       }
 
-      /* Les adaptations reviennent au DA de leur route. */
+      /* Les adaptations reviennent au DA de leur piste. */
       if (window.KV) {
         var mal = KV.adaptationsMalPortees(p);
         if (mal.length) {
           pousser(trouves, p, "adaptation-hors-da",
-            mal.length + (mal.length > 1 ? " adaptations ne sont pas au DA de leur route"
-                                         : " adaptation n'est pas au DA de sa route"),
+            mal.length + (mal.length > 1 ? " adaptations ne sont pas au DA de leur piste"
+                                         : " adaptation n'est pas au DA de sa piste"),
             "creation", "livrables");
         }
       }
@@ -189,21 +189,21 @@ window.REGLES = (function () {
         if (!pi.auteurDA) pousser(trouves, p, "auteur-absent", "Piste « " + (pi.titre || "sans titre") + " » sans auteur", "creation", "pistes");
       });
 
-      /* Livrables. Une campagne multi-marchés porte quatorze pièces : quatorze
+      /* Livrables. Une campagne multi-marchés porte quatorze livrables : quatorze
        * lignes identiques dans le rail ne dirigent rien. Au-delà de deux, le
        * blocage se dit une fois, avec son nombre. */
-      var lots = { "sans-proprietaire": [], "maitre-perime": [], "droits-insuffisants": [], "entree-sans-fournisseur": [], "livrable-sans-route": [] };
+      var lots = { "sans-proprietaire": [], "maitre-perime": [], "droits-insuffisants": [], "entree-sans-fournisseur": [], "livrable-sans-piste": [] };
       (p.livrables || []).forEach(function (l) {
         if (l.annule) return;
         (l.entrees || []).forEach(function (e) {
           if (!e.fournisseur) lots["entree-sans-fournisseur"].push({ l: l, quoi: "« " + e.quoi + " » attendu sans fournisseur nommé" });
         });
         if (!l.responsable) lots["sans-proprietaire"].push({ l: l, quoi: "Livrable « " + l.nom + " » sans responsable" });
-        /* Une pièce que nulle route ne gouverne ne se refuse que par le goût.
+        /* Un livrable que nulle piste ne gouverne ne se refuse que par le goût.
          * Vaut pour une campagne comme pour un cycle : un cycle ne met pas
-         * deux routes en concurrence, mais il en tient une. */
-        if (!l.pisteId) lots["livrable-sans-route"].push({ l: l, quoi: "« " + l.nom + " » ne relève d'aucune route" });
-        if (maitrePerime(p, l)) lots["maitre-perime"].push({ l: l, quoi: "« " + l.nom + " » adapté sur une version dépassée du maître" });
+         * deux pistes en concurrence, mais il en tient une. */
+        if (!l.pisteId) lots["livrable-sans-piste"].push({ l: l, quoi: "« " + l.nom + " » ne relève d'aucune piste" });
+        if (maitrePerime(p, l)) lots["maitre-perime"].push({ l: l, quoi: "« " + l.nom + " » adapté sur une version dépassée du master" });
         var d = droitsInsuffisants(l);
         if (d) lots["droits-insuffisants"].push({ l: l, quoi: d });
       });
@@ -224,13 +224,13 @@ window.REGLES = (function () {
       poserLot(trouves, p, lots["sans-proprietaire"], "sans-proprietaire", "creation", "livrables",
         function (n) { return n + " livrables sans responsable"; });
       poserLot(trouves, p, lots["maitre-perime"], "maitre-perime", "da", "livrables",
-        function (n) { return n + " adaptations faites sur une version dépassée du maître"; });
+        function (n) { return n + " adaptations faites sur une version dépassée du master"; });
       poserLot(trouves, p, lots["droits-insuffisants"], "droits-insuffisants", "motion", "livrables",
         function (n) { return n + " visuels hors zone ou hors durée de cession"; });
       poserLot(trouves, p, lots["entree-sans-fournisseur"], "entree-sans-fournisseur", "creation", "livrables",
         function (n) { return n + " éléments d'entrée attendus sans fournisseur nommé"; });
-      poserLot(trouves, p, lots["livrable-sans-route"], "livrable-sans-route", "creation", "pistes",
-        function (n) { return n + " livrables ne relèvent d'aucune route"; });
+      poserLot(trouves, p, lots["livrable-sans-piste"], "livrable-sans-piste", "creation", "pistes",
+        function (n) { return n + " livrables ne relèvent d'aucune piste"; });
     });
 
     return reconcilier(trouves);
@@ -255,7 +255,7 @@ window.REGLES = (function () {
     return !g || g.sections.indexOf(cle) !== -1;
   }
 
-  /* Un lot : en dessous de trois on nomme chaque pièce, au-delà on nomme le
+  /* Un lot : en dessous de trois on nomme chaque livrable, au-delà on nomme le
    * nombre — et on garde la liste, pour pouvoir l'ouvrir. */
   var SEUIL_LOT = 3;
 

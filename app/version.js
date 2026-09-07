@@ -1,7 +1,7 @@
 /* version.js — tout ce que le client voit se versionne.
  *
  * Le brief se versionne, la plateforme se versionne, l'idée se versionne, les
- * routes se versionnent. Pas seulement les livrables. Sans ça, « le client a
+ * pistes se versionnent. Pas seulement les livrables. Sans ça, « le client a
  * changé d'avis » n'a ni date, ni auteur, ni coût — et la reprise n'existe pas.
  *
  * Une version naît d'un retour, jamais d'une envie : on écrit ce qui l'a
@@ -56,7 +56,7 @@ window.VERSION = (function () {
     return g;
   }
 
-  /* Combien de tours au-delà de ce qui a été vendu. */
+  /* Combien d'allers-retours au-delà de ce qui a été vendu. */
   function tours(o, vendus) {
     var payants = historique(o).filter(function (v) {
       return ORIGINES[v.origine] && ORIGINES[v.origine].cout;
@@ -85,10 +85,10 @@ window.VERSION = (function () {
       onde.appendChild(el("div.stats", {},
         UI.stat("VERSION", "V" + num(objet) + "  →  V" + (num(objet) + 1), "", ""),
         UI.stat("COMPTÉE", o.cout ? "oui" : "non",
-          o.cout ? "elle entre dans les tours de révision" : "le coût reste pour nous",
+          o.cout ? "elle entre dans les allers-retours de révision" : "le coût reste pour nous",
           o.cout ? "alerte" : ""),
         suite.length ? UI.stat("PÉRIME", String(suite.length),
-          suite.length > 1 ? "pièces à regénérer" : "pièce à regénérer", "alerte") : null
+          suite.length > 1 ? "livrables à regénérer" : "livrable à regénérer", "alerte") : null
       ));
       if (suite.length) {
         onde.appendChild(UI.banniere("rouge", suite.slice(0, 4).map(function (x) { return x.nom; }).join(" · ")
@@ -125,9 +125,9 @@ window.VERSION = (function () {
 
     return el("div.vs", {},
       t.depasse
-        ? UI.banniere("rouge", t.faits + " tours consommés pour " + t.vendus
+        ? UI.banniere("rouge", t.faits + " allers-retours consommés pour " + t.vendus
             + " vendus — " + t.depasse + " au-delà du périmètre. C'est le chiffre à porter en négociation.")
-        : t.vendus ? el("div.vs-t", {}, t.faits + " / " + t.vendus + " tours consommés") : null,
+        : t.vendus ? el("div.vs-t", {}, t.faits + " / " + t.vendus + " allers-retours consommés") : null,
 
       el("div.vs-l", {}, h.slice().reverse().map(function (v) {
         var o = ORIGINES[v.origine] || { nom: v.origine, cout: false };

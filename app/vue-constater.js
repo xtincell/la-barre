@@ -13,14 +13,14 @@
 
 window.VUE_CONSTATER = (function () {
   var el = O.el;
-  var mode = "standard";
+  var mode = "indicateurs";
 
   var MODES = [
-    { cle: "standard", nom: "MON STANDARD", quoi: "ce sur quoi je suis évalué" },
-    { cle: "bouscule", nom: "QUI BOUSCULE", quoi: "ce que les retours ont coûté, et à qui" },
-    { cle: "equipe", nom: "MON ÉQUIPE", quoi: "ce qu'ils ont produit, et ce que je leur ai dit" },
-    { cle: "fin", nom: "MA FIN DE MOIS", quoi: "ce qui sort, compilé sans ressaisie" },
-    { cle: "jurisprudence", nom: "LA JURISPRUDENCE", quoi: "comment j'ai tranché, et sur quel critère" },
+    { cle: "indicateurs", nom: "INDICATEURS", quoi: "ce sur quoi je suis évalué" },
+    { cle: "reprises", nom: "REPRISES", quoi: "ce que les retours hors périmètre ont coûté, et à qui" },
+    { cle: "equipe", nom: "ÉVALUATION", quoi: "ce qu'ils ont produit, et ce que je leur ai dit" },
+    { cle: "bilan", nom: "BILAN MENSUEL", quoi: "ce qui sort, compilé sans ressaisie" },
+    { cle: "arbitrages", nom: "ARBITRAGES", quoi: "comment j'ai tranché, et sur quel critère" },
   ];
 
   function rendre(hote, arg) {
@@ -45,10 +45,10 @@ window.VUE_CONSTATER = (function () {
       })),
 
       el("div.dc-corps", {},
-        mode === "standard" ? standard(s, hote)
+        mode === "indicateurs" ? standard(s, hote)
           : mode === "equipe" ? VUE_EQUIPE.rendre(hote, function () { rendre(hote); })
-          : mode === "fin" ? VUE_FINDEMOIS.rendre(hote, function () { rendre(hote); })
-          : mode === "jurisprudence" ? VUE_JURISPRUDENCE.rendre(hote, function () { rendre(hote); })
+          : mode === "bilan" ? VUE_FINDEMOIS.rendre(hote, function () { rendre(hote); })
+          : mode === "arbitrages" ? VUE_JURISPRUDENCE.rendre(hote, function () { rendre(hote); })
           : bouscule(hote))
     ));
   }
@@ -65,10 +65,10 @@ window.VUE_CONSTATER = (function () {
    * Chaque mode sait déjà calculer son propre état. Il ne s'agit que de
    * l'appeler. */
   function pire(s) {
-    if (mode === "bouscule") return pireBouscule();
+    if (mode === "reprises") return pireBouscule();
     if (mode === "equipe") return pireEquipe();
-    if (mode === "fin") return pireFin();
-    if (mode === "jurisprudence") return pireJurisprudence();
+    if (mode === "bilan") return pireFin();
+    if (mode === "arbitrages") return pireJurisprudence();
     return pireStandard(s);
   }
 
@@ -107,7 +107,7 @@ window.VUE_CONSTATER = (function () {
   function pireEquipe() {
     var gens = window.EQUIPE ? EQUIPE.encadres() : [];
     if (!gens.length) {
-      return { cle: "sansEquipe", t: "Personne à encadrer au dépôt",
+      return { cle: "sansEquipe", t: "Personne à encadrer à la base",
         q: "Sans personnes déclarées, « progression mesurée des créatifs encadrés » "
           + "n'a pas de sujet — et l'indicateur reste à zéro par construction." };
     }
@@ -226,7 +226,7 @@ window.VUE_CONSTATER = (function () {
     if (s.depassements) {
       return { cle: "tours",
         t: s.joursDepasses + " jours au-delà du périmètre vendu",
-        q: "Sur " + s.depassements + (s.depassements > 1 ? " pièces" : " pièce")
+        q: "Sur " + s.depassements + (s.depassements > 1 ? " livrables" : " livrable")
           + ". C'est ce chiffre qui rend la clause de reprise crédible en négociation — "
           + "pas le paragraphe du contrat." };
     }
@@ -246,9 +246,9 @@ window.VUE_CONSTATER = (function () {
     if (s.idees - s.retenues) {
       var m = s.idees - s.retenues;
       return { cle: "arbitrage",
-        t: m + (m > 1 ? " big ideas sans route retenue" : " big idea sans route retenue"),
+        t: m + (m > 1 ? " big ideas sans piste retenue" : " big idea sans piste retenue"),
         q: "Je suis évalué sur les big ideas retenues et alignées au brief. Une idée sans "
-          + "route arbitrée ne produit rien de mesurable." };
+          + "piste arbitrée ne produit rien de mesurable." };
     }
     if (s.props - s.avecArg) {
       var k = s.props - s.avecArg;
@@ -259,7 +259,7 @@ window.VUE_CONSTATER = (function () {
           + "refusables au §8." };
     }
     return { cle: "tenu", t: "Le standard tient",
-      q: "Délai de verdict tenu, reprises contenues, briefs contresignés, routes "
+      q: "Délai de verdict tenu, reprises contenues, briefs contresignés, pistes "
         + "arbitrées, propositions argumentées. Ce qui sort en fin de mois se calcule "
         + "tout seul." };
   }
@@ -288,13 +288,13 @@ window.VUE_CONSTATER = (function () {
           ? (s.projets - s.traites) + (s.projets - s.traites > 1 ? " sans go final : ils n'engagent" : " sans go final : il n'engage") + " la Clientèle sur rien"
           : "tous contresignés",
         pourquoi: "Sans contreseing de la Clientèle, un brief mis en forme ne compte pas comme traité — et c'est la première ligne sur laquelle je suis évalué.",
-        geste: { nom: "Réclamer le contreseing →", ou: "#/decider/du" } },
+        geste: { nom: "Réclamer le contreseing →", ou: "#/valider/du" } },
 
       { cle: "idees", v: s.retenues + " / " + s.idees, nom: "big ideas retenues",
         ko: s.retenues < s.idees,
         quoi: s.alignees + (s.alignees > 1 ? " alignées" : " alignée") + " à un brief accepté",
-        pourquoi: "Une idée sans route arbitrée ne produit rien de mesurable.",
-        geste: { nom: "Arbitrer les routes →", ou: "#/decider/file" } },
+        pourquoi: "Une idée sans piste arbitrée ne produit rien de mesurable.",
+        geste: { nom: "Arbitrer les pistes →", ou: "#/valider/file" } },
 
       { cle: "args", v: s.avecArg + " / " + s.props, nom: "propositions argumentées",
         ko: s.avecArg < s.props,
@@ -320,15 +320,15 @@ window.VUE_CONSTATER = (function () {
             ? "au-delà de ma cible de " + s.cibleVerdict + " j"
             : "sous ma cible de " + s.cibleVerdict + " j",
         pourquoi: "C'est la dérive nommée dans ma fiche : « une dépendance qui bloque toute décision en son absence ».",
-        geste: { nom: "Trancher ce qui attend →", ou: "#/decider/file" } },
+        geste: { nom: "Trancher ce qui attend →", ou: "#/valider/file" } },
 
       { cle: "reprise", v: s.reprise === null ? "—" : s.reprise + " %",
         nom: "livrables repris",
         ko: s.reprise !== null && s.reprise > 20,
         creux: s.reprise === null,
         quoi: s.reprise === null
-          ? "aucune pièce ne porte de version : le taux n'a pas de dénominateur"
-          : s.reprises + " sur " + s.pieces + " pièces",
+          ? "aucun livrable ne porte de version : le taux n'a pas de dénominateur"
+          : s.reprises + " sur " + s.pieces + " livrables",
         pourquoi: "L'exigence se mesure au taux de reprise, y compris sur les petits projets.",
         geste: null },
     ];
@@ -378,12 +378,12 @@ window.VUE_CONSTATER = (function () {
         ? el("div.cs-bloc", {},
             el("div.csb-t", {}, "AU-DELÀ DU PÉRIMÈTRE VENDU"),
             UI.banniere("rouge", s.depassements
-              + (s.depassements > 1 ? " pièces ont consommé" : " pièce a consommé")
-              + " plus de tours que ce qui a été vendu — soit "
+              + (s.depassements > 1 ? " livrables ont consommé" : " livrable a consommé")
+              + " plus d'allers-retours que ce qui a été vendu — soit "
               + s.joursDepasses + " jours. C'est ce chiffre qui rend la clause de reprise "
               + "crédible en négociation, pas le paragraphe du contrat."),
             el("div.form-actions", {},
-              el("a.b", { href: "#/constater/bouscule" }, "voir qui les a demandés →")))
+              el("a.b", { href: "#/reporting/reprises" }, "voir qui les a demandés →")))
         : null,
 
       el("div.st-cibles", {},
@@ -533,7 +533,7 @@ window.VUE_CONSTATER = (function () {
             el("div", {},
               el("div.glrq-n", {}, a.nom, client ? UI.eti("client", "or") : UI.eti("interne", "terne")),
               el("div.glrq-p", {}, a.n + (a.n > 1 ? " retours" : " retour")
-                + "  ·  " + a.assets + (a.assets > 1 ? " pièces touchées" : " pièce touchée")))),
+                + "  ·  " + a.assets + (a.assets > 1 ? " livrables touchés" : " livrable touché")))),
 
           /* Le plateau gauche : ce que l'agence a payé. */
           el("div.glr-a", {},
@@ -564,7 +564,7 @@ window.VUE_CONSTATER = (function () {
               el("span.glrd-t", {}, String(f.texte).slice(0, 78)
                 + (String(f.texte).length > 78 ? "…" : "")),
               el("span.glrd-n", {}, (f.niveau ? "niveau " + f.niveau + "  ·  " : "")
-                + i.assets + (i.assets > 1 ? " pièces" : " pièce")));
+                + i.assets + (i.assets > 1 ? " livrables" : " livrable")));
           })));
       })),
 
@@ -572,9 +572,9 @@ window.VUE_CONSTATER = (function () {
         ? el("div.gl-g", {},
             el("div.glg-t", {}, "DEUX ISSUES, JAMAIS TROIS"),
             el("p", {}, ouverts + (ouverts > 1 ? " retours ne sont ni absorbés ni facturés" : " retour n'est ni absorbé ni facturé")
-              + ". Tant que ce n'est pas dit, les pièces restent suspendues et le coût reste chez nous."),
+              + ". Tant que ce n'est pas dit, les livrables restent suspendus et le coût reste chez nous."),
             el("div.form-actions", {},
-              el("a.b.or", { href: "#/decider/file" }, "Trancher les retours →")))
+              el("a.b.or", { href: "#/valider/file" }, "Trancher les retours →")))
         : abs > fac
           ? UI.banniere("rouge", "Plus de jours absorbés que facturés. La clause de reprise "
               + "existe et ne sert pas : c'est une décision commerciale, pas une fatalité.")

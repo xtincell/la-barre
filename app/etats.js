@@ -2,7 +2,7 @@
  *
  * « en lice », « brouillon », « junior », « en cumul » n'apprennent rien : ils
  * nomment une case de base de données. Ce qu'il me faut savoir, c'est ce que
- * cet état produit ou empêche — « en lice — 18 pièces se fabriquent sans savoir
+ * cet état produit ou empêche — « en lice — 18 livrables se fabriquent sans savoir
  * laquelle fait autorité » se lit et se décide.
  *
  * Un seul endroit les écrit, sinon chaque écran réinvente son vocabulaire et
@@ -15,11 +15,11 @@
 window.ETAT = (function () {
   var el = O.el;
 
-  /* ————————————————————— Une route ————————————————————— */
+  /* ————————————————————— Une piste ————————————————————— */
 
   function piste(p, pi) {
-    if (!pi) return { nom: "hors route", ton: "alerte",
-      quoi: "rattachée à aucune route : cette pièce ne relève d'aucune décision" };
+    if (!pi) return { nom: "hors piste", ton: "alerte",
+      quoi: "rattachée à aucune piste : ce livrable ne relève d'aucune décision" };
 
     var pieces = (p.livrables || []).filter(function (l) {
       return !l.annule && l.pisteId === pi.id; }).length;
@@ -43,7 +43,7 @@ window.ETAT = (function () {
     }
     return { nom: "en lice", ton: "attente",
       quoi: pieces
-        ? pieces + (pieces > 1 ? " pièces se fabriquent" : " pièce se fabrique")
+        ? pieces + (pieces > 1 ? " livrables se fabriquent" : " livrable se fabrique")
           + " sans savoir laquelle fait autorité"
         : "rien ne se produit tant qu'aucune ne l'emporte" };
   }
@@ -51,15 +51,15 @@ window.ETAT = (function () {
   /* ————————————————————— Une idée d'atelier ————————————————————— */
 
   function idee(p, i) {
-    var route = i.pisteId && p
+    var piste = i.pisteId && p
       ? (p.sections.pistes || []).filter(function (x) { return x.id === i.pisteId; })[0]
       : null;
 
     if (i.statut === "retenue") {
-      return route
-        ? { nom: "retenue", ton: "vert", quoi: "elle porte la route « " + route.titre + " »" }
+      return piste
+        ? { nom: "retenue", ton: "vert", quoi: "elle porte la piste « " + piste.titre + " »" }
         : { nom: "retenue", ton: "attente",
-            quoi: "reprise dans aucune route — son auteur n'est crédité nulle part, "
+            quoi: "reprise dans aucune piste — son auteur n'est crédité nulle part, "
               + "et l'indicateur « idées retenues » ne bouge pas" };
     }
     if (i.statut === "ecartee") {

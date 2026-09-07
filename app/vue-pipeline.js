@@ -1,4 +1,4 @@
-/* vue-pipeline.js — tous les projets, toutes les pièces, tous les retours.
+/* vue-pipeline.js — tous les projets, tous les livrables, tous les retours.
  *
  * C'est l'écran qui répond aux trois questions qu'aucun autre ne portait :
  *   — sur combien d'assets on travaille, et où ils en sont
@@ -64,7 +64,7 @@ window.VUE_PIPELINE = (function () {
       kpi(pretes + " / " + pieces.length, "prêtes à produire",
         pretes === pieces.length ? "tout peut partir" : (pieces.length - pretes) + " bloquées", pretes < pieces.length ? "alerte" : "vert"),
       kpi(String(fbOuverts.length), fbOuverts.length > 1 ? "retours non tranchés" : "retour non tranché",
-        touchees + (touchees > 1 ? " pièces suspendues" : " pièce suspendue"), fbOuverts.length ? "alerte" : "vert"),
+        touchees + (touchees > 1 ? " livrables suspendus" : " livrable suspendu"), fbOuverts.length ? "alerte" : "vert"),
       kpi(String(sansResp), "sans responsable",
         sansResp ? "personne en défaut le jour où ça n'avance pas" : "toutes affectées", sansResp ? "attente" : "vert")
     );
@@ -115,7 +115,7 @@ window.VUE_PIPELINE = (function () {
     return el("div.bl", {},
       el("div.bl-t", {},
         el("h3", {}, parie.n && !vendu.n
-          ? parie.n + " pièces se fabriquent, aucune n'est vendue"
+          ? parie.n + " livrables se fabriquent, aucune n'est vendue"
           : vendu.n && parie.n
             ? Math.round(parie.j) + " j pariés contre " + Math.round(vendu.j) + " j vendus"
             : "Tout ce qui se produit est vendu"),
@@ -148,9 +148,9 @@ window.VUE_PIPELINE = (function () {
                 el("div", {},
                   el("div.picl-n", {}, (x.personne ? x.personne.nom : "quelqu'un")
                     + " tient " + x.speculatif.length
-                    + (x.speculatif.length > 1 ? " pièces spéculatives" : " pièce spéculative")
+                    + (x.speculatif.length > 1 ? " livrables spéculatifs" : " livrable spéculatif")
                     + " pendant que " + x.ferme.length
-                    + (x.ferme.length > 1 ? " pièces engagées sont" : " pièce engagée est") + " en retard."),
+                    + (x.ferme.length > 1 ? " livrables engagés sont" : " livrable engagé est") + " en retard."),
                   el("div.picl-d", {}, x.ferme.slice(0, 3).map(function (f) {
                     return f.p.ref + " · " + f.l.nom; }).join("  ·  "))));
             }),
@@ -174,13 +174,13 @@ window.VUE_PIPELINE = (function () {
           title: b.r.regle,
         },
           el("span.blcb-n", {}, b.r.nom.toUpperCase()),
-          el("span.blcb-c", {}, n ? n + (n > 1 ? " pièces · " : " pièce · ") + Math.round(j) + " j"
-            : "aucune pièce"),
+          el("span.blcb-c", {}, n ? n + (n > 1 ? " livrables · " : " livrable · ") + Math.round(j) + " j"
+            : "aucun livrable"),
           n && b.g.length ? el("div.blcb-v", {}, vignettesDe(b.g)) : null);
       })),
       el("div.blc-s" + (vide ? ".creux" : ""), {}, vide
         ? (cle === "vendu" ? "0 jour engagé contractuellement" : "rien de parié")
-        : Math.round(tot.j) + " j sur " + tot.n + (tot.n > 1 ? " pièces" : " pièce")));
+        : Math.round(tot.j) + " j sur " + tot.n + (tot.n > 1 ? " livrables" : " livrable")));
   }
 
   function vignettesDe(g) {
@@ -199,12 +199,12 @@ window.VUE_PIPELINE = (function () {
     if (enLice.length) {
       var age = enLice.reduce(function (n, x) {
         return Math.max(n, x.pi.soumis_le ? O.depuis(x.pi.soumis_le) : 0); }, 0);
-      return "Une route retenue et validée fait basculer ses pièces à gauche. "
-        + enLice.length + (enLice.length > 1 ? " routes sont en lice" : " route est en lice")
+      return "Une piste retenue et validée fait basculer ses livrables à gauche. "
+        + enLice.length + (enLice.length > 1 ? " pistes sont en lice" : " piste est en lice")
         + (age ? " depuis " + age + (age > 1 ? " jours" : " jour") : "") + ".";
     }
     if (!rangs[0].length && rangs[1].length) {
-      return "Les routes sont validées mais pas payées. Relancer la facturation : "
+      return "Les pistes sont validées mais pas payées. Relancer la facturation : "
         + "produire sans bon de commande, c'est financer le client.";
     }
     return "La balance tient : ce qui se produit est vendu.";
@@ -219,10 +219,10 @@ window.VUE_PIPELINE = (function () {
       });
     });
     if (cible) {
-      g.push(el("a.b.or", { href: "#/projets/" + cible.id + "/pistes" }, "Arbitrer les routes →"));
+      g.push(el("a.b.or", { href: "#/projets/" + cible.id + "/pistes" }, "Arbitrer les pistes →"));
       g.push(el("a.b.nu", { href: "#/projets/" + cible.id + "/presentation" }, "Préparer la présentation"));
     } else {
-      g.push(el("a.b.nu", { href: "#/placer/charge" }, "Voir où en sont les pièces →"));
+      g.push(el("a.b.nu", { href: "#/planning/charge" }, "Voir où en sont les livrables →"));
     }
     return g;
   }
@@ -235,7 +235,7 @@ window.VUE_PIPELINE = (function () {
     return el("div.pi-rc", {},
       el("div.pirc-h", {},
         el("a.pirc-n", { href: "#/projets/" + x.p.id + "/pistes" },
-          x.pi ? (x.pi.titre || "route sans titre") : "Pièces sans route"),
+          x.pi ? (x.pi.titre || "piste sans titre") : "Livrables sans piste"),
         el("span.pirc-p", {}, x.p.ref + " · " + x.p.nom),
         el("span.pirc-c", {}, pretes + " / " + x.ls.length + " prêtes")),
 
@@ -262,12 +262,12 @@ window.VUE_PIPELINE = (function () {
             el("span.pil-m", {}, manque ? manque + " manques" : "prête")));
       })),
       x.ls.length > 8
-        ? el("a.pip-plus", { href: "#/projets/" + x.p.id + "/livrables" }, "les " + x.ls.length + " pièces →")
+        ? el("a.pip-plus", { href: "#/projets/" + x.p.id + "/livrables" }, "les " + x.ls.length + " livrables →")
         : null
     );
   }
 
-  /* ————————————————————— La charge : où en sont les pièces ————————————————————— */
+  /* ————————————————————— La charge : où en sont les livrables ————————————————————— */
 
   /* ————————————————————— La charge : le mur, ordonné par le risque ————————————————————— */
 
@@ -307,7 +307,7 @@ window.VUE_PIPELINE = (function () {
     }).sort(function (a, b) { return b.r.pts - a.r.pts; });
 
     if (!tout.length) {
-      return el("p.rien", {}, "Aucune pièce en production. Le mur se remplit quand une route est retenue.");
+      return el("p.rien", {}, "Aucun livrable en production. Le mur se remplit quand une piste est retenue.");
     }
 
     /* La ligne de partage : au-delà, la semaine tient. */
@@ -317,9 +317,9 @@ window.VUE_PIPELINE = (function () {
     return el("div.mu", {},
       el("div.mu-t", {},
         el("h3", {}, chaud.length
-          ? chaud.length + (chaud.length > 1 ? " pièces vont manquer leur date" : " pièce va manquer sa date")
-          : tout.length + (tout.length > 1 ? " pièces, aucune en risque" : " pièce, aucune en risque")),
-        el("p", {}, "Classées par ce qui va tomber, pas par volet. Une pièce sans estimation "
+          ? chaud.length + (chaud.length > 1 ? " livrables vont manquer leur date" : " livrable va manquer sa date")
+          : tout.length + (tout.length > 1 ? " livrables, aucune en risque" : " livrable, aucune en risque")),
+        el("p", {}, "Classées par ce qui va tomber, pas par volet. Un livrable sans estimation "
           + "est invisible dans la semaine — le mur arrive sans prévenir.")),
 
       chaud.length
@@ -337,7 +337,7 @@ window.VUE_PIPELINE = (function () {
 
       tout.length > 20
         ? el("a.pip-plus", { href: "#/projets/" + tout[0].p.id + "/livrables" },
-            "les " + tout.length + " pièces →")
+            "les " + tout.length + " livrables →")
         : null);
   }
 

@@ -23,7 +23,7 @@ window.FILE = (function () {
     reclamer: { nom: "Réclamer", ton: "attente", ou: "attentes",
       quoi: "ce qu'on me doit et que personne ne sait qu'il me doit" },
     placer: { nom: "Placer", ton: "attente", ou: "direction",
-      quoi: "des pièces sans responsable, sans charge ou sans date : invisibles dans la semaine" },
+      quoi: "des livrables sans responsable, sans charge ou sans date : invisibles dans la semaine" },
     traiter: { nom: "Traiter un brief", ton: "or", ou: "briefs",
       quoi: "la chaîne d'entrée s'est arrêtée quelque part" },
     contresigner: { nom: "Faire contresigner", ton: "attente", ou: "projets",
@@ -41,11 +41,11 @@ window.FILE = (function () {
     if (pieces.length) {
       var vieille = pieces.reduce(function (n, x) {
         return Math.max(n, x.depuis ? O.depuis(x.depuis) : 0); }, 0);
-      out.push(item("trancher", pieces.length + (pieces.length > 1 ? " pièces attendent mon verdict" : " pièce attend mon verdict"),
+      out.push(item("trancher", pieces.length + (pieces.length > 1 ? " livrables attendent mon verdict" : " livrable attend mon verdict"),
         "Chaque jour sans verdict est un jour où l'équipe ne peut ni corriger ni continuer.",
         100 + pieces.length * 5, "#/revue",
         pieces.slice(0, 4).map(function (x) { return x.objet || x; }),
-        { chiffre: pieces.length + (pieces.length > 1 ? " pièces suspendues" : " pièce suspendue"),
+        { chiffre: pieces.length + (pieces.length > 1 ? " livrables suspendus" : " livrable suspendu"),
           depuis: vieille,
           trancher: "Approuver, renvoyer dans le périmètre, ou refuser sur critère. Tant que ce n'est pas dit, rien ne repart.",
           court: "attendent mon verdict",
@@ -59,7 +59,7 @@ window.FILE = (function () {
           } }] }));
     }
 
-    /* 2 · Les retours client non tranchés : ils suspendent des pièces. */
+    /* 2 · Les retours client non tranchés : ils suspendent des livrables. */
     var fb = FEEDBACK.ouverts();
     if (fb.length) {
       var touchees = fb.reduce(function (n, f) { return n + FEEDBACK.impact(f).assets; }, 0);
@@ -72,26 +72,26 @@ window.FILE = (function () {
           if (!l.annule && l.vignette && vus.length < 4) vus.push(l); });
       });
       out.push(item("trancher", fb.length + (fb.length > 1 ? " retours client non tranchés" : " retour client non tranché"),
-        touchees + (touchees > 1 ? " pièces sont suspendues" : " pièce est suspendue")
+        touchees + (touchees > 1 ? " livrables sont suspendus" : " livrable est suspendue")
           + " tant que je n'ai pas dit si c'est absorbé, facturé ou refusé.",
         95 + touchees, "#/pipeline", vus,
-        { chiffre: touchees + (touchees > 1 ? " pièces suspendues" : " pièce suspendue"),
+        { chiffre: touchees + (touchees > 1 ? " livrables suspendus" : " livrable suspendu"),
           depuis: age,
           trancher: "Absorbé par l'agence, facturé au client, ou refusé sur critère. Tant que ce n'est pas dit, rien ne repart.",
           court: "retours non tranchés",
           verbatim: (fb[0] || {}).texte, verbatimPar: (fb[0] || {}).auteur,
           verbatimLe: (fb[0] || {}).quand,
           gestes: [{ nom: "Trancher les retours →", fort: true, quand: function () {
-            location.hash = "#/constater/bouscule"; } }] }));
+            location.hash = "#/reporting/reprises"; } }] }));
     }
 
-    /* 3 · Les routes en lice sans arbitrage. */
+    /* 3 · Les pistes en lice sans arbitrage. */
     projets.forEach(function (p) {
       var pistes = (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
       if (pistes.length > 1 && !pistes.some(function (x) { return x.statut === "retenue"; })) {
         var n = (p.livrables || []).filter(function (l) { return !l.annule; }).length;
-        out.push(item("trancher", "« " + p.nom + " » : " + pistes.length + " routes, aucune retenue",
-          n + " pièces se fabriquent sans savoir quel concept fait autorité.",
+        out.push(item("trancher", "« " + p.nom + " » : " + pistes.length + " pistes, aucune retenue",
+          n + " livrables se fabriquent sans savoir quel concept fait autorité.",
           90, "#/projets/" + p.id + "/pistes"));
       }
     });
@@ -100,8 +100,8 @@ window.FILE = (function () {
     var c = PRIORITE.conflits();
     c.conflits.forEach(function (x) {
       out.push(item("ordre", (x.personne ? x.personne.nom : "Quelqu'un") + " tient du spéculatif",
-        x.speculatif.length + " pièces spéculatives pendant que " + x.ferme.length
-          + " pièces engagées sont en retard. Le spéculatif ne s'arrête pas : il passe après.",
+        x.speculatif.length + " livrables spéculatifs pendant que " + x.ferme.length
+          + " livrables engagés sont en retard. Le spéculatif ne s'arrête pas : il passe après.",
         85, "#/pipeline"));
     });
 
@@ -109,7 +109,7 @@ window.FILE = (function () {
     var comptes = ECARTS.compte();
     Object.keys(comptes).forEach(function (o) {
       var d = ECARTS.def(o);
-      out.push(item("reclamer", comptes[o] + (comptes[o] > 1 ? " pièces" : " pièce") + " — " + d.nom.toLowerCase(),
+      out.push(item("reclamer", comptes[o] + (comptes[o] > 1 ? " livrables" : " livrable") + " — " + d.nom.toLowerCase(),
         d.quoi, o === "donneur" ? 70 : o === "brief" ? 75 : 60, "#/attentes"));
     });
 
@@ -131,7 +131,7 @@ window.FILE = (function () {
         55 - a.faits, "#/projets/" + p.id + "/" + a.prochain.section));
     });
 
-    /* 8 · Les pièces qu'on ne peut ni placer ni réclamer. */
+    /* 8 · Les livrables qu'on ne peut ni placer ni réclamer. */
     var sansResp = 0, sansCharge = 0, sansDate = 0;
     projets.forEach(function (p) {
       (p.livrables || []).forEach(function (l) {
@@ -141,11 +141,11 @@ window.FILE = (function () {
         if (!l.remise) sansDate++;
       });
     });
-    if (sansResp) out.push(item("placer", sansResp + " pièces sans responsable",
+    if (sansResp) out.push(item("placer", sansResp + " livrables sans responsable",
       "Personne n'est en défaut le jour où ça n'avance pas.", 50, "#/pipeline"));
-    if (sansCharge) out.push(item("placer", sansCharge + " pièces sans estimation",
-      "Elles sont invisibles dans la charge : la semaine se calcule sans elles, et le mur arrive sans prévenir.", 45, "#/pipeline"));
-    if (sansDate) out.push(item("placer", sansDate + " pièces sans date de remise",
+    if (sansCharge) out.push(item("placer", sansCharge + " livrables sans estimation",
+      "Ils sont invisibles dans la charge : la semaine se calcule sans eux, et le mur arrive sans prévenir.", 45, "#/pipeline"));
+    if (sansDate) out.push(item("placer", sansDate + " livrables sans date de remise",
       "Ni plaçables ni réclamables. Le rétroplanning ne les voit pas.", 40, "#/pipeline"));
 
     /* 9 · Ce qui tient sur une inférence. */
@@ -208,7 +208,7 @@ window.FILE = (function () {
     return el("div.fi-vide", {},
       el("div.fiv-s", {}, "Rien n'attend de décision. C'est le seul moment où l'on peut "
         + "faire mûrir une piste spéculative — celles qui sont mûres se valident plus souvent."),
-      el("a.b", { href: "#/placer/ordre" }, "Voir ce qui peut mûrir →"));
+      el("a.b", { href: "#/planning/ordre" }, "Voir ce qui peut mûrir →"));
   }
 
   /* La file, réduite à des coûts. Elle navigue, elle ne se lit pas. */

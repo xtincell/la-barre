@@ -34,13 +34,13 @@ window.BRIEFS = (function () {
       cle: "plateforme", nom: "Brief de plateforme de marque",
       porte: "marque",
       emetteur: "clientele", contributeur: "planning", destinataire: "creation",
-      fonde: "la commande du socle de marque — positionnement, promesse, idée directrice",
+      fonde: "la commande du plateforme de marque — positionnement, promesse, idée directrice",
       boussole: "toutes les campagnes de la marque : chacune s'y rattache, ou justifie son écart",
-      quoi: "Il commande le socle. Sans lui, le vault se remplit au fil des campagnes "
+      quoi: "Il commande la plateforme de marque. Sans elle, la bibliothèque se remplit au fil des campagnes "
           + "et finit par dire trois choses différentes.",
       champs: socleCommun("clientele").concat([
         { cle: "horizon", nom: "Horizon", type: "texte", critique: true, poste: "clientele",
-          aide: "Combien d'années ce socle doit tenir. En dessous de trois, ce n'est pas un socle." },
+          aide: "Combien d'années cette plateforme de marque doit tenir. En dessous de trois, ce n'est pas une plateforme de marque." },
         { cle: "concurrence", nom: "Contre qui la marque se situe", type: "long",
           critique: true, poste: "planning" },
         { cle: "heritage", nom: "Ce qui ne se touche pas", type: "puces", critique: true,
@@ -48,7 +48,7 @@ window.BRIEFS = (function () {
         { cle: "aTrancher", nom: "Ce qui est ouvert", type: "puces", poste: "planning",
           aide: "Ce que la plateforme doit trancher, et qui ne l'est pas aujourd'hui." },
         { cle: "gammes", nom: "Gammes à couvrir", type: "puces", poste: "clientele",
-          aide: "Une gamme peut mériter son propre socle sous celui de la marque." },
+          aide: "Une gamme peut mériter son propre plateforme sous celui de la marque." },
         { cle: "marches", nom: "Marchés à couvrir", type: "puces", critique: true, poste: "clientele" },
       ]),
     },
@@ -59,7 +59,7 @@ window.BRIEFS = (function () {
       porte: "projet", gabarits: ["campagne"],
       emetteur: "clientele", contributeur: "planning", destinataire: "creation",
       fonde: "la campagne — son périmètre, son budget, sa fenêtre",
-      boussole: "l'arbitrage des routes et le verdict des pièces : hors brief, c'est refusable",
+      boussole: "l'arbitrage des pistes et le verdict des livrables : hors brief, c'est refusable",
       quoi: "Le document reçu de la Clientèle. Onze champs critiques, et la clause "
           + "de frontière qui protège la Création de l'amont.",
       section: "brief",
@@ -71,7 +71,7 @@ window.BRIEFS = (function () {
       porte: "projet", gabarits: ["campagne", "pitch"],
       emetteur: "planning", destinataire: "creation",
       fonde: "la recommandation stratégique — problème réel, insight, territoire",
-      boussole: "le territoire : une route qui en sort est refusable sans discuter du goût",
+      boussole: "le territoire : une piste qui en sort est refusable sans discuter du goût",
       quoi: "Livrable explicite de la fiche 12. Il requalifie la demande reçue : "
           + "ce que le client demande n'est pas toujours son problème.",
       section: "strategie",
@@ -117,12 +117,12 @@ window.BRIEFS = (function () {
       cle: "fabrication", nom: "Ordre de fabrication",
       porte: "livrable", gabarits: ["campagne", "pitch", "demande"],
       emetteur: "creation", destinataire: "graphic",
-      fonde: "l'exécution d'une pièce — et ce que l'exécutant décide seul",
+      fonde: "l'exécution d'un livrable — et ce que l'exécutant décide seul",
       boussole: "le contrôle avant remise : conforme à l'ordre, ou pas",
       quoi: "Une page, écrite et jamais générée. Quinze minutes à l'oral d'abord, "
           + "la page ensuite — c'est le §9.3 du processus.",
       champs: [
-        { cle: "enUnePhrase", nom: "La pièce en une phrase", type: "texte", critique: true,
+        { cle: "enUnePhrase", nom: "Le livrable en une phrase", type: "texte", critique: true,
           poste: "creation" },
         { cle: "seDire", nom: "Ce que le spectateur doit se dire", type: "long",
           critique: true, poste: "creation" },
@@ -279,7 +279,7 @@ window.BRIEFS = (function () {
   /* Ce que coûte son absence — la phrase qui remplace « champ manquant ». */
   function cout(t, e) {
     if (!e.existe) {
-      return "Sans lui, " + t.fonde + " n'a pas de socle : on ne pourra la refuser "
+      return "Sans lui, " + t.fonde + " n'a pas de plateforme de marque : on ne pourra la refuser "
         + "que par le goût, et rien ne dira si on a dérivé.";
     }
     if (e.manquants.length) {

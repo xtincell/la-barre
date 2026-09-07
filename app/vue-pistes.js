@@ -8,49 +8,49 @@ window.VUE_PISTES = (function () {
   function rendre(p, rafraichir) {
     var pistes = (p.sections.pistes || []);
 
-    /* Une route ouverte prend toute la place. On y entre, on en ressort. */
+    /* Une piste ouverte prend toute la place. On y entre, on en ressort. */
     if (ouverte) {
       var pi = pistes.filter(function (x) { return x.id === ouverte; })[0];
       if (!pi) { ouverte = null; }
       else return el("div", {},
         el("button.retour", { type: "button", onclick: function () { ouverte = null; rafraichir(); } },
-          "← toutes les routes"),
+          "← toutes les pistes"),
         VUE_ROUTE.rendre(p, pi, rafraichir));
     }
 
     var vives = pistes.filter(function (x) { return x.statut !== "ecartee"; });
     var retenue = pistes.filter(function (x) { return x.statut === "retenue"; })[0];
 
-    /* Comparer une route à elle-même n'a pas de sens.
+    /* Comparer une piste à elle-même n'a pas de sens.
      *
-     * Un cycle mensuel ne met pas deux routes en concurrence : il en tient
+     * Un cycle mensuel ne met pas deux pistes en concurrence : il en tient
      * une, et tout le mois vit dedans. Le comparateur mettait donc l'unique
-     * route derrière un clic, et ses dix-sept publications derrière deux —
+     * piste derrière un clic, et ses dix-sept publications derrière deux —
      * autant dire qu'elles n'existaient pas dans l'onglet Concevoir. Quand il
-     * n'y a qu'une route vive et qu'elle est retenue, on entre directement. */
+     * n'y a qu'une piste vive et qu'elle est retenue, on entre directement. */
     if (retenue && vives.length === 1) {
       return el("div", {}, VUE_ROUTE.rendre(p, retenue, rafraichir));
     }
 
     if (!vives.length) {
       return el("div", {},
-        el("div.section-titre", {}, "Routes créatives"),
-        el("p.rien", {}, "Aucune route en lice. Une route naît d'une demande de "
+        el("div.section-titre", {}, "Pistes créatives"),
+        el("p.rien", {}, "Aucune piste en lice. Une piste naît d'une demande de "
           + "proposition — c'est elle qui fixe l'étage, les critères et l'auteur."),
         el("div", { style: { "margin-top": "1.4rem" } }, DEMANDE.bloc(p, rafraichir)),
         gestes(p, rafraichir));
     }
 
     return el("div.cmp", {},
-      el("div.cmp-t", {}, "Retenir une route, c'est sacrifier l'autre — et l'écrire"),
+      el("div.cmp-t", {}, "Retenir une piste, c'est sacrifier l'autre — et l'écrire"),
       el("p.cmp-s", {}, retenue
-        ? "« " + (retenue.titre || "une route") + " » fait autorité. Les autres restent "
+        ? "« " + (retenue.titre || "une piste") + " » fait autorité. Les autres restent "
           + "lisibles : c'est leur sacrifice écrit qui rend la décision défendable."
-        : "Ici on décide. La big idea, elle, se juge sur son opposabilité, pas sur ses routes."),
+        : "Ici on décide. La big idea, elle, se juge sur son opposabilité, pas sur ses pistes."),
 
       comparateur(p, vives, rafraichir),
 
-      el("p.cmp-pied", {}, "Plusieurs routes recommandées à égalité est un motif de "
+      el("p.cmp-pied", {}, "Plusieurs pistes recommandées à égalité est un motif de "
         + "refus opposable. Une seule doit sortir d'ici."),
 
       el("div", { style: { "margin-top": "1.4rem" } }, DEMANDE.bloc(p, rafraichir)),
@@ -63,14 +63,14 @@ window.VUE_PISTES = (function () {
       el("button.b", { type: "button", onclick: function () { seance(p, rafraichir); } },
         "Ouvrir une séance de concept"),
       el("button.b.nu", { type: "button", onclick: function () { editer(p, null, rafraichir); } },
-        "+ Ajouter une route"));
+        "+ Ajouter une piste"));
   }
 
   /* ————————————————————— Le comparateur ————————————————————— */
 
-  /* Des cartes empilées se lisent verticalement : on découvre une route, puis
+  /* Des cartes empilées se lisent verticalement : on découvre une piste, puis
    * l'autre, et on compare de mémoire. Or la décision est une comparaison —
-   * elle se lit en travers. Une colonne de libellés, une colonne par route,
+   * elle se lit en travers. Une colonne de libellés, une colonne par piste,
    * et chaque ligne aligne la même question pour toutes. */
   var LIGNES = [
     { cle: "visuel",     nom: "VISUEL" },
@@ -89,7 +89,7 @@ window.VUE_PISTES = (function () {
     var grille = { "grid-template-columns": "7.5rem repeat(" + n + ", minmax(0, 1fr))" };
 
     return el("div.cmp-g", { style: grille },
-      /* L'en-tête : le nom de chaque route, et son état. */
+      /* L'en-tête : le nom de chaque piste, et son état. */
       el("div.cmpg-l", {}),
       vives.map(function (pi, i) {
         var etat = pi.statut === "retenue" ? "retenue" : "";
@@ -112,7 +112,7 @@ window.VUE_PISTES = (function () {
           ? el("span.cmpv-ok", {}, "✓ retenue — le sacrifice de l'autre est écrit")
           : el("button.b.or.cmpv-b", { type: "button",
               onclick: function () { VUE_ROUTE.ouvrir(p, pi, rafraichir); } },
-              "Retenir « " + (pi.titre || "cette route") + " »"));
+              "Retenir « " + (pi.titre || "cette piste") + " »"));
       })
     );
   }
@@ -125,7 +125,7 @@ window.VUE_PISTES = (function () {
     if (cle === "visuel") {
       return el("button.cmp-c.visuel", { type: "button",
         onclick: function () { ouverte = pi.id; rafraichir(); },
-        title: "ouvrir « " + (pi.titre || "cette route") + " »" },
+        title: "ouvrir « " + (pi.titre || "cette piste") + " »" },
         IMAGE.vignette(pi, "grande"));
     }
 
@@ -138,7 +138,7 @@ window.VUE_PISTES = (function () {
     if (cle === "sacrifice") {
       return el("div.cmp-c", {}, pi.sacrifice
         ? el("p.cmpc-p", {}, pi.sacrifice)
-        : vide("sacrifice non écrit — ", "refusable au §8 : une route qui ne renonce à rien n'a pas choisi."));
+        : vide("sacrifice non écrit — ", "refusable au §8 : une piste qui ne renonce à rien n'a pas choisi."));
     }
 
     if (cle === "argument") {
@@ -164,7 +164,7 @@ window.VUE_PISTES = (function () {
     if (cle === "dispositif") {
       var ds = pi.dispositif || [];
       if (!ds.length) return el("div.cmp-c", {},
-        vide("aucun dispositif — ", "on ne sait pas ce que cette route coûte à produire."));
+        vide("aucun dispositif — ", "on ne sait pas ce que cette piste coûte à produire."));
       return el("div.cmp-c", {}, el("div.cmp-disp", {}, ds.slice(0, 5).map(function (a) {
         return el("div.cmpd", {},
           el("span.cmpd-c", {}, a.canal || "—"),
@@ -175,7 +175,7 @@ window.VUE_PISTES = (function () {
     if (cle === "delai") {
       var fin = RETRO.finDe(p, pi);
       if (!fin) return el("div.cmp-c", {},
-        vide("aucune date de fin — ", "le rétroplanning de cette route ne se calcule pas."));
+        vide("aucune date de fin — ", "le rétroplanning de cette piste ne se calcule pas."));
       var c = RETRO.calculer(pi, fin);
       var jal = c.phases.filter(function (x) { return !x.hors && x.fin; });
       return el("div.cmp-c", {}, el("div.cmp-frise", {}, jal.map(function (x) {
@@ -193,7 +193,7 @@ window.VUE_PISTES = (function () {
       var pretes = tout.filter(function (l) { return REGLES.pretSur(l).part === 100; }).length;
       var faux = kvs.filter(function (l) { return !KV.conforme(p, l); }).length;
       return el("div.cmp-c", {},
-        el("span.cmpc-n", {}, tout.length + (tout.length > 1 ? " pièces" : " pièce")
+        el("span.cmpc-n", {}, tout.length + (tout.length > 1 ? " livrables" : " livrable")
           + "  ·  " + pretes + (pretes > 1 ? " prêtes" : " prête")),
         faux ? el("span.cmp-al", {}, faux + (faux > 1 ? " KV non conformes" : " KV non conforme")
           + " à leur marché") : null);
@@ -234,7 +234,7 @@ window.VUE_PISTES = (function () {
   function editer(p, pi, rafraichir) {
     var f = FORM.rendre(CHAMPS.piste, pi || {});
     PANNEAU.ouvrir(pi ? "Modifier la piste" : "Nouvelle piste", p.ref, el("div", {},
-      el("div.prix", {}, el("span.signe", {}, "⚠"), "Une route sans son sacrifice ni son argument est refusable — critère écrit du §8."),
+      el("div.prix", {}, el("span.signe", {}, "⚠"), "Une piste sans son sacrifice ni son argument est refusable — critère écrit du §8."),
       f.noeud,
       el("div.form-actions", {},
         el("button.b.or", {

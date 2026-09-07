@@ -5,7 +5,7 @@
  * projet. Le montage peut reformater, raccourcir, mettre en récit ; il n'altère
  * jamais la source.
  *
- * Une planche de déclinaisons, un mockup, une route : ce sont des pages. Pas
+ * Une planche de déclinaisons, un mockup, une piste : ce sont des pages. Pas
  * des objectifs.
  */
 
@@ -17,10 +17,10 @@ window.PRESENTATION = (function () {
     probleme: { nom: "Le problème", tire: "le brief — problème, cible, tension" },
     strategie: { nom: "La stratégie", tire: "le territoire et l'insight" },
     idee: { nom: "L'idée", tire: "la big idea, sa mécanique, sa signature" },
-    route: { nom: "Une route", tire: "une piste créative et son visuel" },
-    planche: { nom: "Planche de déclinaisons", tire: "les pièces d'une route, en grille" },
-    mockup: { nom: "Mise en situation", tire: "les mockups d'une route" },
-    dispositif: { nom: "Le dispositif", tire: "les activités d'une route et leurs dates" },
+    piste: { nom: "Une piste", tire: "une piste créative et son visuel" },
+    planche: { nom: "Planche de déclinaisons", tire: "les livrables d'une piste, en grille" },
+    mockup: { nom: "Mise en situation", tire: "les mockups d'une piste" },
+    dispositif: { nom: "Le dispositif", tire: "les activités d'une piste et leurs dates" },
     livrables: { nom: "Ce que nous livrons", tire: "la liste des livrables et leurs formats" },
     calendrier: { nom: "Le calendrier", tire: "les jalons et les dates de publication" },
     suite: { nom: "La suite", tire: "ce qui est validé aujourd'hui, et ce qui vient après" },
@@ -33,7 +33,7 @@ window.PRESENTATION = (function () {
    * Mettre les déclinaisons dans une présentation spéculative, c'est promettre
    * du travail qu'on n'a pas vendu. */
   var NIVEAUX = {
-    minimum: { nom: "Minimum client", quoi: "le problème, la stratégie, l'idée, les routes et leurs KV" },
+    minimum: { nom: "Minimum client", quoi: "le problème, la stratégie, l'idée, les pistes et leurs KV" },
     ambitieux: { nom: "Pitch ambitieux", quoi: "en plus : dispositif, planches de déclinaisons, mises en situation, calendrier" },
   };
 
@@ -49,16 +49,16 @@ window.PRESENTATION = (function () {
     if (strat.territoire) pages.push({ type: "strategie" });
     if (b.idee) pages.push({ type: "idee" });
 
-    /* Chaque route porte ses propres pages : son visuel, son dispositif, sa
+    /* Chaque piste porte ses propres pages : son visuel, son dispositif, sa
      * planche, ses mises en situation. Une planche globale mélangerait deux
      * concepts sur la même page. */
     var retenue = (p.sections.pistes || []).filter(function (x) { return x.statut === "retenue"; })[0];
-    var routes = retenue ? [retenue]
+    var pistes = retenue ? [retenue]
       : (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
 
-    routes.forEach(function (pi) {
-      pages.push({ type: "route", pisteId: pi.id });
-      /* Le KV maître et ses adaptations : c'est le minimum montrable. */
+    pistes.forEach(function (pi) {
+      pages.push({ type: "piste", pisteId: pi.id });
+      /* Le KV master et ses adaptations : c'est le minimum montrable. */
       var kvs = (p.livrables || []).filter(function (l) {
         return !l.annule && l.pisteId === pi.id && KV.estKV(l); });
       if (kvs.length) pages.push({ type: "planche", pisteId: pi.id, seulementKV: !ambitieux });
@@ -117,7 +117,7 @@ window.PRESENTATION = (function () {
       return { titre: b.campagne || "L'idée", phrase: b.idee, signature: b.signature,
         corps: b.mecanique, note: auteur ? "Idée : " + auteur.nom : null };
     }
-    if (page.type === "route") {
+    if (page.type === "piste") {
       var pi = (p.sections.pistes || []).filter(function (x) { return x.id === page.pisteId; })[0];
       if (!pi) return null;
       var da = pi.auteurDA ? DEPOT.trouve("personnes", pi.auteurDA) : null;
@@ -194,7 +194,7 @@ window.PRESENTATION = (function () {
       var retenue = (p.sections.pistes || []).filter(function (x) { return x.statut === "retenue"; })[0];
       return { titre: "Ce que nous validons aujourd'hui",
         valide: [
-          retenue ? "La route « " + retenue.titre + " »" : "La route créative",
+          retenue ? "La piste « " + retenue.titre + " »" : "La piste créative",
           b.idee ? "L'idée : " + (b.campagne || "") : null,
           b.signature ? "La signature : « " + b.signature + " »" : null,
           "Le périmètre de livrables",
@@ -243,7 +243,7 @@ window.PRESENTATION = (function () {
       return PRODUCTION.exiges(l).indexOf("bat") !== -1 && !PRODUCTION.de(l, "bat").length; }).length;
     var sansDispositif = (p.sections.pistes || []).filter(function (x) {
       return x.statut !== "ecartee" && !(x.dispositif || []).length; }).length;
-    var routesMaigres = (p.sections.pistes || []).filter(function (x) {
+    var pistesMaigres = (p.sections.pistes || []).filter(function (x) {
       if (x.statut === "ecartee") return false;
       return ls.filter(function (l) { return l.pisteId === x.id && KV.estKV(l) && l.vignette; }).length < 2;
     }).length;
@@ -253,7 +253,7 @@ window.PRESENTATION = (function () {
     return [
       { quoi: "Décideur final nommé", ok: !!ident.decideur, poids: 5,
         cout: "la validation ne prendra pas effet — elle sera suspendue" },
-      { quoi: "Une route fait autorité", ok: !!retenue, poids: 4,
+      { quoi: "Une piste fait autorité", ok: !!retenue, poids: 4,
         cout: "présenter deux idées, c'est demander au client d'arbitrer à ma place" },
       { quoi: "Droits couverts", ok: droits === 0, poids: 4,
         cout: droits + " visuels hors zone ou hors durée" },
@@ -267,13 +267,13 @@ window.PRESENTATION = (function () {
       { quoi: "Mentions par marché", ok: mentions === 0, poids: 2,
         cout: mentions + " marchés sans mentions obligatoires renseignées" },
       { quoi: "BAT livrables", ok: sansBAT === 0, poids: 4,
-        cout: sansBAT + (sansBAT > 1 ? " pièces n'ont pas de BAT" : " pièce n'a pas de BAT")
+        cout: sansBAT + (sansBAT > 1 ? " livrables n'ont pas de BAT" : " livrable n'a pas de BAT")
           + " : valider aujourd'hui engage une livraison qu'on ne peut pas tenir" },
-      { quoi: "Au moins deux KV par route", ok: routesMaigres === 0, poids: 4,
-        cout: routesMaigres + (routesMaigres > 1 ? " routes présentées ont" : " route présentée a")
+      { quoi: "Au moins deux KV par piste", ok: pistesMaigres === 0, poids: 4,
+        cout: pistesMaigres + (pistesMaigres > 1 ? " pistes présentées ont" : " piste présentée a")
           + " moins de deux KV montrables : en dessous, on présente une intention, pas une campagne" },
-      { quoi: "Un dispositif par route", ok: sansDispositif === 0, poids: 3,
-        cout: sansDispositif + (sansDispositif > 1 ? " routes présentées n'ont" : " route présentée n'a")
+      { quoi: "Un dispositif par piste", ok: sansDispositif === 0, poids: 3,
+        cout: sansDispositif + (sansDispositif > 1 ? " pistes présentées n'ont" : " piste présentée n'a")
           + " aucun dispositif : on présente une image, pas une campagne" },
     ];
   }
@@ -285,7 +285,7 @@ window.PRESENTATION = (function () {
     pres.statut = "presentee";
   }
 
-  /* Un retour de séance redescend sur la pièce qu'il vise : c'est là qu'il se
+  /* Un retour de séance redescend sur le livrable qu'il vise : c'est là qu'il se
    * traite, pas dans un compte rendu que personne ne rouvre. */
   function poserRetour(p, pres, retour) {
     pres.retours.push(retour);

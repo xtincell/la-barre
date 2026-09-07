@@ -18,12 +18,12 @@ window.MARQUE = (function () {
       quoi: "le bloc-marque, dans ses versions", ou: "partout",
       cout: "aucun logo au dossier : chaque exécutant ira le chercher ailleurs, et le trouvera faux" },
     gamme: { rang: 1, nom: "Vue de gamme", pluriel: "Vues de gamme",
-      quoi: "les produits photographiés côte à côte", ou: "socle, cadrage, présentation" },
+      quoi: "les produits photographiés côte à côte", ou: "plateforme de marque, cadrage, présentation" },
     produit: { rang: 2, nom: "Produit", pluriel: "Produits",
-      quoi: "un SKU, un packaging, un item", ou: "socle, KV, référentiel",
+      quoi: "un SKU, un packaging, un item", ou: "plateforme de marque, KV, référentiel",
       cout: "les KV montreront des produits que personne n'a validés" },
     illustration: { rang: 3, nom: "Illustration", pluriel: "Illustrations",
-      quoi: "les dessins propriétaires de la marque", ou: "socle, goodies" },
+      quoi: "les dessins propriétaires de la marque", ou: "plateforme de marque, goodies" },
     charte: { rang: 4, nom: "Charte", pluriel: "Chartes",
       quoi: "le document de normes graphiques", ou: "socle" },
     police: { rang: 5, nom: "Police", pluriel: "Polices",
@@ -159,7 +159,7 @@ window.MARQUE = (function () {
       gamme.length ? blocGamme(p, gamme, rafraichir) : null,
 
       !tous.length
-        ? el("p.rien", {}, "Le socle ne porte que du texte. Un DA qui ouvre ce dossier ne sait pas à quoi ressemble la marque, et ira chercher ailleurs.")
+        ? el("p.rien", {}, "La plateforme ne porte que du texte. Un DA qui ouvre ce dossier ne sait pas à quoi ressemble la marque, et ira chercher ailleurs.")
         : el("div.mq-roles", {}, Object.keys(ROLES)
             .filter(function (r) { return parRole[r] && r !== "produit"; })
             .map(function (r) {
@@ -184,14 +184,14 @@ window.MARQUE = (function () {
           el("span.mqm-n", {}, m.nom),
           el("span.mqm-q", {}, tous.length + (tous.length > 1 ? " éléments" : " élément")
             + "  ·  " + gamme.length + (gamme.length > 1 ? " packs" : " pack")),
-          el("a.mqm-v", { href: "#/maison/marques" }, "son vault →")),
+          el("a.mqm-v", { href: "#/referentiel/marques" }, "sa bibliothèque de marque →")),
         tous.length
           ? el("div.mq-el", {}, tous.slice(0, 8).map(function (a) {
               return el("span.mqe", { title: a.nom },
                 a.vignette ? el("img", { src: a.vignette, alt: a.nom })
                   : el("span.mqe-x", {}, "—"));
             }))
-          : el("p.rien", {}, "Aucun élément de marque au vault. Un DA doit avoir le "
+          : el("p.rien", {}, "Aucun élément de marque à la bibliothèque. Un DA doit avoir le "
               + "logo et la gamme sous les yeux avant de dessiner."));
     }));
   }
@@ -247,7 +247,7 @@ window.MARQUE = (function () {
   }
 
   function ajouter(p, m, rafraichir) {
-    var nom = el("input", { type: "text", placeholder: "Logo principal, gamme 2026, packaging 6 pièces…" });
+    var nom = el("input", { type: "text", placeholder: "Logo principal, gamme 2026, packaging 6 livrables…" });
     var selR = el("select", {});
     Object.keys(ROLES).forEach(function (k) {
       selR.appendChild(el("option", { value: k }, ROLES[k].nom + " — " + ROLES[k].quoi));
@@ -257,7 +257,7 @@ window.MARQUE = (function () {
     var donnee = null;
 
     PANNEAU.ouvrir("Ajouter un élément de marque", m ? m.nom : p.ref, el("div", {},
-      UI.banniere("", "Un élément de marque sert partout : socle, cadrage, présentation, contrôle de conformité. C'est le seul endroit où on le pose."),
+      UI.banniere("", "Un élément de marque sert partout : plateforme, cadrage, présentation, contrôle de conformité. C'est le seul endroit où on le pose."),
       el("div.form", {},
         el("div.champ", {}, el("label", {}, "Nom"), nom),
         el("div.champ", {}, el("label", {}, "Rôle"), selR),

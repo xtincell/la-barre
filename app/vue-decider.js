@@ -2,7 +2,7 @@
  *
  * Avant, quatre destinations répondaient à la même question : Maintenant, Revue,
  * Mes attentes, Pipeline. Quelqu'un qui découvrait le produit devait résoudre
- * un problème de classification — « est-ce une pièce à juger, un renvoi, un
+ * un problème de classification — « est-ce un livrable à juger, un renvoi, un
  * retour client ? » — avant d'accéder à ce qu'il cherchait.
  *
  * Ce n'est pas son travail. C'est celui du produit.
@@ -14,7 +14,7 @@
  * Elles étaient trois. « La file » et « Une à une » ont fusionné : parcourir et
  * faire étaient deux moitiés du même geste, et choisir entre les deux était
  * précisément la micro-décision qu'un outil doit absorber. La file présente
- * maintenant une pièce en grand — c'est la salle de tri.
+ * maintenant un livrable en grand — c'est la salle de tri.
  *
  * Un mode n'est pas une catégorie : on n'a pas à choisir avant d'arriver.
  */
@@ -24,8 +24,8 @@ window.VUE_DECIDER = (function () {
   var mode = "file";
 
   var MODES = [
-    { cle: "file", nom: "LA FILE", quoi: "une décision en entier, dans l'ordre du coût" },
-    { cle: "du", nom: "CE QU'ON ME DOIT", quoi: "ce que d'autres me doivent" },
+    { cle: "file", nom: "FILE DE VALIDATION", quoi: "un livrable en entier, dans l'ordre du coût" },
+    { cle: "du", nom: "EN ATTENTE DE TIERS", quoi: "ce que j'ai renvoyé et qui n'est pas revenu" },
   ];
 
   /* « piece » a été absorbée par « file ». L'adresse continue de fonctionner :

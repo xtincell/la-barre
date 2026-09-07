@@ -134,7 +134,7 @@ window.BILAN = (function () {
       var compte = (p.sections.identite || {}).client || "sans client";
       (p.livrables || []).forEach(function (l) {
         if (l.annule) return;
-        /* Une pièce compte dans le mois où elle est remise, pas dans celui où
+        /* Un livrable compte dans le mois où elle est remise, pas dans celui où
          * elle est née : sinon la fin de mois compte du travail à venir. */
         if (f && !dedans(f, l.remise || l.echeance)) { horsFenetre++; return; }
         pieces++;
@@ -154,7 +154,7 @@ window.BILAN = (function () {
     });
     var reprise = avecVersions ? Math.round((reprises / pieces) * 100) : null;
 
-    /* Les tours au-delà du vendu : le chiffre qui se porte en négociation. */
+    /* Les allers-retours au-delà du vendu : le chiffre qui se porte en négociation. */
     var depassements = 0, joursDepasses = 0;
     projets.forEach(function (p) {
       (p.livrables || []).forEach(function (l) {
@@ -215,17 +215,17 @@ window.BILAN = (function () {
           ? "au-delà de ma cible de " + s.cibleVerdict + " j — c'est la dérive nommée dans ma fiche"
           : "sous ma cible de " + s.cibleVerdict + " j",
         sansQuoi: "aucun verdict daté : le seul indicateur qui porte sur moi ne se calcule pas. "
-          + "Il le fera dès qu'une pièce soumise recevra une décision" }),
+          + "Il le fera dès qu'un livrable soumis recevra une décision" }),
 
       mesure({ nom: "livrables repris",
         valeur: s.reprise === null ? "?" : s.reprise + " %", brut: s.reprise,
         assise: s.avecVersions,
         ton: s.reprise === null ? "" : s.reprise > 20 ? "alerte" : "vert",
-        quoi: s.reprises + " sur " + s.pieces + " pièces",
+        quoi: s.reprises + " sur " + s.pieces + " livrables",
         sansQuoi: !s.pieces
-          ? "aucune pièce à remettre sur la période"
+          ? "aucun livrable à remettre sur la période"
             + (s.horsFenetre ? " — " + s.horsFenetre + " sont attendues plus tard" : "")
-          : "aucune des " + s.pieces + " pièces ne porte de version : le taux de reprise "
+          : "aucune des " + s.pieces + " livrables ne porte de version : le taux de reprise "
             + "n'a pas de dénominateur, et il en aura un à la première soumission" }),
     ];
   }
@@ -324,28 +324,28 @@ window.BILAN = (function () {
         { t: "Mon exigence, par compte",
           lignes: Object.keys(s.parCompte).map(function (k) {
             var x = s.parCompte[k];
-            return { q: k, v: x.r + " reprises sur " + x.n + " pièces" };
+            return { q: k, v: x.r + " reprises sur " + x.n + " livrables" };
           }),
           corps: Object.keys(s.parCompte).length ? null
-            : "Aucune pièce remise sur la période"
-              + (s.horsFenetre ? " : les " + s.horsFenetre + " pièces du dossier sont attendues plus tard." : "."),
+            : "Aucun livrable remis sur la période"
+              + (s.horsFenetre ? " : les " + s.horsFenetre + " livrables du dossier sont attendues plus tard." : "."),
           source: "« exigence constante y compris sur les petits projets »" },
 
         Object.keys(s.parMarche).length
           ? { t: "Mon exigence, par marché",
               lignes: Object.keys(s.parMarche).map(function (k) {
                 var x = s.parMarche[k];
-                return { q: k, v: x.r + " reprises sur " + x.n + " pièces" };
+                return { q: k, v: x.r + " reprises sur " + x.n + " livrables" };
               }) }
           : null,
 
         s.depassements
           ? { t: "Ce que le périmètre a coûté", lignes: [
-              { q: "Pièces au-delà du vendu", v: String(s.depassements) },
+              { q: "Livrables au-delà du vendu", v: String(s.depassements) },
               { q: "Jours absorbés", v: s.joursDepasses + " j" },
             ], source: "le chiffre qui rend la clause de reprise crédible en négociation" }
           : { t: "Ce que le périmètre a coûté", videBon: true,
-              siVide: "Rien : aucune pièce n'a dépassé les tours vendus.",
+              siVide: "Rien : aucun livrable n'a dépassé les allers-retours vendus.",
               source: "le chiffre qui rend la clause de reprise crédible en négociation" },
 
         { t: "Ce que j'attends des autres",
@@ -362,7 +362,7 @@ window.BILAN = (function () {
         trimestre ? { t: "Les cumuls à revoir", puces: cumulsARevoir(),
           videBon: true, siVide: "Aucun cumul échu ni sans part déclarée." } : null,
         trimestre ? { t: "Les plans de progression", puces: plansDeProgression(),
-          siVide: "Personne à encadrer au dépôt." } : null,
+          siVide: "Personne à encadrer à la base." } : null,
       ].filter(Boolean),
       inferences: [],
     };
@@ -446,18 +446,18 @@ window.BILAN = (function () {
 
         { t: "Ses propositions", mesures: [
           mesure({ nom: "propositions", valeur: String(b.propose.length), brut: b.propose.length,
-            assise: 1, quoi: "routes et idées portées, tous dossiers confondus",
+            assise: 1, quoi: "pistes et idées portées, tous dossiers confondus",
             sansQuoi: "" }),
           mesure({ nom: "retenues", valeur: String(b.retenu.length), brut: b.retenu.length,
             assise: b.propose.length, ton: b.retenu.length ? "vert" : "",
             quoi: b.propose.length
               ? Math.round((b.retenu.length / b.propose.length) * 100) + " % de ses propositions" : "",
             sansQuoi: "rien de proposé sur la période" }),
-          mesure({ nom: "pièces reprises", valeur: String(b.repris.length), brut: b.repris.length,
+          mesure({ nom: "livrables repris", valeur: String(b.repris.length), brut: b.repris.length,
             assise: b.pieces.length, ton: b.repris.length ? "alerte" : "vert",
             quoi: b.sansReprise !== null
-              ? b.sansReprise + " % de ses pièces sortent sans repasser par la case départ" : "",
-            sansQuoi: "aucune pièce sous sa responsabilité : rien à mesurer" }),
+              ? b.sansReprise + " % de ses livrables sortent sans repasser par la case départ" : "",
+            sansQuoi: "aucun livrable sous sa responsabilité : rien à mesurer" }),
         ] },
 
         { t: "Ce que je lui ai dit",
@@ -484,7 +484,7 @@ window.BILAN = (function () {
     var out = [];
     if (!crits.length) out.push("Écrire au moins une critique datée : sans elle, « progression mesurée » est une impression.");
     if (b.jamaisSurUnePiste) out.push("Lui confier une piste : un créatif qu'on n'y met jamais est un talent qu'on ne détecte pas.");
-    if (!b.pieces.length) out.push("Lui affecter une pièce : sans responsabilité nommée, aucun taux ne se calcule.");
+    if (!b.pieces.length) out.push("Lui affecter un livrable : sans responsabilité nommée, aucun taux ne se calcule.");
     engs.filter(function (x) { return x.etat !== "fait"; }).forEach(function (x) {
       out.push("Réclamer « " + x.e.quoi + " » : "
         + (x.etat === "jamais" ? "jamais déposé" : "en retard de " + x.retard + " j")

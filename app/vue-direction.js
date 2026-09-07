@@ -1,7 +1,7 @@
 /* vue-direction.js — les gens, et ce qu'on peut leur donner.
  *
  * Mode « les gens » de Placer. Deux bandes : ce dont je dispose, ce qui
- * s'impose. Et au centre un seul geste — commander une pièce : qui, combien,
+ * s'impose. Et au centre un seul geste — commander un livrable : qui, combien,
  * pour quand.
  *
  * Les objectifs vivaient ici et n'y appelaient aucune action : un taux de
@@ -44,7 +44,7 @@ window.VUE_DIRECTION = (function () {
       h.appendChild(el("div.cmd-file", {},
         el("span", {}, nf + (nf > 1 ? " décisions attendent" : " décision attend")
           + " — elles se prennent dans la salle de tri, pas ici."),
-        el("a.b.nu", { href: "#/decider/file" }, "y aller →")));
+        el("a.b.nu", { href: "#/valider/file" }, "y aller →")));
     }
 
     /* La partie ressources ne s'ouvre que si elle a quelque chose à montrer.
@@ -53,7 +53,7 @@ window.VUE_DIRECTION = (function () {
     var aMontrer = pieces.length > 0;
     if (!aMontrer) {
       h.appendChild(el("div.cmd-rien", {},
-        el("span", {}, "Aucune pièce à placer cette semaine."),
+        el("span", {}, "Aucun livrable à placer cette semaine."),
         el("a.b.nu", { href: "#/pipeline" }, "voir la charge →")));
       return;
     }
@@ -63,7 +63,7 @@ window.VUE_DIRECTION = (function () {
      * Constater, qui regarde le mois — c'est leur horizon. */
 
     /* La semaine d'abord, pleine largeur : c'est elle qui répond à « à qui je
-     * confie la prochaine pièce ». Les pièces à diriger viennent après. */
+     * confie la prochaine livrable ». Les livrables à diriger viennent après. */
     h.appendChild(ressources(function () { rendre(h); }));
     if (visibles.length) {
       h.appendChild(el("div.cmd-corps.seule", {},
@@ -118,7 +118,7 @@ window.VUE_DIRECTION = (function () {
         el("div.smd-t", {}, "CE QUE ÇA DÉPLACE"),
         el("p", {}, deplacement(enMur, vides)),
         el("div.form-actions", {},
-          el("a.b.or", { href: "#/placer/charge" }, "Voir les pièces →"),
+          el("a.b.or", { href: "#/planning/charge" }, "Voir les livrables →"),
           el("button.b.nu", { type: "button", onclick: function () {
             if (lignes[0]) proteger(lignes[0].pe); } }, "Protéger du temps"))));
   }
@@ -150,12 +150,12 @@ window.VUE_DIRECTION = (function () {
 
   function deplacement(enMur, vides) {
     if (enMur.length && vides.length) {
-      return "Déplacer une pièce de " + enMur[0].pe.nom.split(" ")[0] + " à "
+      return "Déplacer un livrable de " + enMur[0].pe.nom.split(" ")[0] + " à "
         + vides[0].pe.nom.split(" ")[0] + " libère la semaine"
         + (vides[0].pe.seniorite === "junior"
           ? " et fait bouger l'indicateur « idées retenues émanant de juniors »." : ".");
     }
-    if (enMur.length) return "Personne n'a d'air pour reprendre. C'est la date qu'il faut déplacer, pas la pièce.";
+    if (enMur.length) return "Personne n'a d'air pour reprendre. C'est la date qu'il faut déplacer, pas le livrable.";
     return "Un cumul sans part déclarée rend la charge fausse. Ceux qui sont déclarés le sont avec leur part.";
   }
 
@@ -192,10 +192,10 @@ window.VUE_DIRECTION = (function () {
 
       el("div.smr-j", {},
         !l.pieces.length
-          ? el("div.smr-rien", {}, "aucune pièce ne lui est affectée — c'est un talent qu'on ne détecte pas")
+          ? el("div.smr-rien", {}, "aucun livrable ne lui est affecté — c'est un talent qu'on ne détecte pas")
           : parJour.every(function (g) { return !g.length; })
             ? el("div.smr-rien", {}, "rien cette semaine — "
-                + (apres.length ? apres.length + (apres.length > 1 ? " pièces attendues plus tard" : " pièce attendue plus tard") : "")
+                + (apres.length ? apres.length + (apres.length > 1 ? " livrables attendus plus tard" : " livrable attendu plus tard") : "")
                 + (apres.length && sansDate.length ? ", " : "")
                 + (sansDate.length ? sansDate.length + (sansDate.length > 1 ? " sans date" : " sans date") : ""))
             : parJour.map(function (g, i) {
@@ -214,7 +214,7 @@ window.VUE_DIRECTION = (function () {
       el("div.smr-t" + (mur ? ".alerte" : ""), {},
         el("span", {}, l.c.jours + " j sur " + l.c.capacite),
         apres.length ? el("span.smr-ap", {}, apres.length
-          + (apres.length > 1 ? " pièces plus tard" : " pièce plus tard")) : null,
+          + (apres.length > 1 ? " livrables plus tard" : " livrable plus tard")) : null,
         sansDate.length ? el("span.smr-sd", {}, sansDate.length
           + (sansDate.length > 1 ? " sans date — invisibles ici" : " sans date — invisible ici")) : null,
         l.conflit ? el("span.smr-x", {}, "2 dossiers, même jour") : null));
@@ -304,18 +304,18 @@ window.VUE_DIRECTION = (function () {
             onclick: function () { vue = "tout"; rafraichir(); } },
             "tout", el("span.n", {}, String(total)))
         ),
-        el("span.cc-compte", {}, visibles.length + (visibles.length > 1 ? " pièces" : " pièce"))
+        el("span.cc-compte", {}, visibles.length + (visibles.length > 1 ? " livrables" : " livrable"))
       ),
 
       visibles.length
         ? el("div.cc-mur", {}, visibles.map(carte))
         : el("div.cc-rien", {},
             el("span", {}, vue === "adiriger"
-              ? "Toutes les pièces ont leur responsable, leur charge et leur date."
+              ? "Tous les livrables ont leur responsable, leur charge et leur date."
               : "Rien à ce filtre."),
             vue === "adiriger" && total
               ? el("button.b.nu", { type: "button", onclick: function () { vue = "tout"; rafraichir(); } },
-                  "voir les " + total + " pièces")
+                  "voir les " + total + " livrables")
               : null)
     );
   }
@@ -363,7 +363,7 @@ window.VUE_DIRECTION = (function () {
     );
   }
 
-  /* ————————————————————— L'acte : commander une pièce ————————————————————— */
+  /* ————————————————————— L'acte : commander un livrable ————————————————————— */
 
   function commander(pc, quoi) {
     var objs = OBJECTIFS.tous();
@@ -406,7 +406,7 @@ window.VUE_DIRECTION = (function () {
         etiquette: pc.nom, label: "Estimation, en jours", type: "number",
         valeur: pc.charge !== null ? pc.charge : "",
         aide: "C'est elle qui rend la charge visible. Sans elle, la semaine ne se calcule pas et personne ne peut dire non.",
-        requis: "Sans estimation, cette pièce est invisible dans la charge.",
+        requis: "Sans estimation, ce livrable est invisible dans la charge.",
       }, function (v) {
         if (isNaN(Number(v))) return;
         pc.objet.estime = Number(v);
@@ -421,7 +421,7 @@ window.VUE_DIRECTION = (function () {
         etiquette: pc.nom, label: "Remise du fichier", type: "date",
         valeur: pc.date || O.jour(),
         aide: "La remise, pas la publication. C'est la date qui commande la production.",
-        requis: "Une pièce sans date ne peut être ni placée ni réclamée.",
+        requis: "Un livrable sans date ne peut être ni placée ni réclamée.",
       }, function (v) {
         if (!v) return;
         pc.objet.remise = v;
@@ -469,7 +469,7 @@ window.VUE_DIRECTION = (function () {
     return el("div.zone-gestes", {},
       el("div.g-selection", {},
         el("b", {}, String(ids.length)),
-        el("span", {}, ids.length > 1 ? "pièces" : "pièce"),
+        el("span", {}, ids.length > 1 ? "livrables" : "livrable"),
         el("span.g-jours", {}, total ? "· " + total + " j" : "· charge inconnue")
       ),
       el("div.g-verbes", {},
@@ -500,7 +500,7 @@ window.VUE_DIRECTION = (function () {
             el("button.b.nu", { type: "button", onclick: function () {
               filtreSemaine = null; filtrePersonne = null; rafraichir();
             } }, "tout voir"))
-        : el("span.f-aide", {}, "Qui · combien · quand — les trois décisions qui font avancer une pièce")
+        : el("span.f-aide", {}, "Qui · combien · quand — les trois décisions qui font avancer un livrable")
     );
   }
 

@@ -100,7 +100,7 @@ window.VUE_BRIEF = (function () {
       el("div.bfc-g", {},
         t.module === "DEMANDE"
           ? el("button.b.nu", { type: "button", onclick: function () {
-              location.hash = "#/projets/" + p.id + "/pistes"; } }, "aux routes créatives →")
+              location.hash = "#/projets/" + p.id + "/pistes"; } }, "aux pistes créatives →")
           : t.section
             ? el("button.b.nu", { type: "button", onclick: function () {
                 location.hash = "#/projets/" + p.id + "/" + t.section; } },
@@ -389,7 +389,7 @@ window.VUE_BRIEF = (function () {
     return [
       { nom: "Brief", date: p.cree_le, fait: (p.sections.brief || {}).statut === "accepte" },
       { nom: "Idée", date: null, fait: !!b.idee, ici: !!b.idee && !retenue },
-      { nom: "Route retenue", date: retenue ? retenue.arbitre_le : null, fait: !!retenue },
+      { nom: "Piste retenue", date: retenue ? retenue.arbitre_le : null, fait: !!retenue },
       { nom: "Production", date: null, fait: produit },
       { nom: "Échéance", date: ident.echeance, fait: false },
     ];

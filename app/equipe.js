@@ -4,7 +4,7 @@
  * trace de ce que j'ai dit à qui, c'est une impression — et au moment de
  * l'entretien trimestriel, on reconstitue de mémoire, c'est-à-dire mal.
  *
- * Presque tout est déjà au dépôt : chaque verdict, chaque route écartée, chaque
+ * Presque tout est déjà au dépôt : chaque verdict, chaque piste écartée, chaque
  * idée arbitrée porte son motif obligatoire. Ce module ne demande donc aucune
  * saisie nouvelle — il rassemble ce qui existe et l'attribue à une personne.
  *
@@ -42,12 +42,12 @@ window.EQUIPE = (function () {
     var propose = [], retenu = [], repris = [], pieces = [];
 
     DEPOT.liste("projets").forEach(function (p) {
-      /* Les routes qu'il a portées. */
+      /* Les pistes qu'il a portées. */
       (p.sections.pistes || []).forEach(function (pi) {
         if (pi.auteurDA !== id && pi.auteurCR !== id) return;
-        propose.push({ type: "route", projet: p, objet: pi, nom: pi.titre,
+        propose.push({ type: "piste", projet: p, objet: pi, nom: pi.titre,
           quand: pi.cree_le || null });
-        if (pi.statut === "retenue") retenu.push({ type: "route", projet: p, objet: pi, nom: pi.titre });
+        if (pi.statut === "retenue") retenu.push({ type: "piste", projet: p, objet: pi, nom: pi.titre });
       });
 
       /* Les idées qu'il a posées en atelier. */
@@ -57,7 +57,7 @@ window.EQUIPE = (function () {
         if (i.statut === "retenue") retenu.push({ type: "idee", projet: p, objet: i, nom: i.texte });
       });
 
-      /* Les pièces dont il répond. */
+      /* Les livrables dont il répond. */
       (p.livrables || []).forEach(function (l) {
         if (l.annule || l.responsable !== id) return;
         pieces.push({ projet: p, l: l });
@@ -76,7 +76,7 @@ window.EQUIPE = (function () {
         ? Math.round(((pieces.length - repris.length) / pieces.length) * 100) : null,
       /* Un créatif jamais affecté à une piste est un talent qu'on ne détecte
        * pas — c'est une ligne de ma fiche. */
-      jamaisSurUnePiste: propose.filter(function (x) { return x.type === "route"; }).length === 0,
+      jamaisSurUnePiste: propose.filter(function (x) { return x.type === "piste"; }).length === 0,
     };
   }
 
@@ -102,7 +102,7 @@ window.EQUIPE = (function () {
         out.push({ quand: quand(pi.arbitre_le, pi.cree_le), projet: p,
           quoi: pi.titre, motif: pi.motif,
           ton: pi.statut === "retenue" ? "retenu" : "ecarte",
-          source: pi.statut === "retenue" ? "route retenue" : "route écartée" });
+          source: pi.statut === "retenue" ? "piste retenue" : "piste écartée" });
       });
 
       (p.idees || []).forEach(function (i) {

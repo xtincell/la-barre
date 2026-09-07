@@ -25,7 +25,7 @@ window.COMPILATEUR = (function () {
     conception: {
       nom: "Document de conception", court: "Conception",
       pour: "la production", ouvre: "l'exécution",
-      quoi: "l'idée retenue, la route qui la porte, son dispositif et son calendrier",
+      quoi: "l'idée retenue, la piste qui la porte, son dispositif et son calendrier",
       sans: "on fabriquera sans savoir quel concept fait autorité, ni pour quand",
       sections: ["bigidea", "pistes"],
     },
@@ -96,7 +96,7 @@ window.COMPILATEUR = (function () {
         cout: "rien pour accrocher : l'atelier tournera sur des jeux de mots" },
       { quoi: "Le territoire", ok: !!st.territoire, poids: 4,
         cout: "aucun cadre : toutes les idées se vaudront, et aucune ne sera arbitrable" },
-      { quoi: "L'idée directrice du socle", ok: !!s.idee_directrice, poids: 4,
+      { quoi: "L'idée directrice de la plateforme de marque", ok: !!s.idee_directrice, poids: 4,
         cout: "la campagne pourra être refusée en revue sans recours" },
       { quoi: "Le ton et les interdits", ok: !!(b.ton || s.ton || (s.jamais || []).length), poids: 3,
         cout: "on découvrira les interdits en présentation, quand il sera trop tard" },
@@ -132,12 +132,12 @@ window.COMPILATEUR = (function () {
         cout: "rien à faire porter : la production inventera au fil de l'eau" },
       { quoi: "Les critères d'acceptation", ok: (b.criteres || []).length > 0, poids: 5,
         cout: "ce qui sortira ne pourra être refusé que par goût" },
-      { quoi: "Une route retenue", ok: !!retenue, poids: 5,
+      { quoi: "Une piste retenue", ok: !!retenue, poids: 5,
         cout: pistes.length > 1
-          ? pistes.length + " routes en lice : l'équipe travaille sans savoir quel concept fait autorité"
-          : "aucune route arbitrée" },
+          ? pistes.length + " pistes en lice : l'équipe travaille sans savoir quel concept fait autorité"
+          : "aucune piste arbitrée" },
       { quoi: "Sacrifice et argument", ok: !!(retenue && retenue.sacrifice && retenue.argument), poids: 4,
-        cout: "la route ne se défend pas : le premier retour client la fera tomber" },
+        cout: "la piste ne se défend pas : le premier retour client la fera tomber" },
       { quoi: "Un dispositif", ok: !!(retenue && (retenue.dispositif || []).length), poids: 5,
         cout: "on ne saura pas quoi fabriquer, ni pour quelle activité" },
       { quoi: "Un rétroplanning", ok: !!e, poids: 4,
@@ -165,7 +165,7 @@ window.COMPILATEUR = (function () {
    * document de cadrage, c'est demander à la production de choisir elle-même —
    * et elle choisira mal, parce que rien ne lui dit sur quels marchés on est.
    *
-   * L'ordre : ce que les pièces déclarent d'abord (le fait), puis ce qui est
+   * L'ordre : ce que les livrables déclarent d'abord (le fait), puis ce qui est
    * distribué sur les marchés de la campagne et dans ses catégories (le
    * probable), et rien d'autre. */
   function gammeDeLaCampagne(p, mq, seulement) {
@@ -181,7 +181,7 @@ window.COMPILATEUR = (function () {
       if (l.marche) marches[l.marche] = true;
       if (l.categorie) cats[l.categorie] = true;
     });
-    /* Un dossier qui n'a encore aucune pièce a quand même un périmètre : ses
+    /* Un dossier qui n'a encore aucun livrable a quand même un périmètre : ses
      * volets déclarent les marchés. C'est le cas d'une campagne qu'on cadre
      * avant l'atelier — et c'est justement là que le cadrage sert le plus. */
     if (!Object.keys(marches).length) {
@@ -191,7 +191,7 @@ window.COMPILATEUR = (function () {
     }
     var aucunCadre = !Object.keys(marches).length && !Object.keys(cats).length;
 
-    /* Ce que les pièces déclarent : c'est un fait, il passe devant. */
+    /* Ce que les livrables déclarent : c'est un fait, il passe devant. */
     var declares = {};
     pieces.forEach(function (l) {
       ((l.kv || {}).sku || []).forEach(function (id) { declares[id] = true; });
@@ -246,7 +246,7 @@ window.COMPILATEUR = (function () {
         { t: "Le territoire", corps: st.territoire, fort: true },
         { t: "La promesse", corps: b.promesse || s.promesse, fort: true },
         { t: "L'idée directrice de la marque", corps: s.idee_directrice,
-          source: "socle — pluriannuelle, elle ne se rediscute pas ici" },
+          source: "plateforme de marque — pluriannuelle, elle ne se rediscute pas ici" },
         { t: "Ce qu'on peut prouver", puces: (b.rtb || []).concat(s.preuves || []) },
         { t: "Le ton, et ce qu'on ne dit jamais", corps: b.ton || s.ton,
           puces: s.jamais && s.jamais.length ? s.jamais.map(function (x) { return "jamais : " + x; }) : null },
@@ -284,7 +284,7 @@ window.COMPILATEUR = (function () {
 
     return {
       titre: "Conception — " + (b.campagne || p.nom),
-      sous: p.ref + (retenue ? "  ·  route « " + retenue.titre + " »" : "  ·  aucune route retenue")
+      sous: p.ref + (retenue ? "  ·  piste « " + retenue.titre + " »" : "  ·  aucune piste retenue")
         + (retenue && retenue.statut === "retenue" ? "" : "  —  NON ARBITRÉE"),
       blocs: [
         { t: "La marque", elements: (function () {
@@ -296,13 +296,13 @@ window.COMPILATEUR = (function () {
           source: auteur ? "posée par " + auteur.nom : "auteur non nommé" },
         { t: "La signature", corps: b.signature ? "« " + b.signature + " »" : null },
         { t: "La mécanique", corps: b.mecanique },
-        { t: "Le rattachement au socle", corps: b.rattachement },
+        { t: "Le rattachement à la plateforme de marque", corps: b.rattachement },
         { t: "La condition de validité", corps: b.validite,
           source: "le jour où elle tombe, l'idée tombe avec" },
         { t: "Les critères d'acceptation", puces: b.criteres,
           source: "les seuls éléments opposables au travail" },
         { t: "Les directions interdites", puces: b.interdits },
-        retenue ? { t: "La route", corps: retenue.concept, fort: true,
+        retenue ? { t: "La piste", corps: retenue.concept, fort: true,
           source: da ? "direction artistique : " + da.nom : null } : null,
         retenue ? { t: "Ce qu'elle sacrifie", corps: retenue.sacrifice } : null,
         retenue ? { t: "L'argument", corps: retenue.argument } : null,

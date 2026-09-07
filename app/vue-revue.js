@@ -1,20 +1,20 @@
 /* vue-revue.js — la revue créative.
  *
- * Une pièce à la fois, en grand. À gauche ce qu'on juge, à droite ce contre quoi
+ * Un livrable à la fois, en grand. À gauche ce qu'on juge, à droite ce contre quoi
  * on le juge. Et sous chaque verdict, son coût — parce qu'un retour n'est pas
  * gratuit et que personne ne le calcule au moment de décider.
  */
 
 /* Depuis la fusion de « la file » et « une à une », cet écran n'a plus
- * d'adresse : la salle de tri de FILE présente la pièce en grand, et le
- * verdict se rend dans le panneau de la pièce. `pieces()` reste la source de
+ * d'adresse : la salle de tri de FILE présente le livrable en grand, et le
+ * verdict se rend dans le panneau du livrable. `pieces()` reste la source de
  * vérité de ce qui attend un verdict — c'est elle que la file interroge.
  * `rendre` est conservé : il porte la mise en scène de la revue hebdomadaire,
  * qui reviendra le jour où le rituel du lundi aura son propre écran. */
 
 window.VUE_REVUE = (function () {
   var el = O.el;
-  var ETAPES = ["Brief", "Concept", "Création", "Review", "Final"];
+  var ETAPES = PRODUCTION.ETAPES;
   var index = 0;
   var hote = null;
 
@@ -29,7 +29,7 @@ window.VUE_REVUE = (function () {
         if (pi.statut !== "proposee") return;
         liste.push({
           type: "piste", id: pi.id, projet: p, objet: pi, titre: pi.titre,
-          contexte: p.ref + " · route créative",
+          contexte: p.ref + " · piste créative",
           depuis: pi.soumis_le || p.cree_le, criteres: "proposition", etape: 1,
           auteur: pi.auteurDA,
         });
@@ -88,7 +88,7 @@ window.VUE_REVUE = (function () {
     return el("div.rv-haut", {},
       kpi(delai.reel === null ? "—" : delai.reel, "j · mon délai de verdict",
         "cible " + delai.cible, delai.tenu === false ? "manque" : "tenu"),
-      kpi(file.n, file.n > 1 ? "pièces en attente" : "pièce en attente",
+      kpi(file.n, file.n > 1 ? "livrables en attente" : "livrable en attente",
         file.plusVieux ? "la plus vieille : " + file.plusVieux + " j" : "à jour",
         file.plusVieux > 3 ? "manque" : "tenu"),
       kpi(file.jours || "—", "j de production bloqués", "tant que je n'ai pas tranché",
@@ -106,7 +106,7 @@ window.VUE_REVUE = (function () {
     );
   }
 
-  /* ————————————————————— 2 · La scène : une pièce, en grand ————————————————————— */
+  /* ————————————————————— 2 · La scène : un livrable, en grand ————————————————————— */
 
   function scene(pc, toutes) {
     var b = pc.projet.sections.bigidea || {};

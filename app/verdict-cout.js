@@ -1,6 +1,6 @@
 /* verdict-cout.js — ce qu'un verdict coûte, avant de le rendre.
  *
- * Un retour n'est pas gratuit : il consomme un tour, il repousse de la
+ * Un retour n'est pas gratuit : il consomme un aller-retour, il repousse de la
  * production, et parfois il fait sauter une échéance. Une approbation n'est pas
  * neutre non plus : elle libère de la charge et démarre des adaptations.
  *
@@ -55,12 +55,12 @@ window.COUT = (function () {
     out.tours = toursApres;
     out.jours = jours;
 
-    out.effets.push("Tour " + toursApres + (vendus ? " sur " + vendus + " vendus" : ""));
+    out.effets.push("Aller-retour " + toursApres + (vendus ? " sur " + vendus + " vendus" : ""));
     if (estime) out.effets.push("Environ " + jours + " j de reprise pour " + porteur(l));
     else out.effets.push("Charge inconnue : impossible de dire ce que la reprise coûte");
 
     if (vendus && toursApres > vendus) {
-      out.alertes.push("Au-delà des " + vendus + " tours vendus — ce tour se comptabilise en reprise");
+      out.alertes.push("Au-delà des " + vendus + " allers-retours vendus — cet aller-retour se comptabilise en reprise");
     }
 
     var d = PLATEAU.echeanceDe(p, l);
@@ -105,16 +105,16 @@ window.COUT = (function () {
     var orphelins = (p.livrables || []).filter(function (l) { return !l.pisteId; });
 
     if (cle === "approuve") {
-      out.gagne.push("Cette route fait autorité — l'équipe sait sur quoi travailler");
-      if (autres.length) out.effets.push(autres.length + (autres.length > 1 ? " autres routes sont écartées" : " autre route est écartée"));
-      if (orphelins.length) out.effets.push(orphelins.length + " livrables sans route s'y rattachent");
+      out.gagne.push("Cette piste fait autorité — l'équipe sait sur quoi travailler");
+      if (autres.length) out.effets.push(autres.length + (autres.length > 1 ? " autres pistes sont écartées" : " autre piste est écartée"));
+      if (orphelins.length) out.effets.push(orphelins.length + " livrables sans piste s'y rattachent");
       var a = pi.auteurDA ? DEPOT.trouve("personnes", pi.auteurDA) : null;
       if (a && a.seniorite === "junior") {
         out.gagne.push("Idée retenue d'un junior : ton objectif avance de un");
       }
       if (!pi.auteurDA) out.alertes.push("Aucun auteur nommé — l'idée ne pourra être attribuée à personne");
       if (!pi.sacrifice || !pi.argument) {
-        out.alertes.push("Retenir une route sans son sacrifice ni son argument, c'est retenir sans critère");
+        out.alertes.push("Retenir une piste sans son sacrifice ni son argument, c'est retenir sans critère");
       }
       return out;
     }
@@ -122,15 +122,15 @@ window.COUT = (function () {
     if (cle === "hors") {
       out.effets.push("Route écartée");
       if (rattaches.length) out.alertes.push(rattaches.length + " livrables perdent leur base");
-      if (!autres.length) out.alertes.push("Plus aucune route en lice : la production s'arrête tant qu'il n'y en a pas");
+      if (!autres.length) out.alertes.push("Plus aucune piste en lice : la production s'arrête tant qu'il n'y en a pas");
       return out;
     }
 
-    out.effets.push("La route repart chez son auteur");
+    out.effets.push("La piste repart chez son auteur");
     var jrs = 2;
     out.jours = jrs;
     out.effets.push("Environ " + jrs + " j avant qu'elle revienne");
-    if (autres.length === 0) out.alertes.push("Aucune autre route en lice pendant ce temps");
+    if (autres.length === 0) out.alertes.push("Aucune autre piste en lice pendant ce temps");
     return out;
   }
 

@@ -1,7 +1,7 @@
 /* vue-asset.js — l'écran de validation d'un asset.
  *
  * C'est l'écran le plus utilisé de tous, et il n'existait pas comme tel : une
- * pièce se jugeait dans un panneau à onglets où l'image était un détail.
+ * livrable se jugeait dans un panneau à onglets où l'image était un détail.
  *
  * Ici il n'y a qu'une question — ce qui doit être posé l'est-il ? — et quatre
  * cases : l'asset, le BAT, la simulation, la mise en situation. Une case vide
@@ -34,7 +34,7 @@ window.VUE_ASSET = (function () {
       UI.onglets(ONGLETS, onglet, function (c) { onglet = c; apres(); }),
       el("div", { style: { "margin-top": "1rem" } },
         onglet === "poser" ? el("div", {}, cases(p, l, apres), packsMontres(p, l, apres), MOCKUP.bloc(p, l, apres))
-          : onglet === "juger" ? el("div", {}, retoursClient(p, l, apres) || vide("Aucun retour sur cette pièce."),
+          : onglet === "juger" ? el("div", {}, retoursClient(p, l, apres) || vide("Aucun retour sur ce livrable."),
               VUE_LIVRABLE.criteres(p, l, apres))
           : el("div", {}, precedente(p, l) || vide("Une seule version : rien n'a encore été repris."),
               VUE_LIVRABLE.dependances(p, l))),
@@ -44,7 +44,7 @@ window.VUE_ASSET = (function () {
 
   function vide(t) { return el("p.rien", {}, t); }
 
-  /* Ce qu'on voit avant de juger : la pièce, son niveau, son marché, son état. */
+  /* Ce qu'on voit avant de juger : le livrable, son niveau, son marché, son état. */
   function entete(p, l) {
     var m = DEPOT.trouve("marches", l.marche);
     var s = DEPOT.trouve("supports", l.support);
@@ -65,7 +65,7 @@ window.VUE_ASSET = (function () {
         el("div.ast-r", {},
           resp ? UI.avatar(resp, 22) : UI.avatar(null, 22),
           el("span", {}, resp ? resp.nom : "sans responsable"),
-          piste ? el("span", {}, "route « " + piste.titre + " »") : el("span.alerte", {}, "hors route"))
+          piste ? el("span", {}, "piste « " + piste.titre + " »") : el("span.alerte", {}, "hors piste"))
       ));
   }
 
@@ -137,7 +137,7 @@ window.VUE_ASSET = (function () {
     );
   }
 
-  /* Le chambranle. Une pièce qui ne vient d'aucune route arbitrée n'a pas de
+  /* Le chambranle. Un livrable qui ne vient d'aucune piste arbitrée n'a pas de
    * porte à franchir : elle n'a pas de mur autour. */
   function cadre(p, l, piste, retenue, et, ici) {
     var exiges = et.filter(function (e) { return e.exige; });
@@ -147,15 +147,15 @@ window.VUE_ASSET = (function () {
       el("div.ptc-t", {}, "LA PORTE"),
       el("div.ptc-n", {}, faits + " sur " + exiges.length,
         el("span", {}, faits === exiges.length
-          ? "la porte est franchie — la pièce peut partir"
+          ? "la porte est franchie — le livrable peut partir"
           : exiges.length - faits === 1 ? "un étage reste à franchir"
           : (exiges.length - faits) + " étages restent à franchir")),
       retenue
-        ? el("div.ptc-r", {}, "Sur la route « " + piste.titre + " », arbitrée et retenue.")
+        ? el("div.ptc-r", {}, "Sur la piste « " + piste.titre + " », arbitrée et retenue.")
         : el("div.ptc-r", {}, piste
-            ? "La route « " + piste.titre + " » n'a pas été arbitrée. Produire ici, "
+            ? "La piste « " + piste.titre + " » n'a pas été arbitrée. Produire ici, "
               + "c'est parier — et si elle tombe, tout ce qui est posé tombe avec elle."
-            : "Cette pièce n'est rattachée à aucune route : elle ne vient de nulle part, "
+            : "Ce livrable n'est rattaché à aucune piste : elle ne vient de nulle part, "
               + "et rien ne dira pourquoi elle a été faite.")
     );
   }
@@ -227,7 +227,7 @@ window.VUE_ASSET = (function () {
 
       el("div.pto-c", {}, el("b", {}, "sans lui"), e.def.cout),
       !retenue && e.def.signable
-        ? el("div.pto-a", {}, "Et la route n'est pas arbitrée : ce serait signer un bon "
+        ? el("div.pto-a", {}, "Et la piste n'est pas arbitrée : ce serait signer un bon "
             + "à tirer sur une idée que personne n'a retenue.")
         : null);
   }
@@ -247,9 +247,9 @@ window.VUE_ASSET = (function () {
 
   /* ————————————————————— Les packs montrés ————————————————————— */
 
-  /* Une pièce montre des produits. Lesquels, ça ne se devine pas — et c'est le
+  /* Un livrable montre des produits. Lesquels, ça ne se devine pas — et c'est le
    * seul endroit d'où l'on peut voir qu'un pack apparaît sur un marché qui ne
-   * le vend pas. Le catalogue proposé est celui de la marque de la pièce, et
+   * le vend pas. Le catalogue proposé est celui de la marque du livrable, et
    * d'aucune autre. */
   function packsMontres(p, l, apres) {
     var cat = VAULT.proposables(l);
@@ -261,7 +261,7 @@ window.VUE_ASSET = (function () {
     if (!l.marqueId) {
       return el("div.pm", {},
         el("div.pm-t", {}, "LES PACKS MONTRÉS"),
-        el("p.pm-x", {}, "Cette pièce n'est rattachée à aucune marque : on ne peut "
+        el("p.pm-x", {}, "Ce livrable n'est rattaché à aucune marque : on ne peut "
           + "lui proposer aucun catalogue, et rien ne dira si elle montre un produit "
           + "qui n'est pas vendu ici."));
     }
@@ -278,7 +278,7 @@ window.VUE_ASSET = (function () {
               + (z.hors.length > 1 ? " packs ne sont pas distribués" : " pack n'est pas distribué")
               + (m ? " sur " + m.nom : " sur ce marché")),
             el("span.pmh-x", {}, z.hors.map(function (s) { return s.nom; }).join("  ·  ")
-              + " — une pièce qui montre un produit qu'on n'y vend pas se rappelle, "
+              + " — un livrable qui montre un produit qu'on n'y vend pas se rappelle, "
               + "et le rappel est pour l'agence."))
         : null,
 
@@ -308,7 +308,7 @@ window.VUE_ASSET = (function () {
                 || "à qualifier"));
           }))
         : el("p.pm-x", {}, "Le catalogue de " + (mq ? mq.nom : "cette marque")
-            + " est vide. Un pack se crée au vault.")
+            + " est vide. Un pack se crée à la bibliothèque de marque.")
     );
   }
 
@@ -333,7 +333,7 @@ window.VUE_ASSET = (function () {
             el("span", {}, FEEDBACK.nomAuteur(f.auteur)),
             el("span", {}, O.joli(f.quand)),
             el("span", {}, FEEDBACK.CANAUX[f.canal].nom),
-            el("span", {}, i.assets + (i.assets > 1 ? " pièces touchées" : " pièce touchée")),
+            el("span", {}, i.assets + (i.assets > 1 ? " livrables touchés" : " livrable touché")),
             UI.eti(FEEDBACK.ISSUES[f.issue].nom, FEEDBACK.ISSUES[f.issue].ton)),
           f.issue === "ouvert"
             ? el("button.b.nu", { type: "button", onclick: function () { FEEDBACK.trancher(f, apres); } }, "trancher")

@@ -1,13 +1,13 @@
-/* brief-production.js — tout ce qu'il faut pour fabriquer UNE pièce.
+/* brief-production.js — tout ce qu'il faut pour fabriquer UNE livrable.
  *
  * Le §9.3 du processus dit la règle : quinze minutes à l'oral, puis une page
  * écrite pour faire démarrer quelqu'un. Cette page-là n'existait pas. Un
- * exécutant recevait le nom de sa pièce et allait chercher le reste — le
+ * exécutant recevait le nom de son livrable et allait chercher le reste — le
  * gabarit dans le référentiel, la langue dans le marché, le claim dans la
  * plateforme, les mentions dans un mail. Quatre endroits, et un oubli par
- * pièce en moyenne.
+ * livrable en moyenne.
  *
- * Ici, un clic. Tout ce que le modèle sait déjà sur cette pièce, rassemblé
+ * Ici, un clic. Tout ce que le modèle sait déjà sur ce livrable, rassemblé
  * dans l'ordre où on le lit pour fabriquer : ce qu'on fait, ce que ça doit
  * dire, ce qu'on ne dit jamais, les contraintes techniques, les droits, et
  * ce qui décide que c'est fini.
@@ -21,7 +21,7 @@
 window.BRIEF_PRODUCTION = (function () {
   var el = O.el;
 
-  /* ————————————————————— Ce qu'on sait de la pièce ————————————————————— */
+  /* ————————————————————— Ce qu'on sait du livrable ————————————————————— */
 
   function contexte(p, l) {
     var s = DEPOT.trouve("supports", l.support);
@@ -61,12 +61,12 @@ window.BRIEF_PRODUCTION = (function () {
 
     cs.push({ quoi: "Les mentions du marché sont écrites", ok: !!(c.m && (c.m.mentions || []).length), poids: 4,
       cout: c.m
-        ? "aucune mention obligatoire renseignée sur " + c.m.nom + " : une pièce "
+        ? "aucune mention obligatoire renseignée sur " + c.m.nom + " : un livrable "
           + "diffusée ici peut être non conforme sans que rien ne le dise"
         : "marché non renseigné" });
 
     cs.push({ quoi: "Quelqu'un en répond", ok: !!c.resp, poids: 4,
-      cout: "sans responsable nommé, cette pièce n'apparaît dans la semaine de "
+      cout: "sans responsable nommé, ce livrable n'apparaît dans la semaine de "
         + "personne — et personne n'est en défaut si elle ne sort pas" });
 
     cs.push({ quoi: "Une date de remise", ok: !!(l.remise || l.echeance || l.publication), poids: 3,
@@ -99,15 +99,15 @@ window.BRIEF_PRODUCTION = (function () {
     if (c.piste) {
       blocs.push({ t: "L'IDÉE QU'ELLE SERT", source: c.piste.titre,
         corps: c.piste.idee || null,
-        siVide: "la route est retenue mais son idée n'est pas écrite : rien ne "
-          + "permet de dire si cette pièce la sert ou la trahit",
+        siVide: "la piste est retenue mais son idée n'est pas écrite : rien ne "
+          + "permet de dire si ce livrable la sert ou la trahit",
         lignes: [
           { q: "Ce qu'elle sacrifie", v: c.piste.sacrifice || null },
           { q: "Ce qui la défend", v: c.piste.argument || null },
         ] });
     }
 
-    /* 3 — Ce que la pièce doit dire, mot pour mot. */
+    /* 3 — Ce que le livrable doit dire, mot pour mot. */
     blocs.push({ t: "CE QU'ELLE DOIT DIRE", fort: true,
       siVide: "aucun texte arrêté — il s'écrira à la maquette",
       lignes: [
@@ -119,7 +119,7 @@ window.BRIEF_PRODUCTION = (function () {
         { q: "Objectif", v: b.objectif || null },
       ].filter(function (x) { return x.v; }) });
 
-    /* 4 — Le déroulé, quand la pièce est un film. Une animatique sans son
+    /* 4 — Le déroulé, quand le livrable est un film. Une animatique sans son
      * découpage n'est pas un brief, c'est une intention. */
     if ((b.scenes || []).length) {
       blocs.push({ t: "LE DÉROULÉ", source: b.scenes.length + " scènes",
@@ -131,12 +131,12 @@ window.BRIEF_PRODUCTION = (function () {
 
     /* 5 — Ce qu'on ne dit jamais. Le seul bloc dont l'absence se paie en revue. */
     var interdits = [].concat(c.vault.jamais || []);
-    blocs.push({ t: "CE QU'ON NE DIT JAMAIS", source: c.mq ? "vault " + c.mq.nom : null,
+    blocs.push({ t: "CE QU'ON NE DIT JAMAIS", source: c.mq ? "bibliothèque de marque " + c.mq.nom : null,
       puces: interdits,
       siVide: c.mq
-        ? "rien d'écrit au vault de " + c.mq.nom + " : le contrôle de vocabulaire "
+        ? "rien d'écrit à la bibliothèque de marque de " + c.mq.nom + " : le contrôle de vocabulaire "
           + "n'a rien à vérifier"
-        : "aucune marque rattachée à cette pièce" });
+        : "aucune marque rattachée à ce livrable" });
 
     /* 6 — Les packs montrés, et où ils sont vendus. */
     if (c.packs.length || c.mq) {
@@ -146,7 +146,7 @@ window.BRIEF_PRODUCTION = (function () {
           var d = (s.marches || []).length ? "vendu sur " + s.marches.length + " marchés" : "marchés non renseignés";
           return s.nom + (s.contenu ? "  ·  " + s.contenu : "") + "  —  " + d;
         }),
-        siVide: "aucun pack déclaré sur cette pièce : on ne peut pas vérifier "
+        siVide: "aucun pack déclaré sur ce livrable : on ne peut pas vérifier "
           + "qu'on montre un article vendu ici",
         corps: hz.hors.length
           ? "⚠ " + hz.hors.length + (hz.hors.length > 1 ? " packs montrés ne sont pas distribués" : " pack montré n'est pas distribué")
@@ -176,7 +176,7 @@ window.BRIEF_PRODUCTION = (function () {
     blocs.push({ t: "MENTIONS OBLIGATOIRES", source: c.m ? c.m.nom : null,
       puces: c.m ? (c.m.mentions || []) : [],
       siVide: c.m
-        ? "non renseignées sur " + c.m.nom + " : une pièce diffusée ici peut être "
+        ? "non renseignées sur " + c.m.nom + " : un livrable diffusé ici peut être "
           + "non conforme sans que rien ne le dise"
         : "marché non renseigné" });
 
@@ -185,7 +185,7 @@ window.BRIEF_PRODUCTION = (function () {
       blocs.push({ t: "À VÉRIFIER AVANT DE PRODUIRE", fort: true, puces: b.aVerifier });
     }
 
-    /* 10 — Qui, pour quand, et sur combien de tours. */
+    /* 10 — Qui, pour quand, et sur combien d'allers-retours. */
     var t = window.VERSION ? VERSION.tours(l, l.toursVendus) : null;
     blocs.push({ t: "QUI, POUR QUAND", lignes: [
       { q: "En répond", v: c.resp ? c.resp.nom + "  ·  " + O.poste(c.resp.poste).nom : null },
@@ -200,7 +200,7 @@ window.BRIEF_PRODUCTION = (function () {
     var restants = Object.keys(axes).filter(function (k) { return axes[k] !== "fait"; });
     blocs.push({ t: "CE QUI DÉCIDE QUE C'EST FINI",
       puces: restants.map(function (k) { return NOM_AXE[k] || k; }),
-      siVide: "les dix axes sont au vert : la pièce est finie au sens de la définition.",
+      siVide: "les dix axes sont au vert : le livrable est finie au sens de la définition.",
       videBon: true });
 
     return {
@@ -213,14 +213,14 @@ window.BRIEF_PRODUCTION = (function () {
   }
 
   var NOM_AXE = {
-    concept: "le concept — rattaché à une route retenue",
+    concept: "le concept — rattaché à une piste retenue",
     copy: "le texte — définitif et verrouillé",
     asset: "les visuels sources — tous disponibles",
     design: "l'exécution — conforme au système graphique",
     technique: "le fichier — format, poids, profil conformes au gabarit",
     droits: "les droits — licence, territoire et durée couvrent l'usage",
     langue: "la langue — traduite et relue pour le marché",
-    central: "la validation centrale — le maître est approuvé",
+    central: "la validation centrale — le master est approuvé",
     local: "la validation locale — l'adaptation est approuvée sur son marché",
     final: "le fini — exporté, validé, publié, sources archivées",
   };
@@ -275,8 +275,8 @@ window.BRIEF_PRODUCTION = (function () {
     PANNEAU.ouvrir("Brief de production", l.nom, el("div.co", {},
       UI.recevabilite(
         manques.length
-          ? "Quelqu'un peut-il fabriquer cette pièce avec ça ?"
-          : "Tout y est — cette pièce peut se fabriquer sans rien demander",
+          ? "Quelqu'un peut-il fabriquer ce livrable avec ça ?"
+          : "Tout y est — ce livrable peut se fabriquer sans rien demander",
         cs, null,
         [
           { nom: "Imprimer", fort: !manques.length, quand: function () { window.print(); } },
@@ -294,7 +294,7 @@ window.BRIEF_PRODUCTION = (function () {
     ));
   }
 
-  /* Le bouton, là où la pièce se regarde. */
+  /* Le bouton, là où le livrable se regarde. */
   function bouton(p, l) {
     var manques = controles(p, l).filter(function (c) { return !c.ok; }).length;
     return el("button.b" + (manques ? "" : ".or"), { type: "button",

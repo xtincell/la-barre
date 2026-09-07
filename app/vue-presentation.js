@@ -1,12 +1,12 @@
 /* vue-presentation.js — le dossier de présentation, engendré et présenté.
  *
- * C'est la pièce qui porte la décision du client. Elle ne se saisit pas : elle
+ * C'est le livrable qui porte la décision du client. Elle ne se saisit pas : elle
  * se compose depuis le projet, et chaque page dit d'où elle tire ce qu'elle
  * montre. Une page dont la source est vide ne s'invente pas — elle affiche sa
  * dette, et le bouton qui la comble.
  *
  * Après la séance, les retours ne restent pas dans un compte rendu : ils
- * redescendent sur la pièce qu'ils visent.
+ * redescendent sur le livrable qu'ils visent.
  */
 
 window.VUE_PRESENTATION = (function () {
@@ -45,7 +45,7 @@ window.VUE_PRESENTATION = (function () {
 
     var ecartees = (p.sections.pistes || []).filter(function (x) { return x.statut === "ecartee"; });
     if (ecartees.length) {
-      out.push({ quoi: ecartees.length + (ecartees.length > 1 ? " routes écartées" : " route écartée"),
+      out.push({ quoi: ecartees.length + (ecartees.length > 1 ? " pistes écartées" : " piste écartée"),
         detail: ecartees.map(function (x) { return x.titre; }).join(", "),
         pourquoi: "on ne présente pas ce qu'on a refusé — mais le motif reste "
           + "au dossier, et c'est lui qui rend la recommandation défendable." });
@@ -63,7 +63,7 @@ window.VUE_PRESENTATION = (function () {
     if (sacrifices) {
       out.push({ quoi: sacrifices + (sacrifices > 1 ? " sacrifices écrits" : " sacrifice écrit"),
         detail: null,
-        pourquoi: "ce à quoi chaque route renonce se dit à l'oral si on le demande. "
+        pourquoi: "ce à quoi chaque piste renonce se dit à l'oral si on le demande. "
           + "Écrit sur une planche, il se lit comme un aveu de faiblesse." });
     }
 
@@ -71,7 +71,7 @@ window.VUE_PRESENTATION = (function () {
       return n + (Number(l.estime) || 0); }, 0);
     if (charge) {
       out.push({ quoi: O.decimal(charge) + " jours de charge estimée",
-        detail: (p.livrables || []).length + " pièces",
+        detail: (p.livrables || []).length + " livrables",
         pourquoi: "la Création s'engage sur une date, jamais sur un prix. "
           + "La charge est une donnée de production, pas un argument client." });
     }
@@ -239,7 +239,7 @@ window.VUE_PRESENTATION = (function () {
   /* Combler : on renvoie vers la section propriétaire, jamais on n'écrit à sa place. */
   function combler(p, pg, rafraichir) {
     var vers = { probleme: "brief", strategie: "strategie", idee: "bigidea",
-      route: "pistes", planche: "livrables", mockup: "livrables",
+      piste: "pistes", planche: "livrables", mockup: "livrables",
       livrables: "livrables", calendrier: "livrables", titre: "identite", suite: "identite" };
     var cle = vers[pg.type] || "identite";
     location.hash = "#/projets/" + p.id + "/" + cle;
@@ -252,7 +252,7 @@ window.VUE_PRESENTATION = (function () {
       choix.appendChild(el("button.pr-ch", { type: "button", onclick: function () {
         var pg = { type: t };
         if (t === "planche" && (p.volets || []).length) pg.voletId = p.volets[0].id;
-        if (t === "route" && (p.sections.pistes || []).length) pg.pisteId = p.sections.pistes[0].id;
+        if (t === "piste" && (p.sections.pistes || []).length) pg.pisteId = p.sections.pistes[0].id;
         d.pages.push(pg);
         DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
       } }, el("b", {}, def.nom), el("span", {}, def.tire)));
@@ -327,8 +327,8 @@ window.VUE_PRESENTATION = (function () {
         c.note ? el("div.pg-note", {}, c.note) : null);
     }
 
-    if (pg.type === "route") {
-      return el("div.pg.pg-route", {},
+    if (pg.type === "piste") {
+      return el("div.pg.pg-piste", {},
         el("div.pg-gauche", {}, IMAGE.vignette(c.visuel, "toile")),
         el("div.pg-droite", {},
           el("div.pg-eti", {}, "Route" + (c.statut === "retenue" ? " · retenue" : "")),
@@ -442,7 +442,7 @@ window.VUE_PRESENTATION = (function () {
         : el("p.rien", {}, "Aucun retour enregistré."),
 
       sansCible
-        ? UI.banniere("", sansCible + (sansCible > 1 ? " retours n'ont pas de pièce" : " retour n'a pas de pièce")
+        ? UI.banniere("", sansCible + (sansCible > 1 ? " retours n'ont pas de livrable" : " retour n'a pas de livrable")
             + " : il ne se traitera nulle part. Rattache-le à un livrable.")
         : null
     );
@@ -451,16 +451,16 @@ window.VUE_PRESENTATION = (function () {
   function retour(p, d, rafraichir) {
     var champ = el("textarea", { rows: 2, placeholder: "Ce que le client a dit, en une phrase" });
     var sel = el("select", {});
-    sel.appendChild(el("option", { value: "" }, "— sans pièce visée —"));
+    sel.appendChild(el("option", { value: "" }, "— sans livrable visé —"));
     (p.livrables || []).filter(function (l) { return !l.annule; }).forEach(function (l) {
       sel.appendChild(el("option", { value: l.id }, l.nom));
     });
 
     PANNEAU.sur("Retour de séance", p.ref, el("div", {},
-      UI.banniere("", "Un retour rattaché à une pièce y descend comme annotation — il se traite là où le travail se fait, pas dans un compte rendu que personne ne rouvre."),
+      UI.banniere("", "Un retour rattaché à un livrable y descend comme annotation — il se traite là où le travail se fait, pas dans un compte rendu que personne ne rouvre."),
       el("div.form", {},
         el("div.champ", {}, el("label", {}, "Le retour"), champ),
-        el("div.champ", {}, el("label", {}, "Sur quelle pièce"), sel)),
+        el("div.champ", {}, el("label", {}, "Sur quel livrable"), sel)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           if (!champ.value.trim()) { AVIS.refus("Un retour sans texte n'est pas un retour."); return; }

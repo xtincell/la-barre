@@ -27,7 +27,7 @@ window.CHAINE_BRIEF = (function () {
       quoi: "territoire, insight, tension — reçus du Planning ou définis",
       fait: function (p) { return !!(p.sections.strategie || {}).territoire; } },
     { cle: "atelier", nom: "Atelier", section: "atelier",
-      quoi: "la séance qui affine le socle et la stratégie, et où les idées se posent",
+      quoi: "la séance qui affine la plateforme de marque et la stratégie, et où les idées se posent",
       fait: function (p) { return (VUE_ATELIER.idees(p) || []).length > 0; } },
     { cle: "bigidea", nom: "Big idea", section: "bigidea",
       quoi: "la séance de définition — je la gouverne, je n'ai pas le monopole de l'idée",

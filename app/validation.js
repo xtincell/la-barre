@@ -1,7 +1,7 @@
-/* validation.js — le verdict, sur un document et pas seulement sur une pièce.
+/* validation.js — le verdict, sur un document et pas seulement sur un livrable.
  *
  * Le brief se valide, la plateforme se valide, la stratégie, l'idée, les
- * routes. Le processus le suppose partout et ne l'outillait nulle part : on ne
+ * pistes. Le processus le suppose partout et ne l'outillait nulle part : on ne
  * pouvait rendre un verdict que sur un livrable.
  *
  * Quatre verdicts, motif obligatoire pour trois d'entre eux, et le motif se
@@ -21,13 +21,13 @@ window.VALIDATION = (function () {
       apres: "Le territoire devient opposable au DA." },
     bigidea: { nom: "la big idea", criteres: "bigidea", poste: "creation",
       apres: "La demande de proposition peut partir." },
-    piste: { nom: "la route créative", criteres: "proposition", poste: "da",
-      apres: "La production peut s'ouvrir sur cette route." },
+    piste: { nom: "la piste créative", criteres: "proposition", poste: "da",
+      apres: "La production peut s'ouvrir sur cette piste." },
     /* Un calendrier mensuel se valide avant le 5, et cette validation est ce
      * qui rend chaque publication opposable. Sans elle, chacune peut être
      * rediscutée le jour de sa parution — et un cycle ne se rattrape pas. */
     calendrier: { nom: "le calendrier du mois", criteres: null, poste: "clientele",
-      apres: "Les publications du mois deviennent opposables : on ne rediscute plus une pièce validée au calendrier." },
+      apres: "Les publications du mois deviennent opposables : on ne rediscute plus un livrable validé au calendrier." },
   };
 
   function etat(objet) {
@@ -178,12 +178,12 @@ window.VALIDATION = (function () {
     var out = [];
     if (cle === "piste") {
       var n = (p.livrables || []).length;
-      out.push({ t: "EN AVAL", v: String(n), s: n > 1 ? "pièces attendent cette route" : "pièce attend cette route",
+      out.push({ t: "EN AVAL", v: String(n), s: n > 1 ? "livrables attendent cette piste" : "livrable attend cette piste",
         ton: verdict.cle === "approuve" ? "" : "alerte" });
     }
     if (cle === "bigidea") {
       var pistes = (p.sections.pistes || []).length;
-      out.push({ t: "EN AVAL", v: String(pistes), s: pistes > 1 ? "routes en dépendent" : "route en dépend",
+      out.push({ t: "EN AVAL", v: String(pistes), s: pistes > 1 ? "pistes en dépendent" : "piste en dépend",
         ton: verdict.cle === "approuve" ? "" : "alerte" });
     }
     if (cle === "brief" && verdict.cle !== "approuve") {

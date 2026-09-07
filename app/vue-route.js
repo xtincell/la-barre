@@ -1,7 +1,7 @@
-/* vue-route.js — une route créative, en entier.
+/* vue-piste.js — une piste créative, en entier.
  *
- * Une route n'est pas une vignette et trois lignes de texte : c'est un concept,
- * ses KV maîtres par marché, et tout ce qui en découle. Tant qu'on ne voit pas
+ * Une piste n'est pas une vignette et trois lignes de texte : c'est un concept,
+ * ses KV masters par marché, et tout ce qui en découle. Tant qu'on ne voit pas
  * l'arbre complet, on arbitre sur une impression.
  *
  * L'image commande. Le texte se range autour.
@@ -31,7 +31,7 @@ window.VUE_ROUTE = (function () {
 
   /* ————————————————————— L'écran ————————————————————— */
 
-  /* Ouvrir une route, c'est changer d'écran — pas ouvrir un tiroir. */
+  /* Ouvrir une piste, c'est changer d'écran — pas ouvrir un tiroir. */
   function ouvrir(p, pi, rafraichir) {
     VUE_PISTES.ouvrir(pi.id);
     location.hash = "#/projets/" + p.id + "/pistes";
@@ -50,7 +50,7 @@ window.VUE_ROUTE = (function () {
 
     return el("div.rt", {},
       el("div.rt-tete", {},
-        el("h2", {}, pi.titre || "Route sans titre"),
+        el("h2", {}, pi.titre || "Piste sans titre"),
         UI.eti(etiquette(pi), pi.statut === "retenue" ? "vert" : pi.statut === "ecartee" ? "terne" : "attente"),
         controle(p, da)
       ),
@@ -98,7 +98,7 @@ window.VUE_ROUTE = (function () {
     );
   }
 
-  /* La question de la route. */
+  /* La question de la piste. */
   function bande(p, pi, mes, decl, apres) {
     var marches = DEPOT.liste("marches");
     var sansKV = marches.filter(function (m) {
@@ -110,7 +110,7 @@ window.VUE_ROUTE = (function () {
 
     var controles = [
       { quoi: "Sacrifice écrit", ok: !!pi.sacrifice, poids: 5,
-        cout: "une route sans sacrifice n'est pas arbitrable — refusable au §8" },
+        cout: "une piste sans sacrifice n'est pas arbitrable — refusable au §8" },
       { quoi: "Argument écrit", ok: !!pi.argument, poids: 5,
         cout: "elle ne se défend que par le goût" },
       { quoi: "Auteur nommé", ok: !!pi.auteurDA, poids: 4,
@@ -122,17 +122,17 @@ window.VUE_ROUTE = (function () {
       { quoi: "Déclinaisons rattachées", ok: sansMaitre.length === 0, poids: 3,
         cout: sansMaitre.length + " formats ne savent pas de quel KV ils viennent : une V2 ne les périmera pas" },
       { quoi: "Aucune adaptation dépassée", ok: perimees.length === 0, poids: 4,
-        cout: perimees.length + " formats faits sur une version antérieure du maître" },
+        cout: perimees.length + " formats faits sur une version antérieure du master" },
       { quoi: "Un dispositif", ok: DISPOSITIF.liste(pi).length > 0, poids: 5,
         cout: "un concept sans activités ne se produit pas : le jour où elle est retenue, personne ne saura quoi fabriquer" },
     ];
 
     return UI.recevabilite(
-      pi.statut === "retenue" ? "Cette route fait autorité" : "Cette route peut-elle être retenue ?",
+      pi.statut === "retenue" ? "Cette piste fait autorité" : "Cette piste peut-elle être retenue ?",
       controles, null,
       [
         pi.statut !== "retenue"
-          ? { nom: "Retenir cette route", fort: true, quand: function () { retenir(p, pi, apres); } }
+          ? { nom: "Retenir cette piste", fort: true, quand: function () { retenir(p, pi, apres); } }
           : null,
         { nom: "Ajouter un KV", quand: function () { ajouterKV(p, pi, apres); } },
         { nom: "Renvoyer au DA", doux: true, quand: function () {
@@ -153,7 +153,7 @@ window.VUE_ROUTE = (function () {
     return pire ? pire.l.nom + " — " + pire.cout : "";
   }
 
-  /* Ce qui se dit de la route : court, et sous l'image. */
+  /* Ce qui se dit de la piste : court, et sous l'image. */
   function argumentaire(pi) {
     var blocs = [
       { t: "Le concept", v: pi.concept },
@@ -182,12 +182,12 @@ window.VUE_ROUTE = (function () {
     );
   }
 
-  /* ————————————————————— Les KV maîtres de la route ————————————————————— */
+  /* ————————————————————— Les KV masters de la piste ————————————————————— */
 
   function blocKV(p, pi, mes, apres) {
     return el("div.rt-bloc", {},
       el("div.rtbl-tete", {},
-        el("span.t", {}, "LES KV MAÎTRES"),
+        el("span.t", {}, "LES KV MASTERS"),
         el("span.n", {}, mes.length + (mes.length > 1 ? " marchés" : " marché"))),
       el("div.rt-mur", {}, mes.map(function (l) {
         var m = DEPOT.trouve("marches", l.marche);
@@ -208,7 +208,7 @@ window.VUE_ROUTE = (function () {
       })));
   }
 
-  /* ————————————————————— Les déclinaisons, groupées par KV maître ————————————————————— */
+  /* ————————————————————— Les déclinaisons, groupées par KV master ————————————————————— */
 
   function blocDecl(p, pi, decl, apres) {
     var mes = kvs(p, pi);
@@ -216,9 +216,9 @@ window.VUE_ROUTE = (function () {
     var groupes;
 
     if (cycle) {
-      /* Dans un cycle, les pièces ne découlent pas d'un maître : elles se
+      /* Dans un cycle, les livrables ne découlent pas d'un maître : elles se
        * suivent dans le temps. Les grouper par KV les envoyait toutes sous
-       * « Sans maître » — la route gouverne pourtant chacune, et c'est ici
+       * « Sans master » — la piste gouverne pourtant chacune, et c'est ici
        * qu'on doit les voir. */
       groupes = [];
       decl.slice().sort(function (a, b) {
@@ -246,7 +246,7 @@ window.VUE_ROUTE = (function () {
       var orphelines = decl.filter(function (l) {
         return !mes.some(function (kv) { return kv.id === l.maitre; });
       });
-      if (orphelines.length) groupes.push({ nom: "Sans maître", code: "—", ls: orphelines, orphelin: true });
+      if (orphelines.length) groupes.push({ nom: "Sans master", code: "—", ls: orphelines, orphelin: true });
     }
 
     return el("div.rt-bloc", {},
@@ -255,7 +255,7 @@ window.VUE_ROUTE = (function () {
         el("span.n", {}, decl.length + (cycle
           ? (decl.length > 1 ? " publications" : " publication")
           : (decl.length > 1 ? " formats" : " format")))),
-      cycle ? el("p.rt-q", {}, "Chacune sert la route ou n'appartient pas au mois. "
+      cycle ? el("p.rt-q", {}, "Chacune sert la piste ou n'appartient pas au mois. "
         + "C'est ce qui permet de refuser une publication sur autre chose que le goût.") : null,
 
       groupes.map(function (g) {
@@ -288,7 +288,7 @@ window.VUE_ROUTE = (function () {
     );
   }
 
-  /* ————————————————————— Les mises en situation de la route ————————————————————— */
+  /* ————————————————————— Les mises en situation de la piste ————————————————————— */
 
   function blocSituation(p, mks, apres) {
     return el("div.rt-bloc", {},
@@ -312,7 +312,7 @@ window.VUE_ROUTE = (function () {
     return el("div.form-actions", { style: { "margin-top": "1.2rem" } },
       el("button.b.or", { type: "button", onclick: function () {
         PANNEAU.fermer(); VUE_PISTES.editer(p, pi, apres);
-      } }, "Modifier la route"),
+      } }, "Modifier la piste"),
       el("button.b", { type: "button", onclick: function () { ajouterKV(p, pi, apres); } }, "Ajouter un KV"),
       pi.statut !== "ecartee" && pi.statut !== "retenue"
         ? el("button.b.nu", { type: "button", onclick: function () { ecarter(p, pi, apres); } }, "Écarter")
@@ -322,7 +322,7 @@ window.VUE_ROUTE = (function () {
 
   /* Retenir n'est pas valider un visuel : c'est ouvrir la production de tout
    * un dispositif. L'onde de choc dit ce que ça fabrique, et ce que ça coûte
-   * aux routes qui s'écartent. */
+   * aux pistes qui s'écartent. */
   function retenir(p, pi, apres) {
     var autres = (p.sections.pistes || []).filter(function (x) { return x.id !== pi.id && x.statut !== "ecartee"; });
     var mes = kvs(p, pi);
@@ -335,22 +335,22 @@ window.VUE_ROUTE = (function () {
     var creer = el("input", { type: "checkbox" });
     creer.checked = d.aCreer.length > 0;
 
-    PANNEAU.sur("Retenir « " + (pi.titre || "cette route") + " »", "ce que ça ouvre", el("div", {},
+    PANNEAU.sur("Retenir « " + (pi.titre || "cette piste") + " »", "ce que ça ouvre", el("div", {},
       el("div.stats", {},
         UI.stat("ACTIVITÉS", String(DISPOSITIF.liste(pi).length),
           "passent en production", DISPOSITIF.liste(pi).length ? "vert" : "alerte"),
         UI.stat("PIÈCES À CRÉER", String(d.aCreer.length),
           d.aCreer.length ? "croisements du dispositif non couverts" : "tout existe déjà", ""),
         UI.stat("BAT MANQUANTS", String(d.sansBAT.length),
-          d.sansBAT.length ? "sur les pièces existantes" : "tous posés",
+          d.sansBAT.length ? "sur les livrables existantes" : "tous posés",
           d.sansBAT.length ? "alerte" : "vert"),
         UI.stat("ORPHELINS", String(perdues),
-          perdues ? "pièces faites sur les autres routes" : "rien de perdu", perdues ? "alerte" : "")
+          perdues ? "livrables faits sur les autres pistes" : "rien de perdu", perdues ? "alerte" : "")
       ),
 
       d.sansBAT.length
         ? UI.banniere("rouge", "La validation engage la livraison des BAT : "
-            + d.sansBAT.length + (d.sansBAT.length > 1 ? " pièces n'en ont pas" : " pièce n'en a pas")
+            + d.sansBAT.length + (d.sansBAT.length > 1 ? " livrables n'en ont pas" : " livrable n'en a pas")
             + ". Sans eux, rien ne part à l'impression.")
         : UI.banniere("vert", "Tous les BAT sont posés : la production peut s'ouvrir."),
 
@@ -361,12 +361,12 @@ window.VUE_ROUTE = (function () {
               return el("span.chip", {}, x.support.nom + " · " + x.marche.code); })),
             d.aCreer.length > 12 ? el("div.indice", {}, "et " + (d.aCreer.length - 12) + " autres") : null,
             el("label.coche", {}, creer,
-              el("span", {}, "Créer ces " + d.aCreer.length + " pièces maintenant, rattachées à leur activité")))
+              el("span", {}, "Créer ces " + d.aCreer.length + " livrables maintenant, rattachés à leur activité")))
         : null,
 
       perdues
-        ? UI.banniere("", perdues + (perdues > 1 ? " pièces ont été produites" : " pièce a été produite")
-            + " sur les routes qui s'écartent. Elles restent au dossier, comptées.")
+        ? UI.banniere("", perdues + (perdues > 1 ? " livrables ont été produites" : " livrable a été produite")
+            + " sur les pistes qui s'écartent. Elles restent au dossier, comptées.")
         : null,
 
       el("div.form", {}, el("div.champ", {}, el("label", {}, "L'argument"),
@@ -380,8 +380,8 @@ window.VUE_ROUTE = (function () {
           var n = creer.checked ? DISPOSITIF.ouvrirProduction(p, pi) : 0;
           DEPOT.ajoute("decisions", { objet: pi.id, type: "piste", projet: p.id, verdict: "approuve",
             motif: pi.motif, quand: pi.arbitre_le, qui: MAISON.titulaire, titre: pi.titre });
-          DEPOT.tracer("route retenue", "pistes", p.id,
-            pi.titre + (n ? " — " + n + " pièces ouvertes en production" : ""));
+          DEPOT.tracer("piste retenue", "pistes", p.id,
+            pi.titre + (n ? " — " + n + " livrables ouverts en production" : ""));
           DEPOT.enregistrer(); PANNEAU.fermerSur(); apres();
         } }, "Retenir et ouvrir la production"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Annuler"))
@@ -391,15 +391,15 @@ window.VUE_ROUTE = (function () {
   function ecarter(p, pi, apres) {
     var n = (p.livrables || []).filter(function (l) { return l.pisteId === pi.id && !l.annule; }).length;
     var champ = el("textarea", { rows: 2, placeholder: "Pourquoi elle ne part pas" });
-    PANNEAU.sur("Écarter « " + (pi.titre || "cette route") + " »", "ce que ça change", el("div", {},
-      n ? UI.banniere("", n + (n > 1 ? " pièces restent" : " pièce reste") + " au dossier, comptées comme travail fait sur une route écartée.")
-        : UI.banniere("vert", "Aucune pièce n'a été produite sur cette route."),
+    PANNEAU.sur("Écarter « " + (pi.titre || "cette piste") + " »", "ce que ça change", el("div", {},
+      n ? UI.banniere("", n + (n > 1 ? " livrables restent" : " livrable reste") + " au dossier, comptées comme travail fait sur une piste écartée.")
+        : UI.banniere("vert", "Aucun livrable n'a été produite sur cette piste."),
       el("div.form", {}, el("div.champ", {}, el("label", {}, "Le motif"), champ)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           if (!champ.value.trim()) { AVIS.refus("Écarter sans motif écrit, c'est écarter par goût."); return; }
           pi.statut = "ecartee"; pi.motif = champ.value.trim();
-          DEPOT.tracer("route écartée", "pistes", p.id, pi.titre);
+          DEPOT.tracer("piste écartée", "pistes", p.id, pi.titre);
           DEPOT.enregistrer(); PANNEAU.fermerSur(); apres();
         } }, "Écarter"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Annuler"))
@@ -415,8 +415,8 @@ window.VUE_ROUTE = (function () {
         m.nom + " · " + (m.langues || []).map(O.langue).join(", ") + (deja ? "  (déjà un KV)" : "")));
     });
 
-    PANNEAU.sur("Nouveau KV maître", pi.titre, el("div", {},
-      UI.banniere("", "Le KV naît sur cette route et en hérite : concept, accroche, choix de DA. Sa langue vient du marché."),
+    PANNEAU.sur("Nouveau KV master", pi.titre, el("div", {},
+      UI.banniere("", "Le KV naît sur cette piste et en hérite : concept, accroche, choix de DA. Sa langue vient du marché."),
       el("div.form", {}, el("div.champ", {}, el("label", {}, "Marché"), selM)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {

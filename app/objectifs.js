@@ -1,6 +1,6 @@
 /* objectifs.js — ce que je vise, et ce que les briefs m'imposent.
  *
- * C'est la pièce qui sépare un observatoire d'un poste de commande. Un
+ * C'est le livrable qui sépare un observatoire d'un poste de commande. Un
  * observatoire montre l'état. Un poste de commande compare l'état à une
  * intention — la mienne, et celle que le brief a fixée.
  *

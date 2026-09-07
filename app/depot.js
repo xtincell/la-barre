@@ -140,7 +140,7 @@ window.DEPOT = (function () {
 
   /* Le jeu de démonstration s'affiche pendant que le vrai dépôt arrive. Il ne
    * doit jamais prendre sa place sur le disque : il l'a fait une fois, et un
-   * dossier de 161 pièces a été remplacé par l'exemple. Deux verrous, et ils
+   * dossier de 161 livrables a été remplacé par l'exemple. Deux verrous, et ils
    * sont volontairement stricts — on écrase un fichier, on ne le récupère pas.
    *
    *   1. l'exemple n'écrit pas ;
@@ -150,7 +150,7 @@ window.DEPOT = (function () {
    * pas encore arrivée — pousse son état sur un fichier plus récent que lui. */
   function peutEcrire() {
     if (!fichier || location.protocol === "file:" || !window.fetch) return "pas de fichier";
-    if (etat.exemple === true) return "l'exemple ne s'écrit pas sur le dépôt de référence";
+    if (etat.exemple === true) return "l'exemple ne s'écrit pas sur la base de référence";
     if (!referenceLue) return "le fichier n'a pas encore été lu dans cette session";
     return null;
   }
@@ -179,7 +179,7 @@ window.DEPOT = (function () {
         surDisque = false;
         if (!disqueKO) {
           disqueKO = true;
-          if (window.AVIS) AVIS.grave("Le dépôt ne s'écrit plus dans son fichier — "
+          if (window.AVIS) AVIS.grave("La base ne s'écrit plus dans son fichier — "
             + "seul ce navigateur garde la suite. Vérifie que le serveur tourne "
             + "(node servir.mjs), sinon exporte à la main.");
         }
@@ -215,12 +215,12 @@ window.DEPOT = (function () {
         ecritureKO = true;
         if (window.AVIS) {
           if (surDisque === true) {
-            AVIS.fait("Le cache du navigateur est plein — sans conséquence : le dépôt "
+            AVIS.fait("Le cache du navigateur est plein — sans conséquence : la base "
               + "s'écrit dans " + fichier + ", et c'est lui qui fait foi. Le cache ne "
               + "servait qu'à rouvrir plus vite.");
           } else {
             AVIS.grave("Le cache du navigateur est plein : plus rien ne s'enregistre. "
-              + "Aucun fichier de dépôt n'est servi à côté de l'application, donc ce "
+              + "Aucun fichier de base n'est servie à côté de l'application, donc ce "
               + "cache était le seul endroit. Exporte maintenant (Réglages → Exporter).");
           }
         }
@@ -241,7 +241,7 @@ window.DEPOT = (function () {
     if (location.protocol === "file:") return { cle: "fichier-impossible",
       nom: "ce navigateur seul",
       quoi: "ouvert par double-clic : le navigateur interdit d'écrire dans le fichier. "
-        + "Lance le serveur (node servir.mjs) pour que tous les navigateurs partagent le dépôt." };
+        + "Lance le serveur (node servir.mjs) pour que tous les navigateurs partagent la base." };
     if (surDisque === true) return { cle: "disque", nom: fichier,
       quoi: "écrit dans son fichier — tous les navigateurs voient la même chose" };
     if (surDisque === false) return { cle: "navigateur", nom: "ce navigateur seul",
@@ -355,8 +355,8 @@ window.DEPOT = (function () {
     function verdict(ok, pourquoi) {
       if (rendu) return; rendu = true;
       if (!ok && pourquoi && window.AVIS) {
-        AVIS.refus("Le dépôt de référence n'a pas pu être lu : " + pourquoi
-          + ". Ce que vous voyez est le jeu de démonstration, pas votre dépôt.");
+        AVIS.refus("La base de référence n'a pas pu être lu : " + pourquoi
+          + ". Ce que vous voyez est le jeu de démonstration, pas votre base.");
       }
       if (apres) apres(ok);
     }
@@ -385,9 +385,9 @@ window.DEPOT = (function () {
    * coûte quelque chose. */
   function provenance() {
     if (etat.exemple === true) return { cle: "exemple", nom: "l'exemple d'amorce",
-      quoi: "aucun dépôt de référence n'a été trouvé — ce que vous voyez est le jeu de démonstration" };
+      quoi: "aucune base de référence n'a été trouvé — ce que vous voyez est le jeu de démonstration" };
     if (etat.reference) return { cle: "reference", nom: etat.reference,
-      quoi: "chargé depuis le dépôt de référence servi avec l'application" };
+      quoi: "chargé depuis la base de référence servi avec l'application" };
     return { cle: "local", nom: "ce navigateur",
       quoi: "modifié ici ; exportez pour que les autres navigateurs le voient" };
   }
@@ -418,7 +418,7 @@ window.DEPOT = (function () {
   }
 
   /* Les dépôts d'avant le modèle à trois niveaux n'ont pas de `niveau` sur
-   * leurs pièces. On le déduit une fois, à l'import, plutôt que de le
+   * leurs livrables. On le déduit une fois, à l'import, plutôt que de le
    * recalculer à chaque lecture. */
   function migrer(d) {
     (d.projets || []).forEach(function (p) {

@@ -49,8 +49,8 @@ window.DEMANDE = (function () {
         cout: "aucune date : la charge ne peut être ni placée ni réclamée" },
       { quoi: "Entrées fournies", ok: (d.entrees || []).length > 0, poids: 2,
         cout: "il attendra des fichiers que personne ne doit lui donner" },
-      { quoi: "Étage cohérent avec le socle", ok: !!(p.sections.socle || {}).idee_directrice, poids: 3,
-        cout: "sans socle actif, la proposition pourra être refusée en revue sans recours" },
+      { quoi: "Étage cohérent avec la plateforme de marque", ok: !!(p.sections.socle || {}).idee_directrice, poids: 3,
+        cout: "sans plateforme de marque active, la proposition pourra être refusée en revue sans recours" },
       { quoi: "Rattachée à une big idea", ok: !!(p.sections.bigidea || {}).idee, poids: 4,
         cout: e ? "à l'étage " + e.n + ", le DA n'a rien à traiter — il inventera l'idée aussi" : "" },
     ];

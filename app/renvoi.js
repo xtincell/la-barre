@@ -17,14 +17,14 @@ window.RENVOI = (function () {
     "entree": { poste: null, critere: "L'élément d'entrée porte son fournisseur et sa date" },
     "perimetre": { poste: "clientele", critere: "Toute remise en cause d'un élément validé constitue un nouveau brief" },
     "etage": { poste: "da", critere: "§8 — la proposition sort de l'étage autorisé" },
-    "sacrifice": { poste: "da", critere: "§8 — une route ne porte pas son sacrifice et son argument" },
-    "egalite": { poste: "da", critere: "§8 — plusieurs routes sont recommandées à égalité" },
+    "sacrifice": { poste: "da", critere: "§8 — une piste ne porte pas son sacrifice et son argument" },
+    "egalite": { poste: "da", critere: "§8 — plusieurs pistes sont recommandées à égalité" },
     "accroche": { poste: "da", critere: "§8 — une accroche dépasse cinq mots" },
     "porteurs": { poste: "da", critere: "§8 — le livrable perd deux de ses trois porteurs de reconnaissance" },
     "conformite": { poste: "graphic", critere: "Conformité technique des fichiers livrés" },
     "droits": { poste: "motion", critere: "Respect des droits : musiques, images, licences" },
     "sources": { poste: "graphic", critere: "Sources rangées et nommées selon la convention" },
-    "maitre": { poste: "da", critere: "Adaptation produite sur une version dépassée du maître" },
+    "maitre": { poste: "da", critere: "Adaptation produite sur une version dépassée du master" },
     "autre": { poste: null, critere: null },
   };
 

@@ -10,15 +10,15 @@
 
 window.VUE_MAISON = (function () {
   var el = O.el;
-  var mode = "referentiel";
+  var mode = "marches";
 
   var MODES = [
     /* Le vault vit ici, hors des campagnes : ce qui définit une marque ne
      * change pas d'une saison à l'autre, et n'a rien à faire dans le dossier
      * qui l'a écrit en premier. */
-    { cle: "marques", nom: "LES MARQUES", quoi: "socle, catalogue, marchés — le vault" },
-    { cle: "referentiel", nom: "LE RÉFÉRENTIEL", quoi: "marchés, supports, gabarits, assets" },
-    { cle: "reglages", nom: "LES RÉGLAGES", quoi: "dépôt, règles, équipe, journal" },
+    { cle: "marques", nom: "MARQUES", quoi: "plateforme, catalogue, marchés — la bibliothèque de marque" },
+    { cle: "marches", nom: "MARCHÉS & SUPPORTS", quoi: "marchés, supports, gabarits, éléments de marque" },
+    { cle: "parametres", nom: "PARAMÈTRES", quoi: "base, règles, équipe, journal" },
   ];
 
   function rendre(hote, arg) {
@@ -45,13 +45,13 @@ window.VUE_MAISON = (function () {
 
       el("div.dc-modes", {}, MODES.map(function (m) {
         var n = m.cle === "marques" ? vides + VAULT.orphelins().length
-          : m.cle === "referentiel" ? trous
+          : m.cle === "marches" ? trous
           : (w.grave || (!w.surDisque && (age === null || age > 2))) ? 1 : 0;
         return el("button.dcm" + (mode === m.cle ? ".ici" : ""), { type: "button",
           onclick: function () { mode = m.cle; rendre(hote); } },
           el("span.dcm-n", {}, m.nom),
           el("span.dcm-q", {}, m.quoi),
-          n ? el("span.dcm-c", {}, m.cle === "reglages" ? "!" : String(n)) : null);
+          n ? el("span.dcm-c", {}, m.cle === "parametres" ? "!" : String(n)) : null);
       })),
 
       el("div.dc-corps", {}, corps(hote))
@@ -61,7 +61,7 @@ window.VUE_MAISON = (function () {
   function corps(hote) {
     var z = el("div");
     if (mode === "marques") VUE_VAULT.rendre(z);
-    else if (mode === "referentiel") VUE_REFERENTIEL.rendre(z);
+    else if (mode === "marches") VUE_REFERENTIEL.rendre(z);
     else VUE_REGLAGES.rendre(z);
     return z;
   }
@@ -73,7 +73,7 @@ window.VUE_MAISON = (function () {
    * dépôt au second plan sur le seul écran où il compte. Un dépôt qui n'est
    * pas à l'abri est la chose la plus coûteuse que ce produit puisse taire. */
   function pire(mode, e) {
-    if (mode === "reglages") return pireReglages(e);
+    if (mode === "parametres") return pireReglages(e);
     if (mode === "marques") return pireMarques(e);
     return pireReferentiel(e);
   }
@@ -85,23 +85,23 @@ window.VUE_MAISON = (function () {
         q: "Plus rien ne s'enregistre localement. Exporte maintenant, sinon la séance est perdue." };
     }
     if (!e.w.surDisque && e.age === null) {
-      return { t: "Le dépôt n'est pas à l'abri",
+      return { t: "La base n'est pas à l'abri",
         q: "Jamais exporté. Le navigateur ne garde qu'un cache : vider les données du "
           + "site effacerait tout." };
     }
     if (!e.w.surDisque && e.age > 2) {
-      return { t: "Le dépôt n'est pas à l'abri",
-        q: "Exporté il y a " + e.age + " jours. Le fichier sur ton Drive est le dépôt "
+      return { t: "La base n'est pas à l'abri",
+        q: "Exporté il y a " + e.age + " jours. Le fichier sur ton Drive est la base "
           + "de référence." };
     }
     /* Ce qui reste d'images dans le dépôt : elles y pesaient 93 %. */
     var v = window.IMAGE ? IMAGE.poids() : { restantes: 0, ko: 0 };
     if (v.restantes) {
-      return { t: v.restantes + (v.restantes > 1 ? " vignettes pèsent sur le dépôt" : " vignette pèse sur le dépôt"),
+      return { t: v.restantes + (v.restantes > 1 ? " vignettes pèsent sur la base" : " vignette pèse sur la base"),
         q: O.milliers(v.ko) + " Ko d'images rangées dans le fichier au lieu du disque. "
-          + "Le dépôt se réécrit en entier à chaque frappe : ce poids se paie à chaque geste." };
+          + "La base se réécrit en entier à chaque frappe : ce poids se paie à chaque geste." };
     }
-    return { t: e.w.surDisque ? "Le dépôt s'écrit dans son fichier" : "Le dépôt est à jour",
+    return { t: e.w.surDisque ? "La base s'écrit dans son fichier" : "La base est à jour",
       q: e.w.surDisque
         ? "Tous les navigateurs voient la même chose, et les vignettes vivent sur le "
           + "disque à côté des packshots — le fichier ne porte que des liens."
@@ -112,8 +112,8 @@ window.VUE_MAISON = (function () {
    * réécrit ; un pack sans marque n'appartient à personne. */
   function pireMarques(e) {
     if (e.vides) {
-      return { t: e.vides + (e.vides > 1 ? " marques n'ont pas de socle" : " marque n'a pas de socle"),
-        q: "Sans socle de marque, chaque campagne repart d'une page blanche et rien ne "
+      return { t: e.vides + (e.vides > 1 ? " marques n'ont pas de plateforme" : " marque n'a pas de plateforme"),
+        q: "Sans plateforme de marque, chaque campagne repart d'une page blanche et rien ne "
           + "peut être refusé sur un fondement de marque." };
     }
     var orph = VAULT.orphelins().length;
@@ -122,8 +122,8 @@ window.VUE_MAISON = (function () {
         q: "Un pack sans marque n'est pas à tout le monde : il attend d'être qualifié. "
           + "Tant qu'il l'est, aucun cadrage ne peut le convoquer." };
     }
-    return { t: "Le vault est tenu",
-      q: "Chaque marque a son socle, chaque pack sa marque. Une campagne peut convoquer "
+    return { t: "La bibliothèque de marque est tenue",
+      q: "Chaque marque a sa plateforme, chaque pack sa marque. Une campagne peut convoquer "
         + "ce qui existe au lieu de le réécrire." };
   }
 

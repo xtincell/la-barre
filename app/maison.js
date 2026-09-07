@@ -46,8 +46,8 @@ window.MAISON = {
   /* ————— Les étages de finition. Source : processus §3. ————— */
   etages: [
     { n: 0, nom: "Territoire", effort: 5, produit: "Travail écrit. Aucun visuel", ouvertPar: "Brief accepté" },
-    { n: 1, nom: "Concept", effort: 15, produit: "3 routes maximum, une planche d'intention par route", ouvertPar: "Plateforme créative émise" },
-    { n: 2, nom: "Master", effort: 35, produit: "Le livrable maître de la route retenue, animatique", ouvertPar: "Fiche de validation étage 1 signée" },
+    { n: 1, nom: "Concept", effort: 15, produit: "3 pistes maximum, une planche d'intention par piste", ouvertPar: "Plateforme créative émise" },
+    { n: 2, nom: "Master", effort: 35, produit: "Le livrable master de la piste retenue, animatique", ouvertPar: "Fiche de validation étage 1 signée" },
     { n: 3, nom: "Déploiement", effort: 100, produit: "Formats, déclinaisons, fichiers finaux", ouvertPar: "Fiche de validation étage 2 signée" },
   ],
 
@@ -64,8 +64,8 @@ window.MAISON = {
     ],
     proposition: [
       "Elle sort de l'étage autorisé",
-      "Une route ne porte pas son sacrifice et son argument",
-      "Plusieurs routes sont recommandées à égalité",
+      "Une piste ne porte pas son sacrifice et son argument",
+      "Plusieurs pistes sont recommandées à égalité",
       "Une accroche dépasse cinq mots",
       "Le livrable perd deux de ses trois porteurs de reconnaissance",
     ],
@@ -150,10 +150,10 @@ window.MAISON = {
     { cle: "cadrer", nom: "Cadrer", quoi: "ce qui est demandé, et par qui",
       sections: ["identite", "brief", "socle", "strategie"],
       sans: "on travaillera sans savoir ce qui est attendu, ni qui peut le refuser" },
-    { cle: "concevoir", nom: "Concevoir", quoi: "l'idée, et les routes qui la portent",
+    { cle: "concevoir", nom: "Concevoir", quoi: "l'idée, et les pistes qui la portent",
       sections: ["atelier", "bigidea", "pistes"],
-      sans: "les pièces se fabriqueront sans concept opposable — refusables par goût" },
-    { cle: "produire", nom: "Produire", quoi: "les pièces, et ce qu'on présente",
+      sans: "les livrables se fabriqueront sans concept opposable — refusables par goût" },
+    { cle: "produire", nom: "Produire", quoi: "les livrables, et ce qu'on présente",
       sections: ["planche", "livrables", "presentation"],
       sans: "rien ne part : l'idée reste au dossier" },
   ],
@@ -162,11 +162,11 @@ window.MAISON = {
   gabarits: [
     { cle: "campagne", nom: "Campagne", sections: ["identite", "brief", "socle", "strategie", "atelier", "bigidea", "pistes", "planche", "livrables", "presentation"] },
     /* Un cycle éditorial est une campagne mensuelle : il a sa plateforme de
-     * marque, son atelier au début du cycle, sa big idea et sa route — et
-     * toutes les publications du mois vivent DANS cette route.
+     * marque, son atelier au début du cycle, sa big idea et sa piste — et
+     * toutes les publications du mois vivent DANS cette piste.
      *
-     * Une seule chose lui manque, et ce n'est pas un manque : le KV maître.
-     * Ses pièces ne découlent pas d'un visuel de référence, elles se suivent
+     * Une seule chose lui manque, et ce n'est pas un manque : le KV master.
+     * Ses livrables ne découlent pas d'un visuel de référence, elles se suivent
      * dans un calendrier. C'est donc la planche des KV qui saute, et elle
      * seule — j'avais d'abord amputé la moitié de la chaîne, ce qui revenait
      * à dire qu'un cycle n'a pas de concept. */

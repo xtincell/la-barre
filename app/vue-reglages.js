@@ -27,18 +27,18 @@ window.VUE_REGLAGES = (function () {
       el("div.rgt-c", {},
         el("div.rgt-h", {}, risque ? "⚠" : "✓"),
         el("div", {},
-          el("h2", {}, age === null ? "Le dépôt n'a jamais été exporté"
+          el("h2", {}, age === null ? "La base n'a jamais été exportée"
             : risque ? "Dernier export il y a " + age + (age > 1 ? " jours" : " jour")
-            : "Le dépôt est à jour"),
+            : "La base est à jour"),
           el("p.rgt-q", {}, risque
             ? "Vider les données du navigateur détruirait tout : " + n
-              + (n > 1 ? " dossiers, " : " dossier, ") + pcs + " pièces, " + infs + " inférences."
+              + (n > 1 ? " dossiers, " : " dossier, ") + pcs + " livrables, " + infs + " inférences."
             : "Exporté il y a " + age + (age > 1 ? " jours" : " jour") + ". Le fichier sur le Drive fait foi."),
           el("p.rgt-s", {}, "Le navigateur n'en garde qu'un cache. Import à l'ouverture, "
             + "export à la fermeture — c'est ce qui règle le cas des deux machines."))),
       el("div.rgt-g", {},
         el("button.b.or", { type: "button", onclick: function () {
-          DEPOT.exporter(); DEPOT.noterExport(); rendre(hote); } }, "Exporter le dépôt →"),
+          DEPOT.exporter(); DEPOT.noterExport(); rendre(hote); } }, "Exporter la base →"),
         el("button.b.nu", { type: "button", onclick: function () { importer(hote); } },
           "Importer un fichier")),
       el("div.rgt-j", {},
@@ -100,7 +100,7 @@ window.VUE_REGLAGES = (function () {
       lecteur.onload = function () {
         try {
           DEPOT.importer(String(lecteur.result));
-          AVIS.refus("Dépôt importé.");
+          AVIS.refus("Base importée.");
           rendre(hote);
         } catch (e) { AVIS.refus("Import impossible : " + e.message); }
       };

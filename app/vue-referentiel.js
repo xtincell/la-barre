@@ -111,9 +111,9 @@ window.VUE_REFERENTIEL = (function () {
         el("span.rfm-l", {}, (m.langues || []).map(O.langue).join(", ")
           + (m.zone ? "  ·  " + m.zone : "")),
         el("span.rfm-q", {}, pieces
-          ? pieces + (pieces > 1 ? " pièces" : " pièce") + " sur " + siens.length
+          ? pieces + (pieces > 1 ? " livrables" : " livrable") + " sur " + siens.length
             + (siens.length > 1 ? " supports" : " support")
-          : "aucune pièce à ce jour")),
+          : "aucun livrable à ce jour")),
 
       /* Les mentions obligatoires sont une responsabilité de marché : leur
        * absence ne se voit qu'à l'impression, et coûte un rappel. */
@@ -121,7 +121,7 @@ window.VUE_REFERENTIEL = (function () {
         ? el("div.rfm-x", {}, m.mentions.length
             + (m.mentions.length > 1 ? " mentions obligatoires" : " mention obligatoire"))
         : el("div.rfm-x.manque", {}, "mentions obligatoires non renseignées — "
-            + "une pièce diffusée ici peut être non conforme sans que rien ne le dise"),
+            + "un livrable diffusé ici peut être non conforme sans que rien ne le dise"),
       m.note ? el("div.rfm-x.manque", {}, m.note) : null,
 
       supports_(m, siens, hote),
@@ -144,7 +144,7 @@ window.VUE_REFERENTIEL = (function () {
   function supports_(m, siens, hote) {
     if (!siens.length) {
       return el("p.rf-p", {}, "Aucun support servi sur ce marché. Il apparaîtra ici "
-        + "à la première pièce qu'on y produit.");
+        + "à la première livrable qu'on y produit.");
     }
     var tries = siens.slice().sort(function (a, b) { return b.n - a.n; });
     function gabaritDe(c) {
@@ -172,7 +172,7 @@ window.VUE_REFERENTIEL = (function () {
               onclick: function () { editerSupport(s, hote); },
               title: Object.keys(c.projets).join(", ") },
               el("span.rfs-n", {}, s ? s.nom : c.support),
-              el("span.rfs-q", {}, c.n + (c.n > 1 ? " pièces" : " pièce")),
+              el("span.rfs-q", {}, c.n + (c.n > 1 ? " livrables" : " livrable")),
               el("span.rfs-g", {}, g ? (g.dimensions || "gabarit renseigné") : "gabarit manquant"));
           }))
         : null
@@ -212,7 +212,7 @@ window.VUE_REFERENTIEL = (function () {
               exp
                 ? el("span.rfa-e", {}, perime
                     ? "droits expirés le " + O.joli(a.expire_le)
-                      + " — toute pièce qui s'en sert est en infraction"
+                      + " — tout livrable qui s'en sert est en infraction"
                     : bientot
                       ? "expire le " + O.joli(a.expire_le) + " — dans "
                         + Math.round((exp - aujourdhui) / 86400000) + " jours"

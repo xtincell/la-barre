@@ -23,7 +23,7 @@ window.VUE_VAULT = (function () {
 
     if (!arbre.length) {
       hote.appendChild(el("p.rien", {}, "Aucune marque. Une marque naît avec son "
-        + "premier dossier — et son vault se remplit en travaillant."));
+        + "premier dossier — et sa bibliothèque de marque se remplit en travaillant."));
       return;
     }
 
@@ -51,7 +51,7 @@ window.VUE_VAULT = (function () {
         && VAULT.etatNiveau("marque", m.id).herites === 0; });
     if (sansSocle.length) {
       return sansSocle.length
-        + (sansSocle.length > 1 ? " marques n'ont pas de socle" : " marque n'a pas de socle")
+        + (sansSocle.length > 1 ? " marques n'ont pas de plateforme" : " marque n'a pas de plateforme")
         + " — chaque campagne le réécrira depuis zéro";
     }
     if (orphelins.length) {
@@ -60,7 +60,7 @@ window.VUE_VAULT = (function () {
         + " à aucune marque";
     }
     return marques.length + (marques.length > 1 ? " marques tenues" : " marque tenue")
-      + ", socle et catalogue renseignés";
+      + ", plateforme de marque et catalogue renseignés";
   }
 
   /* ————————————————————— Un nœud de l'arbre ————————————————————— */
@@ -131,14 +131,14 @@ window.VUE_VAULT = (function () {
         + (e.vides.length ? "  ·  " + e.vides.length + " champs manquent encore" : "");
     }
     if (n.type === "ombrelle") {
-      return "Aucun socle d'entreprise. Ce qui vaut pour tout le portefeuille "
+      return "Aucune plateforme d'entreprise. Ce qui vaut pour tout le portefeuille "
         + "sera réécrit marque par marque, et finira par diverger.";
     }
     if (n.type === "gamme") {
-      return "Ni socle propre, ni socle de marque à hériter : cette gamme se "
+      return "Ni plateforme propre, ni plateforme de marque à hériter : cette gamme se "
         + "dessine sans fondement.";
     }
-    return "Aucun socle écrit. Chaque campagne repartira d'une page blanche, "
+    return "Aucune plateforme de marque écrite. Chaque campagne repartira d'une page blanche, "
       + "et rien ne pourra être refusé sur un fondement de marque.";
   }
 
@@ -223,7 +223,7 @@ window.VUE_VAULT = (function () {
         el("button.b.or", { type: "button", onclick: function () {
           BRIEFS.ecrire(t, m, f.valeurs());
           DEPOT.enregistrer(); PANNEAU.fermer(); rendre(hote);
-        } }, "Enregistrer au vault"),
+        } }, "Enregistrer à la bibliothèque de marque"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
     ));
   }
@@ -386,7 +386,7 @@ window.VUE_VAULT = (function () {
         ? el("div.vtb-a", {},
             el("div.vtbk-t", {}, "ARCHIVÉS",
               el("span", {}, VAULT.archives(m.id).length
-                + "  ·  hors catalogue, toujours au dépôt")),
+                + "  ·  hors catalogue, toujours à la base")),
             el("div.vt-arch", {}, VAULT.archives(m.id).map(function (s) {
               return el("div.vta", {},
                 el("span.vta-n", {}, s.nom),
@@ -427,7 +427,7 @@ window.VUE_VAULT = (function () {
             var sel = VAULT.selection(p, m.id);
             return el("a.vtcp", { href: "#/projets/" + p.id },
               el("span.vtcp-n", {}, p.nom),
-              el("span.vtcp-q", {}, sel.pieces + " pièces  ·  "
+              el("span.vtcp-q", {}, sel.pieces + " livrables  ·  "
                 + sel.marchesRetenus.length + " marchés sur " + sel.marchesDisponibles
                 + "  ·  " + sel.skuRetenus + " packs retenus sur " + sel.skuCatalogue));
           }))
@@ -483,7 +483,7 @@ window.VUE_VAULT = (function () {
   /* ————————————————————— La fiche d'un pack ————————————————————— */
 
   /* Un pack n'est pas une image : c'est un article. Sa fiche porte son code,
-   * ses mentions, les marchés qui le vendent — et la liste des pièces qui le
+   * ses mentions, les marchés qui le vendent — et la liste des livrables qui le
    * montrent, seul endroit d'où l'on voit qu'on l'affiche là où il n'est pas
    * distribué. */
   function fiche(s, m, hote, liste) {
@@ -569,8 +569,8 @@ window.VUE_VAULT = (function () {
         el("div.fi-b", {},
           el("div.fib-t", {}, "MONTRÉ SUR",
             el("span", {}, usage.length
-              ? usage.length + (usage.length > 1 ? " pièces" : " pièce")
-              : "aucune pièce")),
+              ? usage.length + (usage.length > 1 ? " livrables" : " livrable")
+              : "aucun livrable")),
           usage.length
             ? el("div.fi-u", {}, usage.slice(0, 12).map(function (x) {
                 var hors = x.marche && dist.length
@@ -581,7 +581,7 @@ window.VUE_VAULT = (function () {
                     + (x.marche ? "  ·  " + x.marche.code : "")
                     + (hors ? "  ·  non distribué ici" : "")));
               }))
-            : el("p.rien", {}, "Aucune pièce ne le déclare. Tant que les pièces ne "
+            : el("p.rien", {}, "Aucun livrable ne le déclare. Tant que les livrables ne "
                 + "disent pas quels packs elles montrent, on ne peut pas vérifier "
                 + "qu'un SKU n'apparaît pas là où il n'est pas vendu.")),
 
@@ -638,11 +638,11 @@ window.VUE_VAULT = (function () {
       placeholder: "Pourquoi il sort du catalogue — format arrêté, promo terminée…" });
     PANNEAU.ouvrir("Archiver « " + s.nom + " »", m ? m.nom : "", el("div", {},
       UI.banniere("", "Le pack sort du catalogue et n'est plus proposé aux campagnes. "
-        + "Il reste au dépôt : les campagnes passées qui le montrent gardent leur trace, "
+        + "Il reste à la base : les campagnes passées qui le montrent gardent leur trace, "
         + "et il se remet au catalogue d'un geste."),
       VAULT.usage(s.id).length
         ? el("div.prix", {}, el("span.signe", {}, "⚠"),
-            VAULT.usage(s.id).length + " pièces le montrent encore. Elles ne changent pas — "
+            VAULT.usage(s.id).length + " livrables le montrent encore. Elles ne changent pas — "
             + "mais plus personne ne pourra en ajouter.")
         : null,
       el("div.form", {}, el("div.champ", {}, el("label", {}, "Motif"), champ)),
@@ -650,7 +650,7 @@ window.VUE_VAULT = (function () {
         el("button.b.or", { type: "button", onclick: function () {
           VAULT.archiver(s.id, champ.value.trim() || null);
           DEPOT.enregistrer(); PANNEAU.fermer(); rendre(hote);
-          AVIS.fait("« " + s.nom + " » est archivé. Il reste au dépôt.");
+          AVIS.fait("« " + s.nom + " » est archivé. Il reste à la base.");
         } }, "Archiver"),
         el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); fiche(s, m, hote, liste); } },
           "Annuler"))

@@ -6,7 +6,7 @@
  * c'est le motif de chaque arbitrage — et il est déjà obligatoire partout.
  *
  * Rien ne se saisit ici : tout est déjà écrit, éparpillé entre les verdicts,
- * les routes écartées, les idées arbitrées, les versions, les remarques de
+ * les pistes écartées, les idées arbitrées, les versions, les remarques de
  * revue et les blocages que j'ai déclarés non pertinents. Ce module les
  * rassemble et les range par critère.
  *
@@ -20,9 +20,9 @@ window.JURISPRUDENCE = (function () {
   /* La famille d'une source dit dans quelle liste de MAISON.criteres un
    * nouveau critère irait se ranger — pas d'où vient l'arbitrage. */
   var SOURCES = {
-    piste: { nom: "route arbitrée", famille: "proposition", poids: 5 },
+    piste: { nom: "piste arbitrée", famille: "proposition", poids: 5 },
     idee: { nom: "idée arbitrée", famille: "bigidea", poids: 3 },
-    livrable: { nom: "verdict sur une pièce", famille: "livrable", poids: 4 },
+    livrable: { nom: "verdict sur un livrable", famille: "livrable", poids: 4 },
     version: { nom: "version close", famille: "livrable", poids: 3 },
     brief: { nom: "verdict sur le brief", famille: "brief", poids: 5 },
     socle: { nom: "verdict sur la plateforme", famille: "brief", poids: 4 },
@@ -75,7 +75,7 @@ window.JURISPRUDENCE = (function () {
     });
 
     /* Et tout ce qui porte un motif sans être passé par lui — un dossier
-     * repris en cours de route, un dépôt importé, un objet créé à la main. */
+     * repris en cours de piste, un dépôt importé, un objet créé à la main. */
     DEPOT.liste("projets").forEach(function (p) {
       (p.sections.pistes || []).forEach(function (pi) {
         if (dejaLa(out, pi.titre, pi.motif)) return;

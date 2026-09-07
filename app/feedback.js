@@ -25,16 +25,16 @@ window.FEEDBACK = (function () {
    * l'ordre de traitement — traiter une déclinaison avant le KV dont elle vient,
    * c'est la refaire deux fois.
    *
-   * Les niveaux suivent le modèle : idée → KV maître → adaptation → déclinaison.
+   * Les niveaux suivent le modèle : idée → KV master → adaptation → déclinaison.
    * Et un cinquième, transversal : la MANIÈRE — la règle de déclinaison, qui ne
-   * vise aucune pièce en particulier mais toutes celles à venir. */
+   * vise aucun livrable en particulier mais toutes celles à venir. */
   var NIVEAUX = {
     idee: { rang: 0, nom: "L'idée", ton: "alerte",
       quoi: "le concept lui-même est remis en cause",
-      onde: "tout ce qui en découle est suspendu — routes, KV, adaptations, formats",
+      onde: "tout ce qui en découle est suspendu — pistes, KV, adaptations, formats",
       avant: "Rien d'autre ne se traite tant que celui-ci n'est pas tranché." },
-    maitre: { rang: 1, nom: "Le KV maître", ton: "alerte",
-      quoi: "le visuel de référence d'une route",
+    maitre: { rang: 1, nom: "Le KV master", ton: "alerte",
+      quoi: "le visuel de référence d'une piste",
       onde: "effet domino : toutes les adaptations et tous les formats en découlent",
       avant: "À traiter avant toute adaptation : une adaptation refaite sur l'ancien maître est à refaire." },
     adaptation: { rang: 2, nom: "Une adaptation marché", ton: "attente",
@@ -42,11 +42,11 @@ window.FEEDBACK = (function () {
       onde: "les formats de ce marché suivent ; les autres marchés ne bougent pas",
       avant: "À traiter avant les formats de ce marché." },
     maniere: { rang: 3, nom: "La manière de décliner", ton: "or",
-      quoi: "la règle, pas une pièce — cadrage, place du logo, traitement du fond",
+      quoi: "la règle, pas un livrable — cadrage, place du logo, traitement du fond",
       onde: "elle s'applique à tous les formats, y compris ceux qui n'existent pas encore",
       avant: "À trancher avant de produire d'autres formats, sinon on décline deux fois." },
     declinaison: { rang: 4, nom: "Un format", ton: "terne",
-      quoi: "une pièce, et elle seule",
+      quoi: "un livrable, et elle seule",
       onde: "rien d'autre ne bouge",
       avant: "Se traite en dernier : c'est le seul niveau qui n'entraîne rien." },
   };
@@ -56,7 +56,7 @@ window.FEEDBACK = (function () {
 
   function niveau(f) {
     if (f.niveau) return f.niveau;
-    if (f.portee === "route" || f.portee === "projet" || f.portee === "marque") return "idee";
+    if (f.portee === "piste" || f.portee === "projet" || f.portee === "marque") return "idee";
     if (f.portee === "marche") return "adaptation";
     return "declinaison";
   }
@@ -85,7 +85,7 @@ window.FEEDBACK = (function () {
 
   /* ————————————————————— Ce qu'un feedback touche ————————————————————— */
 
-  /* La portée dit combien de pièces bougent. C'est le seul chiffre qui rend un
+  /* La portée dit combien de livrables bougent. C'est le seul chiffre qui rend un
    * retour discutable au moment où il arrive, pas au moment de la facture. */
   function impact(f) {
     var p = DEPOT.trouve("projets", f.projet);
@@ -106,17 +106,17 @@ window.FEEDBACK = (function () {
     }
 
     if (n === "idee") {
-      /* L'idée remet tout en cause — ou seulement les routes visées. */
-      touches = (f.routes || []).length
-        ? vivants.filter(function (l) { return (f.routes || []).indexOf(l.pisteId) !== -1; })
+      /* L'idée remet tout en cause — ou seulement les pistes visées. */
+      touches = (f.pistes || []).length
+        ? vivants.filter(function (l) { return (f.pistes || []).indexOf(l.pisteId) !== -1; })
         : vivants;
 
     } else if (n === "maitre") {
-      /* Le maître, et tout ce qui en descend : c'est l'effet domino. */
+      /* Le master, et tout ce qui en descend : c'est l'effet domino. */
       var maitres = (f.cibles || []).length
         ? vivants.filter(function (l) { return (f.cibles || []).indexOf(l.id) !== -1; })
         : vivants.filter(function (l) {
-            return KV.estMaitre(l) && (!(f.routes || []).length || (f.routes || []).indexOf(l.pisteId) !== -1); });
+            return KV.estMaitre(l) && (!(f.pistes || []).length || (f.pistes || []).indexOf(l.pisteId) !== -1); });
       touches = avecDescendance(maitres);
 
     } else if (n === "adaptation") {
@@ -127,11 +127,11 @@ window.FEEDBACK = (function () {
       touches = avecDescendance(adas);
 
     } else if (n === "maniere") {
-      /* La manière touche les formats — pas les maîtres, pas les adaptations. */
+      /* La manière touche les formats — pas les masters, pas les adaptations. */
       touches = vivants.filter(function (l) {
         if (KV.estKV(l)) return false;
         if ((f.marches || []).length && (f.marches || []).indexOf(l.marche) === -1) return false;
-        if ((f.routes || []).length && (f.routes || []).indexOf(l.pisteId) === -1) return false;
+        if ((f.pistes || []).length && (f.pistes || []).indexOf(l.pisteId) === -1) return false;
         return true;
       });
 
@@ -172,13 +172,13 @@ window.FEEDBACK = (function () {
       return d !== 0 ? d : String(a.quand).localeCompare(String(b.quand));
     });
 
-    /* Un retour attend s'il vise une pièce qu'un retour de niveau supérieur
+    /* Un retour attend s'il vise un livrable qu'un retour de niveau supérieur
      * touche déjà. */
     return tries.map(function (f, i) {
       var mien = impact(f);
       var ids = {};
       mien.pieces.forEach(function (l) { ids[l.id] = true; });
-      /* Les retours d'un niveau supérieur qui touchent déjà ces pièces : eux
+      /* Les retours d'un niveau supérieur qui touchent déjà ces livrables : eux
        * d'abord, sinon on refait le travail. */
       var bloquants = tries.slice(0, i).filter(function (g) {
         if (defNiveau(g).rang >= defNiveau(f).rang) return false;
@@ -199,14 +199,14 @@ window.FEEDBACK = (function () {
     var out = [];
     if (!p) return out;
 
-    /* 1 · Au-delà des tours vendus */
+    /* 1 · Au-delà des allers-retours vendus */
     var depassements = i.pieces.filter(function (l) {
       var t = VERSION.tours(l, l.toursVendus);
       return t.vendus && t.faits >= t.vendus;
     });
     if (depassements.length) {
-      out.push({ cle: "tours", quoi: "Les tours vendus sont consommés",
-        detail: depassements.length + (depassements.length > 1 ? " pièces sont" : " pièce est")
+      out.push({ cle: "tours", quoi: "Les allers-retours vendus sont consommés",
+        detail: depassements.length + (depassements.length > 1 ? " livrables sont" : " livrable est")
           + " au bout de leur périmètre de révision",
         force: 5 });
     }
@@ -218,7 +218,7 @@ window.FEEDBACK = (function () {
     });
     if (apresValidation.length) {
       out.push({ cle: "valide", quoi: "Il arrive après une validation",
-        detail: apresValidation.length + (apresValidation.length > 1 ? " pièces avaient" : " pièce avait")
+        detail: apresValidation.length + (apresValidation.length > 1 ? " livrables avaient" : " livrable avait")
           + " été approuvée — ce n'est pas une correction, c'est une reprise",
         force: 5 });
     }
@@ -229,7 +229,7 @@ window.FEEDBACK = (function () {
     });
     if (apresBAT.length) {
       out.push({ cle: "bat", quoi: "Le BAT est signé",
-        detail: apresBAT.length + (apresBAT.length > 1 ? " pièces sont parties" : " pièce est partie")
+        detail: apresBAT.length + (apresBAT.length > 1 ? " livrables sont parties" : " livrable est partie")
           + " en production avec un accord écrit",
         force: 5 });
     }
@@ -238,7 +238,7 @@ window.FEEDBACK = (function () {
     var spontanes = i.pieces.filter(function (l) { return l.origine !== "prevu"; });
     if (spontanes.length) {
       out.push({ cle: "perimetre", quoi: "C'est hors du périmètre vendu",
-        detail: spontanes.length + (spontanes.length > 1 ? " pièces n'étaient" : " pièce n'était")
+        detail: spontanes.length + (spontanes.length > 1 ? " livrables n'étaient" : " livrable n'était")
           + " pas dans la proposition validée",
         force: 4 });
     }
@@ -295,15 +295,15 @@ window.FEEDBACK = (function () {
     function brouillon() {
       return { projet: projetId, niveau: selPortee.value, portee: selPortee.value,
         cibles: choixCibles.valeurs(), marches: choixMarches.valeurs(),
-        routes: choixRoutes.valeurs(), issue: "ouvert" };
+        pistes: choixRoutes.valeurs(), issue: "ouvert" };
     }
 
     function dessiner() {
       O.vider(zoneCibles);
       var n = selPortee.value;
-      if (n === "declinaison" || n === "maitre") zoneCibles.appendChild(bloc("Quelles pièces", choixCibles.noeud));
+      if (n === "declinaison" || n === "maitre") zoneCibles.appendChild(bloc("Quelles livrables", choixCibles.noeud));
       if (n === "adaptation" || n === "maniere") zoneCibles.appendChild(bloc("Quels marchés", choixMarches.noeud));
-      if (n === "idee" || n === "maniere") zoneCibles.appendChild(bloc("Quelles routes", choixRoutes.noeud));
+      if (n === "idee" || n === "maniere") zoneCibles.appendChild(bloc("Quelles pistes", choixRoutes.noeud));
 
       var i = impact(brouillon());
       var c = CANAUX[selCanal.value];
@@ -311,7 +311,7 @@ window.FEEDBACK = (function () {
       var dn = NIVEAUX[selPortee.value];
       apercu.appendChild(el("div.stats", {},
         UI.stat("PIÈCES TOUCHÉES", String(i.assets), i.marches.length + " marchés", i.assets > 5 ? "alerte" : ""),
-        UI.stat("COÛT ESTIMÉ", i.jours + " j", "à mi-estimation par pièce", i.jours > 5 ? "alerte" : ""),
+        UI.stat("COÛT ESTIMÉ", i.jours + " j", "à mi-estimation par livrable", i.jours > 5 ? "alerte" : ""),
         i.enProduction ? UI.stat("DÉJÀ EN PRODUCTION", String(i.enProduction),
           "BAT signé — les rappeler coûte", "alerte") : null
       ));
@@ -421,7 +421,7 @@ window.FEEDBACK = (function () {
             el("h3", {}, "SUR QUOI JE PEUX M'OPPOSER",
               el("span.droite", {}, motifs.length + (motifs.length > 1 ? " motifs opposables" : " motif opposable"))),
             listeM)
-        : UI.banniere("", "Aucun motif opposable : ce retour arrive avant validation, dans les tours vendus, sur du périmètre prévu. Il se traite, il ne se conteste pas."),
+        : UI.banniere("", "Aucun motif opposable : ce retour arrive avant validation, dans les allers-retours vendus, sur du périmètre prévu. Il se traite, il ne se conteste pas."),
 
       el("div.form", {},
         el("div.champ", {}, el("label", {}, "L'issue"), selI, aide),
@@ -442,7 +442,7 @@ window.FEEDBACK = (function () {
     ));
   }
 
-  /* Appliquer : chaque pièce touchée passe une version, avec ce retour en cause. */
+  /* Appliquer : chaque livrable touché passe une version, avec ce retour en cause. */
   function appliquer(f, i) {
     var ouvertes = [];
     i.pieces.forEach(function (l) {

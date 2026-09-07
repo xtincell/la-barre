@@ -25,7 +25,7 @@ window.VUE_SOCLE = (function () {
       cout: "le contrôle de vocabulaire n'a rien à vérifier" },
     { n: 8, t: "Symboles", cle: "symboles", forme: "puces",
       cout: "chaque campagne réinventera son imagerie" },
-    { n: 9, t: "Ce que le socle ne fera pas", cle: "ne_fera_pas", forme: "puces",
+    { n: 9, t: "Ce que la plateforme de marque ne fera pas", cle: "ne_fera_pas", forme: "puces",
       cout: "aucune frontière écrite d'avance" },
   ];
 
@@ -103,10 +103,10 @@ window.VUE_SOCLE = (function () {
     return el("div.sv", {},
       el("div.sv-h", {},
         el("h3.sv-t", {}, phraseSocle(mqs)),
-        el("p.sv-s", {}, "Le socle appartient à la marque et vaut plusieurs années. "
+        el("p.sv-s", {}, "La plateforme appartient à la marque et vaut plusieurs années. "
           + "La campagne s'y adosse ; ce qui n'est vrai que cette saison reste dans "
           + "le dossier."),
-        el("a.b.or", { href: "#/maison/marques" }, "Ouvrir le vault")),
+        el("a.b.or", { href: "#/referentiel/marques" }, "Ouvrir la bibliothèque de marque")),
 
       el("div.sv-l", {}, mqs.map(function (m) { return blocMarqueSocle(p, m); })),
 
@@ -119,10 +119,10 @@ window.VUE_SOCLE = (function () {
     var sans = mqs.filter(function (m) { return VAULT.etatNiveau("marque", m.id).propres === 0; });
     if (sans.length) {
       return sans.map(function (m) { return m.nom; }).join(", ")
-        + (sans.length > 1 ? " n'ont pas de socle au vault" : " n'a pas de socle au vault");
+        + (sans.length > 1 ? " n'ont pas de plateforme de marque" : " n'a pas de plateforme de marque");
     }
     return mqs.length + (mqs.length > 1 ? " marques, " : " marque, ")
-      + "leur socle vient du vault";
+      + "leur plateforme de marque vient de la bibliothèque";
   }
 
   var TETE = ["idee_directrice", "jamais"];
@@ -144,7 +144,7 @@ window.VUE_SOCLE = (function () {
             + (e.herites ? "  ·  " + e.herites + (e.herites > 1 ? " hérités" : " hérité") : "")
             + (e.vides.length ? "  ·  " + e.vides.length
                 + (e.vides.length > 1 ? " manquants" : " manquant") : ""))),
-        el("a.svm-v", { href: "#/maison/marques" }, "au vault →")),
+        el("a.svm-v", { href: "#/referentiel/marques" }, "à la bibliothèque de marque →")),
 
       /* Les deux qui servent à refuser passent devant et en grand. */
       el("div.svm-f", {}, TETE.map(function (cle) {
@@ -189,7 +189,7 @@ window.VUE_SOCLE = (function () {
 
     return el("a.svf" + (grand ? ".grand" : "") + (vide ? ".vide" : "")
         + (!h.propre && !vide ? ".herite" : ""),
-      { href: "#/maison/marques", title: "modifier au vault — " + c.nom },
+      { href: "#/referentiel/marques", title: "modifier à la bibliothèque de marque — " + c.nom },
       el("span.svf-n", {}, c.nom,
         !h.propre && !vide && h.source ? el("span.svf-h", {}, "de " + h.source.nom) : null),
       el("span.svf-v", {}, vide
@@ -228,7 +228,7 @@ window.VUE_SOCLE = (function () {
   /* Les packs de la marque, montrés ici et pas seulement au vault. Ceux que la
    * campagne retient passent devant : c'est ce qu'on dessine. */
   function blocPacks(p, m) {
-    /* La campagne ne convoque pas toute la gamme : ses KV maîtres portent des
+    /* La campagne ne convoque pas toute la gamme : ses KV masters portent des
      * catégories — ici EVAP et IMP — et ses volets des marchés. Montrer les
      * cinquante et un packs du vault, c'était poser des yaourts sous les yeux
      * d'un DA qui dessine du lait en poudre. Le cadrage existait déjà au
@@ -284,12 +284,12 @@ window.VUE_SOCLE = (function () {
         : null,
       hors > 0
         ? el("p.svp-x", {}, hors + (hors > 1 ? " autres packs" : " autre pack")
-            + " au vault de " + m.nom + (noms.length
+            + " à la bibliothèque de marque de " + m.nom + (noms.length
               ? " — hors " + noms.join(" et ") + ", cette campagne ne les convoque pas."
               : " que cette campagne ne convoque pas."))
         : null,
       !n && !noms.length
-        ? el("p.svp-x", {}, "Aucune pièce ne déclare les packs qu'elle montre. "
+        ? el("p.svp-x", {}, "Aucun livrable ne déclare les packs qu'elle montre. "
             + "Tant que c'est le cas, on ne peut pas vérifier qu'un produit "
             + "n'apparaît pas sur un marché qui ne le vend pas.")
         : null);
@@ -323,7 +323,7 @@ window.VUE_SOCLE = (function () {
         el("button.b.nu", { type: "button", onclick: function () { ajouter(p, s, rafraichir); } }, "+ image")),
 
       !ms.length
-        ? el("p.rien", {}, "Le socle ne porte que du texte. Une plateforme sans images oblige chaque DA à réinventer l'univers, et à se tromper.")
+        ? el("p.rien", {}, "La plateforme de marque ne porte que du texte. Une plateforme sans images oblige chaque DA à réinventer l'univers, et à se tromper.")
         : Object.keys(ROLES).map(function (r) {
             if (!parRole[r].length) return null;
             return el("div.mb-groupe", {},
@@ -414,7 +414,7 @@ window.VUE_SOCLE = (function () {
       : null;
 
     return UI.recevabilite(
-      vides.length ? "Ce socle laisse " + vides.length + (vides.length > 1 ? " dettes" : " dette") : "Ce socle tient",
+      vides.length ? "Cette plateforme de marque laisse " + vides.length + (vides.length > 1 ? " dettes" : " dette") : "Cette plateforme de marque tient",
       controles, prix,
       vides.length
         ? [
@@ -426,7 +426,7 @@ window.VUE_SOCLE = (function () {
           ]
         : [
             { nom: "Vérifier le vocabulaire", quand: function () { verifier(p); } },
-            { nom: "Modifier le socle", doux: true,
+            { nom: "Modifier la plateforme de marque", doux: true,
               quand: function () { VUE_PROJETS.editerSection(p, "socle", rafraichir); } },
           ]);
   }

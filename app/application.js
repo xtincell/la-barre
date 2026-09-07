@@ -16,20 +16,20 @@ window.APP = (function () {
    * test qui la valide : quelqu'un qui découvre le produit doit savoir sans
    * hésiter où aller pour voir ce qui demande son intervention. */
   var VUES = [
-    { cle: "decider", ico: "revue", nom: "DÉCIDER",
-      quoi: "ce qui attend une décision de moi",
+    { cle: "valider", ico: "revue", nom: "À VALIDER",
+      quoi: "ce qui attend ma validation",
       vue: function () { return VUE_DECIDER; } },
-    { cle: "placer", ico: "charge", nom: "PLACER",
-      quoi: "qui fait quoi, dans quel ordre",
+    { cle: "planning", ico: "charge", nom: "PLANNING",
+      quoi: "charge, priorités, équipe",
       vue: function () { return VUE_PLACER; } },
-    { cle: "constater", ico: "standard", nom: "CONSTATER",
-      quoi: "ce que mes décisions ont produit",
+    { cle: "reporting", ico: "standard", nom: "REPORTING",
+      quoi: "indicateurs, bilan, arbitrages",
       vue: function () { return VUE_CONSTATER; } },
-    { cle: "projets", ico: "projets", nom: "LES DOSSIERS",
-      quoi: "où en est chaque chose",
+    { cle: "projets", ico: "projets", nom: "PROJETS",
+      quoi: "où en est chaque projet",
       vue: function () { return VUE_PROJETS; } },
-    { cle: "maison", ico: "referentiel", nom: "LA MAISON",
-      quoi: "référentiel, règles, dépôt",
+    { cle: "referentiel", ico: "referentiel", nom: "RÉFÉRENTIEL",
+      quoi: "marques, marchés, gabarits, base",
       vue: function () { return VUE_MAISON; } },
   ];
 
@@ -37,17 +37,22 @@ window.APP = (function () {
    * mode de la bonne intention. Un lien ne se casse pas parce qu'on a changé
    * d'architecture. */
   var ANCIENNES = {
-    direction: ["decider", "file"],
-    revue: ["decider", "file"],
-    attentes: ["decider", "du"],
-    briefs: ["constater", "standard"],
-    standard: ["constater", "standard"],
-    pipeline: ["placer", "ordre"],
-    referentiel: ["maison", "referentiel"],
-    reglages: ["maison", "reglages"],
+    /* Les noms d'avant la normalisation du vocabulaire. Un lien partagé il y a
+     * six mois doit arriver quelque part — on ne casse pas une adresse. */
+    decider: ["valider", "file"],
+    placer: ["planning", "ordre"],
+    constater: ["reporting", "indicateurs"],
+    maison: ["referentiel", "marches"],
+    direction: ["valider", "file"],
+    revue: ["valider", "file"],
+    attentes: ["valider", "du"],
+    briefs: ["reporting", "indicateurs"],
+    standard: ["reporting", "indicateurs"],
+    pipeline: ["planning", "ordre"],
+    reglages: ["referentiel", "parametres"],
   };
 
-  function route() {
+  function piste() {
     var brut = location.hash.replace(/^#\/?/, "");
     var m = brut.split("/");
     var cle = m[0] || "decider";
@@ -70,7 +75,7 @@ window.APP = (function () {
   var dernierProjet = null;
 
   function rail() {
-    var r = route();
+    var r = piste();
     var aJuger = VUE_REVUE.pieces().length;
     var attentes = RENVOI.ouvertes().length;
     var projets = DEPOT.liste("projets");
@@ -128,35 +133,52 @@ window.APP = (function () {
     return n;
   }
 
-  /* Ce qui attend derrière chaque place. */
+  /* Ce qui attend derrière chaque place.
+   *
+   * Les clés sont celles des cinq destinations, pas celles des anciens
+   * modules : renommer une vue sans renommer son compteur éteint le compteur
+   * en silence, et un badge qui disparaît ne se remarque jamais.
+   *
+   * Reporting n'a pas de compteur : c'est une lecture mensuelle, pas une
+   * file. Lui en donner un ferait cinq badges permanents, et la priorité
+   * cesserait d'être rare. */
   function charge(cle, aJuger, attentes, projets, age) {
-    if (cle === "revue") return { n: aJuger ? String(aJuger) : null, ton: "alerte",
-      quoi: aJuger + " pièces attendent un verdict" };
-    if (cle === "attentes") return { n: attentes ? String(attentes) : null, ton: "attente",
-      quoi: attentes + " renvois sans retour" };
+    if (cle === "valider") return { n: aJuger ? String(aJuger) : null, ton: "alerte",
+      quoi: aJuger + (aJuger > 1 ? " livrables attendent mon verdict" : " livrable attend mon verdict")
+        + (attentes ? " — et " + attentes + " renvois sont sans retour" : "") };
+
+    if (cle === "planning") {
+      var c = PRIORITE.conflits().conflits.length;
+      return { n: c ? String(c) : null, ton: "alerte",
+        quoi: c + (c > 1 ? " conflits d'ordre" : " conflit d'ordre")
+          + " : du spéculatif passe avant un engagement" };
+    }
+
     if (cle === "projets") {
       var n = projets.filter(function (p) {
         return REGLES.blocages(p.id).some(function (b) { return b.type !== "infere-non-contresigne"; });
       }).length;
       return { n: n ? String(n) : null, ton: "alerte",
-        quoi: n + " dossiers avec un blocage ouvert" };
+        quoi: n + (n > 1 ? " projets ont un blocage ouvert" : " projet a un blocage ouvert") };
     }
-    if (cle === "pipeline") {
-      var f = FEEDBACK.ouverts().length;
-      return { n: f ? String(f) : null, ton: "alerte",
-        quoi: f + " retours non tranchés" };
-    }
+
+    /* Le dépôt d'abord : c'est la seule perte irréversible du produit, et il
+     * vit derrière cette place depuis que les réglages y ont déménagé. */
     if (cle === "referentiel") {
+      if (age === null || age > 2) {
+        return { n: "!", ton: "alerte",
+          quoi: age === null ? "la base n'a jamais été exportée"
+            : "la base a été exportée il y a " + age + " jours" };
+      }
       var trous = 0;
       DEPOT.liste("marches").forEach(function (m) {
         if (!(m.mentions || []).length) trous++;
         if (!(m.sku || []).length) trous++;
       });
       return { n: trous ? String(trous) : null, ton: "attente",
-        quoi: trous + " entrées du référentiel non renseignées" };
+        quoi: trous + (trous > 1 ? " entrées de référentiel manquent" : " entrée de référentiel manque") };
     }
-    if (cle === "reglages") return { n: (age === null || age > 2) ? "!" : null, ton: "alerte",
-      quoi: age === null ? "jamais exporté" : "exporté il y a " + age + " jours" };
+
     return { n: null };
   }
 
@@ -241,7 +263,7 @@ window.APP = (function () {
   /* ————————————————————— Le fil et la recherche ————————————————————— */
 
   function chapeau() {
-    var r = route();
+    var r = piste();
     var fil = [el("a", { href: "#/" + r.vue.cle }, r.vue.nom.charAt(0) + r.vue.nom.slice(1).toLowerCase())];
     if (r.arg) {
       var p = DEPOT.trouve("projets", r.arg);
@@ -314,7 +336,7 @@ window.APP = (function () {
   /* ————————————————————— Rendu ————————————————————— */
 
   function rendre() {
-    var r = route();
+    var r = piste();
 
     var nouveauRail = rail();
     if (railNoeud && railNoeud.parentNode) railNoeud.parentNode.replaceChild(nouveauRail, railNoeud);

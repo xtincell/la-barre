@@ -136,8 +136,8 @@ window.AMORCE = (function () {
           ton_campagne: "Sobre, sans emphase.",
           phares: [
             "Nom officiel et descripteur, une fois en clair",
-            "La preuve maîtresse « derrière la vitre », sujet du film",
-            "Les quatre bénéfices dans l'ordre du socle",
+            "La preuve mastersse « derrière la vitre », sujet du film",
+            "Les quatre bénéfices dans l'ordre de la plateforme de marque",
             "La traçabilité datée et attribuée, plan le plus long",
             "Le mot « inclus », une seule occurrence",
             "Les douze marques références",
@@ -233,7 +233,7 @@ window.AMORCE = (function () {
 
   /* ————— Le second exemple : une campagne multi-marchés.
    *
-   * Quatorze KV maîtres, trois marques, six marchés — la planche réelle, avec
+   * Quatorze KV masters, trois marques, six marchés — la planche réelle, avec
    * ses erreurs : un marché anglophone servi en français, une accroche de sept
    * mots, un SKU montré là où il n'est pas distribué. C'est exactement ce
    * qu'une planche imprimée ne dit pas.
@@ -314,7 +314,7 @@ window.AMORCE = (function () {
       volets: [{ id: "V-kv", nom: "Key visuals", supports: ["S-kv"],
         marches: ["M-CM", "M-CI", "M-GH", "M-CG", "M-ZA", "M-BJ"] }],
       livrables: livrables,
-      notes: "Les KV maîtres par marché, avant déclinaisons. Chacun porte sa combinaison : marque, accroche, langue, SKU montrés, et les choix de direction artistique.",
+      notes: "Les KV masters par marché, avant déclinaisons. Chacun porte sa combinaison : marque, accroche, langue, SKU montrés, et les choix de direction artistique.",
     };
   }
 

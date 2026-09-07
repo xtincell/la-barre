@@ -28,7 +28,7 @@ window.VUE_BIGIDEA = (function () {
 
     /* L'idée est la plus grosse chose à l'écran, et elle passe devant ses
      * conditions : on juge une idée, puis on regarde si elle est opposable —
-     * pas l'inverse. Les routes ont leur écran ; les répéter ici, c'est faire
+     * pas l'inverse. Les pistes ont leur écran ; les répéter ici, c'est faire
      * juger la big idea sur ses exécutions. */
     return el("div.bi", {},
       idee(p, b, socle),
@@ -52,8 +52,8 @@ window.VUE_BIGIDEA = (function () {
         cout: "au-delà d'une phrase, l'idée est refusable — §8" },
       { quoi: "Mécanique hors média", ok: !!b.mecanique, poids: 3,
         cout: "une mécanique lisible dans un seul média est refusable" },
-      { quoi: "Rattachement au socle", ok: !!b.rattachement, poids: 2,
-        cout: socle.idee_directrice ? "l'écart au socle n'est pas justifié" : REGLES.prix("socle-absent") },
+      { quoi: "Rattachement à la plateforme de marque", ok: !!b.rattachement, poids: 2,
+        cout: socle.idee_directrice ? "l'écart à la plateforme de marque n'est pas justifié" : REGLES.prix("socle-absent") },
       { quoi: "Condition de validité", ok: !!b.validite, poids: 2,
         cout: "sans elle, la plateforme est refusable" },
       { quoi: "Signature", ok: !!b.signature, poids: 1 },
@@ -157,9 +157,9 @@ window.VUE_BIGIDEA = (function () {
     );
   }
 
-  /* ————————————————————— Les routes, avec leur coût d'arbitrage ————————————————————— */
+  /* ————————————————————— Les pistes, avec leur coût d'arbitrage ————————————————————— */
 
-  /* Comparer deux routes, c'est comparer deux arguments — pas deux images.
+  /* Comparer deux pistes, c'est comparer deux arguments — pas deux images.
    * On les met côte à côte, avec ce que chacune sacrifie et ce qu'elle oppose,
    * et le nom de qui la porte. C'est là qu'on tranche. */
   function colonneRoute(p, pi, rafraichir) {
@@ -175,7 +175,7 @@ window.VUE_BIGIDEA = (function () {
         IMAGE.vignette(pi, "planche"),
         el("span.bic-eti", {}, ETAT.piste(p, pi).nom)),
 
-      el("div.bic-t", {}, pi.titre || "Route sans titre"),
+      el("div.bic-t", {}, pi.titre || "Piste sans titre"),
       ETAT.ligne(ETAT.piste(p, pi), "bic-etat"),
       el("div.bic-a", {},
         da ? UI.avatar(da, 20) : null,
@@ -188,12 +188,12 @@ window.VUE_BIGIDEA = (function () {
 
       el("div.bic-c", {}, pi.concept || ""),
 
-      /* Les deux lignes qui décident. Sans elles, la route est irrecevable. */
+      /* Les deux lignes qui décident. Sans elles, la piste est irrecevable. */
       el("div.bic-arg", {},
         el("div.bica.sacrifice", {},
           el("div.t", {}, "CE QU'ELLE SACRIFIE"),
           el("div.v" + (pi.sacrifice ? "" : ".vide"), {},
-            pi.sacrifice || "non écrit — la route n'est pas arbitrable, §8")),
+            pi.sacrifice || "non écrit — la piste n'est pas arbitrable, §8")),
         el("div.bica.argument", {},
           el("div.t", {}, "L'ARGUMENT"),
           el("div.v" + (pi.argument ? "" : ".vide"), {},
@@ -208,7 +208,7 @@ window.VUE_BIGIDEA = (function () {
         : el("div.bic-src.vide", {}, "aucune idée d'atelier rattachée"),
 
       el("div.bic-n", {},
-        el("span", {}, el("b", {}, String(ls.length)), ls.length > 1 ? " pièces" : " pièce"),
+        el("span", {}, el("b", {}, String(ls.length)), ls.length > 1 ? " livrables" : " livrable"),
         el("span", {}, el("b", {}, String(pretes)), " prêtes"),
         el("span" + (disp ? "" : ".alerte"), {}, el("b", {}, String(disp)),
           disp > 1 ? " activités" : disp ? " activité" : " dispositif")),
@@ -218,7 +218,7 @@ window.VUE_BIGIDEA = (function () {
           ? el("button.b.or", { type: "button", onclick: function () { VUE_ROUTE.ouvrir(p, pi, rafraichir); } },
               "Ouvrir pour arbitrer")
           : el("button.b", { type: "button", onclick: function () { VUE_ROUTE.ouvrir(p, pi, rafraichir); } },
-              "Ouvrir la route"))
+              "Ouvrir la piste"))
     );
   }
 
@@ -246,13 +246,13 @@ window.VUE_BIGIDEA = (function () {
       el("div.bir-tete", {},
         el("span", {}, "LES IDÉES DE L'ATELIER"),
         el("span.bir-e", {}, retenues.length + " retenues sur " + is.length
-          + "  ·  " + reprises + " reprises dans une route"
+          + "  ·  " + reprises + " reprises dans une piste"
           + (juniors ? "  ·  " + juniors + " de juniors" : ""))),
 
       reprises < retenues.length
         ? UI.banniere("", (retenues.length - reprises)
             + (retenues.length - reprises > 1 ? " idées retenues ne sont reprises" : " idée retenue n'est reprise")
-            + " dans aucune route. Retenue et jamais servie, c'est une idée volée à son auteur.")
+            + " dans aucune piste. Retenue et jamais servie, c'est une idée volée à son auteur.")
         : null,
 
       el("div.bi-idees", {}, is.map(function (i) {
@@ -269,7 +269,7 @@ window.VUE_BIGIDEA = (function () {
           i.motif ? el("div.bii-mo", {}, i.motif) : null,
           i.statut === "retenue" && !pi
             ? el("button.b.nu", { type: "button", onclick: function () { rattacher(p, i, rafraichir); } },
-                "rattacher à une route")
+                "rattacher à une piste")
             : null);
       }))
     );
@@ -279,12 +279,12 @@ window.VUE_BIGIDEA = (function () {
     var sel = el("select", {});
     sel.appendChild(el("option", { value: "" }, "— aucune —"));
     (p.sections.pistes || []).forEach(function (pi) {
-      sel.appendChild(el("option", { value: pi.id }, pi.titre || "route sans titre"));
+      sel.appendChild(el("option", { value: pi.id }, pi.titre || "piste sans titre"));
     });
     PANNEAU.sur("Rattacher l'idée", p.ref, el("div", {},
       el("div.fb-texte", {}, i.texte),
-      UI.banniere("", "Rattacher dit quelle route porte cette idée. C'est ce qui rend « on a pris l'idée de X » vérifiable — et l'indicateur juniors calculable."),
-      el("div.form", {}, el("div.champ", {}, el("label", {}, "La route"), sel)),
+      UI.banniere("", "Rattacher dit quelle piste porte cette idée. C'est ce qui rend « on a pris l'idée de X » vérifiable — et l'indicateur juniors calculable."),
+      el("div.form", {}, el("div.champ", {}, el("label", {}, "La piste"), sel)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           i.pisteId = sel.value || null;
@@ -299,7 +299,7 @@ window.VUE_BIGIDEA = (function () {
     var c = COUT.verdict(piece, "approuve");
     var motif = el("input", { type: "text", placeholder: "une ligne d'argument — c'est ce que le processus demande" });
 
-    PANNEAU.ouvrir("Retenir « " + (pi.titre || "cette route") + " »", "ce que ça change", el("div", {},
+    PANNEAU.ouvrir("Retenir « " + (pi.titre || "cette piste") + " »", "ce que ça change", el("div", {},
       c.alertes.length ? el("div", {}, c.alertes.map(function (a) { return UI.banniere("rouge", a); })) : null,
       c.gagne.length ? el("div.sousbloc", {}, el("h3", {}, "CE QUE ÇA DÉBLOQUE"),
         el("div", {}, c.gagne.map(function (g) {

@@ -38,19 +38,19 @@ window.KV = (function () {
 
   /* Trois niveaux, pas deux. C'est la distinction qui manquait :
    *
-   *   maître       — un par route. La référence. Il n'appartient à aucun marché.
-   *   adaptation   — le maître réécrit pour un marché : sa langue, son casting,
+   *   maître       — un par piste. La référence. Il n'appartient à aucun marché.
+   *   adaptation   — le master réécrit pour un marché : sa langue, son casting,
    *                  ses SKU, ses mentions. Un marché peut en avoir une, ou zéro.
-   *   déclinaison  — un format. Il naît d'une adaptation, ou du maître si le
+   *   déclinaison  — un format. Il naît d'une adaptation, ou du master si le
    *                  marché n'en a pas eu besoin.
    *
    * Un marché peut donc avoir plus ou moins de déclinaisons qu'un autre, et une
    * adaptation ou pas. Confondre les deux, c'est croire que tous les marchés
    * reçoivent la même chose. */
   var NIVEAUX = {
-    maitre: { nom: "KV maître", rang: 0 },
-    adaptation: { nom: "Adaptation", rang: 1 },
-    declinaison: { nom: "Déclinaison", rang: 2 },
+    maitre: { nom: "KV master", rang: 0 },
+    adaptation: { nom: "Déclinaison", rang: 1 },
+    declinaison: { nom: "Exé", rang: 2 },
   };
 
   function niveau(l) {
@@ -78,14 +78,14 @@ window.KV = (function () {
     });
   }
 
-  /* Les formats nés d'une pièce — adaptation ou maître. */
+  /* Les formats nés d'un livrable — adaptation ou maître. */
   function declinaisons(p, kvId) {
     return (p.livrables || []).filter(function (l) {
       return l.maitre === kvId && !l.annule && niveau(l) === "declinaison";
     });
   }
 
-  /* Tout ce qui descend d'une pièce, à tous les étages. */
+  /* Tout ce qui descend d'un livrable, à tous les étages. */
   function descendance(p, id) {
     var out = [];
     (p.livrables || []).forEach(function (l) {
@@ -144,7 +144,7 @@ window.KV = (function () {
       },
     };
     /* Une adaptation est le travail du directeur artistique qui a porté la
-     * route : c'est lui qui sait ce que le marché doit garder du maître et ce
+     * piste : c'est lui qui sait ce que le marché doit garder du master et ce
      * qu'il peut en changer. Elle ne se rattache donc pas au responsable du
      * maître, mais à l'auteur de la piste. */
     l.responsable = l.niveau === "adaptation"
@@ -168,8 +168,8 @@ window.KV = (function () {
     return pi ? (pi.auteurDA || null) : null;
   }
 
-  /* Les adaptations qui ne sont pas au DA de leur route. Ce n'est pas une
-   * faute de saisie : c'est une pièce dont personne ne sait qui la porte le
+  /* Les adaptations qui ne sont pas au DA de leur piste. Ce n'est pas une
+   * faute de saisie : c'est un livrable dont personne ne sait qui la porte le
    * jour où le marché demande une correction. */
   function adaptationsMalPortees(p) {
     return (p.livrables || []).filter(function (l) {
@@ -182,7 +182,7 @@ window.KV = (function () {
       var act = l.responsable ? DEPOT.trouve("personnes", l.responsable) : null;
       return { l: l, da: da, attendu: pe, actuel: act,
         cout: (act ? act.nom + " porte" : "personne ne porte") + " l'adaptation "
-          + l.nom + ", alors que la route est de " + (pe ? pe.nom : "un autre DA")
+          + l.nom + ", alors que la piste est de " + (pe ? pe.nom : "un autre DA")
           + " : au premier retour du marché, la correction n'a pas d'auteur" };
     });
   }
@@ -260,7 +260,7 @@ window.KV = (function () {
     return conformite(p, l).every(function (c) { return c.ok; });
   }
 
-  /* Le pire écart de toute la planche, avec la pièce qui le porte. Compter les
+  /* Le pire écart de toute la planche, avec le livrable qui le porte. Compter les
    * KV non conformes ne dit rien ; nommer celui qui coûte le plus dit tout. */
   function pireEcart(p) {
     var pire = null;

@@ -59,7 +59,7 @@ window.VUE_FINDEMOIS = (function () {
       creuses.length
         ? "Ce qui manque n'est pas du travail non fait, c'est du travail non enregistré. "
           + (qui
-             ? "Une piste confiée, une pièce affectée, une critique écrite : trois gestes, "
+             ? "Une piste confiée, un livrable affecté, une critique écrite : trois gestes, "
                + "et cette fiche devient tenable."
              : "Les verdicts, les versions et les attentes se posent en travaillant — "
                + "et cette feuille se remplira toute seule.")

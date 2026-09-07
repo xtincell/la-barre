@@ -5,14 +5,14 @@
  * qu'un cycle sort ou ne sort pas : à qui je l'ai demandée, pour quand, et
  * depuis combien de jours je l'attends.
  *
- * Sans cet objet, une pièce non rendue ressemble à une pièce non commencée.
+ * Sans cet objet, un livrable non rendue ressemble à un livrable non commencé.
  * L'une est de ma faute, l'autre pas — et c'est exactement la distinction que
  * ma fiche me demande de tenir.
  *
  * Une demande n'est pas un renvoi. Le renvoi remonte ce qui n'est pas à moi ;
  * la demande descend ce que j'attends de mon équipe. Elle porte donc ce que
- * le §5 impose à une demande créative : qui, quoi, pour quand — et le tour
- * qu'elle consomme, parce qu'un tour au-delà du vendu se paie.
+ * le §5 impose à une demande créative : qui, quoi, pour quand — et l'aller-retour
+ * qu'elle consomme, parce qu'un aller-retour au-delà du vendu se paie.
  */
 
 window.DEMANDE_VERSION = (function () {
@@ -70,22 +70,22 @@ window.DEMANDE_VERSION = (function () {
       return el("div", {},
         UI.banniere(depasse ? "rouge" : "",
           depasse
-            ? "Ce serait le tour " + prochain + " sur " + l.toursVendus + " vendus. "
+            ? "Ce serait l'aller-retour " + prochain + " sur " + l.toursVendus + " vendus. "
               + "Au-delà du vendu, le temps passé est absorbé par l'agence tant que "
               + "personne n'a tranché qui le porte."
-            : "Tour " + prochain + " sur " + (l.toursVendus || 2) + " vendus. "
+            : "Aller-retour " + prochain + " sur " + (l.toursVendus || 2) + " vendus. "
               + "L'outil n'envoie rien : il écrit la demande et compte les jours."),
 
         el("div.form", {},
           el("div.champ", {}, el("label", {}, "À qui"), selQui,
             el("div.indice", {}, "Celui qui rend est celui qui en répond : l'affectation "
-              + "de la pièce suit la demande.")),
+              + "du livrable suit la demande.")),
           el("div.champ", {}, el("label", {}, "Ce que j'attends"), quoi),
           el("div.champ", {}, el("label", {}, "Pour quand"), pour,
             el("div.indice", {}, l.publication
               ? "La parution est le " + O.joli(l.publication)
                 + (l.remise ? " ; la remise est posée au " + O.joli(l.remise) + "." : ".")
-              : "Aucune date de parution sur cette pièce."))),
+              : "Aucune date de parution sur ce livrable."))),
 
         el("div.form-actions", {},
           el("button.b.or", { type: "button", onclick: function () {
@@ -114,7 +114,7 @@ window.DEMANDE_VERSION = (function () {
       demande_le: new Date().toISOString(), par: MAISON.titulaire,
       rendu_le: null, version: null,
     });
-    /* Demander, c'est affecter : la pièce entre dans la semaine de celui à qui
+    /* Demander, c'est affecter : le livrable entre dans la semaine de celui à qui
      * on la demande. Sans ça la charge reste fausse. */
     if (!l.responsable) l.responsable = o.qui;
     var q = DEPOT.trouve("personnes", o.qui);

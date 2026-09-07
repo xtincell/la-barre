@@ -1,6 +1,6 @@
 /* vue-livrable.js — l'écran d'un livrable.
  *
- * L'aperçu, le fil d'étapes, les trois chiffres, la bannière quand les tours
+ * L'aperçu, le fil d'étapes, les trois chiffres, la bannière quand les allers-retours
  * dépassent le vendu, les critères, les dépendances. Tout ce qu'il faut pour
  * juger sans ouvrir autre chose.
  */
@@ -8,7 +8,10 @@
 window.VUE_LIVRABLE = (function () {
   var el = O.el;
 
-  var ETAPES = ["Brief", "Concept", "Création", "Review", "Final"];
+  /* La frise vit dans production.js : c'est elle qui sait ce qu'un support
+   * exige, et le BAT en fait partie. Deux écrans la lisaient chacun à leur
+   * façon — ils lisent maintenant la même. */
+  var ETAPES = PRODUCTION.ETAPES;
 
   var ONGLETS = [
     { cle: "apercu", nom: "APERÇU" },
@@ -19,7 +22,7 @@ window.VUE_LIVRABLE = (function () {
     { cle: "historique", nom: "HISTORIQUE" },
   ];
 
-  /* L'écran d'une pièce, c'est VUE_ASSET. Celui-ci ne sert plus que de source
+  /* L'écran d'un livrable, c'est VUE_ASSET. Celui-ci ne sert plus que de source
    * pour ses onglets — et redirige si on l'appelle encore. */
   function ouvrir(projet, livrable, rafraichir) {
     if (window.VUE_ASSET) { VUE_ASSET.ouvrir(projet, livrable, rafraichir); return; }
@@ -52,7 +55,7 @@ window.VUE_LIVRABLE = (function () {
     var m = DEPOT.trouve("marches", l.marche);
     var resp = DEPOT.trouve("personnes", l.responsable);
     var t = tours(l);
-    var etape = etapeCourante(l);
+    var etape = etapeCourante(p, l);
     var perime = REGLES.maitrePerime(p, l);
     var droits = REGLES.droitsInsuffisants(l);
 
@@ -93,11 +96,11 @@ window.VUE_LIVRABLE = (function () {
         )
       ),
 
-      perime ? UI.banniere("rouge", "Le maître est passé en version " + versionMaitre(p, l)
+      perime ? UI.banniere("rouge", "Le master est passé en version " + versionMaitre(p, l)
         + ". Cette adaptation est à regénérer.") : null,
       droits ? UI.banniere("rouge", droits) : null,
       t.vendus && t.faits > t.vendus ? UI.banniere("",
-        "Plus de tours que prévu. Chaque tour supplémentaire est comptabilisé en reprise.") : null
+        "Plus d'allers-retours que prévu. Chaque aller-retour supplémentaire est comptabilisé en reprise.") : null
     );
   }
 
@@ -112,7 +115,7 @@ window.VUE_LIVRABLE = (function () {
       { quoi: "Responsable", ok: !!resp, poids: 5, cout: REGLES.prix("sans-proprietaire") },
       { quoi: "Charge estimée", ok: l.estime !== null && l.estime !== undefined, poids: 3,
         cout: "la semaine de production ne se calcule pas" },
-      { quoi: "Échéance", ok: !!d, cout: "la pièce est hors du temps, donc invisible" },
+      { quoi: "Échéance", ok: !!d, cout: "le livrable est hors du temps, donc invisible" },
       { quoi: "Maître à jour", ok: !REGLES.maitrePerime(p, l), poids: 4, cout: REGLES.prix("maitre-perime") },
       { quoi: "Droits couverts", ok: !REGLES.droitsInsuffisants(l), poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5, poids: 5,
         cout: REGLES.droitsInsuffisants(l) || "" },
@@ -120,8 +123,8 @@ window.VUE_LIVRABLE = (function () {
         cout: REGLES.prix("entree-sans-fournisseur") },
       { quoi: "Dix axes prêts", ok: coince.length === 0,
         cout: coince.length ? "en attente sur " + coince.map(function (c) { return c.axe.toLowerCase(); }).join(", ") : "" },
-      { quoi: "Tours dans le vendu", ok: !(t.vendus && t.faits > t.vendus),
-        cout: "chaque tour au-delà se comptabilise en reprise" },
+      { quoi: "Allers-retours dans le vendu", ok: !(t.vendus && t.faits > t.vendus),
+        cout: "chaque aller-retour au-delà se comptabilise en reprise" },
     ];
 
     var prix = null;   /* la bande choisit la conséquence la plus lourde */
@@ -148,7 +151,7 @@ window.VUE_LIVRABLE = (function () {
     }
 
     return UI.recevabilite(
-      coince.length === 0 && !manques.length ? "Cette pièce est prête" : "Que manque-t-il pour livrer ?",
+      coince.length === 0 && !manques.length ? "Ce livrable est prête" : "Que manque-t-il pour livrer ?",
       controles, prix, gestes);
   }
 
@@ -178,22 +181,18 @@ window.VUE_LIVRABLE = (function () {
     return (e > 0 ? "+" : "") + e + " %";
   }
 
+  /* Les allers-retours consommés, et ceux qui étaient vendus. Trois lignes du
+   * bloc d'export s'étaient recollées ici lors d'une reconstruction : elles ne
+   * cassaient rien, elles mentaient seulement sur ce que la fonction rend. */
   function tours(l) {
     return {
-    criteres: function (p, l, apres) { return criteres(p, l, apres); },
-    dependances: function (p, l) { return dependances(p, l); },
-    ouvrirFiche: ouvrirFiche,
       faits: (l.versions || []).filter(function (v) { return v.verdict && v.verdict !== "approuve"; }).length,
       vendus: l.toursVendus || 0,
     };
   }
 
-  function etapeCourante(l) {
-    var v = (l.versions || [])[l.versions.length - 1];
-    if (!v) return 2;
-    if (!v.verdict) return 3;
-    if (v.verdict === "approuve") return 4;
-    return 3;
+  function etapeCourante(p, l) {
+    return PRODUCTION.etape(p, l).i;
   }
 
   function versionMaitre(p, l) {
@@ -241,7 +240,7 @@ window.VUE_LIVRABLE = (function () {
                 (pers ? pers.nom : "client") + " · " + O.joli(a.quand) + " · V" + a.version,
                 UI.eti(ANNOT.ETATS[a.statut].nom, a.statut === "aTraiter" ? "alerte" : "terne"));
             }))
-          : el("p.rien", {}, "Aucun retour posé sur cette pièce. Un retour qui vit dans un message ne se traite jamais."),
+          : el("p.rien", {}, "Aucun retour posé sur ce livrable. Un retour qui vit dans un message ne se traite jamais."),
         el("div.form-actions", {},
           el("button.b.or", { type: "button", onclick: function () {
             PANNEAU.fermer(); ANNOT.ouvrir(p, l, apres);
@@ -435,7 +434,7 @@ window.VUE_LIVRABLE = (function () {
         if (apres) apres();
       } }, "Soumettre une version"),
       /* Un clic, et l'exécutant a tout : le brief de production compile ce que
-       * le modèle sait déjà de cette pièce, et nomme ce qui manque. */
+       * le modèle sait déjà de ce livrable, et nomme ce qui manque. */
       BRIEF_PRODUCTION.bouton(p, l),
       el("button.b", { type: "button", onclick: function () { VUE_MATRICE.editer(p, l, apres); } }, "Modifier"),
       el("button.b", { type: "button", onclick: function () {

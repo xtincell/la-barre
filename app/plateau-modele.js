@@ -40,7 +40,7 @@ window.PLATEAU = (function () {
       || (projet.sections.identite || {}).echeance || null;
   }
 
-  /* ————————————————————— Les pièces en vol ————————————————————— */
+  /* ————————————————————— Les livrables en vol ————————————————————— */
 
   function pieces() {
     var out = [];
@@ -125,7 +125,7 @@ window.PLATEAU = (function () {
    * Le filtre ne gardait que les postes rattachés DIRECTEMENT au titulaire.
    * Sur le plateau réel, ceux qui font le travail — graphic, motion, motion 3D,
    * web — sont rattachés au Directeur Artistique, donc au deuxième rang : ils
-   * disparaissaient de la charge. On affectait des pièces à des gens que la vue
+   * disparaissaient de la charge. On affectait des livrables à des gens que la vue
    * de capacité ne montrait pas. */
   function sousLeTitulaire(cle, garde) {
     if (!cle || (garde || 0) > 6) return false;
@@ -192,7 +192,7 @@ window.PLATEAU = (function () {
       if (maitre) {
         var dm = echeanceDe(pc.projet, maitre);
         if (nouvelle && dm && nouvelle < new Date(dm)) {
-          casse.push(pc.nom + " passerait avant son maître");
+          casse.push(pc.nom + " passerait avant son master");
         }
       }
     });
@@ -228,7 +228,7 @@ window.PLATEAU = (function () {
         hors.push(pc.nom + " était prévu par la proposition validée — l'annuler sort du périmètre vendu");
       }
       var adapt = REGLES.adaptations(pc.projet, pc.id);
-      if (adapt.length) hors.push(pc.nom + " porte " + adapt.length + " adaptations qui perdraient leur maître");
+      if (adapt.length) hors.push(pc.nom + " porte " + adapt.length + " adaptations qui perdraient leur master");
     });
     return { touches: touches, libere: libere, consequences: hors, verbe: "annuler" };
   }

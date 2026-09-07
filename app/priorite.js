@@ -28,7 +28,7 @@ window.PRIORITE = (function () {
       regle: "On produit. Et on relance la facturation : produire sans bon de commande, c'est financer le client." },
     { cle: "presente", rang: 2, nom: "Présenté", ton: "attente",
       quoi: "chez le client, en attente de retour",
-      regle: "On ne décline pas. Tant qu'aucune route n'est retenue, chaque format produit peut être jeté." },
+      regle: "On ne décline pas. Tant qu'aucune piste n'est retenue, chaque format produit peut être jeté." },
     { cle: "speculatif", rang: 3, nom: "Spéculatif", ton: "terne",
       quoi: "en élaboration, rien n'est engagé",
       regle: "Se fait avec le temps qui reste. Mûrir une piste augmente ses chances d'être retenue — mais jamais au prix d'un ferme." },
@@ -38,7 +38,7 @@ window.PRIORITE = (function () {
     return RANGS.filter(function (r) { return r.cle === cle; })[0] || RANGS[3];
   }
 
-  /* L'état commercial d'une route. Par défaut, spéculatif : c'est l'état de
+  /* L'état commercial d'une piste. Par défaut, spéculatif : c'est l'état de
    * tout ce qui n'a rien signé. */
   function etat(pi) {
     var c = pi.commercial || {};
@@ -50,7 +50,7 @@ window.PRIORITE = (function () {
 
   function rang(pi) { return def(etat(pi)).rang; }
 
-  /* Une pièce hérite du rang de sa route. Sans route, elle est spéculative :
+  /* Un livrable hérite du rang de sa piste. Sans piste, elle est spéculative :
    * personne ne l'a demandée. */
   function rangPiece(p, l) {
     var pi = (p.sections.pistes || []).filter(function (x) { return x.id === l.pisteId; })[0];
@@ -68,7 +68,7 @@ window.PRIORITE = (function () {
       fait: function (p, pi) { return !!(p.sections.bigidea || {}).idee; } },
     { cle: "argument", nom: "Sacrifice et argument", poids: 3, minimum: true,
       fait: function (p, pi) { return !!pi.sacrifice && !!pi.argument; } },
-    { cle: "maitre", nom: "Un KV maître", poids: 3, minimum: true,
+    { cle: "maitre", nom: "Un KV master", poids: 3, minimum: true,
       fait: function (p, pi) { return KV.maitres(p).some(function (l) { return l.pisteId === pi.id; }); } },
     { cle: "kv", nom: "Deux à trois KV montrables", poids: 3, minimum: true,
       fait: function (p, pi) {
@@ -156,7 +156,7 @@ window.PRIORITE = (function () {
       n++;
     });
     DEPOT.tracer("demande d'EXE", "production", p.id,
-      n + " pièces passées en exécution sur « " + (pi.titre || "la route") + " »");
+      n + " livrables passés en exécution sur « " + (pi.titre || "la piste") + " »");
     return n;
   }
 
@@ -164,7 +164,7 @@ window.PRIORITE = (function () {
     return (p.livrables || []).filter(function (l) { return !l.annule && l.exe; });
   }
 
-  /* ————————————————————— Le bloc commercial, dans la route ————————————————————— */
+  /* ————————————————————— Le bloc commercial, dans la piste ————————————————————— */
 
   function bande(p, pi, apres) {
     var e = etat(pi);
@@ -201,7 +201,7 @@ window.PRIORITE = (function () {
         ligneDate("Validée", c.valide_le),
         ligneDate("Payée", c.paye_le),
         c.montant ? el("span", {}, "montant : " + c.montant) : null,
-        nExe ? el("span.vert", {}, nExe + " pièces en EXE") : null),
+        nExe ? el("span.vert", {}, nExe + " livrables en EXE") : null),
 
       el("div.prb-g", {},
         !c.presente_le
@@ -243,23 +243,23 @@ window.PRIORITE = (function () {
       });
     });
 
-    PANNEAU.sur("Le client a validé « " + (pi.titre || "cette route") + " »", "ce que ça change", el("div", {},
+    PANNEAU.sur("Le client a validé « " + (pi.titre || "cette piste") + " »", "ce que ça change", el("div", {},
       el("div.stats", {},
         UI.stat("EN EXÉCUTION", String(ls.length),
-          ls.length > 1 ? "pièces passent en demande d'EXE" : "pièce passe en demande d'EXE", "vert"),
+          ls.length > 1 ? "livrables passent en demande d'EXE" : "livrable passe en demande d'EXE", "vert"),
         UI.stat("PRIORITÉ", "Engagé", "passe devant tout le spéculatif", "vert"),
         speculatifsAilleurs.length
           ? UI.stat("REPOUSSÉ", String(speculatifsAilleurs.length),
-              "pièces spéculatives passent après", "")
+              "livrables spéculatifs passent après", "")
           : null
       ),
 
-      UI.banniere("vert", "Les KV et leurs adaptations passent en demande d'EXE. À partir de maintenant, cette route a un rétroplanning à tenir — et rien de spéculatif ne peut lui prendre un jour."),
+      UI.banniere("vert", "Les KV et leurs adaptations passent en demande d'EXE. À partir de maintenant, cette piste a un rétroplanning à tenir — et rien de spéculatif ne peut lui prendre un jour."),
 
       speculatifsAilleurs.length
         ? UI.banniere("", speculatifsAilleurs.length
-            + (speculatifsAilleurs.length > 1 ? " pièces spéculatives sont affectées" : " pièce spéculative est affectée")
-            + " ailleurs. Elles ne s'arrêtent pas — elles passent après. L'écran Pipeline le dira à chaque conflit.")
+            + (speculatifsAilleurs.length > 1 ? " livrables spéculatifs sont affectés" : " livrable spéculatif est affecté")
+            + " ailleurs. Ils ne s'arrêtent pas — ils passent après. L'écran Pipeline le dira à chaque conflit.")
         : null,
 
       el("div.form-actions", {},
@@ -268,7 +268,7 @@ window.PRIORITE = (function () {
           pi.commercial.valide_le = new Date().toISOString();
           var n = passerEnExe(p, pi);
           DEPOT.tracer("validation client", "pistes", p.id,
-            (pi.titre || "route") + " — " + n + " pièces en EXE");
+            (pi.titre || "piste") + " — " + n + " livrables en EXE");
           DEPOT.enregistrer(); PANNEAU.fermerSur(); if (apres) apres();
         } }, "Valider et ouvrir les EXE"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Annuler"))
@@ -279,13 +279,13 @@ window.PRIORITE = (function () {
     PANNEAU.demander("Bon de commande reçu", {
       etiquette: pi.titre || "", label: "Montant", type: "text",
       aide: "À partir du bon de commande, le rétroplanning devient contractuel : plus rien ne passe devant.",
-      avertissement: "Produire sans bon de commande, c'est financer le client. Le noter ici sort la route du financement à l'aveugle.",
+      avertissement: "Produire sans bon de commande, c'est financer le client. Le noter ici sort la piste du financement à l'aveugle.",
       ton: "vert", bouton: "Enregistrer",
     }, function (v) {
       if (!pi.commercial) pi.commercial = {};
       pi.commercial.paye_le = new Date().toISOString();
       pi.commercial.montant = v || null;
-      DEPOT.tracer("bon de commande", "pistes", p.id, (pi.titre || "route") + (v ? " — " + v : ""));
+      DEPOT.tracer("bon de commande", "pistes", p.id, (pi.titre || "piste") + (v ? " — " + v : ""));
       DEPOT.enregistrer(); if (apres) apres();
     });
   }

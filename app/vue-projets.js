@@ -5,8 +5,8 @@ window.VUE_PROJETS = (function () {
 
   var NOMS = {
     identite: "Identité", brief: "Brief", socle: "Plateforme de marque",
-    strategie: "Stratégie", bigidea: "Big idea", pistes: "Routes créatives",
-    atelier: "Atelier", planche: "Planche des KV", livrables: "Livrables", calendriers: "Calendriers",
+    strategie: "Stratégie", bigidea: "Big idea", pistes: "Pistes créatives",
+    atelier: "Séance de créa", planche: "Déclinaisons", livrables: "Livrables", calendriers: "Calendriers",
     presentation: "Présentation",
   };
 
@@ -147,7 +147,7 @@ window.VUE_PROJETS = (function () {
 
     /* Un dossier sans visuel ne mérite pas un quart d'écran de carré gris :
      * la place revient à ce qui se lit — le verdict et son coût. L'illustration
-     * n'est pas une décoration, c'est une pièce ; quand il n'y en a pas, on le
+     * n'est pas une décoration, c'est un livrable ; quand il n'y en a pas, on le
      * dit en une ligne et on passe. */
     var vis = visuelDe(p);
     return el("a.dl-r.grand." + (vis ? "" : "sansvisuel.")
@@ -268,8 +268,8 @@ window.VUE_PROJETS = (function () {
     if (cle === "pistes") {
       var pistes = (p.sections.pistes || []);
       var retenue = pistes.filter(function (x) { return x.statut === "retenue"; }).length;
-      if (!pistes.length) return { classe: "vide", texte: "aucune route" };
-      return retenue ? { classe: "plein", texte: "une route retenue" }
+      if (!pistes.length) return { classe: "vide", texte: "aucune piste" };
+      return retenue ? { classe: "plein", texte: "une piste retenue" }
         : { classe: "partiel", texte: pistes.length + " en lice, aucune retenue" };
     }
     var e = CHAMPS.etat(cle, p.sections[cle]);
@@ -388,7 +388,7 @@ window.VUE_PROJETS = (function () {
             (b.pieces || []).length
               ? el("button.b.nu", { type: "button", style: { "font-size": "var(--t-micro)", "margin-top": ".25rem" },
                   onclick: function () { lesPieces(p, b, rafraichir); } },
-                  "les " + b.pieces.length + " pièces →")
+                  "les " + b.pieces.length + " livrables →")
               : null,
             b.type === "infere-non-contresigne"
               ? el("button.b.nu", { type: "button", style: { "font-size": "var(--t-micro)", "margin-top": ".25rem" },
@@ -469,13 +469,13 @@ window.VUE_PROJETS = (function () {
 
     return el("div.cotes", {}, el("div.pe-etat.vert", {},
       el("span.pee-c", {}, String(n)),
-      el("span.pee-n", {}, n > 1 ? "pièces" : "pièce"),
+      el("span.pee-n", {}, n > 1 ? "livrables" : "livrable"),
       el("p.pee-q", {}, n
         ? "Rien ne bloque ce dossier. Ce qui reste est du travail, pas une décision."
-        : "Aucune pièce. Une route retenue les engendre — c'est là qu'elles naissent.")));
+        : "Aucun livrable. Une piste retenue les engendre — c'est là qu'elles naissent.")));
   }
 
-  /* Un blocage de lot s'ouvre : la liste des pièces qu'il porte, chacune
+  /* Un blocage de lot s'ouvre : la liste des livrables qu'il porte, chacune
    * cliquable. Le nombre dirige, la liste exécute. */
   function lesPieces(p, b, rafraichir) {
     var ls = (p.livrables || []).filter(function (l) { return b.pieces.indexOf(l.id) !== -1; });
@@ -853,7 +853,7 @@ window.VUE_PROJETS = (function () {
                 ? el("ul.ste-l", {}, v.map(function (x) { return el("li", {}, x); }))
                 : el("p.ste-v", {}, String(v)))
             : el("p.ste-x", {}, c.requis
-                ? "Non écrit. Sans lui, une route ne se juge que par le goût."
+                ? "Non écrit. Sans lui, une piste ne se juge que par le goût."
                 : "Non écrit."),
           infere ? el("p.ste-p", {}, INFERENCE.pourquoi(p, "strategie", c.cle)) : null);
       }),

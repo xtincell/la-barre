@@ -22,8 +22,8 @@ window.VUE_MATRICE = (function () {
   }
 
   /* Le mur faisait dix-sept mille pixels de haut et deux cent douze gestes
-   * cliquables : cent quatre-vingt-neuf pièces à plat, sans repli ni filtre.
-   * Vingt écrans de défilement pour choisir une pièce, ce n'est pas une vue
+   * cliquables : cent quatre-vingt-neuf livrables à plat, sans repli ni filtre.
+   * Vingt écrans de défilement pour choisir un livrable, ce n'est pas une vue
    * dense, c'est une vue qu'on ne lit pas.
    *
    * Deux gestes le corrigent, et ils vont ensemble. Le repli montre l'état de
@@ -44,13 +44,13 @@ window.VUE_MATRICE = (function () {
     return !!(filtre.marque || filtre.marche || filtre.bloque || filtre.muette);
   }
 
-  /* Une pièce sans visuel ne se juge pas — c'est la première phrase du
+  /* Un livrable sans visuel ne se juge pas — c'est la première phrase du
    * produit. Ce n'est pas un blocage au sens des règles, et ça ne doit pas se
    * confondre avec eux : c'est l'état qui décide si la case sert à quelque
-   * chose. Sur ce dossier, 175 pièces sur 189 sont dans ce cas. */
+   * chose. Sur ce dossier, 175 livrables sur 189 sont dans ce cas. */
   function muette(l) { return !l.vignette; }
 
-  /* Ce qui bloque une pièce : son maître a bougé, ou un retour n'est pas
+  /* Ce qui bloque un livrable : son master a bougé, ou un retour n'est pas
    * traité. Ce sont les deux seules choses qui empêchent de la livrer. */
   function bloquee(p, l) {
     return REGLES.maitrePerime(p, l) || ANNOT.ouvertes(l).length > 0;
@@ -70,14 +70,14 @@ window.VUE_MATRICE = (function () {
 
     /* Un dossier ne se suit pas de la même façon selon ce qu'il produit.
      *
-     * Le mur par route et par maître est la vue d'une CAMPAGNE : la question y
-     * est « le maître est-il posé, et qu'est-ce qu'il périme ». Un CYCLE
+     * Le mur par piste et par maître est la vue d'une CAMPAGNE : la question y
+     * est « le master est-il posé, et qu'est-ce qu'il périme ». Un CYCLE
      * éditorial n'a pas de maître — dix-sept publications datées sur un mois
-     * n'en ont pas besoin, et les ranger sous « sans maître » les décrivait
+     * n'en ont pas besoin, et les ranger sous « sans master » les décrivait
      * par un manque qui n'en est pas un. Ce qu'on y suit, c'est le calendrier
      * et le contenu de chaque post.
      *
-     * La nature se déduit des pièces ; le mode reste choisissable, parce
+     * La nature se déduit des livrables ; le mode reste choisissable, parce
      * qu'un dossier mixte existe. */
     var nat = window.VUE_CYCLE ? VUE_CYCLE.nature(p) : "campagne";
     var modes = nat === "cycle" ? ["calendrier", "mur", "grille"] : ["mur", "grille"];
@@ -162,8 +162,8 @@ window.VUE_MATRICE = (function () {
     return el("div.pcm", { style: { "border-top-color": couleur } },
       el("div.pcm-t", {},
         el("span.pcmt-n", {}, el("span.pcmt-p", { style: { background: couleur } }), m.nom),
-        el("a.pcmt-v", { href: "#/maison/marques" },
-          e.ecrits ? "son vault →" : "aucun socle au vault →")),
+        el("a.pcmt-v", { href: "#/referentiel/marques" },
+          e.ecrits ? "sa bibliothèque de marque →" : "aucune plateforme de marque →")),
 
       /* La sélection : c'est ça, une campagne. */
       el("div.pcm-b", {},
@@ -172,10 +172,10 @@ window.VUE_MATRICE = (function () {
           ligneSel(sel.marchesRetenus.length, sel.marchesDisponibles, "marchés",
             sel.marchesRetenus.map(function (x) { return x.code; }).join("  ·  ")),
           ligneSel(sel.skuRetenus, sel.skuCatalogue, "packs",
-            sel.skuRetenus ? null : "aucun pack déclaré sur les pièces"),
+            sel.skuRetenus ? null : "aucun pack déclaré sur les livrables"),
           el("div.pcms", {},
             el("span.pcms-c", {}, String(sel.pieces)),
-            el("span.pcms-n", {}, sel.pieces > 1 ? "pièces" : "pièce"),
+            el("span.pcms-n", {}, sel.pieces > 1 ? "livrables" : "livrable"),
             el("span.pcms-x", {}, "à produire")))),
 
       /* Ce qui appartient à cette campagne, et à elle seule : le message. */
@@ -228,13 +228,13 @@ window.VUE_MATRICE = (function () {
       detail ? el("span.pcmsel-d", {}, detail) : null);
   }
 
-  /* ————— Le mur : par route, puis par marque, puis par KV maître ————— */
+  /* ————— Le mur : par piste, puis par marque, puis par KV master ————— */
 
   function mur(p, rafraichir) {
     var pistes = (p.sections.pistes || []);
     var toutes = (p.livrables || []).filter(function (l) { return !l.annule; });
 
-    /* Le filtre garde les pièces retenues, et avec elles le maître dont elles
+    /* Le filtre garde les livrables retenus, et avec eux le master dont ils
      * dépendent : une adaptation sans sa référence à l'écran, c'est une
      * adaptation qu'on juge sans savoir de quoi elle découle. */
     var tout = toutes;
@@ -263,9 +263,9 @@ window.VUE_MATRICE = (function () {
         hors.length ? blocRoute(p, null, hors, rafraichir) : null,
         !blocs.length && !hors.length
           ? el("p.rien", {}, filtreActif()
-              ? "Aucune pièce ne passe ce filtre. Ce n'est pas forcément une absence : "
+              ? "Aucun livrable ne passe ce filtre. Ce n'est pas forcément une absence : "
                 + "c'est peut-être un croisement qu'on n'a jamais produit."
-              : "Aucun livrable. Une route retenue engendre ses pièces — c'est là qu'elles naissent.")
+              : "Aucun livrable. Une piste retenue engendre ses livrables — c'est là qu'ils naissent.")
           : null)
     );
   }
@@ -298,14 +298,14 @@ window.VUE_MATRICE = (function () {
 
     return el("div.vt-f.mr-f", {},
       el("div.mrf-e", {}, filtreActif()
-        ? vises + (vises > 1 ? " pièces sur " : " pièce sur ") + toutes.length
+        ? vises + (vises > 1 ? " livrables sur " : " livrable sur ") + toutes.length
           + " — le reste est écarté, pas absent"
           + (montrees.length > vises
               ? ", et " + (montrees.length - vises)
                 + (montrees.length - vises > 1 ? " références dont elles découlent" : " référence dont elles découlent")
                 + " restent à l'écran"
               : "")
-        : toutes.length + " pièces. Déplie ce que tu travailles ; le compte de chaque "
+        : toutes.length + " livrables. Déplie ce que tu travailles ; le compte de chaque "
           + "bloc dit ce qu'il y a dedans."),
 
       mqs.length > 1
@@ -330,7 +330,7 @@ window.VUE_MATRICE = (function () {
       (bloquees || muettes)
         ? el("div.vtf-g", {},
             bloquees
-              ? bouton(filtre.bloque, bloquees + (bloquees > 1 ? " pièces bloquées" : " pièce bloquée"),
+              ? bouton(filtre.bloque, bloquees + (bloquees > 1 ? " livrables bloqués" : " livrable bloqué"),
                   function () { filtre.bloque = !filtre.bloque; })
               : null,
             muettes
@@ -346,8 +346,8 @@ window.VUE_MATRICE = (function () {
     var reste = ls.filter(function (l) { return !KV.estKV(l); });
     var perimes = ls.filter(function (l) { return REGLES.maitrePerime(p, l); }).length;
 
-    /* Sous chaque KV maître, ses formats. Le reste va dans « sans maître ». */
-    /* Le maître d'abord, puis les adaptations. Un maître n'a pas de marché :
+    /* Sous chaque KV master, ses formats. Le reste va dans « sans master ». */
+    /* Le master d'abord, puis les adaptations. Un maître n'a pas de marché :
      * c'est ce qui le distingue d'une adaptation, pas un oubli. */
     var plusieursMaitres = kvs.filter(KV.estMaitre).length > 1;
     var groupes = kvs.slice().sort(function (a, b) {
@@ -355,12 +355,12 @@ window.VUE_MATRICE = (function () {
     }).map(function (kv) {
       var m = DEPOT.trouve("marches", kv.marche);
       var maitre = KV.estMaitre(kv);
-      /* Une route peut porter plusieurs maîtres — une marque et une catégorie
+      /* Une piste peut porter plusieurs masters — une marque et une catégorie
        * de produit chacun. « La référence » au singulier les rendait tous
        * identiques à l'œil : on nomme celui dont il s'agit. */
       var nom;
       if (!maitre) nom = m ? "Adaptation " + m.nom : "sans marché";
-      else if (plusieursMaitres) nom = kv.nom.replace(/^KV maître\s*·\s*/, "") + " — la référence";
+      else if (plusieursMaitres) nom = kv.nom.replace(/^KV master\s*·\s*/, "") + " — la référence";
       else nom = "La référence — aucun marché";
       return { kv: kv, code: maitre ? "MAÎTRE" : (m ? m.code : "?"), nom: nom,
         ls: reste.filter(function (l) { return l.maitre === kv.id; }) };
@@ -379,26 +379,26 @@ window.VUE_MATRICE = (function () {
     var servis = {};
     groupes.forEach(function (g) { if (g.kv.marche) servis[g.kv.marche] = true; });
     reste.forEach(function (l) { if (l.marche) servis[l.marche] = true; });
-    /* La promesse est due par une route qui sert déjà : c'est l'asymétrie qui
-     * fait le trou. Une route qui ne sert aucun marché n'a pas de trou — elle
+    /* La promesse est due par une piste qui sert déjà : c'est l'asymétrie qui
+     * fait le trou. Une piste qui ne sert aucun marché n'a pas de trou — elle
      * est vide, ce qui est un autre problème et se dit ailleurs. */
     var doit = Object.keys(servis).length > 0;
     var trous = !doit ? [] : Object.keys(promis).filter(function (id) { return !servis[id]; })
       .map(function (id) { return DEPOT.trouve("marches", id); }).filter(Boolean);
 
-    /* Quand la route porte plusieurs marques, on ne mélange pas leurs maîtres :
+    /* Quand la piste porte plusieurs marques, on ne mélange pas leurs masters :
      * chaque marque est un bloc, avec son filet à sa couleur. Sinon on lit
      * quatorze KV d'affilée sans savoir lequel parle au nom de qui. */
     var parMarque = groupesParMarque(p, groupes, reste);
 
-    return el("div.mr-route" + (pi && pi.statut === "retenue" ? ".retenue" : pi ? "" : ".hors"), {},
+    return el("div.mr-piste" + (pi && pi.statut === "retenue" ? ".retenue" : pi ? "" : ".hors"), {},
       el("div.mr-tete", {},
-        el("span.mrt-nom", {}, pi ? (pi.titre || "Route sans titre") : "Hors route"),
+        el("span.mrt-nom", {}, pi ? (pi.titre || "Piste sans titre") : "Hors piste"),
         ETAT.pastille(ETAT.piste(p, pi)),
-        el("span.mrt-n", {}, ls.length + (ls.length > 1 ? " pièces" : " pièce")
+        el("span.mrt-n", {}, ls.length + (ls.length > 1 ? " livrables" : " livrable")
           + (perimes ? "  ·  " + perimes + " à regénérer" : "")),
         pi ? el("button.b.nu", { type: "button", onclick: function () { VUE_ROUTE.ouvrir(p, pi, rafraichir); } },
-          "la route →") : null
+          "la piste →") : null
       ),
 
       parMarque.map(function (bloc) {
@@ -416,8 +416,8 @@ window.VUE_MATRICE = (function () {
                 onclick: function () { basculer(cleMq); rafraichir(); } },
                 el("span.mrmqt-n", {}, el("span.pcmt-p", { style: { background: (VAULT.de(bloc.m.id) || {}).couleur || "var(--trait-clair)" } }), bloc.m.nom),
                 /* Replié, ce bloc doit se lire sans s'ouvrir : combien de
-                 * pièces, sur combien de KV, et ce qui bloque. */
-                el("span.mrmqt-q", {}, bloc.n + (bloc.n > 1 ? " pièces" : " pièce")
+                 * livrables, sur combien de KV, et ce qui bloque. */
+                el("span.mrmqt-q", {}, bloc.n + (bloc.n > 1 ? " livrables" : " livrable")
                   + "  ·  " + bloc.groupes.length + " KV"
                   + (sansVisuel ? "  ·  " + sansVisuel + " sans visuel" : "")
                   + (bloques ? "  ·  " + bloques + (bloques > 1 ? " bloquées" : " bloquée") : "")),
@@ -459,14 +459,14 @@ window.VUE_MATRICE = (function () {
           el("span.mrg-nom", {}, trous.length > 1
             ? trous.length + " marchés promis, rien de produit"
             : "Un marché promis, rien de produit"),
-          el("span.mrg-n", {}, "le volet les a engagés — cette route ne les sert pas")),
+          el("span.mrg-n", {}, "le volet les a engagés — cette piste ne les sert pas")),
         el("div.rt-mur", {}, trous.map(function (m) { return caseTrou(p, pi, m, rafraichir); }))) : null,
 
       orphelins.length
         ? el("div.mr-groupe.orphelin", {},
             el("div.mrg-tete", {},
               el("span.mrg-code", {}, "—"),
-              el("span.mrg-nom", {}, "Sans maître"),
+              el("span.mrg-nom", {}, "Sans master"),
               el("span.mrg-n", {}, orphelins.length + " — une V2 du KV ne les périmera pas")),
             el("div.rt-mur", {}, orphelins.map(function (l) { return caseM(p, l, rafraichir, false); })))
         : null
@@ -523,7 +523,7 @@ window.VUE_MATRICE = (function () {
     );
   }
 
-  /* Un marché promis que rien ne porte. Même encombrement qu'une pièce : c'est
+  /* Un marché promis que rien ne porte. Même encombrement qu'un livrable : c'est
    * la seule façon qu'un vide se compte. Le geste est direct — ouvrir
    * l'adaptation manquante depuis la case qui la réclame. */
   function caseTrou(p, pi, m, rafraichir) {
@@ -531,22 +531,22 @@ window.VUE_MATRICE = (function () {
       return !l.annule && KV.estMaitre(l) && (!pi || l.pisteId === pi.id); })[0] || null;
 
     return el("button.rt-c.trou", { type: "button",
-      title: m.nom + " — aucune pièce sur ce marché",
+      title: m.nom + " — aucun livrable sur ce marché",
       onclick: function () {
         if (!kvRoute) {
-          AVIS.refus("Aucun KV maître sur cette route : c'est lui qui engendre les "
-            + "adaptations. Il se crée depuis la route.");
+          AVIS.refus("Aucun KV master sur cette piste : c'est lui qui engendre les "
+            + "adaptations. Il se crée depuis la piste.");
           return;
         }
         KV.creer(p, m.id, kvRoute, "adaptation");
         DEPOT.enregistrer();
         AVIS.fait("Adaptation " + m.nom + " ouverte sur « "
-          + (pi ? pi.titre : "cette route") + " ». Elle hérite du maître ; "
+          + (pi ? pi.titre : "cette piste") + " ». Elle hérite du master ; "
           + "ses formats restent à créer.");
         rafraichir();
       } },
       el("span.rtct-c", {}, m.code),
-      el("span.rtct-x", {}, "aucune pièce"),
+      el("span.rtct-x", {}, "aucun livrable"),
       el("span.rtc-bas", {},
         el("span.rtc-n", {}, m.nom),
         el("span.rtc-m", {}, "promis au volet  ·  " + ((m.langues || []).map(O.langue).join(", ") || "langue non dite")))
@@ -623,7 +623,7 @@ window.VUE_MATRICE = (function () {
     return el("div", { style: { overflow: "auto" } }, table);
   }
 
-  /* Une case peut contenir plusieurs pièces : le maître et ses déclinaisons de
+  /* Une case peut contenir plusieurs livrables : le master et ses déclinaisons de
    * même support et même marché. Aucune ne doit disparaître de la grille. */
   function trouver(p, voletId, supportId, marcheId) {
     return (p.livrables || []).filter(function (l) {
@@ -640,7 +640,7 @@ window.VUE_MATRICE = (function () {
       }, el("span.rond"), el("span.part", {}, "+"));
     }
 
-    /* L'état de la case est celui de sa pièce la plus en retard. */
+    /* L'état de la case est celui de son livrable la plus en retard. */
     var pire = null, perime = false, bloque = false, somme = 0;
     ls.forEach(function (l) {
       var pr = REGLES.pretSur(l);
@@ -661,13 +661,13 @@ window.VUE_MATRICE = (function () {
       },
     },
       el("span.rond"),
-      el("span.part", {}, ls.length > 1 ? ls.length + " pièces" : moyenne + "%")
+      el("span.part", {}, ls.length > 1 ? ls.length + " livrables" : moyenne + "%")
     );
   }
 
-  /* Plusieurs pièces dans une case. */
+  /* Plusieurs livrables dans une case. */
   function liste(p, s, m, ls, rafraichir) {
-    PANNEAU.ouvrir(s.nom + " · " + m.code, ls.length + " pièces", el("div", {},
+    PANNEAU.ouvrir(s.nom + " · " + m.code, ls.length + " livrables", el("div", {},
       ls.map(function (l) {
         var pr = REGLES.pretSur(l);
         return el("div.attente-l", {
@@ -685,7 +685,7 @@ window.VUE_MATRICE = (function () {
         el("button.b", {
           type: "button",
           onclick: function () { PANNEAU.fermer(); creer(p, { id: ls[0].voletId }, s, m, rafraichir); },
-        }, "Ajouter une pièce ici")
+        }, "Ajouter un livrable ici")
       )
     ));
   }
@@ -733,10 +733,10 @@ window.VUE_MATRICE = (function () {
     var ann = ANNOT.ouvertes(l).length;
 
     var corps = el("div", {},
-      perime ? el("div.avertissement", {}, "Le maître est passé en version " + versionMaitre(p, l) + ". Cette adaptation est à regénérer.") : null,
+      perime ? el("div.avertissement", {}, "Le master est passé en version " + versionMaitre(p, l) + ". Cette adaptation est à regénérer.") : null,
       droits ? el("div.avertissement", {}, droits) : null,
 
-      /* La pièce elle-même, avant tout le reste : on ne juge pas un livrable
+      /* Le livrable elle-même, avant tout le reste : on ne juge pas un livrable
        * sur sa fiche. Un film s'y lit avec son lecteur — il s'affichait par
        * son arrêt sur image, et rien ne permettait de le regarder. */
       el("div.dt-media", {}, IMAGE.media(l, "grande")),
@@ -855,7 +855,7 @@ window.VUE_MATRICE = (function () {
       }),
       l.toursVendus
         ? UI.banniere(tours > l.toursVendus ? "rouge" : "",
-            tours + " tours consommés / " + l.toursVendus + " vendus"
+            tours + " allers-retours consommés / " + l.toursVendus + " vendus"
             + (tours > l.toursVendus ? " — au-delà du périmètre vendu." : ""))
         : null
     ));

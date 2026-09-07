@@ -1,10 +1,10 @@
-/* dispositif.js — une route n'est pas un visuel, c'est un dispositif.
+/* dispositif.js — une piste n'est pas un visuel, c'est un dispositif.
  *
  * Le KV est ce qu'on montre en présentation. Ce qu'on vend, c'est un ensemble
  * d'actions : de l'affichage, du rayon, un événement, du digital — chacune avec
  * sa date d'exécution et, en amont, sa date de production.
  *
- * Sans ce niveau, retenir une route ne déclenche rien : on a un visuel validé
+ * Sans ce niveau, retenir une piste ne déclenche rien : on a un visuel validé
  * et personne ne sait ce qu'il faut fabriquer, ni pour quand.
  */
 
@@ -22,7 +22,7 @@ window.DISPOSITIF = (function () {
   };
 
   var LIEUX = {
-    outdoor: { nom: "Extérieur", quoi: "rue, route, façade — vu en mouvement, à distance" },
+    outdoor: { nom: "Extérieur", quoi: "rue, piste, façade — vu en mouvement, à distance" },
     indoor: { nom: "Intérieur", quoi: "rayon, mall, point de vente — vu de près, à l'arrêt" },
     digital: { nom: "Digital", quoi: "fil, story, display — vu sans son, sur un téléphone" },
     evenement: { nom: "Événement", quoi: "un lieu, une date, des gens" },
@@ -39,7 +39,7 @@ window.DISPOSITIF = (function () {
     return x;
   }
 
-  /* Les pièces qu'une activité exige : croisement de ses supports et de ses
+  /* Les livrables qu'une activité exige : croisement de ses supports et de ses
    * marchés, rapproché de ce qui existe déjà. */
   function pieces(p, pi, a) {
     return (p.livrables || []).filter(function (l) {
@@ -75,11 +75,11 @@ window.DISPOSITIF = (function () {
       reste: reste, manque: manque };
     if (!manque) return { etat: "tenu", texte: "tout est prêt", reste: reste, manque: 0 };
     return { etat: reste < 10 ? "tendu" : "encours",
-      texte: manque + (manque > 1 ? " pièces à produire" : " pièce à produire") + " en " + reste + " j",
+      texte: manque + (manque > 1 ? " livrables à produire" : " livrable à produire") + " en " + reste + " j",
       reste: reste, manque: manque };
   }
 
-  /* ————————————————————— Le bloc, dans la route ————————————————————— */
+  /* ————————————————————— Le bloc, dans la piste ————————————————————— */
 
   function bloc(p, pi, apres) {
     var acts = liste(pi);
@@ -96,7 +96,7 @@ window.DISPOSITIF = (function () {
           "+ activité")),
 
       !acts.length
-        ? el("p.rien", {}, "Cette route n'a pas de dispositif. Un concept sans actions ne se vend pas et ne se produit pas : on ne saurait pas quoi fabriquer le jour où elle est retenue.")
+        ? el("p.rien", {}, "Cette piste n'a pas de dispositif. Un concept sans actions ne se vend pas et ne se produit pas : on ne saurait pas quoi fabriquer le jour où elle est retenue.")
         : Object.keys(parCanal).map(function (c) {
             if (!parCanal[c].length) return null;
             return el("div.di-canal", {},
@@ -120,7 +120,7 @@ window.DISPOSITIF = (function () {
         el("span.dia-t", {}, t.texte)),
       el("div.dia-q", {}, a.quoi || ""),
       el("div.dia-m", {},
-        el("span", {}, ls.length + (ls.length > 1 ? " pièces" : " pièce")),
+        el("span", {}, ls.length + (ls.length > 1 ? " livrables" : " livrable")),
         manq.length ? el("span.alerte", {}, manq.length + " à créer") : null,
         (a.marches || []).length
           ? el("span", {}, (a.marches || []).map(function (id) {
@@ -185,7 +185,7 @@ window.DISPOSITIF = (function () {
         onde.appendChild(UI.banniere("", manq.slice(0, 5).map(function (x) {
           return (x.support ? x.support.nom : "?") + " · " + (x.marche ? x.marche.code : "?");
         }).join(" · ") + (manq.length > 5 ? "  et " + (manq.length - 5) + " autres" : "")
-          + " — à créer au moment où la route est retenue."));
+          + " — à créer au moment où la piste est retenue."));
       }
     }
     chM.surChangement(dessiner); chS.surChangement(dessiner);
@@ -247,7 +247,7 @@ window.DISPOSITIF = (function () {
 
   /* ————————————————————— Ce que retenir déclenche ————————————————————— */
 
-  /* Retenir une route ne valide pas un visuel : ça ouvre la production de tout
+  /* Retenir une piste ne valide pas un visuel : ça ouvre la production de tout
    * son dispositif. Voici ce que ça fabrique. */
   function declenche(p, pi) {
     var aCreer = [];
@@ -265,13 +265,13 @@ window.DISPOSITIF = (function () {
       sansBAT: existantes.filter(function (l) { return !PRODUCTION.de(l, "bat").length; }) };
   }
 
-  /* Créer les pièces manquantes du dispositif, d'un coup. */
+  /* Créer les livrables manquantes du dispositif, d'un coup. */
   function ouvrirProduction(p, pi) {
     var d = declenche(p, pi);
     d.aCreer.forEach(function (x) {
       var axes = {};
       MAISON.axes.forEach(function (a) { axes[a.cle] = "attente"; });
-      /* Le format naît de l'adaptation du marché si elle existe, sinon du maître. */
+      /* Le format naît de l'adaptation du marché si elle existe, sinon du master. */
       var parent = (p.livrables || []).filter(function (l) {
         return !l.annule && l.pisteId === pi.id && KV.estAdaptation(l) && l.marche === x.marche.id;
       })[0] || (p.livrables || []).filter(function (l) {
@@ -291,7 +291,7 @@ window.DISPOSITIF = (function () {
       });
     });
     DEPOT.tracer("production ouverte", "dispositif", p.id,
-      d.aCreer.length + " pièces créées depuis le dispositif de « " + pi.titre + " »");
+      d.aCreer.length + " livrables créés depuis le dispositif de « " + pi.titre + " »");
     return d.aCreer.length;
   }
 

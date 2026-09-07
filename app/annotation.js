@@ -41,7 +41,7 @@ window.ANNOT = (function () {
     var quand = new Date().toISOString();
     var a = {
       id: O.id("AN"), x: x, y: y, texte: texte, auteur: auteur || null,
-      /* Sur une pièce qui dure, c'est l'instant qui situe le retour. */
+      /* Sur un livrable qui dure, c'est l'instant qui situe le retour. */
       instant: (instant === null || instant === undefined) ? null : Math.round(instant * 10) / 10,
       quand: quand, statut: "aTraiter", version: l.version || 1,
       reprise: estReprise(l, quand),
@@ -66,7 +66,7 @@ window.ANNOT = (function () {
       O.vider(boite);
       O.vider(cote);
 
-      /* Une pièce qui dure ne s'annote pas au même endroit qu'une image :
+      /* Un livrable qui dure ne s'annote pas au même endroit qu'une image :
        * un point à 50 % / 50 % sur un film ne veut rien dire, un instant si.
        * Le lecteur reste le juge — on annote là où il est arrêté. */
       var medium = IMAGE.media(l, "toile");

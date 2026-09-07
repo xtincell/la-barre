@@ -7,7 +7,7 @@
  * Cinq origines, et elles ne se valent pas. C'est l'origine qui dit qui est
  * légitimement sur le crochet, et si la reprise se facture :
  *
- *   brief        la pièce ne tient pas ce que le brief demande
+ *   brief        le livrable ne tient pas ce que le brief demande
  *   plateforme   elle contredit le socle de marque — vocabulaire, symboles, interdits
  *   bigidea      elle ne tient pas un critère d'acceptation écrit
  *   agence       nous avons changé d'avis. Le coût est pour nous.
@@ -20,10 +20,10 @@ window.ECARTS = (function () {
   var ORIGINES = {
     brief: { nom: "Non-respect du brief", ton: "alerte", rang: 0,
       qui: "l'exécutant", facturable: false,
-      quoi: "la pièce ne tient pas ce que le brief demandait. La reprise est pour nous." },
+      quoi: "le livrable ne tient pas ce que le brief demandait. La reprise est pour nous." },
     plateforme: { nom: "Non-respect de la plateforme", ton: "alerte", rang: 1,
       qui: "l'exécutant", facturable: false,
-      quoi: "elle contredit le socle de marque. Refusable en revue sans recours." },
+      quoi: "elle contredit le plateforme de marque. Refusable en revue sans recours." },
     bigidea: { nom: "Critère d'acceptation non tenu", ton: "alerte", rang: 2,
       qui: "l'exécutant", facturable: false,
       quoi: "un critère écrit avant le travail n'est pas tenu. C'est le seul refus opposable." },
@@ -81,7 +81,7 @@ window.ECARTS = (function () {
     });
   }
 
-  /* Le brief exige une langue, des SKU, des mentions par marché. Une pièce qui
+  /* Le brief exige une langue, des SKU, des mentions par marché. Un livrable qui
    * ne les tient pas ne respecte pas le brief — pas le goût de quelqu'un. */
   function duBrief(p) {
     var out = [];
@@ -124,7 +124,7 @@ window.ECARTS = (function () {
       (s.jamais || []).forEach(function (mot) {
         if (O.contient(textes, mot)) {
           pousser(out, p, l, "plateforme", "« " + mot + " » — la marque ne le dit jamais",
-            "la pièce contredit le socle : refusable en revue sans recours", "redacteur");
+            "le livrable contredit la plateforme de marque : refusable en revue sans recours", "redacteur");
         }
       });
       MAISON.nomsRetires.forEach(function (nom) {
@@ -135,7 +135,7 @@ window.ECARTS = (function () {
       });
     });
     if ((p.sections.bigidea || {}).idee && !s.idee_directrice) {
-      pousser(out, p, null, "plateforme", "Big idea ouverte sans socle actif",
+      pousser(out, p, null, "plateforme", "Big idea ouverte sans plateforme de marque active",
         "la campagne pourra être refusée en revue sans recours", "creation");
     }
     return out;
@@ -150,17 +150,17 @@ window.ECARTS = (function () {
     (p.sections.pistes || []).forEach(function (pi) {
       if (pi.statut === "ecartee") return;
       if (!pi.sacrifice) pousser(out, p, null, "bigidea",
-        "« " + (pi.titre || "route") + " » sans sacrifice écrit",
-        "la route n'est pas arbitrable — refusable au §8", "da");
+        "« " + (pi.titre || "piste") + " » sans sacrifice écrit",
+        "la piste n'est pas arbitrable — refusable au §8", "da");
       if (!pi.argument) pousser(out, p, null, "bigidea",
-        "« " + (pi.titre || "route") + " » sans argument écrit",
+        "« " + (pi.titre || "piste") + " » sans argument écrit",
         "elle ne se défend que par le goût", "da");
     });
 
     (p.livrables || []).forEach(function (l) {
       if (l.annule) return;
       if (REGLES.maitrePerime(p, l)) {
-        pousser(out, p, l, "bigidea", "Faite sur une version dépassée du maître",
+        pousser(out, p, l, "bigidea", "Faite sur une version dépassée du master",
           "ce qui est produit ne correspond plus à ce qui a été validé", "da");
       }
     });
@@ -168,7 +168,7 @@ window.ECARTS = (function () {
   }
 
   /* Les retours client non tranchés : chacun est une modification en attente. */
-  /* Un retour client fait UNE ligne, pas une par pièce touchée. Sinon le même
+  /* Un retour client fait UNE ligne, pas une par livrable touché. Sinon le même
    * feedback se répète six fois et l'on ne voit plus lequel commande les autres. */
   function duDonneur(p) {
     var out = [];
@@ -180,7 +180,7 @@ window.ECARTS = (function () {
         projet: p, livrable: l, origine: "donneur",
         quoi: f.texte.slice(0, 110) + (f.texte.length > 110 ? "…" : ""),
         cout: FEEDBACK.nomAuteur(f.auteur) + " · " + O.joli(f.quand)
-          + "  ·  " + i.assets + (i.assets > 1 ? " pièces" : " pièce")
+          + "  ·  " + i.assets + (i.assets > 1 ? " livrables" : " livrable")
           + ", " + i.jours + " j"
           + (i.enProduction ? "  ·  " + i.enProduction + " déjà en production" : ""),
         poste: "da", responsable: l && l.responsable ? l.responsable : null,

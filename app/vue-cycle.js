@@ -1,20 +1,20 @@
 /* vue-cycle.js — suivre l'exécution d'un cycle éditorial.
  *
- * Le mur des livrables est fait pour une campagne : idée → KV maître →
+ * Le mur des livrables est fait pour une campagne : idée → KV master →
  * adaptation par marché → déclinaison par format. C'est la bonne vue quand un
  * visuel de référence gouverne vingt déclinaisons, parce que la question est
- * « le maître est-il posé, et qu'est-ce qu'il périme ».
+ * « le master est-il posé, et qu'est-ce qu'il périme ».
  *
  * Un cycle éditorial ne marche pas comme ça. Dix-sept publications datées sur
  * un mois n'ont pas de maître — et ce n'est pas un manque, c'est leur nature.
- * Les afficher sous « Hors route · Sans maître », c'était les décrire par ce
+ * Les afficher sous « Hors piste · Sans master », c'était les décrire par ce
  * qui leur manquait sans que rien ne leur manque.
  *
  * Ce qui gouverne ici, c'est le calendrier : ce qui sort cette semaine, ce qui
  * est en retard, ce qui n'est pas prêt pour sa date. Et une chose que le mur
  * ne montrait pas du tout : LE CONTENU. Le texte de chaque post est écrit
  * depuis le début, dans le planning éditorial. Il doit se lire ici, sur la
- * pièce — pas derrière un bouton.
+ * livrable — pas derrière un bouton.
  *
  * Une chose ne change pas : une piste gouverne chaque livrable. Un cycle n'en
  * met pas deux en concurrence, il en tient une — mais il en tient une.
@@ -35,7 +35,7 @@ window.VUE_CYCLE = (function () {
     if (!ls.length) return "campagne";
     var maitres = ls.filter(function (l) { return KV.estMaitre(l); }).length;
     var dates = ls.filter(function (l) { return l.publication; }).length;
-    /* Un cycle : des pièces datées, aucun visuel de référence au-dessus. */
+    /* Un cycle : des livrables datés, aucun visuel de référence au-dessus. */
     if (!maitres && dates >= ls.length * 0.8 && ls.length > 2) return "cycle";
     if (ls.length === 1) return "piece";
     return "campagne";
@@ -47,7 +47,7 @@ window.VUE_CYCLE = (function () {
     var manques = BRIEF_PRODUCTION.controles(p, l).filter(function (c) { return !c.ok; });
     var dem = (l.demandes || []).filter(function (x) { return !x.rendu_le; });
     var v = (l.versions || []).length;
-    /* Deux horloges, et c'est la remise qui court en premier : une pièce non
+    /* Deux horloges, et c'est la remise qui court en premier : un livrable non
      * remise à J-3 ne se valide plus avant sa parution. */
     var apresParution = l.publication ? O.depuis(l.publication) : null;
     var apresRemise = l.remise ? O.depuis(l.remise) : null;
@@ -134,8 +134,8 @@ window.VUE_CYCLE = (function () {
     return UI.recevabilite(
       "Ce qui doit sortir ce mois-ci sortira-t-il ?",
       [
-        { quoi: "Une route gouverne chaque publication", ok: sansRoute === 0, poids: 5,
-          cout: sansRoute + (sansRoute > 1 ? " publications ne relèvent d'aucune route" : " publication ne relève d'aucune route")
+        { quoi: "Une piste gouverne chaque publication", ok: sansRoute === 0, poids: 5,
+          cout: sansRoute + (sansRoute > 1 ? " publications ne relèvent d'aucune piste" : " publication ne relève d'aucune piste")
             + " : elles se fabriquent sans concept opposable, et ne sont refusables que par le goût" },
         { quoi: "Chacune a quelqu'un", ok: sansQui === 0, poids: 4,
           cout: sansQui + (sansQui > 1 ? " publications n'ont personne" : " publication n'a personne")
@@ -152,8 +152,8 @@ window.VUE_CYCLE = (function () {
           cout: pretes + " publications validées sur " + etats.length },
       ],
       piste
-        ? "La route du mois : « " + piste.titre + " ». " + (piste.argument || "")
-        : "Aucune route retenue : rien ne dit ce qui appartient à ce mois et ce qui n'y "
+        ? "La piste du mois : « " + piste.titre + " ». " + (piste.argument || "")
+        : "Aucune piste retenue : rien ne dit ce qui appartient à ce mois et ce qui n'y "
           + "appartient pas.",
       []);
   }
@@ -272,7 +272,7 @@ window.VUE_CYCLE = (function () {
         DEMANDE_VERSION.bouton(p, l, rafraichir),
         BRIEF_PRODUCTION.bouton(p, l),
         el("button.b.nu", { type: "button", onclick: function () {
-          VUE_MATRICE.detail(p, l, rafraichir); } }, "la pièce →"))
+          VUE_MATRICE.detail(p, l, rafraichir); } }, "le livrable →"))
     );
   }
 

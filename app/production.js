@@ -1,7 +1,7 @@
 /* production.js — la porte de production.
  *
- * Une route retenue n'ouvre pas la production. Ce qui l'ouvre, c'est le
- * fichier : le BAT signé et les sources ouvertes, rattachés à la pièce et à sa
+ * Une piste retenue n'ouvre pas la production. Ce qui l'ouvre, c'est le
+ * fichier : le BAT signé et les sources ouvertes, rattachés au livrable et à sa
  * version. Sans eux, on produit sur une image d'écran — et la mise en situation
  * montre quelque chose qui n'ira jamais chez l'imprimeur.
  *
@@ -18,7 +18,7 @@ window.PRODUCTION = (function () {
     asset: { rang: 0, nom: "L'asset", ext: "jpg · png · mp4",
       quoi: "le fichier plat, celui qu'on regarde et qu'on fait valider",
       pour: "le client, la revue",
-      cout: "rien à montrer : la pièce n'existe qu'en tête" },
+      cout: "rien à montrer : le livrable n'existe qu'en tête" },
     bat: { rang: 1, nom: "Le BAT", ext: "psd · ai · indd · aep", signable: true,
       quoi: "le montage source, bon à tirer, signé et daté",
       pour: "l'imprimeur, le prestataire",
@@ -26,13 +26,13 @@ window.PRODUCTION = (function () {
     simulation: { rang: 2, nom: "La simulation", ext: "jpg · png", f: true,
       quoi: "le rendu sur fond blanc, à l'échelle, avec ses repères",
       pour: "le contrôle technique avant remise",
-      cout: "personne n'a vu la pièce à sa taille réelle" },
+      cout: "personne n'a vu le livrable à sa taille réelle" },
     storyboard: { rang: 0, nom: "Le storyboard", ext: "pdf · jpg",
       quoi: "le film raconté en planches — et une ébauche d'animation si le temps le permet",
       pour: "la présentation client, avant toute production",
       cout: "on présente un film que personne ne peut se représenter" },
     situation: { rang: 3, nom: "La mise en situation", ext: "jpg · png", f: true,
-      quoi: "la pièce dans son support — un 4×3 en rue, une gondole en rayon",
+      quoi: "le livrable dans son support — un 4×3 en rue, une gondole en rayon",
       pour: "la présentation client",
       cout: "on fait valider un visuel que personne n'a vu à trois mètres" },
   };
@@ -84,9 +84,84 @@ window.PRODUCTION = (function () {
     l.fichiers = fichiers(l).filter(function (f) { return f.id !== id; });
   }
 
+  /* ————————————————————— La chaîne d'un livrable ————————————————————— */
+
+  /* Six jalons, et le BAT en fait partie.
+   *
+   * La frise disait « Brief · Concept · Création · Review · Final » — deux mots
+   * d'anglais et un mot qui ne dit rien. Surtout, elle sautait le seul jalon
+   * qui engage l'agence : la signature du bon à tirer. Un livrable approuvé
+   * n'est pas un livrable parti ; entre les deux il y a une signature, un
+   * signataire et une version — et c'est cette version-là qui va chez
+   * l'imprimeur, pas celle qu'on a montrée à l'écran.
+   *
+   * Chaque jalon rend état, conséquence et prochain geste : la frise se lit
+   * sans ouvrir le livrable. */
+  var ETAPES = ["Brief", "Concept", "Création", "Validation", "BAT", "Livré"];
+
+  function etape(p, l) {
+    var piste = p ? (p.sections.pistes || []).filter(function (x) {
+      return x.id === l.pisteId; })[0] : null;
+    var retenue = piste && piste.statut === "retenue";
+    var v = l.version || 1;
+    var vs = l.versions || [];
+    var derniere = vs[vs.length - 1];
+    var besoin = exiges(l);
+    var batExige = besoin.indexOf("bat") !== -1;
+    var bats = de(l, "bat").filter(function (f) { return (f.version || 1) === v; });
+    var signe = bats.filter(function (f) { return f.signataire; })[0] || null;
+    var manque = porte(p, l).filter(function (c) { return !c.ok; });
+
+    if (!piste) {
+      return { i: 0, nom: "Brief", ton: "attente",
+        quoi: "rattaché à aucune piste créative",
+        geste: "le rattacher à une piste : sans elle, il ne se refuse que par le goût" };
+    }
+    if (!retenue) {
+      return { i: 1, nom: "Concept", ton: "attente",
+        quoi: "« " + (piste.titre || "la piste") + " » n'est pas arbitrée",
+        geste: "arbitrer la piste — produire avant, c'est parier" };
+    }
+    if (!derniere) {
+      return { i: 2, nom: "Création", ton: "attente",
+        quoi: "aucune version soumise",
+        geste: "demander une version à son responsable" };
+    }
+    if (!derniere.verdict) {
+      return { i: 3, nom: "Validation", ton: "attente",
+        quoi: "V" + (derniere.numero || v) + " soumise, sans verdict",
+        geste: "rendre le verdict — l'horloge court sur moi" };
+    }
+    if (derniere.verdict !== "approuve") {
+      var tours = vs.length;
+      return { i: 3, nom: "Validation", ton: "alerte",
+        quoi: tours + (tours > 1 ? " allers-retours" : " aller-retour")
+          + " — la dernière version n'est pas approuvée",
+        geste: "la reprise est due par son responsable" };
+    }
+    if (batExige && !signe) {
+      return { i: 4, nom: "BAT", ton: bats.length ? "attente" : "alerte",
+        quoi: bats.length ? "le BAT est posé, personne ne l'a signé"
+          : "approuvé à l'écran, aucun bon à tirer posé",
+        geste: bats.length
+          ? "le faire signer : sans signataire, l'erreur d'impression est pour l'agence"
+          : "poser le fichier source et le faire signer — c'est lui qui part chez l'imprimeur" };
+    }
+    if (manque.length) {
+      return { i: 4, nom: "BAT", ton: "attente",
+        quoi: manque.length + (manque.length > 1 ? " étages manquent" : " étage manque")
+          + " : " + manque[0].quoi.toLowerCase(),
+        geste: manque[0].cout };
+    }
+    return { i: 5, nom: "Livré", ton: "vert",
+      quoi: signe ? "BAT signé par " + signe.signataire + " sur la V" + (signe.version || v)
+        : "approuvé, tous les fichiers posés",
+      geste: l.publication ? "parution le " + O.jourCourt(l.publication) : "rien n'est dû" };
+  }
+
   /* ————————————————————— La porte ————————————————————— */
 
-  /* Peut-on produire cette pièce ? Quatre conditions, et chacune dit son prix. */
+  /* Peut-on produire ce livrable ? Quatre conditions, et chacune dit son prix. */
   function porte(p, l) {
     var piste = (p.sections.pistes || []).filter(function (x) { return x.id === l.pisteId; })[0];
     var retenue = piste && piste.statut === "retenue";
@@ -96,9 +171,9 @@ window.PRODUCTION = (function () {
     var mksLies = (l.mockups || []).filter(function (m) { return m.fichier; }).length;
 
     var out = [
-      { quoi: "Route retenue", ok: !!retenue, poids: 5,
-        cout: !piste ? "cette pièce n'est rattachée à aucune route : elle ne vient de nulle part"
-          : "« " + (piste.titre || "la route") + " » n'a pas été arbitrée — produire ici, c'est parier" },
+      { quoi: "Piste retenue", ok: !!retenue, poids: 5,
+        cout: !piste ? "ce livrable n'est rattaché à aucune piste : elle ne vient de nulle part"
+          : "« " + (piste.titre || "la piste") + " » n'a pas été arbitrée — produire ici, c'est parier" },
     ];
 
     besoin.forEach(function (t) {
@@ -122,7 +197,7 @@ window.PRODUCTION = (function () {
     return out;
   }
 
-  /* Où en est cette pièce sur les quatre étages. */
+  /* Où en est ce livrable sur les quatre étages. */
   function etages(l) {
     var v = l.version || 1;
     var besoin = exiges(l);
@@ -138,19 +213,19 @@ window.PRODUCTION = (function () {
     return porte(p, l).every(function (c) { return c.ok; });
   }
 
-  /* Combien de pièces peuvent réellement partir. */
+  /* Combien de livrables peuvent réellement partir. */
   function pretes(p) {
     return (p.livrables || []).filter(function (l) { return !l.annule && ouverte(p, l); }).length;
   }
 
-  /* ————————————————————— Le bloc, sur la pièce ————————————————————— */
+  /* ————————————————————— Le bloc, sur le livrable ————————————————————— */
 
   function bloc(p, l, rafraichir) {
     var fs = fichiers(l);
     var vieux = perimes(l);
 
     return el("div", {},
-      UI.recevabilite("Cette pièce peut-elle partir en production ?",
+      UI.recevabilite("Ce livrable peut-elle partir en production ?",
         porte(p, l), null,
         [{ nom: "Poser un fichier", fort: !fs.length, quand: function () { ajouter(p, l, rafraichir); } }]),
 
@@ -175,7 +250,7 @@ window.PRODUCTION = (function () {
                   retirer(l, f.id); DEPOT.enregistrer(); if (rafraichir) rafraichir();
                 });
             }))
-          : el("p.rien", {}, "Aucun fichier. La pièce existe à l'écran, pas en production.")
+          : el("p.rien", {}, "Aucun fichier. Le livrable existe à l'écran, pas en production.")
       )
     );
   }
@@ -198,12 +273,12 @@ window.PRODUCTION = (function () {
     });
 
     PANNEAU.sur("Poser un fichier", l.nom + " · V" + (l.version || 1), el("div", {},
-      UI.banniere("", "Le fichier est rattaché à la version en cours. Le jour où la pièce repart en V" + ((l.version || 1) + 1) + ", il apparaîtra comme périmé — c'est ce qui évite d'envoyer à l'imprimeur ce qui a été corrigé."),
+      UI.banniere("", "Le fichier est rattaché à la version en cours. Le jour où le livrable repart en V" + ((l.version || 1) + 1) + ", il apparaîtra comme périmé — c'est ce qui évite d'envoyer à l'imprimeur ce qui a été corrigé."),
       el("div.form", {},
         el("div.champ", {}, el("label", {}, "Type"), selT, aide),
         el("div.champ", {}, el("label", {}, "Nom"), champNom),
         el("div.champ", {}, el("label", {}, "Où il est"),
-          el("div.indice", {}, "Le dépôt local ne porte jamais un fichier de production : on garde le chemin."), champLieu),
+          el("div.indice", {}, "La base local ne porte jamais un fichier de production : on garde le chemin."), champLieu),
         el("div.champ", {}, el("label", {}, "Signataire"), champSig),
         (l.mockups || []).length
           ? el("div.champ", {}, el("label", {}, "Lier à une mise en situation"),
@@ -223,7 +298,7 @@ window.PRODUCTION = (function () {
     ));
   }
 
-  /* Toutes les pièces à produire, tous projets confondus. C'est le dénominateur
+  /* Tous les livrables à produire, tous projets confondus. C'est le dénominateur
    * de la question « sur combien d'assets on travaille ». */
   function toutesLesPieces(projetId) {
     var out = [];
@@ -237,6 +312,7 @@ window.PRODUCTION = (function () {
   }
 
   return { TYPES: TYPES, exiges: exiges, etages: etages,
+    ETAPES: ETAPES, etape: etape,
     fichiers: fichiers, de: de, perimes: perimes,
     poser: poser, retirer: retirer, porte: porte, ouverte: ouverte, pretes: pretes,
     toutesLesPieces: toutesLesPieces, bloc: bloc, ajouter: ajouter };

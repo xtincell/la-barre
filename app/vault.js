@@ -270,7 +270,7 @@ window.VAULT = (function () {
     }).filter(function (f) { return f.mauvais; });
   }
 
-  /* Ce qu'une pièce porte de fautif. On regarde ce qui se lit : l'accroche, le
+  /* Ce qu'un livrable porte de fautif. On regarde ce qui se lit : l'accroche, le
    * nom, la note — pas les identifiants techniques. */
   function fautesSur(l) {
     if (!l.marqueId) return [];
@@ -283,9 +283,9 @@ window.VAULT = (function () {
     });
   }
 
-  /* ————————————————————— Les packs montrés par une pièce ————————————————————— */
+  /* ————————————————————— Les packs montrés par un livrable ————————————————————— */
 
-  /* Une pièce déclare les packs qu'elle montre. Sans ce lien, « 0 sur 32 packs
+  /* Un livrable déclare les packs qu'elle montre. Sans ce lien, « 0 sur 32 packs
    * retenus » est vrai mais inutile — et surtout, on ne peut pas voir qu'un
    * pack apparaît sur un marché qui ne le vend pas. C'est l'erreur qui fait
    * rappeler une campagne, et elle ne se voit qu'ici. */
@@ -302,7 +302,7 @@ window.VAULT = (function () {
     return true;
   }
 
-  /* Ce que cette pièce montre et qui n'est pas vendu sur son marché. Un pack
+  /* Ce que ce livrable montre et qui n'est pas vendu sur son marché. Un pack
    * dont personne n'a renseigné les marchés ne peut rien affirmer : il est
    * signalé à part, comme un contrôle impossible plutôt qu'un contrôle réussi. */
   function packsHorsZone(l) {
@@ -316,7 +316,7 @@ window.VAULT = (function () {
     return { hors: hors, muets: muets };
   }
 
-  /* Le catalogue proposable à une pièce : celui de sa marque, jamais l'autre.
+  /* Le catalogue proposable à un livrable : celui de sa marque, jamais l'autre.
    * Le cloisonnement vaut ici comme partout. */
   function proposables(l) {
     if (!l.marqueId) return [];
@@ -558,7 +558,7 @@ window.VAULT = (function () {
       .filter(Boolean);
   }
 
-  /* Où ce pack est montré : les pièces qui le déclarent. C'est la relation que
+  /* Où ce pack est montré : les livrables qui le déclarent. C'est la relation que
    * le §2 du modèle réclame — « cet asset est utilisé où ? ». */
   function usage(skuId) {
     var s = DEPOT.trouve("sku", skuId);
@@ -601,7 +601,7 @@ window.VAULT = (function () {
       return x.marche && d.length && !d.some(function (m) { return m.id === x.marche.id; });
     });
     if (horsZone.length) out.push({ quoi: "Montré seulement où il est vendu", ok: false,
-      cout: horsZone.length + (horsZone.length > 1 ? " pièces le montrent" : " pièce le montre")
+      cout: horsZone.length + (horsZone.length > 1 ? " livrables le montrent" : " livrable le montre")
         + " sur un marché où il n'est pas distribué : "
         + horsZone.map(function (x) { return x.marche.code; }).join(", ") });
 
@@ -619,7 +619,7 @@ window.VAULT = (function () {
 
   /* ————————————————————— Où la marque est distribuée ————————————————————— */
 
-  /* Déduit de l'usage : un marché où la marque a déjà produit une pièce est un
+  /* Déduit de l'usage : un marché où la marque a déjà produit un livrable est un
    * marché où elle est distribuée. Le référentiel se remplit en travaillant. */
   function marches(marqueId) {
     var vus = {};
@@ -667,9 +667,9 @@ window.VAULT = (function () {
   }
 
 
-  /* Les campagnes qui servent cette marque. Le lien passe par la pièce quand
+  /* Les campagnes qui servent cette marque. Le lien passe par le livrable quand
    * elle porte sa marque — mais un dossier mono-marque n'a jamais eu besoin de
-   * le répéter sur chaque pièce : son identité le dit. Ne lire que le premier
+   * le répéter sur chaque livrable : son identité le dit. Ne lire que le premier
    * cassait le lien pour tous les dossiers d'avant les campagnes multi-marques. */
   function campagnesDe(marqueId) {
     var m = marque(marqueId);

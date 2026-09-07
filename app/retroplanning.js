@@ -1,4 +1,4 @@
-/* retroplanning.js — le rétroplanning d'une route.
+/* retroplanning.js — le rétroplanning d'une piste.
  *
  * Une piste ne porte pas qu'un concept : elle porte une chaîne de fabrication,
  * et chaque maillon a une durée. Sans elle, « c'est pour le 3 novembre » ne dit
@@ -19,13 +19,13 @@ window.RETRO = (function () {
    * elle s'y imbrique, entre la décision client et la remise. */
   var PHASES = [
     { cle: "cadrage", nom: "Cadrage", jours: 5,
-      quoi: "brief accepté, socle, stratégie — ce qui ferme le périmètre", poste: "clientele" },
+      quoi: "brief accepté, plateforme de marque, stratégie — ce qui ferme le périmètre", poste: "clientele" },
     { cle: "conception", nom: "Conception", jours: 12,
-      quoi: "atelier, big idea, routes et leurs KV — l'étage 1", poste: "creation" },
+      quoi: "atelier, big idea, pistes et leurs KV — l'étage 1", poste: "creation" },
     { cle: "presentation", nom: "Présentation", jours: 3,
       quoi: "montage du dossier, répétition, séance client", poste: "clientele" },
     { cle: "decision", nom: "Décision client", jours: 10,
-      quoi: "les allers-retours jusqu'à la route retenue. Ce délai n'est pas le nôtre.",
+      quoi: "les allers-retours jusqu'à la piste retenue. Ce délai n'est pas le nôtre.",
       poste: "clientele", subi: true },
     { cle: "execution", nom: "Exécution", jours: 10,
       quoi: "adaptations par marché, déclinaisons, gabarits, BAT", poste: "graphic" },
@@ -35,7 +35,7 @@ window.RETRO = (function () {
       quoi: "l'exécution du dispositif sur le terrain", poste: "clientele" },
   ];
 
-  /* Les phases d'une PRODUCTION lourde. Elles n'existent que pour les pièces
+  /* Les phases d'une PRODUCTION lourde. Elles n'existent que pour les livrables
    * qui en demandent une, et se logent dans la fenêtre d'exécution de la
    * campagne — jamais à côté. */
   var PRODUCTION_PHASES = [
@@ -56,7 +56,7 @@ window.RETRO = (function () {
     return !!s && LOURDS.indexOf(s.type) !== -1;
   }
 
-  /* Ce que la route doit produire en lourd. Au stade proposition, un film ne
+  /* Ce que la piste doit produire en lourd. Au stade proposition, un film ne
    * se tourne pas : il se pitche. C'est le rang commercial qui le dit. */
   function productions(p, pi) {
     return (p.livrables || []).filter(function (l) {
@@ -124,7 +124,7 @@ window.RETRO = (function () {
     };
   }
 
-  /* La date de fin d'une route : la première exécution de son dispositif, ou
+  /* La date de fin d'une piste : la première exécution de son dispositif, ou
    * l'échéance du dossier à défaut. */
   function finDe(p, pi) {
     var dates = (pi.dispositif || []).map(function (a) { return a.debut; }).filter(Boolean).sort();
@@ -132,7 +132,7 @@ window.RETRO = (function () {
     return (p.sections.identite || {}).echeance || null;
   }
 
-  /* ————————————————————— Le bloc, dans la route ————————————————————— */
+  /* ————————————————————— Le bloc, dans la piste ————————————————————— */
 
   function bloc(p, pi, apres) {
     var e = etat(p, pi);
@@ -178,7 +178,7 @@ window.RETRO = (function () {
     );
   }
 
-  /* Les productions lourdes de la route, imbriquées dans sa fenêtre. */
+  /* Les productions lourdes de la piste, imbriquées dans sa fenêtre. */
   function productionsBloc(p, pi, apres) {
     var ls = productions(p, pi);
     if (!ls.length) return null;
@@ -186,10 +186,10 @@ window.RETRO = (function () {
 
     return el("div.re-prod", {},
       el("div.rep-t", {}, "PRODUCTIONS LOURDES",
-        el("span", {}, ls.length + (ls.length > 1 ? " pièces" : " pièce"))),
+        el("span", {}, ls.length + (ls.length > 1 ? " livrables" : " livrable"))),
 
       rang >= 2
-        ? UI.banniere("", "Tant que la route n'est pas validée, un film ne se tourne pas : il se pitche. "
+        ? UI.banniere("", "Tant que la piste n'est pas validée, un film ne se tourne pas : il se pitche. "
             + "Concept, storyboard, et une ébauche d'animation si le temps le permet — le plan de tournage ne s'ouvre qu'après signature.")
         : null,
 

@@ -44,7 +44,7 @@ window.VUE_PLANCHE = (function () {
     return UI.recevabilite(
       g.kvs.length
         ? (nonConformes.length ? "Ces KV sont-ils conformes à leurs marchés ?" : "Les KV tiennent")
-        : "Aucun KV maître",
+        : "Aucun KV master",
       controles, null,
       [
         { nom: "Ajouter un KV", fort: !g.kvs.length,
@@ -62,7 +62,7 @@ window.VUE_PLANCHE = (function () {
     return el("div.pl-vide", {},
       UI.icone("projets", 28),
       el("div.plv-t", {}, "La planche est vide."),
-      el("div.plv-s", {}, "Un KV maître par marché, avant les formats. Chacun porte sa marque, son accroche, sa langue, ses SKU et les choix de direction artistique."),
+      el("div.plv-s", {}, "Un KV master par marché, avant les formats. Chacun porte sa marque, son accroche, sa langue, ses SKU et les choix de direction artistique."),
       el("button.b.or", { type: "button", onclick: function () { ajouter(p, rafraichir); } }, "Poser le premier KV")
     );
   }
@@ -70,11 +70,11 @@ window.VUE_PLANCHE = (function () {
   /* ————————————————————— La grille ————————————————————— */
 
   /* Les lignes de la planche portent ce qui distingue les KV entre eux : les
-   * marques quand il y en a plusieurs, sinon les routes. Une planche à une
+   * marques quand il y en a plusieurs, sinon les pistes. Une planche à une
    * seule ligne ne dit rien. */
   function grille(p, g, rafraichir) {
     var parRoute = g.marques.length < 2;
-    var lignes = parRoute ? routes(p, g) : g.marques.map(function (marque) {
+    var lignes = parRoute ? pistes(p, g) : g.marques.map(function (marque) {
       return { nom: marque, kvs: g.kvs.filter(function (l) {
         return ((l.kv || {}).marque || "sans marque") === marque; }) };
     });
@@ -91,17 +91,17 @@ window.VUE_PLANCHE = (function () {
     }));
   }
 
-  function routes(p, g) {
+  function pistes(p, g) {
     var pistes = p.sections.pistes || [];
     var out = pistes.map(function (pi) {
-      return { nom: pi.titre || "route sans titre", statut: pi.statut === "retenue" ? "retenue" : null,
+      return { nom: pi.titre || "piste sans titre", statut: pi.statut === "retenue" ? "retenue" : null,
         kvs: g.kvs.filter(function (l) { return l.pisteId === pi.id; }) };
     }).filter(function (r) { return r.kvs.length; });
 
     var orphelins = g.kvs.filter(function (l) {
       return !pistes.some(function (pi) { return pi.id === l.pisteId; });
     });
-    if (orphelins.length) out.push({ nom: "Sans route", statut: "rattachement manquant", kvs: orphelins });
+    if (orphelins.length) out.push({ nom: "Sans piste", statut: "rattachement manquant", kvs: orphelins });
     return out.length ? out : [{ nom: g.marques[0] || "sans marque", kvs: g.kvs }];
   }
 
@@ -166,7 +166,7 @@ window.VUE_PLANCHE = (function () {
         el("button.b.nu", { type: "button", onclick: function () { detail(p, l, rafraichir); } }, "régler"),
         el("button.b.nu", { type: "button", onclick: function () { ANNOT.ouvrir(p, l, rafraichir); } },
           retours ? retours + (retours > 1 ? " retours" : " retour") : "annoter"),
-        el("button.b.nu", { type: "button", onclick: function () { VUE_LIVRABLE.ouvrir(p, l, rafraichir); } }, "la pièce"),
+        el("button.b.nu", { type: "button", onclick: function () { VUE_LIVRABLE.ouvrir(p, l, rafraichir); } }, "le livrable"),
         IMAGE.bouton(l, rafraichir)
       )
     );
@@ -247,7 +247,7 @@ window.VUE_PLANCHE = (function () {
     var champMarque = el("input", { type: "text", placeholder: "Bonnet Rouge, Peak, Belle Hollandaise…" });
     var base = KV.tous(p)[0] || null;
 
-    PANNEAU.ouvrir("Nouveau KV maître", "un par marché", el("div", {},
+    PANNEAU.ouvrir("Nouveau KV master", "un par marché", el("div", {},
       UI.banniere("", "Le KV vient avant les formats. Une fois posé, il se décline — et toute reprise du KV périme ses déclinaisons."),
       el("div.form", {},
         el("div.champ", {}, el("label", {}, "Marché"), selM),
@@ -277,7 +277,7 @@ window.VUE_PLANCHE = (function () {
     PANNEAU.ouvrir("Décliner un KV", "les formats viennent après", el("div", {},
       UI.banniere("", "Chaque format créé porte ce KV comme maître. Si le KV repart en V2, ils basculent tous en « à regénérer » — et le nombre est écrit."),
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Le KV maître"), selKV),
+        el("div.champ", {}, el("label", {}, "Le KV master"), selKV),
         el("div.champ", {}, el("label", {}, "Les formats"), choix.noeud)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
