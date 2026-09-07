@@ -380,8 +380,12 @@ window.VUE_PROJETS = (function () {
       particulier,
       blocs.length ? el("div.panneau-lat", {},
         el("h3", {}, "CE QUI BLOQUE ICI", el("span.droite", {}, String(blocs.length))),
+        /* Chaque blocage porte sa clé : quand il tombe, il tombe aux quatre
+         * endroits où il vit — le rail, la carte du dossier, la charge, la
+         * file — et pas seulement là où on l'a résolu. C'est ce qui rend la
+         * résolution croyable. */
         el("div.blocages", {}, blocs.map(function (b) {
-          return el("div.blocage", {},
+          return el("div.blocage", { "data-blocage": b.cle },
             el("b", {}, b.quoi),
             el("span.quand", {}, b.jours === 0 ? "depuis aujourd'hui" : "depuis " + b.jours + (b.jours > 1 ? " jours" : " jour")),
             b.prix ? el("span.cout", {}, b.prix) : null,

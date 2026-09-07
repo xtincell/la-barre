@@ -1754,9 +1754,14 @@
 .sl-p { display: grid; gap: .35rem; }
 .slp-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
   color: var(--clair-terne); }
-.sl-p blockquote { font-size: var(--t-meta); line-height: 1.55; color: var(--clair-doux);
-  background: var(--surface-3); border-radius: var(--r-m); padding: .7rem .8rem;
-  font-style: italic; }
+/* Le verbatim client est la chose la plus humaine de l'écran : quelqu'un a dit
+ * ça, à voix haute, dans une salle. Il passe à la voix de lecture — c'est
+ * exactement ce que --ecrit désigne — et il monte d'un cran : on ne cite pas
+ * un client en taille de légende. */
+.sl-p blockquote { font-family: var(--ecrit); font-style: italic;
+  font-size: var(--t-lire); line-height: 1.5; letter-spacing: var(--ls-lire);
+  color: var(--clair); background: var(--surface-3);
+  border-radius: var(--r-m); padding: .8rem .9rem; }
 .slp-a { font-size: var(--t-eti); line-height: var(--lh-eti); color: var(--clair-terne); }
 .sl-p p { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
   max-width: var(--mesure); }

@@ -28,6 +28,11 @@ window.RENVOI = (function () {
     "autre": { poste: null, critere: null },
   };
 
+  /* L'attente créée au dernier geste, consommée par le premier écran qui la
+   * rend. Une seule fois : sans ça, elle rejouerait à chaque re-rendu. */
+  var dernier = null;
+  function consommerDernier() { var d = dernier; dernier = null; return d; }
+
   function motifs() {
     return Object.keys(SOUVERAINETES).map(function (k) {
       return { cle: k, critere: SOUVERAINETES[k].critere, poste: SOUVERAINETES[k].poste };
@@ -129,7 +134,7 @@ window.RENVOI = (function () {
           onclick: function () {
             if (!destinataire) { AVIS.refus("Nomme une personne : un renvoi ne s'adresse pas à une direction."); return; }
             var s = SOUVERAINETES[choix];
-            DEPOT.ajoute("attentes", {
+            var neuve = DEPOT.ajoute("attentes", {
               quoi: contexte.quoi || "",
               projet: contexte.projet || null,
               projetId: contexte.projetId || null,
@@ -143,6 +148,11 @@ window.RENVOI = (function () {
               envoye_le: new Date().toISOString(),
               resolu_le: null,
             });
+            /* Ce qui vient de partir se retient le temps d'un rendu : la ligne
+             * arrive dans la colonne de l'autre au lieu d'apparaître. C'est
+             * l'horloge qui bascule visiblement de mon côté au sien — le seul
+             * moment où ce produit dit « ce n'est plus mon retard ». */
+            dernier = neuve && neuve.id ? neuve.id : null;
             PANNEAU.fermer();
             if (window.APP) APP.rendre();
           },
@@ -170,5 +180,5 @@ window.RENVOI = (function () {
       .sort(function (a, b) { return new Date(a.envoye_le) - new Date(b.envoye_le); });
   }
 
-  return { ouvrir: ouvrir, resoudre: resoudre, ouvertes: ouvertes, motifs: motifs };
+  return { ouvrir: ouvrir, consommerDernier: consommerDernier, resoudre: resoudre, ouvertes: ouvertes, motifs: motifs };
 })();

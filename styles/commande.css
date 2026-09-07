@@ -259,7 +259,7 @@
 .rc-idee { background: var(--nuit-relief); padding: .75rem .85rem .85rem; }
 .rc-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em; color: var(--clair-terne); }
 .rc-phrase { font-size: var(--t-lire); letter-spacing: var(--ls-lire); line-height: 1.5; margin-top: .35rem; }
-.rc-sign { font-family: var(--main); color: var(--or); font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); margin-top: .4rem; }
+.rc-sign { font-family: var(--ecrit); font-style: italic; color: var(--or); font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); margin-top: .4rem; }
 
 .rc-grille { border: 1px solid var(--trait); }
 .rg-tete { display: flex; justify-content: space-between; padding: .45rem .7rem;
@@ -330,7 +330,7 @@
 .zone.engagements { display: grid; gap: 1rem; align-content: start; padding: 1.1rem 1.2rem 3rem; }
 
 .eg-haut { display: flex; align-items: flex-end; gap: 1.5rem; flex-wrap: wrap; }
-.eg-titre h2 { font-family: var(--main); font-size: var(--t-nombre); letter-spacing: var(--ls-nombre); font-weight: 400; line-height: 1; }
+.eg-titre h2 { font-family: var(--lecture); font-size: var(--t-nombre); letter-spacing: var(--ls-nombre); font-weight: 400; line-height: 1; }
 .eg-devise { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); margin-top: .25rem; }
 .eg-kpis { display: flex; gap: 1.2rem; margin-left: auto; }
 .eg-kpi { display: grid; gap: .05rem; }
@@ -429,8 +429,8 @@
 
 .bi-idee { background: var(--nuit-relief); padding: 1.1rem 1.2rem 1.2rem; }
 .bii-nom { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .18em; color: var(--or); }
-.bii-phrase { font-family: var(--main); font-size: var(--t-ecran); letter-spacing: var(--ls-ecran); line-height: 1.35; margin-top: .5rem; }
-.bii-sign { font-family: var(--main); font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--or); margin-top: .6rem; }
+.bii-phrase { font-family: var(--ecrit); font-style: italic; font-size: var(--t-ecran); letter-spacing: var(--ls-ecran); line-height: 1.35; margin-top: .5rem; }
+.bii-sign { font-family: var(--ecrit); font-style: italic; font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--or); margin-top: .6rem; }
 .bii-pied { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
   margin-top: .8rem; padding-top: .7rem; border-top: 1px solid var(--trait); }
 .bii-a { display: flex; gap: .4rem; align-items: center; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }

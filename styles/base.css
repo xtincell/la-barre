@@ -124,13 +124,27 @@
   --mesure-large: 96ch;  /* les listes et les tableaux */
   --contenu: 1180px;     /* la colonne de travail, centrée au-delà */
 
-  /* Satoshi n'est pas une police système : déposer les fichiers dans
-   * styles/polices/ et la déclarer en @font-face pour qu'elle prenne. Tant
-   * qu'elle n'est pas là, la pile de repli tient la même largeur d'œil. */
-  --affichage: "Satoshi Variable", "Satoshi", "Avenir Next", "Segoe UI Variable",
+  /* Les trois voix. Elles sont chargées pour de bon depuis polices.css :
+   * auto-hébergées, variables, hors ligne. Les piles de repli restent
+   * derrière — si un fichier manque, l'écran ne casse pas, il change de
+   * coupe.
+   *
+   *   --affichage   le système qui parle : les états, les compteurs, les listes
+   *   --lecture     ce qu'on lit de près : les verbatims, les concepts, la prose
+   *   --ecrit       ce qu'un humain a écrit : l'idée, la règle, la promesse,
+   *                 la signature. C'est --lecture en italique.
+   *
+   * --ecrit remplace --main, qui appelait Bradley Hand et retombait en Comic
+   * Sans dès qu'on changeait de machine. La distinction — le système contre la
+   * personne — se dit maintenant par la coupe, et elle voyage. */
+  --affichage: "Satoshi", "Avenir Next", "Segoe UI Variable",
     "Segoe UI", system-ui, -apple-system, sans-serif;
-  --main: "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive;
-  --lecture: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --lecture: "Newsreader", Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --ecrit: var(--lecture);
+
+  /* L'ancien nom, tenu comme alias : soixante-cinq modules l'emploient, et un
+   * site oublié doit rester lisible plutôt que de retomber en cursive. */
+  --main: var(--ecrit);
 
   --rail: 218px;
   --droite: 320px;
@@ -150,10 +164,39 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Le grain donne sa matière à la toile — pas à la typographie.
+ *
+ * Posé au-dessus de tout, il se serait déposé sur le texte aussi, et aurait
+ * mangé du contraste sur chaque mot de l'application. Il passe DERRIÈRE le
+ * contenu : z-index négatif, devant le fond du corps, sous tout ce qui se
+ * lit. Le contraste mesuré ne bouge pas d'un centième. */
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  opacity: .05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
 html { -webkit-text-size-adjust: 100%; }
 
+/* La toile.
+ *
+ * Quatre niveaux de surface sont déclarés et rien ne les séparait à l'œil :
+ * mêmes bleus, trois points de luminosité d'écart, aucune lumière. Le fond
+ * reçoit une source haute et à gauche — très faible, deux pour cent — et un
+ * grain qui lui donne de la matière. Sur un écran qu'on regarde quatre-vingt-
+ * dix minutes d'affilée, un aplat parfait fatigue plus qu'il ne repose.
+ *
+ * Le grain est un SVG en ligne de moins de 400 octets : aucune requête,
+ * aucune image, et il disparaît à l'impression. */
 body {
-  background: var(--nuit);
+  background:
+    radial-gradient(120% 80% at 12% -10%,
+      rgba(199, 80, 31, .055) 0%, rgba(199, 80, 31, 0) 55%),
+    radial-gradient(90% 60% at 88% 0%,
+      rgba(255, 176, 32, .028) 0%, rgba(255, 176, 32, 0) 60%),
+    var(--nuit);
+  background-attachment: fixed;
   color: var(--clair);
   font-family: var(--affichage);
   font-size: 16px;
@@ -182,13 +225,28 @@ body {
   border-bottom: 1px solid var(--trait);
   text-align: center;
 }
+/* La couronne est le seul ornement du produit. Elle reste un caractère —
+ * mais elle cesse d'être un caractère parmi d'autres : elle porte l'or, et
+ * rien autour d'elle ne le porte. */
 .rail-marque .couronne { color: var(--or); font-size: var(--t-lire); letter-spacing: var(--ls-lire); line-height: 1; }
+/* Le logotype.
+ *
+ * Le plan prévoyait de le redessiner en SVG, pour qu'aucune police ne puisse
+ * plus le dégrader. Cette assurance ne sert plus à rien : Newsreader est
+ * auto-hébergée, elle voyage avec l'application. Un tracé bézier écrit à la
+ * main aurait été moins bon qu'une italique bien réglée — on le laisse en
+ * texte, et on le règle vraiment.
+ *
+ * Taille optique poussée au maximum : à 32 px, Newsreader durcit ses pleins
+ * et affine ses déliés, ce qui est exactement ce qu'on demande à un logotype.
+ * L'approche se resserre parce qu'une italique de titre respire déjà seule. */
 .rail-marque h1 {
-  font-family: var(--main);
-  font-size: var(--t-ecran); line-height: var(--lh-ecran);
-  font-weight: 400;
-  letter-spacing: .02em;
-  margin-top: .1rem;
+  font-family: var(--ecrit); font-style: italic;
+  font-size: var(--t-ecran); line-height: 1.05;
+  font-weight: 500;
+  font-variation-settings: "opsz" 40;
+  letter-spacing: -.012em;
+  margin-top: .15rem;
 }
 .rail-marque .os {
   font-size: var(--t-micro); line-height: var(--lh-micro);
@@ -368,7 +426,7 @@ body {
 
 .titre-ecran { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
 .titre-ecran h2 {
-  font-family: var(--main);
+  font-family: var(--lecture);
   font-size: clamp(1.6rem, 3vw, 2.15rem);
   font-weight: 400;
   letter-spacing: .01em;
@@ -466,8 +524,8 @@ body {
   border: 1px solid #d9c9a3;
 }
 .regle .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .16em; color: #8a7a55; }
-.regle .texte { font-family: var(--main); font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.25; margin-top: .4rem; }
-.regle .signe { text-align: right; font-family: var(--main); font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: #8a7a55; margin-top: .4rem; }
+.regle .texte { font-family: var(--ecrit); font-style: italic; font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.25; margin-top: .4rem; }
+.regle .signe { text-align: right; font-family: var(--ecrit); font-style: italic; font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: #8a7a55; margin-top: .4rem; }
 
 /* ————————————————————— Vignettes ————————————————————— */
 
@@ -608,6 +666,10 @@ ul.puces li::before { content: ""; position: absolute; left: 0; top: .68rem; wid
 }
 
 @media print {
+  /* Le grain et la lumière n'existent que pour l'écran : sur papier ils
+   * salissent le fond et coûtent de l'encre. */
+  body::before { display: none; }
+  body { background: #fff; }
   body { grid-template-columns: 1fr; background: #fff; color: #111; }
   .rail, .chapeau-outils, .b, .voile, .panneau { display: none !important; }
   .kpi, .panneau-lat, .carte-livrable { border-color: #ccc; background: #fff; color: #111; }
@@ -688,6 +750,38 @@ button, a, input, select, textarea, summary {
 }
 
 /* Qui préfère moins de mouvement n'en reçoit aucun. */
+/* ————————————————————— Le mouvement, et rien de plus —————————————————————
+ *
+ * Quatre animations, trois moments, tous liés à une décision. Le produit n'en
+ * avait aucune : rien n'accusait réception d'un verdict, et sur un outil où
+ * l'on tranche vingt-trois fois de suite, on finit par ne plus savoir si le
+ * clic a porté.
+ *
+ * Aucune ne dépasse 220 ms. Le bloc prefers-reduced-motion, plus bas, les
+ * ramène toutes à 1 ms — il était déjà écrit, il n'avait rien à garder. */
+
+@keyframes s-sort {
+  to { opacity: 0; transform: translateX(-14px); }
+}
+@keyframes s-arrive {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+/* Un blocage qui tombe ne s'efface pas : il se raye et se referme. On voit
+ * qu'il a existé, et qu'il n'existe plus. */
+@keyframes s-resolu {
+  0%   { opacity: 1; }
+  45%  { opacity: 1; filter: saturate(0); }
+  100% { opacity: 0; transform: scaleY(.85); }
+}
+
+.s-arrive { animation: s-arrive 200ms var(--easing) both; }
+/* La sortie passe après l'arrivée dans la feuille : si les deux classes se
+ * croisent une fraction de seconde, c'est la sortie qui l'emporte — on part
+ * toujours, on n'arrive pas deux fois. */
+.s-sort   { animation: s-sort 180ms var(--easing) forwards; }
+.s-resolu { animation: s-resolu 220ms var(--easing) forwards; transform-origin: top; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     transition-duration: 1ms !important; animation-duration: 1ms !important;

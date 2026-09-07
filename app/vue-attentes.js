@@ -79,7 +79,12 @@ window.VUE_ATTENTES = (function () {
           Math.round(t * echelle) + (t === 1 ? " jours" : ""));
       })),
 
-      el("div.at-g", {}, groupes.map(function (g) { return groupe(g, echelle, hote); })),
+      /* Ce qui vient d'être renvoyé arrive au lieu d'apparaître : l'horloge
+       * bascule visiblement de mon côté au sien. */
+      el("div.at-g", {}, (function () {
+        var neuve = window.RENVOI && RENVOI.consommerDernier ? RENVOI.consommerDernier() : null;
+        return groupes.map(function (g) { return groupe(g, echelle, hote, neuve); });
+      })()),
 
       montrerResolues ? resolues() : null,
       el("div.at-pied", {},
@@ -89,7 +94,7 @@ window.VUE_ATTENTES = (function () {
     ));
   }
 
-  function groupe(g, echelle, hote) {
+  function groupe(g, echelle, hote, neuve) {
     return el("div.at-d", {},
       el("div.atd-q", {},
         g.personne ? UI.avatar(g.personne, 36) : UI.avatar(null, 36),
@@ -107,7 +112,7 @@ window.VUE_ATTENTES = (function () {
       el("div.atd-b", {}, g.l.map(function (x) {
         var part = Math.max(6, Math.round((x.age / echelle) * 100));
         var ton = x.age >= 15 ? "alerte" : x.age >= 7 ? "attente" : "calme";
-        return el("div.at-x", {},
+        var n = el("div.at-x", {},
           el("button.atx-b." + ton, { type: "button",
             style: { width: part + "%" },
             title: x.quoi,
@@ -115,6 +120,7 @@ window.VUE_ATTENTES = (function () {
             el("span", {}, x.quoi)),
           el("span.atx-j." + ton, {}, x.age + " j"),
           el("span.atx-k", {}, x.critere || x.source));
+        return neuve && x.id === neuve ? O.arrive(n) : n;
       })));
   }
 

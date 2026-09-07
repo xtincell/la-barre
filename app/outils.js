@@ -37,6 +37,60 @@ window.O = (function () {
 
   function vider(n) { while (n.firstChild) n.removeChild(n.firstChild); return n; }
 
+  /* ————————————————————— Le mouvement, et rien de plus —————————————————————
+   *
+   * Trois moments seulement, tous liés à une décision : le verdict rendu, le
+   * blocage résolu, le renvoi parti. Rien au survol, rien à l'arrivée d'un
+   * écran. Le mouvement dit « c'est enregistré » — il ne décore pas.
+   *
+   * Le plafond du produit est de vingt secondes par geste. Une animation s'y
+   * prend : aucune ne dépasse 220 ms, et le bloc prefers-reduced-motion de
+   * base.css les ramène toutes à 1 ms si le système le demande. */
+
+  var BOUGE = !window.matchMedia
+    || !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* Faire sortir un nœud, puis rendre la suite. Si l'animation n'a pas lieu —
+   * réglage système, nœud détaché, navigateur sans animationend — on appelle
+   * quand même : un geste ne doit jamais dépendre d'une décoration. */
+  function sortir(noeud, apres) {
+    if (!noeud || !BOUGE || !noeud.parentNode) { if (apres) apres(); return; }
+    var fait = false;
+    function fini() { if (fait) return; fait = true; if (apres) apres(); }
+    /* La classe d'arrivée peut encore être là — animationend ne se déclenche
+     * pas si le nœud a été remplacé entre-temps. Les deux animations
+     * cohabitaient alors, et c'est l'arrivée qui gagnait : la carte ne
+     * sortait jamais. */
+    noeud.classList.remove("s-arrive");
+    noeud.addEventListener("animationend", fini, { once: true });
+    setTimeout(fini, 260);
+    noeud.classList.add("s-sort");
+  }
+
+  /* Poser la classe d'arrivée sur le remplaçant. Elle se retire seule : sans
+   * ça, un nœud réanimerait à chaque re-rendu. */
+  function arrive(noeud, retard) {
+    if (!noeud || !BOUGE) return noeud;
+    if (retard) noeud.style.animationDelay = retard + "ms";
+    noeud.classList.add("s-arrive");
+    function net() { noeud.classList.remove("s-arrive"); noeud.style.animationDelay = ""; }
+    noeud.addEventListener("animationend", net, { once: true });
+    /* Filet : un nœud jamais peint — onglet en arrière-plan, rendu annulé —
+     * ne recevra pas animationend et garderait sa classe pour toujours. */
+    setTimeout(net, 400);
+    return noeud;
+  }
+
+  /* Un blocage vit à quatre endroits à la fois — le rail, la carte du dossier,
+   * la charge, la file. Quand il tombe, il tombe partout en même temps :
+   * c'est ce qui rend la résolution croyable. */
+  function resoudrePartout(cle, apres) {
+    var noeuds = document.querySelectorAll('[data-blocage="' + cle + '"]');
+    if (!noeuds.length || !BOUGE) { if (apres) apres(); return; }
+    for (var i = 0; i < noeuds.length; i++) noeuds[i].classList.add("s-resolu");
+    setTimeout(function () { if (apres) apres(); }, 220);
+  }
+
   /* ————— Dates ————— */
 
   function auj() { return new Date(); }
@@ -146,7 +200,8 @@ window.O = (function () {
   }
 
   return {
-    el: el, vider: vider, jour: jour, joli: joli, jolieHeure: jolieHeure,
+    el: el, vider: vider, sortir: sortir, arrive: arrive,
+    resoudrePartout: resoudrePartout, jour: jour, joli: joli, jolieHeure: jolieHeure,
     depuis: depuis, ancien: ancien, semaine: semaine, auj: auj, jourCourt: jourCourt,
     id: id, poste: poste, jeton: jeton, normalise: normalise, contient: contient,
     milliers: milliers, decimal: decimal,

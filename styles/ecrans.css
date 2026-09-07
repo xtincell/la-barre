@@ -65,7 +65,7 @@
 /* ————————————————————— Projet : ruban de sections ————————————————————— */
 
 .projet-entete { display: flex; gap: 1.2rem; align-items: flex-start; flex-wrap: wrap; }
-.projet-entete .titre h2 { font-family: var(--main); font-size: var(--t-nombre); letter-spacing: var(--ls-nombre); font-weight: 400; line-height: 1.1; }
+.projet-entete .titre h2 { font-family: var(--lecture); font-size: var(--t-nombre); letter-spacing: var(--ls-nombre); font-weight: 400; line-height: 1.1; }
 .projet-entete .titre .sous { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); margin-top: .2rem; }
 .projet-entete .cotes { margin-left: auto; display: flex; gap: 1.2rem; align-items: center; }
 
@@ -229,9 +229,9 @@
 
 .carte-phrase { background: var(--nuit-relief); padding: 1rem 1.1rem 1.1rem; }
 .carte-phrase .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .12em; color: var(--clair-terne); }
-.carte-phrase .phrase { font-family: var(--main); font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.4; margin-top: .5rem; }
+.carte-phrase .phrase { font-family: var(--ecrit); font-style: italic; font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.4; margin-top: .5rem; }
 .carte-phrase .signe { text-align: right; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .5rem; }
-.carte-phrase .signature { font-family: var(--main); color: var(--or); font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); margin-top: .6rem; }
+.carte-phrase .signature { font-family: var(--ecrit); font-style: italic; color: var(--or); font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); margin-top: .6rem; }
 .carte-phrase.grande { margin-top: 1rem; }
 .carte-phrase.grande .phrase { font-size: var(--t-ecran); line-height: var(--lh-ecran); letter-spacing: var(--ls-ecran); }
 
@@ -279,7 +279,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 /* ————————————————————— Big idea ————————————————————— */
 
 .bi-tete { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-.bi-nom { font-family: var(--main); font-size: var(--t-ecran); letter-spacing: var(--ls-ecran); font-weight: 400; line-height: 1.1; }
+.bi-nom { font-family: var(--lecture); font-size: var(--t-ecran); letter-spacing: var(--ls-ecran); font-weight: 400; line-height: 1.1; }
 .bi-sous { display: flex; gap: .4rem; margin-top: .4rem; flex-wrap: wrap; }
 .bi-auteur { margin-left: auto; display: flex; gap: .55rem; align-items: center; }
 .bi-auteur .a-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
@@ -299,7 +299,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 /* ————————————————————— Socle ————————————————————— */
 
 .socle-tete { display: flex; align-items: flex-start; gap: 1rem; }
-.socle-marque { font-family: var(--main); font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre); margin-top: .3rem; }
+.socle-marque { font-family: var(--ecrit); font-style: italic; font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre); margin-top: .3rem; }
 .ordre { display: grid; gap: .3rem; }
 .ordre-l { display: flex; gap: .5rem; font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; }
 .ordre-l .n { color: var(--or); flex: 0 0 auto; }

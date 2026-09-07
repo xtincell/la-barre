@@ -174,7 +174,7 @@
 .carte-n-tete .n { color: var(--or); font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
 .carte-n-tete .t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em; text-transform: uppercase; color: var(--clair-doux); }
 .carte-n-corps { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.5; }
-.carte-n-corps .phrase-marque { font-family: var(--main); font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.3; color: var(--clair); }
+.carte-n-corps .phrase-marque { font-family: var(--ecrit); font-style: italic; font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.3; color: var(--clair); }
 .carte-n-corps .accent { color: var(--or); }
 
 /* ————————————————————— 15 · Graphe ————————————————————— */

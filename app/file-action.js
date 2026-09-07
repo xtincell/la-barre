@@ -199,7 +199,7 @@ window.FILE = (function () {
 
     return el("div.sl", {},
       spine(items, rafraichir),
-      decision(x, items.length, rafraichir),
+      O.arrive(decision(x, items.length, rafraichir)),
       preuve(x)
     );
   }
@@ -265,8 +265,16 @@ window.FILE = (function () {
         el("p", {}, x.trancher || x.cout)),
 
       el("div.sld-g", {},
+        /* Le geste rendu : la carte se retire avant que la suivante arrive.
+         * Sur un écran où l'on tranche vingt-trois fois de suite, c'est la
+         * seule chose qui dit que le clic a porté. Si l'animation n'a pas
+         * lieu, le geste part quand même — O.sortir le garantit. */
         (x.gestes || []).map(function (g) {
-          return el("button.b" + (g.fort ? ".or" : ""), { type: "button", onclick: g.quand }, g.nom);
+          return el("button.b" + (g.fort ? ".or" : ""), { type: "button",
+            onclick: function () {
+              var carte = document.querySelector(".sl-d");
+              O.sortir(carte, g.quand);
+            } }, g.nom);
         }),
         /* Le lien nu de la file d'action était le plus coûteux du produit :
          * c'est l'écran où l'assistant passe sa journée, et il envoyait
@@ -277,7 +285,10 @@ window.FILE = (function () {
           "b" + ((x.gestes || []).length ? ".nu" : ".or"),
           { quoi: x.quoi, cout: x.trancher || x.cout }),
         el("button.b.nu", { type: "button", onclick: function () {
-          courant = Math.min(courant + 1, total - 1); rafraichir();
+          var carte = document.querySelector(".sl-d");
+          O.sortir(carte, function () {
+            courant = Math.min(courant + 1, total - 1); rafraichir();
+          });
         } }, "Passer  ↓")),
 
       el("div.sld-m", {}, "le motif se choisit dans les critères écrits"));
