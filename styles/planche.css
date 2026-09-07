@@ -1706,7 +1706,23 @@
   color: var(--clair-terne); }
 .slfi-c { font-size: var(--t-meta); line-height: var(--lh-meta); font-weight: 500; }
 .slf-i.ici .slfi-c { color: var(--or); }
-.slfi-q { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne);
+/* Le filet de gauche prend le ton de la famille : vingt-trois lignes se
+ * lisent alors comme quatre bandes, et l'œil trouve « ce qu'il y a à
+ * trancher » sans lire un mot. Il reste un filet — deux pixels — parce que
+ * la couleur ne doit pas concurrencer le texte qu'elle range. */
+.slf-i.f-alerte  { border-left-color: color-mix(in srgb, var(--bloquant) 55%, transparent); }
+.slf-i.f-attente { border-left-color: color-mix(in srgb, var(--attente) 55%, transparent); }
+.slf-i.f-or      { border-left-color: color-mix(in srgb, var(--or) 55%, transparent); }
+.slf-i.ici.f-alerte, .slf-i.ici.f-attente, .slf-i.ici.f-or { border-left-color: var(--or); }
+
+.slfi-q { display: flex; gap: .45rem; align-items: baseline; flex-wrap: wrap; }
+.slfi-f { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
+.slf-i.f-alerte  .slfi-f { color: var(--bloquant-txt); }
+.slf-i.f-attente .slfi-f { color: var(--attente); }
+.slf-i.f-or      .slfi-f { color: var(--or); }
+.slfi-d { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+.slfi-q-old { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .slf-p { display: grid; gap: .3rem; margin-top: .4rem; }
 .slf-p span { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
@@ -2488,6 +2504,16 @@
  * dates et les libellés fixaient une largeur minimale, et la colonne débordait
  * de trente pixels. Chaque jalon peut maintenant se serrer, et son libellé se
  * coupe plutôt que de pousser la grille. */
+/* Le libellé de gauche porte le coût de la ligne — une fois, au lieu d'une
+ * fois par colonne. Il se lit en second : c'est une consigne, pas un titre. */
+.cmpgl-c { display: block; margin-top: .2rem; font-size: var(--t-micro);
+  line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); text-transform: none; letter-spacing: 0; }
+
+/* Une case vide dit ce qui manque, en trois mots. Le pourquoi est à gauche. */
+.cmp-manque { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--bloquant-txt); font-style: italic; }
+
 .cmp-frise { display: flex; gap: .1rem; min-width: 0; }
 .cmpf { display: grid; justify-items: center; gap: .25rem; flex: 1 1 0; min-width: 0; }
 .cmpf-d { font-size: var(--t-micro); line-height: 1; color: var(--clair);
@@ -3868,9 +3894,15 @@ blockquote, .message, .verbatim, .bii-t, .ati-t {
 .regc-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair); }
 .regc-q { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
 
+/* La conséquence, dite une fois au-dessus de la liste. */
+.reg-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--clair-doux); border-left: 2px solid var(--attente); padding-left: .7rem;
+  max-width: var(--mesure); }
+.reg-n b { color: var(--clair); font-weight: 400; }
+
 .reg-l { display: grid; gap: .1rem; }
-.reg-r { display: grid; grid-template-columns: 7.5rem minmax(0, 1.4fr) 10rem minmax(0, 1.6fr) auto;
-  gap: .7rem; align-items: baseline; padding: .5rem 0; border-top: 1px solid var(--trait); }
+.reg-r { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 10rem 12rem auto;
+  gap: .7rem; align-items: baseline; padding: .42rem 0; border-top: 1px solid var(--trait); }
 .reg-r.hors { color: var(--clair-terne); }
 .regr-ref { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
   color: var(--clair-terne); font-variant-numeric: tabular-nums; }
@@ -3885,10 +3917,19 @@ blockquote, .message, .verbatim, .bii-t, .ati-t {
 .regrs-p { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
   color: var(--n900); background: var(--bloquant); padding: .04rem .3rem; }
 .regr-q { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-doux); }
+  color: var(--clair-terne); font-variant-numeric: tabular-nums; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; }
 .regr-g { justify-self: end; }
 
 @media (max-width: 900px) {
   .reg-r { grid-template-columns: minmax(0, 1fr); gap: .2rem; }
   .regr-g { justify-self: start; }
 }
+
+/* Une personne archivée garde sa place au rail — on n'efface pas une
+ * paternité — mais elle ne se lit plus comme quelqu'un qu'on peut affecter. */
+.file-item.parti .fi-nom { color: var(--clair-terne); }
+.fi-parti { margin-left: .45rem; font-size: var(--t-eti); line-height: var(--lh-eti);
+  letter-spacing: var(--ls-eti); color: var(--bloquant-txt); }
+.fi-motif { margin-top: .25rem; font-size: var(--t-eti); line-height: var(--lh-eti);
+  letter-spacing: var(--ls-eti); color: var(--clair-terne); }

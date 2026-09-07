@@ -216,12 +216,25 @@ window.FILE = (function () {
     return el("div.sl-file", {},
       el("div.slf-t", {}, "LA FILE · " + items.length
         + (items.length > 1 ? " DÉCISIONS" : " DÉCISION")),
+      /* La seconde ligne redisait la première, tronquée : « William Kwin
+       * Mandengue tient du spéculatif » au-dessus de « William Kwin Mandengue
+       * tient du spécul… ». Vingt-trois lignes grises identiques, et le
+       * principe qui les ordonne — le geste, et depuis quand — invisible.
+       *
+       * Elle porte maintenant ce qui diffère : le geste que ça demande, et
+       * l'âge quand on le connaît. Le filet de gauche prend le ton de la
+       * famille : on voit les bandes avant de lire les mots. */
       el("div.slf-l", {}, items.map(function (x, n) {
-        return el("button.slf-i" + (n === courant ? ".ici" : ""), { type: "button",
+        var f = FAMILLES[x.famille] || {};
+        return el("button.slf-i" + (n === courant ? ".ici" : "")
+          + (f.ton ? ".f-" + f.ton : ""), { type: "button",
           onclick: function () { courant = n; rafraichir(); } },
           el("span.slfi-n", {}, String(n + 1)),
           el("span.slfi-c", {}, x.chiffre),
-          el("span.slfi-q", {}, x.court));
+          el("span.slfi-q", {},
+            el("span.slfi-f", {}, f.nom || x.famille),
+            x.depuis ? el("span.slfi-d", {}, "depuis " + x.depuis
+              + (x.depuis > 1 ? " jours" : " jour")) : null));
       })),
       el("div.slf-p", {},
         el("span", {}, (courant + 1) + " sur " + items.length),

@@ -190,19 +190,18 @@ window.REGLES = (function () {
       /* L'axe créatif : ce qui sépare une piste d'une autre. Le contrôle ne
        * mord que sur les pistes vives — écarter une piste sans axe n'est pas
        * une faute, c'est une décision déjà prise. */
+      /* Le même prix, répété une fois par piste, cesse d'être lu à la seconde.
+       * Deux pistes sans axe se disent en un blocage qui porte le nombre —
+       * c'est le mécanisme du lot, déjà écrit pour les livrables. */
       var jumeauxDits = {};
+      var sansAxe = [];
       pistes.forEach(function (pi) {
         if (!pi.auteurDA) pousser(trouves, p, "auteur-absent", "Piste « " + (pi.titre || "sans titre") + " » sans auteur", "creation", "pistes");
         if (pi.statut === "ecartee" || !window.AXE) return;
 
         var a = AXE.de(pi);
-        if (!a.complet) {
-          pousser(trouves, p, "axe-absent",
-            "Piste « " + (pi.titre || "sans titre") + " » — "
-              + (a.vide ? "aucun axe créatif écrit"
-                : a.manque.map(function (c) { return c.court.toLowerCase(); }).join(", ") + " à écrire"),
-            "da", "pistes");
-        }
+        if (!a.complet) sansAxe.push({ l: { id: pi.id }, pi: pi, a: a });
+
         var j = AXE.jumelles(p, pi);
         if (j.length && !jumeauxDits[O.normalise(pi.axe_ton)]) {
           jumeauxDits[O.normalise(pi.axe_ton)] = true;
@@ -211,6 +210,22 @@ window.REGLES = (function () {
               + " » portent le même ton", "da", "pistes");
         }
       });
+
+      if (sansAxe.length === 1) {
+        var x = sansAxe[0];
+        pousser(trouves, p, "axe-absent",
+          "Piste « " + (x.pi.titre || "sans titre") + " » — "
+            + (x.a.vide ? "aucun axe créatif écrit"
+              : x.a.manque.map(function (c) { return c.court.toLowerCase(); }).join(", ") + " à écrire"),
+          "da", "pistes", x.pi.id);
+      } else if (sansAxe.length > 1) {
+        var tous = sansAxe.every(function (x) { return x.a.vide; });
+        var b = pousser(trouves, p, "axe-absent",
+          sansAxe.length + " pistes sur " + pistes.length
+            + (tous ? " n'ont aucun axe créatif écrit" : " ont un axe incomplet"),
+          "da", "pistes");
+        b.pieces = sansAxe.map(function (x) { return x.pi.id; });
+      }
 
       /* Livrables. Une campagne multi-marchés porte quatorze livrables : quatorze
        * lignes identiques dans le rail ne dirigent rien. Au-delà de deux, le

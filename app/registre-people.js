@@ -49,9 +49,21 @@ window.REGISTRE = (function () {
       return { cle: "hors", nom: r.statut, ton: "terne",
         quoi: "rien à suivre tant qu'il est " + r.statut };
     }
-    return { cle: "aveugle", nom: "aucun dossier ici", ton: r.priorite === "critique" ? "alerte" : "attente",
-      quoi: "l'exécution de ce dossier ne se voit nulle part dans LA BARRE : "
-        + "rien n'y est relançable, et son absence ne se signale pas d'elle-même" };
+    /* La conséquence est la même pour les trente-quatre : elle se dit une fois,
+     * au-dessus de la liste. Écrite sur chaque ligne, elle occupait trois
+     * lignes de haut et cessait d'être lue à la deuxième. */
+    return { cle: "aveugle", nom: "aucun dossier ici",
+      ton: r.priorite === "critique" ? "alerte" : "attente",
+      quoi: fenetre(r) };
+  }
+
+  /* Ce qui reste propre à la ligne : quand ça tourne, et jusqu'à quand.
+   * C'est la seule chose qui distingue un dossier aveugle d'un autre. */
+  function fenetre(r) {
+    if (r.debut && r.fin) return O.jourCourt(r.debut) + " → " + O.jourCourt(r.fin);
+    if (r.fin) return "jusqu'au " + O.jourCourt(r.fin);
+    if (r.debut) return "ouvert le " + O.jourCourt(r.debut);
+    return "sans dates chez People";
   }
 
   /* Le bilan : ce qui manque, et ce que ça coûte. */
@@ -135,6 +147,15 @@ window.REGISTRE = (function () {
         b.aveugles ? compte(String(b.aveugles), "sans dossier ici",
           "leur exécution ne se voit nulle part", b.critiques.length ? "alerte" : "attente") : null,
         b.hors ? compte(String(b.hors), "clôturés ou en pause", "rien à suivre", "terne") : null),
+
+      /* La conséquence, une fois. Elle vaut pour toutes les lignes marquées
+       * « aucun dossier ici » — la répéter trente-quatre fois ne la rendait
+       * pas plus vraie, seulement invisible. */
+      b.aveugles
+        ? el("div.reg-n", {}, el("b", {}, "« aucun dossier ici » — ce que ça veut dire  :  "),
+            "l'exécution ne se voit nulle part dans LA BARRE, rien n'y est relançable, "
+            + "et cette absence ne se signale pas d'elle-même.")
+        : null,
 
       el("div.reg-l", {}, rs.map(function (r) { return ligne(r, par[r.ref], rafraichir); }))
     ));

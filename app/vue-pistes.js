@@ -105,8 +105,12 @@ window.VUE_PISTES = (function () {
       }),
 
       LIGNES.map(function (L) {
+        /* Le libellé porte le coût de la ligne quand une colonne manque : une
+         * fois à gauche plutôt qu'une fois par colonne. */
+        var cout = window.AXE && AXE.coutLigne ? AXE.coutLigne(p, L.cle, vives) : null;
         return [
-          el("div.cmpg-l", {}, L.nom),
+          el("div.cmpg-l", {}, el("span", {}, L.nom),
+            cout ? el("span.cmpgl-c", {}, cout) : null),
           vives.map(function (pi) { return cellule(p, pi, L.cle, rafraichir); }),
         ];
       }),

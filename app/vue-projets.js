@@ -652,14 +652,23 @@ window.VUE_PROJETS = (function () {
     var equipe = p.equipe || [];
     return el("div.panneau-lat", {},
       el("h3", {}, "ÉQUIPE"),
+      /* Une personne archivée qui a signé quelque chose ici reste au rail : on
+       * n'efface pas une paternité. Mais elle ne s'affiche pas comme si elle
+       * était au plateau — le rail disait « Claude · Concepteur-Rédacteur »
+       * pour un poste vacant, et « Nadia Fotso » pour quelqu'un qui n'a jamais
+       * été à l'agence. Le motif de l'archivage est écrit à côté du nom. */
       equipe.length
         ? equipe.map(function (m) {
             var pers = DEPOT.trouve("personnes", m.personne);
-            return el("div.file-item", {},
+            var parti = pers && pers.archive;
+            return el("div.file-item" + (parti ? ".parti" : ""), {},
               el("div.vignette.v-mini", {}, el("span.absente", {}, pers ? pers.nom.split(" ").map(function (x) { return x[0]; }).join("") : "?")),
               el("div.fi-corps", {},
-                el("div.fi-nom", {}, pers ? pers.nom : "—"),
-                el("div.fi-meta", {}, O.poste(m.poste).nom)
+                el("div.fi-nom", {}, pers ? pers.nom : "—",
+                  parti ? el("span.fi-parti", {}, "plus au plateau") : null),
+                el("div.fi-meta", {}, O.poste(m.poste).nom),
+                parti && pers.archive.motif
+                  ? el("div.fi-motif", {}, pers.archive.motif) : null
               )
             );
           })

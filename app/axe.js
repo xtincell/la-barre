@@ -233,15 +233,29 @@ window.AXE = (function () {
   /* Trois lignes seulement — idée directrice, ton, univers — parce que c'est
    * sur celles-là que deux pistes se départagent. Les valeurs voyagent avec
    * l'idée directrice : elles la qualifient, elles ne se comparent pas seules. */
+  /* Dans une grille de comparaison, une cellule vide n'a pas à expliquer ce
+   * qu'elle coûte : le coût est le même dans toutes les colonnes vides, et
+   * l'écrire deux fois côte à côte le rend invisible. Il se dit une fois, à
+   * gauche, dans le libellé de la ligne. La cellule ne porte que la différence
+   * — ou son absence, en trois mots. */
+  var MANQUE = {
+    axe: "aucun axe écrit",
+    ton: "sans ton",
+    univers: "univers non décrit",
+  };
+
+  /* Ce que coûte la ligne quand elle est vide — pour le libellé de gauche. */
+  var COUT_LIGNE = {
+    axe: "sans elle, deux pistes ne se comparent que par leur titre",
+    ton: "le DA et le rédacteur choisiront chacun le leur",
+    univers: "on comparera deux images, pas deux partis pris",
+  };
+
   function cellule(p, pi, cle) {
     var a = de(pi);
 
     if (cle === "axe") {
-      if (!a.directrice) {
-        return el("div.cmp-c", {}, el("span.cmp-vide", {},
-          el("b", {}, "aucun axe écrit — "),
-          "cette colonne ne se compare à aucune autre."));
-      }
+      if (!a.directrice) return vide(cle);
       return el("div.cmp-c", {},
         el("p.cmpc-p", {}, a.directrice),
         a.valeurs.length
@@ -250,23 +264,33 @@ window.AXE = (function () {
     }
 
     if (cle === "ton") {
-      if (!a.ton) {
-        return el("div.cmp-c", {}, el("span.cmp-vide", {},
-          el("b", {}, "sans ton — "), "le DA et le rédacteur choisiront chacun le leur."));
-      }
+      if (!a.ton) return vide(cle);
       var j = jumelles(p, pi);
       return el("div.cmp-c", {},
         el("div.axe-ton", {}, a.ton),
+        /* Celui-là reste dans la cellule : il ne vaut que pour cette colonne. */
         j.length ? el("div.axe-jum", {}, "même ton que "
-          + j.map(function (x) { return "« " + (x.titre || "sans titre") + " »"; }).join(", ")
-          + " — deux propositions au même ton ne font pas un choix") : null);
+          + j.map(function (x) { return "« " + (x.titre || "sans titre") + " »"; }).join(", ")) : null);
     }
 
     return a.univers
       ? el("div.cmp-c", {}, el("p.cmpc-p", {}, a.univers))
-      : el("div.cmp-c", {}, el("span.cmp-vide", {},
-          el("b", {}, "univers non décrit — "),
-          "on comparera deux images, pas deux partis pris."));
+      : vide(cle);
+  }
+
+  function vide(cle) {
+    return el("div.cmp-c", {}, el("span.cmp-manque", {}, MANQUE[cle]));
+  }
+
+  /* Le coût de la ligne, à afficher sous son libellé — et seulement si au
+   * moins une colonne est vide. Une consigne sur une ligne complète est du
+   * bruit. */
+  function coutLigne(p, cle, pistes) {
+    var vide = (pistes || []).some(function (pi) {
+      var a = de(pi);
+      return cle === "axe" ? !a.directrice : cle === "ton" ? !a.ton : !a.univers;
+    });
+    return vide ? COUT_LIGNE[cle] : null;
   }
 
   /* ————————————————————— Écrire l'axe ————————————————————— */
@@ -326,5 +350,6 @@ window.AXE = (function () {
   }
 
   return { CHAMPS: CHAMPS, de: de, etat: etat, jumelles: jumelles, controles: controles,
+    coutLigne: coutLigne,
     texte: texte, socle: socle, bloc: bloc, cellule: cellule, editer: editer };
 })();
