@@ -292,3 +292,45 @@
 .critere-etat b { font-weight: 500; margin-right: .4rem; }
 .critere-etat.alerte b { color: var(--bloquant-txt); }
 .critere-etat.attente b { color: var(--attente); }
+
+/* ————————————————————— La modale de geste ————————————————————— */
+/* Un CTA nomme un geste ; la modale dit pourquoi maintenant, ce qu'on va y
+ * faire dans l'ordre, et ce que ça change. Quatre blocs, jamais plus : au
+ * cinquième on ne la lit plus, et on est revenu au lien nu. */
+
+.geste { display: grid; gap: 1rem; max-width: 60ch; }
+.geste > div { color: inherit; }
+
+.geste .gp-t, .geste .gq-t, .geste .gf-t, .geste .gc-t {
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--clair-terne); margin-bottom: .25rem;
+}
+.geste .gp-v, .geste .gq-v, .geste .gc-v {
+  font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair);
+}
+
+/* Le coût porte l'accent : c'est la seule raison d'ouvrir une modale plutôt
+ * que de poser un lien. */
+.geste-pourquoi { border-left: 2px solid var(--or); padding-left: .75rem; }
+.geste-pourquoi .gp-t { color: var(--or); }
+
+.geste .gf-l { list-style: none; display: grid; gap: .5rem; margin: 0; padding: 0; }
+.geste .gf-l li {
+  display: grid; grid-template-columns: 1.5rem 1fr; gap: .5rem; align-items: start;
+  font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair);
+}
+.geste .gf-n {
+  font-size: var(--t-micro); line-height: 1.5rem; text-align: center;
+  color: var(--clair-terne); border: 1px solid var(--trait-clair); border-radius: 50%;
+  width: 1.5rem; height: 1.5rem;
+}
+
+.geste .form-actions { margin-top: .25rem; }
+.geste .form-actions .b { min-height: var(--cible); }
+
+/* L'adresse est écrite : on sait où on va avant de cliquer, et un lien se
+ * partage. Elle est en retrait — c'est une information, pas une invitation. */
+.geste-ou {
+  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); border-top: 1px solid var(--trait-clair); padding-top: .5rem;
+}

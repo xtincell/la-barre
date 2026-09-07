@@ -194,7 +194,7 @@ window.VUE_PISTES = (function () {
       var faux = kvs.filter(function (l) { return !KV.conforme(p, l); }).length;
       return el("div.cmp-c", {},
         el("span.cmpc-n", {}, tout.length + (tout.length > 1 ? " livrables" : " livrable")
-          + "  ·  " + pretes + (pretes > 1 ? " prêtes" : " prête")),
+          + "  ·  " + pretes + (pretes > 1 ? " prêts" : " prêt")),
         faux ? el("span.cmp-al", {}, faux + (faux > 1 ? " KV non conformes" : " KV non conforme")
           + " à leur marché") : null);
     }

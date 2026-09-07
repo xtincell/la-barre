@@ -288,13 +288,13 @@ window.VUE_CONSTATER = (function () {
           ? (s.projets - s.traites) + (s.projets - s.traites > 1 ? " sans go final : ils n'engagent" : " sans go final : il n'engage") + " la Clientèle sur rien"
           : "tous contresignés",
         pourquoi: "Sans contreseing de la Clientèle, un brief mis en forme ne compte pas comme traité — et c'est la première ligne sur laquelle je suis évalué.",
-        geste: { nom: "Réclamer le contreseing →", ou: "#/valider/du" } },
+        geste: { nom: "Réclamer le contreseing", ou: "#/valider/du" } },
 
       { cle: "idees", v: s.retenues + " / " + s.idees, nom: "big ideas retenues",
         ko: s.retenues < s.idees,
         quoi: s.alignees + (s.alignees > 1 ? " alignées" : " alignée") + " à un brief accepté",
         pourquoi: "Une idée sans piste arbitrée ne produit rien de mesurable.",
-        geste: { nom: "Arbitrer les pistes →", ou: "#/valider/file" } },
+        geste: { nom: "Arbitrer les pistes", ou: "#/valider/file" } },
 
       { cle: "args", v: s.avecArg + " / " + s.props, nom: "propositions argumentées",
         ko: s.avecArg < s.props,
@@ -320,7 +320,7 @@ window.VUE_CONSTATER = (function () {
             ? "au-delà de ma cible de " + s.cibleVerdict + " j"
             : "sous ma cible de " + s.cibleVerdict + " j",
         pourquoi: "C'est la dérive nommée dans ma fiche : « une dépendance qui bloque toute décision en son absence ».",
-        geste: { nom: "Trancher ce qui attend →", ou: "#/valider/file" } },
+        geste: { nom: "Trancher ce qui attend", ou: "#/valider/file" } },
 
       { cle: "reprise", v: s.reprise === null ? "—" : s.reprise + " %",
         nom: "livrables repris",
@@ -358,7 +358,9 @@ window.VUE_CONSTATER = (function () {
               el("p", {}, gros.pourquoi))
           : null,
         gros.geste
-          ? el("div.stg-g", {}, el("a.b.or", { href: gros.geste.ou }, gros.geste.nom))
+          ? el("div.stg-g", {}, GESTE.lien(gros.geste.ou,
+              gros.geste.nom.replace(/\s*→\s*$/, ""), "b.or",
+              { quoi: gros.quoi, cout: gros.pourquoi }))
           : null),
 
       /* Les cinq autres : lisibles, sans rien réclamer. */
@@ -383,7 +385,7 @@ window.VUE_CONSTATER = (function () {
               + s.joursDepasses + " jours. C'est ce chiffre qui rend la clause de reprise "
               + "crédible en négociation, pas le paragraphe du contrat."),
             el("div.form-actions", {},
-              el("a.b", { href: "#/reporting/reprises" }, "voir qui les a demandés →")))
+              GESTE.bouton("reprises", {}, "Voir qui les a demandés")))
         : null,
 
       el("div.st-cibles", {},
@@ -574,7 +576,7 @@ window.VUE_CONSTATER = (function () {
             el("p", {}, ouverts + (ouverts > 1 ? " retours ne sont ni absorbés ni facturés" : " retour n'est ni absorbé ni facturé")
               + ". Tant que ce n'est pas dit, les livrables restent suspendus et le coût reste chez nous."),
             el("div.form-actions", {},
-              el("a.b.or", { href: "#/valider/file" }, "Trancher les retours →")))
+              GESTE.bouton("file", {}, "Trancher les retours", "b.or")))
         : abs > fac
           ? UI.banniere("rouge", "Plus de jours absorbés que facturés. La clause de reprise "
               + "existe et ne sert pas : c'est une décision commerciale, pas une fatalité.")

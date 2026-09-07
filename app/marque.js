@@ -240,9 +240,8 @@ window.MARQUE = (function () {
       el("div.form-actions", {},
         IMAGE.bouton(a, function () { DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir(); }),
         el("button.b.nu", { type: "button", onclick: function () {
-          location.hash = "#/referentiel";
-          PANNEAU.fermer();
-        } }, "voir au référentiel"))
+          GESTE.ouvrir("marches");
+        } }, "Vérifier au référentiel"))
     ));
   }
 

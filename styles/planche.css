@@ -66,8 +66,10 @@
   font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); border-radius: 10px; padding: 0 .28rem; color: var(--nuit);
 }
 .plc-retours { background: var(--or); }
-.plc-pastille.ecart { background: var(--alerte); color: var(--clair); }
-.plc-pastille.ok { background: var(--vert); color: var(--clair); }
+/* Sur un aplat vif, l'encre claire tombe à 2:1. C'est l'encre sombre qui
+ * tient : même règle que les boutons pleins. */
+.plc-pastille.ecart { background: var(--alerte); color: var(--n900); }
+.plc-pastille.ok { background: var(--vert); color: #06180e; }
 
 /* Le bas de l'image : l'accroche, puis ce qui la qualifie. */
 .plc-bas {
@@ -168,7 +170,9 @@
  background: var(--nuit-carte); padding: .55rem .6rem;
 }
 .pr-p.dette { border-left: 2px solid var(--alerte); }
-.prp-rang { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--trait-clair); text-align: center; }
+/* Le rang portait la couleur d'un filet : 1,57:1, illisible. Un ordre de
+ * passage n'est pas une décoration — il se lit. */
+.prp-rang { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair-terne); text-align: center; }
 .prp-corps { min-width: 0; display: grid; gap: .35rem; }
 .prp-tete { display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
 .prp-type { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: .03em; }
@@ -311,7 +315,7 @@
 .rtbl-tete .n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
 
 .rt-groupe { display: grid; gap: .4rem; }
-.rt-groupe.orphelin .rtg-code { background: var(--alerte); color: var(--clair); }
+.rt-groupe.orphelin .rtg-code { background: var(--alerte); color: var(--n900); }
 .rtg-tete { display: flex; align-items: baseline; gap: .5rem; }
 .rtg-code { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .08em; padding: .08rem .34rem;
   background: var(--nuit-relief); color: var(--clair-doux); }
@@ -366,7 +370,7 @@
 .mr-tete .b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .14rem .4rem; }
 
 .mr-groupe { display: grid; gap: .4rem; }
-.mr-groupe.orphelin .mrg-code { background: var(--alerte); color: var(--clair); }
+.mr-groupe.orphelin .mrg-code { background: var(--alerte); color: var(--n900); }
 .mrg-tete { display: flex; align-items: baseline; gap: .5rem; }
 .mrg-code { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .08em; padding: .08rem .34rem;
   background: var(--nuit-relief); color: var(--clair-doux); }
@@ -892,7 +896,9 @@
 .prb-jalons { display: flex; gap: .3rem; flex-wrap: wrap; }
 .prbj { display: flex; align-items: center; gap: .25rem; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
   color: var(--clair-terne); border: 1px solid var(--trait); padding: .1rem .35rem; }
-.prbj .m { color: var(--trait-clair); }
+/* Le jeton de filet porté par du texte : 1,57:1. Un jalon non atteint se lit,
+ * sinon il ne dit rien. */
+.prbj .m { color: var(--clair-terne); }
 .prbj.ok { color: var(--clair-doux); border-color: var(--trait-clair); }
 .prbj.ok .m { color: var(--vert); }
 .prbj.min:not(.ok) { border-color: var(--alerte); color: var(--bloquant-txt); }
@@ -3740,89 +3746,3 @@ blockquote, .message, .verbatim, .bii-t, .ati-t {
 /* Et la règle qui empêche la dérive de revenir : au-dessous de --t-eti, on ne
  * met que des capitales espacées. Un texte en bas de casse à cette taille est
  * un défaut, pas un choix. */
-
-/* ————————————————————— La comparaison des routes ————————————————————— */
-
-.bi-comp { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: .9rem; }
-.bic { display: grid; gap: .45rem; align-content: start;
-  background: var(--nuit-carte); border: 1px solid var(--trait);
-  border-top: 2px solid var(--trait-clair); padding-bottom: .6rem; }
-.bic.retenue { border-top-color: var(--vert); }
-.bic.ecartee { opacity: .55; }
-.bic-v { position: relative; display: block; padding: 0; border: 0; background: none;
-  cursor: pointer; aspect-ratio: 16/9; overflow: hidden; }
-.bic-v .vignette { height: 100%; }
-.bic-v .vignette img { height: 100%; object-fit: cover; }
-.bic-v:hover { outline: 1px solid var(--or); outline-offset: -1px; }
-.bic-eti { position: absolute; left: 0; top: 0; font-size: .62rem; letter-spacing: .1em;
-  padding: .1rem .4rem; background: rgba(14,15,17,.86); color: var(--clair); }
-.bic.retenue .bic-eti { background: var(--vert); }
-.bic-t { font-size: 1.05rem; padding: 0 .65rem; }
-.bic-a { display: flex; align-items: center; gap: .3rem; font-size: .72rem;
-  color: var(--clair-terne); padding: 0 .65rem; }
-.bic-acc { font-family: var(--lecture); font-size: 1rem; color: var(--or); padding: 0 .65rem; }
-.bic-c { font-size: .82rem; line-height: 1.45; color: var(--clair-doux); padding: 0 .65rem; }
-
-.bic-arg { display: grid; gap: .4rem; padding: .2rem .65rem; }
-.bica { border-left: 2px solid var(--trait-clair); padding-left: .5rem; }
-.bica.sacrifice { border-left-color: var(--alerte); }
-.bica.argument { border-left-color: var(--vert); }
-.bica .t { font-size: .58rem; letter-spacing: .12em; color: var(--clair-terne); }
-.bica .v { font-size: .82rem; line-height: 1.45; }
-.bica .v.vide { color: var(--alerte); font-style: italic; }
-
-.bic-src { font-size: .7rem; color: var(--clair-doux); padding: 0 .65rem; line-height: 1.4; }
-.bic-src.vide { color: var(--clair-terne); font-style: italic; }
-.bic-n { display: flex; gap: .7rem; font-size: .72rem; color: var(--clair-terne); padding: 0 .65rem; }
-.bic-n b { color: var(--clair); }
-.bic-n .alerte, .bic-n .alerte b { color: var(--alerte); }
-.bic-g { padding: .2rem .65rem 0; }
-.bic-g .b { width: 100%; }
-
-/* ————————————————————— Les idées de l'atelier, dans la big idea ————————————————————— */
-
-.bi-atelier { display: grid; gap: .6rem; margin-top: 1.4rem; }
-.bi-idees { display: grid; gap: .35rem; }
-.bii { background: var(--nuit-carte); border-left: 2px solid var(--trait-clair);
-  padding: .4rem .6rem; display: grid; gap: .2rem; }
-.bii.retenue { border-left-color: var(--vert); }
-.bii.ecartee { opacity: .55; }
-.bii-t { font-size: .88rem; font-family: var(--lecture); line-height: 1.35; }
-.bii-m { display: flex; align-items: center; gap: .35rem; font-size: .7rem;
-  color: var(--clair-terne); flex-wrap: wrap; }
-.bii-r { color: var(--vert); }
-.bii-r.vide { color: var(--alerte); font-style: italic; }
-.bii-mo { font-size: .74rem; color: var(--clair-doux); border-left: 2px solid var(--trait);
-  padding-left: .5rem; }
-
-/* ————————————————————— Le dispositif ————————————————————— */
-
-.di-canal { display: grid; gap: .35rem; margin-bottom: .7rem; }
-.dic-t { display: flex; align-items: center; gap: .5rem; font-size: .7rem; color: var(--clair-terne); }
-.dic-b { font-size: .62rem; letter-spacing: .1em; padding: .08rem .38rem;
-  border: 1px solid currentColor; }
-.dic-b.or { color: var(--or); }
-.dic-b.vert { color: var(--vert); }
-.dic-b.violet { color: var(--violet); }
-
-.di-l { display: grid; gap: .3rem; }
-.di-a { text-align: left; background: var(--nuit-carte); border: 1px solid var(--trait);
-  border-left: 2px solid var(--trait-clair); padding: .45rem .6rem; cursor: pointer;
-  font: inherit; color: var(--clair); display: grid; gap: .2rem; }
-.di-a:hover { border-color: var(--trait-clair); }
-.di-a.tenu { border-left-color: var(--vert); }
-.di-a.tendu { border-left-color: var(--attente); }
-.di-a.depasse { border-left-color: var(--alerte); }
-.dia-h { display: flex; align-items: baseline; gap: .5rem; }
-.dia-lieu { font-size: .6rem; letter-spacing: .08em; color: var(--clair-terne);
-  border: 1px solid var(--trait); padding: 0 .28rem; }
-.dia-nom { font-size: .88rem; flex: 1; }
-.dia-t { font-size: .7rem; color: var(--clair-terne); }
-.di-a.depasse .dia-t { color: var(--alerte); }
-.di-a.tendu .dia-t { color: var(--attente); }
-.di-a.tenu .dia-t { color: var(--vert); }
-.dia-q { font-size: .78rem; color: var(--clair-doux); line-height: 1.4; }
-.dia-m { display: flex; gap: .6rem; flex-wrap: wrap; font-size: .68rem; color: var(--clair-terne); }
-.dia-m .alerte { color: var(--alerte); }
-
-.coche { display: flex; align-items: center; gap: .45rem; font-size: .8rem; margin-top: .5rem; }

@@ -355,7 +355,7 @@ window.COMPILATEUR = (function () {
           manques.length
             ? { nom: "Combler ce qui manque", doux: true, quand: function () {
                 PANNEAU.fermer();
-                location.hash = "#/projets/" + p.id + "/" + def.sections[0];
+                GESTE.ouvrir("projet", { p: p, section: def.sections[0] });
               } }
             : null,
         ].filter(Boolean)),

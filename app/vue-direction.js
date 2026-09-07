@@ -44,7 +44,7 @@ window.VUE_DIRECTION = (function () {
       h.appendChild(el("div.cmd-file", {},
         el("span", {}, nf + (nf > 1 ? " décisions attendent" : " décision attend")
           + " — elles se prennent dans la salle de tri, pas ici."),
-        el("a.b.nu", { href: "#/valider/file" }, "y aller →")));
+        GESTE.bouton("file", {}, null, "b.nu")));
     }
 
     /* La partie ressources ne s'ouvre que si elle a quelque chose à montrer.
@@ -54,7 +54,7 @@ window.VUE_DIRECTION = (function () {
     if (!aMontrer) {
       h.appendChild(el("div.cmd-rien", {},
         el("span", {}, "Aucun livrable à placer cette semaine."),
-        el("a.b.nu", { href: "#/pipeline" }, "voir la charge →")));
+        GESTE.bouton("charge", {}, null, "b.nu")));
       return;
     }
 
@@ -118,7 +118,7 @@ window.VUE_DIRECTION = (function () {
         el("div.smd-t", {}, "CE QUE ÇA DÉPLACE"),
         el("p", {}, deplacement(enMur, vides)),
         el("div.form-actions", {},
-          el("a.b.or", { href: "#/planning/charge" }, "Voir les livrables →"),
+          GESTE.bouton("charge", {}, null, "b.or"),
           el("button.b.nu", { type: "button", onclick: function () {
             if (lignes[0]) proteger(lignes[0].pe); } }, "Protéger du temps"))));
   }
@@ -268,8 +268,8 @@ window.VUE_DIRECTION = (function () {
         el("h3", {}, "GABARITS NON RENSEIGNÉS"),
         el("p", { style: { "font-size": ".84rem", color: "var(--clair-doux)" } },
           gabarits + " croisement" + (gabarits > 1 ? "s" : "") + " support × marché sans dimensions."),
-        el("button.b", { type: "button", onclick: function () { PANNEAU.fermer(); location.hash = "#/referentiel"; } },
-          "Ouvrir le référentiel")
+        el("button.b", { type: "button", onclick: function () {
+          PANNEAU.fermer(); GESTE.ouvrir("marches"); } }, "Renseigner les gabarits")
       ) : null
     ));
   }
@@ -441,7 +441,7 @@ window.VUE_DIRECTION = (function () {
         var ton = e.tenable === null ? "inconnu" : e.tenable ? "tenable" : "intenable";
         return el("button.eng." + ton, {
           type: "button",
-          onclick: function () { location.hash = "#/projets/" + e.projet.id + "/brief"; },
+          onclick: function () { GESTE.ouvrir("brief", { p: e.projet }); },
         },
           el("span.e-nom", {}, e.projet.ref),
           el("span.e-date", {}, e.echeance ? O.joli(e.echeance) : "sans échéance"),

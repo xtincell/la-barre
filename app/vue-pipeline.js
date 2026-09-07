@@ -61,12 +61,12 @@ window.VUE_PIPELINE = (function () {
         Object.keys(parProjet).length + " dossiers", ""),
       kpi(fermes + " / " + pieces.length, "engagés ou fermes",
         specu + " spéculatifs", fermes ? "vert" : "attente"),
-      kpi(pretes + " / " + pieces.length, "prêtes à produire",
-        pretes === pieces.length ? "tout peut partir" : (pieces.length - pretes) + " bloquées", pretes < pieces.length ? "alerte" : "vert"),
+      kpi(pretes + " / " + pieces.length, "prêts à produire",
+        pretes === pieces.length ? "tout peut partir" : (pieces.length - pretes) + " bloqués", pretes < pieces.length ? "alerte" : "vert"),
       kpi(String(fbOuverts.length), fbOuverts.length > 1 ? "retours non tranchés" : "retour non tranché",
         touchees + (touchees > 1 ? " livrables suspendus" : " livrable suspendu"), fbOuverts.length ? "alerte" : "vert"),
       kpi(String(sansResp), "sans responsable",
-        sansResp ? "personne en défaut le jour où ça n'avance pas" : "toutes affectées", sansResp ? "attente" : "vert")
+        sansResp ? "personne en défaut le jour où ça n'avance pas" : "tous affectés", sansResp ? "attente" : "vert")
     );
   }
 
@@ -219,10 +219,10 @@ window.VUE_PIPELINE = (function () {
       });
     });
     if (cible) {
-      g.push(el("a.b.or", { href: "#/projets/" + cible.id + "/pistes" }, "Arbitrer les pistes →"));
-      g.push(el("a.b.nu", { href: "#/projets/" + cible.id + "/presentation" }, "Préparer la présentation"));
+      g.push(GESTE.bouton("pistes", { p: cible }, null, "b.or"));
+      g.push(GESTE.bouton("presentation", { p: cible }, null, "b.nu"));
     } else {
-      g.push(el("a.b.nu", { href: "#/planning/charge" }, "Voir où en sont les livrables →"));
+      g.push(GESTE.bouton("charge", {}, null, "b.nu"));
     }
     return g;
   }
@@ -237,7 +237,7 @@ window.VUE_PIPELINE = (function () {
         el("a.pirc-n", { href: "#/projets/" + x.p.id + "/pistes" },
           x.pi ? (x.pi.titre || "piste sans titre") : "Livrables sans piste"),
         el("span.pirc-p", {}, x.p.ref + " · " + x.p.nom),
-        el("span.pirc-c", {}, pretes + " / " + x.ls.length + " prêtes")),
+        el("span.pirc-c", {}, pretes + " / " + x.ls.length + " prêts")),
 
       m
         ? el("div.pirc-m", {},

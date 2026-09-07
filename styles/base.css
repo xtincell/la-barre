@@ -498,7 +498,10 @@ body {
 }
 .panneau-tete h2 { font-size: var(--t-lire); letter-spacing: var(--ls-lire); font-weight: 400; line-height: 1.2; }
 .panneau-tete .etat { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--or); margin-left: auto; white-space: nowrap; }
-.panneau-fermer { background: none; border: 1px solid var(--trait-clair); color: var(--clair-doux);
+/* La croix était à 29 px de haut : sous la cible de 44. C'est le seul geste
+ * disponible sur une modale ouverte — il ne peut pas être le plus petit. */
+.panneau-fermer { min-width: var(--cible); min-height: var(--cible);
+  background: none; border: 1px solid var(--trait-clair); color: var(--clair-doux);
   font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: .15rem .4rem; cursor: pointer; }
 .panneau-fermer:hover { background: var(--alerte); color: #fff; border-color: var(--alerte); }
 .panneau-corps { overflow-y: auto; padding: 1rem; }
@@ -714,12 +717,18 @@ button, a, input, select, textarea, summary {
  * boutons de texte en ligne, qui vivent dans des lignes denses, les prennent
  * par une zone invisible — la cible grandit, la ligne non. */
 .b { min-height: var(--cible); }
-.b.nu, .b.petit, .pip-plus, .fil a, .pirc-n, .jul, .jucas-p, .rail-i {
+.b.nu, .b.petit, .pip-plus, .fil a, .pirc-n, .jul, .jucas-p, .rail-i,
+.smr-b, .pc-select, .cmd-b, .pld {
   min-height: 0; position: relative;
 }
 .b.nu::after, .b.petit::after, .pip-plus::after, .fil a::after,
-.pirc-n::after, .jul::after, .jucas-p::after, .rail-i::after {
-  content: ""; position: absolute; left: 0; right: 0;
+.pirc-n::after, .jul::after, .jucas-p::after, .rail-i::after,
+.smr-b::after, .pc-select::after, .cmd-b::after, .pld::after {
+  content: ""; position: absolute;
+  /* La zone déborde de dix pixels de chaque côté : un bouton de deux mots
+     * faisait 24 px de large. La hauteur suffisait, la largeur non — et un
+   * pouce ne vise pas un mot, il vise une zone. */
+  left: -12px; right: -12px;
   top: 50%; transform: translateY(-50%);
   min-height: var(--cible); height: 100%;
 }

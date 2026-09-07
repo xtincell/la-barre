@@ -54,7 +54,7 @@ window.FILE = (function () {
             if (pr && pr.type === "livrable" && window.VUE_ASSET) {
               VUE_ASSET.ouvrir(pr.projet, pr.objet, function () { location.reload(); });
             } else if (pr) {
-              location.hash = "#/projets/" + pr.projet.id + "/pistes";
+              GESTE.ouvrir("pistes", { p: pr.projet });
             }
           } }] }));
     }
@@ -81,8 +81,8 @@ window.FILE = (function () {
           court: "retours non tranchés",
           verbatim: (fb[0] || {}).texte, verbatimPar: (fb[0] || {}).auteur,
           verbatimLe: (fb[0] || {}).quand,
-          gestes: [{ nom: "Trancher les retours →", fort: true, quand: function () {
-            location.hash = "#/reporting/reprises"; } }] }));
+          gestes: [{ nom: "Trancher les retours", fort: true, quand: function () {
+            GESTE.ouvrir("reprises"); } }] }));
     }
 
     /* 3 · Les pistes en lice sans arbitrage. */
@@ -208,7 +208,7 @@ window.FILE = (function () {
     return el("div.fi-vide", {},
       el("div.fiv-s", {}, "Rien n'attend de décision. C'est le seul moment où l'on peut "
         + "faire mûrir une piste spéculative — celles qui sont mûres se valident plus souvent."),
-      el("a.b", { href: "#/planning/ordre" }, "Voir ce qui peut mûrir →"));
+      GESTE.bouton("ordre", {}, "Voir ce qui peut mûrir"));
   }
 
   /* La file, réduite à des coûts. Elle navigue, elle ne se lit pas. */
@@ -255,8 +255,14 @@ window.FILE = (function () {
         (x.gestes || []).map(function (g) {
           return el("button.b" + (g.fort ? ".or" : ""), { type: "button", onclick: g.quand }, g.nom);
         }),
-        el("a.b" + ((x.gestes || []).length ? ".nu" : ".or"), { href: x.ou },
-          (x.gestes || []).length ? "Ouvrir le dossier" : d.nom ? d.nom + " →" : "Ouvrir →"),
+        /* Le lien nu de la file d'action était le plus coûteux du produit :
+         * c'est l'écran où l'assistant passe sa journée, et il envoyait
+         * ailleurs sans dire quoi y faire. L'item sait déjà ce qui attend et
+         * ce que ça coûte — la modale se monte avec. */
+        GESTE.lien(x.ou,
+          (x.gestes || []).length ? "Ouvrir le dossier" : d.nom || "Ouvrir",
+          "b" + ((x.gestes || []).length ? ".nu" : ".or"),
+          { quoi: x.quoi, cout: x.trancher || x.cout }),
         el("button.b.nu", { type: "button", onclick: function () {
           courant = Math.min(courant + 1, total - 1); rafraichir();
         } }, "Passer  ↓")),

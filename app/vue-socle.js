@@ -106,7 +106,7 @@ window.VUE_SOCLE = (function () {
         el("p.sv-s", {}, "La plateforme appartient à la marque et vaut plusieurs années. "
           + "La campagne s'y adosse ; ce qui n'est vrai que cette saison reste dans "
           + "le dossier."),
-        el("a.b.or", { href: "#/referentiel/marques" }, "Ouvrir la bibliothèque de marque")),
+        GESTE.bouton("marques", {}, null, "b.or")),
 
       el("div.sv-l", {}, mqs.map(function (m) { return blocMarqueSocle(p, m); })),
 

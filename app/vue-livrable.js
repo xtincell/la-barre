@@ -132,7 +132,7 @@ window.VUE_LIVRABLE = (function () {
     var gestes = [];
     if (v && !v.verdict) {
       gestes.push({ nom: "Juger cette version", fort: true, quand: function () {
-        PANNEAU.fermer(); location.hash = "#/revue"; } });
+        PANNEAU.fermer(); GESTE.ouvrir("file"); } });
     } else {
       gestes.push({ nom: "Soumettre une version", fort: true, quand: function () {
         var n = (l.versions || []).length + 1;

@@ -229,7 +229,7 @@ window.FEEDBACK = (function () {
     });
     if (apresBAT.length) {
       out.push({ cle: "bat", quoi: "Le BAT est signé",
-        detail: apresBAT.length + (apresBAT.length > 1 ? " livrables sont parties" : " livrable est partie")
+        detail: apresBAT.length + (apresBAT.length > 1 ? " livrables sont partis" : " livrable est parti")
           + " en production avec un accord écrit",
         force: 5 });
     }

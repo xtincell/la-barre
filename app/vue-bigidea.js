@@ -209,7 +209,7 @@ window.VUE_BIGIDEA = (function () {
 
       el("div.bic-n", {},
         el("span", {}, el("b", {}, String(ls.length)), ls.length > 1 ? " livrables" : " livrable"),
-        el("span", {}, el("b", {}, String(pretes)), " prêtes"),
+        el("span", {}, el("b", {}, String(pretes)), pretes > 1 ? " prêts" : " prêt"),
         el("span" + (disp ? "" : ".alerte"), {}, el("b", {}, String(disp)),
           disp > 1 ? " activités" : disp ? " activité" : " dispositif")),
 
@@ -234,7 +234,7 @@ window.VUE_BIGIDEA = (function () {
           el("span.bir-e", { style: { color: "var(--alerte)" } }, "aucune idée posée")),
         el("p.rien", {}, "Aucune idée n'a été posée en atelier. L'indicateur « idées retenues émanant de juniors » reste donc à zéro, quoi qu'il arrive."),
         el("div.form-actions", {},
-          el("a.b", { href: "#/projets/" + p.id + "/atelier" }, "Ouvrir l'atelier →")));
+          GESTE.bouton("atelier", { p: p })));
     }
 
     var retenues = is.filter(function (i) { return i.statut === "retenue"; });

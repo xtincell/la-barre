@@ -99,12 +99,11 @@ window.VUE_BRIEF = (function () {
 
       el("div.bfc-g", {},
         t.module === "DEMANDE"
-          ? el("button.b.nu", { type: "button", onclick: function () {
-              location.hash = "#/projets/" + p.id + "/pistes"; } }, "aux pistes créatives →")
+          ? GESTE.bouton("pistes", { p: p }, null, "b.nu")
           : t.section
             ? el("button.b.nu", { type: "button", onclick: function () {
-                location.hash = "#/projets/" + p.id + "/" + t.section; } },
-                "à la section " + t.section + " →")
+                GESTE.ouvrir("projet", { p: p, section: t.section }); } },
+                "Ouvrir « " + VUE_PROJETS.nomSection(t.section) + " »")
             : el("button.b" + (e.existe ? ".nu" : ".or"), { type: "button",
                 onclick: function () { editerBrief(p, t, rafraichir); } },
                 e.existe ? "compléter" : "poser ce brief")));
