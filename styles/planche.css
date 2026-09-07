@@ -3462,6 +3462,29 @@ a.svf.vide .svf-v { color: var(--clair-terne); font-style: italic; }
 }
 
 
+/* ————————————————————— Le même dossier, chez People ————————————————————— */
+
+.pe-people {
+  display: grid; gap: .2rem; margin-top: .7rem;
+  padding: .55rem .8rem; background: var(--nuit-carte);
+  border-left: 2px solid var(--trait-clair);
+}
+.pe-people.multiple { border-left-color: var(--attente); }
+.pe-people.absent { border-left-color: var(--trait); }
+.pep-t {
+  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--clair-terne);
+}
+.pep-r { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair); }
+.pe-people.absent .pep-r { color: var(--clair-terne); font-style: italic; }
+.pep-n {
+  margin: .15rem 0 0;
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--clair-doux); max-width: var(--mesure);
+}
+.pe-people.multiple .pep-n { color: var(--attente); }
+
+
 /* ————————————————————— Un chiffre porte sa conséquence ————————————————————— */
 
 /* Les trois tuiles de l'en-tête — blocages, inférés, livrables — étaient

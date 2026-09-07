@@ -120,11 +120,24 @@ window.PLATEAU = (function () {
 
   /* ————————————————————— Les gens ————————————————————— */
 
+  /* Toute la chaîne créative, pas seulement le premier rang.
+   *
+   * Le filtre ne gardait que les postes rattachés DIRECTEMENT au titulaire.
+   * Sur le plateau réel, ceux qui font le travail — graphic, motion, motion 3D,
+   * web — sont rattachés au Directeur Artistique, donc au deuxième rang : ils
+   * disparaissaient de la charge. On affectait des pièces à des gens que la vue
+   * de capacité ne montrait pas. */
+  function sousLeTitulaire(cle, garde) {
+    if (!cle || (garde || 0) > 6) return false;
+    if (cle === MAISON.titulaire) return true;
+    var p = O.poste(cle);
+    return p && p.rattache ? sousLeTitulaire(p.rattache, (garde || 0) + 1) : false;
+  }
+
   function personnes() {
     return DEPOT.liste("personnes").filter(function (p) {
-      var poste = O.poste(p.poste);
-      return poste.rattache === MAISON.titulaire || p.poste === "da" || p.poste === "planning"
-        || (p.casquettes || []).length;
+      if (p.archive) return false;
+      return sousLeTitulaire(p.poste) || (p.casquettes || []).length > 0;
     });
   }
 

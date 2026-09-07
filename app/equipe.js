@@ -21,6 +21,10 @@ window.EQUIPE = (function () {
 
   function encadres() {
     return DEPOT.liste("personnes").filter(function (p) {
+      /* Une personne archivée a quitté le plateau : elle reste au dépôt — on
+       * n'efface rien — mais on ne l'encadre plus, et elle ne compte plus dans
+       * « progression mesurée des créatifs encadrés ». */
+      if (p.archive) return false;
       if (p.poste === MAISON.titulaire) return false;
       if (ENCADRES.indexOf(p.poste) !== -1) return true;
       return (p.casquettes || []).some(function (c) { return ENCADRES.indexOf(c.poste) !== -1; });

@@ -368,6 +368,8 @@ window.VUE_PROJETS = (function () {
         meta("FENÊTRE", ident.fenetre)
       ),
 
+      chezPeople(p),
+
       navigateur(p, g, courante, hote),
 
       el("div", { style: { "margin-top": "1.2rem" } }, corpsSection(p, courante, rafraichir))
@@ -401,6 +403,23 @@ window.VUE_PROJETS = (function () {
 
     hote.appendChild(gauche);
     hote.appendChild(droite);
+  }
+
+  /* ————————————————————— Le même dossier, chez People ————————————————————— */
+
+  /* Deux systèmes suivent le même travail sous deux références. Tant qu'elles
+   * ne se nomment pas l'une l'autre, on compare de mémoire — et c'est comme ça
+   * qu'on découvre trois dossiers Ecobank ouverts en parallèle après coup. */
+  function chezPeople(p) {
+    var x = p.people;
+    if (!x) return null;
+    var n = (x.refs || []).length;
+    return el("div.pe-people" + (n > 1 ? ".multiple" : n ? "" : ".absent"), {},
+      el("span.pep-t", {}, "MATANGA PEOPLE"),
+      el("span.pep-r", {}, n
+        ? (x.refs || []).join("  ·  ") + (x.nom ? "  —  " + x.nom : "")
+        : "aucun dossier correspondant"),
+      x.note ? el("p.pep-n", {}, x.note) : null);
   }
 
   /* ————————————————————— L'état du dossier, en une phrase ————————————————————— */
