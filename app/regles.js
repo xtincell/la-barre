@@ -19,6 +19,8 @@ window.REGLES = (function () {
     "da-absent": "Direction de la Création qui produit : la porte A se ferme pour l'équipe.",
     "auteur-absent": "L'idée ne pourra être attribuée à personne, et l'indicateur juniors reste à zéro.",
     "arbitrage-absent": "L'équipe travaille sans savoir quel concept fait autorité.",
+    "axe-absent": "La piste ne se distingue des autres que par son titre : la comparer n'oppose rien, et le client tranchera sur le visuel qu'on lui montre.",
+    "axe-jumeau": "Deux pistes au même ton ne font pas un choix : on demande au client de trancher sur rien, et il reviendra dessus.",
     "entree-sans-fournisseur": "Tout le monde attend un fichier que personne ne doit fournir.",
     "copy-non-verrouille": "Une correction tardive traversera toutes les déclinaisons et toutes les langues.",
     "droits-insuffisants": "Usage hors du territoire ou de la durée couverts par la licence.",
@@ -185,8 +187,29 @@ window.REGLES = (function () {
       if (pistes.length > 1 && retenue === 0) {
         pousser(trouves, p, "arbitrage-absent", pistes.length + " pistes en lice, aucune retenue", "creation", "pistes");
       }
+      /* L'axe créatif : ce qui sépare une piste d'une autre. Le contrôle ne
+       * mord que sur les pistes vives — écarter une piste sans axe n'est pas
+       * une faute, c'est une décision déjà prise. */
+      var jumeauxDits = {};
       pistes.forEach(function (pi) {
         if (!pi.auteurDA) pousser(trouves, p, "auteur-absent", "Piste « " + (pi.titre || "sans titre") + " » sans auteur", "creation", "pistes");
+        if (pi.statut === "ecartee" || !window.AXE) return;
+
+        var a = AXE.de(pi);
+        if (!a.complet) {
+          pousser(trouves, p, "axe-absent",
+            "Piste « " + (pi.titre || "sans titre") + " » — "
+              + (a.vide ? "aucun axe créatif écrit"
+                : a.manque.map(function (c) { return c.court.toLowerCase(); }).join(", ") + " à écrire"),
+            "da", "pistes");
+        }
+        var j = AXE.jumelles(p, pi);
+        if (j.length && !jumeauxDits[O.normalise(pi.axe_ton)]) {
+          jumeauxDits[O.normalise(pi.axe_ton)] = true;
+          pousser(trouves, p, "axe-jumeau",
+            "« " + (pi.titre || "sans titre") + " » et « " + (j[0].titre || "sans titre")
+              + " » portent le même ton", "da", "pistes");
+        }
       });
 
       /* Livrables. Une campagne multi-marchés porte quatorze livrables : quatorze
@@ -360,20 +383,24 @@ window.REGLES = (function () {
     return msg;
   }
 
-  /* ————— Complétude sur dix axes ————— */
+  /* ————— Recevabilité sur dix points ————— */
 
   function completude(livrable) {
-    var axes = {};
-    MAISON.axes.forEach(function (a) {
-      axes[a.cle] = (livrable.axes && livrable.axes[a.cle]) || "attente";
+    var points = {};
+    /* Repli sur l'ancienne clé : un dépôt écrit avant le renommage doit
+     * continuer de s'ouvrir. Rien n'est réécrit tant qu'on ne touche pas au
+     * livrable — la migration se fait au premier clic. */
+    var porte = livrable.points || livrable.axes;
+    MAISON.points.forEach(function (a) {
+      points[a.cle] = (porte && porte[a.cle]) || "attente";
     });
-    return axes;
+    return points;
   }
 
   function pretSur(livrable) {
     var c = completude(livrable);
     var n = 0, total = 0;
-    MAISON.axes.forEach(function (a) {
+    MAISON.points.forEach(function (a) {
       if (c[a.cle] === "sansobjet") return;
       total++;
       if (c[a.cle] === "pret") n++;
@@ -385,8 +412,8 @@ window.REGLES = (function () {
   function coince(livrable) {
     var c = completude(livrable);
     var liste = [];
-    MAISON.axes.forEach(function (a) {
-      if (c[a.cle] === "attente") liste.push({ axe: a.nom, poste: a.poste, cle: a.cle });
+    MAISON.points.forEach(function (a) {
+      if (c[a.cle] === "attente") liste.push({ point: a.nom, poste: a.poste, cle: a.cle });
     });
     return liste;
   }

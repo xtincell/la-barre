@@ -117,7 +117,9 @@ window.MAISON = {
   ],
 
   /* ————— Les dix axes de complétude d'un livrable. ————— */
-  axes: [
+  /* Les dix points de recevabilité. Ils s'appelaient « axes » — le mot est
+   * rendu à l'axe créatif, qui est autre chose. */
+  points: [
     { cle: "concept", nom: "Concept", poste: "creation" },
     { cle: "copy", nom: "Copy", poste: "redacteur" },
     { cle: "asset", nom: "Asset", poste: "da" },

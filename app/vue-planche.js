@@ -201,7 +201,7 @@ window.VUE_PLANCHE = (function () {
     }
     dessiner();
 
-    var f = FORM.rendre(KV.axes(p).map(function (a) {
+    var f = FORM.rendre(KV.champs(p).map(function (a) {
       return { cle: a.cle, nom: a.nom, type: a.type === "choix" ? "texte" : a.type, aide: a.aide };
     }), k);
 
@@ -286,15 +286,15 @@ window.VUE_PLANCHE = (function () {
           var faits = 0;
           choix.valeurs().forEach(function (sid) {
             var s = DEPOT.trouve("supports", sid);
-            var axes = {};
-            MAISON.axes.forEach(function (a) { axes[a.cle] = "attente"; });
+            var points = {};
+            MAISON.points.forEach(function (a) { points[a.cle] = "attente"; });
             p.livrables.push({
               id: O.id("L"), voletId: maitre.voletId, support: sid, marche: maitre.marche,
               nom: (s ? s.nom : "format") + " · " + (DEPOT.trouve("marches", maitre.marche) || {}).code,
               responsable: maitre.responsable, origine: "prevu", pisteId: maitre.pisteId,
               maitre: maitre.id, versionMaitre: maitre.version || 1, version: 1, versions: [],
               estime: null, reel: null, toursVendus: maitre.toursVendus,
-              assets: [], entrees: [], annotations: [], mockups: [], axes: axes,
+              assets: [], entrees: [], annotations: [], mockups: [], volets: volets,
             });
             faits++;
           });

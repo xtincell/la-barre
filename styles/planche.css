@@ -3746,3 +3746,64 @@ blockquote, .message, .verbatim, .bii-t, .ati-t {
 /* Et la règle qui empêche la dérive de revenir : au-dessous de --t-eti, on ne
  * met que des capitales espacées. Un texte en bas de casse à cette taille est
  * un défaut, pas un choix. */
+
+/* ————————————————————— L'axe créatif ————————————————————— */
+/* Ce qui sépare une piste d'une autre. Il se lit avant l'argumentaire :
+ * le sacrifice défend quelque chose, et ce quelque chose est l'axe. */
+
+.axe { background: var(--nuit-carte); border-left: 2px solid var(--or);
+  padding: .8rem .9rem; display: grid; gap: .6rem; margin-bottom: 1rem; }
+.axe.vide { border-left-color: var(--bloquant); }
+
+.axe-t { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; }
+.axet-l { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--or); }
+.axet-e { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
+.axet-e.vert { color: var(--vert); }
+.axet-e.attente { color: var(--attente); }
+.axet-e.alerte { color: var(--bloquant-txt); }
+
+.axe-q { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--clair-doux); max-width: var(--mesure); }
+.axe-rien { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux);
+  max-width: var(--mesure); }
+
+.axe-c { display: grid; gap: .55rem; }
+.axec { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: .7rem; align-items: start; }
+.axec-l { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--clair-terne); }
+.axec-v { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair);
+  max-width: var(--mesure); }
+.axec-v.manque { color: var(--bloquant-txt); font-style: italic; }
+.axec-p { display: flex; gap: .35rem; flex-wrap: wrap; }
+.axe-val { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--clair-doux); border: 1px solid var(--trait); padding: .1rem .4rem; }
+
+/* Le ton, en grand : c'est le mot qui doit sauter aux yeux quand on met
+ * trois colonnes côte à côte. */
+.axe-ton { font-family: var(--lecture); font-size: var(--t-titre);
+  letter-spacing: var(--ls-titre); line-height: 1.25; color: var(--clair); }
+.axe-jum { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--bloquant-txt); margin-top: .3rem; }
+
+/* Ce que la marque impose, pendant qu'on écrit l'axe. Pluriannuel au-dessus
+ * du saisonnier : le produit ne juge pas le sens, il met la règle sous les
+ * yeux de celui qui écrit. */
+.axe-socle { border: 1px solid var(--trait); padding: .7rem .8rem; display: grid; gap: .45rem;
+  margin-bottom: .9rem; }
+.axsoc-l { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--clair-terne); }
+.axsoc-r { display: grid; grid-template-columns: 11rem minmax(0, 1fr) auto; gap: .6rem;
+  align-items: baseline; }
+.axsocr-n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--clair-terne); }
+.axsocr-v { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--clair); }
+.axsocr-s { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); }
+.axsoc-i { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--clair-doux); }
+
+@media (max-width: 700px) {
+  .axec, .axsoc-r { grid-template-columns: minmax(0, 1fr); gap: .2rem; }
+}

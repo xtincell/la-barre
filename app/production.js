@@ -31,6 +31,16 @@ window.PRODUCTION = (function () {
       quoi: "le film raconté en planches — et une ébauche d'animation si le temps le permet",
       pour: "la présentation client, avant toute production",
       cout: "on présente un film que personne ne peut se représenter" },
+    /* Les sources. L'en-tête de ce module les nomme depuis le premier jour et
+     * le type avait disparu du tableau : « Poser un fichier » plantait sur
+     * TYPES.ouvert, donc plus aucun fichier ne pouvait être posé. Deux fiches
+     * sont évaluées dessus — « sources rangées et nommées » — et la définition
+     * de fini les exige. */
+    ouvert: { rang: 4, nom: "Les sources", ext: "psd · ai · indd · aep · prproj",
+      quoi: "les fichiers de travail, rangés et nommés",
+      pour: "l'agence, la reprise dans six mois",
+      cout: "le livrable ne se reprend que depuis zéro, et la personne qui l'a fait "
+        + "emporte le dossier en partant" },
     situation: { rang: 3, nom: "La mise en situation", ext: "jpg · png", f: true,
       quoi: "le livrable dans son support — un 4×3 en rue, une gondole en rayon",
       pour: "la présentation client",
@@ -260,8 +270,9 @@ window.PRODUCTION = (function () {
     Object.keys(TYPES).forEach(function (k) {
       selT.appendChild(el("option", { value: k }, TYPES[k].nom));
     });
-    var aide = el("div.indice", {}, TYPES.ouvert.quoi);
-    selT.addEventListener("change", function () { aide.textContent = TYPES[selT.value].quoi; });
+    function defDe(cle) { return TYPES[cle] || TYPES.asset; }
+    var aide = el("div.indice", {}, defDe(selT.value).quoi);
+    selT.addEventListener("change", function () { aide.textContent = defDe(selT.value).quoi; });
 
     var champNom = el("input", { type: "text", placeholder: "Nom du fichier, conventionné" });
     var champLieu = el("input", { type: "text", placeholder: "Chemin sur le Drive, ou lien" });
@@ -278,7 +289,7 @@ window.PRODUCTION = (function () {
         el("div.champ", {}, el("label", {}, "Type"), selT, aide),
         el("div.champ", {}, el("label", {}, "Nom"), champNom),
         el("div.champ", {}, el("label", {}, "Où il est"),
-          el("div.indice", {}, "La base local ne porte jamais un fichier de production : on garde le chemin."), champLieu),
+          el("div.indice", {}, "La base locale ne porte jamais un fichier de production : on garde le chemin."), champLieu),
         el("div.champ", {}, el("label", {}, "Signataire"), champSig),
         (l.mockups || []).length
           ? el("div.champ", {}, el("label", {}, "Lier à une mise en situation"),

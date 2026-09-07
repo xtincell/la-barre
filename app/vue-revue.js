@@ -295,7 +295,7 @@ window.VUE_REVUE = (function () {
     } else {
       var ver = (pc.objet.versions || [])[pc.objet.versions.length - 1];
       if (ver) { ver.verdict = v.cle; ver.motif = motif; ver.juge_le = quand; }
-      if (v.cle === "approuve") pc.objet.axes.central = "pret";
+      if (v.cle === "approuve") pc.objet.points.central = "pret";
     }
     DEPOT.enregistrer();
   }

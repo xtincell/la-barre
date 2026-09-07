@@ -588,7 +588,7 @@ window.VUE_MATRICE = (function () {
   }
 
   function matrice(p, v, rafraichir) {
-    /* Les axes sont l'union du croisement déclaré et de ce que les livrables
+    /* Les volets sont l'union du croisement déclaré et de ce que les livrables
      * existants utilisent : aucun livrable ne disparaît de la grille. */
     var idsS = (v.supports || []).slice();
     var idsM = (v.marches || []).slice();
@@ -677,7 +677,7 @@ window.VUE_MATRICE = (function () {
           el("div.tete", {},
             el("b", {}, l.nom),
             l.maitre ? el("span.critere", {}, "adaptation") : el("span.critere", {}, "maître"),
-            el("span.age", {}, pr.pret + "/" + pr.total + " axes")
+            el("span.age", {}, pr.pret + "/" + pr.total + " volets")
           )
         );
       }),
@@ -693,10 +693,10 @@ window.VUE_MATRICE = (function () {
   /* ————— Créer une case ————— */
 
   function creer(p, v, s, m, rafraichir) {
-    var axes = {};
-    MAISON.axes.forEach(function (a) { axes[a.cle] = "attente"; });
-    if (m.langues.length === 1 && m.langues[0] === "fr") axes.langue = "pret";
-    if (!v.marches || v.marches.length < 2) axes.local = "sansobjet";
+    var points = {};
+    MAISON.points.forEach(function (a) { points[a.cle] = "attente"; });
+    if (m.langues.length === 1 && m.langues[0] === "fr") points.langue = "pret";
+    if (!v.marches || v.marches.length < 2) points.local = "sansobjet";
 
     var l = {
       id: O.id("L"), voletId: v.id, support: s.id, marche: m.id,
@@ -704,7 +704,7 @@ window.VUE_MATRICE = (function () {
       responsable: null, echeance: null, remise: null, publication: null,
       origine: "prevu", pisteId: pisteRetenue(p), maitre: null, version: 1, versions: [],
       estime: null, reel: null, toursVendus: null, assets: [], entrees: [],
-      axes: axes,
+      volets: volets,
     };
     if (!p.livrables) p.livrables = [];
     p.livrables.push(l);
@@ -761,10 +761,10 @@ window.VUE_MATRICE = (function () {
 
       gabaritSupport(s, m),
 
-      PANNEAU.sousbloc("Complétude — dix axes", axesLivrable(l, rafraichir)),
+      PANNEAU.sousbloc("Recevabilité — dix points", axesLivrable(l, rafraichir)),
       coince.length
-        ? UI.banniere("", "En attente sur : " + coince.map(function (c) { return c.axe + " (" + O.poste(c.poste).court + ")"; }).join(" · "))
-        : UI.banniere("vert", "Tous les axes sont prêts."),
+        ? UI.banniere("", "En attente sur : " + coince.map(function (c) { return c.point + " (" + O.poste(c.poste).court + ")"; }).join(" · "))
+        : UI.banniere("vert", "Tous les points sont prêts."),
 
       versions(p, l, rafraichir),
       entrees(l),
@@ -797,7 +797,7 @@ window.VUE_MATRICE = (function () {
       )
     );
 
-    PANNEAU.ouvrir(l.nom, pr.pret + "/" + pr.total + " axes", corps, O.poste("da").couleur);
+    PANNEAU.ouvrir(l.nom, pr.pret + "/" + pr.total + " volets", corps, O.poste("da").couleur);
   }
 
   function versionMaitre(p, l) {
@@ -820,17 +820,17 @@ window.VUE_MATRICE = (function () {
   }
 
   function axesLivrable(l, rafraichir) {
-    var boite = el("div.axes");
+    var boite = el("div.points-r");
     function dessiner() {
       O.vider(boite);
-      MAISON.axes.forEach(function (a) {
-        var etat = (l.axes && l.axes[a.cle]) || "attente";
+      MAISON.points.forEach(function (a) {
+        var etat = (l.points && l.points[a.cle]) || "attente";
         boite.appendChild(el("button.axe." + etat, {
           type: "button",
           title: a.nom + " — " + O.poste(a.poste).nom,
           onclick: function () {
             var suite = { attente: "pret", pret: "sansobjet", sansobjet: "attente" };
-            l.axes[a.cle] = suite[etat];
+            l.points[a.cle] = suite[etat];
             DEPOT.enregistrer(); dessiner();
           },
         }, a.nom));

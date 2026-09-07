@@ -37,7 +37,7 @@ window.COUT = (function () {
       }
       var reste = REGLES.coince(l).filter(function (a) { return a.cle !== "central"; });
       if (reste.length) {
-        out.effets.push("Il restera " + reste.length + " axes en attente : "
+        out.effets.push("Il restera " + reste.length + " points en attente : "
           + reste.map(function (a) { return a.axe.toLowerCase(); }).join(", "));
       }
       return out;

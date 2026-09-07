@@ -196,11 +196,11 @@ window.BRIEF_PRODUCTION = (function () {
     ] });
 
     /* 11 — Ce qui décide que c'est fini. */
-    var axes = l.axes || {};
+    var axes = l.points || {};
     var restants = Object.keys(axes).filter(function (k) { return axes[k] !== "fait"; });
     blocs.push({ t: "CE QUI DÉCIDE QUE C'EST FINI",
       puces: restants.map(function (k) { return NOM_AXE[k] || k; }),
-      siVide: "les dix axes sont au vert : le livrable est finie au sens de la définition.",
+      siVide: "les dix points sont au vert : le livrable est finie au sens de la définition.",
       videBon: true });
 
     return {

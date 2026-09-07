@@ -379,7 +379,7 @@ window.VUE_BIGIDEA = (function () {
         codes.length ? el("div.val-locales", {}, el("span.v-t", {}, "LOCALES"),
           codes.map(function (c) {
             var prets = (p.livrables || []).filter(function (l) {
-              return l.marche === c && (l.axes || {}).local === "pret"; }).length;
+              return l.marche === c && (l.points || {}).local === "pret"; }).length;
             var total = (p.livrables || []).filter(function (l) { return l.marche === c; }).length;
             return el("div.val-m", {}, UI.drapeau(c),
               el("span.v-etat" + (prets === total && total ? ".ok" : ""), {}, prets + "/" + total));

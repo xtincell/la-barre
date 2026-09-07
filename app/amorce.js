@@ -187,28 +187,28 @@ window.AMORCE = (function () {
             { quoi: "Palette et polices de la charte", fournisseur: null, date: null },
             { quoi: "Jeu de données neutre validé par l'IT", fournisseur: null, date: null },
           ],
-          axes: { concept: "attente", copy: "attente", asset: "attente", design: "attente", technique: "attente", droits: "attente", langue: "pret", central: "attente", local: "sansobjet", final: "attente" },
+          points: { concept: "attente", copy: "attente", asset: "attente", design: "attente", technique: "attente", droits: "attente", langue: "pret", central: "attente", local: "sansobjet", final: "attente" },
         },
         {
           id: "L-30", nom: "Version courte 30 s", support: "S-film", marche: "M-CM",
           voletId: "V-film", responsable: "P-serge", origine: "prevu", pisteId: "PI-1",
           maitre: "L-master", versionMaitre: 1, version: 1, versions: [],
           estime: null, reel: null, toursVendus: 2, assets: [], entrees: [],
-          axes: { concept: "attente", copy: "attente", asset: "attente", design: "attente", technique: "attente", droits: "attente", langue: "pret", central: "attente", local: "sansobjet", final: "attente" },
+          points: { concept: "attente", copy: "attente", asset: "attente", design: "attente", technique: "attente", droits: "attente", langue: "pret", central: "attente", local: "sansobjet", final: "attente" },
         },
         {
           id: "L-vert", nom: "Vertical 9:16", support: "S-vertical", marche: "M-CM",
           voletId: "V-film", responsable: "P-serge", origine: "prevu", pisteId: "PI-1",
           maitre: "L-master", versionMaitre: 1, version: 1, versions: [],
           estime: null, reel: null, toursVendus: 2, assets: [], entrees: [],
-          axes: { concept: "attente", copy: "attente", asset: "attente", design: "attente", technique: "attente", droits: "attente", langue: "pret", central: "attente", local: "sansobjet", final: "attente" },
+          points: { concept: "attente", copy: "attente", asset: "attente", design: "attente", technique: "attente", droits: "attente", langue: "pret", central: "attente", local: "sansobjet", final: "attente" },
         },
         {
           id: "L-en", nom: "Version anglaise", support: "S-film", marche: "M-GH",
           voletId: "V-film", responsable: "P-serge", origine: "prevu", pisteId: "PI-1",
           maitre: "L-master", versionMaitre: 1, version: 1, versions: [],
           estime: null, reel: null, toursVendus: 2, assets: [], entrees: [],
-          axes: { concept: "attente", copy: "attente", asset: "attente", design: "attente", technique: "attente", droits: "attente", langue: "attente", central: "attente", local: "attente", final: "attente" },
+          points: { concept: "attente", copy: "attente", asset: "attente", design: "attente", technique: "attente", droits: "attente", langue: "attente", central: "attente", local: "attente", final: "attente" },
         },
       ],
       notes: "L'ordre de fabrication transmis porte le concept de la piste 2, alors que la big idea en vigueur porte celui de la piste 1. La porte B n'est pas arbitrée.",
@@ -259,10 +259,10 @@ window.AMORCE = (function () {
     var livrables = COMBIS.map(function (c, i) {
       var m = null;
       DEPOT.tout().marches.forEach(function (x) { if (x.id === c[1]) m = x; });
-      var axes = {};
-      MAISON.axes.forEach(function (a) { axes[a.cle] = "attente"; });
-      axes.concept = "pret";
-      if (i < 6) axes.design = "pret";
+      var points = {};
+      MAISON.points.forEach(function (a) { points[a.cle] = "attente"; });
+      points.concept = "pret";
+      if (i < 6) points.design = "pret";
       return {
         id: "KV-" + (i + 1), voletId: "V-kv", support: "S-kv", marche: c[1],
         nom: "KV · " + (m ? m.code : "?") + " · " + c[0],
@@ -270,7 +270,7 @@ window.AMORCE = (function () {
         echeance: "2026-09-18", remise: "2026-09-25", publication: null,
         origine: "prevu", pisteId: null, maitre: null, version: 1, versions: [],
         estime: 1, reel: null, toursVendus: 2,
-        assets: [], entrees: [], annotations: [], mockups: [], axes: axes,
+        assets: [], entrees: [], annotations: [], mockups: [], points: points,
         kv: {
           marque: c[0],
           /* Le Ghana est servi en français : l'erreur que la planche ne dit pas. */
@@ -307,7 +307,7 @@ window.AMORCE = (function () {
         pistes: [],
       },
       /* Les choix de direction artistique propres à cette campagne. */
-      axesDA: [
+      champsDA: [
         { cle: "enfant", nom: "Enfant", type: "texte", aide: "Garçon ou fille." },
         { cle: "metier", nom: "Métier illustré", type: "texte", aide: "L'ombre projetée : astronaute, juge, médecin…" },
       ],

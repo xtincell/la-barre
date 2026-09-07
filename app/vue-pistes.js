@@ -72,8 +72,14 @@ window.VUE_PISTES = (function () {
    * l'autre, et on compare de mémoire. Or la décision est une comparaison —
    * elle se lit en travers. Une colonne de libellés, une colonne par piste,
    * et chaque ligne aligne la même question pour toutes. */
+  /* Ce sur quoi deux pistes se départagent vraiment. L'axe passe devant le
+   * concept : deux pistes peuvent porter le même concept et ne pas être la
+   * même campagne — c'est le ton et l'univers qui les séparent. */
   var LIGNES = [
     { cle: "visuel",     nom: "VISUEL" },
+    { cle: "axe",        nom: "AXE" },
+    { cle: "ton",        nom: "TON" },
+    { cle: "univers",    nom: "UNIVERS VISUEL" },
     { cle: "concept",    nom: "CONCEPT" },
     { cle: "sacrifice",  nom: "SACRIFICE" },
     { cle: "argument",   nom: "ARGUMENT" },
@@ -127,6 +133,10 @@ window.VUE_PISTES = (function () {
         onclick: function () { ouverte = pi.id; rafraichir(); },
         title: "ouvrir « " + (pi.titre || "cette piste") + " »" },
         IMAGE.vignette(pi, "grande"));
+    }
+
+    if (cle === "axe" || cle === "ton" || cle === "univers") {
+      return AXE.cellule(p, pi, cle);
     }
 
     if (cle === "concept") {
@@ -232,7 +242,9 @@ window.VUE_PISTES = (function () {
   }
 
   function editer(p, pi, rafraichir) {
-    var f = FORM.rendre(CHAMPS.piste, pi || {});
+    /* Les quatre champs de l'axe vivent dans axe.js — une seule définition,
+     * deux portes : ce formulaire complet, et le panneau guidé de l'axe. */
+    var f = FORM.rendre(CHAMPS.piste.concat(AXE.CHAMPS), pi || {});
     PANNEAU.ouvrir(pi ? "Modifier la piste" : "Nouvelle piste", p.ref, el("div", {},
       el("div.prix", {}, el("span.signe", {}, "⚠"), "Une piste sans son sacrifice ni son argument est refusable — critère écrit du §8."),
       f.noeud,

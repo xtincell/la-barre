@@ -58,6 +58,10 @@ window.VUE_ROUTE = (function () {
       PRIORITE.bande(p, pi, apres),
       el("div", {}, VALIDATION.bande(p, "piste", pi, apres)),
       bande(p, pi, mes, decl, apres),
+      /* L'axe avant l'argumentaire : le sacrifice et l'argument défendent
+       * quelque chose, et ce quelque chose est l'axe. Le lire après, c'est
+       * lire une plaidoirie avant de savoir sur quoi elle porte. */
+      AXE.bloc(p, pi, apres),
       argumentaire(pi),
       DISPOSITIF.bloc(p, pi, apres),
       RETRO.bloc(p, pi, apres),

@@ -90,7 +90,7 @@ window.VUE_LIVRABLE = (function () {
               l.estime ? "estimé : " + l.estime + " j" + (l.reel && l.estime ? " · " + ecart(l) : "") : "aucune estimation",
               l.reel && l.estime && l.reel > l.estime ? "alerte" : ""),
             UI.stat("COMPLÉTUDE", REGLES.pretSur(l).part + " %",
-              REGLES.pretSur(l).pret + (REGLES.pretSur(l).pret > 1 ? " axes prêts sur " : " axe prêt sur ")
+              REGLES.pretSur(l).pret + (REGLES.pretSur(l).pret > 1 ? " points prêts sur " : " point prêt sur ")
                 + REGLES.pretSur(l).total, "")
           )
         )
@@ -121,8 +121,8 @@ window.VUE_LIVRABLE = (function () {
         cout: REGLES.droitsInsuffisants(l) || "" },
       { quoi: "Entrées fournies", poids: 4, ok: (l.entrees || []).every(function (e) { return e.fournisseur; }),
         cout: REGLES.prix("entree-sans-fournisseur") },
-      { quoi: "Dix axes prêts", ok: coince.length === 0,
-        cout: coince.length ? "en attente sur " + coince.map(function (c) { return c.axe.toLowerCase(); }).join(", ") : "" },
+      { quoi: "Dix points prêts", ok: coince.length === 0,
+        cout: coince.length ? "en attente sur " + coince.map(function (c) { return c.point.toLowerCase(); }).join(", ") : "" },
       { quoi: "Allers-retours dans le vendu", ok: !(t.vendus && t.faits > t.vendus),
         cout: "chaque aller-retour au-delà se comptabilise en reprise" },
     ];
@@ -173,7 +173,7 @@ window.VUE_LIVRABLE = (function () {
         + (coince.length ? ". En attente aussi sur " + coince.length + " axes." : ".");
     }
     return "V" + v.n + " jugée le " + O.joli(v.juge_le) + (v.motif ? " — " + v.motif : "")
-      + (coince.length ? ". Reste " + coince.map(function (c) { return c.axe.toLowerCase(); }).join(", ") + "." : "");
+      + (coince.length ? ". Reste " + coince.map(function (c) { return c.point.toLowerCase(); }).join(", ") + "." : "");
   }
 
   function ecart(l) {
@@ -262,7 +262,7 @@ window.VUE_LIVRABLE = (function () {
       el("div.sousbloc", {},
         el("h3", {}, "COMPLÉTUDE — DIX AXES"),
         axes(l, apres),
-        el("div.axes-legende", {}, "cliquer un axe le fait passer de en attente à prêt, puis sans objet")
+        el("div.points-legende", {}, "cliquer un point le fait passer de en attente à prêt, puis sans objet")
       ),
       el("div.sousbloc", {},
         el("h3", {}, "INFORMATIONS"),
@@ -286,16 +286,16 @@ window.VUE_LIVRABLE = (function () {
   }
 
   function axes(l, apres) {
-    var boite = el("div.axes");
+    var boite = el("div.points-r");
     function dessiner() {
       O.vider(boite);
-      MAISON.axes.forEach(function (a) {
-        var etat = (l.axes && l.axes[a.cle]) || "attente";
+      MAISON.points.forEach(function (a) {
+        var etat = (l.points && l.points[a.cle]) || "attente";
         boite.appendChild(el("button.axe." + etat, {
           type: "button", title: a.nom + " — " + O.poste(a.poste).nom,
           onclick: function () {
             var suite = { attente: "pret", pret: "sansobjet", sansobjet: "attente" };
-            l.axes[a.cle] = suite[etat];
+            l.points[a.cle] = suite[etat];
             DEPOT.enregistrer(); dessiner();
           },
         }, a.nom));
@@ -368,7 +368,7 @@ window.VUE_LIVRABLE = (function () {
 
   function poser(p, l, v, verdict, motif, apres) {
     v.verdict = verdict.cle; v.motif = motif; v.juge_le = new Date().toISOString();
-    if (verdict.cle === "approuve") l.axes.central = "pret";
+    if (verdict.cle === "approuve") l.points.central = "pret";
     DEPOT.ajoute("decisions", { objet: l.id, type: "livrable", projet: p.id, verdict: verdict.cle,
       motif: motif, quand: v.juge_le, qui: MAISON.titulaire, titre: l.nom });
     DEPOT.enregistrer();

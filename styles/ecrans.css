@@ -118,7 +118,7 @@
 
 /* ————————————————————— Axes ————————————————————— */
 
-.axes { display: flex; gap: 2px; flex-wrap: wrap; }
+.points-r { display: flex; gap: 2px; flex-wrap: wrap; }
 .axe { font: inherit; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); padding: .14rem .35rem; cursor: pointer;
   background: none; border: 1px solid var(--trait); color: var(--clair-terne); }
 .axe.pret { background: var(--vert); color: #06180e; border-color: var(--vert); }
@@ -317,7 +317,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 .ou-en .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
 .ou-en .v { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.5; margin-top: .25rem; }
 
-.axes-legende { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .4rem; font-style: italic; }
+.points-legende { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .4rem; font-style: italic; }
 
 .graphe-boite { background: var(--nuit-carte); padding: .5rem; margin-bottom: .8rem; }
 

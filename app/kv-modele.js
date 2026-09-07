@@ -12,7 +12,7 @@ window.KV = (function () {
 
   /* Ce qui distingue un KV d'un autre, et qui vaut pour toute campagne :
    * la marque, ce qui est écrit, dans quelle langue, ce qui est montré. */
-  var AXES = [
+  var CHAMPS_KV = [
     { cle: "marque", nom: "Marque", type: "texte" },
     { cle: "copy", nom: "Accroche", type: "texte", aide: "Cinq mots maximum — critère du §8." },
     { cle: "langue", nom: "Langue", type: "texte", aide: "Héritée du marché, surchargeable." },
@@ -25,15 +25,15 @@ window.KV = (function () {
    * l'enfant et le métier illustré, là le nombre de personnages et le lieu.
    * Les coder en dur reviendrait à écrire une campagne dans le produit. La
    * campagne les déclare une fois, chaque KV les renseigne. */
-  function axesDA(p) {
-    return (p.axesDA || []).map(function (a) {
+  function champsDA(p) {
+    return (p.champsDA || []).map(function (a) {
       return { cle: a.cle, nom: a.nom || a.cle, type: a.type || "texte", aide: a.aide || "", da: true };
     });
   }
 
   /* Les axes complets d'un KV de ce projet. */
   function axes(p) {
-    return AXES.slice(0, 4).concat(axesDA(p)).concat(AXES.slice(4));
+    return CHAMPS_KV.slice(0, 4).concat(champsDA(p)).concat(CHAMPS_KV.slice(4));
   }
 
   /* Trois niveaux, pas deux. C'est la distinction qui manquait :
@@ -119,7 +119,7 @@ window.KV = (function () {
     if (!support) support = DEPOT.ajoute("supports", { code: "kv", nom: "Key visual", type: "kv" });
 
     var axes = {};
-    MAISON.axes.forEach(function (a) { axes[a.cle] = "attente"; });
+    MAISON.points.forEach(function (a) { axes[a.cle] = "attente"; });
     if (m && m.langues.length === 1) axes.langue = "pret";
 
     var l = {
@@ -152,7 +152,7 @@ window.KV = (function () {
       : (base ? base.responsable : null);
 
     /* Les choix de DA se reprennent du KV de référence, à ajuster ensuite. */
-    axesDA(p).forEach(function (a) {
+    champsDA(p).forEach(function (a) {
       l.kv[a.cle] = base && base.kv ? (base.kv[a.cle] || "") : "";
     });
     if (!p.livrables) p.livrables = [];
@@ -223,7 +223,7 @@ window.KV = (function () {
         : "" });
 
     /* Les choix de DA : ceux que la campagne a déclarés, et eux seuls. */
-    var da = axesDA(p);
+    var da = champsDA(p);
     if (!da.length) {
       out.push({ quoi: "Axes de DA déclarés", ok: false, poids: 2,
         cout: "la campagne n'a déclaré aucun choix de direction artistique — rien ne distingue un KV d'un autre que son marché" });
@@ -294,7 +294,7 @@ window.KV = (function () {
     };
   }
 
-  return { AXES: AXES, NIVEAUX: NIVEAUX, axes: axes, axesDA: axesDA,
+  return { CHAMPS_KV: CHAMPS_KV, NIVEAUX: NIVEAUX, axes: axes, champsDA: champsDA,
     niveau: niveau, estKV: estKV, estMaitre: estMaitre, estAdaptation: estAdaptation,
     tous: tous, maitres: maitres, adaptations: adaptations, declinaisons: declinaisons,
     descendance: descendance, parMarche: parMarche,

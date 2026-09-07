@@ -270,7 +270,7 @@ window.DISPOSITIF = (function () {
     var d = declenche(p, pi);
     d.aCreer.forEach(function (x) {
       var axes = {};
-      MAISON.axes.forEach(function (a) { axes[a.cle] = "attente"; });
+      MAISON.points.forEach(function (a) { axes[a.cle] = "attente"; });
       /* Le format naît de l'adaptation du marché si elle existe, sinon du master. */
       var parent = (p.livrables || []).filter(function (l) {
         return !l.annule && l.pisteId === pi.id && KV.estAdaptation(l) && l.marche === x.marche.id;
