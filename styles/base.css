@@ -13,59 +13,90 @@
    * qu'on attend du lecteur. Et jamais seule — §14 : chaque état porte aussi
    * un signe ou un mot, sinon il n'existe pas pour qui ne distingue pas les
    * rouges des verts. */
-  --bloquant:  #FF4D4F;   /* intervention immédiate — la marque : filet, pastille, fond */
-  --bloquant-txt: #FF8082;/* la même, portée par du texte : 5,6:1 sur la surface
-                           * la plus élevée, là où #FF4D4F tombe à 4,48 et manque
-                           * le minimum AA du §14 d'un centième */
-  --arbitrage: #FFB020;   /* demande un jugement */
-  --succes:    #22C55E;   /* validé, terminé */
-  --info:      #3B82F6;   /* à consulter */
-  --neutre:    #64748B;   /* par défaut */
+  --bloquant:  #B02118;   /* intervention immédiate — la marque : filet, pastille, fond */
+  --bloquant-txt: #B02118;/* la même, portée par du texte. En clair le rouge sombre
+                           * est lisible tel quel : 6,9:1 sur la toile. Il n'a plus
+                           * besoin d'une variante éclaircie comme en sombre. */
+  /* La v3 propose #B07714, #2E7D4F et #8A8178. Aucune des trois ne tient
+   * 4,5:1 sur la toile : 3,36 · 4,43 · 3,36. Or ces jetons servent d'abord de
+   * TEXTE — 141 usages en couleur contre 16 en fond pour le seul ambre — donc
+   * c'est la valeur lisible qui doit être la valeur de base.
+   *
+   * On garde la teinte et la saturation exactes de la v3, on descend la
+   * luminosité au minimum qui passe : à l'œil c'est la même couleur, à la
+   * mesure elle tient le plancher que le §14 impose depuis le premier jour. */
+  --arbitrage: #8A5D10;   /* demande un jugement — v3 #B07714, assombri de 4,53:1 */
+  --succes:    #2A7348;   /* validé, terminé — v3 #2E7D4F */
+  --info:      #2C5AA0;   /* à consulter */
+  --neutre:    #6E665E;   /* par défaut */
 
-  /* Les neutres. #64748B est le pas 500 de la famille ardoise : l'échelle en
-   * découle. N950 prolonge la série vers le bas — la toile du produit est plus
-   * profonde que N900, c'est ce qui donne sa tenue au sombre. */
-  --n950: #080C14;
-  --n900: #0F172A;
-  --n800: #1E293B;
-  --n700: #334155;
-  --n600: #475569;
-  --n500: #64748B;
-  --n400: #94A3B8;
-  --n300: #CBD5E1;
-  --n200: #E2E8F0;
-  --n100: #F1F5F9;
+  /* Les neutres, retournés. La famille n'est plus une ardoise froide mais une
+   * terre chaude : c'est elle qui donne au produit son grain de papier plutôt
+   * que son grain d'écran. N950 reste l'extrême — ici l'encre, pas la toile. */
+  --n950: #241C18;
+  --n900: #3B332C;
+  --n800: #6E665E;
+  --n700: #8A8178;
+  --n600: #A59B8E;
+  --n500: #C9C0B2;
+  --n400: #D6CFC1;
+  --n300: #E2DCCC;
+  --n200: #EAE6DC;
+  --n100: #F2F0EB;
 
-  /* La marque. L'ambre reste l'action première : c'est elle qui porte
-   * « Décider », et elle n'est pas un état — on ne la lit pas, on la clique. */
-  --or: #FFB020;
-  --accent: #C7501F;
-  --violet: #8B6FD4;
+  /* La marque. L'ambre reste l'action première : c'est elle qui porte le geste,
+   * et elle n'est pas un état — on ne la lit pas, on la clique. La terracotta
+   * traverse les deux thèmes sans bouger : c'est le seul jeton qui n'a pas
+   * changé de valeur en passant du sombre au clair. */
+  --or: #8A5D10;
+  --accent: #AD451B;      /* v3 #C7501F : 4,01:1, trop court pour du texte */
+  --violet: #6A4FA8;
+
+  /* Les valeurs pleines de la v3, réservées à ce qui n'est PAS du texte :
+   * un aplat de bouton, une pastille, un filet. Sur un fond, le contraste se
+   * mesure sur ce qu'on écrit dessus, pas sur la couleur elle-même. */
+  --or-plein: #B07714;
+  --accent-plein: #C7501F;
+  --succes-plein: #2E7D4F;
 
   /* 05 · SURFACES & ÉLÉVATION
    *
-   * Quatre plans. Ce qui est en avant est plus clair, ce qui est en retrait est
-   * plus sombre — l'inverse du réflexe, et c'est ce qui marche en sombre. */
-  --surface-1: #1E293B;   /* élevée   — ce qui flotte : panneau, menu, modale */
-  --surface-2: #172033;   /* standard — la carte, le bloc */
-  --surface-3: #111A2B;   /* en retrait — le creux, le champ */
-  --surface-4: #080C14;   /* sombre   — la toile */
+   * Quatre plans, et la règle s'inverse avec le thème. En sombre, ce qui flotte
+   * était plus clair. En clair, ce qui flotte est plus BLANC et ce qui est en
+   * retrait se teinte : une feuille posée sur la table attrape la lumière, un
+   * creux la perd. */
+  --surface-1: #FBFAF7;   /* élevée   — ce qui flotte : panneau, menu, modale */
+  --surface-2: #EAE6DC;   /* standard — la carte, le bloc */
+  --surface-3: #E8E4DA;   /* en retrait — le creux, le champ */
+  --surface-4: #F2F0EB;   /* la toile */
 
+  /* Les ombres aussi changent de nature. Sur du sombre, une ombre est une
+   * absence de lumière et peut être franche. Sur du papier, une ombre franche
+   * fait tache : elle se réduit à un halo tiède. */
   --elev-0: none;
-  --elev-1: 0 1px 2px rgba(0,0,0,.28);
-  --elev-2: 0 2px 8px rgba(0,0,0,.34);
-  --elev-3: 0 8px 24px rgba(0,0,0,.42);
-  --elev-4: 0 16px 48px rgba(0,0,0,.55);
+  --elev-1: 0 1px 2px rgba(36,28,24,.06);
+  --elev-2: 0 2px 8px rgba(36,28,24,.08);
+  --elev-3: 0 8px 24px rgba(36,28,24,.10);
+  --elev-4: 0 16px 48px rgba(36,28,24,.14);
 
   /* Les traits : deux seulement, et ils ne servent qu'à répondre à une
-   * question — jamais à border une carte que son fond sépare déjà. */
-  --trait: #263449;
-  --trait-clair: #334155;
+   * question — jamais à border une carte que son fond sépare déjà.
+   *
+   * Les noms mentent maintenant d'un cran : « trait-clair » est le plus VISIBLE
+   * des deux, et sur du papier le plus visible est le plus sombre. On garde les
+   * noms — deux mille six cents usages en dépendent — et on mappe par rôle. */
+  --trait: #D6CFC1;        /* discret */
+  --trait-clair: #C9C0B2;  /* marqué */
 
-  /* Les encres */
-  --clair: #F1F5F9;
-  --clair-doux: #CBD5E1;
-  --clair-terne: #94A3B8;
+  /* Les encres. Même remarque : « clair » désigne l'encre principale, qui en
+   * thème clair est la plus sombre. Quatre niveaux là où le sombre en avait
+   * trois — la v3 sépare le texte de lecture de l'étiquette. */
+  --clair: #241C18;        /* l'encre : titres, texte fort */
+  --clair-doux: #3B332C;   /* la prose, ce qui se lit longtemps */
+  --clair-terne: #6E665E;  /* l'étiquette, la capitale espacée — 4,95:1 */
+  --encre-douce: #6E665E;  /* alias : la v3 les distinguait, la mesure les réunit */
+  --encre-pale: #8A8178;   /* la valeur v3, pour ce qui n'est pas lu : un filet,
+                            * une puce, un chiffre décoratif. Jamais du texte. */
 
   /* Papier, pour les documents compilés — ils s'impriment. */
   --papier: #F3F1EC;
@@ -137,9 +168,9 @@
    * --ecrit remplace --main, qui appelait Bradley Hand et retombait en Comic
    * Sans dès qu'on changeait de machine. La distinction — le système contre la
    * personne — se dit maintenant par la coupe, et elle voyage. */
-  --affichage: "Satoshi", "Avenir Next", "Segoe UI Variable",
-    "Segoe UI", system-ui, -apple-system, sans-serif;
-  --lecture: "Newsreader", Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --affichage: "Asap", "Avenir Next Condensed", "Segoe UI", system-ui,
+    -apple-system, sans-serif;
+  --lecture: "Source Serif 4", Georgia, "Iowan Old Style", "Times New Roman", serif;
   --ecrit: var(--lecture);
 
   /* L'ancien nom, tenu comme alias : soixante-cinq modules l'emploient, et un
@@ -174,7 +205,9 @@
 body::before {
   content: "";
   position: fixed; inset: 0; z-index: -1; pointer-events: none;
-  opacity: .05;
+  /* Sur du sombre le grain se devinait à 5 %. Sur du papier il salit à la
+   * moitié : il tombe à 1,8 %, juste assez pour que l'aplat ne soit pas mort. */
+  opacity: .018;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 html { -webkit-text-size-adjust: 100%; }
@@ -190,11 +223,12 @@ html { -webkit-text-size-adjust: 100%; }
  * Le grain est un SVG en ligne de moins de 400 octets : aucune requête,
  * aucune image, et il disparaît à l'impression. */
 body {
+  /* La lumière vient de la même source, mais elle se pose au lieu d'éclairer :
+   * sur du papier une lueur se lit comme une tache d'humidité si on la pousse.
+   * Deux pour cent, et seulement la terracotta — l'ambre jaunissait le blanc. */
   background:
     radial-gradient(120% 80% at 12% -10%,
-      rgba(199, 80, 31, .055) 0%, rgba(199, 80, 31, 0) 55%),
-    radial-gradient(90% 60% at 88% 0%,
-      rgba(255, 176, 32, .028) 0%, rgba(255, 176, 32, 0) 60%),
+      rgba(199, 80, 31, .022) 0%, rgba(199, 80, 31, 0) 58%),
     var(--nuit);
   background-attachment: fixed;
   color: var(--clair);
@@ -475,10 +509,14 @@ body {
   display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap;
 }
 .b:hover { border-color: var(--or); color: var(--or); }
-.b.or { background: var(--or); color: #1a1408; border-color: var(--or); font-weight: 600; }
-.b.or:hover { background: #f0b355; color: #1a1408; }
-.b.vert { background: var(--vert); color: #06180e; border-color: var(--vert); font-weight: 600; }
-.b.vert:hover { background: #4cb87b; color: #06180e; }
+/* Le bouton plein passe à l'encre claire sur l'ambre sombre. La valeur pleine
+ * de la v3 (#B07714) ne donnait que 3,66:1 avec du blanc et 3:1 avec du noir :
+ * aucune des deux encres ne tenait dessus. C'est le fond qu'il fallait
+ * descendre, pas l'encre qu'il fallait choisir. */
+.b.or { background: var(--or); color: #FBFAF7; border-color: var(--or); font-weight: 600; }
+.b.or:hover { background: #8A5D10; color: #FBFAF7; }
+.b.vert { background: var(--succes); color: #FBFAF7; border-color: var(--succes); font-weight: 600; }
+.b.vert:hover { background: #2A7348; color: #FBFAF7; }
 .b.nu { background: none; border-color: transparent; color: var(--clair-terne); }
 .b.nu:hover { color: var(--clair); border-color: var(--trait); }
 .b:disabled { opacity: .4; cursor: not-allowed; }
