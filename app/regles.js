@@ -15,12 +15,23 @@ window.REGLES = (function () {
     "tueur-absent": "La signature de l'étage 1 n'immunise rien : la remise en cause restera possible sans être imputable.",
     "fenetre-absente": "La charge de production ne peut être ni placée ni tenue.",
     "socle-absent": "La campagne pourra être refusée en revue sans recours.",
+    "rattachement-absent": "Le §6 bis demande que toute plateforme créative se rattache explicitement au socle ou justifie son écart. Sans ce champ, la big idea n'a rien à opposer si la marque la conteste.",
     "criteres-absents": "Ce travail ne pourra être refusé que par goût.",
     "da-absent": "Direction de la Création qui produit : la porte A se ferme pour l'équipe.",
     "auteur-absent": "L'idée ne pourra être attribuée à personne, et l'indicateur juniors reste à zéro.",
     "arbitrage-absent": "L'équipe travaille sans savoir quel concept fait autorité.",
     "axe-absent": "La piste ne se distingue des autres que par son titre : la comparer n'oppose rien, et le client tranchera sur le visuel qu'on lui montre.",
     "axe-jumeau": "Deux pistes au même ton ne font pas un choix : on demande au client de trancher sur rien, et il reviendra dessus.",
+
+    /* Une reprise d'emballage se suit sur deux sources — un tableau et un
+     * disque. Quand les deux se contredisent, ce n'est pas un détail de
+     * saisie : c'est une commande qu'on passe à l'imprimeur sur une hypothèse. */
+    "releve-contredit": "Le tableau de suivi et les fichiers livrés ne disent pas la même chose : on ne sait pas ce qui est prêt, et une relance se fera sur la mauvaise moitié du parc.",
+    "exe-annonce-absent": "Le tableau compte ces films comme faits. Ils ne le sont pas — et personne ne les réclamera puisqu'ils sont déjà cochés.",
+    "codebarre-sur-exe-absent": "Le nouveau code-barre est déclaré posé sur un exé qui n'existe pas. La ligne est verte des deux côtés et il n'y a rien dessous.",
+    "qr-sans-specification": "Le QR est exigé sur chaque film et rien ne dit vers quoi il pointe, à quelle taille ni à quel endroit du pack. Chaque exé produit avant cette décision sera à reprendre.",
+    "exe-sans-pdf": "Un seul format livré. L'imprimeur qui demande l'autre le demandera la veille du départ.",
+    "storyboard-vide": "Le découpage est écrit, les cadres sont vides. On ne peut ni chiffrer la production, ni faire valider un plan, ni briefer un générateur d'image.",
     "entree-sans-fournisseur": "Tout le monde attend un fichier que personne ne doit fournir.",
     "copy-non-verrouille": "Une correction tardive traversera toutes les déclinaisons et toutes les langues.",
     "droits-insuffisants": "Usage hors du territoire ou de la durée couverts par la licence.",
@@ -60,9 +71,27 @@ window.REGLES = (function () {
       critique(trouves, p, "identite", "tueur", "tueur-absent", "Qui peut annuler une idée validée : non nommé", "clientele");
       critique(trouves, p, "identite", "fenetre", "fenetre-absente", "Fenêtre et dates non fixées", "clientele");
 
-      /* Socle avant big idea */
-      if (aSection(p, "bigidea") && s.bigidea && s.bigidea.idee && !(s.socle && s.socle.idee_directrice)) {
-        pousser(trouves, p, "socle-absent", "Big idea ouverte sans plateforme de marque active", "creation", "socle");
+      /* Socle avant big idea.
+       *
+       * La section du dossier n'est pas la seule source : une marque porte sa
+       * plateforme à la bibliothèque, et c'est même là qu'elle doit vivre —
+       * elle vaut plusieurs années, le dossier vaut une saison. Chercher
+       * seulement dans le dossier faisait dire au contrôle « sans plateforme
+       * de marque active » sur une marque qui en a une.
+       *
+       * Quand la bibliothèque en porte une, ce qui manque n'est plus la
+       * plateforme : c'est le rattachement explicite que le §6 bis exige. */
+      if (aSection(p, "bigidea") && s.bigidea && s.bigidea.idee) {
+        var mid = (s.identite || {}).marqueIds ? (s.identite.marqueIds || [])[0] : null;
+        var h = mid && window.VAULT ? VAULT.herite("marque", mid, "idee_directrice") : null;
+        var auVault = !!(h && h.valeur);
+        if (!(s.socle && s.socle.idee_directrice) && !auVault) {
+          pousser(trouves, p, "socle-absent", "Big idea ouverte sans plateforme de marque active", "creation", "socle");
+        } else if (auVault && !s.bigidea.rattachement) {
+          pousser(trouves, p, "rattachement-absent",
+            "La big idea ne dit pas à quoi elle se rattache dans la plateforme de marque",
+            "creation", "bigidea");
+        }
       }
 
       /* Auteur de l'idée */
@@ -239,8 +268,13 @@ window.REGLES = (function () {
         if (!l.responsable) lots["sans-proprietaire"].push({ l: l, quoi: "Livrable « " + l.nom + " » sans responsable" });
         /* Un livrable que nulle piste ne gouverne ne se refuse que par le goût.
          * Vaut pour une campagne comme pour un cycle : un cycle ne met pas
-         * deux pistes en concurrence, mais il en tient une. */
-        if (!l.pisteId) lots["livrable-sans-piste"].push({ l: l, quoi: "« " + l.nom + " » ne relève d'aucune piste" });
+         * deux pistes en concurrence, mais il en tient une.
+         *
+         * Sauf pour une reprise de conformité — un film d'emballage qu'on remet
+         * au nouveau code-barre n'exécute aucun concept : il exécute une norme.
+         * Lui réclamer une piste, c'est inventer un blocage là où il n'y en a
+         * pas, et cinquante-neuf fois de suite. */
+        if (!l.pisteId && !l.conformite) lots["livrable-sans-piste"].push({ l: l, quoi: "« " + l.nom + " » ne relève d'aucune piste" });
         if (maitrePerime(p, l)) lots["maitre-perime"].push({ l: l, quoi: "« " + l.nom + " » adapté sur une version dépassée du master" });
         var d = droitsInsuffisants(l);
         if (d) lots["droits-insuffisants"].push({ l: l, quoi: d });
@@ -269,6 +303,73 @@ window.REGLES = (function () {
         function (n) { return n + " éléments d'entrée attendus sans fournisseur nommé"; });
       poserLot(trouves, p, lots["livrable-sans-piste"], "livrable-sans-piste", "creation", "pistes",
         function (n) { return n + " livrables ne relèvent d'aucune piste"; });
+
+      /* ————— La conformité d'un parc d'emballages —————
+       *
+       * Trois crans par film : l'exé existe, il porte le nouveau code-barre, il
+       * porte le QR. Chaque film relevé garde ce que le tableau en disait ET ce
+       * que le disque en montrait : c'est l'écart entre les deux qui coûte, pas
+       * l'un ou l'autre pris seul. */
+      var conformes = (p.livrables || []).filter(function (l) {
+        return !l.annule && l.conformite; });
+      if (conformes.length) {
+        var contredits = conformes.filter(function (l) {
+          return l.releve && l.releve.ecart; });
+        var annonces = conformes.filter(function (l) {
+          return l.releve && l.releve.ecart === "annonce-sans-fichier"; });
+        var faux = conformes.filter(function (l) {
+          return l.conformite.codebarre === "fait" && l.conformite.exe !== "fait"; });
+        var sansQR = conformes.filter(function (l) { return l.conformite.qr !== "fait"; });
+        var monoFormat = conformes.filter(function (l) {
+          return l.releve && l.releve.formats && l.releve.formats.length === 1; });
+
+        if (annonces.length) {
+          var ba = pousser(trouves, p, "exe-annonce-absent",
+            annonces.length + " films sont comptés faits sans qu'aucun fichier existe",
+            "graphic", "livrables");
+          ba.pieces = annonces.map(function (l) { return l.id; });
+        }
+        if (faux.length) {
+          var bf = pousser(trouves, p, "codebarre-sur-exe-absent",
+            faux.length + " films portent le nouveau code-barre sur un exé absent",
+            "graphic", "livrables");
+          bf.pieces = faux.map(function (l) { return l.id; });
+        }
+        if (contredits.length) {
+          var bc = pousser(trouves, p, "releve-contredit",
+            contredits.length + " films sur " + conformes.length
+              + " : le tableau et le disque se contredisent",
+            "clientele", "livrables");
+          bc.pieces = contredits.map(function (l) { return l.id; });
+        }
+        /* Le QR n'est pas un état de fichier : c'est une décision qui n'est pas
+         * prise. Tant qu'elle ne l'est pas, produire un exé, c'est produire une
+         * reprise. */
+        if (sansQR.length && !(p.sections.identite || {}).qr) {
+          var bq = pousser(trouves, p, "qr-sans-specification",
+            "Le QR est exigé sur " + sansQR.length + " films et n'est spécifié nulle part",
+            "creation", "identite");
+          bq.pieces = sansQR.slice(0, 12).map(function (l) { return l.id; });
+        }
+        if (monoFormat.length) {
+          pousser(trouves, p, "exe-sans-pdf",
+            monoFormat.length + (monoFormat.length > 1 ? " exés n'ont qu'un format livré" : " exé n'a qu'un format livré"),
+            "graphic", "livrables");
+        }
+      }
+
+      /* ————— Un découpage dont les cadres sont vides —————
+       *
+       * Un film qui a son plan de tournage écrit et aucune image n'est pas
+       * « en cours » : il est arrêté à la porte de la production. */
+      (p.livrables || []).forEach(function (l) {
+        if (l.annule || !l.plans || !l.plans.length) return;
+        var vides = l.plans.filter(function (x) { return !x.visuel; }).length;
+        if (!vides) return;
+        pousser(trouves, p, "storyboard-vide",
+          "« " + l.nom + " » — " + vides + " cadres du découpage sur "
+            + l.plans.length + " sont vides", "da", "livrables", l.id);
+      });
     });
 
     return reconcilier(trouves);

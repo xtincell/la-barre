@@ -17,9 +17,19 @@ window.ETAT = (function () {
 
   /* ————————————————————— Une piste ————————————————————— */
 
-  function piste(p, pi) {
-    if (!pi) return { nom: "hors piste", ton: "alerte",
-      quoi: "rattachée à aucune piste : ce livrable ne relève d'aucune décision" };
+  function piste(p, pi, l) {
+    if (!pi) {
+      /* Une reprise de conformité n'exécute pas un concept, elle exécute une
+       * norme : un film qu'on remet au nouveau code-barre n'a pas de piste à
+       * tenir, et l'afficher en rouge cinquante-neuf fois apprend à ignorer
+       * la couleur. */
+      if (l && l.conformite) {
+        return { nom: "conformité", ton: "",
+          quoi: "reprise de norme, pas d'exécution de concept : aucune piste n'a à la gouverner" };
+      }
+      return { nom: "hors piste", ton: "alerte",
+        quoi: "rattachée à aucune piste : ce livrable ne relève d'aucune décision" };
+    }
 
     var pieces = (p.livrables || []).filter(function (l) {
       return !l.annule && l.pisteId === pi.id; }).length;

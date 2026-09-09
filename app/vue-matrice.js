@@ -391,10 +391,14 @@ window.VUE_MATRICE = (function () {
      * quatorze KV d'affilée sans savoir lequel parle au nom de qui. */
     var parMarque = groupesParMarque(p, groupes, reste);
 
-    return el("div.mr-piste" + (pi && pi.statut === "retenue" ? ".retenue" : pi ? "" : ".hors"), {},
+    /* Un lot entièrement fait de reprises de conformité n'est pas « hors
+     * piste » : il est de la conformité, et ce n'est pas un défaut. */
+    var conformite = ls.length && ls.every(function (x) { return x.conformite; });
+    return el("div.mr-piste" + (pi && pi.statut === "retenue" ? ".retenue" : pi ? "" : (conformite ? "" : ".hors")), {},
       el("div.mr-tete", {},
-        el("span.mrt-nom", {}, pi ? (pi.titre || "Piste sans titre") : "Hors piste"),
-        ETAT.pastille(ETAT.piste(p, pi)),
+        el("span.mrt-nom", {}, pi ? (pi.titre || "Piste sans titre")
+          : (conformite ? "Reprise de conformité" : "Hors piste")),
+        ETAT.pastille(ETAT.piste(p, pi, ls[0])),
         el("span.mrt-n", {}, ls.length + (ls.length > 1 ? " livrables" : " livrable")
           + (perimes ? "  ·  " + perimes + " à regénérer" : "")),
         pi ? el("button.b.nu", { type: "button", onclick: function () { VUE_ROUTE.ouvrir(p, pi, rafraichir); } },
