@@ -18,6 +18,7 @@ window.VUE_PLACER = (function () {
     { cle: "ordre", nom: "PRIORITÉS", quoi: "ce qui passe avant, et pourquoi" },
     { cle: "charge", nom: "PLAN DE CHARGE", quoi: "où en sont les livrables" },
     { cle: "gens", nom: "ÉQUIPE", quoi: "la capacité de chacun" },
+    { cle: "livraisons", nom: "LIVRAISONS", quoi: "ce qui est dû et n'est pas arrivé" },
   ];
 
   function rendre(hote, arg) {
@@ -31,7 +32,10 @@ window.VUE_PLACER = (function () {
     var sansPlace = pieces.filter(function (x) {
       return !x.l.responsable || !x.l.estime || !x.l.remise; }).length;
 
-    var p = mode === "gens" ? pireGens()
+    var souffrance = TRACE.enSouffrance();
+
+    var p = mode === "livraisons" ? pireLivraisons(souffrance)
+      : mode === "gens" ? pireGens()
       : mode === "charge" ? pireCharge(pieces, sansPlace)
       : pireOrdre(c, sansPlace);
 
@@ -43,7 +47,8 @@ window.VUE_PLACER = (function () {
 
       el("div.dc-modes", {}, MODES.map(function (m) {
         var n = m.cle === "ordre" ? c.conflits.length
-          : m.cle === "charge" ? sansPlace : 0;
+          : m.cle === "charge" ? sansPlace
+          : m.cle === "livraisons" ? souffrance.length : 0;
         return el("button.dcm" + (mode === m.cle ? ".ici" : ""), { type: "button",
           onclick: function () { mode = m.cle; rendre(hote); } },
           el("span.dcm-n", {}, m.nom),
@@ -145,7 +150,35 @@ window.VUE_PLACER = (function () {
         + "voit immédiatement." };
   }
 
+  /* Les livraisons. Le titre nomme ce qui coûte le plus, jamais le total :
+   * « 47 livrables en souffrance » n'appelle aucun geste, « 12 artworks
+   * annoncés faits n'existent pas » en appelle un, et tout de suite. */
+  function pireLivraisons(souffrance) {
+    if (!souffrance.length) {
+      return { t: "Rien en souffrance",
+        q: "Tout ce qui est dû est arrivé, ou n'est pas encore exigible." };
+    }
+    var ment = souffrance.filter(function (x) { return x.s.cle === "dement"; }).length;
+    if (ment) {
+      return { t: ment + (ment > 1 ? " livraisons annoncées faites n'existent pas" : " livraison annoncée faite n'existe pas"),
+        q: "Le tableau du client sert de preuve et n'en est pas une : l'écart se "
+          + "découvre à l'impression, pas avant." };
+    }
+    var tard = souffrance.filter(function (x) { return x.s.cle === "depasse"; });
+    if (tard.length) {
+      return { t: tard.length + (tard.length > 1 ? " remises sont passées" : " remise est passée"),
+        q: "La plus ancienne depuis " + tard[0].s.jours + " jours — « " + tard[0].l.nom + " »." };
+    }
+    var b = TRACE.bilan(souffrance.map(function (x) { return x.l; }));
+    return TRACE.phrase(b);
+  }
+
   function corps(hote) {
+    if (mode === "livraisons") {
+      var zl = el("div");
+      VUE_LIVRAISONS.rendre(zl);
+      return zl;
+    }
     if (mode === "gens") {
       var z = el("div");
       VUE_DIRECTION.rendre(z);

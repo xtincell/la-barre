@@ -237,7 +237,13 @@ window.PRODUCTION = (function () {
     return el("div", {},
       UI.recevabilite("Ce livrable peut-elle partir en production ?",
         porte(p, l), null,
-        [{ nom: "Poser un fichier", fort: !fs.length, quand: function () { ajouter(p, l, rafraichir); } }]),
+        /* Deux gestes, et le premier est l'import : dans la vraie vie le
+         * fichier existe déjà quelque part, et le décrire à la main est ce
+         * qui a fait qu'aucun des 225 livrables n'en portait un. Saisir à la
+         * main reste possible — pour un master qu'on ne monte pas. */
+        [{ nom: "Importer un fichier", fort: !fs.length,
+           quand: function () { IMAGE.importer(l, rafraichir); } },
+         { nom: "Décrire un fichier", quand: function () { ajouter(p, l, rafraichir); } }]),
 
       vieux.length
         ? UI.banniere("rouge", vieux.length + (vieux.length > 1 ? " fichiers datent" : " fichier date")
@@ -283,7 +289,12 @@ window.PRODUCTION = (function () {
       selMk.appendChild(el("option", { value: m.id }, m.contexte || "mockup sans contexte"));
     });
 
-    PANNEAU.sur("Poser un fichier", l.nom + " · V" + (l.version || 1), el("div", {},
+    PANNEAU.sur("Décrire un fichier", l.nom + " · V" + (l.version || 1), el("div", {},
+      el("div.form-actions", {},
+        el("button.b", { type: "button", onclick: function () {
+          PANNEAU.fermerSur();
+          IMAGE.importer(l, rafraichir);
+        } }, "Choisir le fichier plutôt que le décrire")),
       UI.banniere("", "Le fichier est rattaché à la version en cours. Le jour où le livrable repart en V" + ((l.version || 1) + 1) + ", il apparaîtra comme périmé — c'est ce qui évite d'envoyer à l'imprimeur ce qui a été corrigé."),
       el("div.form", {},
         el("div.champ", {}, el("label", {}, "Type"), selT, aide),

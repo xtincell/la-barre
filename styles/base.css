@@ -580,6 +580,45 @@ body {
 .vignette.v-grande { width: 100%; height: 260px; }
 .vignette.v-planche { width: 100%; height: 100%; border: 0; }
 
+/* Le vide qui se nomme.
+ *
+ * « aucun visuel » centré au milieu d'un cadre gris est un trou décoré. Ce
+ * bloc-ci porte deux lignes — sous quel nom le fichier arrivera, et ce qui
+ * manque pour qu'il arrive — donc il se lit comme du texte : aligné à gauche,
+ * en haut, à l'échelle. Le pointillé dit la seule chose que la bordure a le
+ * droit de dire ici : quelque chose se pose là. */
+.vignette.vide.attente {
+  display: grid; align-content: center; justify-items: start; gap: .18rem;
+  padding: .5rem .55rem; text-align: left;
+  /* La toile, pas le creux : sur --surface-3 l'étiquette terne tombe à 4,45:1,
+   * et ce texte-ci se lit. Le trou de la carte montre donc la table. */
+  background: var(--surface-4); border: 1px dashed var(--trait-clair);
+}
+
+/* Un nom de fichier peut être long, et une carte est petite. Il se coupe donc
+ * par les points de suspension, jamais par le bord : un mot tranché en deux
+ * fait croire à un autre fichier. Le nom entier reste dans l'infobulle. */
+.va-f {
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--clair-doux); overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.va-f.sans { color: var(--clair-terne); font-family: var(--ecrit); font-style: italic; letter-spacing: 0; }
+.va-q {
+  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+/* Un fichier tiré du Finder au-dessus d'une cible. Sans ce retour, personne ne
+ * devine que la carte accepte un dépôt — et un raccourci que rien n'annonce
+ * n'existe pas. */
+[data-depot] { position: relative; }
+.survol-depot { outline: 2px solid var(--or); outline-offset: -2px; }
+.survol-depot .vignette.vide.attente { border-style: solid; border-color: var(--or); }
+
 /* ————————————————————— Panneau modal ————————————————————— */
 
 .voile { position: fixed; inset: 0; background: rgba(0,0,0,.62); z-index: 50; }

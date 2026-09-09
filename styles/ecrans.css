@@ -324,3 +324,74 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 @media (max-width: 1000px) {
   .brief-grille, .liv-apercu { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ————————————————————— Les livrables en souffrance ————————————————————— */
+
+/* Ce qui remplace le tableur. Une ligne se lit de gauche à droite dans l'ordre
+ * du contrat : l'état, ce dont il s'agit, qui le porte, et le geste. Le geste
+ * est à droite parce qu'on y arrive après avoir lu — jamais avant. */
+.liv { display: grid; gap: 1rem; }
+
+.liv-filtres { display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap; border-bottom: 1px solid var(--trait); padding-bottom: .5rem; }
+.liv-deg { display: flex; gap: .3rem; flex-wrap: wrap; }
+.livf { display: flex; align-items: baseline; gap: .4rem; padding: .4rem .55rem;
+  min-height: var(--cible); background: transparent; border: 0;
+  border-bottom: 2px solid transparent; cursor: pointer; text-align: left; }
+.livf:hover { background: var(--surface-1); }
+.livf.ici { border-bottom-color: var(--or); }
+.livf.vide { color: var(--clair-terne); }
+.livf-n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); }
+.livf.vide .livf-n { color: var(--clair-terne); }
+.livf.ici .livf-n { color: var(--clair); }
+.livf-c { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); }
+
+
+.liv-p { display: flex; align-items: center; gap: .45rem; max-width: 100%; }
+.liv-p select { flex: 1 1 auto; min-width: 0; }
+.liv-p label { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+
+.liv-liste { display: grid; }
+
+/* Pas de carte, pas de boîte : un filet par ligne. Une liste de quarante
+ * lignes bordées est un damier, et un damier ne se parcourt pas. */
+.livl {
+  display: grid; grid-template-columns: 8.5rem minmax(0, 1fr) 11rem auto;
+  gap: .8rem; align-items: start; padding: .7rem .2rem;
+  border-bottom: 1px solid var(--trait);
+}
+/* Plus clair, pas plus sombre : le survol ne doit jamais faire perdre un
+ * demi-point de contraste à l'étiquette qu'il éclaire. */
+.livl:hover { background: var(--surface-1); }
+
+.livl-e { display: grid; gap: .1rem; }
+.livl-deg { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
+.livl.alerte .livl-deg { color: var(--bloquant-txt); }
+.livl.attente .livl-deg { color: var(--arbitrage); }
+.livl-j { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+
+.livl-c { display: grid; gap: .12rem; min-width: 0; }
+.livl-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
+.livl-m { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+.livl-f { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--clair-doux); overflow-wrap: anywhere; }
+.livl-fe { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); margin-right: .35rem; }
+.livl-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-doux); }
+
+.livl-qui { display: grid; gap: .1rem; }
+.livl-p { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
+.livl-d { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+.livl-p.sans, .livl-d.sans { color: var(--arbitrage); font-family: var(--ecrit); font-style: italic; letter-spacing: 0; }
+
+.livl-g { display: flex; gap: .35rem; align-items: center; }
+
+@media (max-width: 900px) {
+  .livl { grid-template-columns: 1fr; gap: .35rem; }
+  .livl-g { justify-content: flex-start; }
+}
+
+@media print {
+  .liv-filtres, .livl-g { display: none; }
+  .livl:hover { background: transparent; }
+}

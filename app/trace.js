@@ -52,6 +52,130 @@ window.TRACE = (function () {
     };
   }
 
+  /* ————————————————————— Ce qu'on attend à la place de l'image ————————————————————— */
+
+  /* « aucun visuel » est vrai et ne sert à rien.
+   *
+   * Il dit qu'il manque quelque chose sans dire quoi, ni sous quel nom la
+   * chose arrivera. Six livrables sans visuel donnent alors six cartes
+   * identiques — et un mur de vides indiscernables ne se réclame pas : on ne
+   * sait pas lequel demander, ni à quoi on le reconnaîtra quand il arrivera.
+   *
+   * Or les deux moitiés de la réponse sont là. Le nom est souvent connu — le
+   * tableau du client l'annonce — et ce qui manque l'est toujours. Le vide
+   * porte donc le fichier attendu, et le geste qui n'a pas eu lieu. */
+  function attendu(l) {
+    if (!l) return null;
+    /* Un pack, une marque, une personne n'attendent pas un livrable : le vide
+     * leur va. Seul ce qui se produit se réclame. */
+    if (!(l.conformite || l.releve || l.versions || l.support)) return null;
+
+    var r = l.releve || {};
+    var c = l.conformite || null;
+    var quoi;
+
+    if (c) {
+      var manque = [];
+      if (c.exe !== "fait") manque.push("l'exé");
+      if (c.codebarre !== "fait") manque.push("le code-barres");
+      if (c.qr !== "fait") manque.push("le QR");
+
+      /* L'écart prime sur le décompte : « annoncé fait » et « rien au
+       * dossier » ne se disent pas comme un simple manque. C'est la ligne du
+       * tableau qui est fausse, et c'est elle qu'on va opposer. */
+      if (r.ecart === "annonce-sans-fichier") {
+        quoi = "annoncé fait au tableau — l'artwork n'est pas au dossier";
+      } else if (r.ecart === "fichier-sans-annonce") {
+        quoi = "l'artwork existe au dossier, le tableau ne l'annonce pas";
+      } else if (!manque.length) {
+        quoi = "conforme au tableau — le visuel reste à poser";
+      } else {
+        quoi = "attendu : " + manque.join(", ");
+      }
+    } else {
+      var t = de(l);
+      quoi = t.cle === "vu" ? "un visuel existe, aucun fichier déposé"
+        : t.cle === "trace" ? "déposé, jamais regardé"
+        : "aucun fichier, aucune version";
+    }
+
+    return { fichier: r.fichier || null, nomme: !!r.fichier,
+      quoi: quoi, ecart: r.ecart || null,
+      formats: (r.formats || []).slice() };
+  }
+
+  /* ————————————————————— Ce qui souffre ————————————————————— */
+
+  /* Un livrable en souffrance : quelque chose est dû, et rien n'est arrivé.
+   * Le mot est celui du transport, et il est juste — le colis est parti, il
+   * n'est pas au bout, et personne ne sait où il dort.
+   *
+   * Quatre degrés, du plus coûteux au moins. L'ordre compte : c'est celui
+   * dans lequel on traite une pile un lundi matin, et il place en tête ce qui
+   * est FAUX plutôt que ce qui est seulement en retard — une ligne de tableau
+   * qui ment coûte plus cher qu'une date dépassée qu'on voit. */
+  var DEGRES = {
+    dement: { rang: 0, nom: "le tableau ment", ton: "alerte",
+      quoi: "une livraison est annoncée faite, rien n'est au dossier" },
+    depasse: { rang: 1, nom: "date dépassée", ton: "alerte",
+      quoi: "la remise est passée, rien n'est arrivé" },
+    sansTrace: { rang: 2, nom: "sans trace", ton: "attente",
+      quoi: "aucune version, aucun fichier, aucun visuel" },
+    aTracer: { rang: 3, nom: "à tracer", ton: "attente",
+      quoi: "le travail se voit, la trace manque — le geste est le mien" },
+  };
+
+  /* Ce qui n'est pas en souffrance rend null. Un livrable tracé va bien ; un
+   * livrable sans date n'est en retard de rien, et le dire serait l'impair. */
+  function souffrance(l, aujourdhui) {
+    if (!l || l.annule) return null;
+    var t = de(l);
+    var r = l.releve || {};
+
+    if (r.ecart === "annonce-sans-fichier") return degre("dement", l, t, null);
+
+    if (t.cle === "trace") return null;
+
+    var jours = null;
+    if (l.remise) {
+      var d = new Date(l.remise);
+      var maintenant = aujourdhui || new Date();
+      if (!isNaN(d)) jours = Math.floor((maintenant - d) / 86400000);
+    }
+    if (jours !== null && jours > 0) return degre("depasse", l, t, jours);
+    if (t.cle === "vu") return degre("aTracer", l, t, jours);
+    return degre("sansTrace", l, t, jours);
+  }
+
+  function degre(cle, l, t, jours) {
+    var d = DEGRES[cle];
+    return { cle: cle, rang: d.rang, nom: d.nom, ton: d.ton, quoi: d.quoi,
+      jours: jours, trace: t, relancable: t.relancable,
+      sansQui: t.sansQui, sansDate: t.sansDate };
+  }
+
+  /* Toutes les souffrances du produit, tous projets confondus, triées comme on
+   * les traite : le plus coûteux d'abord, puis le plus vieux. */
+  function enSouffrance(filtre) {
+    var out = [];
+    var maintenant = new Date();
+    DEPOT.liste("projets").forEach(function (p) {
+      (p.livrables || []).forEach(function (l) {
+        var s = souffrance(l, maintenant);
+        if (!s) return;
+        if (filtre && !filtre(p, l, s)) return;
+        out.push({ projet: p, l: l, s: s, attendu: attendu(l) });
+      });
+    });
+    out.sort(function (a, b) {
+      if (a.s.rang !== b.s.rang) return a.s.rang - b.s.rang;
+      var ja = a.s.jours === null ? -1 : a.s.jours;
+      var jb = b.s.jours === null ? -1 : b.s.jours;
+      return jb - ja;
+    });
+    return out;
+  }
+
   /* ————————————————————— Le bilan d'un ensemble ————————————————————— */
 
   function bilan(livrables) {
@@ -148,6 +272,8 @@ window.TRACE = (function () {
     return el("span.trc." + t.ton, { title: t.quoi }, t.nom);
   }
 
-  return { ETATS: ETATS, de: de, bilan: bilan, tous: tous, dePersonne: dePersonne,
+  return { ETATS: ETATS, DEGRES: DEGRES, de: de, bilan: bilan, tous: tous,
+    dePersonne: dePersonne, attendu: attendu,
+    souffrance: souffrance, enSouffrance: enSouffrance,
     phrase: phrase, banniere: banniere, pastille: pastille };
 })();

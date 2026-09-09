@@ -156,13 +156,13 @@ window.MAISON = {
       sections: ["atelier", "bigidea", "pistes"],
       sans: "les livrables se fabriqueront sans concept opposable — refusables par goût" },
     { cle: "produire", nom: "Produire", quoi: "les livrables, et ce qu'on présente",
-      sections: ["planche", "livrables", "presentation"],
+      sections: ["planche", "livrables", "livraison", "presentation"],
       sans: "rien ne part : l'idée reste au dossier" },
   ],
 
   /* ————— Les gabarits de projet. ————— */
   gabarits: [
-    { cle: "campagne", nom: "Campagne", sections: ["identite", "brief", "socle", "strategie", "atelier", "bigidea", "pistes", "planche", "livrables", "presentation"] },
+    { cle: "campagne", nom: "Campagne", sections: ["identite", "brief", "socle", "strategie", "atelier", "bigidea", "pistes", "planche", "livrables", "livraison", "presentation"] },
     /* Un cycle éditorial est une campagne mensuelle : il a sa plateforme de
      * marque, son atelier au début du cycle, sa big idea et sa piste — et
      * toutes les publications du mois vivent DANS cette piste.
@@ -173,9 +173,9 @@ window.MAISON = {
      * seule — j'avais d'abord amputé la moitié de la chaîne, ce qui revenait
      * à dire qu'un cycle n'a pas de concept. */
     { cle: "cycle", nom: "Cycle éditorial",
-      sections: ["identite", "brief", "socle", "strategie", "atelier", "bigidea", "pistes", "livrables", "presentation"] },
-    { cle: "demande", nom: "Demande simple", sections: ["identite", "livrables"] },
-    { cle: "pitch", nom: "Pitch", sections: ["identite", "strategie", "atelier", "bigidea", "pistes", "planche", "livrables", "presentation"] },
+      sections: ["identite", "brief", "socle", "strategie", "atelier", "bigidea", "pistes", "livrables", "livraison", "presentation"] },
+    { cle: "demande", nom: "Demande simple", sections: ["identite", "livrables", "livraison"] },
+    { cle: "pitch", nom: "Pitch", sections: ["identite", "strategie", "atelier", "bigidea", "pistes", "planche", "livrables", "livraison", "presentation"] },
   ],
 
   /* ————— Les engagements récurrents, tirés des fiches de poste. ————— */

@@ -7,6 +7,7 @@ window.VUE_PROJETS = (function () {
     identite: "Identité", brief: "Brief", socle: "Plateforme de marque",
     strategie: "Stratégie", bigidea: "Big idea", pistes: "Pistes créatives",
     atelier: "Séance de créa", planche: "Déclinaisons", livrables: "Livrables", calendriers: "Calendriers",
+    livraison: "Planche de livraison",
     presentation: "Présentation",
   };
 
@@ -243,6 +244,18 @@ window.VUE_PROJETS = (function () {
       var ret = is.filter(function (i) { return i.statut === "retenue"; }).length;
       return ret ? { classe: "plein", texte: is.length + " idées · " + ret + " retenue" + (ret > 1 ? "s" : "") }
         : { classe: "partiel", texte: is.length + " idées, aucune retenue" };
+    }
+    /* La planche de livraison ne demande ni idée ni maître : une case est due,
+     * elle est pleine ou elle est vide. C'est ce qui la rend lisible sur une
+     * reprise de parc, là où la planche des KV n'a rien à montrer. */
+    if (cle === "livraison") {
+      var lv = (p.livrables || []).filter(function (l) { return !l.annule; });
+      if (!lv.length) return { classe: "vide", texte: "aucun livrable" };
+      var pl = lv.filter(function (l) { return !!l.vignette; }).length;
+      if (!pl) return { classe: "vide", texte: lv.length + " cases, aucune remplie" };
+      return pl === lv.length
+        ? { classe: "plein", texte: "planche complète · " + lv.length + " visuels" }
+        : { classe: "partiel", texte: pl + " / " + lv.length + " cases remplies" };
     }
     if (cle === "planche") {
       var kvs = KV.tous(p);
@@ -887,6 +900,7 @@ window.VUE_PROJETS = (function () {
     if (cle === "pistes") return VUE_PISTES.rendre(p, rafraichir);
     if (cle === "atelier") return VUE_ATELIER.rendre(p, rafraichir);
     if (cle === "planche") return VUE_PLANCHE.rendre(p, rafraichir);
+    if (cle === "livraison") return VUE_LIVRAISON.rendre(p, rafraichir);
     if (cle === "presentation") return VUE_PRESENTATION.rendre(p, rafraichir);
     if (cle === "livrables" || cle === "calendriers") return VUE_MATRICE.rendre(p, rafraichir);
 

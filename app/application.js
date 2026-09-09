@@ -149,10 +149,27 @@ window.APP = (function () {
         + (attentes ? " — et " + attentes + " renvois sont sans retour" : "") };
 
     if (cle === "planning") {
+      /* Le compteur dit le plus coûteux des deux, pas leur somme. Un conflit
+       * d'ordre passe avant un retard : il fait travailler quelqu'un sur du
+       * spéculatif pendant qu'un engagement dort. Sans conflit, ce qui compte
+       * est ce qui est annoncé livré et n'existe pas. */
       var c = PRIORITE.conflits().conflits.length;
-      return { n: c ? String(c) : null, ton: "alerte",
-        quoi: c + (c > 1 ? " conflits d'ordre" : " conflit d'ordre")
-          + " : du spéculatif passe avant un engagement" };
+      if (c) {
+        return { n: String(c), ton: "alerte",
+          quoi: c + (c > 1 ? " conflits d'ordre" : " conflit d'ordre")
+            + " : du spéculatif passe avant un engagement" };
+      }
+      var souf = TRACE.enSouffrance();
+      var ment = souf.filter(function (x) { return x.s.cle === "dement"; }).length;
+      if (ment) {
+        return { n: String(ment), ton: "alerte",
+          quoi: ment + (ment > 1 ? " livraisons sont annoncées faites" : " livraison est annoncée faite")
+            + " et rien n'est au dossier" };
+      }
+      var tard = souf.filter(function (x) { return x.s.cle === "depasse"; }).length;
+      return { n: tard ? String(tard) : null, ton: "attente",
+        quoi: tard + (tard > 1 ? " remises sont passées" : " remise est passée")
+          + " sans que rien n'arrive" };
     }
 
     if (cle === "projets") {

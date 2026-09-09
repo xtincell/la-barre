@@ -507,16 +507,28 @@ window.VUE_MATRICE = (function () {
     var mk = (l.mockups || []).length;
     var pr = REGLES.pretSur(l);
 
-    return el("button.rt-c" + (maitre ? ".grand" : "") + (perime ? ".perime" : ""), {
-      type: "button", title: l.nom,
+    /* La carte porte le nom du LIVRABLE.
+     *
+     * Elle portait celui du support : sur un projet où cinquante-neuf films
+     * partagent le même support, cinquante-neuf cartes lisaient « Film
+     * d'emballage » et seule l'infobulle disait laquelle. Un mur qu'on ne peut
+     * pas lire ne se travaille pas. Le support est un fait de gabarit, il
+     * descend à la ligne de méta ; le nom du livrable remonte à sa place. */
+    var noeud = el("button.rt-c" + (maitre ? ".grand" : "") + (perime ? ".perime" : "")
+      /* Sans visuel, le bandeau n'a rien à recouvrir : il descend sous le
+       * texte plutôt que de flotter dessus. Deux blocs de texte superposés
+       * s'amputent l'un l'autre, et c'est le nom du fichier qui disparaît. */
+      + (l.vignette ? "" : ".sans-visuel"), {
+      type: "button", title: l.nom + (s ? " · " + s.nom : ""),
       onclick: function () { VUE_LIVRABLE.ouvrir(p, l, rafraichir); },
     },
       IMAGE.vignette(l, "planche"),
       maitre ? el("span.rtc-code", {}, m ? m.code : "?") : null,
       retours ? el("span.rtc-r", {}, String(retours)) : null,
       el("span.rtc-bas", {},
-        el("span.rtc-n", {}, maitre ? ((l.kv || {}).copy || l.nom) : (s ? s.nom : l.nom)),
+        el("span.rtc-n", {}, maitre ? ((l.kv || {}).copy || l.nom) : l.nom),
         el("span.rtc-m", {}, [
+          s ? s.nom : null,
           "V" + (l.version || 1),
           pr.part + " %",
           mk ? mk + " en situation" : null,
@@ -525,6 +537,11 @@ window.VUE_MATRICE = (function () {
         ].filter(Boolean).join("  ·  "))
       )
     );
+
+    /* Le fichier se lâche sur la carte : c'est le chemin le plus court entre
+     * le Finder et le dossier, et le seul que quelqu'un prendra deux cents
+     * fois de suite. */
+    return IMAGE.accepterDepot(noeud, l, rafraichir);
   }
 
   /* Un marché promis que rien ne porte. Même encombrement qu'un livrable : c'est

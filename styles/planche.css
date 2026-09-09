@@ -336,20 +336,43 @@
 .rt-c.perime { border-top-color: var(--bloquant-txt); }
 .rt-c .vignette { height: 100%; }
 .rt-c .vignette img { height: 100%; object-fit: cover; }
+/* Le vide nommé occupe la carte moins son bandeau : deux lignes de texte ne
+ * se lisent pas à moitié cachées. */
+/* Le texte décide de la hauteur, jamais l'inverse.
+ *
+ * Une carte à visuel tient son 4/3 : l'image y est recadrée sans perte de
+ * sens. Une carte sans visuel porte quatre lignes de texte, et un ratio fixe
+ * les ampute — c'est le nom du fichier qui saute, donc précisément ce qu'on
+ * était venu lire. Elle prend donc la hauteur qu'il lui faut, et la rangée
+ * s'aligne dessus. */
+.rt-c.sans-visuel { display: grid; grid-template-rows: minmax(0, 1fr) auto;
+  aspect-ratio: auto; min-height: 118px; }
+.rt-c.sans-visuel .rtc-bas { position: static; }
+.rt-c.sans-visuel .vignette.vide.attente { align-content: start; padding: .45rem .5rem; gap: .12rem; }
+@media (max-width: 760px) {
+  .rt-c.sans-visuel .vignette.vide.attente .va-q { -webkit-line-clamp: 2; }
+}
 
 .rtc-code {
   position: absolute; left: 0; top: 0; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em;
-  padding: .1rem .38rem; background: rgba(14,15,17,.86); color: var(--clair);
+  padding: .1rem .38rem; background: var(--n950); color: var(--n100);
 }
 .rtc-r {
   position: absolute; right: .25rem; top: .25rem; min-width: 18px; height: 18px;
   display: grid; place-items: center; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); border-radius: 9px;
   padding: 0 .26rem; background: var(--or); color: var(--nuit);
 }
+/* Le bandeau de la carte : un bloc opaque, pas un dégradé.
+ *
+ * Le dégradé venait du thème sombre, où le texte était clair et le fond noir.
+ * En clair il est resté noir sous une encre devenue sombre : du #241C18 sur du
+ * #0E0F11, soit la bande illisible du mur Panzani. Une carte se lit ou n'existe
+ * pas — le bandeau prend donc la surface haute du produit, et un filet le
+ * détache de l'image au lieu d'un fondu qui ne détache rien. */
 .rtc-bas {
   position: absolute; left: 0; right: 0; bottom: 0; display: grid; gap: .05rem;
-  padding: 1.4rem .45rem .38rem; text-align: left;
-  background: linear-gradient(to top, rgba(14,15,17,.93) 40%, rgba(14,15,17,0));
+  padding: .34rem .45rem .38rem; text-align: left;
+  background: var(--surface-1); border-top: 1px solid var(--trait);
 }
 .rtc-n { font-size: var(--t-eti); letter-spacing: var(--ls-eti); color: var(--clair); line-height: 1.2; }
 .rt-c.grand .rtc-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); }
@@ -3938,3 +3961,80 @@ blockquote, .message, .verbatim, .bii-t, .ati-t {
   letter-spacing: var(--ls-eti); color: var(--bloquant-txt); }
 .fi-motif { margin-top: .25rem; font-size: var(--t-eti); line-height: var(--lh-eti);
   letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+
+/* ————————————————————— La planche de présentation / livraison ————————————————————— */
+
+.plv { display: grid; gap: 1.2rem; }
+
+.plv-tete { display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap; border-bottom: 1px solid var(--trait); padding-bottom: .5rem; }
+.plv-t { display: grid; gap: .1rem; }
+.plv-n { font-size: var(--t-h2); line-height: var(--lh-h2); letter-spacing: var(--ls-h2);
+  font-family: var(--affichage); color: var(--clair); }
+.plv-q { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
+.plv-modes { display: flex; gap: .3rem; }
+
+.plv-familles { display: grid; gap: 1.4rem; }
+
+/* Une famille de SKU : le niveau sur lequel une décision technique se prend
+ * une fois. Elle a son titre et son compte — c'est à ce niveau qu'on réclame,
+ * jamais livrable par livrable. */
+.plv-f { display: grid; gap: .55rem; }
+.plvf-tete { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap;
+  border-bottom: 1px solid var(--trait); padding-bottom: .3rem; }
+.plvf-tete h3 { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre);
+  font-family: var(--affichage); color: var(--clair); margin: 0; }
+.plvf-v { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.plvf-n { margin-left: auto; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
+
+.plvf-mur { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: .55rem; }
+
+.plvc { position: relative; display: grid; grid-template-rows: minmax(0,1fr) auto;
+  padding: 0; cursor: pointer; overflow: hidden; text-align: left;
+  background: var(--surface-2); border: 0; border-top: 2px solid var(--trait-clair);
+  min-height: 150px; }
+.plvc.pleine { aspect-ratio: 4 / 3; }
+.plvc.pleine .plvc-bas { position: absolute; left: 0; right: 0; bottom: 0; }
+.plvc.tracee { border-top-color: var(--succes); }
+.plvc:hover { outline: 1px solid var(--or); outline-offset: -1px; }
+.plvc .vignette { height: 100%; }
+.plvc .vignette img { height: 100%; object-fit: cover; }
+.plvc.vide .vignette.vide.attente { align-content: start; padding: .45rem .5rem; gap: .12rem; }
+
+.plvc-bas { display: grid; gap: .05rem; padding: .34rem .45rem .38rem;
+  background: var(--surface-1); border-top: 1px solid var(--trait); }
+.plvc-n { font-size: var(--t-eti); line-height: 1.2; letter-spacing: var(--ls-eti); color: var(--clair); }
+.plvc-m { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+
+/* Un lot survolé. Le pointillé dit la cible, jamais un remplissage : on doit
+ * continuer à lire ce qu'il y a dessous pour savoir où on lâche. */
+.survol-lot { outline: 2px dashed var(--or); outline-offset: 4px; }
+
+/* ————————————————————— L'arbitrage d'un lot ————————————————————— */
+
+.arb { display: grid; max-height: 46vh; overflow-y: auto; margin: .6rem 0; }
+.arb-l { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: .6rem; align-items: center; padding: .5rem .2rem;
+  border-bottom: 1px solid var(--trait); border-left: 2px solid transparent; padding-left: .5rem; }
+.arb-l.sur { border-left-color: var(--succes); }
+.arb-l.hesite { border-left-color: var(--arbitrage); }
+.arb-l.aucun { border-left-color: var(--bloquant); }
+.arb-f { display: grid; gap: .08rem; min-width: 0; }
+.arb-fn { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--clair-doux); overflow-wrap: anywhere; }
+.arb-e { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+.arb-l.hesite .arb-e { color: var(--arbitrage); }
+.arb-l.aucun .arb-e { color: var(--bloquant-txt); }
+.arb-c select { width: 100%; min-width: 0; }
+
+@media (max-width: 760px) {
+  .arb-l { grid-template-columns: 1fr; gap: .3rem; }
+}
+
+/* La planche s'imprime : c'est l'écran de séance. Les trous, les gestes et les
+ * modes n'ont rien à faire sur le papier qu'on tend au client. */
+@media print {
+  .plv-modes, .plv .recev, .plvc.vide { display: none; }
+  .plvc { break-inside: avoid; }
+  .plv-f { break-inside: avoid; }
+}
