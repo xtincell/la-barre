@@ -140,6 +140,11 @@ window.CHAMPS = {
          * pas un champ à côté, elle en était la moitié. */
         { cle: "opportunite", nom: "Opportunité", type: "long" },
         { cle: "gardefous", nom: "Garde-fous", type: "puces" },
+        /* Sharp : « une marque grandit en étant associée à plus de situations
+         * d'achat, pas à une seule mieux. » Une par ligne. */
+        { cle: "pointsEntree", nom: "Points d'entrée de catégorie", type: "puces",
+          aide: "Les situations d'achat auxquelles la marque est associée. Le petit "
+            + "déjeuner, la fin du mois, la rentrée, le déplacement." },
       ],
     },
     {
@@ -219,6 +224,16 @@ window.CHAMPS = {
     { cle: "estime", nom: "Estimé (jours)", type: "nombre" },
     { cle: "reel", nom: "Réel (jours)", type: "nombre" },
     { cle: "toursVendus", nom: "Allers-retours de révision vendus", type: "nombre" },
+    /* Ce que ce livrable fait, au sens du corpus d'efficacité. Sans lui, la
+     * répartition marque / activation du dossier se calculerait sur une poignée
+     * et s'afficherait comme un fait. Le champ n'est pas requis : un livrable
+     * qui ne se range dans aucune des deux se compte comme non classé, et le
+     * dossier le dit. */
+    { cle: "nature", nom: "Construction de marque ou activation", type: "choix",
+      options: [{ cle: "marque", nom: "Construction de marque — large, lente, cumulative" },
+                { cle: "activation", nom: "Activation — ciblée, immédiate, sans reste" }],
+      aide: "Binet & Field : environ 60 / 40. C'est une référence issue de données "
+        + "britanniques, pas un seuil local — l'écart se lit, il ne se corrige pas." },
   ],
 
   /* Utilitaires */

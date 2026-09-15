@@ -25,8 +25,106 @@ window.VUE_INSIGHT = (function () {
           }))
         : vide(p, rafraichir),
       r.orphelines.length ? orphelines(p, r, rafraichir) : null,
+      window.ECOLES ? blocEcoles(p, rafraichir) : null,
+      window.EFFICACITE ? EFFICACITE.bloc(p) : null,
       reste(p, rafraichir)
     );
+  }
+
+  /* ————————————————————— L'école, étage par étage ————————————————————— */
+
+  /* « C'est de plus en plus à vous de savoir dans quelle école vous travaillez
+   * — personne ne vous le dira. » Trois étages, une école par étage. Le
+   * mélange tient quand chacune en gouverne un différent ; deux au même étage
+   * se neutralisent, sauf si elles partagent la même racine. */
+  function blocEcoles(p, rafraichir) {
+    var d = p.ecoles || {};
+    var e = ECOLES.etat(p);
+
+    return el("section.eco." + e.ton, {},
+      el("div.eco-tete", {},
+        el("span.eco-t", {}, "L'ÉCOLE QUI GOUVERNE CHAQUE ÉTAGE"),
+        el("span.eco-e", {}, e.nom)),
+      el("p.eco-q", {}, e.quoi),
+
+      el("div.eco-g", {}, ECOLES.ETAGES.map(function (et) {
+        /* Le territoire déclare son école lui-même : c'est l'étage qu'il
+         * gouverne, et un dossier peut en porter deux. */
+        var surT = et.cle === "territoire"
+          ? TERRITOIRE.liste(p).filter(function (t) { return !!t.ecole; }) : [];
+        var cle = d[et.cle] || (surT.length === 1 ? surT[0].ecole : null);
+        var ec = cle ? ECOLES.de(cle) : null;
+        var pr = cle ? ECOLES.preuve(p, cle, et.cle) : null;
+
+        return el("div.ecoe" + (ec ? (pr && !pr.ok ? ".manque" : ".posee") : ".vide"), {},
+          el("span.ecoe-t", {}, et.nom),
+          el("span.ecoe-n", {}, ec ? ec.nom : "non déclarée"),
+          ec ? el("span.ecoe-m", {}, ec.maison) : null,
+          ec ? el("span.ecoe-p", {}, "preuve attendue : " + ec.preuve) : null,
+          pr && !pr.ok ? el("p.ecoe-x", {}, pr.cout) : null,
+          ec && ec.local ? el("p.ecoe-l", {}, "Ici : " + ec.local) : null,
+          surT.length > 1
+            ? el("p.ecoe-x", {}, surT.length + " territoires déclarent chacun la leur — "
+                + "elles ne se neutralisent que si leurs racines diffèrent.")
+            : null,
+          et.cle === "territoire" && surT.length
+            ? null
+            : el("button.b.nu", { type: "button",
+                onclick: function () { choisirEcole(p, et, rafraichir); } },
+                ec ? "Changer" : "Déclarer"));
+      })),
+
+      el("details.eco-tab", {},
+        el("summary", {}, "Les douze écoles, et ce que chacune réclame"),
+        ECOLES.tableau()));
+  }
+
+  function choisirEcole(p, etage, rafraichir) {
+    var d = p.ecoles || {};
+    var choix = d[etage.cle] || null;
+    var liste = ECOLES.parEtage(etage.cle);
+
+    var cartes = liste.map(function (ec) {
+      var pr = ECOLES.preuve(p, ec.cle, etage.cle);
+      var b = el("button.ecc" + (choix === ec.cle ? ".ici" : "") + (ec.corpus ? ".corpus" : ""),
+        { type: "button" },
+        el("div.ecc-t", {},
+          el("span.ecc-n", {}, ec.nom),
+          el("span.ecc-m", {}, ec.maison + " · " + ec.annee)),
+        el("p.ecc-p", {}, ec.principe),
+        el("p.ecc-pr", {}, el("span.ecc-e", {}, "PREUVE ATTENDUE  "), ec.preuve,
+          pr ? el("span.ecc-ok" + (pr.ok ? ".ok" : ""), {},
+            pr.ok ? "  — elle est au dossier" : "  — elle n'y est pas") : null),
+        el("p.ecc-lim", {}, el("span.ecc-e", {}, "LA LIMITE  "), ec.limite),
+        ec.local ? el("p.ecc-loc", {}, el("span.ecc-e", {}, "ICI  "), ec.local) : null);
+      b.addEventListener("click", function () {
+        choix = ec.cle;
+        [].forEach.call(b.parentNode.children, function (x) { x.classList.remove("ici"); });
+        b.classList.add("ici");
+      });
+      return b;
+    });
+
+    PANNEAU.sur("L'école de " + etage.nom.toLowerCase(), p.ref, el("div", {},
+      UI.banniere("", "Une école répond à une seule question : où se trouve la bonne "
+        + "idée ? Le mélange tient quand chacune gouverne un étage différent — deux au "
+        + "même étage se neutralisent, sauf si elles partagent la même racine."),
+      el("div.ecc-l", {}, cartes),
+      el("div.form-actions", {},
+        el("button.b.or", { type: "button", onclick: function () {
+          if (!p.ecoles) p.ecoles = {};
+          p.ecoles[etage.cle] = choix || null;
+          DEPOT.tracer("école", "strategie", p.id,
+            etage.nom + " — " + (choix ? ECOLES.de(choix).nom : "aucune"));
+          DEPOT.enregistrer(); PANNEAU.fermerSur(); rafraichir();
+        } }, "Déclarer"),
+        choix ? el("button.b", { type: "button", onclick: function () {
+          if (!p.ecoles) p.ecoles = {};
+          p.ecoles[etage.cle] = null;
+          DEPOT.enregistrer(); PANNEAU.fermerSur(); rafraichir();
+        } }, "Retirer l'école") : null,
+        el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Annuler"))
+    ));
   }
 
   /* ————————————————————— La question ————————————————————— */

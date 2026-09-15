@@ -43,6 +43,10 @@ window.REGLES = (function () {
     "pistes-sans-role": "Trois pistes d'égale valeur ne font pas un choix : il en faut une à vendre, et deux qui bornent le territoire. Sans rôles, la sage l'emporte par défaut, parce qu'elle rassure.",
     "integrite-non-ecrite": "Sur un compte à comités en cascade, c'est la seule pièce écrite qui protège le travail entre deux étages de validation. Sans elle, le concept d'une piste remontera monté sur l'exécution d'une autre, et personne ne saura dire ce qui a été perdu.",
     "structure-hybride": "Le deck mélange deux squelettes. Le client sent l'incohérence sans savoir la nommer, et l'argumentation s'affaiblit là où elle devrait porter.",
+    "ecole-sans-preuve": "L'école est déclarée et ce qu'elle réclame n'est pas au dossier. On travaille selon un critère qu'on ne pourra pas produire le jour où le client demandera sur quoi la reco s'appuie.",
+    "convention-supposee": "Une convention qu'on ne peut pas montrer en trois visuels de concurrents n'est pas identifiée : elle est supposée. La rupture qu'on construira dessus cassera peut-être une porte ouverte.",
+    "ecoles-meme-etage": "Deux écoles au même étage, et chacune apporte sa racine. Elles se neutralisent : le deck portera deux raisonnements concurrents, et le client sentira l'incohérence sans savoir la nommer.",
+    "chiffre-sans-source": "Un chiffre sans source se retourne en réunion, et emporte avec lui le reste du diagnostic. On n'invente jamais un chiffre : on dit à quel niveau il a été obtenu.",
 
     /* Une reprise d'emballage se suit sur deux sources — un tableau et un
      * disque. Quand les deux se contredisent, ce n'est pas un détail de
@@ -315,6 +319,68 @@ window.REGLES = (function () {
               "Territoire « " + (t.nom || t.quoi || "sans nom").slice(0, 40) + " » n'ouvre qu'un concept",
               "planning", "strategie", t.id);
           });
+        }
+      }
+
+      /* ————— L'école déclarée, et la preuve qu'elle réclame —————
+       *
+       * Déclarer une école n'est pas une préférence de style : c'est s'engager
+       * à porter sa preuve. Disruption veut la convention en trois visuels,
+       * Brutal Simplicity le chemin de réduction, Account Planning un insight
+       * qui passe le test. */
+      if (window.ECOLES) {
+        ECOLES.declarees(p).forEach(function (x) {
+          var pr = ECOLES.preuve(p, x.cle, x.etage);
+          if (!pr || pr.ok) return;
+          var e = ECOLES.de(x.cle);
+          /* La convention a son propre prix : c'est le contrôle le plus cité du
+           * métier, et le confondre avec les autres l'affadirait. */
+          if (e && e.exige === "convention") {
+            pousser(trouves, p, "convention-supposee",
+              "Disruption déclarée, la convention n'est pas montrée", "planning", "strategie",
+              x.territoire ? x.territoire.id : null);
+            return;
+          }
+          pousser(trouves, p, "ecole-sans-preuve",
+            (e ? e.nom : x.cle) + " déclarée — " + pr.quoi + " manque",
+            "planning", "strategie", x.territoire ? x.territoire.id : null);
+        });
+
+        /* Deux écoles au même étage. Elles ne se neutralisent QUE si chacune
+         * apporte sa racine : c'est la nuance de la v4, et sans elle le
+         * contrôle interdirait un mélange qui tient très bien. */
+        var parEtage = {};
+        ECOLES.declarees(p).forEach(function (x) {
+          (parEtage[x.etage] = parEtage[x.etage] || []).push(x);
+        });
+        Object.keys(parEtage).forEach(function (et) {
+          var xs = parEtage[et];
+          if (xs.length < 2) return;
+          var cles = {};
+          xs.forEach(function (x) { cles[x.cle] = 1; });
+          if (Object.keys(cles).length < 2) return;
+          var racines = {};
+          xs.forEach(function (x) {
+            var r = x.territoire && x.territoire.insightId ? x.territoire.insightId : "?";
+            racines[r] = 1;
+          });
+          if (Object.keys(racines).length < 2) return;
+          pousser(trouves, p, "ecoles-meme-etage",
+            Object.keys(cles).length + " écoles à l'étage « " + et + " », sur "
+              + Object.keys(racines).length + " racines différentes",
+            "planning", "strategie");
+        });
+      }
+
+      /* Le seul contrôle du corpus d'efficacité. Le 60/40 et l'ESOV restent en
+       * lecture : appliquer un seuil britannique sans mesure locale, ce serait
+       * refaire l'erreur qu'on reproche aux doctrines d'agence. */
+      if (window.EFFICACITE) {
+        var sansSource = EFFICACITE.sansSource(p);
+        if (sansSource.length) {
+          pousser(trouves, p, "chiffre-sans-source",
+            sansSource.length + (sansSource.length > 1 ? " chiffres du dossier n'ont" : " chiffre du dossier n'a")
+              + " ni source ni niveau de preuve", "planning", "strategie");
         }
       }
 
