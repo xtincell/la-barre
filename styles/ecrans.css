@@ -800,3 +800,68 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
   .doc-s { overflow-x: auto; }
 }
 @media print { .doc-lien, .doc-s > summary { display: block; } .doc-s { border-left: 0; } }
+
+/* ————————————————————— Le dossier, composé ————————————————————— */
+
+/* Ce qui se remet, par opposition à ce qui se monte. Mesure de lecture, pas de
+ * tableau de bord : on le lit d'un trait, et il s'imprime tel quel. */
+.pr-dossier { display: grid; gap: 1.6rem; max-width: 100%; }
+
+.prd-tete { display: grid; gap: .25rem; padding-bottom: .7rem; border-bottom: 2px solid var(--clair); }
+.prd-tete h2 { font-family: var(--affichage); font-size: var(--t-ecran); line-height: var(--lh-ecran);
+  letter-spacing: var(--ls-ecran); color: var(--clair); margin: 0; text-wrap: balance; }
+.prd-s { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.prd-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); margin: .2rem 0 0; max-width: var(--mesure); }
+
+.prd-corps { display: grid; gap: 1.8rem; }
+.prd-doc { display: grid; gap: .6rem; }
+
+/* La dette d'un document, dite avant qu'on le lise : un cadrage incomplet se
+ * remet quand même, mais on sait ce qui lui manque. */
+.prd-dette { display: grid; gap: .2rem; padding: .6rem .75rem;
+  background: var(--surface-3); border-left: 3px solid var(--arbitrage); max-width: var(--mesure); }
+.prdd-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--arbitrage); }
+.prdd-l { margin: 0; padding-left: 1.1rem; display: grid; gap: .15rem; }
+.prdd-l li { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-doux); }
+.prdd-l b { color: var(--clair); font-weight: inherit; }
+
+/* Une page du deck, lue plutôt que survolée. */
+.prd-p { display: grid; gap: .4rem; padding-top: 1rem; border-top: 1px solid var(--trait); }
+.prdp-t { font-family: var(--affichage); font-size: var(--t-titre); line-height: var(--lh-titre);
+  letter-spacing: var(--ls-titre); color: var(--clair); margin: 0; text-wrap: balance; }
+.prdp-phrase { font-family: var(--lecture); font-size: var(--t-h2); line-height: var(--lh-h2);
+  letter-spacing: var(--ls-h2); color: var(--clair); margin: .2rem 0; max-width: var(--mesure); text-wrap: balance; }
+.prdp-corps { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire);
+  color: var(--clair-doux); margin: 0; max-width: var(--mesure); }
+.prdp-sign { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: .1em;
+  color: var(--or); margin: .2rem 0 0; }
+.prdp-note { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); margin: 0; }
+.prdp-blocs { display: grid; gap: .35rem; margin: .3rem 0 0; max-width: var(--mesure); }
+.prdp-blocs > div { display: grid; gap: .05rem; }
+.prdp-blocs dt { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
+.prdp-blocs dd { margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta);
+  letter-spacing: var(--ls-meta); color: var(--clair-doux); }
+
+.prdp-mur { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: .5rem; }
+.prdp-c { margin: 0; display: grid; gap: .2rem; }
+.prdp-c figcaption { font-size: var(--t-micro); line-height: var(--lh-micro);
+  letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+
+.prdp-tab { width: 100%; border-collapse: collapse; }
+.prdp-tab td { padding: .22rem .45rem; border-bottom: 1px solid var(--trait); vertical-align: top;
+  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-doux); }
+.prdp-tab td:first-child { color: var(--clair); }
+
+.prd-manque { display: grid; gap: .1rem; padding: .5rem .7rem; background: var(--surface-3);
+  border-left: 3px solid var(--trait-clair); max-width: var(--mesure); }
+.prdm-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.prdm-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+
+/* Il s'imprime tel quel : c'est sa raison d'être. */
+@media print {
+  .pr-dossier { gap: 1.2rem; }
+  .prd-doc, .prd-p { break-inside: avoid; }
+  .prd-dette, .prd-manque { display: none; }
+}

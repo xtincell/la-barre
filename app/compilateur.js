@@ -20,21 +20,39 @@ window.COMPILATEUR = (function () {
       pour: "l'atelier", ouvre: "la conception",
       quoi: "ce qui est demandé, par qui, dans quel cadre — et ce qu'on ne fera pas",
       sans: "l'atelier partira d'une page blanche et produira des idées hors sujet",
-      sections: ["identite", "brief", "socle", "strategie"],
+      /* Le brief-back appartient au cadrage : c'est son dernier acte. Un
+       * document de cadrage qui ne porte pas ce qu'on a répondu au client
+       * raconte la moitié de la conversation. */
+      sections: ["identite", "brief", "briefback", "socle", "strategie"],
     },
     conception: {
       nom: "Document de conception", court: "Conception",
       pour: "la production", ouvre: "l'exécution",
       quoi: "l'idée retenue, la piste qui la porte, son dispositif et son calendrier",
       sans: "on fabriquera sans savoir quel concept fait autorité, ni pour quand",
-      sections: ["bigidea", "pistes"],
+      /* La séance de créa en fait partie : c'est là que les idées ont été
+       * posées et que l'auteur a été constaté. Sans elle, le document dit ce
+       * qu'on a retenu sans dire entre quoi on a choisi. */
+      sections: ["atelier", "bigidea", "pistes"],
+    },
+    /* Le troisième temps avait ses écrans et pas son document. Or c'est celui
+     * qu'on remet — à l'imprimeur, au client, à celui qui reprend le dossier
+     * dans six mois. */
+    production: {
+      nom: "Document de production", court: "Production",
+      pour: "la remise", ouvre: "la diffusion",
+      quoi: "ce qui a été fabriqué, ce qui manque, et sous quelles conditions ça part",
+      sans: "on remet un dossier dont personne ne sait ce qu'il contient vraiment",
+      sections: ["planche", "livrables", "livraison", "presentation"],
     },
   };
 
   /* ————————————————————— La recevabilité ————————————————————— */
 
   function controles(p, cle) {
-    return cle === "cadrage" ? controlesCadrage(p) : controlesConception(p);
+    if (cle === "cadrage") return controlesCadrage(p);
+    if (cle === "production") return controlesProduction(p);
+    return controlesConception(p);
   }
 
 
@@ -157,7 +175,9 @@ window.COMPILATEUR = (function () {
   /* ————————————————————— Le document ————————————————————— */
 
   function compiler(p, cle) {
-    return cle === "cadrage" ? cadrage(p) : conception(p);
+    if (cle === "cadrage") return cadrage(p);
+    if (cle === "production") return production(p);
+    return conception(p);
   }
 
 
@@ -240,10 +260,13 @@ window.COMPILATEUR = (function () {
         { t: "Ce qu'on nous demande", corps: b.verbatim, source: "les mots du client",
           citation: (p.briefCitations || {}).verbatim },
         { t: "Le problème réel", corps: b.probleme, source: "Strategy Planner" },
+        briefbackBloc(p),
         { t: "À qui on parle", corps: b.cible },
-        { t: "L'insight", corps: b.insight || st.insight, fort: true },
-        { t: "La tension", corps: st.tension },
-        { t: "Le territoire", corps: st.territoire, fort: true },
+        /* L'insight n'est plus un paragraphe : il a une couche, et la couche
+         * décide du livrable. Un cadrage qui donne l'énoncé sans son étage
+         * envoie l'atelier chercher au mauvais endroit. */
+        insightBloc(p, b, st),
+        territoireBloc(p, st),
         { t: "La promesse", corps: b.promesse || s.promesse, fort: true },
         { t: "L'idée directrice de la marque", corps: s.idee_directrice,
           source: "plateforme de marque — pluriannuelle, elle ne se rediscute pas ici" },
@@ -257,6 +280,7 @@ window.COMPILATEUR = (function () {
         { t: "Comment on mesurera", puces: b.kpis },
         elts.length ? { t: "Les éléments de marque", elements: elts,
           source: "ce qu'un DA doit avoir sous les yeux avant de dessiner" } : null,
+        ecolesBloc(p),
         { t: "Le cadre de décision", lignes: [
           { q: "Décideur final", v: i.decideur },
           { q: "Qui peut annuler", v: i.tueur },
@@ -271,6 +295,93 @@ window.COMPILATEUR = (function () {
             return DOCS.cadrage.sections.indexOf(x.section) !== -1; })
         : [],
     };
+  }
+
+  /* ————————————————————— La chaîne du raisonnement, dans le document —————————————————————
+   *
+   * Trois blocs qui n'existaient pas parce que les objets qu'ils rendent
+   * n'existaient pas. Ils tombent d'eux-mêmes sur un dossier qui n'a rien :
+   * un document ne montre pas des rubriques vides, il montre ce qu'il a. */
+
+  function insightBloc(p, b, st) {
+    var is = window.INSIGHT ? INSIGHT.liste(p) : [];
+    if (!is.length) {
+      /* Repli sur les anciens champs : un dossier d'avant la chaîne garde son
+       * paragraphe, et le cadrage le rend plutôt que de mentir par omission. */
+      var txt = b.insight || st.insight;
+      return txt ? { t: "L'insight", corps: txt, fort: true,
+        source: "écrit avant que la couche ne soit un champ — son étage n'est pas nommé" } : null;
+    }
+    return { t: is.length > 1 ? "Les insights" : "L'insight", fort: true,
+      source: "chacun à sa couche — et la couche décide du livrable",
+      lignes: is.map(function (i) {
+        INSIGHT.normaliser(i);
+        var c = i.couche ? INSIGHT.couche(i.couche) : null;
+        var v = INSIGHT.verdict(i);
+        return { q: c ? c.nom.toUpperCase() : "COUCHE NON NOMMÉE",
+          v: INSIGHT.texte(i)
+            + (c ? "  —  commande " + c.commande : "")
+            + "  ·  " + v.nom
+            + (i.sources.length ? "  ·  " + i.sources.length + " sources croisées" : "  ·  sans source") };
+      }) };
+  }
+
+  function territoireBloc(p, st) {
+    var ts = window.TERRITOIRE ? TERRITOIRE.liste(p) : [];
+    if (!ts.length) {
+      return st.territoire ? { t: "Le territoire", corps: st.territoire, fort: true } : null;
+    }
+    var t = ts[0];
+    var conv = TERRITOIRE.convention(t);
+    var puces = [];
+    ts.forEach(function (x) {
+      var n = TERRITOIRE.pistes(p, x).length;
+      puces.push((x.nom || "territoire sans nom") + " — " + (x.quoi || "espace non décrit")
+        + "  ·  " + n + (n > 1 ? " concepts" : " concept"));
+    });
+    return { t: ts.length > 1 ? "Les territoires" : "Le territoire", fort: true,
+      corps: ts.length === 1 ? t.quoi : null,
+      puces: ts.length > 1 ? puces : null,
+      source: conv.enonce
+        ? "convention de catégorie : " + conv.enonce
+          + (conv.prouvee ? "  —  prouvée en " + conv.preuves.length + " visuels de concurrents"
+            : "  —  " + conv.manque + " visuel(s) manquent : elle est supposée")
+        : "l'espace que l'insight ouvre, et où plusieurs concepts vivent" };
+  }
+
+  function briefbackBloc(p) {
+    var bb = (p.sections || {}).briefback || {};
+    if (!(bb.compris || "").trim()) return null;
+    var c = bb.couche && window.INSIGHT ? INSIGHT.couche(bb.couche) : null;
+    return { t: "Ce que nous avons répondu au client", fort: !!(bb.ecart || "").trim(),
+      source: bb.envoye_le
+        ? "brief-back envoyé le " + O.joli(bb.envoye_le)
+          + (bb.repondu_le ? ", contresigné le " + O.joli(bb.repondu_le) : " — sans retour à ce jour")
+        : "brief-back rédigé, pas encore envoyé",
+      lignes: [
+        { q: "Ce que nous avons compris", v: bb.compris },
+        { q: "Où vit le problème", v: c ? c.nom + " — commande " + c.commande : bb.couche },
+        { q: "Ce que nous proposons de produire", v: bb.propose },
+        { q: "L'écart avec ce qui est demandé", v: bb.ecart },
+        { q: "Sa réponse", v: bb.reponse },
+      ].filter(function (x) { return !!(x.v || "").trim(); }) };
+  }
+
+  function ecolesBloc(p) {
+    if (!window.ECOLES) return null;
+    var ds = ECOLES.declarees(p);
+    if (!ds.length) return null;
+    return { t: "L'école qui gouverne chaque étage",
+      source: "le mélange tient quand chacune gouverne un étage différent",
+      lignes: ds.map(function (x) {
+        var e = ECOLES.de(x.cle);
+        var pr = ECOLES.preuve(p, x.cle, x.etage);
+        var et = ECOLES.ETAGES.filter(function (t) { return t.cle === x.etage; })[0];
+        return { q: et ? et.nom : x.etage,
+          v: (e ? e.nom + " · " + e.maison : x.cle)
+            + "  —  preuve attendue : " + (e ? e.preuve : "—")
+            + (pr ? (pr.ok ? "  ✓ au dossier" : "  ✕ absente") : "") };
+      }) };
   }
 
   function conception(p) {
@@ -302,11 +413,21 @@ window.COMPILATEUR = (function () {
         { t: "Les critères d'acceptation", puces: b.criteres,
           source: "les seuls éléments opposables au travail" },
         { t: "Les directions interdites", puces: b.interdits },
-        retenue ? { t: "La piste", corps: retenue.concept, fort: true,
+        racineBloc(p, retenue),
+        retenue ? { t: "La piste retenue", corps: retenue.concept, fort: true,
           source: da ? "direction artistique : " + da.nom : null } : null,
-        retenue ? { t: "Ce qu'elle sacrifie", corps: retenue.sacrifice } : null,
+        retenue ? { t: "L'axe", lignes: (window.AXE ? AXE.CHAMPS : []).map(function (c) {
+            var v = retenue[c.cle];
+            return { q: c.court, v: Array.isArray(v) ? v.join(" · ") : v };
+          }).filter(function (x) { return !!(x.v || "").trim(); }) } : null,
+        retenue ? { t: "Le prix à payer", lignes: [
+            { q: "Ce qu'elle privilégie", v: (retenue.prix || {}).privilegie },
+            { q: "Ce qu'elle sacrifie", v: (retenue.prix || {}).sacrifie || retenue.sacrifice },
+          ].filter(function (x) { return !!(x.v || "").trim(); }) } : null,
         retenue ? { t: "L'argument", corps: retenue.argument } : null,
         retenue ? { t: "Les porteurs de reconnaissance", puces: retenue.porteurs } : null,
+        arbitrageBloc(p, retenue),
+        seanceBloc(p),
         retenue && (retenue.dispositif || []).length
           ? { t: "Le dispositif", activites: retenue.dispositif.map(function (a) {
               return { nom: a.nom, quoi: a.quoi,
@@ -333,6 +454,178 @@ window.COMPILATEUR = (function () {
             return DOCS.conception.sections.indexOf(x.section) !== -1; })
         : [],
     };
+  }
+
+  /* ————————————————————— Ce que la conception doit porter en plus ————————————————————— */
+
+  /* D'où l'idée descend. Une conception qui ne dit pas sa racine laisse
+   * l'exécutant croire que le concept est arrivé de nulle part — et il le
+   * défendra comme tel, c'est-à-dire mal. */
+  function racineBloc(p, retenue) {
+    if (!retenue || !window.TERRITOIRE) return null;
+    var i = TERRITOIRE.racine(p, retenue);
+    var t = retenue.territoireId ? TERRITOIRE.de(p, retenue.territoireId) : null;
+    if (!i && !t) return null;
+    var c = i && i.couche ? INSIGHT.couche(i.couche) : null;
+    return { t: "D'où elle descend",
+      source: "remonter un axe jusqu'à son insight est le seul test qui dise si deux pistes sont comparables",
+      lignes: [
+        { q: "L'insight", v: i ? INSIGHT.texte(i) + (c ? "  ·  couche " + c.nom.toLowerCase() : "") : null },
+        { q: "Le territoire", v: t ? (t.nom || t.quoi) : null },
+      ].filter(function (x) { return !!(x.v || "").trim(); }) };
+  }
+
+  /* L'arbitrage. « Trois pistes sans arbitrage ne sont pas des routes
+   * parallèles : ce sont trois recommandations dans le même document. » Le
+   * document de conception est précisément l'endroit où ça s'écrit. */
+  function arbitrageBloc(p, retenue) {
+    if (!window.RECO) return null;
+    var a = RECO.arbitrage(p);
+    if (!a.due) return null;
+    var lignes = a.pistes.map(function (pi) {
+      var r = pi.role ? RECO.role(pi.role) : null;
+      var px = pi.prix || {};
+      return { q: (pi.titre || "sans titre") + (r ? "  ·  " + r.nom : "")
+          + (pi.statut === "retenue" ? "  ·  RETENUE" : ""),
+        v: [pi.concept, px.privilegie ? "privilégie : " + px.privilegie : null,
+            (px.sacrifie || pi.sacrifice) ? "sacrifie : " + (px.sacrifie || pi.sacrifice) : null]
+          .filter(Boolean).join("  —  ") };
+    });
+    if (a.raisons.length) {
+      lignes.push({ q: "Pourquoi celle-là", v: a.raisons.join("  ·  ") });
+    }
+    if ((a.integrite || "").trim()) {
+      lignes.push({ q: "Ce qui casse si on recompose", v: a.integrite });
+    }
+    return { t: "L'arbitrage", fort: true, lignes: lignes,
+      source: a.prete
+        ? "l'agence recommande, et dit ce que coûte de recomposer"
+        : "incomplet : sans les trois raisons et sans l'intégrité, le client choisira seul" };
+  }
+
+  /* La séance de concept. Elle fonde l'attribution : « l'auteur se saisit
+   * avant l'arbitrage, pas après. » Sans elle au document, l'idée retenue n'a
+   * pas d'histoire et l'indicateur juniors reste à zéro. */
+  function seanceBloc(p) {
+    var is = (p.idees || []);
+    if (!is.length) return null;
+    var se = p.seance || {};
+    return { t: "La séance de créa",
+      source: se.date
+        ? O.joli(se.date) + (se.duree ? "  ·  " + se.duree + " min" : "")
+          + "  ·  " + is.length + " idées posées"
+        : is.length + " idées posées",
+      lignes: is.map(function (i) {
+        var a = i.auteur ? DEPOT.trouve("personnes", i.auteur) : null;
+        return { q: (a ? a.nom : "auteur non nommé") + (i.statut === "retenue" ? "  ·  RETENUE" : ""),
+          v: i.texte };
+      }).concat(se.motif ? [{ q: "Le motif de l'arbitrage", v: se.motif }] : []) };
+  }
+
+  /* ————————————————————— Le document de production ————————————————————— */
+
+  /* Ce qui a été fabriqué, ce qui manque, et sous quelles conditions ça part.
+   * Il se compile depuis l'état réel des livrables — jamais depuis une
+   * déclaration : c'est la différence entre un bordereau et une promesse. */
+  function production(p) {
+    var ls = (p.livrables || []).filter(function (l) { return !l.annule; });
+    var pleins = ls.filter(function (l) { return !!l.vignette; });
+    var b = window.TRACE ? TRACE.bilan(ls) : null;
+    var souf = window.TRACE ? TRACE.enSouffrance(function (x) { return x.id === p.id; }) : [];
+    var retenue = (p.sections.pistes || []).filter(function (x) { return x.statut === "retenue"; })[0];
+
+    /* Par famille : c'est le niveau auquel on réclame, jamais livrable par
+     * livrable. */
+    var fam = {};
+    ls.forEach(function (l) {
+      var cle = l.marqueId || l.voletId || "sans";
+      if (!fam[cle]) {
+        var mq = l.marqueId ? DEPOT.trouve("marques", l.marqueId) : null;
+        var vo = (p.volets || []).filter(function (v) { return v.id === l.voletId; })[0];
+        fam[cle] = { nom: mq ? mq.nom : vo ? vo.nom : "Sans famille", n: 0, pleins: 0 };
+      }
+      fam[cle].n++;
+      if (l.vignette) fam[cle].pleins++;
+    });
+
+    var eff = window.EFFICACITE ? EFFICACITE.repartition(p) : null;
+
+    return {
+      titre: "Production — " + p.nom,
+      sous: p.ref + "  ·  " + pleins.length + " / " + ls.length + " livrables portent leur visuel"
+        + (retenue ? "  ·  piste « " + retenue.titre + " »" : ""),
+      logo: (function () { var m = MARQUE.de(p); return m ? MARQUE.logo(m.id) : null; })(),
+      blocs: [
+        { t: "Où en est le parc", fort: true,
+          lignes: Object.keys(fam).map(function (k) {
+            return { q: fam[k].nom, v: fam[k].pleins + " / " + fam[k].n + " visuels posés" };
+          }) },
+
+        b ? { t: "Ce qui est tracé, et ce qui ne l'est pas",
+          source: "« pas fait » et « pas tracé » ne se relancent pas de la même façon",
+          lignes: [
+            { q: "Tracé", v: b.trace + " — une version ou un fichier au dossier" },
+            { q: "Vu, non déposé", v: b.vu + " — le travail se voit, la trace manque" },
+            { q: "Muet", v: b.muet + " — aucune version, aucun fichier, aucun visuel" },
+            { q: "Relançables", v: b.relancables + " sur " + b.total
+                + " portent un responsable ET une date" },
+          ] } : null,
+
+        souf.length ? { t: "Ce qui est en souffrance",
+          source: "classé par coût : ce qui est faux avant ce qui est en retard",
+          lignes: souf.slice(0, 12).map(function (x) {
+            return { q: x.s.nom + (x.s.jours ? "  ·  " + x.s.jours + " j" : ""),
+              v: x.l.nom + (x.attendu && x.attendu.fichier ? "  —  attendu : " + x.attendu.fichier : "") };
+          }) } : null,
+
+        eff && eff.lisible ? { t: "Construction de marque et activation",
+          source: eff.reserve,
+          lignes: [{ q: "Répartition", v: eff.partMarque + " / " + (100 - eff.partMarque)
+            + "  —  référence " + eff.cible + " / " + (100 - eff.cible) }] } : null,
+
+        { t: "Ce qui part", pieces: pleins },
+        ls.length > pleins.length
+          ? { t: "Ce qui manque encore",
+              pieces: ls.filter(function (l) { return !l.vignette; }) }
+          : null,
+
+        creditsBloc(p),
+      ].filter(Boolean),
+      inferences: [],
+    };
+  }
+
+  /* Les crédits se posent avant la diffusion : fonction exercée, nom
+   * orthographié, validation écrite avant tout dépôt. */
+  function creditsBloc(p) {
+    var gens = window.PRESENTATION && PRESENTATION.credits ? PRESENTATION.credits(p) : [];
+    if (!gens.length) return null;
+    return { t: "Crédits",
+      source: "fonction exercée, nom orthographié — avant tout dépôt",
+      lignes: gens.map(function (g) { return { q: g.fonction, v: g.nom }; }) };
+  }
+
+  function controlesProduction(p) {
+    var ls = (p.livrables || []).filter(function (l) { return !l.annule; });
+    var pleins = ls.filter(function (l) { return !!l.vignette; }).length;
+    var sansQui = ls.filter(function (l) { return !l.responsable; }).length;
+    var gens = window.PRESENTATION && PRESENTATION.credits ? PRESENTATION.credits(p) : [];
+    var ment = ls.filter(function (l) {
+      return (l.releve || {}).ecart === "annonce-sans-fichier"; }).length;
+
+    return [
+      { quoi: "Des livrables au dossier", ok: ls.length > 0, poids: 5,
+        cout: "il n'y a rien à remettre : le dossier s'arrête à l'idée" },
+      { quoi: "Chaque livrable porte son visuel", ok: ls.length > 0 && pleins === ls.length, poids: 4,
+        cout: (ls.length - pleins) + " cases vides : le document promet ce qu'il ne montre pas" },
+      { quoi: "Le tableau dit vrai", ok: ment === 0, poids: 5,
+        cout: ment + " livraisons sont annoncées faites et rien n'est au dossier — "
+          + "l'écart se découvre à l'impression" },
+      { quoi: "Chaque livrable a un responsable", ok: sansQui === 0, poids: 3,
+        cout: sansQui + " sans porteur : personne n'est en défaut le jour où ça n'avance pas" },
+      { quoi: "Les crédits sont posés", ok: gens.length > 0, poids: 3,
+        cout: "aucun nom au document : le travail part sans que personne en réponde" },
+    ];
   }
 
   /* ————————————————————— L'écran ————————————————————— */
@@ -374,7 +667,22 @@ window.COMPILATEUR = (function () {
     ));
   }
 
+  /* Une liste attendue peut arriver en chaîne : un champ déclaré en puces que
+   * quelqu'un a rempli en prose, un import, une reprise à la main. Le document
+   * doit alors la rendre — pas blanchir l'écran entier. C'est le pire échec
+   * possible pour un produit dont la promesse est que rien ne se taise. */
+  function enListe(v) {
+    if (v === null || v === undefined) return v;
+    if (Array.isArray(v)) return v;
+    var t = String(v).trim();
+    return t ? [t] : [];
+  }
+
   function bloc(p, bl) {
+    if (bl && bl.puces !== undefined) bl = Object.keys(bl).reduce(function (o, k) {
+      o[k] = k === "puces" ? enListe(bl[k]) : bl[k]; return o;
+    }, {});
+
     var vide = !bl.corps && !(bl.puces || []).length && !(bl.lignes || []).length
       && !(bl.activites || []).length && !(bl.pieces || []).length
       && !(bl.elements || []).length && !(bl.gamme || []).length

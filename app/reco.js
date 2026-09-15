@@ -81,6 +81,19 @@ window.RECO = (function () {
       garde: "La créativité y est jugée sur sa logique, pas sur son audace. Ne pas y "
         + "placer une idée qui ne se justifie que par le goût." },
 
+    /* Ce n'est pas un deck : c'est le dossier. Les trois documents de la
+     * maison, compilés dans l'ordre des trois temps, et rien qui soit
+     * cherry-pické. On le remet ; on ne le projette pas. */
+    { cle: "dossier", nom: "Le dossier complet",
+      quoi: "les trois documents de la maison, compilés dans l'ordre des trois temps.",
+      squelette: ["titre", "cadrage", "conception", "production", "credits"],
+      brief: "Passation, reprise de dossier, remise à un prestataire, ou archive de fin "
+        + "de campagne. Tout ce qui doit survivre sans son auteur.",
+      produits: "Tous. Ce n'est pas une structure de vente : c'est la forme sous laquelle "
+        + "un dossier se transmet.",
+      garde: "Il ne se présente pas en séance — il se lit. Pour une salle, prendre une "
+        + "des six autres structures." },
+
     { cle: "manifesto", nom: "Manifesto",
       quoi: "Un texte de posture avant toute exécution. On énonce ce en quoi la marque croit.",
       squelette: ["titre", "manifeste", "principe", "piste", "abandons", "signes"],

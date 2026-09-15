@@ -47,6 +47,14 @@ window.PRESENTATION = (function () {
     abandons: { nom: "Ce qu'on ne fera plus jamais", tire: "ce que la plateforme de marque ne fera pas" },
     signes: { nom: "Les premiers signes visibles", tire: "ce qui change dans les trois mois, concrètement" },
     credits: { nom: "Les crédits", tire: "fonction exercée, nom orthographié, validation écrite" },
+
+    /* Les trois documents compilés. Ce ne sont pas des pages de deck : ce sont
+     * les documents de la maison, rendus tels quels dans le dossier. Ils se
+     * recomposent à chaque ouverture — une présentation ne fige pas un cadrage,
+     * elle le cite dans son état du jour. */
+    cadrage: { nom: "Document de cadrage", tire: "identité, brief, brief-back, plateforme de marque, insight et territoire" },
+    conception: { nom: "Document de conception", tire: "la séance, l'idée, les pistes et leur arbitrage, le dispositif" },
+    production: { nom: "Document de production", tire: "le parc, ce qui est tracé, ce qui manque, les crédits" },
   };
 
   /* ————————————————————— Engendrer ————————————————————— */
@@ -247,6 +255,23 @@ window.PRESENTATION = (function () {
     }
 
     /* ————— Les pages des cinq autres structures ————— */
+
+    /* Un document compilé. Le contenu sert l'aperçu ; le rendu complet passe
+     * par COMPILATEUR.document, qui sait le mettre en page. */
+    if (page.type === "cadrage" || page.type === "conception" || page.type === "production") {
+      if (!window.COMPILATEUR) return null;
+      var def = COMPILATEUR.DOCS[page.type];
+      var doc = COMPILATEUR.compiler(p, page.type);
+      var pleins = doc.blocs.filter(Boolean).length;
+      if (!pleins) return null;
+      var manques = COMPILATEUR.controles(p, page.type).filter(function (x) { return !x.ok; });
+      return { titre: def.nom, document: page.type,
+        corps: pleins + (pleins > 1 ? " blocs compilés" : " bloc compilé")
+          + (manques.length ? "  ·  " + manques.length + " condition"
+            + (manques.length > 1 ? "s" : "") + " non remplie"
+            + (manques.length > 1 ? "s" : "") : "  ·  recevable"),
+        manques: manques };
+    }
 
     if (page.type === "contexte") {
       if (!brief.objectif_business && !brief.probleme) return null;

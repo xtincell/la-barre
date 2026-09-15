@@ -12,6 +12,18 @@
 window.VUE_PRESENTATION = (function () {
   var el = O.el;
 
+  /* Deux lectures du même objet, et c'est la seconde qui manquait.
+   *
+   * L'écran ne savait montrer que le MONTAGE : une liste de pages qu'on
+   * ordonne et qu'on retire. Utile pour préparer, inutile pour lire — et
+   * personne ne remet une liste de pages à un prestataire.
+   *
+   * « Le dossier » compose ce que le montage annonce : les trois documents de
+   * la maison, recompilés à l'ouverture, mis en page, imprimables. Un
+   * document n'est pas figé au moment où on l'a monté — il cite l'état du
+   * jour, et c'est tout l'intérêt de le compiler plutôt que de le saisir. */
+  var lecture = "montage";
+
   function pres(p) {
     if (!p.presentation) p.presentation = PRESENTATION.creer(p);
     return p.presentation;
@@ -27,7 +39,7 @@ window.VUE_PRESENTATION = (function () {
        * choix, et le choix doit être visible. À gauche ce qui part dans son
        * ordre de lecture, à droite ce qu'on retire — pour qu'on sache ce qu'on
        * ne dit pas, et qu'on puisse le défendre si on le demande. */
-      el("div.pr-deux", {},
+      lecture === "dossier" ? dossier(p) : el("div.pr-deux", {},
         el("div.prd-c", {},
           el("div.prd-t", {}, "CE QUI PART CHEZ LE CLIENT",
             el("span", {}, d.pages.length + (d.pages.length > 1 ? " pages" : " page"))),
@@ -143,12 +155,121 @@ window.VUE_PRESENTATION = (function () {
       controles, null,
       [
         { nom: "Présenter", fort: true, quand: function () { presenter(p, d, rafraichir); } },
+        { nom: lecture === "dossier" ? "Revenir au montage" : "Lire le dossier", fort: lecture !== "dossier",
+          quand: function () { lecture = lecture === "dossier" ? "montage" : "dossier"; rafraichir(); } },
         { nom: "Choisir la structure", quand: function () { choisirStructure(p, d, rafraichir); } },
         { nom: "Ajouter une page", quand: function () { ajouterPage(p, d, rafraichir); } },
         { nom: d.niveau === "ambitieux" ? "Revenir au minimum client" : "Passer en pitch ambitieux",
           quand: function () { regenerer(p, d, rafraichir); } },
         { nom: "Imprimer", doux: true, quand: function () { window.print(); } },
       ]);
+  }
+
+  /* ————————————————————— Le dossier, composé ————————————————————— */
+
+  /* Il suit le squelette de la structure choisie : ce que le montage dit, le
+   * dossier le rend. Les pages qui portent un document compilé passent par
+   * COMPILATEUR, qui sait les mettre en page ; les autres passent par la
+   * composition de page du deck. Une page dont la source est vide n'est pas
+   * inventée — elle affiche sa dette, et de quoi la combler. */
+  function dossier(p) {
+    var d = pres(p);
+    var st = d.structure && window.RECO ? RECO.structure(d.structure) : null;
+    var docs = { cadrage: 1, conception: 1, production: 1 };
+
+    return el("div.pr-dossier", {},
+      el("div.prd-tete", {},
+        el("h2", {}, p.nom),
+        el("div.prd-s", {}, [p.ref,
+          (p.sections.identite || {}).client,
+          st ? st.nom : "montage libre",
+          O.joli(new Date().toISOString())].filter(Boolean).join("  ·  ")),
+        el("p.prd-q", {}, "Compilé à l'ouverture. Chaque document cite l'état du jour "
+          + "des sections dont il descend — il ne fige rien.")),
+
+      /* Les trois documents de la maison viennent toujours, quelle que soit la
+       * structure du montage. C'est ce qui distingue le dossier du deck : le
+       * deck choisit ce qu'il montre, le dossier porte tout. Ceux que le
+       * montage déclarait déjà ne sont pas rendus deux fois. */
+      el("div.prd-corps", {},
+        ["cadrage", "conception", "production"].map(function (cle) {
+          return docCompile(p, cle);
+        }),
+        d.pages.filter(function (pg) { return !docs[pg.type] && pg.type !== "titre"; }).map(function (pg) {
+        var c = PRESENTATION.contenu(p, pg);
+        var t = PRESENTATION.TYPES[pg.type] || { nom: pg.type };
+        if (!c) {
+          return el("section.prd-manque", {},
+            el("span.prdm-t", {}, t.nom),
+            el("span.prdm-q", {}, "la source est vide — cette page ne montrerait rien"));
+        }
+        return pageComposee(p, pg, c, t);
+      })));
+  }
+
+  /* Un document de la maison, recompilé et rendu par son propre composeur. Sa
+   * recevabilité est dite au-dessus : un cadrage incomplet se lit quand même,
+   * mais on sait ce qui lui manque avant de le remettre. */
+  function docCompile(p, cle) {
+    if (!window.COMPILATEUR) return null;
+    var def = COMPILATEUR.DOCS[cle];
+    var manques = COMPILATEUR.controles(p, cle).filter(function (x) { return !x.ok; });
+    return el("section.prd-doc", {},
+      manques.length
+        ? el("div.prd-dette",
+            el("span.prdd-t", {}, manques.length
+              + (manques.length > 1 ? " conditions non remplies" : " condition non remplie")
+              + " — " + def.nom.toLowerCase()),
+            el("ul.prdd-l", {}, manques.slice(0, 4).map(function (x) {
+              return el("li", {}, el("b", {}, x.quoi), x.cout ? " — " + x.cout : null);
+            })))
+        : null,
+      COMPILATEUR.document(COMPILATEUR.compiler(p, cle)));
+  }
+
+  /* Une page du deck, composée pour la lecture plutôt que pour l'aperçu. */
+  function pageComposee(p, pg, c, t) {
+    if (pg.type === "planche" || pg.type === "mockup") {
+      var items = pg.type === "planche" ? c.cases : c.mockups;
+      return el("section.prd-p", {},
+        el("h3.prdp-t", {}, c.titre || t.nom),
+        el("div.prdp-mur", {}, items.map(function (x) {
+          var objet = pg.type === "planche" ? x.livrable : x.mockup;
+          return el("figure.prdp-c", {}, IMAGE.vignette(objet, "carte"),
+            el("figcaption", {}, pg.type === "planche" ? x.etiquette
+              : (x.mockup.contexte || x.livrable.nom)));
+        })));
+    }
+    if (pg.type === "livrables") {
+      return el("section.prd-p", {},
+        el("h3.prdp-t", {}, c.titre || t.nom),
+        el("table.prdp-tab", {},
+          el("tbody", {}, c.lignes.map(function (x) {
+            return el("tr", {},
+              el("td", {}, x.nom),
+              el("td", {}, x.support || ""),
+              el("td", {}, x.marche || ""));
+          }))));
+    }
+    if (pg.type === "calendrier") {
+      return el("section.prd-p", {},
+        el("h3.prdp-t", {}, c.titre || t.nom),
+        el("table.prdp-tab", {},
+          el("tbody", {}, c.jalons.map(function (j) {
+            return el("tr", {}, el("td", {}, O.joli(j.date)), el("td", {}, j.nom));
+          }))));
+    }
+    return el("section.prd-p", {},
+      el("h3.prdp-t", {}, c.titre || t.nom),
+      c.phrase ? el("p.prdp-phrase", {}, c.phrase) : null,
+      c.corps ? el("p.prdp-corps", {}, c.corps) : null,
+      c.signature ? el("p.prdp-sign", {}, c.signature) : null,
+      (c.blocs || []).length
+        ? el("dl.prdp-blocs", {}, (c.blocs || []).map(function (b) {
+            return el("div", {}, el("dt", {}, b.t), el("dd", {}, b.v));
+          }))
+        : null,
+      c.note ? el("p.prdp-note", {}, c.note) : null);
   }
 
   /* ————————————————————— Lire la salle ————————————————————— */
