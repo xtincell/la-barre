@@ -81,3 +81,18 @@ Servent de modèles de format, pas de dossier actif.
 2. `GABARIT_Brief.md` — ajouter le délai de contestation dans le bloc de demande de proposition créative.
 3. `GABARIT_Plateforme_Marque.md` — ajouter la section 6 bis, idée directrice de marque.
 4. Arbitrer la porte B sur MT-0020, puis mettre à jour `FINAL_3` avec l'idée retenue et le nom de son auteur.
+
+---
+
+## G · La doctrine — où chercher l'idée, et comment l'écrire
+
+| Fichier | Objet | Statut |
+|---|---|---|
+| `07_doctrine/Ecoles_de_pensee_publicitaires_v4.pdf` | Douze écoles de la création, deux corpus d'efficacité, et **la preuve que chacune attend** | **Courant** |
+| `07_doctrine/Insight_et_creation_v4.pdf` | Les quatre couches de l'insight et ce que chacune commande ; le test en trois questions | **Courant** |
+| `07_doctrine/Recommandation_creative_v5.pdf` | Six structures de deck, la grille « qui décide dans la salle », la règle de la slide d'arbitrage | **Courant** |
+
+> Ces trois documents sont **la source du modèle de raisonnement du produit** :
+> `insight.js`, `ecoles.js`, `territoire.js`, `reco.js` et `efficacite.js` en
+> viennent, et de nulle part ailleurs. Le tableau de correspondance document →
+> module est dans `07_doctrine/INDEX.md`, avec les trois versions remplacées.
