@@ -37,6 +37,12 @@ window.REGLES = (function () {
     "axes-concurrents": "Ce ne sont pas des axes : ce sont des recommandations concurrentes dans le même document. Le client recomposera entre elles, et il sortira autant de signatures que de pistes.",
     "piste-hors-territoire": "Cette piste ne remonte à aucune racine : impossible de dire si elle traite le même problème que les autres, ni de la défendre autrement que par le goût.",
     "territoire-a-un-concept": "Un insight qui ne donne qu'un seul concept possible n'est pas un insight : c'est déjà une idée, arrivée trop tôt. Le territoire n'a pas de durée.",
+    "briefback-absent": "Le premier atelier est ouvert et rien n'est parti par écrit. Le jour où le client conteste ce qui a été compris, il n'y a rien à citer — et c'est la création qu'on tiendra pour responsable.",
+    "briefback-sans-reponse": "Envoyé, jamais contresigné. Ce qui a été compris n'engage que nous : le client pourra dire qu'il demandait autre chose, et il aura raison puisque rien ne dit le contraire.",
+    "reco-sans-arbitrage": "Trois pistes sans arbitrage ne sont pas des routes parallèles : ce sont trois recommandations dans le même document. Le client choisira seul, sans les raisons, et il recomposera entre les pistes — il sortira autant de signatures que de routes.",
+    "pistes-sans-role": "Trois pistes d'égale valeur ne font pas un choix : il en faut une à vendre, et deux qui bornent le territoire. Sans rôles, la sage l'emporte par défaut, parce qu'elle rassure.",
+    "integrite-non-ecrite": "Sur un compte à comités en cascade, c'est la seule pièce écrite qui protège le travail entre deux étages de validation. Sans elle, le concept d'une piste remontera monté sur l'exécution d'une autre, et personne ne saura dire ce qui a été perdu.",
+    "structure-hybride": "Le deck mélange deux squelettes. Le client sent l'incohérence sans savoir la nommer, et l'argumentation s'affaiblit là où elle devrait porter.",
 
     /* Une reprise d'emballage se suit sur deux sources — un tableau et un
      * disque. Quand les deux se contredisent, ce n'est pas un détail de
@@ -225,6 +231,29 @@ window.REGLES = (function () {
         pousser(trouves, p, "da-absent", "Aucun Directeur Artistique affecté au dossier", "creation", "equipe");
       }
 
+      /* Le brief-back : trois lignes avant le premier atelier.
+       *
+       * Il n'est dû qu'une fois la conception ouverte — le réclamer sur un
+       * dossier qu'on vient de recevoir serait réclamer avant d'avoir lu. Ce
+       * qui le déclenche est donc la séance de créa ou la première piste. */
+      if (aSection(p, "briefback")) {
+        var bb = s.briefback || {};
+        var at = s.atelier || {};
+        var conceptionOuverte = (s.pistes || []).length > 0
+          || !!at.tenue_le
+          || (at.idees || []).length > 0
+          || !!((s.bigidea || {}).idee || "").trim();
+
+        if (conceptionOuverte && !(bb.compris || "").trim()) {
+          pousser(trouves, p, "briefback-absent",
+            "La conception est ouverte, aucun brief-back n'est parti", "creation", "briefback");
+        } else if (bb.envoye_le && !(bb.reponse || "").trim()) {
+          pousser(trouves, p, "briefback-sans-reponse",
+            "Brief-back envoyé le " + O.jourCourt(bb.envoye_le) + ", sans retour",
+            "clientele", "briefback");
+        }
+      }
+
       /* ————— La chaîne du raisonnement —————
        *
        * Un insight, un territoire, des axes qui remontent à eux. Ces contrôles
@@ -286,6 +315,63 @@ window.REGLES = (function () {
               "Territoire « " + (t.nom || t.quoi || "sans nom").slice(0, 40) + " » n'ouvre qu'un concept",
               "planning", "strategie", t.id);
           });
+        }
+      }
+
+      /* ————— La recommandation : sa structure, ses rôles, son arbitrage —————
+       *
+       * « Aucun deck ne sort sans slide d'arbitrage. Quelle que soit la
+       * structure, l'agence recommande. Sans elle, elle devient exécutante. »
+       * Le cas maison l'a prouvé : quatre-vingt-sept pages, trois axes
+       * également finis, pas une ligne d'arbitrage — et trois baselines. */
+      if (window.RECO && aSection(p, "presentation")) {
+        var arb = RECO.arbitrage(p);
+        var d = p.presentation || null;
+        var salle = RECO.lireLaSalle(p);
+
+        if (arb.due) {
+          var aPage = d && (d.pages || []).some(function (x) { return x.type === "arbitrage"; });
+          if (!arb.prete || (d && !aPage)) {
+            pousser(trouves, p, "reco-sans-arbitrage",
+              arb.pistes.length + " pistes présentées"
+                + (!arb.piste ? ", aucune défendue"
+                  : !(arb.piste.raisons || []).length ? ", sans les trois raisons"
+                  : !(arb.piste.integrite || "").trim() ? ", sans ce qui casse si on recompose"
+                  : ", sans page d'arbitrage au deck"),
+              "creation", "presentation");
+          }
+          /* Les rôles n'ont de sens qu'en routes parallèles : c'est la seule
+           * structure qui met les pistes côte à côte. */
+          var enRoutes = (d && d.structure === "routes")
+            || (!d && salle.structures.indexOf("routes") !== -1);
+          if (enRoutes && !arb.pistes.some(function (pi) { return !!pi.role; })) {
+            pousser(trouves, p, "pistes-sans-role",
+              arb.pistes.length + " pistes d'égale valeur, aucun rôle posé", "creation", "pistes");
+          }
+          /* L'intégrité : due dès que la salle a plusieurs étages. */
+          if (salle.integrite && arb.piste && !(arb.piste.integrite || "").trim()) {
+            pousser(trouves, p, "integrite-non-ecrite",
+              "Comités en cascade, et « " + (arb.piste.titre || "la piste défendue")
+                + " » ne dit pas ce qui casse si on recompose", "creation", "pistes", arb.piste.id);
+          }
+        }
+
+        /* Un deck qui mélange deux squelettes. On ne compare pas des pages à un
+         * squelette théorique — on regarde si des pages appartiennent en propre
+         * à une AUTRE structure que celle déclarée. */
+        if (d && d.structure) {
+          var mien = RECO.structure(d.structure);
+          var communs = { titre: 1, piste: 1, planche: 1, mockup: 1, dispositif: 1,
+            livrables: 1, calendrier: 1, suite: 1, credits: 1 };
+          var etrangeres = (d.pages || []).filter(function (x) {
+            return !communs[x.type] && mien && mien.squelette.indexOf(x.type) === -1;
+          });
+          if (etrangeres.length) {
+            pousser(trouves, p, "structure-hybride",
+              "Deck en « " + mien.nom + " » avec "
+                + etrangeres.length + " page" + (etrangeres.length > 1 ? "s" : "")
+                + " d'une autre structure", "creation", "presentation");
+          }
         }
       }
 

@@ -21,6 +21,7 @@ window.VUE_PRESENTATION = (function () {
     var d = pres(p);
     return el("div.pr", {},
       bande(p, d, rafraichir),
+      laSalle(p, d, rafraichir),
       d.statut === "presentee" ? apresSeance(p, d, rafraichir) : null,
       /* Le montage client n'est pas le dossier moins quelques pages : c'est un
        * choix, et le choix doit être visible. À gauche ce qui part dans son
@@ -142,6 +143,7 @@ window.VUE_PRESENTATION = (function () {
       controles, null,
       [
         { nom: "Présenter", fort: true, quand: function () { presenter(p, d, rafraichir); } },
+        { nom: "Choisir la structure", quand: function () { choisirStructure(p, d, rafraichir); } },
         { nom: "Ajouter une page", quand: function () { ajouterPage(p, d, rafraichir); } },
         { nom: d.niveau === "ambitieux" ? "Revenir au minimum client" : "Passer en pitch ambitieux",
           quand: function () { regenerer(p, d, rafraichir); } },
@@ -149,9 +151,113 @@ window.VUE_PRESENTATION = (function () {
       ]);
   }
 
+  /* ————————————————————— Lire la salle ————————————————————— */
+
+  /* « Le nombre d'étages de validation détermine la structure, davantage que la
+   * nature du produit. » Rien de neuf ne se saisit : on relit le décideur
+   * final, qui peut annuler une idée validée, et le circuit — trois champs
+   * critiques que le dossier porte déjà. La lecture est une PROPOSITION : elle
+   * s'affiche avec sa raison, et le titulaire choisit. */
+  function laSalle(p, d, rafraichir) {
+    if (!window.RECO) return null;
+    var l = RECO.lireLaSalle(p);
+    var st = d.structure ? RECO.structure(d.structure) : null;
+    var prop = l.structures.length ? RECO.structure(l.structures[0]) : null;
+    var accord = st && prop && st.cle === prop.cle;
+
+    return el("div.salle" + (st ? (accord ? ".accord" : ".ecart") : ".sans"), {},
+      el("div.sal-g", {},
+        el("div.sal-c", {},
+          el("span.sal-t", {}, "QUI DÉCIDE DANS LA SALLE"),
+          el("span.sal-n", {}, l.salle ? l.salle.nom : "salle non lisible"),
+          l.salle && l.salle.quoi ? el("span.sal-x", {}, l.salle.quoi) : null),
+        el("div.sal-c", {},
+          el("span.sal-t", {}, "STRUCTURE DU DECK"),
+          el("span.sal-n" + (st ? "" : ".sans"), {}, st ? st.nom : "non choisie"),
+          prop && !accord
+            ? el("span.sal-x", {}, "la salle appelle plutôt « " + prop.nom + " »")
+            : st ? el("span.sal-x", {}, st.quoi) : null)),
+      el("p.sal-q", {}, l.pourquoi
+        + (l.sur ? "" : "  Cette lecture est une supposition : si elle est fausse, la structure l'est aussi.")),
+      l.integrite
+        ? el("p.sal-i", {}, "Comités en cascade : l'intégrité de la piste défendue est due. "
+            + "C'est la seule pièce écrite qui protège le travail entre deux étages de validation.")
+        : null,
+      el("button.b" + (st ? ".nu" : ".or"), { type: "button",
+        onclick: function () { choisirStructure(p, d, rafraichir); } },
+        st ? "Changer de structure" : "Choisir la structure"));
+  }
+
+  /* ————————————————————— Choisir la structure ————————————————————— */
+
+  function choisirStructure(p, d, rafraichir) {
+    if (!window.RECO) return;
+    var l = RECO.lireLaSalle(p);
+    var choix = d.structure || l.structures[0] || null;
+
+    var cartes = RECO.STRUCTURES.map(function (st) {
+      var propose = l.structures.indexOf(st.cle) !== -1;
+      var b = el("button.stc" + (choix === st.cle ? ".ici" : "") + (propose ? ".prop" : ""),
+        { type: "button" },
+        el("div.stc-t", {},
+          el("span.stc-n", {}, st.nom),
+          propose ? el("span.stc-p", {}, "la salle l'appelle") : null),
+        el("p.stc-q", {}, st.quoi),
+        el("ol.stc-s", {}, st.squelette.map(function (t) {
+          var def = PRESENTATION.TYPES[t];
+          return el("li", {}, def ? def.nom : t);
+        })),
+        el("p.stc-b", {}, el("span.stc-e", {}, "LE BRIEF QUI VA AVEC  "), st.brief),
+        el("p.stc-g", {}, el("span.stc-e", {}, "À SAVOIR  "), st.garde));
+      b.addEventListener("click", function () {
+        choix = st.cle;
+        [].forEach.call(b.parentNode.children, function (x) { x.classList.remove("ici"); });
+        b.classList.add("ici");
+      });
+      return b;
+    });
+
+    PANNEAU.sur("La structure du deck", p.ref, el("div", {},
+      UI.banniere("", "Choisir la structure est un acte stratégique, au même titre que "
+        + "choisir le concept : elle décide de l'ordre dans lequel le client rencontre "
+        + "l'idée, donc de la façon dont il la juge. Une seule par deck — les hybrides diluent."),
+      el("div.salle-lue", {},
+        el("span.sal-t", {}, "LA SALLE"),
+        el("span.sal-n", {}, l.salle ? l.salle.nom : "non lisible"),
+        el("p.sal-q", {}, l.pourquoi)),
+      el("div.stc-l", {}, cartes),
+      autresFormes(),
+      el("div.form-actions", {},
+        el("button.b.or", { type: "button", onclick: function () {
+          if (!choix) { AVIS.refus("Aucune structure choisie."); return; }
+          var neuve = PRESENTATION.creer(p, choix, d.niveau);
+          d.structure = choix;
+          d.pages = neuve.pages;
+          DEPOT.tracer("structure", "presentation", p.id,
+            RECO.structure(choix).nom + " — " + neuve.pages.length + " pages");
+          DEPOT.enregistrer(); PANNEAU.fermerSur(); rafraichir();
+        } }, "Monter le deck sur cette structure"),
+        el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Annuler"))
+    ));
+  }
+
+  /* « Le deck existe parce que le document doit survivre à la réunion et
+   * circuler sans son auteur. Quand ce besoin n'existe pas, un autre format est
+   * meilleur. » Ce n'est pas un contrôle : c'est une question, posée une fois. */
+  function autresFormes() {
+    return el("details.autref", {},
+      el("summary", {}, "Et si ce n'était pas un deck ?"),
+      el("ul.autref-l", {}, RECO.AUTRES_FORMES.map(function (f) {
+        return el("li", {},
+          el("span.autref-n", {}, f.nom),
+          el("span.autref-w", {}, f.quand),
+          el("span.autref-q", {}, f.quoi));
+      })));
+  }
+
   function regenerer(p, d, rafraichir) {
     var niveau = d.niveau === "ambitieux" ? "minimum" : "ambitieux";
-    var neuves = PRESENTATION.creer(p, niveau).pages;
+    var neuves = PRESENTATION.creer(p, d.structure, niveau).pages;
     var gain = neuves.length - d.pages.length;
     var def = PRESENTATION.NIVEAUX[niveau];
     PANNEAU.ouvrir("Régénérer la présentation", p.ref, el("div", {},

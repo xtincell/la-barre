@@ -24,6 +24,29 @@ window.PRESENTATION = (function () {
     livrables: { nom: "Ce que nous livrons", tire: "la liste des livrables et leurs formats" },
     calendrier: { nom: "Le calendrier", tire: "les jalons et les dates de publication" },
     suite: { nom: "La suite", tire: "ce qui est validé aujourd'hui, et ce qui vient après" },
+
+    /* Les pages qu'appellent les cinq autres structures. Elles ne servent pas
+     * toutes dans le même deck — c'est le squelette de la structure choisie qui
+     * décide, et un deck qui mélange deux squelettes se voit. */
+    contexte: { nom: "Contexte marché", tire: "le brief — le chiffre qui pose le problème" },
+    verite: { nom: "La vérité inconfortable", tire: "l'insight, sa preuve, et le coût du statu quo" },
+    transformation: { nom: "De … à …", tire: "le comportement de départ et celui que la campagne vise" },
+    pourquoi: { nom: "Pourquoi ça marche", tire: "l'insight, pris à rebours — quatre arguments, pas plus" },
+    faisabilite: { nom: "Faisabilité et budget", tire: "les estimés des livrables et les implications de production" },
+    criteres: { nom: "Critères de lecture des pistes", tire: "la grille de comparaison de la reco" },
+    comparatif: { nom: "Tableau comparatif", tire: "les pistes notées sur les quatre critères" },
+    arbitrage: { nom: "Recommandation de l'agence", tire: "la piste défendue, ses trois raisons, et ce qui casse si on recompose" },
+    diagnostic: { nom: "Diagnostic chiffré", tire: "les chiffres du dossier, avec leur source et leur niveau de preuve" },
+    barrieres: { nom: "Les trois barrières", tire: "ce qui empêche, et sur quoi la communication peut agir" },
+    phases: { nom: "Plan d'activation", tire: "les phases du dispositif et leur indicateur de sortie" },
+    mesure: { nom: "Mesure et indicateurs", tire: "les critères de succès du brief et leur source" },
+    reduction: { nom: "Le chemin de réduction", tire: "les trois versions du problème, du long au court" },
+    convention: { nom: "La convention de catégorie", tire: "l'énoncé et ses trois visuels de concurrents" },
+    manifeste: { nom: "Le texte de manifesto", tire: "la plateforme de marque — ce en quoi la marque croit" },
+    principe: { nom: "Le principe créatif", tire: "la règle de conduite que le manifesto impose" },
+    abandons: { nom: "Ce qu'on ne fera plus jamais", tire: "ce que la plateforme de marque ne fera pas" },
+    signes: { nom: "Les premiers signes visibles", tire: "ce qui change dans les trois mois, concrètement" },
+    credits: { nom: "Les crédits", tire: "fonction exercée, nom orthographié, validation écrite" },
   };
 
   /* ————————————————————— Engendrer ————————————————————— */
@@ -37,16 +60,33 @@ window.PRESENTATION = (function () {
     ambitieux: { nom: "Pitch ambitieux", quoi: "en plus : dispositif, planches de déclinaisons, mises en situation, calendrier" },
   };
 
-  function creer(p, niveau) {
+  /* La structure décide du squelette ; le niveau décide de sa longueur.
+   *
+   * Le produit ne connaissait qu'une structure — la linéaire — en deux
+   * longueurs. Or « la structure d'une reco n'est pas un habillage : elle
+   * décide de l'ordre dans lequel le client rencontre l'idée, donc de la façon
+   * dont il la juge ». Le squelette vient donc de RECO, et le niveau ne règle
+   * plus que ce qu'on ajoute : dispositif, planches, mises en situation,
+   * calendrier — tout ce qu'on ne produit qu'après validation.
+   *
+   * Une page dont la source est vide ne s'invente pas : elle est écartée ici,
+   * et l'écran dira ce qui lui manque. */
+  function creer(p, structure, niveau) {
+    /* Ancienne signature : creer(p, niveau). Un appel à deux arguments dont le
+     * second est un niveau ne doit pas devenir un appel à une structure. */
+    if (structure === "minimum" || structure === "ambitieux") { niveau = structure; structure = null; }
     niveau = niveau || "minimum";
     var ambitieux = niveau === "ambitieux";
-    var pages = [{ type: "titre" }];
     var b = p.sections.bigidea || {};
     var brief = p.sections.brief || {};
     var strat = p.sections.strategie || {};
 
+    var st = (window.RECO && structure) ? RECO.structure(structure) : null;
+    if (st) return creerDepuis(p, st, niveau);
+
+    var pages = [{ type: "titre" }];
     if (brief.probleme) pages.push({ type: "probleme" });
-    if (strat.territoire) pages.push({ type: "strategie" });
+    if (INSIGHT.liste(p).length || strat.territoire) pages.push({ type: "strategie" });
     if (b.idee) pages.push({ type: "idee" });
 
     /* Chaque piste porte ses propres pages : son visuel, son dispositif, sa
@@ -76,7 +116,56 @@ window.PRESENTATION = (function () {
 
     return {
       id: O.id("PRES"), cree_le: new Date().toISOString(), statut: "brouillon",
-      niveau: niveau, pages: pages, seance: null, retours: [],
+      structure: null, niveau: niveau, pages: pages, seance: null, retours: [],
+    };
+  }
+
+  /* Le squelette d'une structure, déplié sur le dossier. Les pages par piste se
+   * multiplient ; les autres se posent une fois. */
+  function creerDepuis(p, st, niveau) {
+    var ambitieux = niveau === "ambitieux";
+    var pages = [];
+    var retenue = (p.sections.pistes || []).filter(function (x) { return x.statut === "retenue"; })[0];
+    /* En routes parallèles on montre TOUTES les pistes vives : c'est la
+     * structure qui a pour objet de les mettre côte à côte. Ailleurs, la
+     * retenue suffit dès qu'elle existe. */
+    var vives = (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
+    var pistes = st.cle === "routes" ? vives : (retenue ? [retenue] : vives);
+
+    st.squelette.forEach(function (t) {
+      if (t === "piste") {
+        pistes.forEach(function (pi) {
+          pages.push({ type: "piste", pisteId: pi.id });
+          var kvs = (p.livrables || []).filter(function (l) {
+            return !l.annule && l.pisteId === pi.id && KV.estKV(l); });
+          if (kvs.length) pages.push({ type: "planche", pisteId: pi.id, seulementKV: !ambitieux });
+          if (!ambitieux) return;
+          if ((pi.dispositif || []).length) pages.push({ type: "dispositif", pisteId: pi.id });
+          var mk = (p.livrables || []).filter(function (l) { return l.pisteId === pi.id && !l.annule; })
+            .reduce(function (n, l) { return n + (l.mockups || []).length; }, 0);
+          if (mk) pages.push({ type: "mockup", pisteId: pi.id });
+        });
+        return;
+      }
+      /* Les pages ambitieuses ne s'ajoutent pas à un minimum : mettre des
+       * déclinaisons dans une présentation spéculative, c'est promettre du
+       * travail qu'on n'a pas vendu. */
+      if (!ambitieux && (t === "planche" || t === "mockup" || t === "dispositif"
+        || t === "calendrier" || t === "livrables")) return;
+      pages.push({ type: t });
+    });
+
+    if (ambitieux && st.squelette.indexOf("livrables") === -1 && (p.livrables || []).length) {
+      pages.push({ type: "livrables" });
+    }
+    /* Les crédits se posent avant la diffusion, quelle que soit la structure. */
+    if (pages[pages.length - 1] && pages[pages.length - 1].type !== "credits") {
+      pages.push({ type: "credits" });
+    }
+
+    return {
+      id: O.id("PRES"), cree_le: new Date().toISOString(), statut: "brouillon",
+      structure: st.cle, niveau: niveau, pages: pages, seance: null, retours: [],
     };
   }
 
@@ -84,6 +173,40 @@ window.PRESENTATION = (function () {
   function pagesPossibles(p) {
     var toutes = creer(p).pages;
     return toutes;
+  }
+
+  /* La convention du dossier, prise au premier territoire qui l'énonce. */
+  function conventionDuDossier(p) {
+    var ts = window.TERRITOIRE ? TERRITOIRE.liste(p) : [];
+    for (var i = 0; i < ts.length; i++) {
+      var e = ((ts[i].convention || {}).enonce || "").trim();
+      if (e) return e;
+    }
+    return null;
+  }
+
+  /* Qui a fait quoi. « Fonction exercée, nom orthographié, validation écrite
+   * avant tout dépôt » — les crédits se composent, ils ne se ressaisissent pas. */
+  function credits(p) {
+    var vus = {};
+    var out = [];
+    function poser(fonction, id) {
+      if (!id) return;
+      var pers = DEPOT.trouve("personnes", id);
+      if (!pers) return;
+      var cle = fonction + "|" + pers.id;
+      if (vus[cle]) return;
+      vus[cle] = 1;
+      out.push({ fonction: fonction, nom: pers.nom });
+    }
+    var b = p.sections.bigidea || {};
+    poser("Idée", b.auteur);
+    (p.sections.pistes || []).forEach(function (pi) {
+      if (pi.statut === "ecartee") return;
+      poser("Direction artistique", pi.auteurDA);
+      poser("Conception-rédaction", pi.auteurCR);
+    });
+    return out;
   }
 
   /* ————————————————————— Ce que chaque page montre ————————————————————— */
@@ -106,11 +229,174 @@ window.PRESENTATION = (function () {
         ] };
     }
     if (page.type === "strategie") {
-      return { titre: "La stratégie", corps: strat.territoire,
+      /* L'insight n'est plus un paragraphe : la page tire de l'objet, et du
+       * territoire qu'il ouvre. Le repli sur les anciens champs tient tant
+       * qu'un dossier n'a pas été repris à la main. */
+      var i0 = INSIGHT.liste(p)[0] || null;
+      var t0 = window.TERRITOIRE ? TERRITOIRE.liste(p)[0] : null;
+      if (!i0 && !t0 && !strat.territoire) return null;
+      var tps = i0 ? INSIGHT.normaliser(i0).passes.temps : {};
+      return { titre: "La stratégie",
+        corps: (t0 && (t0.quoi || t0.nom)) || strat.territoire,
+        phrase: i0 ? INSIGHT.texte(i0) : null,
         blocs: [
-          { t: "La tension", v: strat.tension },
+          { t: "La tension", v: tps.tension || strat.tension },
+          { t: "Ce que ça empêche", v: tps.empeche },
           { t: "La promesse", v: brief.promesse },
-        ] };
+        ].filter(function (x) { return x.v; }) };
+    }
+
+    /* ————— Les pages des cinq autres structures ————— */
+
+    if (page.type === "contexte") {
+      if (!brief.objectif_business && !brief.probleme) return null;
+      return { titre: "Contexte marché", corps: brief.objectif_business || brief.probleme,
+        blocs: [{ t: "La barrière", v: brief.probleme }].filter(function (x) { return x.v; }) };
+    }
+
+    if (page.type === "verite") {
+      var iv = INSIGHT.liste(p)[0];
+      if (!iv) return null;
+      var tv = INSIGHT.normaliser(iv).passes.temps;
+      return { titre: "La vérité inconfortable", phrase: INSIGHT.texte(iv),
+        blocs: [
+          { t: "Ce qui la rend crédible", v: (iv.sources || []).map(function (x) { return x.quoi; })
+            .filter(Boolean).join("  ·  ") },
+          { t: "Ce que ça coûte de ne rien faire", v: tv.empeche },
+        ].filter(function (x) { return x.v; }) };
+    }
+
+    if (page.type === "transformation") {
+      var it = INSIGHT.liste(p)[0];
+      if (!it && !b.idee) return null;
+      var tt = it ? INSIGHT.normaliser(it).passes.temps : {};
+      return { titre: "De … à …", phrase: b.signature || null,
+        blocs: [
+          { t: "Aujourd'hui", v: tt.situation },
+          { t: "Après la campagne", v: b.idee },
+        ].filter(function (x) { return x.v; }) };
+    }
+
+    if (page.type === "pourquoi") {
+      var ip = INSIGHT.liste(p)[0];
+      if (!ip && !b.rattachement) return null;
+      return { titre: "Pourquoi ça marche",
+        blocs: [
+          { t: "Le ressort humain", v: ip ? INSIGHT.texte(ip) : null },
+          { t: "Le décalage de catégorie", v: conventionDuDossier(p) },
+          { t: "La preuve de marque", v: b.rattachement },
+          { t: "La longévité", v: b.validite },
+        ].filter(function (x) { return x.v; }) };
+    }
+
+    if (page.type === "faisabilite") {
+      var jours = (p.livrables || []).reduce(function (n, l) { return n + (l.estime || 0); }, 0);
+      if (!jours) return null;
+      return { titre: "Faisabilité et budget",
+        blocs: [{ t: "Charge estimée", v: jours + " jours sur " + (p.livrables || []).length + " livrables" }] };
+    }
+
+    if (page.type === "criteres") {
+      if (!window.RECO) return null;
+      return { titre: "Comment lire les pistes",
+        corps: "Chaque piste se juge sur les mêmes quatre critères, et sur son prix à payer.",
+        blocs: RECO.COMPARAISON.map(function (c) { return { t: c.nom, v: "—" }; }) };
+    }
+
+    if (page.type === "comparatif") {
+      if (!window.RECO) return null;
+      var a = RECO.arbitrage(p);
+      if (a.pistes.length < 2) return null;
+      return { titre: "Les pistes, côte à côte",
+        blocs: a.pistes.map(function (pi) {
+          var r = pi.role ? RECO.role(pi.role) : null;
+          return { t: (pi.titre || "sans titre") + (r ? "  ·  " + r.nom : ""),
+            v: [(pi.prix || {}).privilegie || pi.privilegie,
+                "sacrifie : " + ((pi.prix || {}).sacrifie || pi.sacrifice || "—")]
+              .filter(Boolean).join("  —  ") };
+        }) };
+    }
+
+    /* La slide d'arbitrage. Aucun deck ne sort sans elle : trois lignes, trente
+     * secondes. Ce qui manque s'affiche comme manquant — recommander expose, et
+     * c'est ce risque que le client paie. */
+    if (page.type === "arbitrage") {
+      if (!window.RECO) return null;
+      var ar = RECO.arbitrage(p);
+      if (!ar.due) return null;
+      return { titre: "Notre recommandation",
+        phrase: ar.piste ? "Nous recommandons la piste « " + (ar.piste.titre || "sans titre") + " »."
+          : null,
+        blocs: [
+          { t: "Les trois raisons", v: ar.raisons.length ? ar.raisons.join("  ·  ") : null },
+          { t: "Ce qui casse si on recompose", v: ar.integrite || null },
+        ].filter(function (x) { return x.v; }) };
+    }
+
+    if (page.type === "convention") {
+      var c = conventionDuDossier(p);
+      if (!c) return null;
+      var tc = (window.TERRITOIRE ? TERRITOIRE.liste(p) : [])
+        .filter(function (x) { return (x.convention || {}).enonce; })[0];
+      var pr = tc ? TERRITOIRE.convention(tc) : null;
+      return { titre: "Ce que toute la catégorie tient pour acquis", phrase: c,
+        blocs: pr ? [{ t: "Prouvée par", v: pr.preuves.length + " visuels de concurrents" }] : [] };
+    }
+
+    if (page.type === "reduction") {
+      var tr = (window.TERRITOIRE ? TERRITOIRE.liste(p) : [])
+        .filter(function (x) { return (x.reduction || {}).six; })[0];
+      if (!tr) return null;
+      var r = tr.reduction;
+      return { titre: "Le chemin de réduction", phrase: r.six,
+        blocs: [{ t: "Dix mots", v: r.dix }, { t: "Le problème, au départ", v: r.longue }]
+          .filter(function (x) { return x.v; }) };
+    }
+
+    if (page.type === "manifeste") {
+      var so = p.sections.socle || {};
+      if (!so.idee_directrice && !so.positionnement) return null;
+      return { titre: "Ce en quoi nous croyons", phrase: so.idee_directrice,
+        corps: so.positionnement };
+    }
+
+    if (page.type === "principe") {
+      var sp = p.sections.socle || {};
+      if (!sp.ton) return null;
+      return { titre: "Le principe créatif", corps: sp.ton };
+    }
+
+    if (page.type === "abandons") {
+      var sa = p.sections.socle || {};
+      var jamais = (sa.jamais || []).concat(sa.ne_fera_pas || []);
+      if (!jamais.length) return null;
+      return { titre: "Ce qu'on ne fera plus jamais",
+        blocs: jamais.slice(0, 3).map(function (x) { return { t: "Abandonné", v: x }; }) };
+    }
+
+    if (page.type === "signes") {
+      var proches = (p.livrables || []).filter(function (l) { return l.publication; })
+        .sort(function (a, b2) { return String(a.publication).localeCompare(String(b2.publication)); })
+        .slice(0, 3);
+      if (!proches.length) return null;
+      return { titre: "Les premiers signes visibles",
+        blocs: proches.map(function (l) {
+          return { t: O.jourCourt(l.publication), v: l.nom };
+        }) };
+    }
+
+    if (page.type === "diagnostic" || page.type === "barrieres"
+      || page.type === "phases" || page.type === "mesure") {
+      return window.EFFICACITE ? EFFICACITE.page(p, page.type) : null;
+    }
+
+    /* Les crédits se posent avant la diffusion : fonction exercée, nom
+     * orthographié, validation écrite avant tout dépôt. */
+    if (page.type === "credits") {
+      var gens = credits(p);
+      if (!gens.length) return null;
+      return { titre: "Crédits",
+        blocs: gens.map(function (g) { return { t: g.fonction, v: g.nom }; }) };
     }
     if (page.type === "idee") {
       var auteur = b.auteur ? DEPOT.trouve("personnes", b.auteur) : null;
@@ -296,7 +582,8 @@ window.PRESENTATION = (function () {
   }
 
   return {
-    TYPES: TYPES, NIVEAUX: NIVEAUX, creer: creer, contenu: contenu, controles: controles,
+    TYPES: TYPES, NIVEAUX: NIVEAUX, creer: creer, creerDepuis: creerDepuis, credits: credits,
+    contenu: contenu, controles: controles,
     mockups: mockups, pagesPossibles: pagesPossibles,
     enregistrerSeance: enregistrerSeance, poserRetour: poserRetour,
   };

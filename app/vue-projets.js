@@ -4,7 +4,7 @@ window.VUE_PROJETS = (function () {
   var el = O.el;
 
   var NOMS = {
-    identite: "Identité", brief: "Brief", socle: "Plateforme de marque",
+    identite: "Identité", brief: "Brief", briefback: "Brief-back", socle: "Plateforme de marque",
     strategie: "Stratégie", bigidea: "Big idea", pistes: "Pistes créatives",
     atelier: "Séance de créa", planche: "Déclinaisons", livrables: "Livrables", calendriers: "Calendriers",
     livraison: "Planche de livraison",

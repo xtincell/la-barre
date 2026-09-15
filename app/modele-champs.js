@@ -62,6 +62,49 @@ window.CHAMPS = {
         { cle: "kpis", nom: "Critères de succès mesurables", type: "puces", critique: true, poste: "clientele", aide: "Chacun avec sa source de mesure, sinon il n'est pas mesurable." },
       ],
     },
+    /* Le brief-back. Trois lignes, par écrit, avant le premier atelier.
+     *
+     * « Le document le moins coûteux et le plus protecteur du métier. » Il ne
+     * refuse pas le brief — refuser fait perdre le budget et laisse le problème
+     * entier. Il ne le dit pas non plus en réunion de restitution, où le client
+     * découvre en public qu'il s'est trompé et défend son brief au lieu
+     * d'écouter. Il pose la question par écrit, avant de commencer, et laisse
+     * le client y répondre lui-même.
+     *
+     * La quatrième ligne n'est pas dans la méthode : c'est le produit qui
+     * l'exige. Sans écart écrit, le désaccord n'existe nulle part — et c'est
+     * la création qu'on tiendra pour responsable. */
+    {
+      cle: "briefback",
+      nom: "Brief-back",
+      poste: "creation",
+      champs: [
+        { cle: "compris", nom: "Ce que nous avons compris", type: "long", requis: true,
+          critique: true,
+          aide: "Le problème reformulé dans nos mots, en une phrase. Si le client "
+            + "corrige, c'est déjà un gain." },
+        { cle: "couche", nom: "La couche où nous pensons qu'il vit", type: "choix",
+          requis: true, critique: true,
+          options: [{ cle: "consommateur", nom: "Consommateur — le message et le ton" },
+                    { cle: "culture", nom: "Culture — la big idea" },
+                    { cle: "categorie", nom: "Catégorie — le positionnement" },
+                    { cle: "entreprise", nom: "Entreprise — une correction de marque" }],
+          aide: "Sans jargon, dans la phrase : « le sujet nous semble être la place "
+            + "de la marque, plus que sa notoriété »." },
+        { cle: "propose", nom: "Ce que nous proposons de produire", type: "long",
+          requis: true, critique: true,
+          aide: "Le livrable, nommé." },
+        { cle: "ecart", nom: "L'écart avec ce qui est demandé", type: "long",
+          aide: "Si le livrable diffère de ce qui est demandé, c'est ici qu'on l'écrit "
+            + "— pas en fin de présentation. Une ligne suffit : elle protège le "
+            + "travail, et elle se cite six mois plus tard." },
+        { cle: "envoye_le", nom: "Envoyé le", type: "date" },
+        { cle: "reponse", nom: "Réponse du client", type: "long",
+          aide: "Ce qu'il a corrigé, confirmé ou ignoré." },
+        { cle: "repondu_le", nom: "Répondu le", type: "date" },
+      ],
+    },
+
     {
       cle: "socle",
       nom: "Plateforme de marque",

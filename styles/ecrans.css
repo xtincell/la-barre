@@ -555,3 +555,59 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
   .rin { padding: .7rem .75rem; }
   .rte-c { margin-left: 0; }
 }
+
+/* ————————————————————— Lire la salle, choisir la structure ————————————————————— */
+
+/* « Le nombre d'étages de validation détermine la structure, davantage que la
+ * nature du produit. » Le bloc affiche les deux côte à côte : ce que la salle
+ * appelle, et ce que le deck est. L'écart entre les deux est l'information. */
+.salle { display: grid; gap: .4rem; padding: .7rem .85rem; margin: .9rem 0;
+  background: var(--surface-3); border-left: 3px solid var(--trait-clair); justify-items: start; }
+.salle.accord { border-left-color: var(--succes); }
+.salle.ecart { border-left-color: var(--arbitrage); }
+.salle.sans { border-left-color: var(--bloquant); }
+
+.sal-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; width: 100%; }
+.sal-c { display: grid; gap: .1rem; }
+.sal-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
+.sal-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
+.sal-n.sans { color: var(--bloquant-txt); font-family: var(--ecrit); font-style: italic; letter-spacing: 0; }
+.sal-x { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-doux); }
+.sal-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); margin: 0; max-width: var(--mesure); }
+.sal-i { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--arbitrage); margin: 0; max-width: var(--mesure); }
+
+.salle-lue { display: grid; gap: .1rem; padding: .55rem .7rem; margin-bottom: .7rem; background: var(--surface-3); }
+
+/* Les six structures, en fiches. Chacune porte son squelette : c'est lui qu'on
+ * compare, pas le nom. */
+.stc-l { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: .5rem; max-height: 52vh; overflow-y: auto; padding: .1rem; }
+.stc { display: grid; gap: .3rem; padding: .6rem .7rem; text-align: left; cursor: pointer;
+  background: var(--surface-3); border: 1px solid var(--trait); align-content: start; }
+.stc:hover { background: var(--surface-1); }
+.stc.prop { border-color: var(--or); }
+.stc.ici { background: var(--surface-1); border-color: var(--or); border-left-width: 3px; }
+.stc-t { display: flex; gap: .4rem; align-items: baseline; flex-wrap: wrap; }
+.stc-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
+.stc-p { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--or); }
+.stc-q { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--clair-doux); margin: 0; }
+.stc-s { margin: .15rem 0; padding-left: 1.1rem; display: grid; gap: .02rem; }
+.stc-s li { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+.stc-b, .stc-g { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); margin: 0; }
+.stc-g { color: var(--arbitrage); }
+.stc-e { letter-spacing: .1em; color: var(--clair-terne); }
+
+.autref { margin: .6rem 0; }
+.autref summary { min-height: var(--cible); display: flex; align-items: center; cursor: pointer;
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.autref-l { margin: 0; padding: 0; list-style: none; display: grid; gap: .35rem; }
+.autref-l li { display: grid; gap: .05rem; }
+.autref-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair); }
+.autref-w { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--or); }
+.autref-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+
+@media print { .salle button, .autref { display: none; } }
