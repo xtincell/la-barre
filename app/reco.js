@@ -105,25 +105,34 @@ window.RECO = (function () {
    * idée validée, et le circuit de validation — trois champs critiques que le
    * dossier porte déjà. La lecture est une PROPOSITION, jamais une décision :
    * elle s'affiche avec sa raison, et le titulaire choisit. */
+  /* Les mots qui font lire la salle sont un réglage de maison, pas une
+   * propriété du métier : ce sont ceux que NOS clients emploient dans leur
+   * circuit de validation. Une autre maison en écrirait d'autres, et le repli
+   * ci-dessous reste le nôtre. */
+  function mots(cle, defaut) {
+    var d = ((window.MAISON && MAISON.doctrine) || {}).salles || {};
+    return d[cle] || defaut;
+  }
+
   var SALLES = [
     { cle: "cascade", nom: "Comités en cascade",
       quoi: "local → régional → groupe",
-      mots: ["cascade", "regional", "régional", "groupe", "group", "siege", "siège", "holding", "maison mere"],
+      mots: mots("cascade", ["cascade", "regional", "régional", "groupe", "group", "siege", "siège", "holding", "maison mere"]),
       structures: ["routes"], integrite: true },
 
     { cle: "board", nom: "Board ou siège étranger à reconvaincre",
       quoi: "il faut pouvoir revendre en interne",
-      mots: ["board", "conseil", "actionnaire", "investisseur", "bailleur"],
+      mots: mots("board", ["board", "conseil", "actionnaire", "investisseur", "bailleur"]),
       structures: ["consulting"] },
 
     { cle: "fondateur", nom: "Fondateur, président de fédération",
       quoi: "une personne qui engage la marque",
-      mots: ["fondateur", "fondatrice", "president", "président", "pdg", "directeur general", "directrice generale"],
+      mots: mots("fondateur", ["fondateur", "fondatrice", "president", "président", "pdg", "directeur general", "directrice generale"]),
       structures: ["manifesto"] },
 
     { cle: "comite", nom: "Comité unique",
       quoi: "un seul étage, mais collectif",
-      mots: ["comite", "comité", "collegial", "collégial"],
+      mots: mots("comite", ["comite", "comité", "collegial", "collégial"]),
       structures: ["routes"] },
 
     { cle: "autonome", nom: "Directeur marketing autonome",
@@ -143,7 +152,9 @@ window.RECO = (function () {
       return x.id !== p.id && x.sections && x.sections.identite
         && x.sections.identite.clientId === s.clientId;
     }).length;
-    if (anciens >= 2 && (p.gabarit === "campagne" || p.gabarit === "cycle")) {
+    var seuilInstalle = ((window.MAISON && MAISON.doctrine) || {}).compteInstalle;
+    if (seuilInstalle === undefined || seuilInstalle === null) seuilInstalle = 2;
+    if (anciens >= seuilInstalle && (p.gabarit === "campagne" || p.gabarit === "cycle")) {
       return { salle: { cle: "installe", nom: "Client installé, brief récurrent",
           quoi: anciens + " dossiers antérieurs sur ce compte" },
         structures: ["lineaire"], integrite: false,

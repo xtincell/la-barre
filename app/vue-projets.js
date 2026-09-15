@@ -407,6 +407,11 @@ window.VUE_PROJETS = (function () {
                   onclick: function () { lesPieces(p, b, rafraichir); } },
                   "les " + b.pieces.length + " livrables →")
               : null,
+            /* Le renvoi à la doctrine. Un contrôle qui refuse sans dire selon
+             * quel critère refait exactement ce que la doctrine reproche aux
+             * agences : « on te dira ça ne marche pas sans te dire selon quel
+             * critère ». Celui qui remplace le DC doit pouvoir lire la règle. */
+            window.VUE_DOCTRINE ? VUE_DOCTRINE.lien(b.type) : null,
             b.type === "infere-non-contresigne"
               ? el("button.b.nu", { type: "button", style: { "font-size": "var(--t-micro)", "margin-top": ".25rem" },
                   onclick: function () { INFERENCE.panneau(p, rafraichir); } }, "faire contresigner →")

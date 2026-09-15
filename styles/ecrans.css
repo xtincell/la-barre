@@ -705,3 +705,98 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
   color: var(--clair-doux); }
 
 @media print { .eco-tab, .eco button, .ecoe button { display: none; } }
+
+/* ————————————————————— La doctrine ————————————————————— */
+
+/* D'où viennent les règles. Un écran de lecture, pas de décision : la mesure
+ * est large, le texte respire, et rien ne clignote. */
+.doc { display: grid; gap: 1rem; max-width: 100%; }
+.doc-tete { display: grid; gap: .25rem; }
+.doc-tete h2 { font-family: var(--affichage); font-size: var(--t-ecran); line-height: var(--lh-ecran);
+  letter-spacing: var(--ls-ecran); color: var(--clair); margin: 0; }
+.doc-q { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire);
+  color: var(--clair-doux); margin: 0; max-width: var(--mesure); }
+.doc-r { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); margin: 0; max-width: var(--mesure); }
+
+/* Une section : repliée par défaut, dépliée quand un blocage l'a visée. */
+.doc-s { border-top: 1px solid var(--trait); padding: .5rem 0; }
+.doc-s > summary { min-height: var(--cible); display: flex; align-items: baseline; gap: .6rem;
+  flex-wrap: wrap; cursor: pointer; }
+.docs-t { font-family: var(--affichage); font-size: var(--t-titre); line-height: var(--lh-titre);
+  letter-spacing: var(--ls-titre); color: var(--clair); }
+.docs-src { margin-left: auto; font-size: var(--t-micro); line-height: var(--lh-micro);
+  letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+.docs-c { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--clair-doux); margin: .3rem 0 .6rem; max-width: var(--mesure); }
+/* Celle qu'un blocage vient d'ouvrir : le filet dit où on a atterri. */
+.doc-s.vise { border-left: 3px solid var(--or); padding-left: .7rem; }
+
+.doc-docs { display: grid; gap: .4rem; }
+.docd { display: grid; gap: .08rem; padding: .5rem .6rem; background: var(--surface-3); }
+.docd-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
+.docd-g { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-doux); }
+.docd-f { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+
+.doc-t { width: 100%; border-collapse: collapse; }
+.doc-t th, .doc-t td { text-align: left; padding: .35rem .5rem; vertical-align: top;
+  border-bottom: 1px solid var(--trait);
+  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-doux); }
+.doc-t th { color: var(--clair-terne); letter-spacing: .08em; }
+.doc-t tr.corpus td { font-style: italic; }
+.doc-t tr.maison { background: var(--surface-3); }
+.doc-n { display: block; font-size: var(--t-meta); line-height: var(--lh-meta);
+  letter-spacing: var(--ls-meta); color: var(--clair); font-style: normal; }
+.doc-m { display: block; color: var(--clair-terne); }
+.doc-cmd { color: var(--clair-doux); }
+.doc-prat { display: inline-block; margin-top: .1rem; font-size: var(--t-micro);
+  letter-spacing: var(--ls-micro); color: var(--or); }
+.doc-x { display: block; color: var(--clair-terne); }
+.doc-ex { display: block; font-family: var(--ecrit); font-style: italic; color: var(--clair-doux); }
+.doc-pg { display: inline-block; margin: 0 .3rem .15rem 0; padding: .05rem .3rem;
+  background: var(--surface-3); color: var(--clair-terne); }
+.doc-garde { display: block; margin-top: .2rem; color: var(--arbitrage); }
+
+.doc-l, .doc-u { margin: 0 0 .5rem; padding-left: 1.2rem; display: grid; gap: .3rem;
+  max-width: var(--mesure); }
+.doc-u { list-style: none; padding-left: 0; }
+.doc-l li, .doc-u li { font-size: var(--t-meta); line-height: var(--lh-meta);
+  letter-spacing: var(--ls-meta); color: var(--clair-doux); }
+.doc-imp { margin: 0; padding: 0; list-style: none; display: grid; gap: .35rem; max-width: var(--mesure); }
+.doc-imp li { display: grid; gap: .02rem; }
+.doc-h { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .08em;
+  color: var(--clair-terne); margin: .7rem 0 .3rem; }
+.doc-note { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); margin: .4rem 0 0; max-width: var(--mesure); }
+
+/* Une règle du métier qu'il faut retenir : encadrée, pas décorée. */
+.doc-regle { display: grid; gap: .2rem; padding: .6rem .7rem; margin: .5rem 0;
+  background: var(--surface-3); border-left: 3px solid var(--clair); max-width: var(--mesure); }
+.docr-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
+.doc-regle p { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--clair-doux); margin: 0; }
+.docr-cas { color: var(--clair-terne) !important; font-size: var(--t-micro) !important;
+  line-height: var(--lh-micro) !important; }
+
+/* Un réglage de la maison, signalé au milieu du métier : c'est la seule chose
+ * de cet écran qui se change sans toucher au code. */
+.doc-reg { display: grid; gap: .1rem; padding: .55rem .7rem; margin: .5rem 0;
+  background: var(--surface-1); border: 1px dashed var(--or); max-width: var(--mesure); }
+.docg-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--or); }
+.docg-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair); }
+.docg-v { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
+.docg-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); margin: .1rem 0 0; }
+.docg-c { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* Le renvoi depuis un blocage. */
+.doc-lien { font-size: var(--t-micro) !important; margin-top: .25rem; color: var(--or) !important; }
+
+@media (max-width: 760px) {
+  .docs-src { margin-left: 0; }
+  .doc-s { overflow-x: auto; }
+}
+@media print { .doc-lien, .doc-s > summary { display: block; } .doc-s { border-left: 0; } }

@@ -98,11 +98,22 @@ window.EFFICACITE = (function () {
       mesure: "se mesure en semaines" },
   ];
 
-  var CIBLE_MARQUE = 60;
+  /* La calibration de la maison, avec son repli.
+   *
+   * La doctrine est du métier et vit ici ; ce que la maison en règle vit dans
+   * maison.js. Une maison qui n'écrit pas la clé garde la valeur d'origine :
+   * le produit tourne, il ne se tait pas. */
+  function regle(cle, defaut) {
+    var d = (window.MAISON && MAISON.doctrine) || {};
+    return d[cle] === undefined || d[cle] === null ? defaut : d[cle];
+  }
 
-  var RESERVE = "Le 60/40 vient de la base de cas de l'IPA — Royaume-Uni, États-Unis, "
+  var CIBLE_MARQUE = regle("cibleMarque", 60);
+
+  var RESERVE = regle("reserveEfficacite",
+    "Le 60/40 vient de la base de cas de l'IPA — Royaume-Uni, États-Unis, "
     + "Australie, grande consommation. Aucune donnée locale ne le corrobore ici : "
-    + "c'est une référence, pas un seuil. L'écart se lit, il ne se corrige pas.";
+    + "c'est une référence, pas un seuil. L'écart se lit, il ne se corrige pas.");
 
   function repartition(p) {
     var ls = (p.livrables || []).filter(function (l) { return !l.annule; });

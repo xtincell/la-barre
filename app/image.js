@@ -388,8 +388,11 @@ window.IMAGE = (function () {
    * « 250 ». Chaque mot pèse donc l'inverse de sa fréquence dans le lot : les
    * mots que tout le monde porte ne départagent personne. */
 
-  var SEUIL = 0.45;   /* en dessous, on ne propose rien */
-  var MARGE = 0.12;   /* deux candidats plus proches que ça : on hésite */
+  /* Réglés par la maison, avec leur repli : ce sont des choix de calibration,
+   * pas une propriété du métier. */
+  var CAL = ((window.MAISON && MAISON.doctrine) || {}).appariement || {};
+  var SEUIL = CAL.seuil === undefined ? 0.45 : CAL.seuil;  /* en dessous, on ne propose rien */
+  var MARGE = CAL.marge === undefined ? 0.12 : CAL.marge;  /* deux candidats plus proches : on hésite */
 
   function mots(x) {
     return String(x || "").toLowerCase()

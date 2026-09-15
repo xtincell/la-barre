@@ -195,6 +195,80 @@ window.MAISON = {
     { poste: "webdesign", quoi: "Rapport de performance", rythme: "par livraison" },
   ],
 
+  /* ————— La doctrine, et ce que la maison en a réglé.
+   *
+   * La distinction que le produit tient depuis le premier jour : le métier en
+   * code, la maison en configuration. La doctrine elle-même est du métier
+   * universel — une agence d'Accra a les mêmes douze écoles, les mêmes quatre
+   * couches, les mêmes six structures — et elle vit donc dans ses modules.
+   *
+   * Ce qui suit n'est pas la doctrine : c'est la CALIBRATION que cette
+   * maison-ci lui applique. Trois sources croisées plutôt que deux, trois
+   * visuels pour prouver une convention, une référence à 60/40 qu'aucune
+   * donnée locale ne corrobore. Ce sont des choix, ils se discutent, et ils
+   * n'ont rien à faire dans du code de métier.
+   *
+   * Chaque module lit ces valeurs et garde la sienne en repli : une maison qui
+   * n'écrit pas la clé n'empêche pas le produit de tourner.
+   * ————— */
+  doctrine: {
+    /* Les documents qui font foi. Le produit ne les lit pas encore ; il sait
+     * au moins dire lequel gouverne quoi, et où le trouver. */
+    documents: [
+      { cle: "insight", nom: "Insight et création",
+        fichier: "sources/07_doctrine/Insight_et_creation_v4.pdf",
+        gouverne: "les quatre couches, le test en trois questions, la forme en trois temps" },
+      { cle: "ecoles", nom: "Les écoles de pensée publicitaires",
+        fichier: "sources/07_doctrine/Ecoles_de_pensee_publicitaires_v4.pdf",
+        gouverne: "les douze écoles, leur preuve attendue, les deux corpus d'efficacité" },
+      { cle: "reco", nom: "La recommandation créative",
+        fichier: "sources/07_doctrine/Recommandation_creative_v5.pdf",
+        gouverne: "les six structures, la lecture de la salle, la slide d'arbitrage" },
+    ],
+
+    /* Combien de sources indépendantes avant de tenir un insight pour écrit.
+     * « Une seule produit une opinion ; trois produisent un insight. » */
+    sourcesCroisees: 3,
+
+    /* Combien de visuels de concurrents pour qu'une convention soit prouvée.
+     * En dessous, elle est supposée — et la rupture qu'on bâtit dessus casse
+     * peut-être une porte ouverte. */
+    preuvesConvention: 3,
+
+    /* Les écoles que la maison pratique réellement. Les autres restent
+     * consultables : on ne retire pas une école du métier parce qu'on ne s'en
+     * sert pas cette année. */
+    ecolesMaison: ["account-planning", "disruption", "truth-well-told",
+      "brutal-simplicite", "cultural-strategy", "ehrenberg-bass"],
+
+    /* La référence de répartition marque / activation, et la réserve qui doit
+     * l'accompagner partout où elle s'affiche. Sans la réserve, le chiffre
+     * devient un seuil — et ce serait importer une croyance. */
+    cibleMarque: 60,
+    reserveEfficacite:
+      "Le 60/40 vient de la base de cas de l'IPA — Royaume-Uni, États-Unis, "
+      + "Australie, grande consommation. Aucune donnée locale ne le corrobore ici : "
+      + "c'est une référence, pas un seuil. L'écart se lit, il ne se corrige pas.",
+
+    /* Ce qui fait lire la salle. Ces mots-ci sont ceux que NOS clients emploient
+     * dans leur circuit de validation — une autre maison en écrirait d'autres. */
+    salles: {
+      cascade: ["cascade", "regional", "régional", "groupe", "group", "siege",
+        "siège", "holding", "maison mere"],
+      board: ["board", "conseil", "actionnaire", "investisseur", "bailleur"],
+      fondateur: ["fondateur", "fondatrice", "president", "président", "pdg",
+        "directeur general", "directrice generale"],
+      comite: ["comite", "comité", "collegial", "collégial"],
+    },
+    /* À partir de combien de dossiers antérieurs un compte est « installé ». */
+    compteInstalle: 2,
+
+    /* L'appariement d'un lot de fichiers livrés à leurs livrables. En dessous
+     * du seuil on ne propose rien ; deux candidats plus proches que la marge
+     * font hésiter plutôt que trancher. */
+    appariement: { seuil: 0.45, marge: 0.12 },
+  },
+
   /* ————— La palette. Source : l'ordre de fabrication MT-0020. ————— */
   palette: {
     sombre: "#241C18",

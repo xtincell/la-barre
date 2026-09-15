@@ -89,7 +89,17 @@ window.TERRITOIRE = (function () {
   /* Ce que toute la catégorie tient pour acquis. Elle se démontre, elle ne se
    * suppose pas : « si vous ne pouvez pas la montrer en trois visuels de
    * concurrents, vous ne l'avez pas identifiée ». */
-  var PREUVES_CONVENTION = 3;
+  /* La calibration de la maison, avec son repli.
+   *
+   * La doctrine est du métier et vit ici ; ce que la maison en règle vit dans
+   * maison.js. Une maison qui n'écrit pas la clé garde la valeur d'origine :
+   * le produit tourne, il ne se tait pas. */
+  function regle(cle, defaut) {
+    var d = (window.MAISON && MAISON.doctrine) || {};
+    return d[cle] === undefined || d[cle] === null ? defaut : d[cle];
+  }
+
+  var PREUVES_CONVENTION = regle("preuvesConvention", 3);
 
   function convention(t) {
     var c = (t && t.convention) || {};

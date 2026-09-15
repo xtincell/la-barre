@@ -21,6 +21,9 @@ window.VUE_MAISON = (function () {
     /* Le registre de l'autre outil. Il n'a pas sa place dans les projets : ce
      * n'est pas du travail, c'est ce qui dit lequel manque. */
     { cle: "people", nom: "MATANGA PEOPLE", quoi: "ce qui existe là-bas, et n'existe pas ici" },
+    /* La doctrine : d'où viennent les règles que le produit applique. Elle vit
+     * ici parce que ce n'est pas du travail — c'est ce qui le rend jugeable. */
+    { cle: "doctrine", nom: "DOCTRINE", quoi: "les couches, les écoles, les structures — et ce que la maison en a réglé" },
     { cle: "parametres", nom: "PARAMÈTRES", quoi: "base, règles, équipe, journal" },
   ];
 
@@ -67,6 +70,7 @@ window.VUE_MAISON = (function () {
     if (mode === "marques") VUE_VAULT.rendre(z);
     else if (mode === "marches") VUE_REFERENTIEL.rendre(z);
     else if (mode === "people") REGISTRE.rendre(z, function () { rendre(hote); });
+    else if (mode === "doctrine") z.appendChild(VUE_DOCTRINE.rendre(z));
     else VUE_REGLAGES.rendre(z);
     return z;
   }
@@ -78,6 +82,12 @@ window.VUE_MAISON = (function () {
    * dépôt au second plan sur le seul écran où il compte. Un dépôt qui n'est
    * pas à l'abri est la chose la plus coûteuse que ce produit puisse taire. */
   function pire(mode, e) {
+    if (mode === "doctrine") {
+      var nd = ((MAISON.doctrine || {}).documents || []).length;
+      return { t: "D'où viennent les règles",
+        q: nd + " documents font foi. Chaque contrôle du produit renvoie à la page qui "
+          + "l'explique — un refus sans critère est ce que la doctrine reproche aux agences." };
+    }
     if (mode === "parametres") return pireReglages(e);
     if (mode === "marques") return pireMarques(e);
     if (mode === "people") return REGISTRE.pire();

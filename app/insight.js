@@ -140,7 +140,17 @@ window.INSIGHT = (function () {
         + "client qu'il n'a jamais relues" },
   ];
 
-  var CROISEMENT = 3;
+  /* La calibration de la maison, avec son repli.
+   *
+   * La doctrine est du métier et vit ici ; ce que la maison en règle vit dans
+   * maison.js. Une maison qui n'écrit pas la clé garde la valeur d'origine :
+   * le produit tourne, il ne se tait pas. */
+  function regle(cle, defaut) {
+    var d = (window.MAISON && MAISON.doctrine) || {};
+    return d[cle] === undefined || d[cle] === null ? defaut : d[cle];
+  }
+
+  var CROISEMENT = regle("sourcesCroisees", 3);
 
   /* ————————————————————— Les cinq imposteurs ————————————————————— */
 
