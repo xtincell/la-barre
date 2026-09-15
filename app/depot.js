@@ -17,7 +17,7 @@ window.DEPOT = (function () {
    *   people              le relevé de Matanga People
    * Sans incrément, le cache du navigateur ne relit jamais le fichier : la
    * collection neuve serait sur le disque et invisible à l'écran. */
-  var VERSION_SCHEMA = 2;
+  var VERSION_SCHEMA = 3;
 
   var etat = vide();
   var ecouteurs = [];
@@ -481,6 +481,55 @@ window.DEPOT = (function () {
       });
       if (p.axesDA && !p.champsDA) p.champsDA = p.axesDA;
       if (p.axesDA) delete p.axesDA;
+
+      /* 3 → l'insight et le territoire cessent d'être des paragraphes.
+       *
+       * Ils deviennent des objets à identifiant, parce que c'est la seule
+       * façon qu'une piste remonte à sa racine — et que le dossier dise si
+       * ses axes en partagent une. Le texte d'origine n'est pas jeté : il
+       * devient la phrase de l'insight, et le reste s'affiche comme ce qu'il
+       * est, non renseigné. Un insight migré dira « couche non nommée », ce
+       * qui est vrai : personne ne l'a nommée.
+       *
+       * Les anciens champs restent au dépôt. On archive, on ne supprime pas :
+       * le jour où la migration s'est trompée, le texte est encore là. */
+      var st = (p.sections || {}).strategie || {};
+      if (!p.insights) {
+        p.insights = [];
+        if ((st.insight || "").trim()) {
+          p.insights.push({
+            id: "IN-" + p.id.replace(/^PRJ-/, "").toLowerCase(),
+            couche: null, auteur: null, ecrit_le: p.cree_le || null,
+            passes: { longue: "",
+              temps: { situation: "", tension: (st.tension || ""), empeche: "" },
+              phrase: st.insight },
+            sources: [], test: { contredit: null, gene: null, ouvre: null },
+            migre: true,
+          });
+        }
+      }
+      if (!p.territoires) {
+        p.territoires = [];
+        if ((st.territoire || "").trim()) {
+          p.territoires.push({
+            id: "TR-" + p.id.replace(/^PRJ-/, "").toLowerCase(),
+            nom: "", quoi: st.territoire,
+            insightId: p.insights.length ? p.insights[0].id : null,
+            ecole: null, convention: null, reduction: null, migre: true,
+          });
+        }
+      }
+
+      /* Une piste sans territoire se rattache au seul qui existe. S'il y en a
+       * plusieurs, on ne devine pas : le contrôle « piste hors territoire » le
+       * dira, et c'est une question qui se tranche à l'œil. */
+      var seul = p.territoires.length === 1 ? p.territoires[0].id : null;
+      ((p.sections || {}).pistes || []).forEach(function (pi) {
+        if (!pi.territoireId && seul) pi.territoireId = seul;
+        /* Le sacrifice rejoint le prix à payer, qui a deux moitiés. L'ancienne
+         * clé reste : soixante modules la lisent encore. */
+        if (!pi.prix) pi.prix = { privilegie: "", sacrifie: pi.sacrifice || "" };
+      });
     });
     if (!d.people) d.people = [];
     d.schema = VERSION_SCHEMA;

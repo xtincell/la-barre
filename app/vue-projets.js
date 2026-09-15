@@ -859,7 +859,15 @@ window.VUE_PROJETS = (function () {
   /* L'écran le plus court et le plus calme du produit, et c'est très bien. Une
    * liste de champs en faisait un formulaire de plus ; ce sont des énoncés, ils
    * se lisent à la largeur d'une colonne de lecture. */
+  /* La stratégie n'est plus une liste de champs.
+   *
+   * L'insight et le territoire y étaient deux paragraphes ; ce sont maintenant
+   * des objets, et ce qui les relie aux pistes est une arborescence. Ce corps
+   * ne sert plus que de repli — si le module de la chaîne n'est pas chargé, la
+   * section reste lisible au lieu de disparaître. */
   function corpsStrategie(p, rafraichir) {
+    if (window.VUE_INSIGHT) return VUE_INSIGHT.rendre(p, rafraichir);
+
     var def = CHAMPS.section("strategie");
     var d = p.sections.strategie || {};
 

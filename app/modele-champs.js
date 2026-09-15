@@ -85,10 +85,17 @@ window.CHAMPS = {
       poste: "planning",
       champs: [
         { cle: "probleme_reel", nom: "Problème réel", type: "long", requis: true },
-        { cle: "insight", nom: "Insight", type: "long", requis: true },
-        { cle: "tension", nom: "Tension", type: "texte", requis: true },
+        /* L'insight et le territoire ne sont plus des champs.
+         *
+         * Ils étaient deux paragraphes, et deux paragraphes ne portent ni
+         * couche, ni sources, ni test, ni identifiant — donc une piste ne
+         * pouvait remonter à rien. Ce sont maintenant des objets, dans
+         * p.insights et p.territoires, rendus par VUE_INSIGHT. Les anciennes
+         * clés restent au dépôt : on archive, on ne supprime pas.
+         *
+         * « tension » a rejoint le deuxième temps de l'insight : elle n'était
+         * pas un champ à côté, elle en était la moitié. */
         { cle: "opportunite", nom: "Opportunité", type: "long" },
-        { cle: "territoire", nom: "Territoire", type: "long", requis: true },
         { cle: "gardefous", nom: "Garde-fous", type: "puces" },
       ],
     },
@@ -115,14 +122,44 @@ window.CHAMPS = {
   /* Une piste créative. */
   piste: [
     { cle: "titre", nom: "Titre de la piste", type: "texte", requis: true },
+    /* La racine. C'est elle qui rend le test d'une minute possible : remonter
+     * chaque axe jusqu'à son insight, et voir s'ils en partagent un. Sans elle,
+     * trois pistes dans un deck peuvent traiter trois problèmes différents sans
+     * que rien ne le dise — et le client sortira trois signatures. */
+    { cle: "territoireId", nom: "Territoire", type: "territoire", requis: true,
+      aide: "L'espace dont cette piste est un concept. Il porte l'insight." },
     { cle: "auteurDA", nom: "Auteur — Direction Artistique", type: "personne", requis: true },
     { cle: "auteurCR", nom: "Auteur — Concepteur-rédacteur", type: "personne" },
     { cle: "concept", nom: "Le concept", type: "long", requis: true },
     { cle: "accroches", nom: "Accroches", type: "puces", aide: "Cinq mots maximum, sinon refusable." },
     { cle: "visuel", nom: "Concept visuel", type: "long" },
     { cle: "mecanique", nom: "Mécanique", type: "long", requis: true },
+    { cle: "executionCle", nom: "L'exécution clé", type: "long",
+      aide: "Celle qui rend la piste lisible avant qu'on l'explique." },
+    /* Le prix à payer a deux moitiés, et le produit n'en portait qu'une. Ce
+     * qu'une piste privilégie se lit rarement tout seul : c'est ce qui la rend
+     * défendable autrement que par le goût. « sacrifice » reste lu par les
+     * anciens écrans, et suit prix.sacrifie. */
     { cle: "sacrifice", nom: "Ce qu'elle sacrifie", type: "long", requis: true },
+    { cle: "privilegie", nom: "Ce qu'elle privilégie", type: "long",
+      aide: "L'autre moitié du prix à payer." },
     { cle: "argument", nom: "L'argument qui la soutient", type: "long", requis: true },
+    /* Les trois rôles. « Ne pas présenter trois pistes d'égale valeur : une
+     * piste à vendre, deux qui bornent le territoire. » N'a de sens que sur une
+     * reco en routes parallèles — ailleurs le champ reste vide sans coûter. */
+    { cle: "role", nom: "Rôle dans la reco", type: "choix",
+      options: [{ cle: "sage", nom: "La sage" },
+                { cle: "defendue", nom: "Celle qu'on défend" },
+                { cle: "radicale", nom: "La radicale" }],
+      aide: "La sage rassure et rend les autres lisibles ; la radicale borne le "
+        + "territoire par le haut et rend la défendue raisonnable." },
+    { cle: "integrite", nom: "Ce qui casse si on recompose", type: "long",
+      aide: "Ce qui se perd si le concept de cette piste est monté sur l'exécution "
+        + "d'une autre. Écrit ici, cité plus tard — sur un compte à comités en "
+        + "cascade, c'est la seule pièce écrite qui protège le travail." },
+    { cle: "raisons", nom: "Les trois raisons de la recommander", type: "puces",
+      aide: "Dans l'ordre : réponse au brief, potentiel de durée, capacité de la "
+        + "marque à la porter. Pas de superlatif." },
     { cle: "porteurs", nom: "Porteurs de reconnaissance", type: "puces", aide: "Trois. Deux doivent survivre au montage." },
     { cle: "production", nom: "Implications de production", type: "long" },
   ],

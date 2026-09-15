@@ -23,6 +23,21 @@ window.REGLES = (function () {
     "axe-absent": "La piste ne se distingue des autres que par son titre : la comparer n'oppose rien, et le client tranchera sur le visuel qu'on lui montre.",
     "axe-jumeau": "Deux pistes au même ton ne font pas un choix : on demande au client de trancher sur rien, et il reviendra dessus.",
 
+    /* La chaîne du raisonnement : insight → territoire → axe.
+     *
+     * Ces prix ne parlent pas de champs vides mais de raisonnements faux. Un
+     * insight sans couche ne manque pas d'information : il manque de savoir ce
+     * qu'il commande, et c'est ce qui fait produire une campagne là où il
+     * fallait corriger un service. */
+    "insight-sans-couche": "On ne sait pas ce que cet insight commande — un message, une big idea, un positionnement ou une correction de marque. Les quatre appellent des livrables différents et un seul répond au problème.",
+    "insight-est-un-constat": "Le troisième temps est vide : l'énoncé dit ce qui est, jamais ce que ça empêche. Vrai, vérifiable, et sans aucune conséquence pour la création.",
+    "insight-une-source": "Une seule source produit une opinion ; trois produisent un insight. Celui-ci se défendra mal à la deuxième question du client.",
+    "insight-non-teste": "Personne n'a posé les trois questions. Un énoncé que nul ne peut contredire n'ouvre aucun choix — et on ne le saura qu'en séance.",
+    "decalage-de-couche": "Le problème ne vit pas à l'étage où on lui répond. Obéir au brief produira un travail juste sur une question qui n'est pas la bonne — et ce sera la création qu'on tiendra pour responsable.",
+    "axes-concurrents": "Ce ne sont pas des axes : ce sont des recommandations concurrentes dans le même document. Le client recomposera entre elles, et il sortira autant de signatures que de pistes.",
+    "piste-hors-territoire": "Cette piste ne remonte à aucune racine : impossible de dire si elle traite le même problème que les autres, ni de la défendre autrement que par le goût.",
+    "territoire-a-un-concept": "Un insight qui ne donne qu'un seul concept possible n'est pas un insight : c'est déjà une idée, arrivée trop tôt. Le territoire n'a pas de durée.",
+
     /* Une reprise d'emballage se suit sur deux sources — un tableau et un
      * disque. Quand les deux se contredisent, ce n'est pas un détail de
      * saisie : c'est une commande qu'on passe à l'imprimeur sur une hypothèse. */
@@ -208,6 +223,70 @@ window.REGLES = (function () {
       var aDA = (p.equipe || []).some(function (m) { return m.poste === "da"; });
       if (aSection(p, "pistes") && !aDA) {
         pousser(trouves, p, "da-absent", "Aucun Directeur Artistique affecté au dossier", "creation", "equipe");
+      }
+
+      /* ————— La chaîne du raisonnement —————
+       *
+       * Un insight, un territoire, des axes qui remontent à eux. Ces contrôles
+       * ne cherchent pas des champs vides : ils cherchent des raisonnements qui
+       * ne tiennent pas debout, et c'est ce qui les rend chers. */
+      var insights = window.INSIGHT ? INSIGHT.liste(p) : [];
+      insights.forEach(function (i) {
+        INSIGHT.normaliser(i);
+        var t = INSIGHT.texte(i);
+        var court = t.length > 52 ? t.slice(0, 52) + "…" : t;
+
+        if (!i.couche) {
+          pousser(trouves, p, "insight-sans-couche",
+            "Insight sans couche — « " + court + " »", "planning", "strategie", i.id);
+        }
+        if (!(i.passes.temps.empeche || "").trim() && INSIGHT.texte(i)) {
+          pousser(trouves, p, "insight-est-un-constat",
+            "« " + court + " » ne dit pas ce que ça empêche", "planning", "strategie", i.id);
+        }
+        if (i.sources.length < INSIGHT.CROISEMENT && INSIGHT.texte(i)) {
+          pousser(trouves, p, "insight-une-source",
+            (i.sources.length || "Aucune") + " source"
+              + (i.sources.length > 1 ? "s croisées" : "") + " sur "
+              + INSIGHT.CROISEMENT + " — « " + court + " »", "planning", "strategie", i.id);
+        }
+        if (INSIGHT.verdict(i).cle === "non-teste" && INSIGHT.texte(i)) {
+          pousser(trouves, p, "insight-non-teste",
+            "« " + court + " » n'a pas passé les trois questions", "planning", "strategie", i.id);
+        }
+
+        /* Le décalage de couche. Il se ferme par l'écrit, jamais par
+         * l'obéissance : le brief-back qui porte l'écart le fait disparaître. */
+        var d = INSIGHT.decalage(p, i);
+        if (d) pousser(trouves, p, "decalage-de-couche", d.quoi, "planning", "strategie", i.id);
+      });
+
+      /* Le test d'une minute : remonter chaque axe jusqu'à son insight.
+       *
+       * Si les insights diffèrent, ce ne sont pas des axes — ce sont des
+       * recommandations concurrentes, et c'est le client qui recomposera. Le
+       * cas maison de l'anniversaire télécom est exactement celui-là : trois
+       * axes également finis, trois racines, donc trois baselines. */
+      if (window.RECO && aSection(p, "pistes")) {
+        var r = RECO.racines(p);
+        if (r.concurrents) {
+          pousser(trouves, p, "axes-concurrents",
+            r.nRacines + " racines pour " + r.nVives + " pistes vives", "creation", "pistes");
+        }
+        r.orphelines.forEach(function (pi) {
+          pousser(trouves, p, "piste-hors-territoire",
+            "Piste « " + (pi.titre || "sans titre") + " » ne remonte à aucun territoire",
+            "creation", "pistes", pi.id);
+        });
+        /* Un territoire à un seul concept est légitime sur un cycle éditorial :
+         * un mois ne met pas deux routes en concurrence, il en tient une. */
+        if (p.gabarit !== "cycle") {
+          r.maigres.forEach(function (t) {
+            pousser(trouves, p, "territoire-a-un-concept",
+              "Territoire « " + (t.nom || t.quoi || "sans nom").slice(0, 40) + " » n'ouvre qu'un concept",
+              "planning", "strategie", t.id);
+          });
+        }
       }
 
       /* Arbitrage : plus d'une piste en lice, aucune retenue */

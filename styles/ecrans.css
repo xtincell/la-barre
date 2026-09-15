@@ -395,3 +395,163 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
   .liv-filtres, .livl-g { display: none; }
   .livl:hover { background: transparent; }
 }
+
+/* ————————————————————— La chaîne du raisonnement ————————————————————— */
+
+/* Insight → territoire → axes, rendus en profondeur. C'est l'indentation qui
+ * porte l'information : une piste qui ne remonte à rien flotte visiblement, et
+ * deux racines dans un même dossier se voient d'un seul regard. */
+.rais { display: grid; gap: 1.2rem; }
+.rais-arbre { display: grid; gap: 1.1rem; }
+
+.rin { display: grid; gap: .6rem; padding: .85rem 1rem;
+  background: var(--surface-1); border-left: 3px solid var(--trait-clair); }
+.rin.alerte { border-left-color: var(--bloquant); }
+.rin.attente { border-left-color: var(--arbitrage); }
+.rin.vert { border-left-color: var(--succes); }
+
+.rin-tete { display: grid; gap: .3rem; }
+.rin-c { display: flex; gap: .45rem; align-items: baseline; flex-wrap: wrap; }
+.rin-couche { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em;
+  padding: .1rem .4rem; background: var(--n950); color: var(--n100); }
+.rin-couche.sans { background: transparent; color: var(--bloquant-txt);
+  border: 1px dashed var(--bloquant); }
+.rin-v { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); }
+.rin-v.alerte { color: var(--bloquant-txt); }
+.rin-v.attente { color: var(--arbitrage); }
+.rin-v.vert { color: var(--succes); }
+
+.rin-p { font-family: var(--lecture); font-size: var(--t-titre); line-height: var(--lh-titre);
+  letter-spacing: var(--ls-titre); color: var(--clair); margin: 0; }
+.rin-cmd { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--clair-doux); margin: 0; }
+.rin-e { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); margin: 0; }
+.rin-g { display: flex; gap: .3rem; flex-wrap: wrap; margin-top: .15rem; }
+
+/* Le décalage de couche : la faute la plus chère, dite à l'endroit où elle se
+ * décide, avec la seule chose qui la ferme. */
+.rin-dec { display: grid; gap: .25rem; justify-items: start; padding: .6rem .7rem;
+  background: var(--surface-3); border-left: 3px solid var(--bloquant); }
+.rind-t { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--bloquant-txt); }
+.rind-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-doux); margin: 0; }
+
+/* Le chemin — trois passes de l'insight, trois versions de la réduction. */
+.chem { display: grid; gap: .3rem; margin: 0; padding: 0; list-style: none;
+  border-top: 1px solid var(--trait); padding-top: .5rem; }
+.chem-e { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .5rem; align-items: start; }
+.chem-n { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 9px;
+  font-size: var(--t-micro); line-height: 1; background: var(--surface-3); color: var(--clair-doux); }
+.chem-e.vide .chem-n { color: var(--encre-pale); }
+.chem-c { display: grid; gap: .05rem; min-width: 0; }
+.chem-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.chem-x { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
+.chem-e.vide .chem-x { color: var(--clair-terne); font-family: var(--ecrit); font-style: italic; letter-spacing: 0; }
+.chem-m { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+
+/* Les territoires, en retrait de leur insight. */
+.rin-ter { display: grid; gap: .5rem; justify-items: start;
+  border-top: 1px solid var(--trait); padding-top: .55rem; }
+.rint-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+
+.rte { display: grid; gap: .3rem; width: 100%; padding: .55rem .7rem;
+  background: var(--surface-3); border-left: 2px solid var(--trait-clair); }
+.rte.alerte { border-left-color: var(--bloquant); }
+.rte.attente { border-left-color: var(--arbitrage); }
+.rte.vert { border-left-color: var(--succes); }
+.rte-tete { display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
+.rte-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire);
+  color: var(--clair); margin: 0; }
+.rte-ec { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--or); }
+.rte-c { margin-left: auto; font-size: var(--t-micro); line-height: var(--lh-micro);
+  letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+.rte-q { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--clair-doux); margin: 0; }
+.rte-e { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); margin: 0; }
+
+.rte-preuve { display: grid; gap: .1rem; padding: .4rem .5rem; background: var(--surface-1);
+  border: 1px dashed var(--trait-clair); }
+.rte-preuve.ok { border-style: solid; border-color: var(--succes); }
+.rtp-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
+.rtp-x { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
+.rtp-p { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--arbitrage); }
+.rte-preuve.ok .rtp-p { color: var(--succes); }
+
+.rte-pi { margin: 0; padding: 0; list-style: none; display: grid; gap: .15rem; }
+.rtep { display: flex; gap: .4rem; align-items: baseline; flex-wrap: wrap;
+  font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
+.rtep-n { color: var(--clair-doux); }
+.rtep-r { font-size: var(--t-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+.rtep.defendue .rtep-r { color: var(--or); }
+.rtep-s { font-size: var(--t-micro); letter-spacing: var(--ls-micro); color: var(--succes); }
+.rte-g { display: flex; gap: .3rem; }
+
+/* Les pistes qui ne remontent à rien. */
+.rais-orph { display: grid; gap: .35rem; padding: .7rem .85rem;
+  background: var(--surface-3); border-left: 3px solid var(--bloquant); }
+.rao-t { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--bloquant-txt); }
+.rao-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-doux); margin: 0; }
+.rao-l { margin: 0; padding: 0; list-style: none; display: grid; gap: .2rem; }
+.rao-l li { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.rao-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
+
+/* L'ordre de travail, quand rien n'est encore écrit. */
+.rais-vide { display: grid; gap: .8rem; }
+.rais-ordre { display: grid; gap: .35rem; padding: .7rem .85rem; background: var(--surface-3); }
+.ro-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em; color: var(--clair-terne); }
+.ro-q { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  color: var(--clair-doux); margin: 0; }
+.ro-l { margin: 0; padding-left: 1.2rem; display: grid; gap: .25rem; }
+.ro-l li { display: grid; gap: .05rem; }
+.ro-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair); }
+.ro-x { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-doux); }
+.ro-s { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--arbitrage); }
+
+.rais-reste { display: grid; gap: .5rem; }
+
+/* Le test en trois questions, les sources, les imposteurs. */
+.tst { display: grid; gap: .7rem; margin: .6rem 0; }
+.tst-q { display: grid; gap: .2rem; padding-bottom: .5rem; border-bottom: 1px solid var(--trait); }
+.tstq-t { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
+.tstq-x { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); margin: 0; }
+.tstq-g { display: flex; gap: .3rem; margin-top: .2rem; }
+.tst-v { display: grid; gap: .1rem; padding: .5rem .6rem; background: var(--surface-3); }
+.tst-v.alerte { border-left: 3px solid var(--bloquant); }
+.tst-v.attente { border-left: 3px solid var(--arbitrage); }
+.tst-v.vert { border-left: 3px solid var(--succes); }
+.tstv-n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair); }
+.tstv-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-doux); }
+
+.src { display: grid; gap: .6rem; margin: .6rem 0; }
+.src-l { display: grid; gap: .15rem; padding-bottom: .5rem; border-bottom: 1px solid var(--trait); }
+.src-t { display: flex; gap: .4rem; align-items: center; min-height: var(--cible);
+  font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
+.src-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  color: var(--clair-terne); margin: 0; }
+.src-c { padding: .45rem .6rem; font-size: var(--t-meta); line-height: var(--lh-meta);
+  letter-spacing: var(--ls-meta); background: var(--surface-3); }
+.src-c.attente { border-left: 3px solid var(--arbitrage); color: var(--clair-doux); }
+.src-c.vert { border-left: 3px solid var(--succes); color: var(--clair-doux); }
+
+.imp { margin: .5rem 0; }
+.imp summary { min-height: var(--cible); display: flex; align-items: center; cursor: pointer;
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.imp-l { margin: 0; padding: 0; list-style: none; display: grid; gap: .35rem; }
+.imp-l li { display: grid; gap: .05rem; }
+.imp-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair); }
+.imp-e { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
+  font-family: var(--ecrit); font-style: italic; color: var(--clair-doux); }
+.imp-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
+
+.indice-err { color: var(--arbitrage); }
+
+@media (max-width: 760px) {
+  .rin { padding: .7rem .75rem; }
+  .rte-c { margin-left: 0; }
+}
