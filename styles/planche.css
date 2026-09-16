@@ -4038,3 +4038,50 @@ blockquote, .message, .verbatim, .bii-t, .ati-t {
   .plvc { break-inside: avoid; }
   .plv-f { break-inside: avoid; }
 }
+
+/* ————————————————————— Les diapositives que le deck ne savait pas rendre ————————————————————— */
+
+/* La slide d'arbitrage. C'est le seul endroit du document où l'agence prend un
+ * risque — la page lui donne la place que ce risque mérite. */
+.pg-arb { display: grid; align-content: center; gap: .9rem; }
+.pg-arb .pg-phrase { font-family: var(--lecture); font-size: var(--t-display);
+  line-height: var(--lh-display); letter-spacing: var(--ls-display); color: var(--clair);
+  text-wrap: balance; max-width: 22ch; }
+.pg-arb .pg-phrase.alerte { color: var(--bloquant-txt); font-style: italic; }
+.pg-arb .pg-blocs { display: grid; gap: .5rem; max-width: var(--mesure); }
+
+/* Les pistes côte à côte : même largeur, même finition. Une piste bâclée se
+ * voit, et elle discrédite les deux autres. */
+.pg-comp { display: grid; align-content: center; gap: .8rem; }
+.pg-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .8rem; }
+.pg-col { display: grid; gap: .25rem; align-content: start; padding: .7rem .8rem;
+  background: var(--surface-1); border-top: 2px solid var(--trait-clair); }
+.pg-col .t { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
+.pg-col .v { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
+
+/* Le manifesto et la vérité inconfortable : écrits pour être dits. Rythme
+ * marqué, une idée par ligne, et rien autour. */
+.pg-manif { display: grid; align-content: center; gap: .8rem; }
+.pg-manif-t { font-family: var(--lecture); font-size: var(--t-display); line-height: 1.25;
+  letter-spacing: var(--ls-display); color: var(--clair); max-width: 26ch; text-wrap: balance; }
+
+/* De … à … : le passage est l'information, pas les deux états. */
+.pg-trans { display: grid; align-content: center; gap: 1rem; }
+.pg-trans .pg-deux { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; }
+.pg-trans .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
+.pg-trans .v { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre);
+  color: var(--clair); text-wrap: balance; }
+
+/* Un document projeté : il se lit, il ne se survole pas. On lui donne le
+ * défilement plutôt que de l'amputer. */
+.pg-doc { overflow-y: auto; align-content: start; padding: 1.2rem 1.6rem; }
+.pg-doc .co-doc { max-width: var(--mesure); }
+
+.pg-puces { margin: .3rem 0; padding-left: 1.2rem; display: grid; gap: .25rem; max-width: var(--mesure); }
+.pg-puces li { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair-doux); }
+.pg-texte .pg-phrase { font-family: var(--lecture); font-size: var(--t-h2); line-height: var(--lh-h2);
+  letter-spacing: var(--ls-h2); color: var(--clair); max-width: var(--mesure); text-wrap: balance; }
+
+@media (max-width: 760px) {
+  .pg-trans .pg-deux { grid-template-columns: 1fr; }
+}

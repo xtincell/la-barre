@@ -23,6 +23,9 @@ window.VUE_PRESENTATION = (function () {
    * document n'est pas figé au moment où on l'a monté — il cite l'état du
    * jour, et c'est tout l'intérêt de le compiler plutôt que de le saisir. */
   var lecture = "montage";
+  /* Le dernier dossier composé : c'est LUI qu'on exporte, pas une
+   * recomposition — ce qu'on lit doit être ce qui part. */
+  var compose = null;
 
   function pres(p) {
     if (!p.presentation) p.presentation = PRESENTATION.creer(p);
@@ -161,8 +164,17 @@ window.VUE_PRESENTATION = (function () {
         { nom: "Ajouter une page", quand: function () { ajouterPage(p, d, rafraichir); } },
         { nom: d.niveau === "ambitieux" ? "Revenir au minimum client" : "Passer en pitch ambitieux",
           quand: function () { regenerer(p, d, rafraichir); } },
-        { nom: "Imprimer", doux: true, quand: function () { window.print(); } },
-      ]);
+        lecture === "dossier" && window.ETUDE
+          ? { nom: "Exporter en cas client", quand: function () { ETUDE.exporter(p, compose); } }
+          : null,
+        { nom: "Imprimer", doux: true, quand: function () {
+            /* Le papier veut le dossier, pas le montage : une liste de pages
+             * imprimée n'est utile à personne. */
+            if (lecture !== "dossier") { lecture = "dossier"; rafraichir();
+              setTimeout(function () { window.print(); }, 350); return; }
+            window.print();
+          } },
+      ].filter(Boolean));
   }
 
   /* ————————————————————— Le dossier, composé ————————————————————— */
@@ -174,10 +186,11 @@ window.VUE_PRESENTATION = (function () {
    * inventée — elle affiche sa dette, et de quoi la combler. */
   function dossier(p) {
     var d = pres(p);
+    compose = null;
     var st = d.structure && window.RECO ? RECO.structure(d.structure) : null;
     var docs = { cadrage: 1, conception: 1, production: 1 };
 
-    return el("div.pr-dossier", {},
+    var noeud = el("div.pr-dossier", {},
       el("div.prd-tete", {},
         el("h2", {}, p.nom),
         el("div.prd-s", {}, [p.ref,
@@ -205,6 +218,9 @@ window.VUE_PRESENTATION = (function () {
         }
         return pageComposee(p, pg, c, t);
       })));
+
+    compose = noeud;
+    return noeud;
   }
 
   /* Un document de la maison, recompilé et rendu par son propre composeur. Sa
@@ -616,13 +632,82 @@ window.VUE_PRESENTATION = (function () {
           : el("div.pg-note.alerte", {}, "Aucun décideur nommé — cette validation ne prendra pas effet."));
     }
 
-    /* problème, stratégie : même forme. */
+    /* La slide d'arbitrage. Trois lignes, trente secondes — et la première
+     * est la seule chose que le client doit retenir. Elle passait par le
+     * rendu générique, qui ignore `phrase` : « Nous recommandons la piste B »
+     * disparaissait de l'écran où elle compte le plus. */
+    if (pg.type === "arbitrage") {
+      return el("div.pg.pg-arb", {},
+        el("div.pg-eti", {}, "Notre recommandation"),
+        c.phrase ? el("div.pg-phrase", {}, c.phrase)
+          : el("div.pg-phrase.alerte", {}, "Aucune piste n'est défendue — le client choisira seul."),
+        el("div.pg-blocs", {}, (c.blocs || []).filter(function (b) { return b.v; }).map(function (b) {
+          return el("div.pg-b", {}, el("div.t", {}, b.t), el("div.v", {}, b.v));
+        })));
+    }
+
+    /* Les pistes côte à côte : c'est la mise en regard qui informe, pas la
+     * liste. Une colonne par route, au même niveau de finition. */
+    if (pg.type === "comparatif") {
+      return el("div.pg.pg-comp", {},
+        el("div.pg-eti", {}, c.titre),
+        el("div.pg-cols", {}, (c.blocs || []).map(function (b) {
+          return el("div.pg-col", {},
+            el("div.t", {}, b.t),
+            el("div.v", {}, b.v));
+        })));
+    }
+
+    /* Le manifesto se lit à voix haute : la page lui laisse la place, et rien
+     * d'autre n'y entre. */
+    if (pg.type === "manifeste" || pg.type === "verite") {
+      return el("div.pg.pg-manif", {},
+        el("div.pg-eti", {}, c.titre),
+        c.phrase ? el("div.pg-manif-t", {}, c.phrase) : null,
+        c.corps ? el("div.pg-corps", {}, c.corps) : null,
+        el("div.pg-blocs", {}, (c.blocs || []).filter(function (b) { return b.v; }).map(function (b) {
+          return el("div.pg-b", {}, el("div.t", {}, b.t), el("div.v", {}, b.v));
+        })));
+    }
+
+    /* De … à … : deux états, et le passage entre les deux est l'information. */
+    if (pg.type === "transformation") {
+      var bs = (c.blocs || []).filter(function (b) { return b.v; });
+      return el("div.pg.pg-trans", {},
+        el("div.pg-eti", {}, c.titre),
+        el("div.pg-deux", {}, bs.map(function (b) {
+          return el("div", {}, el("div.t", {}, b.t), el("div.v", {}, b.v));
+        })),
+        c.phrase ? el("div.pg-sign", {}, "« " + c.phrase + " »") : null);
+    }
+
+    /* Un document compilé, projeté. Il ne se découpe pas en diapositives : il
+     * se lit. Le squelette « dossier » le dit lui-même — il ne se présente pas
+     * en séance. Projeté quand même, il doit au moins être lisible, pas
+     * réduit à son compte de blocs. */
+    if (pg.type === "cadrage" || pg.type === "conception" || pg.type === "production") {
+      if (!window.COMPILATEUR) return el("div.pg.pg-vide", {}, el("div.pg-t", {}, c.titre));
+      return el("div.pg.pg-doc", {},
+        COMPILATEUR.document(COMPILATEUR.compiler(p, pg.type)));
+    }
+
+    /* Le rendu commun : problème, stratégie, contexte, critères, faisabilité,
+     * diagnostic, principe, abandons, signes, crédits, réduction, convention.
+     *
+     * Il ignorait `phrase` et `puces` — donc une page dont l'essentiel tient
+     * dans sa phrase sortait vide de son propos. Il les rend maintenant. */
     return el("div.pg.pg-texte", {},
       el("div.pg-eti", {}, c.titre),
+      c.phrase ? el("div.pg-phrase", {}, c.phrase) : null,
       c.corps ? el("div.pg-corps", {}, c.corps) : null,
+      (c.puces || []).length
+        ? el("ul.pg-puces", {}, c.puces.map(function (x) { return el("li", {}, x); }))
+        : null,
       el("div.pg-blocs", {}, (c.blocs || []).filter(function (b) { return b.v; }).map(function (b) {
         return el("div.pg-b", {}, el("div.t", {}, b.t), el("div.v", {}, b.v));
-      })));
+      })),
+      c.signature ? el("div.pg-sign", {}, "« " + c.signature + " »") : null,
+      c.note ? el("div.pg-note", {}, c.note) : null);
   }
 
   /* ————————————————————— La séance et ce qu'elle laisse ————————————————————— */

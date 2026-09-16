@@ -865,3 +865,36 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
   .prd-doc, .prd-p { break-inside: avoid; }
   .prd-dette, .prd-manque { display: none; }
 }
+
+/* ————————————————————— Le dossier, sur papier ————————————————————— */
+
+/* Il s'imprime, et c'est sa raison d'être : un dossier se remet. La règle
+ * globale cache déjà le rail et les boutons ; elle ne connaît pas la colonne
+ * de droite ni les grilles de recevabilité, qui sont du chrome d'application
+ * et n'ont rien à faire sur le papier qu'on tend à quelqu'un. */
+@media print {
+  .panneau-lat, .pr-lat, .recev, .salle, .dc-modes, .pr-modes, .liv-filtres,
+  .prd-dette, .prd-manque, .prp-gestes, .pr-pages, .pr-deux,
+  .nav3, .fil, .chapeau, .projet-entete .droite { display: none !important; }
+
+  /* Le dossier prend toute la feuille, et chaque document commence sa page. */
+  .zone, .dc, .dc-corps { display: block !important; padding: 0 !important; margin: 0 !important; }
+  .pr-dossier { display: block; max-width: none; }
+  .prd-tete { border-bottom: 2px solid #111; padding-bottom: .5rem; margin-bottom: 1rem; }
+  .prd-doc { break-before: page; break-inside: auto; margin-bottom: 1.2rem; }
+  .prd-doc:first-of-type { break-before: auto; }
+  .prd-p { break-inside: avoid; margin-top: 1rem; padding-top: .8rem; }
+
+  /* Sur papier, la mesure de lecture vaut encore : une ligne pleine largeur
+   * d'A4 ne se lit pas. */
+  .prdp-corps, .prdp-phrase, .prdp-blocs, .co-b { max-width: 34em; }
+  .co-doc, .co-blocs { display: block; }
+  .co-b { break-inside: avoid; margin-bottom: .6rem; }
+
+  /* Les vignettes restent, en plus petit : un dossier sans ses visuels ne
+   * prouve rien. */
+  .prdp-mur { grid-template-columns: repeat(4, 1fr) !important; }
+  .vignette { border-color: #ccc; }
+
+  a[href]::after { content: ""; }
+}
