@@ -197,10 +197,15 @@ window.REGISTRE = (function () {
   function ouvrirDossier(r, rafraichir) {
     var champNom = el("input", { type: "text", value: r.nom });
     var selG = el("select", {});
-    MAISON.gabarits.forEach(function (g) {
-      selG.appendChild(el("option", { value: g.cle }, g.nom));
+    NATURE.liste().forEach(function (g) {
+      selG.appendChild(el("option", { value: g.cle, title: g.quoi }, g.nom));
     });
-    selG.value = "piece";
+    /* « piece » n'a jamais été une valeur de la table : le sélecteur retombait
+     * silencieusement sur la première option, et deux dossiers ont gardé la
+     * valeur fantôme au dépôt. On ouvre sur la demande simple — quand on
+     * ouvre un dossier depuis un registre, on ne connaît pas encore sa forme,
+     * et la demande est celle qui exige le moins. */
+    selG.value = "demande";
 
     PANNEAU.ouvrir("Ouvrir un dossier", r.ref, el("div", {},
       el("div.prix", {}, el("span.signe", {}, "⚠"),
@@ -229,7 +234,7 @@ window.REGISTRE = (function () {
           var p = DEPOT.ajoute("projets", {
             ref: "MT-" + String(num).padStart(4, "0"),
             nom: champNom.value.trim() || r.nom,
-            gabarit: selG.value,
+            nature: selG.value,
             cree_le: new Date().toISOString(),
             people: { refs: [r.ref], nom: r.nom,
               note: "Ouvert depuis le registre People du " + O.joli(r.releve_le) + "." },

@@ -27,6 +27,18 @@ window.CHAMPS = {
             return v.clientId ? t.filter(function (m) { return m.clientId === v.clientId; }) : t;
           } },
         { cle: "type", nom: "Type de projet", type: "texte", aide: "Film, campagne 360, KV, activation…" },
+        /* La durée managée a deux bornes, et le produit n'en avait qu'une.
+         *
+         * Sans début, on sait combien de jours restent — jamais combien on en
+         * a eu. Or les deux ne disent pas la même chose : « il reste deux
+         * semaines pour six semaines de travail » peut être du glissement ;
+         * « la charge dépassait la fenêtre dès le premier jour » est un défaut
+         * de cadrage, et il se reproche à un autre moment, à quelqu'un
+         * d'autre. C'est aussi ce qui rend une estimation comparable à la
+         * suivante : une durée sans début n'a pas de longueur. */
+        { cle: "debut", nom: "Ouvert le", type: "date", critique: true, poste: "clientele",
+          aide: "Le jour où le travail a été commandé. Avec l'échéance, il donne la durée "
+              + "accordée — et permet de dire si la charge y tenait dès le départ." },
         { cle: "echeance", nom: "Échéance client", type: "date", requis: true },
         { cle: "budget", nom: "Budget", type: "nombre", aide: "En FCFA. Absent est une information, pas un vide." },
         { cle: "decideurId", nom: "Décideur final", type: "objet", source: function (v) {
@@ -39,6 +51,37 @@ window.CHAMPS = {
         { cle: "tueur", nom: "Qui peut annuler une idée validée", type: "texte", requis: true, critique: true, aide: "Siège, comité de marque, actionnaire. Il y en a presque toujours un." },
         { cle: "circuit", nom: "Circuit et délai de validation", type: "texte", critique: true, aide: "Nombre de passages, délai réel entre présentation et accord ferme." },
         { cle: "fenetre", nom: "Fenêtre de diffusion", type: "texte", requis: true, critique: true },
+
+        /* ————— Ce qu'un brief détermine, et que le dossier diluait —————
+         *
+         * Le titulaire les nomme en une phrase : « une mission est gouvernée
+         * par son brief qui détermine l'objectif, sa durée managée, la mesure
+         * d'accomplissement et éventuellement son coût ». Les quatre existaient
+         * en miettes — l'objectif partagé entre deux champs du brief, la durée
+         * en texte libre, la mesure dans une liste de puces, le coût réduit à
+         * un nombre. Ce ne sont pas des métadonnées : c'est ce qui rend un
+         * projet finissable et jugeable. */
+        { cle: "objectif", nom: "Ce que ce projet doit changer", type: "long",
+          requis: true, critique: true, poste: "clientele",
+          aide: "Une phrase. Pas l'objectif de la campagne — celui de CE projet, "
+              + "et ce qui sera différent après lui." },
+        { cle: "mesure", nom: "À quoi on saura que c'est réussi", type: "puces",
+          critique: true, poste: "clientele",
+          aide: "Chacune avec sa source de mesure. Sans source, ce n'est pas une mesure, "
+              + "c'est un souhait." },
+
+        /* Le pilier de la marque sur lequel ce projet agit. Proposé par la
+         * nature, jamais imposé : c'est un jugement stratégique, et une même
+         * nature peut servir un autre pilier selon l'intention. */
+        { cle: "pilier", nom: "Le pilier de marque qu'il sert", type: "choix",
+          vide: "— proposé par la nature du projet —",
+          options: function () {
+            return ((window.MAISON && MAISON.piliers) || []).map(function (x) {
+              return { cle: x.cle, nom: x.nom + (x.figure ? " · " + x.figure : "") };
+            });
+          },
+          aide: "Le packaging promo sert la Valeur ; une promo choc, l'Engagement ; "
+              + "une refonte de site, la Distinction ; une consultance, l'Authenticité." },
       ],
     },
     {

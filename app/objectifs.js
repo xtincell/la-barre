@@ -152,6 +152,11 @@ window.OBJECTIFS = (function () {
       var joursRestants = ident.echeance
         ? Math.round((new Date(ident.echeance) - new Date()) / 86400000)
         : null;
+      /* La durée accordée : d'un bout à l'autre de la fenêtre. Elle dit ce
+       * qu'on a eu, là où `joursRestants` dit ce qu'il reste. */
+      var duree = (ident.debut && ident.echeance)
+        ? Math.round((new Date(ident.echeance) - new Date(ident.debut)) / 86400000)
+        : null;
 
       out.push({
         projet: p,
@@ -164,6 +169,11 @@ window.OBJECTIFS = (function () {
         perimetre: (brief.livrables_attendus || []).length,
         /* Une échéance dépassée n'est jamais tenable. Une charge inconnue n'est
          * pas un verdict : c'est une décision qui manque. */
+        duree: duree,
+        /* Est-ce que ça tenait AU DÉPART ? Faux ici veut dire que la fenêtre
+         * était trop courte le jour où on l'a acceptée — ce n'est pas du
+         * glissement, c'est un cadrage qui ne pouvait pas marcher. */
+        tenableDepart: (duree === null || !charge) ? null : charge <= duree,
         tenable: joursRestants === null ? null
           : joursRestants < 0 ? false
           : (charge === 0 && inconnues) ? null

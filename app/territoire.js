@@ -132,7 +132,7 @@ window.TERRITOIRE = (function () {
       return { nom: "territoire inexploré", ton: "attente",
         quoi: "aucune piste ne l'occupe encore" };
     }
-    if (n === 1 && p.gabarit !== "cycle") {
+    if (n === 1 && !NATURE.estContinu(p)) {
       return { nom: "territoire à un concept", ton: "attente",
         quoi: "une seule piste en sort : un insight qui ne donne qu'un concept "
           + "possible est déjà une idée, arrivée trop tôt — et la plateforme n'a "
@@ -148,7 +148,7 @@ window.TERRITOIRE = (function () {
       var v = t[c.cle];
       return { quoi: c.nom, ok: !!(v && String(v).trim()), poids: 4, cout: c.cout };
     });
-    out.push({ quoi: "Plusieurs concepts y vivent", ok: n > 1 || p.gabarit === "cycle", poids: 3,
+    out.push({ quoi: "Plusieurs concepts y vivent", ok: n > 1 || NATURE.estContinu(p), poids: 3,
       cout: "un seul concept : le territoire n'a pas de durée, et la plateforme "
         + "qu'on vend tiendra une campagne, pas trois" });
 

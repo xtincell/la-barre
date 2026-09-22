@@ -170,25 +170,68 @@ window.VUE_VAULT = (function () {
       blocs.push(blocCatalogue(m, hote));
       blocs.push(blocMarches(m));
       blocs.push(blocCampagnes(m));
+      blocs.push(blocVie(m));
     }
     return el("div.vn-b", {}, blocs);
   }
 
-  /* Le socle du niveau : ce qui lui est propre, ce qu'il hérite, et d'où. */
+  /* Le socle du niveau, rangé par pilier.
+   *
+   * Vingt et un champs à plat se lisent comme un formulaire ; rangés par
+   * pilier, ils se lisent comme un état. Et le pilier vide se voit : une
+   * marque sans Authenticité ne peut pas dire si une piste EST elle. Chaque
+   * pilier annonce donc ce qu'il sert, et ce qu'on perd quand il est muet. */
   function socleDuNoeud(n, hote) {
-    return el("div.vtb-s", {}, VAULT.CHAMPS.map(function (c) {
-      var h = VAULT.herite(n.type, n.id, c.cle);
-      var vide = h.valeur === null || h.valeur === undefined
-        || (Array.isArray(h.valeur) ? !h.valeur.length : !String(h.valeur).trim());
-      return el("button.vtc" + (vide ? ".vide" : h.propre ? "" : ".herite"), {
-        type: "button", title: "modifier — " + c.nom,
-        onclick: function () { editer(n, c, hote); } },
-        el("span.vtc-n", {}, c.nom,
-          !vide && !h.propre && h.source
-            ? el("span.vtc-h", {}, "de " + h.source.nom) : null),
-        el("span.vtc-v", {}, vide ? (c.aide || "non écrit")
-          : Array.isArray(h.valeur) ? h.valeur.join("  ·  ") : String(h.valeur)));
+    return el("div", {}, VAULT.PILIERS.map(function (pil) {
+      var champs = VAULT.champsDuPilier(pil.cle);
+      if (!champs.length) return null;
+
+      var remplis = champs.filter(function (c) {
+        var h = VAULT.herite(n.type, n.id, c.cle);
+        return !estVide(h.valeur); }).length;
+
+      /* Replié par défaut, et ce n'est pas un détail de confort : vingt et un
+       * champs sur soixante-douze marques font vingt mille pixels, et on vient
+       * ici pour lire un ÉTAT, pas pour parcourir un formulaire. L'en-tête
+       * porte tout ce qu'un état demande — le compte, et ce qu'on perd quand
+       * le pilier est muet. On ouvre celui qu'on travaille. */
+      return el("details.vtb-pil" + (remplis ? "" : ".muet"), {},
+        el("summary", {},
+          el("div.vtbp-t", {},
+            el("b", {}, pil.nom),
+            pil.figure ? el("span.vtbp-f", {}, pil.figure) : null,
+            el("span.droite", {}, remplis + " / " + champs.length)),
+          el("p.vtbp-q", {}, remplis
+            ? (pil.quoi || "")
+            : "Muet — " + (pil.sert ? "sans lui, impossible de " + pil.sert + "." : "rien n'est écrit."))),
+        el("div.vtb-s", {}, champs.map(function (c) { return carteChamp(n, c, hote); })));
     }));
+  }
+
+  function estVide(v) {
+    return v === null || v === undefined
+      || (Array.isArray(v) ? !v.length : !String(v).trim());
+  }
+
+  function carteChamp(n, c, hote) {
+    var h = VAULT.herite(n.type, n.id, c.cle);
+    var vide = estVide(h.valeur);
+    /* Depuis quand la valeur tient, et ce qu'elle a remplacé. Une plateforme
+     * se révise : le dire est la moitié de la cohérence de marque. */
+    var revs = VAULT.revisions ? VAULT.revisions(n.type, n.id, c.cle) : [];
+
+    return el("button.vtc" + (vide ? ".vide" : h.propre ? "" : ".herite"), {
+      type: "button", title: "modifier — " + c.nom,
+      onclick: function () { editer(n, c, hote); } },
+      el("span.vtc-n", {}, c.nom,
+        !vide && !h.propre && h.source
+          ? el("span.vtc-h", {}, "de " + h.source.nom) : null),
+      el("span.vtc-v", {}, vide ? (c.aide || "non écrit")
+        : Array.isArray(h.valeur) ? h.valeur.join("  ·  ") : String(h.valeur)),
+      revs.length
+        ? el("span.vtc-r", {}, revs.length + (revs.length > 1 ? " révisions" : " révision")
+            + " — la dernière le " + O.jourCourt(revs[0].quand))
+        : null);
   }
 
 
@@ -416,6 +459,24 @@ window.VUE_VAULT = (function () {
   }
 
   /* ————————————————————— Ce que les campagnes en retiennent ————————————————————— */
+
+  /* La vie de la marque : ce qui lui est arrivé, du plus récent au plus ancien.
+   *
+   * Elle vient en dernier, et c'est voulu. On ouvre un dossier de marque pour
+   * savoir où elle en est — l'identité et le rythme répondent à ça. L'histoire
+   * répond à une autre question, qu'on se pose moins souvent mais qui coûte
+   * plus cher quand personne ne peut y répondre : qu'est-ce qu'on lui a déjà
+   * fait, et qu'est-ce qu'on lui a déjà promis ? */
+  function blocVie(m) {
+    if (!window.VIE_MARQUE) return null;
+    var e = VIE_MARQUE.etat(m.id);
+    return el("details.vtb-vie" + (e.cle === "muette" ? ".muet" : ""), {},
+      el("summary", {},
+        el("div.vtbk-t", {}, "LA VIE DE LA MARQUE",
+          el("span", {}, e.nom)),
+        el("p.vtbp-q", {}, e.quoi)),
+      VIE_MARQUE.rendre(m.id, 40));
+  }
 
   function blocCampagnes(m) {
     var cs = VAULT.campagnesDe(m.id);
@@ -717,5 +778,21 @@ window.VUE_VAULT = (function () {
       ));
   }
 
-  return { rendre: rendre };
+  /* Le dossier d'une seule marque, sans l'arbre autour.
+   *
+   * Il vivait dans « La maison », derrière un arbre à trois niveaux — c'est-
+   * à-dire dans un écran de réglages, pendant que le travail de la même
+   * marque vivait dans « Les dossiers ». On réglait la plateforme d'un côté
+   * et on jugeait ses pistes de l'autre, sans passage.
+   *
+   * Il est rendu là où l'on travaille désormais. « La maison » garde ce qui
+   * est vraiment du référentiel : quelles marques existent, l'arbre des
+   * ombrelles, et ce qui manque à l'échelle du portefeuille. */
+  function dossierDeMarque(marqueId, hote) {
+    var m = DEPOT.trouve("marques", marqueId);
+    if (!m) return null;
+    return corps({ type: "marque", id: marqueId, nom: m.nom }, hote);
+  }
+
+  return { rendre: rendre, dossierDeMarque: dossierDeMarque };
 })();

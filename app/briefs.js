@@ -53,16 +53,39 @@ window.BRIEFS = (function () {
       ]),
     },
 
-    /* ————— Ce qui fonde une campagne ————— */
+    /* ————— Ce qui fonde une campagne —————
+     *
+     * Ce type portait sur le PROJET, et sa propre fiche disait qu'il fonde
+     * « la campagne — son périmètre, son budget, sa fenêtre ». Le document qui
+     * fonde la campagne était accroché au projet faute d'un nœud où le poser.
+     *
+     * Il reprend sa place. Conséquence directe et voulue : un client qui envoie
+     * vingt briefs sur le même Noël ouvre UNE campagne, et les vingt projets en
+     * héritent la fenêtre, le budget et le périmètre au lieu de les rédéclarer.
+     *
+     * Ce qui ne bouge pas : la section `brief` du dossier. Un projet garde la
+     * sienne — c'est son cadrage à lui, celui de sa nature. Rien n'a été
+     * déplacé au dépôt : cent six projets n'ont pas encore de campagne, et
+     * déménager leur brief vers un nœud qui n'existe pas les aurait vidés. */
     {
       cle: "campagne", nom: "Brief de campagne",
-      porte: "projet", gabarits: ["campagne"],
+      porte: "campagne",
       emetteur: "clientele", contributeur: "planning", destinataire: "creation",
       fonde: "la campagne — son périmètre, son budget, sa fenêtre",
       boussole: "l'arbitrage des pistes et le verdict des livrables : hors brief, c'est refusable",
       quoi: "Le document reçu de la Clientèle. Onze champs critiques, et la clause "
           + "de frontière qui protège la Création de l'amont.",
-      section: "brief",
+      champs: socleCommun("clientele").concat([
+        { cle: "perimetre", nom: "Le périmètre", type: "long", critique: true, poste: "clientele",
+          aide: "Ce que la campagne couvre, et ce qu'elle ne couvre pas." },
+        { cle: "budget", nom: "Budget", type: "nombre", poste: "clientele",
+          aide: "En FCFA. Absent est une information, pas un vide." },
+        { cle: "fenetre", nom: "La fenêtre", type: "texte", critique: true, poste: "clientele",
+          aide: "Du premier jour au dernier. C'est elle qui contraint tous les projets." },
+        { cle: "marches", nom: "Marchés couverts", type: "puces", critique: true, poste: "clientele" },
+        { cle: "kpis", nom: "Critères de succès mesurables", type: "puces", critique: true,
+          poste: "clientele", aide: "Chacun avec sa source de mesure, sinon il n'est pas mesurable." },
+      ]),
     },
 
     /* ————— Ce que le Planning rend, et qui est son livrable de fiche ————— */
@@ -204,12 +227,35 @@ window.BRIEFS = (function () {
 
   /* Les types qui s'appliquent à un dossier, selon son gabarit. Un pitch n'a
    * pas de brief de campagne ; une demande simple n'a pas de requalification. */
-  function pourGabarit(g) {
+  /* Les types qui s'appliquent à un DOSSIER. Ceux qui portent sur la marque ou
+   * sur la campagne n'y sont pas : ils ont leur propre nœud. La liste des
+   * gabarits qui filtrait chaque type disparaît avec eux — c'est la nature du
+   * projet, et ses sections, qui disent désormais ce qui s'applique. */
+  function pourNature(cle) {
+    var n = window.NATURE ? NATURE.de({ nature: cle }) : null;
+    if (!n) return TYPES.filter(function (t) {
+      return t.porte !== "marque" && t.porte !== "campagne"; });
+    var a = function (x) { return n.sections.indexOf(x) !== -1; };
+
     return TYPES.filter(function (t) {
-      if (t.porte === "marque") return false;
-      return !t.gabarits || t.gabarits.indexOf(g) !== -1;
+      /* Ce qui a son propre nœud n'est pas offert sur un dossier. */
+      if (t.porte === "marque" || t.porte === "campagne") return false;
+
+      /* Un brief qui porte sur un livrable ou sur un marché suppose que le
+       * dossier en produise. Un projet de conseil n'a ni l'un ni l'autre :
+       * lui proposer un ordre de fabrication, c'est lui demander d'être une
+       * campagne — exactement ce que les quatre gabarits faisaient. */
+      if (t.porte === "livrable" || t.porte === "marche") return a("livrables");
+
+      /* Ce qui porte sur le dossier lui-même se règle sur sa section. */
+      if (t.section) return a(t.section);
+
+      /* Le pitch n'est un brief que pour un pitch. */
+      if (t.cle === "pitch") return cle === "pitch";
+      return true;
     });
   }
+  var pourGabarit = pourNature;   /* l'ancien nom, le temps que les vues suivent */
 
   /* Les champs d'un type. Ceux qui vivent dans une section du projet les
    * empruntent — on ne duplique pas un modèle qui existe. */
@@ -225,6 +271,14 @@ window.BRIEFS = (function () {
   /* Où vit un brief. La plateforme appartient à la marque : elle vaut plusieurs
    * années et ne se réécrit pas à chaque campagne. */
   function contenant(t, cible) {
+    /* La campagne porte ses briefs comme la marque porte les siens : dans un
+     * sac nommé, pas dans une section de dossier. Une campagne n'a pas de
+     * sections — elle a des projets. */
+    if (t.porte === "campagne") {
+      if (!cible) return null;
+      cible.briefs = cible.briefs || {};
+      return cible.briefs;
+    }
     if (t.porte === "marque") {
       if (!cible) return null;
       cible.briefs = cible.briefs || {};
@@ -291,6 +345,6 @@ window.BRIEFS = (function () {
     return "Recevable : il fonde " + t.fonde + ", et sert de boussole à " + t.boussole + ".";
   }
 
-  return { TYPES: TYPES, def: def, pourGabarit: pourGabarit, champs: champs,
+  return { TYPES: TYPES, def: def, pourNature: pourNature, pourGabarit: pourGabarit, champs: champs,
     lire: lire, ecrire: ecrire, etat: etat, cout: cout, contenant: contenant };
 })();

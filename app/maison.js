@@ -160,22 +160,139 @@ window.MAISON = {
       sans: "rien ne part : l'idée reste au dossier" },
   ],
 
-  /* ————— Les gabarits de projet. ————— */
-  gabarits: [
-    { cle: "campagne", nom: "Campagne", sections: ["identite", "brief", "briefback", "socle", "strategie", "atelier", "bigidea", "pistes", "planche", "livrables", "livraison", "presentation"] },
-    /* Un cycle éditorial est une campagne mensuelle : il a sa plateforme de
-     * marque, son atelier au début du cycle, sa big idea et sa piste — et
-     * toutes les publications du mois vivent DANS cette piste.
-     *
-     * Une seule chose lui manque, et ce n'est pas un manque : le KV master.
-     * Ses livrables ne découlent pas d'un visuel de référence, elles se suivent
-     * dans un calendrier. C'est donc la planche des KV qui saute, et elle
-     * seule — j'avais d'abord amputé la moitié de la chaîne, ce qui revenait
-     * à dire qu'un cycle n'a pas de concept. */
-    { cle: "cycle", nom: "Cycle éditorial",
+  /* ————— Les natures de projet —————
+   *
+   * Ce qui s'appelait « gabarit » ne connaissait que quatre valeurs, et les
+   * quatre étaient des variantes de campagne publicitaire. Sur les 366 briefs
+   * réels du registre de l'agence, 67 sont des campagnes. Les 299 autres —
+   * digital, film, conseil, édition, packaging, branding, PLV, véhicule —
+   * étaient forcés dans « campagne » et réclamaient un insight pour une mise
+   * à jour de code-barre.
+   *
+   * Une nature déclare quatre choses :
+   *   sections   ce que le dossier affiche, et donc ce que les contrôles
+   *              peuvent exiger. C'est le même mécanisme qu'avant, appliqué
+   *              à une table plus juste.
+   *   brief      le type de briefs.js qui la gouverne
+   *   pilier     celui des quatre piliers de la marque qu'elle sert, par
+   *              défaut. PROPOSÉ, jamais imposé : le pilier est un jugement
+   *              stratégique, il entre inféré et se contresigne.
+   *   quoi       ce qu'elle est, en une phrase, pour celui qui choisit
+   *
+   * C'est de la maison, pas du métier : une agence d'Accra a d'autres lignes
+   * de service, pas un autre produit.
+   * ————— */
+  natures: [
+    { cle: "campagne", nom: "Campagne", pilier: "E", brief: "campagne",
+      quoi: "Un temps fort : Noël, Ramadan, un lancement. Elle cherche une idée et la décline.",
+      sections: ["identite", "brief", "briefback", "socle", "strategie", "atelier", "bigidea", "pistes", "planche", "livrables", "livraison", "presentation"] },
+
+    /* Le cycle garde tout sauf la planche des KV. Ses livrables ne découlent
+     * pas d'un visuel de référence : ils se suivent dans un calendrier. J'avais
+     * d'abord amputé la moitié de la chaîne, ce qui revenait à dire qu'un cycle
+     * n'a pas de concept. Il en a un — il n'a pas de maître. */
+    { cle: "cycle", nom: "Cycle éditorial", pilier: "E", brief: "campagne",
+      quoi: "Le mois qui tourne : publications datées, un concept, aucun KV maître.",
       sections: ["identite", "brief", "briefback", "socle", "strategie", "atelier", "bigidea", "pistes", "livrables", "livraison", "presentation"] },
-    { cle: "demande", nom: "Demande simple", sections: ["identite", "livrables", "livraison"] },
-    { cle: "pitch", nom: "Pitch", sections: ["identite", "briefback", "strategie", "atelier", "bigidea", "pistes", "planche", "livrables", "livraison", "presentation"] },
+
+    { cle: "branding", nom: "Identité / branding", pilier: "D", brief: "plateforme",
+      quoi: "Créer ou refondre ce qui dure : nom, logo, charte, plateforme de marque.",
+      sections: ["identite", "brief", "briefback", "socle", "strategie", "atelier", "bigidea", "pistes", "planche", "livrables", "livraison", "presentation"] },
+
+    /* Une consultance ne produit pas de visuel : elle produit un raisonnement.
+     * Lui réclamer une piste et une planche, c'est lui demander d'être une
+     * campagne — et c'est ce que le produit faisait. */
+    { cle: "conseil", nom: "Stratégie / conseil", pilier: "A", brief: "requalification",
+      quoi: "Un diagnostic, une recommandation, un plan. Aucun livrable visuel.",
+      sections: ["identite", "brief", "briefback", "strategie", "presentation"] },
+
+    { cle: "film", nom: "Film / motion", pilier: "E", brief: "estimation",
+      quoi: "Un film, une animation. Découpage, estimation technique, versions par langue.",
+      sections: ["identite", "brief", "briefback", "bigidea", "pistes", "livrables", "livraison", "presentation"] },
+
+    { cle: "packaging", nom: "Packaging / SKU", pilier: "V", brief: "production",
+      quoi: "Le pack, l'étiquette, le film d'emballage. Une norme s'exécute, elle ne se conçoit pas.",
+      sections: ["identite", "brief", "livrables", "livraison"] },
+
+    { cle: "plv", nom: "PLV · véhicule · bâtiment", pilier: "D", brief: "declinaison",
+      quoi: "Ce qui s'installe : rayon, gondole, camion, mur, affichage.",
+      sections: ["identite", "brief", "livrables", "livraison"] },
+
+    { cle: "digital", nom: "Digital / social", pilier: "E", brief: "campagne",
+      quoi: "Ce qui vit en ligne : posts, bannières, site, activation digitale.",
+      sections: ["identite", "brief", "briefback", "bigidea", "pistes", "livrables", "livraison", "presentation"] },
+
+    { cle: "edition", nom: "Édition / contenu", pilier: "V", brief: "production",
+      quoi: "Ce qui se lit : calendrier, brochure, plaquette, catalogue, rapport.",
+      sections: ["identite", "brief", "livrables", "livraison"] },
+
+    { cle: "demande", nom: "Demande simple", pilier: "V", brief: "production",
+      quoi: "Deux heures de travail. Deux champs et un livrable.",
+      sections: ["identite", "livrables", "livraison"] },
+
+    { cle: "pitch", nom: "Pitch", pilier: "D", brief: "pitch",
+      quoi: "Sans brief client formel, avec sa date dure et ses jours spéculatifs.",
+      sections: ["identite", "briefback", "strategie", "atelier", "bigidea", "pistes", "planche", "livrables", "livraison", "presentation"] },
+  ],
+
+  /* ————— Les occasions, et ce qu'elles appellent —————
+   *
+   * Une marque est toujours en campagne : un régime continu, et des temps
+   * forts. Les temps forts ne sont pas des constantes du métier — ce sont le
+   * calendrier de CETTE maison et de ses marchés. Noël ne veut pas dire la
+   * même chose pour Bonnet Rouge au Cameroun et pour Peak au Somaliland ; une
+   * marque peut donc surcharger cette liste dans son propre pilier E.
+   *
+   * `appelle` est la composition usuelle : ce qu'un lancement suppose comme
+   * projets. Elle se PROPOSE à cocher, elle ne se crée jamais seule — et ce
+   * qu'on décoche laisse sa trace datée, parce qu'une case vide sans motif se
+   * rediscute deux fois.
+   * ————— */
+  occasions: [
+    { cle: "lancement", nom: "Lancement de produit ou de marque",
+      appelle: ["branding", "campagne", "film", "plv", "digital", "packaging"] },
+    { cle: "noel", nom: "Noël & fin d'année",
+      appelle: ["campagne", "plv", "digital"] },
+    { cle: "ramadan", nom: "Ramadan & Aïd",
+      appelle: ["campagne", "plv", "digital"] },
+    { cle: "paques", nom: "Pâques & Carême",
+      appelle: ["campagne", "plv", "digital"] },
+    { cle: "rentree", nom: "Back to School",
+      appelle: ["campagne", "plv", "digital", "film"] },
+    { cle: "fete", nom: "Fête des mères, des pères, journée mondiale",
+      appelle: ["campagne", "digital"] },
+    { cle: "promo", nom: "Promotion & déstockage",
+      appelle: ["packaging", "plv", "digital"] },
+    { cle: "jeu", nom: "Jeu-concours & activation",
+      appelle: ["campagne", "plv", "digital"] },
+    { cle: "evenement", nom: "Séminaire, salon, événement",
+      appelle: ["plv", "edition", "digital"] },
+    { cle: "institutionnel", nom: "Institutionnel & prise de parole",
+      appelle: ["conseil", "edition", "digital"] },
+    { cle: "continu", nom: "Hors temps fort — le cycle qui tourne",
+      appelle: ["cycle"] },
+  ],
+
+  /* ————— Les quatre piliers de la marque —————
+   *
+   * Le cadre ADVE du titulaire, réduit à ce qu'une agence d'exécution en
+   * emploie. LA BARRE n'en reprend pas les 155 variables : elle en prend la
+   * logique, et garde les codes pour que le branchement futur sur La Fusée
+   * soit une identité et non une traduction.
+   * ————— */
+  piliers: [
+    { cle: "A", nom: "Authenticité", figure: "Le Gospel",
+      quoi: "Ce que la marque EST. Vision, mission, valeurs, mythe d'origine, archétype.",
+      sert: "juger si une piste est la marque, et pas seulement si elle est belle" },
+    { cle: "D", nom: "Distinction", figure: "Le Mythe",
+      quoi: "Ce qui la sépare des autres. Positionnement, promesse, ton, symboles, dialecte.",
+      sert: "refuser une exécution qui pourrait porter le logo d'un concurrent" },
+    { cle: "V", nom: "Valeur", figure: "Le Miracle",
+      quoi: "Ce qu'elle délivre. Catalogue, échelle de produits, bénéfices, sacrifice demandé.",
+      sert: "vérifier qu'on promet ce que le produit tient" },
+    { cle: "E", nom: "Engagement", figure: "L'Église",
+      quoi: "Ce qui attache. Rituels, points de contact, calendrier sacré, tabous.",
+      sert: "savoir quand parler, et ce qu'on ne dit jamais" },
   ],
 
   /* ————— Les engagements récurrents, tirés des fiches de poste. ————— */

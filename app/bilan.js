@@ -82,9 +82,16 @@ window.BILAN = (function () {
       if (!VALIDATION.valide(p.sections.brief || {})) return false;
       return !f || dedans(f, ((p.sections.brief || {}).validation || {}).quand);
     });
-    var ouverts = f
+    /* « ouverts » portait mal son nom : sans fenêtre, il rendait TOUS les
+     * dossiers. L'ingestion du corpus l'a mis au jour — « 148 briefs sans go
+     * final » en tête de Mon standard, dont cent trente-deux campagnes
+     * terminées avant que ce produit existe.
+     *
+     * Un dossier clos n'attend aucun contreseing : le mesurer sur cette ligne,
+     * c'est se noter sur un manquement qu'on ne peut plus commettre. */
+    var ouverts = (f
       ? projets.filter(function (p) { return dedans(f, p.cree_le); })
-      : projets;
+      : projets).filter(function (p) { return !(window.CLOTURE && CLOTURE.est(p)); });
 
     /* Les big ideas et leur alignement au brief accepté. */
     var idees = 0, retenues = 0, alignees = 0;

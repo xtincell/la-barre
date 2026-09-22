@@ -25,7 +25,7 @@ window.VUE_BRIEF = (function () {
      * Le brief de campagne reste ici, en tête — c'est celui qu'on reçoit — et
      * les autres se déclarent sous lui, chacun avec ce qu'il fonde et ce qu'il
      * pilote. Deux gabarits sur trois n'en avaient aucun. */
-    var g = p.gabarit || "campagne";
+    var g = (NATURE.de(p) || {}).cle || "campagne";
     var types = BRIEFS.pourGabarit(g);
     var campagne = types.filter(function (t) { return t.cle === "campagne"; })[0];
     var autres = types.filter(function (t) { return t.cle !== "campagne"; });
@@ -59,13 +59,14 @@ window.VUE_BRIEF = (function () {
       []);
   }
 
-  /* Le premier brief d'un gabarit qui n'en avait aucun. */
+  /* Le premier brief d'une nature qui n'en avait aucun. */
   function premierBrief(p, g, types, rafraichir) {
+    var n = NATURE.de(p) || { nom: g, quoi: "" };
     return el("div.bf-vide", {},
-      el("p", {}, "Ce dossier est un " + (MAISON.gabarits.filter(function (x) {
-        return x.cle === g; })[0] || { nom: g }).nom.toLowerCase()
-        + " : il n'a pas de brief de campagne, et c'est normal. "
-        + "Ce sont les " + types.length + " types ci-dessous qui le fondent."));
+      el("p", {}, "Ce dossier est un projet de nature « " + n.nom.toLowerCase() + " »"
+        + (n.quoi ? " — " + n.quoi.charAt(0).toLowerCase() + n.quoi.slice(1) : "")
+        + " Il n'a pas de brief de campagne, et c'est normal : "
+        + "ce sont les " + types.length + " types ci-dessous qui le fondent."));
   }
 
   /* ————————————————————— Les autres briefs ————————————————————— */

@@ -15,26 +15,81 @@
  */
 
 window.VAULT = (function () {
-  /* Les champs pluriannuels d'une marque. Ce sont ceux du socle — mais ils
-   * n'appartiennent pas au projet qui les a écrits en premier. */
+  /* Les champs pluriannuels d'une marque, rangés par pilier.
+   *
+   * Le socle en portait dix, et les dix étaient du D avec un peu de V et de E.
+   * Zéro Authenticité : ni vision, ni mission, ni valeurs, ni mythe d'origine,
+   * ni archétype. Or c'est exactement ce qui permet de dire qu'une piste EST
+   * la marque — sans eux on juge sur le positionnement et le ton, c'est-à-dire
+   * sur la surface du Mythe, et « c'est pas la marque » reste une impression.
+   *
+   * Les clés `code` sont celles d'ADVE. LA BARRE n'en reprend pas les cent
+   * cinquante-cinq variables : elle prend ce qu'une agence d'exécution
+   * emploie, et garde les codes pour que le branchement futur sur La Fusée
+   * soit une identité plutôt qu'une traduction. Les clés du produit, elles,
+   * ne bougent pas : `positionnement` reste `positionnement`, et aucun dépôt
+   * n'a à être réécrit.
+   * ————— */
   var CHAMPS = [
-    { cle: "positionnement",  nom: "Positionnement",            type: "long" },
-    { cle: "promesse",        nom: "Promesse",                  type: "texte" },
-    { cle: "idee_directrice", nom: "Idée directrice",           type: "texte",
+    /* ————— A · Authenticité — Le Gospel : ce que la marque EST ————— */
+    { cle: "vision", pilier: "A", code: "a.prophecy", nom: "Vision", type: "long",
+      aide: "Le monde que la marque veut créer. Pas ce qu'elle vend — ce qu'elle veut voir advenir." },
+    { cle: "mission", pilier: "A", code: "a.missionStatement", nom: "Mission", type: "texte",
+      aide: "Comment elle réalise sa vision. Vingt-cinq mots au plus." },
+    { cle: "valeurs", pilier: "A", code: "a.valeurs", nom: "Valeurs", type: "puces",
+      aide: "Trois au maximum. Au-delà, ce ne sont plus des valeurs : c'est une liste." },
+    { cle: "origine", pilier: "A", code: "a.originMyth", nom: "Mythe d'origine", type: "long",
+      aide: "L'histoire fondatrice qui justifie qu'elle existe." },
+    { cle: "archetype", pilier: "A", code: "a.archetype", nom: "Archétype", type: "texte",
+      aide: "Le patron narratif : le Sage, le Héros, le Créateur, le Rebelle…" },
+    { cle: "preuves_origine", pilier: "A", code: "a.preuvesAuthenticite",
+      nom: "Preuves de légitimité", type: "puces",
+      aide: "Ancienneté, certifications, reconnaissance. Ce qui rend l'origine opposable." },
+
+    /* ————— D · Distinction — Le Mythe : ce qui la sépare ————— */
+    { cle: "positionnement", pilier: "D", code: "d.positionnement", nom: "Positionnement", type: "long" },
+    { cle: "promesse", pilier: "D", code: "d.promesseMaitre", nom: "Promesse", type: "texte" },
+    { cle: "idee_directrice", pilier: "D", code: "d.ideeDirectrice", nom: "Idée directrice", type: "texte",
       aide: "Pluriannuelle. Les campagnes en sont des déclinaisons." },
-    { cle: "benefices",       nom: "Bénéfices, dans l'ordre",   type: "puces" },
-    { cle: "preuves",         nom: "Preuves tangibles",         type: "puces" },
-    { cle: "ton",             nom: "Personnalité et ton",       type: "long" },
-    { cle: "jamais",          nom: "Ce qu'on ne dit jamais",    type: "puces",
+    { cle: "ton", pilier: "D", code: "d.tonDeVoix", nom: "Personnalité et ton", type: "long" },
+    { cle: "symboles", pilier: "D", code: "d.symboles", nom: "Symboles", type: "puces" },
+    { cle: "dialecte", pilier: "D", code: "d.assetsLinguistiques", nom: "Vocabulaire propriétaire", type: "puces",
+      aide: "Les mots qui n'appartiennent qu'à elle : signature, mantras, lexique." },
+    { cle: "concurrents", pilier: "D", code: "d.paysageConcurrentiel", nom: "Contre qui elle se situe", type: "puces" },
+
+    /* ————— V · Valeur — Le Miracle : ce qu'elle délivre ————— */
+    { cle: "benefices", pilier: "V", code: "v.valeurClientTangible", nom: "Bénéfices, dans l'ordre", type: "puces" },
+    { cle: "preuves", pilier: "V", code: "v.roiProofs", nom: "Preuves tangibles", type: "puces" },
+    { cle: "sacrifice", pilier: "V", code: "v.sacrificeRequis", nom: "Ce qu'elle demande au client", type: "long",
+      aide: "Prix, temps, effort — et pourquoi ça vaut le coup." },
+
+    /* ————— E · Engagement — L'Église : ce qui attache ————— */
+    { cle: "jamais", pilier: "E", code: "e.taboos", nom: "Ce qu'on ne dit jamais", type: "puces",
       aide: "Le contrôle de vocabulaire s'y adosse." },
-    { cle: "symboles",        nom: "Symboles",                  type: "puces" },
-    { cle: "ne_fera_pas",     nom: "Ce que la marque ne fera pas", type: "puces" },
+    { cle: "ne_fera_pas", pilier: "E", code: "e.commandments", nom: "Ce que la marque ne fera pas", type: "puces" },
+    { cle: "rituels", pilier: "E", code: "e.rituels", nom: "Rituels", type: "puces",
+      aide: "Ce qui revient et crée l'habitude : un rendez-vous, un geste, une formule." },
+    { cle: "occasions", pilier: "E", code: "e.sacredCalendar", nom: "Le calendrier de la marque", type: "puces",
+      aide: "Ses temps forts à elle. Noël ne veut pas dire la même chose partout." },
     /* Même mécanique que « ce qu'on ne dit jamais », autre usage : une faute
      * déjà partie en production se retrouve sur toute la descendance. On la
-     * note une fois, l'outil la traque ensuite. */
-    { cle: "fautes",          nom: "Fautes déjà commises", type: "puces",
+     * note une fois, l'outil la traque ensuite. C'est aussi, littéralement,
+     * un tabou appris — la marque antifragile est celle qui note ses fautes. */
+    { cle: "fautes", pilier: "E", code: "e.taboosAppris", nom: "Fautes déjà commises", type: "puces",
       aide: "Une par ligne, au format « écrit → correct ». Ex. Nourissons → Nourrissons" },
   ];
+
+  /* Les quatre piliers viennent de la maison : c'est de la doctrine d'agence,
+   * pas une loi du métier. Le repli garde le produit debout si la maison ne
+   * les déclare pas. */
+  var PILIERS = (window.MAISON && MAISON.piliers) || [
+    { cle: "A", nom: "Authenticité" }, { cle: "D", nom: "Distinction" },
+    { cle: "V", nom: "Valeur" }, { cle: "E", nom: "Engagement" },
+  ];
+
+  function champsDuPilier(cle) {
+    return CHAMPS.filter(function (c) { return c.pilier === cle; });
+  }
 
   function marque(id) { return DEPOT.trouve("marques", id); }
 
@@ -177,12 +232,45 @@ window.VAULT = (function () {
     return out;
   }
 
-  function ecrireNiveau(type, id, cle, val) {
+  /* Empiler la révision AVANT d'écrire.
+   *
+   * `v[cle] = val` effaçait la valeur précédente. Sur un champ de campagne
+   * c'est sans conséquence ; sur une plateforme de marque, qui vaut plusieurs
+   * années et se révise, c'est la mémoire de la marque qui disparaît. On ne
+   * pouvait pas dire quand le positionnement avait changé, ni pourquoi.
+   *
+   * La règle de la maison, appliquée là où elle manquait le plus : on archive,
+   * on ne supprime pas. Une révision sans changement n'en est pas une — on ne
+   * consigne que ce qui bouge. */
+  function ecrireNiveau(type, id, cle, val, motif) {
     var v = vaultDe(type, id);
     if (!v) return false;
+    var avant = v[cle];
+    if (JSON.stringify(avant === undefined ? null : avant) === JSON.stringify(val === undefined ? null : val)) {
+      return true;
+    }
     v[cle] = val;
-    DEPOT.tracer("vault", "marques", null, nomDe(type, id) + " · " + cle);
+    var estVide = avant === undefined || avant === null || avant === ""
+      || (Array.isArray(avant) && !avant.length);
+    if (!estVide) {
+      v.revisions = v.revisions || [];
+      v.revisions.push({
+        quand: new Date().toISOString(), qui: MAISON.titulaire,
+        champ: cle, avant: avant, apres: val,
+        motif: (motif || "").trim() || null,
+      });
+    }
+    DEPOT.tracer(estVide ? "socle écrit" : "socle révisé", "marques", id,
+      nomDe(type, id) + " · " + cle, type === "marque" ? [id] : null);
     return true;
+  }
+
+  /* Ce qu'un champ a été avant, du plus récent au plus ancien. */
+  function revisions(type, id, cle) {
+    var v = vaultDe(type, id);
+    if (!v || !v.revisions) return [];
+    return v.revisions.filter(function (r) { return !cle || r.champ === cle; })
+      .slice().reverse();
   }
 
   /* Ce qu'un niveau porte en propre, et ce qu'il tient de plus haut. */
@@ -699,15 +787,14 @@ window.VAULT = (function () {
     };
   }
 
-  function ecrire(marqueId, cle, val) {
-    var v = de(marqueId);
-    if (!v) return false;
-    v[cle] = val;
-    DEPOT.tracer("vault", "marques", null, (marque(marqueId) || {}).nom + " · " + cle);
-    return true;
+  /* L'écriture au niveau marque passe par la même porte : une seule façon
+   * d'écrire dans un socle, donc une seule façon de le réviser. */
+  function ecrire(marqueId, cle, val, motif) {
+    return ecrireNiveau("marque", marqueId, cle, val, motif);
   }
 
-  return { CHAMPS: CHAMPS, FICHE: FICHE, CATEGORIES: CATEGORIES,
+  return { CHAMPS: CHAMPS, PILIERS: PILIERS, champsDuPilier: champsDuPilier, FICHE: FICHE, CATEGORIES: CATEGORIES,
+    revisions: revisions,
     clientDe: clientDe, marchesDuClient: marchesDuClient, categoriesDuClient: categoriesDuClient,
     marchesPossibles: marchesPossibles, categoriesPossibles: categoriesPossibles,
     ajouterCategorie: ajouterCategorie,

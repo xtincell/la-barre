@@ -17,7 +17,7 @@ window.DEPOT = (function () {
    *   people              le relevé de Matanga People
    * Sans incrément, le cache du navigateur ne relit jamais le fichier : la
    * collection neuve serait sur le disque et invisible à l'écran. */
-  var VERSION_SCHEMA = 3;
+  var VERSION_SCHEMA = 5;
 
   var etat = vide();
   var ecouteurs = [];
@@ -46,6 +46,16 @@ window.DEPOT = (function () {
       /* Le relevé de Matanga People : ce qui existe là-bas, et dont on veut
        * savoir s'il existe ici. Il se relève, il ne se saisit pas. */
       people: [],
+      /* Le relevé du Radar Matanga : les briefs entrés au registre de l'agence.
+       * Même nature que People — relevé, jamais saisi — et même usage : dire
+       * pour chacun s'il y a ici de quoi suivre ce qu'il a produit. La date du
+       * relevé vit à côté, parce qu'un registre sans date ment sur sa
+       * fraîcheur. */
+      radar: [],
+      radar_releve_le: null,
+      /* L'étage entre la marque et le projet. Une marque est toujours en
+       * campagne : un cycle qui tourne, et des temps forts. */
+      campagnes: [],
       critiques: [],
       engagementsTenus: [],
       criteresAjoutes: {},
@@ -98,7 +108,18 @@ window.DEPOT = (function () {
 
   /* ————— Le journal — dans le lot 1, pas plus tard ————— */
 
-  function tracer(action, type, id, detail) {
+  /* Le journal est un log d'outil, sauf pour ce qui touche une marque — et là
+   * c'est un dossier de vie. Deux différences, et elles tiennent en trois
+   * lignes :
+   *
+   *   `marques` nomme les marques concernées. Sans lui, les écritures de socle
+   *   partaient avec un id nul et l'histoire d'une marque n'était pas
+   *   retrouvable — elle était tracée et illisible, ce qui est pire que rien.
+   *
+   *   Ce qui porte une marque ne se tronque pas. Le reste continue de tourner
+   *   à 1 500 entrées : un dossier médical qui efface ses vieilles pages n'est
+   *   pas un dossier médical. */
+  function tracer(action, type, id, detail, marques) {
     etat.journal.push({
       quand: new Date().toISOString(),
       qui: MAISON.titulaire,
@@ -106,8 +127,15 @@ window.DEPOT = (function () {
       type: type,
       id: id,
       detail: String(detail || "").slice(0, 120),
+      marques: marques && marques.length ? marques.slice() : undefined,
     });
-    if (etat.journal.length > 2000) etat.journal = etat.journal.slice(-1500);
+    if (etat.journal.length > 2000) {
+      var vivants = [], anciens = [];
+      etat.journal.forEach(function (e) {
+        (e.marques && e.marques.length ? vivants : anciens).push(e); });
+      etat.journal = vivants.concat(anciens.slice(-(1500 - Math.min(vivants.length, 1200))));
+      etat.journal.sort(function (a, b) { return (a.quand || "") < (b.quand || "") ? -1 : 1; });
+    }
   }
 
   function journal(filtre) {
@@ -469,6 +497,75 @@ window.DEPOT = (function () {
   /* La migration monte un dépôt d'une version de schéma à la suivante, sur
    * place et sans rien perdre. Elle est idempotente : la relancer sur un dépôt
    * déjà à jour ne fait rien. */
+  /* Le calendrier de la maison, lu sur le nom d'un projet. On ne cherche pas
+   * à comprendre : on reconnaît un mot. Ce qui n'est pas reconnu reste sans
+   * campagne, et le dit. */
+  function occasionDuNom(nom) {
+    var t = O.normalise(nom || "");
+    var table = [
+      ["noel", /\bnoel\b|fin d annee|xmas|christmas/],
+      ["ramadan", /ramadan|aid|carem[e]? musulman/],
+      ["paques", /paques|careme/],
+      ["rentree", /back to school|rentree|\bbts\b|cahiers/],
+      ["fete", /fete des meres|fete des peres|journee mondiale|saint valentin/],
+      ["promo", /promo|destockage|black friday|liquidation|soldes/],
+      ["jeu", /jeu concours|jeu-concours|activation|monopoly|tombola|la roue/],
+      ["evenement", /seminaire|festival|salon|evenement|cowlab|jpo/],
+      ["lancement", /lancement|nouveau look|rebranding|creation de marque|mvp/],
+      ["institutionnel", /institutionnel|communique|prise de parole|rapport annuel|plan marketing/],
+    ];
+    for (var i = 0; i < table.length; i++) if (table[i][1].test(t)) return table[i][0];
+    return null;
+  }
+
+  function rattacherAuxCampagnes(d) {
+    var par = {};
+    (d.campagnes || []).forEach(function (c) { if (c.cleMigration) par[c.cleMigration] = c; });
+
+    (d.projets || []).forEach(function (p) {
+      if (p.campagneId) return;
+      var occ = occasionDuNom(p.nom);
+      if (!occ) return;
+
+      var ident = (p.sections || {}).identite || {};
+      var mq = (ident.marqueIds || [])[0] || ident.clientId || "sans-marque";
+      var an = String(((ident.echeance || p.cree_le || "") + "")).slice(0, 4) || "sans-annee";
+      var cle = mq + "|" + occ + "|" + an;
+
+      var c = par[cle];
+      if (!c) {
+        var nomOcc = occ;
+        (MAISON.occasions || []).forEach(function (o) { if (o.cle === occ) nomOcc = o.nom; });
+        var nomMq = mq;
+        (d.marques || []).forEach(function (m) { if (m.id === mq) nomMq = m.nom; });
+        c = {
+          id: "CMP-" + O.normalise(cle).replace(/[^a-z0-9]+/g, "-").slice(0, 40),
+          nom: nomMq + " — " + nomOcc + (an !== "sans-annee" ? " " + an : ""),
+          clientId: ident.clientId || null,
+          marqueIds: (ident.marqueIds || []).slice(),
+          regime: occ === "continu" ? "always-on" : "ponctuelle",
+          occasion: occ,
+          fenetre: { debut: null, fin: ident.echeance || null },
+          marches: (ident.marches || []).slice(),
+          bilan: "", ecartes: {},
+          cree_le: new Date().toISOString(),
+          cleMigration: cle,
+          infere: { pourquoi: "Déduite du nom du projet, qui porte « " + occ
+            + " » au calendrier de la maison. Les projets de la même marque et de "
+            + "la même année s'y rangent ensemble.", quand: new Date().toISOString() },
+        };
+        par[cle] = c;
+        d.campagnes.push(c);
+      } else {
+        (ident.marqueIds || []).forEach(function (m) {
+          if (c.marqueIds.indexOf(m) === -1) c.marqueIds.push(m); });
+        (ident.marches || []).forEach(function (m) {
+          if (c.marches.indexOf(m) === -1) c.marches.push(m); });
+      }
+      p.campagneId = c.id;
+    });
+  }
+
   function migrer(d) {
     (d.projets || []).forEach(function (p) {
       /* 1 → le niveau d'un livrable se déduisait de sa forme. */
@@ -531,6 +628,63 @@ window.DEPOT = (function () {
         if (!pi.prix) pi.prix = { privilegie: "", sacrifie: pi.sacrifice || "" };
       });
     });
+    /* 4 → la clôture existe.
+     *
+     * Un dossier clos porte sa date de fin, son bilan et d'où vient la preuve
+     * qu'il est fini. Tant qu'il ne la porte pas, il est ouvert — et la
+     * migration n'en ferme AUCUN.
+     *
+     * C'est délibéré et ça se paie : les huit dossiers d'origine restent
+     * ouverts après migration, y compris ceux dont la fenêtre est échue. Une
+     * fenêtre passée n'est pas une preuve de fin ; fermer sur cette base
+     * écrirait une date de clôture que personne n'a décidée, et le produit
+     * porterait un mensonge daté. La clôture se relève ou se pose à la main. */
+
+    /* 5 → l'arbre prend son étage manquant, et perd deux concepts.
+     *
+     * Trois choses, et la troisième est la seule qui infère :
+     *
+     *   Le gabarit devient la nature. Les quatre anciennes valeurs sont
+     *   toutes des natures valides — campagne, cycle, demande, pitch — donc
+     *   la conversion est une copie. L'ancienne clé reste au dépôt : on
+     *   archive, on ne supprime pas.
+     *
+     *   Les volets fusionnent dans le périmètre. Un volet n'était pas un
+     *   niveau, c'était la promesse de ce qu'on produirait : l'union de ses
+     *   supports et de ses marchés dit la même chose sans un étage de plus.
+     *   Les volets restent au dépôt, et les livrables gardent leur voletId —
+     *   la matrice sait encore les grouper.
+     *
+     *   La campagne se déduit du nom, et seulement quand un mot du calendrier
+     *   de la maison s'y trouve. « Bonnet Rouge — Ramadan » et « Peak —
+     *   Ramadan 2026 » de la même marque et de la même année se rangent sous
+     *   la même campagne. Un projet dont le nom ne dit rien reste sans
+     *   campagne — ce n'est pas un orphelin, c'est un projet dont personne
+     *   n'a encore dit à quel moment de la vie de la marque il appartient.
+     *   Aucune campagne n'est fabriquée pour faire joli. */
+
+    var naturesConnues = {};
+    (MAISON.natures || []).forEach(function (n) { naturesConnues[n.cle] = 1; });
+
+    (d.projets || []).forEach(function (p) {
+      /* Une valeur que la table ne connaît pas ne se garde pas : deux dossiers
+       * portaient « piece », une option fantôme d'un sélecteur. Elle retombe
+       * sur l'ancien gabarit, qui lui était valide. */
+      if (!p.nature || !naturesConnues[p.nature]) p.nature = p.gabarit || "campagne";
+
+      if (!p.perimetre) {
+        var sup = {}, mar = {};
+        (p.volets || []).forEach(function (v) {
+          (v.supports || []).forEach(function (x) { sup[x] = 1; });
+          (v.marches || []).forEach(function (x) { mar[x] = 1; });
+        });
+        p.perimetre = { supports: Object.keys(sup), marches: Object.keys(mar) };
+      }
+    });
+
+    if (!d.campagnes) d.campagnes = [];
+    if (d.schema < 5) rattacherAuxCampagnes(d);
+
     if (!d.people) d.people = [];
     d.schema = VERSION_SCHEMA;
   }

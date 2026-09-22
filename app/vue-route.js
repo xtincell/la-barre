@@ -216,7 +216,7 @@ window.VUE_ROUTE = (function () {
 
   function blocDecl(p, pi, decl, apres) {
     var mes = kvs(p, pi);
-    var cycle = window.VUE_CYCLE && VUE_CYCLE.nature(p) === "cycle";
+    var cycle = window.VUE_CYCLE && VUE_CYCLE.regime(p) === "cycle";
     var groupes;
 
     if (cycle) {
