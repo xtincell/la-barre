@@ -34,7 +34,19 @@ window.FILE = (function () {
 
   function tout() {
     var out = [];
-    var projets = DEPOT.liste("projets");
+    /* Un dossier clos ne demande aucune décision.
+     *
+     * La file est le rituel du lundi, et son budget est de quatre-vingt-dix
+     * minutes. L'ingestion du corpus l'a fait passer à deux cent quatre-vingt-
+     * dix-neuf entrées — vingt-sept mille pixels — parce que cent trente-deux
+     * campagnes terminées y réclamaient un arbitrage de piste et un verdict.
+     *
+     * Même ligne que pour les blocages, et pour la même raison : ce qu'on ne
+     * peut plus réparer n'appelle pas de geste. Ce qui peut encore mordre,
+     * lui, reste — et il passe par les blocages, qui sont son lieu. */
+    var projets = DEPOT.liste("projets").filter(function (p) {
+      return !(window.CLOTURE && CLOTURE.est(p));
+    });
 
     /* 1 · Ce qui attend mon verdict. Rien ne coûte plus cher que ça. */
     var pieces = VUE_REVUE.pieces();

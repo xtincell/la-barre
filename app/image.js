@@ -394,13 +394,9 @@ window.IMAGE = (function () {
   var SEUIL = CAL.seuil === undefined ? 0.45 : CAL.seuil;  /* en dessous, on ne propose rien */
   var MARGE = CAL.marge === undefined ? 0.12 : CAL.marge;  /* deux candidats plus proches : on hésite */
 
-  function mots(x) {
-    return String(x || "").toLowerCase()
-      .replace(/\.[a-z0-9]{2,5}$/, "")
-      .replace(/[^a-z0-9àâäéèêëïîôöùûüçñ]+/g, " ")
-      .split(" ")
-      .filter(function (m) { return m.length > 1; });
-  }
+  /* Une seule tokenisation dans le produit, celle d'apparier.js. Deux
+   * découpages de mots qui divergent d'un caractère font deux scores. */
+  function mots(x) { return APPARIER.mots(x); }
 
   /* Ce sous quoi un livrable se reconnaît : le nom que le tableau annonce
    * d'abord, le nom du livrable ensuite. Les deux comptent — le fichier peut
@@ -414,79 +410,21 @@ window.IMAGE = (function () {
     });
   }
 
+  /* Le rapprochement lui-même vit dans apparier.js : c'est du rattachement de
+   * noms, pas du traitement d'image, et un second exemplaire divergerait du
+   * premier. Ici il reste ce qui est propre aux fichiers — sous quels mots un
+   * livrable se reconnaît, et la forme que le reste du module attend. */
   function apparier(livrables, fichiers) {
-    var cand = (livrables || []).filter(function (l) { return !l.annule; })
-      .map(function (l) { return { l: l, mots: motsDe(l) }; });
-    if (!cand.length) {
-      return (fichiers || []).map(function (f) {
-        return { f: f, l: null, score: 0, etat: "aucun", autres: [] };
+    var vivants = (livrables || []).filter(function (l) { return !l.annule; });
+    var cand = vivants.map(function (l) { return { l: l, mots: motsDe(l) }; });
+    var suj = (fichiers || []).map(function (f) { return { f: f, mots: APPARIER.mots(f.name) }; });
+
+    return APPARIER.rapprocher(cand, suj, { seuil: SEUIL, marge: MARGE })
+      .map(function (r) {
+        return { f: r.sujet.f, l: r.candidat ? r.candidat.l : null,
+          score: r.score, etat: r.etat,
+          autres: r.autres.map(function (a) { return { l: a.candidat.l, s: a.s }; }) };
       });
-    }
-
-    /* La fréquence de chaque mot dans le lot des candidats. */
-    var df = {};
-    cand.forEach(function (c) {
-      var vus = {};
-      c.mots.forEach(function (m) { if (!vus[m]) { vus[m] = 1; df[m] = (df[m] || 0) + 1; } });
-    });
-    var N = cand.length;
-    function poids(m) { return Math.log(N / (1 + (df[m] || 0))) + 1; }
-
-    cand.forEach(function (c) {
-      c.total = c.mots.reduce(function (t, m) { return t + poids(m); }, 0) || 1;
-    });
-
-    /* Le score se mesure dans les DEUX sens, et c'est ce qui l'a sauvé.
-     *
-     * Mesuré dans un seul — « quelle part du candidat le fichier contient-il »
-     * — un candidat court devient un joker : trois livrables nommés « DELYS »
-     * sans autre mot obtenaient 100 % sur n'importe quel fichier Delys, et
-     * passaient devant le bon. Un mot contenu ne suffit donc pas : il faut
-     * aussi que le fichier soit couvert par le candidat.
-     *
-     * On prend la moyenne harmonique des deux — sévère par construction, elle
-     * ne pardonne pas qu'une des deux moitiés soit faible. Les mots du fichier
-     * qu'aucun candidat ne porte (« v3 », « exe », « final ») sont du bruit de
-     * nommage : ils ne comptent pas contre lui. */
-    var vocabulaire = {};
-    cand.forEach(function (c) { c.mots.forEach(function (m) { vocabulaire[m] = 1; }); });
-
-    var resultats = (fichiers || []).map(function (f) {
-      var mf = mots(f.name);
-      var connus = mf.filter(function (m) { return vocabulaire[m]; });
-      var totalF = connus.reduce(function (t, m) { return t + poids(m); }, 0) || 1;
-
-      var scores = cand.map(function (c) {
-        var gagne = 0;
-        c.mots.forEach(function (m) { if (mf.indexOf(m) !== -1) gagne += poids(m); });
-        var rappel = gagne / c.total;        /* le candidat est-il couvert */
-        var precision = gagne / totalF;      /* le fichier est-il expliqué */
-        var s = (rappel + precision) ? (2 * rappel * precision) / (rappel + precision) : 0;
-        return { c: c, s: s };
-      }).sort(function (a, b) { return b.s - a.s; });
-
-      var premier = scores[0];
-      var second = scores[1] || { s: 0 };
-      var etat = premier.s < SEUIL ? "aucun"
-        : (premier.s - second.s) < MARGE ? "hesite" : "sur";
-
-      return { f: f, l: etat === "aucun" ? null : premier.c.l,
-        score: premier.s, etat: etat,
-        autres: scores.filter(function (x) { return x.s >= SEUIL * 0.6; })
-          .slice(0, 5).map(function (x) { return { l: x.c.l, s: x.s }; }) };
-    });
-
-    /* Un livrable ne reçoit qu'un fichier par lot. Le mieux placé le garde ;
-     * les suivants repassent en hésitation plutôt que d'écraser en silence. */
-    var pris = {};
-    resultats.slice().sort(function (a, b) { return b.score - a.score; })
-      .forEach(function (r) {
-        if (!r.l) return;
-        if (pris[r.l.id]) { r.etat = "hesite"; return; }
-        pris[r.l.id] = 1;
-      });
-
-    return resultats;
   }
 
   /* Poser un lot déjà tranché. `couples` = [{f, l}]. Les poses sont

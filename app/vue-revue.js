@@ -24,7 +24,12 @@ window.VUE_REVUE = (function () {
 
   function pieces() {
     var liste = [];
-    DEPOT.liste("projets").forEach(function (p) {
+    /* La revue juge ce qui va sortir. Un dossier clos ne sort plus : ses
+     * pièces sont livrées, et les faire remonter au verdict, c'est demander
+     * d'approuver ce qui est déjà chez le client. */
+    DEPOT.liste("projets").filter(function (p) {
+      return !(window.CLOTURE && CLOTURE.est(p));
+    }).forEach(function (p) {
       (p.sections.pistes || []).forEach(function (pi) {
         if (pi.statut !== "proposee") return;
         liste.push({

@@ -79,7 +79,10 @@ window.VUE_MATRICE = (function () {
      *
      * La nature se déduit des livrables ; le mode reste choisissable, parce
      * qu'un dossier mixte existe. */
-    var nat = window.VUE_CYCLE ? VUE_CYCLE.nature(p) : "campagne";
+    /* Le régime d'exécution — calendaire ou par maître — se déduit des livrables.
+     * À ne pas confondre avec la nature du projet, qui dit sa ligne de service :
+     * le mot servait à trois choses, il n'en sert plus qu'à une. */
+    var nat = window.VUE_CYCLE ? VUE_CYCLE.regime(p) : "campagne";
     var modes = nat === "cycle" ? ["calendrier", "mur", "grille"] : ["mur", "grille"];
     var MODE = modeDe(p, modes);
 
@@ -97,7 +100,11 @@ window.VUE_MATRICE = (function () {
         : MODE === "mur" ? mur(p, rafraichir)
         : volets.length
           ? volets.map(function (v) { return blocVolet(p, v, rafraichir); })
-          : el("p.rien", {}, "Aucun volet. Un volet croise des supports et des marchés — c'est lui qui engendre les livrables."),
+          /* Sans volet, le dossier n'était pas vide pour autant : son périmètre
+           * dit déjà ce qu'on s'est engagé à produire. Afficher « Aucun volet »
+           * décrivait le dossier par ce qui lui manquait, alors que ce qui
+           * manque est un découpage, pas une promesse. */
+          : blocPerimetre(p, rafraichir),
 
       el("div.form-actions", { style: { "margin-top": "1rem" } },
         el("button.b.or", { type: "button", onclick: function () { editerVolet(p, null, rafraichir); } }, "Ajouter un volet"),
@@ -608,13 +615,46 @@ window.VUE_MATRICE = (function () {
     );
   }
 
+  /* Le périmètre du projet, rendu comme un volet qui n'aurait pas de nom : la
+   * promesse déclarée, croisée, et ce qui la remplit déjà. Le jour où on nomme
+   * une famille de production, elle devient un volet — et le périmètre reste
+   * ce qu'il est, la somme de ce qui est promis. */
+  function blocPerimetre(p, rafraichir) {
+    var per = p.perimetre || { supports: [], marches: [] };
+    var orphelins = (p.livrables || []).filter(function (l) {
+      return !l.annule && !l.voletId; });
+
+    if (!(per.supports || []).length || !(per.marches || []).length) {
+      return el("p.rien", {}, orphelins.length
+        ? orphelins.length + (orphelins.length > 1
+            ? " livrables ne sont rattachés" : " livrable n'est rattaché")
+          + " à aucune famille, et le projet n'a pas de périmètre déclaré : "
+          + "rien ne dit ce qui est promis, donc rien ne peut manquer."
+        : "Aucun périmètre déclaré. Un périmètre croise des supports et des marchés — "
+          + "c'est lui qui dit ce qui est promis, et donc ce qui manque.");
+    }
+
+    return el("div.volet", {},
+      el("div.volet-tete", {},
+        el("b", {}, "Le périmètre du projet"),
+        el("span.age", {}, (per.supports || []).length + " supports × "
+          + (per.marches || []).length + " marchés"),
+        el("button.b.nu", { type: "button",
+          onclick: function () { editerVolet(p, null, rafraichir); } }, "nommer une famille")),
+      el("p.meta", { style: { padding: "0 .8rem .4rem" } },
+        "Ce que le projet s'est engagé à produire. Nommer une famille — « Key visuals », "
+        + "« Pâtes longues » — la sort d'ici et lui donne sa propre grille."),
+      matrice(p, { id: null, supports: per.supports, marches: per.marches }, rafraichir)
+    );
+  }
+
   function matrice(p, v, rafraichir) {
     /* Les volets sont l'union du croisement déclaré et de ce que les livrables
      * existants utilisent : aucun livrable ne disparaît de la grille. */
     var idsS = (v.supports || []).slice();
     var idsM = (v.marches || []).slice();
     (p.livrables || []).forEach(function (l) {
-      if (l.voletId !== v.id) return;
+      if ((l.voletId || null) !== (v.id || null)) return;
       if (l.support && idsS.indexOf(l.support) === -1) idsS.push(l.support);
       if (l.marche && idsM.indexOf(l.marche) === -1) idsM.push(l.marche);
     });
@@ -646,9 +686,13 @@ window.VUE_MATRICE = (function () {
 
   /* Une case peut contenir plusieurs livrables : le master et ses déclinaisons de
    * même support et même marché. Aucune ne doit disparaître de la grille. */
+  /* `voletId` null désigne la grille du périmètre : elle ramasse les livrables
+   * qu'aucune famille ne réclame. Comparer `undefined` à `null` les manquait
+   * tous — un livrable sans volet n'a pas la clé plutôt que de l'avoir vide. */
   function trouver(p, voletId, supportId, marcheId) {
     return (p.livrables || []).filter(function (l) {
-      return l.voletId === voletId && l.support === supportId && l.marche === marcheId;
+      return (l.voletId || null) === (voletId || null)
+        && l.support === supportId && l.marche === marcheId;
     });
   }
 

@@ -15,13 +15,29 @@ window.VUE_PROJETS = (function () {
 
   function gabarit(p) {
     var g = null;
-    MAISON.gabarits.forEach(function (x) { if (x.cle === p.gabarit) g = x; });
-    return g || MAISON.gabarits[0];
+    return NATURE.de(p);
   }
 
   /* ————————————————————— Mes engagements ————————————————————— */
 
+  /* Deux lectures de la même question — « où en est chaque chose ? ».
+   *
+   * Par défaut, ce qui ne tient pas : c'est le lundi, et ça ne change pas.
+   * Par marque, l'arbre : la marque, son rythme, ses campagnes, ses projets.
+   * C'est la seule façon de répondre à « qu'a-t-on fait à cette marque, et
+   * qu'est-ce qui tourne en ce moment » sans ouvrir douze dossiers.
+   *
+   * Une intention, deux lentilles — le produit fait déjà ça dans Décider et
+   * dans Constater. Aucune destination de plus. */
+  var LENTILLES = [
+    { cle: "defaut", nom: "CE QUI NE TIENT PAS", quoi: "classé par ce qui bloque, pas par date" },
+    { cle: "marque", nom: "PAR MARQUE", quoi: "la marque, son rythme, ses campagnes" },
+  ];
+  var LENTILLE = "defaut";
+
   function rendre(hote, projetId, section) {
+    if (projetId && /^MQ-/.test(projetId)) return marcheDeMarque(hote, projetId);
+    if (projetId && /^CMP-/.test(projetId)) return ecranCampagne(hote, projetId);
     if (projetId) return projet(hote, projetId, section);
 
     var projets = DEPOT.liste("projets");
@@ -49,6 +65,14 @@ window.VUE_PROJETS = (function () {
       return x.rang - y.rang || y.durs.length - x.durs.length || y.age - x.age;
     });
 
+    /* Les dossiers clos sortent de la liste vivante et se replient sous leur
+     * compte. Ce n'est pas cosmétique : à cent quarante campagnes ingérées,
+     * l'écran de travail devient un annuaire, et la question qu'il pose —
+     * « qu'est-ce qui ne tient pas aujourd'hui » — n'a plus de place où
+     * s'afficher. L'historique reste à un clic, et il est entier. */
+    var closes = lignes.filter(function (x) { return window.CLOTURE && CLOTURE.est(x.p); });
+    lignes = lignes.filter(function (x) { return !(window.CLOTURE && CLOTURE.est(x.p)); });
+
     var tiennent = lignes.filter(function (x) { return x.rang === 2; }).length;
     var enDefaut = lignes.length - tiennent;
 
@@ -58,9 +82,15 @@ window.VUE_PROJETS = (function () {
           el("h2.dl-t", {}, titre(tiennent, enDefaut, lignes)),
           el("p.dl-s", {}, "Classés par ce qui ne tient pas, pas par date. "
             + "Ce que j'ai promis, et ce que je peux tenir.")),
-        el("button.b.or", { type: "button", onclick: nouveau }, "+ Nouveau dossier")),
+        el("div", {},
+          el("div.dl-lent", {}, LENTILLES.map(function (l) {
+            return el("button.pld" + (LENTILLE === l.cle ? ".actif" : ""), { type: "button",
+              title: l.quoi,
+              onclick: function () { LENTILLE = l.cle; rendre(hote); } }, l.nom);
+          })),
+          el("button.b.or", { type: "button", onclick: nouveau }, "+ Nouveau dossier"))),
 
-      el("div.dl-corps", {},
+      LENTILLE === "marque" ? murDesMarques() : el("div.dl-corps", {},
         el("div.dl-liste", {}, lignes.map(function (x, i) {
           /* Le premier, s'il ne tient pas, s'ouvre : c'est celui sur lequel
            * il y a quelque chose à faire aujourd'hui. */
@@ -68,9 +98,559 @@ window.VUE_PROJETS = (function () {
         })),
         murDesBlocages(lignes)),
 
-      el("p.dl-pied", {}, "Les dossiers qui tiennent descendent et pâlissent. "
-        + "Seul ce qui ne tient pas remonte.")
+      LENTILLE === "marque" ? null : blocClos(closes),
+
+      el("p.dl-pied", {}, LENTILLE === "marque"
+        ? "Une marque est toujours en campagne : un cycle qui tourne, et des temps forts. "
+          + "Ce qui n'est rattaché à ni l'un ni l'autre se voit."
+        : "Les dossiers qui tiennent descendent et pâlissent. "
+          + "Seul ce qui ne tient pas remonte.")
     ));
+  }
+
+  /* Ce que le projet a produit, et comment on le sait.
+   *
+   * C'est la première des quatre boucles, et celle dont les trois autres
+   * dépendent : sans résultat mesuré, la dérive n'a rien à corriger, la
+   * jurisprudence rien à opposer et le benchmark rien à comparer. */
+  function panneauResultat(p, rafraichir) {
+    if (!window.BOUCLES) return null;
+    var e = BOUCLES.etatResultat(p);
+    var rs = BOUCLES.resultats(p);
+
+    return el("div.panneau-lat", {},
+      el("h3", {}, "LE RÉSULTAT",
+        el("span.droite", { style: { color: e.ton === "vert" ? "var(--vert)"
+          : e.ton === "attente" ? "var(--attente)" : "var(--clair-terne)" } }, e.nom)),
+      el("p.psa-q", {}, e.quoi),
+      rs.length
+        ? el("div", { style: { "margin-top": ".6rem" } }, rs.map(function (r) {
+            var n = window.EFFICACITE ? EFFICACITE.niveau(r.niveau) : null;
+            return el("div.res-l", {},
+              el("b", {}, r.quoi, r.valeur ? el("span.res-v", {}, r.valeur) : null),
+              el("span.res-s", {}, r.source
+                ? r.source + (n ? "  ·  " + n.nom.toLowerCase() : "")
+                : "sans source — il se retournera en réunion"));
+          }))
+        : null,
+      el("div", { style: { "margin-top": ".7rem" } },
+        el("button.bouton.creux", { type: "button",
+          onclick: function () { saisirResultat(p, rafraichir); } }, "Noter un résultat")));
+  }
+
+  function saisirResultat(p, rafraichir) {
+    var quoi = el("input", { type: "text", placeholder: "Portée, engagement, ventes, notoriété…" });
+    var valeur = el("input", { type: "text", placeholder: "+121 % · 206 030 · 3 points" });
+    var source = el("input", { type: "text", placeholder: "Rapport de régie, comptage terrain, Meta Insights…" });
+    var sel = el("select", {});
+    sel.appendChild(el("option", { value: "" }, "— niveau de preuve —"));
+    ((window.EFFICACITE && EFFICACITE.NIVEAUX) || []).forEach(function (n) {
+      sel.appendChild(el("option", { value: n.cle, title: n.quoi }, n.rang + " · " + n.nom));
+    });
+
+    PANNEAU.ouvrir("Noter un résultat", p.ref || p.nom, el("div", {},
+      UI.banniere("", "Un chiffre sans source se retourne en réunion. L'échelle de preuve "
+        + "dit ce qu'il vaut : données maison, catégorie voisine, marché comparable, "
+        + "déclaratif daté — dans cet ordre."),
+      el("div.form", {},
+        el("div.champ", {}, el("label", {}, "Ce qui a été mesuré"), quoi),
+        el("div.champ", {}, el("label", {}, "La valeur"), valeur),
+        el("div.champ", {}, el("label", {}, "D'où elle vient"),
+          el("div.indice", {}, "Sans source, le résultat ne compte pas."), source),
+        el("div.champ", {}, el("label", {}, "Niveau de preuve"), sel)),
+      el("div.form-actions", {},
+        el("button.bouton", { type: "button", onclick: function () {
+          if (!quoi.value.trim()) { AVIS.refus("Il faut dire ce qui a été mesuré."); return; }
+          BOUCLES.poser(p, { quoi: quoi.value, valeur: valeur.value,
+            source: source.value, niveau: sel.value || null });
+          PANNEAU.fermer();
+          AVIS.fait("Résultat noté. Il entre dans la vie de la marque.");
+          if (rafraichir) rafraichir();
+        } }, "Noter"),
+        el("button.bouton.creux", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
+    ), "var(--vert)");
+  }
+
+  /* Le dernier mètre : ce qui part chez le client, et avec quoi.
+   *
+   * Il vient après le coût parce qu'il vient après le verdict — on ne remet
+   * que ce qu'on a soi-même approuvé. */
+  function panneauRemise(p) {
+    if (!window.REMISE || !NATURE.aSection(p, "livraison")) return null;
+    var e = REMISE.etat(p);
+    if (e.cle === "rien") return null;
+
+    return el("div.panneau-lat", {},
+      el("h3", {}, "LA REMISE",
+        el("span.droite", { style: { color: e.ton === "alerte" ? "var(--bloquant-txt)"
+          : e.ton === "vert" ? "var(--vert)" : "var(--attente)" } }, e.nom)),
+      el("p.psa-q", {}, e.quoi),
+      el("div", { style: { "margin-top": ".7rem" } },
+        el("button.bouton.creux", { type: "button",
+          onclick: function () { REMISE.ouvrir(p); } }, "Voir le manifeste")));
+  }
+
+  /* Ce que le projet coûte, et ce que ça rend vérifiable.
+   *
+   * Le budget était un nombre dans l'identité — un chiffre qu'on croit, pas
+   * qu'on vérifie. Ici : les jours par poste, le montant, le bon de commande,
+   * et l'écart entre l'estimé et le réel. C'est l'indicateur de la fiche 07,
+   * et le seul chiffre que la clause de reprise puisse opposer. */
+  function panneauChiffrage(p, rafraichir) {
+    if (!window.CHIFFRAGE) return null;
+    var e = CHIFFRAGE.etat(p);
+    var b = (p.chiffrage || {}).bonDeCommande;
+    var bdc = b ? CHIFFRAGE.BDC[b] : null;
+
+    return el("div.panneau-lat", {},
+      el("h3", {}, "LE COÛT",
+        el("span.droite", { style: { color: e.ton === "alerte" ? "var(--bloquant-txt)"
+          : e.ton === "vert" ? "var(--vert)" : "var(--attente)" } }, e.nom)),
+      el("p.psa-q", {}, e.quoi),
+      bdc ? el("p.psa-q", { style: { "margin-top": ".4rem" } },
+        "Bon de commande : " + bdc.nom + ".") : null,
+      el("div", { style: { "margin-top": ".7rem" } }, CHIFFRAGE.bouton(p, rafraichir)));
+  }
+
+  /* Ce que le corpus dit de ce dossier, et qui ne vient pas de sa saisie.
+   *
+   * L'ingestion a fait entrer cent quarante campagnes avec leur attribution :
+   * les rôles tenus, la cellule de preuve mot pour mot, les briefs du Radar
+   * rattachés. Tout cela vivait dans la donnée et ne s'affichait nulle part —
+   * donc, du point de vue de celui qui ouvre le dossier, ça n'existait pas.
+   *
+   * On le montre tel quel, sous son étiquette : RELEVÉ. Ce ne sont pas des
+   * champs de saisie, ce sont les mots d'un document, et la distinction est
+   * tout ce qui sépare une archive d'une déclaration. */
+  function panneauReleve(p) {
+    var r = p.releve;
+    if (!r) return null;
+    var a = r.annonce;
+
+    return el("div.panneau-lat", {},
+      el("h3", {}, "RELEVÉ",
+        el("span.droite", { style: { color: "var(--clair-terne)" } },
+          r.niveau === "fort" ? "preuve solide"
+            : r.niveau === "moyen" ? "preuve partielle" : "trace ténue")),
+
+      el("p.psa-q", {}, "Relevé de « " + r.source + " »"
+        + (r.section ? ", section " + r.section : "") + ". Rien ici n'a été saisi."),
+
+      (r.rolesNoms || []).length
+        ? el("div", { style: { "margin-top": ".7rem" } },
+            el("div.rlv-eti", {}, "RÔLES TENUS"),
+            el("div", {}, r.rolesNoms.map(function (x) {
+              return el("div.rlv-r", {}, x); })))
+        : null,
+
+      r.preuve
+        ? el("div", { style: { "margin-top": ".7rem" } },
+            el("div.rlv-eti", {}, "LA PREUVE, MOT POUR MOT"),
+            el("p.rlv-p", {}, r.preuve))
+        : null,
+
+      /* Ce que le document annonce et que rien ne trace. On ne fabrique pas
+       * les pièces manquantes : on affiche l'écart, qui est l'information. */
+      a
+        ? el("div", { style: { "margin-top": ".7rem" } },
+            el("div.rlv-eti", {}, "CE QUI EST ANNONCÉ"),
+            el("p.rlv-p", {}, "« " + a.phrase + " » au document, "
+              + (a.traces ? a.traces + (a.traces > 1 ? " tracés ici" : " tracé ici")
+                          : "aucun tracé ici")
+              + (a.traces < a.nombre
+                  ? ".  L'écart n'est pas une perte : les pièces existent sur le disque, "
+                    + "elles ne sont simplement pas rattachées une à une."
+                  : ".")))
+        : null,
+
+      (r.radar || []).length
+        ? el("div", { style: { "margin-top": ".7rem" } },
+            el("div.rlv-eti", {}, "AU RADAR MATANGA"),
+            el("p.rlv-p", {}, r.radar.join("  ·  ")),
+            el("a.b.nu", { href: "#/referentiel/radar" }, "voir le registre →"))
+        : el("div", { style: { "margin-top": ".7rem" } },
+            el("div.rlv-eti", {}, "AU RADAR MATANGA"),
+            el("p.rlv-p", {}, "Aucun brief apparié. La campagne est documentée, "
+              + "sa demande d'origine n'a pas été retrouvée au registre.")));
+  }
+
+  /* La boucle : ouverte, ou fermée et ce qu'elle a laissé.
+   *
+   * Le geste vit ici plutôt qu'en tête du dossier parce que clore n'est pas
+   * une commande d'écran : c'est une décision, et elle se prend en sachant ce
+   * qu'elle change. Le panneau le dit avant de proposer le bouton. */
+  function panneauCloture(p, rafraichir) {
+    if (!window.CLOTURE) return null;
+    var clos = CLOTURE.est(p);
+    var infere = CLOTURE.estInferee(p);
+    var bilan = clos ? ((p.cloture.bilan || "").trim()) : "";
+
+    return el("div.panneau-lat", {},
+      el("h3", {}, "LA BOUCLE",
+        el("span.droite", { style: { color: clos && !infere ? "var(--clair-terne)" : "var(--attente)" } },
+          infere ? "close, inférée" : clos ? "close" : "ouverte")),
+
+      clos
+        ? el("div", {},
+            el("p.psa-q", {}, "Clos le " + O.jourCourt(p.cloture.le)
+              + (p.cloture.releve && p.cloture.releve !== "décidé à la main"
+                  ? " — " + p.cloture.releve : "")
+              + ". Les contrôles de cadrage se taisent ; ce qui peut encore mordre parle."),
+            /* Une clôture inférée ne réclame pas de bilan : personne n'a
+             * encore dit que la campagne était finie. Ce qu'elle attend, c'est
+             * un oui ou un non, et c'est tout ce qu'on lui demande. */
+            infere
+              ? el("p.psa-q", { style: { color: "var(--attente)" } },
+                  "Inférée à l'ingestion, pas décidée : " + p.cloture.infere.pourquoi)
+              : bilan
+                ? el("div.prix.vert", { style: { "margin-top": ".6rem" } },
+                    el("span.signe", {}, "✓"), "Le diagnostic est au dossier.")
+                : el("p.psa-q", { style: { color: "var(--attente)" } },
+                    "Aucun bilan : le prochain brief sur cette marque repartira sans son diagnostic."))
+        : el("p.psa-q", {}, "Tant qu'il est ouvert, le dossier réclame son cadrage — "
+            + "et il a raison de le faire. À la clôture, il devient une entrée réutilisable : "
+            + "le cas client, et le diagnostic que le brief suivant pourra opposer."),
+
+      el("div", { style: { "margin-top": ".7rem" } }, CLOTURE.bouton(p, rafraichir))
+    );
+  }
+
+  /* ————————————————————— L'arbre, par marque —————————————————————
+   *
+   * Une ligne par marque : ce que son socle porte, son rythme, et le compte de
+   * ce qui tourne. On descend d'un clic. Les marques sans dossier n'y figurent
+   * pas — ce mur montre le travail, pas le référentiel. */
+  function murDesMarques() {
+    var ps = DEPOT.liste("projets");
+    var par = {};
+    ps.forEach(function (p) {
+      ((p.sections.identite || {}).marqueIds || []).forEach(function (id) {
+        (par[id] = par[id] || []).push(p); });
+    });
+
+    var lignes = Object.keys(par).map(function (id) {
+      var m = DEPOT.trouve("marques", id);
+      var lot = par[id];
+      var vivants = lot.filter(function (p) { return !(window.CLOTURE && CLOTURE.est(p)); });
+      var cs = window.CAMPAGNE ? CAMPAGNE.deMarque(id) : [];
+      var remplis = window.VAULT ? VAULT.CHAMPS.filter(function (c) {
+        var h = VAULT.herite("marque", id, c.cle);
+        return h && h.valeur !== null && h.valeur !== undefined
+          && (Array.isArray(h.valeur) ? h.valeur.length : String(h.valeur).trim()); }).length : 0;
+      return { id: id, m: m, nom: m ? m.nom : id, lot: lot, vivants: vivants,
+        campagnes: cs, socle: remplis };
+    }).sort(function (a, b) {
+      return b.vivants.length - a.vivants.length || b.lot.length - a.lot.length;
+    });
+
+    if (!lignes.length) {
+      return el("p.rien", {}, "Aucun dossier n'est rattaché à une marque.");
+    }
+
+    return el("div.dl-mq", {}, lignes.map(function (x) {
+      var sansRythme = !x.campagnes.length;
+      return el("a.mqr" + (sansRythme ? ".muet" : ""), { href: "#/projets/" + x.id },
+        el("span.mqr-n", {}, x.nom),
+        el("span.mqr-s", {},
+          x.vivants.length
+            ? x.vivants.length + (x.vivants.length > 1 ? " projets ouverts" : " projet ouvert")
+            : "rien d'ouvert",
+          el("span.mqr-t", {}, x.lot.length + " au total")),
+        el("span.mqr-r", {}, sansRythme
+          ? "aucune campagne, aucun cycle"
+          : x.campagnes.length + (x.campagnes.length > 1 ? " campagnes" : " campagne")),
+        el("span.mqr-so", {}, x.socle + " / " + (window.VAULT ? VAULT.CHAMPS.length : 0) + " au socle"));
+    }));
+  }
+
+  /* La marche : une marque, son rythme, ses campagnes, ses projets. */
+  function marcheDeMarque(hote, marqueId) {
+    var m = DEPOT.trouve("marques", marqueId);
+    hote.className = "zone";
+    O.vider(hote);
+    if (!m) {
+      hote.appendChild(el("p.rien", {}, "Marque inconnue — ",
+        el("a", { href: "#/projets" }, "revenir aux dossiers")));
+      return;
+    }
+    DEPOT.lu("marques", marqueId);
+
+    var ps = DEPOT.liste("projets").filter(function (p) {
+      return ((p.sections.identite || {}).marqueIds || []).indexOf(marqueId) !== -1; });
+    var cs = window.CAMPAGNE ? CAMPAGNE.deMarque(marqueId) : [];
+    var sansCampagne = ps.filter(function (p) { return !p.campagneId; });
+    var vie = window.VIE_MARQUE ? VIE_MARQUE.etat(marqueId) : null;
+
+    hote.appendChild(el("div.dl", {},
+      el("div.dl-h", {},
+        el("div", {},
+          el("p.dl-fil", {}, el("a", { href: "#/projets" }, "Les dossiers"), " / ", m.nom),
+          el("h2.dl-t", {}, m.nom),
+          el("p.dl-s", {}, vie ? vie.quoi : "")),
+        el("a.b", { href: "#/referentiel/marques" }, "Le portefeuille →")),
+
+      cs.length
+        ? el("div", {}, cs.map(function (c) { return blocCampagne(c); }))
+        : el("p.rien", {}, "Aucune campagne, aucun cycle. Une marque est pourtant "
+            + "toujours en campagne : tant que rien n'est ouvert ici, son rythme "
+            + "n'existe que dans la tête de ceux qui le tiennent."),
+
+      /* Le dossier de marque au complet : les quatre piliers, le brief de
+       * plateforme, les décideurs, le catalogue, la vie. Il était dans
+       * « La maison » ; il est ici, sous le rythme, parce que c'est ici qu'on
+       * ouvre une marque pour travailler. */
+      window.VUE_VAULT && VUE_VAULT.dossierDeMarque
+        ? el("details.dl-socle", {},
+            el("summary", {},
+              el("b", {}, "Le socle, le catalogue et la vie"),
+              el("span.dl-clos-q", {}, "ce qui dure — identité, décideurs, packs, histoire")),
+            VUE_VAULT.dossierDeMarque(marqueId, hote))
+        : null,
+
+      sansCampagne.length
+        ? el("div.dl-orph", {},
+            el("div.dlo-t", {}, sansCampagne.length
+              + (sansCampagne.length > 1 ? " projets ne sont rattachés" : " projet n'est rattaché")
+              + " à aucun moment de la vie de la marque"),
+            el("p.dlo-q", {}, "Ce n'est pas une faute : personne n'a encore dit "
+              + "à quelle campagne ils appartiennent."),
+            el("div.dl-liste", {}, sansCampagne.map(ligneProjetCourte)))
+        : null
+    ));
+  }
+
+  /* ————————————————————— La campagne —————————————————————
+   *
+   * L'écran où une campagne se COMPOSE. C'est le flux qui manquait le plus :
+   * monter un lancement voulait dire créer six dossiers à la main, sans lien,
+   * chacun repartant de zéro sur le client, la marque, les marchés et la
+   * fenêtre.
+   *
+   * L'occasion connaît sa composition usuelle et la propose. Elle ne crée
+   * rien seule : le produit n'ouvre pas six dossiers dans le dos de personne.
+   * Et ce qu'on écarte laisse sa trace datée — une case vide sans motif se
+   * rediscute deux fois, une case écartée avec sa date ne se rediscute plus. */
+  function ecranCampagne(hote, campagneId) {
+    var c = window.CAMPAGNE ? CAMPAGNE.de(campagneId) : null;
+    hote.className = "zone";
+    O.vider(hote);
+    if (!c) {
+      hote.appendChild(el("p.rien", {}, "Campagne inconnue — ",
+        el("a", { href: "#/projets" }, "revenir aux dossiers")));
+      return;
+    }
+    var rafraichir = function () { ecranCampagne(hote, campagneId); };
+    var ps = CAMPAGNE.projets(c.id);
+    var e = CAMPAGNE.etat(c);
+    var mq = (c.marqueIds || [])[0];
+    var m = mq ? DEPOT.trouve("marques", mq) : null;
+    var ref = CAMPAGNE.pisteDeReference(c.id);
+
+    hote.appendChild(el("div.dl", {},
+      el("div.dl-h", {},
+        el("div", {},
+          el("p.dl-fil", {},
+            el("a", { href: "#/projets" }, "Les dossiers"), " / ",
+            m ? el("a", { href: "#/projets/" + m.id }, m.nom) : "sans marque", " / ",
+            c.regime === "always-on" ? "le cycle" : "temps fort"),
+          el("h2.dl-t", {}, c.nom),
+          el("p.dl-s", {}, e ? e.quoi : "")),
+        el("a.b", { href: "#/projets/" + (m ? m.id : "") }, "← la marque")),
+
+      /* La piste qui gouverne les frères. Sans elle, le film et l'activation
+       * de la même campagne ignorent le concept qu'on vient d'arbitrer. */
+      ref
+        ? el("div.cmp-piste", {},
+            el("div.cmpp-t", {}, "LA PISTE QUI GOUVERNE"),
+            el("b", {}, ref.piste.titre || "piste retenue"),
+            el("p.cmpp-q", {}, "Arbitrée sur « " + ref.projet.nom + " ». "
+              + "Les autres projets de cette campagne en héritent — celui qui s'en "
+              + "écarte doit le dire."))
+        : ps.length > 1
+          ? el("div.cmp-piste.vide", {},
+              el("div.cmpp-t", {}, "AUCUNE PISTE RETENUE"),
+              el("p.cmpp-q", {}, ps.length + " projets se fabriquent sans savoir quel "
+                + "concept fait autorité. Deux signatures peuvent sortir du même temps fort."))
+          : null,
+
+      blocComposition(c, rafraichir),
+
+      ps.length
+        ? el("div", { style: { "margin-top": "1.2rem" } },
+            el("div.section-titre", {}, "Les projets", el("span.taille", {}, "· " + ps.length)),
+            el("p.cmpc-q", {}, "Un projet peut en attendre un autre. Le dire fait apparaître "
+              + "les jours de production qui courent à vide."),
+            el("div.dl-liste", {}, ps.map(function (x) {
+              return ligneProjetChainee(x, ps, rafraichir); })))
+        : null
+    ));
+  }
+
+  /* La composition : ce que l'occasion appelle, et ce qui est déjà ouvert. */
+  function blocComposition(c, rafraichir) {
+    var comp = CAMPAGNE.composition(c);
+    if (!comp.length) {
+      return el("p.rien", {}, "Cette campagne n'a pas d'occasion déclarée : "
+        + "la maison ne sait pas ce qu'elle appelle d'habitude.");
+    }
+    var manquants = comp.filter(function (x) { return !x.projet && !x.ecarte; }).length;
+
+    return el("div.cmp-comp", {},
+      el("div.section-titre", {}, "Ce que cette occasion appelle",
+        el("span.taille", {}, manquants
+          ? "· " + manquants + " à décider" : "· tout est décidé")),
+      el("p.cmpc-q", {}, "La maison propose ; elle n'ouvre rien seule. Ce qu'on écarte "
+        + "garde sa date, pour ne pas se rediscuter deux fois."),
+      el("div.cmp-l", {}, comp.map(function (x) {
+        return ligneComposition(c, x, rafraichir); }))
+    );
+  }
+
+  function ligneComposition(c, x, rafraichir) {
+    var etat = x.projet ? "ouvert" : x.ecarte ? "ecarte" : "propose";
+    return el("div.cmpl." + etat, {},
+      el("span.cmpl-n", {}, x.nature.nom,
+        x.nature.quoi ? el("span.cmpl-q", {}, x.nature.quoi) : null),
+      el("span.cmpl-e", {},
+        etat === "ouvert" ? el("a", { href: "#/projets/" + x.projet.id }, x.projet.ref)
+          : etat === "ecarte" ? "écarté le " + O.jourCourt(x.ecarte.quand)
+            + (x.ecarte.motif ? "  ·  " + x.ecarte.motif : "")
+          : "pas encore ouvert"),
+      el("span.cmpl-g", {},
+        etat === "ecarte"
+          ? el("button.b.nu", { type: "button", onclick: function () {
+              CAMPAGNE.reprendre(c, x.nature.cle); rafraichir(); } }, "reprendre")
+          : etat === "propose"
+            ? el("span", {},
+                el("button.b.nu", { type: "button", onclick: function () {
+                  ouvrirDepuisCampagne(c, x.nature, rafraichir); } }, "ouvrir"),
+                el("button.b.nu", { type: "button", onclick: function () {
+                  PANNEAU.demander("Écarter « " + x.nature.nom + " »", {
+                    label: "Pourquoi",
+                    aide: "Pourquoi cette campagne n'en a pas besoin. La réponse est "
+                        + "datée et ne se rediscutera pas.",
+                    lignes: 2, requis: "Un écart sans motif se rediscute la semaine suivante.",
+                  }, function (motif) {
+                    CAMPAGNE.ecarter(c, x.nature.cle, motif); rafraichir(); });
+                } }, "écarter"))
+            : null));
+  }
+
+  /* Ouvrir un projet DEPUIS la campagne : il hérite ce qu'elle porte déjà —
+   * client, marques, marchés, fenêtre. C'est tout l'intérêt de l'étage. */
+  function ouvrirDepuisCampagne(c, nature, rafraichir) {
+    var p = DEPOT.ajoute("projets", {
+      ref: "MT-" + String(DEPOT.liste("projets").length + 1).padStart(4, "0"),
+      nom: c.nom + " — " + nature.nom.toLowerCase(),
+      nature: nature.cle,
+      campagneId: c.id,
+      pilier: null,
+      cree_le: new Date().toISOString(),
+      statut: "creation",
+      equipe: [],
+      sections: {
+        identite: {
+          clientId: c.clientId || null,
+          marqueIds: (c.marqueIds || []).slice(),
+          marches: (c.marches || []).slice(),
+          fenetre: c.fenetre && c.fenetre.fin ? O.joli(c.fenetre.fin) : "",
+          echeance: (c.fenetre || {}).fin || "",
+        },
+        brief: {}, pistes: [],
+      },
+      perimetre: { supports: [], marches: (c.marches || []).slice() },
+      livrables: [], volets: [],
+    });
+    DEPOT.tracer("création depuis campagne", "projets", p.id, c.nom + " · " + nature.nom);
+    DEPOT.enregistrer();
+    AVIS.fait("« " + p.nom + " » est ouvert. Il hérite le client, les marques, "
+      + "les marchés et la fenêtre de la campagne.");
+    location.hash = "#/projets/" + p.id;
+  }
+
+  function blocCampagne(c) {
+    var ps = window.CAMPAGNE ? CAMPAGNE.projets(c.id) : [];
+    var e = window.CAMPAGNE ? CAMPAGNE.etat(c) : null;
+    return el("div.dl-cmp" + (c.regime === "always-on" ? ".continu" : ""), {},
+      el("div.dlc-t", {},
+        el("b", {}, el("a", { href: "#/projets/" + c.id }, c.nom)),
+        el("span.dlc-r", {}, c.regime === "always-on" ? "le cycle qui tourne" : "temps fort"),
+        c.infere ? el("span.dlc-i", {}, "rattachement inféré") : null),
+      e ? el("p.dlc-q", {}, e.quoi) : null,
+      ps.length ? el("div.dl-liste", {}, ps.map(ligneProjetCourte)) : null);
+  }
+
+  /* La ligne d'un projet dans sa campagne, avec ce qu'il attend de ses frères.
+   * Le chaînage se déclare ici et nulle part ailleurs : c'est le seul écran
+   * où l'on voit les frères ensemble. */
+  function ligneProjetChainee(p, freres, rafraichir) {
+    var ligne = ligneProjetCourte(p);
+    var amonts = (p.attend || []).map(function (id) {
+      var a = DEPOT.trouve("projets", id); return a ? a.nom : null; }).filter(Boolean);
+
+    var sel = el("select", { onclick: function (e) { e.preventDefault(); e.stopPropagation(); } });
+    sel.appendChild(el("option", { value: "" }, "— n'attend rien —"));
+    freres.forEach(function (f) {
+      if (f.id === p.id) return;
+      sel.appendChild(el("option", { value: f.id,
+        selected: (p.attend || []).indexOf(f.id) !== -1 ? "" : null },
+        "attend « " + f.nom.slice(0, 38) + " »"));
+    });
+    sel.onchange = function () {
+      p.attend = sel.value ? [sel.value] : [];
+      DEPOT.tracer("chaînage", "projets", p.id, sel.value || "délié");
+      DEPOT.enregistrer();
+      rafraichir();
+    };
+
+    return el("div.cmp-pr", {}, ligne,
+      el("div.cmp-ch", {}, sel,
+        amonts.length ? el("span.cmp-cha", {}, "en attente de " + amonts.join(", ")) : null));
+  }
+
+  function ligneProjetCourte(p) {
+    var blocs = REGLES.blocages(p.id);
+    var durs = blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; }).length;
+    var clos = window.CLOTURE && CLOTURE.est(p);
+    var n = (p.livrables || []).filter(function (l) { return !l.annule; }).length;
+    return el("a.dlp" + (clos ? ".clos" : durs ? ".dur" : ""), { href: "#/projets/" + p.id },
+      el("span.dlp-r", {}, p.ref),
+      el("span.dlp-n", {}, p.nom),
+      el("span.dlp-t", {}, window.NATURE ? NATURE.nom(p) : ""),
+      el("span.dlp-q", {}, clos ? "clos"
+        : durs ? durs + (durs > 1 ? " blocages" : " blocage")
+        : n ? n + (n > 1 ? " livrables" : " livrable") : "rien encore"));
+  }
+
+  /* Les dossiers clos, repliés. Le compte dit aussi combien n'ont pas de bilan :
+   * un dossier clos sans diagnostic ne sert pas le suivant, et c'est la seule
+   * chose qu'il reste à en faire. */
+  function blocClos(closes) {
+    if (!closes.length) return null;
+    /* Deux comptes, et ils n'appellent pas le même geste. Une clôture inférée
+     * attend un oui ou un non ; une clôture confirmée sans bilan attend trois
+     * lignes de diagnostic. Les additionner — « 132 sans bilan » — réclamait
+     * un bilan pour cent seize campagnes dont personne n'a encore dit
+     * qu'elles étaient finies. */
+    var inferes = closes.filter(function (x) {
+      return window.CLOTURE && CLOTURE.estInferee(x.p); });
+    var sansBilan = closes.filter(function (x) {
+      return !(window.CLOTURE && CLOTURE.estInferee(x.p))
+        && !((x.p.cloture || {}).bilan || "").trim(); });
+
+    var dits = [];
+    if (inferes.length) dits.push(inferes.length + " clôture" + (inferes.length > 1 ? "s" : "")
+      + " inférée" + (inferes.length > 1 ? "s" : "") + " à confirmer ou rouvrir");
+    if (sansBilan.length) dits.push(sansBilan.length + " sans bilan : "
+      + (sansBilan.length > 1 ? "autant de campagnes dont la suivante" : "une campagne dont la suivante")
+      + " ne saura rien");
+    if (!dits.length) dits.push("tous confirmés, tous avec leur bilan");
+
+    return el("details.dl-clos", {},
+      el("summary", {},
+        el("b", {}, closes.length + (closes.length > 1 ? " dossiers clos" : " dossier clos")),
+        el("span.dl-clos-q", {}, dits.join("  ·  "))),
+      el("div.dl-liste", {}, closes.map(ligneDossier)));
   }
 
   /* Le titre dit l'état de l'ensemble et sa conséquence, pas le nom de l'écran. */
@@ -118,7 +698,7 @@ window.VUE_PROJETS = (function () {
    * question — elle n'a pas à être écrite deux fois. */
   function sectionsDe(p) {
     var g = null;
-    MAISON.gabarits.forEach(function (x) { if (x.cle === p.gabarit) g = x; });
+    g = NATURE.de(p);
     return (g ? g.sections : []).map(function (cle) {
       return { cle: cle, nom: nomSection(cle) };
     });
@@ -296,7 +876,8 @@ window.VUE_PROJETS = (function () {
   function nouveau() {
     var choixG = "campagne";
     var selG = el("select", {});
-    MAISON.gabarits.forEach(function (g) { selG.appendChild(el("option", { value: g.cle }, g.nom)); });
+    NATURE.liste().forEach(function (g) {
+      selG.appendChild(el("option", { value: g.cle, title: g.quoi }, g.nom)); });
     selG.addEventListener("change", function () { choixG = selG.value; });
 
     var f = FORM.rendre([
@@ -316,7 +897,7 @@ window.VUE_PROJETS = (function () {
           if (!d.nom) { alert("Un projet a un nom."); return; }
           var p = DEPOT.ajoute("projets", {
             ref: d.ref || "PRJ-" + String(DEPOT.liste("projets").length + 1).padStart(4, "0"),
-            nom: d.nom, gabarit: choixG, statut: "ouvert", equipe: [],
+            nom: d.nom, nature: choixG, statut: "ouvert", equipe: [],
             sections: { identite: { client: d.client || "", echeance: d.echeance || "" } },
             volets: [], livrables: [],
           });
@@ -420,6 +1001,11 @@ window.VUE_PROJETS = (function () {
         }))
       ) : el("div.panneau-lat", {}, el("h3", {}, "ÉTAT"), el("div.prix.vert", {}, el("span.signe", {}, "✓"), "Rien ne bloque ce projet.")),
       panneauSante(p, g, durs),
+      panneauReleve(p),
+      panneauChiffrage(p, rafraichir),
+      panneauRemise(p),
+      panneauResultat(p, rafraichir),
+      panneauCloture(p, rafraichir),
       panneauEquipe(p)
     );
 
@@ -459,6 +1045,20 @@ window.VUE_PROJETS = (function () {
    * c'est ce qu'elle coûte qu'on dit. */
   function etatDuDossier(p, blocs, durs, infs) {
     var n = (p.livrables || []).filter(function (l) { return !l.annule; }).length;
+
+    /* Un dossier clos ne se lit pas par ce qui le bloque : il n'y a plus rien
+     * à débloquer. Il se lit par ce qu'il laisse au suivant. */
+    if (window.CLOTURE && CLOTURE.est(p)) {
+      var e = CLOTURE.etat(p);
+      var avecBilan = e.cle === "clos";
+      return el("div.cotes", {}, el("div.pe-etat." + (avecBilan ? "terne" : "attente"), {},
+        el("span.pee-c", {}, String(n)),
+        el("span.pee-n", {}, n > 1 ? "livrables" : "livrable"),
+        el("p.pee-q", {}, e.quoi
+          + (durs ? "  " + durs + (durs > 1 ? " risques restent" : " risque reste")
+              + " : les pièces sont toujours dehors." : ""))));
+    }
+
     /* REGLES.blocages trie du plus ancien au plus récent. */
     var vieux = blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; })[0];
 
@@ -644,7 +1244,11 @@ window.VUE_PROJETS = (function () {
       el("h3", {}, "SANTÉ DU DOSSIER", el("span.droite", { style: { color: part === 100 ? "var(--vert)" : "var(--attente)" } }, part + " %")),
       el("div.jauge." + (part === 100 ? "" : part >= 70 ? "limite" : "depasse"), {}, el("i", { style: { width: part + "%" } })),
 
-      el("p.psa-q", {}, durs
+      el("p.psa-q", {}, (window.CLOTURE && CLOTURE.est(p))
+        ? "Sur un dossier clos, ce taux ne mesure pas un retard : il dit ce que "
+          + "l'archive ne portera jamais. " + (total - faits) + " champs sur " + total
+          + " sont restés vides, et c'est l'état dans lequel la campagne s'est faite."
+        : durs
         ? "Le chiffre ne veut pas dire que le dossier avance : "
           + durs + (durs > 1 ? " blocages l'arrêtent" : " blocage l'arrête")
           + ", et les remplir tous ne les lèvera pas."

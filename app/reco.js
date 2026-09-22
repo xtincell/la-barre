@@ -167,7 +167,9 @@ window.RECO = (function () {
     }).length;
     var seuilInstalle = ((window.MAISON && MAISON.doctrine) || {}).compteInstalle;
     if (seuilInstalle === undefined || seuilInstalle === null) seuilInstalle = 2;
-    if (anciens >= seuilInstalle && (p.gabarit === "campagne" || p.gabarit === "cycle")) {
+    /* La salle ne se lit que sur un travail qui cherche une idée : une mise à
+     * jour de packaging ne se présente pas, elle se livre. */
+    if (anciens >= seuilInstalle && NATURE.aSection(p, "pistes")) {
       return { salle: { cle: "installe", nom: "Client installé, brief récurrent",
           quoi: anciens + " dossiers antérieurs sur ce compte" },
         structures: ["lineaire"], integrite: false,

@@ -86,9 +86,26 @@ window.VUE_LIVRABLE = (function () {
             UI.stat("TOURS CONSOMMÉS", t.faits + " / " + (t.vendus || "—"),
               t.vendus && t.faits > t.vendus ? "au-delà du vendu" : "dans le périmètre",
               t.vendus && t.faits > t.vendus ? "alerte" : ""),
-            UI.stat("TEMPS", l.reel ? l.reel + " j" : "—",
-              l.estime ? "estimé : " + l.estime + " j" + (l.reel && l.estime ? " · " + ecart(l) : "") : "aucune estimation",
-              l.reel && l.estime && l.reel > l.estime ? "alerte" : ""),
+            /* Le réel se saisit ICI, et nulle part ailleurs.
+             *
+             * Deux cent vingt-quatre livrables portaient un estimé, zéro un
+             * réel — et pour cause : aucun écran ne permettait de l'écrire.
+             * La faille 10.1 de l'audit tenait à ça. « L'effort est plafonné,
+             * jamais mesuré » n'était pas un défaut de discipline : c'était un
+             * champ sans porte.
+             *
+             * Sans lui, rien ne tourne en aval : ni la marge, ni la clause de
+             * reprise, ni la dérive qui corrige l'estimation suivante, ni la
+             * comparaison entre marques. Un chiffre, et quatre boucles
+             * s'allument. */
+            el("button.st.nu", { type: "button", title: "saisir le temps réel",
+              onclick: function () { saisirReel(projet, l, rafraichir); } },
+              UI.stat("TEMPS", l.reel ? l.reel + " j" : "à saisir",
+                l.estime
+                  ? "estimé : " + l.estime + " j" + (l.reel ? " · " + ecart(l) : "")
+                  : "aucune estimation",
+                l.reel && l.estime && l.reel > l.estime ? "alerte"
+                  : l.estime && !l.reel ? "attente" : "")),
             UI.stat("COMPLÉTUDE", REGLES.pretSur(l).part + " %",
               REGLES.pretSur(l).pret + (REGLES.pretSur(l).pret > 1 ? " points prêts sur " : " point prêt sur ")
                 + REGLES.pretSur(l).total, "")
@@ -174,6 +191,54 @@ window.VUE_LIVRABLE = (function () {
     }
     return "V" + v.n + " jugée le " + O.joli(v.juge_le) + (v.motif ? " — " + v.motif : "")
       + (coince.length ? ". Reste " + coince.map(function (c) { return c.point.toLowerCase(); }).join(", ") + "." : "");
+  }
+
+  /* Le temps réellement consommé, à la livraison. Deux nombres par livrable —
+   * estimé à l'affectation, réel à la livraison — c'est le mécanisme M9 du
+   * plan d'origine, écrit dès le premier jour et jamais posé. */
+  function saisirReel(projet, l, rafraichir) {
+    var champ = el("input", { type: "number", min: "0", step: "0.5",
+      value: l.reel == null ? "" : String(l.reel) });
+    var prop = window.BOUCLES ? BOUCLES.estimationProposee(projet, l) : null;
+
+    PANNEAU.ouvrir("Le temps réellement consommé", l.nom, el("div", {},
+      UI.banniere("", "Deux nombres par livrable : l'estimé à l'affectation, le réel à la "
+        + "livraison. Sans le second, aucune marge n'est vérifiable, aucune reprise n'a de "
+        + "chiffre à opposer, et l'estimation suivante ne s'améliore jamais."),
+
+      l.estime
+        ? PANNEAU.ligne("Estimé à l'affectation", l.estime + " jours")
+        : el("p.lire", {}, "Ce livrable n'a pas d'estimation : le réel se notera quand même, "
+            + "mais il n'y aura pas d'écart à lire."),
+
+      prop
+        ? PANNEAU.sousbloc("Ce que la mémoire de la maison suggère",
+            el("p.lire", {}, prop.pourquoi))
+        : null,
+
+      el("div.form", {}, el("div.champ", {},
+        el("label", {}, "Jours réellement consommés"), champ)),
+
+      el("div.form-actions", {},
+        el("button.bouton", { type: "button", onclick: function () {
+          var v = champ.value === "" ? null : +champ.value;
+          l.reel = v;
+          DEPOT.tracer("temps réel", "livrables", l.id,
+            l.nom + " · " + (v == null ? "effacé" : v + " j"),
+            ((projet.sections || {}).identite || {}).marqueIds);
+          DEPOT.enregistrer();
+          PANNEAU.fermer();
+          if (v != null && l.estime) {
+            var e = Math.round(((v - l.estime) / l.estime) * 100);
+            AVIS.fait("Réel noté : " + v + " j pour " + l.estime + " estimés ("
+              + (e > 0 ? "+" : "") + e + " %). La prochaine estimation de même forme en tiendra compte.");
+          } else {
+            AVIS.fait("Réel noté.");
+          }
+          if (rafraichir) rafraichir();
+        } }, "Noter le réel"),
+        el("button.bouton.creux", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
+    ), "var(--accent)");
   }
 
   function ecart(l) {

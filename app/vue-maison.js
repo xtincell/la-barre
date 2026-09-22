@@ -21,6 +21,8 @@ window.VUE_MAISON = (function () {
     /* Le registre de l'autre outil. Il n'a pas sa place dans les projets : ce
      * n'est pas du travail, c'est ce qui dit lequel manque. */
     { cle: "people", nom: "MATANGA PEOPLE", quoi: "ce qui existe là-bas, et n'existe pas ici" },
+    { cle: "radar", nom: "RADAR MATANGA", quoi: "les 366 briefs du registre, et lesquels ont un dossier ici" },
+    { cle: "intake", nom: "BOÎTE D'ENTRÉE", quoi: "ce qui est tombé au vol, et qu'il reste à ranger" },
     /* La doctrine : d'où viennent les règles que le produit applique. Elle vit
      * ici parce que ce n'est pas du travail — c'est ce qui le rend jugeable. */
     { cle: "doctrine", nom: "DOCTRINE", quoi: "les couches, les écoles, les structures — et ce que la maison en a réglé" },
@@ -53,6 +55,8 @@ window.VUE_MAISON = (function () {
         var n = m.cle === "marques" ? vides + VAULT.orphelins().length
           : m.cle === "marches" ? trous
           : m.cle === "people" ? REGISTRE.bilan().aveugles
+          : m.cle === "radar" ? REGISTRE_RADAR.bilan().siensAveugles
+          : m.cle === "intake" ? INTAKE.pile().length
           : (w.grave || (!w.surDisque && (age === null || age > 2))) ? 1 : 0;
         return el("button.dcm" + (mode === m.cle ? ".ici" : ""), { type: "button",
           onclick: function () { mode = m.cle; rendre(hote); } },
@@ -70,6 +74,8 @@ window.VUE_MAISON = (function () {
     if (mode === "marques") VUE_VAULT.rendre(z);
     else if (mode === "marches") VUE_REFERENTIEL.rendre(z);
     else if (mode === "people") REGISTRE.rendre(z, function () { rendre(hote); });
+    else if (mode === "radar") REGISTRE_RADAR.rendre(z, function () { rendre(hote); });
+    else if (mode === "intake") INTAKE.rendre(z, function () { rendre(hote); });
     else if (mode === "doctrine") z.appendChild(VUE_DOCTRINE.rendre(z));
     else VUE_REGLAGES.rendre(z);
     return z;
@@ -91,6 +97,8 @@ window.VUE_MAISON = (function () {
     if (mode === "parametres") return pireReglages(e);
     if (mode === "marques") return pireMarques(e);
     if (mode === "people") return REGISTRE.pire();
+    if (mode === "radar") return REGISTRE_RADAR.pire();
+    if (mode === "intake") return INTAKE.pire();
     return pireReferentiel(e);
   }
 

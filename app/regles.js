@@ -74,6 +74,11 @@ window.REGLES = (function () {
     "logo-ombrelle-absent": "L'ombrelle doit être considérée et n'apparaît nulle part : le client le verra avant nous.",
     "langue-marche-douteuse": "Une langue de marché que rien ne corrobore : on adapte dans une langue qu'on n'y parle pas.",
     "charge-hors-fenetre": "La charge dépasse la fenêtre : la date ne peut pas être tenue, et personne ne l'a encore dit.",
+    "bon-de-commande-absent": "Le travail est engagé et rien ne l'oppose au client le jour où il conteste le montant.",
+    "attend-un-projet-en-retard": "Des jours de production sont réservés et courent à vide tant que l'amont n'est pas livré.",
+    "hors-piste-de-campagne": "Deux concepts sortiront du même temps fort, et c'est le client qui recomposera.",
+    "remise-sans-manifeste": "Le fichier part sans ses droits ni ses métadonnées : au réemploi dans deux ans, personne ne saura ce qu'on a le droit d'en faire.",
+    "clos-sans-resultat": "Personne ne saura si ça a marché : ni le bilan, ni l'estimation suivante, ni la comparaison entre marques n'auront de quoi s'appuyer.",
   };
 
   function prix(cle) { return PRIX[cle] || ""; }
@@ -212,9 +217,18 @@ window.REGLES = (function () {
       if (window.OBJECTIFS) {
         var eng = OBJECTIFS.engagements().filter(function (x) { return x.projet.id === p.id; })[0];
         if (eng && eng.tenable === false && eng.joursRestants !== null && eng.charge) {
+          /* Deux phrases, deux fautes différentes. « Il reste moins de temps
+           * que de travail » peut être du glissement, et se rattrape. « La
+           * charge dépassait la fenêtre dès le premier jour » est un cadrage
+           * qui ne pouvait pas marcher — et ça ne se reproche ni au même
+           * moment, ni à la même personne. */
           pousser(trouves, p, "charge-hors-fenetre",
-            Math.round(eng.charge) + " j de travail pour "
-              + Math.max(0, eng.joursRestants) + " j restants", "creation", "livrables");
+            eng.tenableDepart === false
+              ? Math.round(eng.charge) + " j de travail pour une fenêtre de "
+                + eng.duree + " j : elle ne tenait pas dès le départ"
+              : Math.round(eng.charge) + " j de travail pour "
+                + Math.max(0, eng.joursRestants) + " j restants",
+            "creation", "livrables");
         }
       }
 
@@ -313,7 +327,7 @@ window.REGLES = (function () {
         });
         /* Un territoire à un seul concept est légitime sur un cycle éditorial :
          * un mois ne met pas deux routes en concurrence, il en tient une. */
-        if (p.gabarit !== "cycle") {
+        if (!NATURE.estContinu(p)) {
           r.maigres.forEach(function (t) {
             pousser(trouves, p, "territoire-a-un-concept",
               "Territoire « " + (t.nom || t.quoi || "sans nom").slice(0, 40) + " » n'ouvre qu'un concept",
@@ -601,6 +615,93 @@ window.REGLES = (function () {
           "« " + l.nom + " » — " + vides + " cadres du découpage sur "
             + l.plans.length + " sont vides", "da", "livrables", l.id);
       });
+
+      /* Le dernier mètre. Un livrable approuvé qui part sans ses droits, ses
+       * mentions ou son nommage entre faux dans le DAM du client — et il y
+       * reste faux des années. C'est le seul contrôle qui regarde APRÈS le
+       * verdict : tous les autres regardent avant. */
+      if (window.REMISE) {
+        var L = REMISE.lot(p);
+        var incomplets = L.total - L.prets;
+        if (incomplets) {
+          pousser(trouves, p, "remise-sans-manifeste",
+            incomplets + (incomplets > 1 ? " pièces approuvées partiraient" : " pièce approuvée partirait")
+              + " sans manifeste complet", "da", "livraison");
+        }
+      }
+
+      /* ————— Ce qui circule entre frères d'une même campagne —————
+       *
+       * La dépendance maître → adaptation existe depuis le début, mais au
+       * niveau du livrable. Entre PROJETS il n'y avait rien : le film attend
+       * le KV maître de la campagne, ses jours de production sont réservés, et
+       * aucun écran ne le disait. */
+      (p.attend || []).forEach(function (amont) {
+        var a = DEPOT.trouve("projets", amont);
+        if (!a) return;
+        var livre = window.CLOTURE && CLOTURE.est(a);
+        if (livre) return;
+        var j = window.CHIFFRAGE ? CHIFFRAGE.estime(p) : 0;
+        pousser(trouves, p, "attend-un-projet-en-retard",
+          "En attente de « " + a.nom + " »"
+            + (j ? " — " + j + (j > 1 ? " jours réservés" : " jour réservé") : ""),
+          "creation", "identite", amont);
+      });
+
+      /* La piste retenue sur un projet de la campagne gouverne ses frères.
+       * C'est le test d'une minute — deux racines, deux recommandations — un
+       * cran plus haut : deux concepts dans le même temps fort, et le client
+       * recompose. Un projet qui s'écarte le DÉCLARE ; le contrôle ne se lève
+       * pas sur celui qui a écrit son écart. */
+      if (window.CAMPAGNE && p.campagneId && aSection(p, "pistes")) {
+        var ref = CAMPAGNE.pisteDeReference(p.campagneId);
+        if (ref && ref.projet.id !== p.id && !(p.ecartDeCampagne || "").trim()) {
+          var sienne = (s.pistes || []).filter(function (x) { return x.statut === "retenue"; })[0];
+          if (sienne) {
+            pousser(trouves, p, "hors-piste-de-campagne",
+              "Piste propre alors que « " + ref.projet.nom + " » gouverne la campagne",
+              "creation", "pistes");
+          }
+        }
+      }
+
+      /* Le chiffrage engagé sans contrepartie écrite. Faille 10.3 de l'audit :
+       * « non annulable sans frais n'a aucun montant à opposer ». Il en a un
+       * désormais — encore faut-il que le bon de commande soit arrivé. */
+      if (window.CHIFFRAGE && CHIFFRAGE.de(p)
+          && (CHIFFRAGE.jours(p) || (p.chiffrage || {}).montant)
+          && (p.chiffrage || {}).bonDeCommande !== "recu") {
+        pousser(trouves, p, "bon-de-commande-absent",
+          "Projet chiffré, bon de commande " + ((p.chiffrage || {}).bonDeCommande === "absent"
+            ? "explicitement absent" : "non reçu"),
+          "clientele", "identite");
+      }
+
+      /* La boucle qui se ferme, ou qui reste ouverte à l'écran.
+       *
+       * « bilan-absent » portait son prix dans la table depuis le premier jour
+       * et aucun contrôle ne le levait : la promesse M10 écrite à moitié. La
+       * clôture lui donne enfin son moment — c'est le seul contrôle qui NAÎT
+       * quand un dossier se ferme, au lieu de se taire. */
+      /* Seulement sur une clôture CONFIRMÉE. Réclamer un bilan pour une fin
+       * que personne n'a encore validée, c'est demander le diagnostic d'une
+       * campagne dont on n'a pas dit qu'elle était finie — et cent trente fois,
+       * c'est du bruit qui enterre les seize vrais. */
+      /* La première boucle, et celle dont les trois autres dépendent. Comme
+       * « bilan-absent », elle ne vaut que sur une clôture CONFIRMÉE : on ne
+       * réclame pas le résultat d'une campagne dont personne n'a encore dit
+       * qu'elle était finie. */
+      if (estClos(p) && !p.cloture.infere
+          && window.BOUCLES && !BOUCLES.resultats(p).length) {
+        pousser(trouves, p, "clos-sans-resultat",
+          "Dossier clos sans résultat mesuré", "planning", "identite");
+      }
+
+      if (estClos(p) && !p.cloture.infere && !((p.cloture || {}).bilan || "").trim()) {
+        pousser(trouves, p, "bilan-absent",
+          "Dossier clos le " + O.jourCourt(p.cloture.le) + " sans bilan",
+          "planning", "identite");
+      }
     });
 
     return reconcilier(trouves);
@@ -619,11 +720,9 @@ window.REGLES = (function () {
     }
   }
 
-  function aSection(p, cle) {
-    var g = null;
-    MAISON.gabarits.forEach(function (x) { if (x.cle === p.gabarit) g = x; });
-    return !g || g.sections.indexOf(cle) !== -1;
-  }
+  /* Le mécanisme de silence vit dans nature.js, et nulle part ailleurs. Cinq
+   * endroits bouclaient sur la table des gabarits, chacun avec ses mots. */
+  function aSection(p, cle) { return NATURE.aSection(p, cle); }
 
   /* Un lot : en dessous de trois on nomme chaque livrable, au-delà on nomme le
    * nombre — et on garde la liste, pour pouvoir l'ouvrir. */
@@ -639,6 +738,37 @@ window.REGLES = (function () {
     b.pieces = lot.map(function (x) { return x.l.id; });
   }
 
+  /* ————— La clôture, et ce qu'elle ne fait pas taire —————
+   *
+   * Un dossier clos ne se répare plus. Nommer aujourd'hui le décideur d'une
+   * campagne de 2025 ne rend aucune validation opposable, et écrire son
+   * brief-back ne protège plus rien : le blocage ne demande rien à personne,
+   * il occupe seulement la place de ceux qui demandent quelque chose.
+   *
+   * Mais les pièces, elles, sont toujours dehors. Un produit montré sur un
+   * marché qui ne le vend pas se rappelle encore ; une faute part sur toute la
+   * descendance le jour où on réemploie le visuel ; une licence expire après
+   * la campagne, pas avec elle. Ceux-là continuent de parler.
+   *
+   * La ligne est donc celle-ci, et c'est la seule qui tienne : la clôture fait
+   * taire ce qu'on ne peut plus réparer, jamais ce qui peut encore mordre.
+   *
+   * Le filtre vit ici, dans pousser(), et nulle part ailleurs : c'est le seul
+   * passage obligé des cinquante-deux contrôles. Posé dans blocages(), il
+   * aurait été oublié au cinquante-troisième. */
+  var SURVIT_A_LA_CLOTURE = {
+    "sku-hors-zone": 1,          /* le rappel est encore possible */
+    "orthographe-diffusee": 1,   /* la faute repart avec le visuel réemployé */
+    "packshot-cmyk": 1,          /* le fichier reste faux pour le prochain usage */
+    "langue-marche-douteuse": 1, /* c'est le référentiel qui est faux, et il ressert */
+    "droits-insuffisants": 1,    /* une cession expire après la campagne, pas avec elle */
+    "maitre-perime": 1,          /* des adaptations vivent sur une version morte */
+    "bilan-absent": 1,           /* le contrôle propre de la clôture */
+    "clos-sans-resultat": 1,     /* idem : il NAÎT à la fermeture */
+  };
+
+  function estClos(p) { return !!(p && p.cloture && p.cloture.le); }
+
   function pousser(liste, projet, type, quoi, poste, section, cible) {
     var b = {
       cle: projet.id + "|" + type + "|" + (cible || section),
@@ -651,6 +781,11 @@ window.REGLES = (function () {
       cible: cible || null,
       prix: prix(type),
     };
+    /* Sur un dossier clos, seuls les contrôles qui mordent encore sont poussés.
+     * L'objet est rendu quand même : les appelants lui posent des propriétés
+     * (pieces, infere, inferences) et n'ont pas à savoir si le dossier est
+     * clos. Il part au rebut, pas dans la liste. */
+    if (estClos(projet) && !SURVIT_A_LA_CLOTURE[type]) return b;
     liste.push(b);
     return b;
   }
@@ -790,7 +925,7 @@ window.REGLES = (function () {
   }
 
   return {
-    prix: prix, blocages: blocages, ecarter: ecarter,
+    prix: prix, blocages: blocages, ecarter: ecarter, estClos: estClos,
     adaptations: adaptations, adaptationsPerimees: adaptationsPerimees, maitrePerime: maitrePerime,
     droitsInsuffisants: droitsInsuffisants,
     completude: completude, pretSur: pretSur, coince: coince,

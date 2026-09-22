@@ -29,7 +29,7 @@ window.VUE_CYCLE = (function () {
 
   /* Trois natures, trois façons de suivre. Elle se déclare sur le dossier ;
    * à défaut elle se déduit, parce qu'un dossier importé n'a rien déclaré. */
-  function nature(p) {
+  function regime(p) {
     if (p.nature) return p.nature;
     var ls = (p.livrables || []).filter(function (l) { return !l.annule; });
     if (!ls.length) return "campagne";
@@ -295,5 +295,5 @@ window.VUE_CYCLE = (function () {
     }));
   }
 
-  return { nature: nature, etat: etat, rendre: rendre };
+  return { regime: regime, nature: regime, etat: etat, rendre: rendre };
 })();

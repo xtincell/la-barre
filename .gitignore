@@ -19,5 +19,8 @@ node_modules/
 
 # BEIGNET_PARADISE_deduction.md documente un dossier client réel.
 documents/BEIGNET_PARADISE_deduction.md
-outils/
+
+# outils/ etait ignore quand le dossier etait vide. Il porte desormais la passe
+# d'ingestion du corpus et sa table de correspondance : du code qui doit vivre
+# avec le produit, sinon l'ingestion n'est plus rejouable depuis un clone.
 .claude/
