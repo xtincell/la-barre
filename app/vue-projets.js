@@ -36,6 +36,8 @@ window.VUE_PROJETS = (function () {
   var LENTILLE = "defaut";
 
   function rendre(hote, projetId, section) {
+    if (!projetId && window.VUE_STUDIO) return VUE_STUDIO.projets(hote);
+    if (projetId === "marques") { projetId = null; LENTILLE = "marque"; }
     if (projetId && /^MQ-/.test(projetId)) return marcheDeMarque(hote, projetId);
     if (projetId && /^CMP-/.test(projetId)) return ecranCampagne(hote, projetId);
     if (projetId) return projet(hote, projetId, section);
@@ -46,7 +48,8 @@ window.VUE_PROJETS = (function () {
 
     if (!projets.length) {
       hote.appendChild(el("p.rien", {},
-        "Aucun dossier. On n'entre que ce qui est vivant, et partiellement."));
+        "Aucun projet pour le moment."));
+      hote.appendChild(el("button.b.or", { type: "button", onclick: nouveau }, "Créer un projet"));
       return;
     }
 
@@ -894,7 +897,7 @@ window.VUE_PROJETS = (function () {
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           var d = f.valeurs();
-          if (!d.nom) { alert("Un projet a un nom."); return; }
+          if (!d.nom || !d.client) { AVIS.refus("Renseignez le client et le nom du projet."); return; }
           var p = DEPOT.ajoute("projets", {
             ref: d.ref || "PRJ-" + String(DEPOT.liste("projets").length + 1).padStart(4, "0"),
             nom: d.nom, nature: choixG, statut: "ouvert", equipe: [],
@@ -1633,7 +1636,7 @@ window.VUE_PROJETS = (function () {
   }
 
   return {
-    rendre: rendre, titre: "Projets", nomSection: nomSection, etatSection: etatSection,
+    rendre: rendre, nouveau: nouveau, titre: "Projets", nomSection: nomSection, etatSection: etatSection,
     sectionsDe: sectionsDe, editerChamp: editerChamp,
     editerSection: function (p, cle, rafraichir) { editer(p, cle, CHAMPS.section(cle), rafraichir); },
   };

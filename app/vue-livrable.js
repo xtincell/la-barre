@@ -379,7 +379,8 @@ window.VUE_LIVRABLE = (function () {
       var etat = l.grille || {};
       g.forEach(function (c) {
         var tenu = etat[c.cle] === true;
-        boite.appendChild(el("div.critere-l" + (tenu ? ".tenu" : ".rate"), {
+        boite.appendChild(el("button.critere-l" + (tenu ? ".tenu" : ".rate"), {
+          type: "button", "aria-pressed": tenu ? "true" : "false",
           onclick: function () { etat[c.cle] = !tenu; l.grille = etat; DEPOT.enregistrer(); dessiner(); },
         }, el("span.marque", {}, tenu ? "✓" : "✕"), el("span", {}, c.texte)));
       });

@@ -5,9 +5,13 @@
   "description": "LA BARRE — le poste de travail du directeur de la création. Du brief au livrable, et les talents qui les font.",
   "type": "module",
   "scripts": {
-    "start": "node servir.mjs"
+    "start": "node servir.mjs",
+    "test": "node tests/parcours.mjs"
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
   }
 }

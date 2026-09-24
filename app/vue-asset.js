@@ -12,8 +12,9 @@
 window.VUE_ASSET = (function () {
   var el = O.el;
 
-  function ouvrir(p, l, rafraichir) {
-    function apres() { PANNEAU.fermer(); ouvrir(p, l, rafraichir); if (rafraichir) rafraichir(); }
+  function ouvrir(p, l, rafraichir, mode) {
+    onglet = mode || "poser";
+    function apres() { PANNEAU.fermer(); ouvrir(p, l, rafraichir, onglet); if (rafraichir) rafraichir(); }
     PANNEAU.ouvrir(l.nom, "V" + (l.version || 1), rendre(p, l, apres));
     DEPOT.lu("livrables", l.id);
   }
@@ -21,9 +22,9 @@ window.VUE_ASSET = (function () {
   /* Trois onglets, pas cinq : ce qu'on regarde, ce qu'on juge, d'où ça vient.
    * L'écran de livrable faisait doublon — il est absorbé ici. */
   var ONGLETS = [
-    { cle: "poser", nom: "CE QU'IL FAUT POSER" },
-    { cle: "juger", nom: "CE QU'ON EN DIT" },
-    { cle: "origine", nom: "D'OÙ ÇA VIENT" },
+    { cle: "poser", nom: "Visuels et fichiers" },
+    { cle: "juger", nom: "Critères et verdict" },
+    { cle: "origine", nom: "Versions et dépendances" },
   ];
   var onglet = "poser";
 

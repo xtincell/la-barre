@@ -72,30 +72,22 @@ window.FILE = (function () {
     }
 
     /* 2 · Les retours client non tranchés : ils suspendent des livrables. */
-    var fb = FEEDBACK.ouverts();
-    if (fb.length) {
-      var touchees = fb.reduce(function (n, f) { return n + FEEDBACK.impact(f).assets; }, 0);
-      var age = fb.reduce(function (n, f) {
-        return Math.max(n, f.quand ? O.depuis(f.quand) : 0); }, 0);
-      var vus = [];
-      fb.forEach(function (f) {
-        var p2 = DEPOT.trouve("projets", f.projet);
-        if (p2) (p2.livrables || []).forEach(function (l) {
-          if (!l.annule && l.vignette && vus.length < 4) vus.push(l); });
-      });
-      out.push(item("trancher", fb.length + (fb.length > 1 ? " retours client non tranchés" : " retour client non tranché"),
-        touchees + (touchees > 1 ? " livrables sont suspendus" : " livrable est suspendue")
-          + " tant que je n'ai pas dit si c'est absorbé, facturé ou refusé.",
-        95 + touchees, "#/pipeline", vus,
-        { chiffre: touchees + (touchees > 1 ? " livrables suspendus" : " livrable suspendu"),
-          depuis: age,
-          trancher: "Absorbé par l'agence, facturé au client, ou refusé sur critère. Tant que ce n'est pas dit, rien ne repart.",
-          court: "retours non tranchés",
-          verbatim: (fb[0] || {}).texte, verbatimPar: (fb[0] || {}).auteur,
-          verbatimLe: (fb[0] || {}).quand,
-          gestes: [{ nom: "Trancher les retours", fort: true, quand: function () {
-            GESTE.ouvrir("reprises"); } }] }));
-    }
+    FEEDBACK.ouverts().forEach(function (f) {
+      var p = DEPOT.trouve("projets", f.projet);
+      if (!p || CLOTURE.est(p)) return;
+      var impact = FEEDBACK.impact(f);
+      out.push(item("trancher", p.nom + " : retour client",
+        impact.assets + " livrable(s) concernés par ce retour.",
+        95 + impact.assets, "#/projets/" + p.id + "/livrables",
+        impact.pieces.filter(function (l) { return l.vignette; }).slice(0, 2),
+        { chiffre: p.ref + " · " + impact.assets + " livrable(s)",
+          depuis: f.quand ? O.depuis(f.quand) : 0,
+          trancher: "Décider si ce retour est absorbé, facturé ou refusé, avec son motif.",
+          verbatim: f.texte, verbatimPar: f.auteur, verbatimLe: f.quand,
+          gestes: [{ nom: "Traiter ce retour", fort: true, quand: function () {
+            FEEDBACK.trancher(f, function () { APP.rendre(); });
+          } }] }));
+    });
 
     /* 3 · Les pistes en lice sans arbitrage. */
     projets.forEach(function (p) {
@@ -202,10 +194,13 @@ window.FILE = (function () {
    * faire étaient deux moitiés du même geste. */
 
   var courant = 0;
+  var famille = "";
 
   function salle(rafraichir) {
-    var items = tout();
-    if (!items.length) return vide();
+    var tous = tout();
+    if (!tous.length) return vide();
+    var items = tous.filter(function (x) { return !famille || x.famille === famille; });
+    if (!items.length) { famille = ""; items = tous; }
     if (courant >= items.length) courant = 0;
     var x = items[courant];
 
@@ -225,9 +220,13 @@ window.FILE = (function () {
 
   /* La file, réduite à des coûts. Elle navigue, elle ne se lit pas. */
   function spine(items, rafraichir) {
-    return el("div.sl-file", {},
-      el("div.slf-t", {}, "LA FILE · " + items.length
-        + (items.length > 1 ? " DÉCISIONS" : " DÉCISION")),
+    var filtre = el("select.studio-file-filtre", { "aria-label": "Filtrer les sujets", onchange: function (e) { famille = e.target.value; courant = 0; rafraichir(); } },
+      el("option", { value: "" }, "Tous les sujets"),
+      Object.keys(FAMILLES).map(function (key) { return el("option", { value: key }, FAMILLES[key].nom); }));
+    filtre.value = famille;
+    return el("div.sl-file", {}, filtre,
+      el("div.slf-t", {}, "À traiter · " + items.length
+        + (items.length > 1 ? " sujets" : " sujet")),
       /* La seconde ligne redisait la première, tronquée : « William Kwin
        * Mandengue tient du spéculatif » au-dessus de « William Kwin Mandengue
        * tient du spécul… ». Vingt-trois lignes grises identiques, et le
@@ -257,8 +256,8 @@ window.FILE = (function () {
   function decision(x, total, rafraichir) {
     var d = FAMILLES[x.famille] || {};
     return el("div.sl-d", {},
-      el("div.sld-r", {}, "DÉCISION " + (courant + 1) + " SUR " + total
-        + (courant === 0 ? "  ·  LA PLUS COÛTEUSE" : "")),
+      el("div.sld-r", {}, "Sujet " + (courant + 1) + " sur " + total
+        + (courant === 0 ? " · priorité proposée" : "")),
 
       el("div.sld-c", {}, x.chiffre),
       el("div.sld-s", {},
@@ -273,7 +272,7 @@ window.FILE = (function () {
         : null,
 
       el("div.sld-t", {},
-        el("div.sldt-l", {}, "CE QU'IL FAUT TRANCHER"),
+        el("div.sldt-l", {}, "La prochaine action"),
         el("p", {}, x.trancher || x.cout)),
 
       el("div.sld-g", {},
@@ -299,11 +298,11 @@ window.FILE = (function () {
         el("button.b.nu", { type: "button", onclick: function () {
           var carte = document.querySelector(".sl-d");
           O.sortir(carte, function () {
-            courant = Math.min(courant + 1, total - 1); rafraichir();
+            courant = (courant + 1) % total; rafraichir();
           });
-        } }, "Passer  ↓")),
+        } }, "Sujet suivant")),
 
-      el("div.sld-m", {}, "le motif se choisit dans les critères écrits"));
+      el("div.sld-m", {}, "Consulter un sujet ou passer au suivant ne le résout pas."));
   }
 
   /* Ce qu'il faut avoir sous les yeux pour trancher — et rien de plus. */
@@ -314,7 +313,7 @@ window.FILE = (function () {
       var pe = x.verbatimPar ? DEPOT.trouve("personnes", x.verbatimPar) : null;
       var ct = x.verbatimPar ? DEPOT.trouve("contacts", x.verbatimPar) : null;
       b.push(el("div.sl-p", {},
-        el("div.slp-t", {}, "LE RETOUR, MOT POUR MOT"),
+        el("div.slp-t", {}, "Le retour client"),
         el("blockquote", {}, "« " + x.verbatim + " »"),
         el("div.slp-a", {}, (pe || ct ? (pe || ct).nom : "auteur non nommé")
           + (x.verbatimLe ? "  ·  " + O.joli(x.verbatimLe) : ""))));
@@ -323,20 +322,8 @@ window.FILE = (function () {
     var d = FAMILLES[x.famille] || {};
     if (d.quoi) {
       b.push(el("div.sl-p", {},
-        el("div.slp-t", {}, "POURQUOI C'EST PREMIER"),
+        el("div.slp-t", {}, "Pourquoi agir"),
         el("p", {}, d.quoi.charAt(0).toUpperCase() + d.quoi.slice(1) + ".")));
-    }
-
-    var att = window.RENVOI ? RENVOI.ouvertes() : [];
-    if (att.length) {
-      b.push(el("div.sl-p", {},
-        el("div.slp-t", {}, "QUI ATTEND DERRIÈRE"),
-        el("div.slp-q", {}, att.slice(0, 4).map(function (a) {
-          var q = a.destinataire ? DEPOT.trouve("personnes", a.destinataire) : null;
-          return q ? UI.avatar(q, 24) : null;
-        }).filter(Boolean)),
-        el("p", {}, att.length + (att.length > 1 ? " renvois ouverts" : " renvoi ouvert")
-          + " — leur horloge court, pas la mienne.")));
     }
 
     return el("div.sl-pr", {}, b);

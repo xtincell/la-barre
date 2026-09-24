@@ -3,23 +3,39 @@
 window.PANNEAU = (function () {
   var el = O.el;
   var ouvert = null;
+  var retourFocus = null;
+  var retourFocusSur = null;
 
   function fermer() {
     if (!ouvert) return;
+    fermerSur();
     document.body.removeChild(ouvert);
     ouvert = null;
     document.removeEventListener("keydown", surTouche);
+    if (retourFocus && retourFocus.isConnected) retourFocus.focus();
   }
 
-  function surTouche(e) { if (e.key === "Escape") fermer(); }
+  function surTouche(e) {
+    var actif = dessus || ouvert;
+    if (!actif) return;
+    if (e.key === "Escape") { e.preventDefault(); if (dessus) fermerSur(); else fermer(); return; }
+    if (e.key !== "Tab") return;
+    var choix = Array.prototype.slice.call(actif.querySelectorAll('button, a[href], input, select, textarea, [tabindex="0"]'))
+      .filter(function (n) { return !n.disabled && n.getClientRects().length; });
+    if (!choix.length) return;
+    var premier = choix[0], dernier = choix[choix.length - 1];
+    if (e.shiftKey && (document.activeElement === premier || !actif.contains(document.activeElement))) { e.preventDefault(); dernier.focus(); }
+    else if (!e.shiftKey && (document.activeElement === dernier || !actif.contains(document.activeElement))) { e.preventDefault(); premier.focus(); }
+  }
 
   function ouvrir(titre, etiquette, corps, couleur) {
     fermer();
-    var p = el("aside.panneau", { role: "dialog", style: { "--dir": couleur || "var(--accent)" } },
+    retourFocus = document.activeElement;
+    var p = el("aside.panneau", { role: "dialog", "aria-modal": "true", "aria-label": titre, style: { "--dir": couleur || "var(--accent)" } },
       el("div.panneau-tete", {},
         el("h2", {}, titre),
         etiquette ? el("span.etat", {}, etiquette) : null,
-        el("button.panneau-fermer", { type: "button", onclick: fermer }, "✕")
+        el("button.panneau-fermer", { type: "button", onclick: fermer, "aria-label": "Fermer le panneau" }, "✕")
       ),
       el("div.panneau-corps", {}, corps)
     );
@@ -27,6 +43,7 @@ window.PANNEAU = (function () {
     document.body.appendChild(env);
     ouvert = env;
     document.addEventListener("keydown", surTouche);
+    p.querySelector("button").focus();
     return p;
   }
 
@@ -52,17 +69,20 @@ window.PANNEAU = (function () {
 
   function sur(titre, etiquette, corps) {
     fermerSur();
-    var p = el("aside.panneau.dessus", { role: "dialog" },
+    retourFocusSur = document.activeElement;
+    var p = el("aside.panneau.dessus", { role: "dialog", "aria-modal": "true", "aria-label": titre },
       el("div.panneau-tete", {},
         el("h2", {}, titre),
         etiquette ? el("span.etat", {}, etiquette) : null,
-        el("button.panneau-fermer", { type: "button", onclick: fermerSur }, "✕")
+        el("button.panneau-fermer", { type: "button", onclick: fermerSur, "aria-label": "Fermer le dialogue" }, "✕")
       ),
       el("div.panneau-corps", {}, corps)
     );
     var env = el("div", {}, el("div.voile.voile-dessus", { onclick: fermerSur }), p);
     document.body.appendChild(env);
     dessus = env;
+    document.addEventListener("keydown", surTouche);
+    p.querySelector("button").focus();
     return p;
   }
 
@@ -70,6 +90,8 @@ window.PANNEAU = (function () {
     if (!dessus) return;
     document.body.removeChild(dessus);
     dessus = null;
+    if (retourFocusSur && retourFocusSur.isConnected) retourFocusSur.focus();
+    if (!ouvert) document.removeEventListener("keydown", surTouche);
   }
 
   /* Demander une valeur sans window.prompt : le navigateur le bloque dans les

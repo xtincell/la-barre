@@ -24,8 +24,8 @@ window.VUE_DECIDER = (function () {
   var mode = "file";
 
   var MODES = [
-    { cle: "file", nom: "FILE DE VALIDATION", quoi: "un livrable en entier, dans l'ordre du coût" },
-    { cle: "du", nom: "EN ATTENTE DE TIERS", quoi: "ce que j'ai renvoyé et qui n'est pas revenu" },
+    { cle: "file", nom: "À traiter", quoi: "arbitrages, retours client et engagements" },
+    { cle: "du", nom: "Retours attendus", quoi: "ce que j'ai renvoyé et qui n'est pas revenu" },
   ];
 
   /* « piece » a été absorbée par « file ». L'adresse continue de fonctionner :
@@ -78,8 +78,8 @@ window.VUE_DECIDER = (function () {
    * l'écran de ce qu'on me doit — où rien de ce N n'est de mon ressort. */
   function pireFile(n) {
     return n
-      ? { t: "Rien n'avance sans ces " + n + " décisions",
-          q: "Triées par ce que ça coûte d'attendre un jour de plus — pas par ordre d'arrivée." }
+      ? { t: n + (n > 1 ? " sujets à faire avancer" : " sujet à faire avancer"),
+          q: "Choisissez un sujet. Son contexte et l’action à mener restent ensemble." }
       : { t: "Rien n'attend",
           q: "Aucun verdict en suspens, aucune modification due, aucun conflit d'ordre." };
   }
