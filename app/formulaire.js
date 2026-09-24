@@ -9,6 +9,7 @@
 
 window.FORM = (function () {
   var el = O.el;
+  var compteurChamp = 0;
 
   function rendre(champs, valeurs, options) {
     options = options || {};
@@ -87,6 +88,10 @@ window.FORM = (function () {
           saisie.value = v[c.cle] === null || v[c.cle] === undefined ? "" : v[c.cle];
         }
 
+        var champId = "champ-" + (++compteurChamp);
+        saisie.id = champId;
+        saisie.setAttribute("aria-label", c.nom);
+        if (c.requis) saisie.setAttribute("aria-required", "true");
         saisie.addEventListener("input", function () {
           if (c.type === "objets") { valeurs[c.cle] = v[c.cle]; return; }
           var val = saisie.value;
@@ -102,7 +107,7 @@ window.FORM = (function () {
         saisie.addEventListener("change", function () { saisie.dispatchEvent(new Event("input")); });
 
         return el("div." + classe.replace(/^\./, ""), {},
-          el("label", {}, c.nom),
+          el("label", { for: champId }, c.nom),
           c.aide ? el("div.indice", {}, c.aide) : null,
           !monPoste && options.frontiere
             ? el("div.indice", {}, "Ce champ appartient à " + O.poste(c.poste).nom + ". Vous pouvez le mettre en forme, pas l'écrire.")

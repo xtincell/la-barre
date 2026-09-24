@@ -16,19 +16,22 @@ window.APP = (function () {
    * test qui la valide : quelqu'un qui découvre le produit doit savoir sans
    * hésiter où aller pour voir ce qui demande son intervention. */
   var VUES = [
-    { cle: "valider", ico: "revue", nom: "À VALIDER",
+    { cle: "bureau", ico: "atelier", nom: "Bureau",
+      quoi: "les créations à regarder et les projets en cours",
+      vue: function () { return VUE_STUDIO; } },
+    { cle: "valider", ico: "revue", nom: "Décisions",
       quoi: "ce qui attend ma validation",
       vue: function () { return VUE_DECIDER; } },
-    { cle: "planning", ico: "charge", nom: "PLANNING",
+    { cle: "planning", ico: "charge", nom: "Planning",
       quoi: "charge, priorités, équipe",
       vue: function () { return VUE_PLACER; } },
-    { cle: "reporting", ico: "standard", nom: "REPORTING",
+    { cle: "reporting", ico: "standard", nom: "Bilan",
       quoi: "indicateurs, bilan, arbitrages",
       vue: function () { return VUE_CONSTATER; } },
-    { cle: "projets", ico: "projets", nom: "PROJETS",
+    { cle: "projets", ico: "projets", nom: "Projets",
       quoi: "où en est chaque projet",
       vue: function () { return VUE_PROJETS; } },
-    { cle: "referentiel", ico: "referentiel", nom: "RÉFÉRENTIEL",
+    { cle: "referentiel", ico: "referentiel", nom: "Ressources",
       quoi: "marques, marchés, gabarits, base",
       vue: function () { return VUE_MAISON; } },
   ];
@@ -56,7 +59,7 @@ window.APP = (function () {
   function piste() {
     var brut = location.hash.replace(/^#\/?/, "");
     var m = brut.split("/");
-    var cle = m[0] || "decider";
+    var cle = m[0] || "bureau";
 
     if (ANCIENNES[cle]) {
       var a = ANCIENNES[cle];
@@ -85,11 +88,11 @@ window.APP = (function () {
     if (r.vue.cle === "projets" && r.arg) dernierProjet = r.arg;
     var actif = (dernierProjet ? DEPOT.trouve("projets", dernierProjet) : null) || projets[0];
 
-    var n = el("nav.rail", {},
+    var n = el("nav.rail", { "aria-label": "Navigation principale" },
       el("div.rail-marque", {},
-        el("div.couronne", {}, "♛"),
-        el("h1", {}, "La Barre"),
-        el("div.os", {}, MAISON.nom.split(" ")[0] + " CREATIVE OS")
+        el("span.studio-signe", { "aria-hidden": "true" }, "▰"),
+        el("a.rail-logo", { href: "#/bureau" }, "La Barre", el("span", {}, ".")),
+        el("div.os", {}, "Direction créative")
       ),
 
       /* Chaque place dit ce qui l'attend. Un compteur qui ne bouge jamais est
@@ -104,14 +107,14 @@ window.APP = (function () {
         );
       })),
 
-      actif ? blocDossier(actif, r, projets) : null,
+      r.vue.cle === "projets" && r.arg && actif ? blocDossier(actif, r, projets) : null,
 
-      el("div.rail-titre", {}, "OUTILS RAPIDES"),
+      el("div.rail-titre", {}, "À portée de main"),
       el("div.rail-outils", {},
         el("button", { type: "button", onclick: function () { RENVOI.ouvrir({}); } },
-          el("span.ico", {}, UI.icone("renvoi", 14)), "Renvoi", el("span.touche", {}, "⌘R")),
+          el("span.ico", {}, UI.icone("renvoi", 14)), "Demander un retour"),
         el("button", { type: "button", onclick: CAPTURE.ouvrir },
-          el("span.ico", {}, UI.icone("capture", 14)), "Capture rapide", el("span.touche", {}, "⌘K")),
+          el("span.ico", {}, UI.icone("capture", 14)), "Prendre une note", el("span.touche", {}, "⌘K")),
         el("button", { type: "button", onclick: function () { var c = document.querySelector(".chapeau-outils input"); if (c) c.focus(); } },
           el("span.ico", {}, UI.icone("recherche", 14)), "Recherche", el("span.touche", {}, "⌘F")),
         el("button", { type: "button", onclick: function () { window.print(); } },
@@ -126,9 +129,9 @@ window.APP = (function () {
             el("div.poste", {}, O.poste(MAISON.titulaire).nom)
           )
         ),
-        el("div.version", {}, "v1.0 · local"),
-        el("div.sauvegarde." + (age === null || age > 2 ? "alerte" : "ok"), {},
-          age === null ? "jamais exporté" : age === 0 ? "exporté aujourd'hui" : "exporté il y a " + age + " j")
+        el("a.rail-suite", { href: MAISON.suite.url, target: "_blank", rel: "noopener noreferrer" }, "Dans la suite Shinkiro ↗"),
+        el("button.sauvegarde." + (age === null || age > 2 ? "alerte" : "ok"), { type: "button", onclick: function () { DEPOT.exporter(); DEPOT.noterExport(); rendre(); }, title: "Télécharger une sauvegarde JSON" },
+          age === null ? "Sauvegarder mon travail" : age === 0 ? "exporté aujourd'hui" : "exporté il y a " + age + " j")
       )
     );
     return n;
@@ -318,7 +321,7 @@ window.APP = (function () {
       el("div.fil", {}, fil),
       el("div.chapeau-outils", {},
         champ,
-        el("button.b.nu", { type: "button", onclick: CAPTURE.ouvrir, title: "Capture rapide ⌘K" }, "✎"),
+        el("button.b.nu", { type: "button", onclick: CAPTURE.ouvrir, title: "Prendre une note ⌘K" }, "Prendre une note"),
         resultats
       )
     );
@@ -356,6 +359,7 @@ window.APP = (function () {
   function rendre() {
     var r = piste();
 
+    document.body.dataset.vue = r.vue.cle;
     var nouveauRail = rail();
     if (railNoeud && railNoeud.parentNode) railNoeud.parentNode.replaceChild(nouveauRail, railNoeud);
     else document.body.insertBefore(nouveauRail, document.body.firstChild);
@@ -363,7 +367,7 @@ window.APP = (function () {
 
     O.vider(corps);
     corps.appendChild(chapeau());
-    var zone = el("div.zone");
+    var zone = el("div.zone", { id: "contenu", tabindex: "-1" });
     corps.appendChild(zone);
     r.vue.vue().rendre(zone, r.arg, r.sous);
     window.scrollTo(0, 0);
@@ -371,6 +375,9 @@ window.APP = (function () {
 
   function demarrer() {
     corps = document.getElementById("corps");
+    document.querySelector(".aller-contenu").addEventListener("click", function (e) {
+      e.preventDefault(); document.getElementById("contenu").focus();
+    });
 
     /* localStorage est propre à un navigateur : ouvrir la même adresse ailleurs
      * donnait un autre contenu, et l'exemple d'amorce l'emportait. La règle est
@@ -410,7 +417,7 @@ window.APP = (function () {
       if (!(e.metaKey || e.ctrlKey)) return;
       var k = e.key.toLowerCase();
       if (k === "k") { e.preventDefault(); CAPTURE.ouvrir(); }
-      if (k === "r") { e.preventDefault(); RENVOI.ouvrir({}); }
+
       if (k === "f") { e.preventDefault(); var c = document.querySelector(".chapeau-outils input"); if (c) c.focus(); }
     });
     rendre();

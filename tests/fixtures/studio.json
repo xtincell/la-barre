@@ -1,0 +1,31 @@
+{
+  "schema": 5,
+  "exemple": true,
+  "personnes": [
+    { "id": "P-dc", "nom": "Camille Laurent", "poste": "creation", "casquettes": [], "seniorite": "senior" },
+    { "id": "P-da", "nom": "Sacha Martin", "poste": "da", "casquettes": [], "seniorite": "senior" }
+  ],
+  "marches": [{ "id": "M-demo", "nom": "Marché de démonstration", "code": "FR", "langues": ["fr"], "sku": [], "mentions": [] }],
+  "supports": [{ "id": "S-demo", "nom": "Affiche", "code": "affiche", "type": "print" }],
+  "projets": [
+    {
+      "id": "PRJ-demo", "ref": "DEMO-01", "nom": "Nacre — faire de la place", "nature": "campagne", "statut": "production", "cree_le": "2026-09-21T09:00:00Z", "equipe": [], "volets": [], "perimetre": { "supports": [], "marches": [] },
+      "sections": {
+        "identite": { "client": "Atelier Nacre (fictif)", "marque": "Nacre", "echeance": "2026-10-15" },
+        "brief": { "probleme": "Une maison d’objets qui veut redonner de la valeur aux espaces que l’on habite. Faire préférer moins d’objets, mieux choisis.", "objectif_com": "Installer une préférence pour les objets durables.", "cible": "Amateurs de design attentifs à leur intérieur." },
+        "bigidea": { "idee": "Faire de la place à ce qui compte.", "criteres": ["Un seul objet au centre de la composition", "La signature reste lisible à distance"] },
+        "pistes": [
+          { "id": "PI-demo-a", "titre": "L’espace retrouvé", "concept": "Faire de la place à ce qui compte.", "statut": "proposee", "auteurDA": "P-da", "sacrifice": "La démonstration de gamme", "argument": "Le vide donne de la valeur à l’objet.", "soumis_le": "2026-09-23T09:00:00Z", "version": 1 },
+          { "id": "PI-demo-b", "titre": "Les objets qui restent", "concept": "Moins de passage. Plus d’attachement.", "statut": "proposee", "auteurDA": "P-da", "soumis_le": "2026-09-24T09:00:00Z", "version": 1 }
+        ]
+      },
+      "livrables": [
+        { "id": "L-demo", "nom": "Affiche de lancement", "niveau": "maitre", "kv": true, "pisteId": "PI-demo-a", "marche": "M-demo", "support": "S-demo", "responsable": "P-da", "points": {}, "estime": 2, "versions": [{ "n": 1, "soumis_le": "2026-09-24T09:00:00Z", "verdict": null }], "version": 1, "entrees": [] }
+      ]
+    },
+    {
+      "id": "PRJ-demo-2", "ref": "DEMO-02", "nom": "Les Traversées — saison culturelle", "nature": "campagne", "statut": "ouvert", "cree_le": "2026-09-20T09:00:00Z", "equipe": [], "volets": [], "livrables": [], "perimetre": { "supports": [], "marches": [] },
+      "sections": { "identite": { "client": "Maison des Traversées (fictive)", "marque": "Les Traversées", "echeance": "2026-11-03" }, "brief": {}, "pistes": [] }
+    }
+  ]
+}

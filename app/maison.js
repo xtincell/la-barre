@@ -10,6 +10,7 @@
 window.MAISON = {
   nom: "MATANGA AGENCY",
   version: "1.0",
+  suite: { nom: "Shinkiro", url: "https://github.com/xtincell/shinkiro" },
 
   /* ————— Les postes. Source : les fiches de poste. ————— */
   postes: [

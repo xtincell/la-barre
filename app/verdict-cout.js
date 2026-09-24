@@ -38,7 +38,7 @@ window.COUT = (function () {
       var reste = REGLES.coince(l).filter(function (a) { return a.cle !== "central"; });
       if (reste.length) {
         out.effets.push("Il restera " + reste.length + " points en attente : "
-          + reste.map(function (a) { return a.axe.toLowerCase(); }).join(", "));
+          + reste.map(function (a) { return a.point.toLowerCase(); }).join(", "));
       }
       return out;
     }
