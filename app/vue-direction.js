@@ -18,6 +18,10 @@ window.VUE_DIRECTION = (function () {
   var filtreSemaine = null;
   var filtrePersonne = null;
   var vue = "adiriger";     /* adiriger · tout */
+  /* Cinq cents livrables à diriger faisaient soixante mille pixels : le mur se
+   * lit par tranches de vingt-quatre, dans l'ordre où ils arrivent. */
+  var LOT = 24;
+  var montres = LOT;
   var hote = null;
 
   function rafraichir() { if (hote) rendre(hote); }
@@ -26,7 +30,7 @@ window.VUE_DIRECTION = (function () {
 
   function rendre(h) {
     hote = h;
-    h.className = (h.className || "") + " commande";
+    h.className = (h.className || "").replace(/\s*commande\b/g, "") + " commande";
     O.vider(h);
 
     var pieces = PLATEAU.pieces();
@@ -99,9 +103,10 @@ window.VUE_DIRECTION = (function () {
     var enMur = lignes.filter(function (l) { return l.c.part > 100; });
     var vides = lignes.filter(function (l) { return !l.pieces.length; });
 
-    return el("div.sm", {},
+    var portent = lignes.filter(function (l) { return l.pieces.length; });
+    return el("section.sm", {},
       el("div.sm-t", {},
-        el("h3", {}, titreSemaine(enMur, vides)),
+        el("h2", {}, titreSemaine(enMur, vides)),
         el("p", {}, "La charge est un problème de calendrier, pas de pourcentage. "
           + "Un cumul déclaré réduit la capacité — il se voit ici, pas dans une note.")),
 
@@ -112,10 +117,19 @@ window.VUE_DIRECTION = (function () {
           el("div.smgh-l", {}, jours.map(function (j) {
             return el("span.smgh-j" + (j.auj ? ".auj" : ""), {}, j.nom); }))),
 
-        lignes.map(function (l) { return ligneSemaine(l, jours, rafraichir); })),
+        portent.map(function (l) { return ligneSemaine(l, jours, rafraichir); }),
+        /* Ceux qui n'ont rien se replient sous leur compte : le titre les nomme
+         * déjà, et quarante lignes vides enterraient la semaine. */
+        vides.length
+          ? el("details.sm-vides", {},
+              el("summary.smv-t", {}, vides.length + (vides.length > 1
+                ? " personnes sans livrable affecté" : " personne sans livrable affecté"),
+                el("span", {}, "des talents qu'on ne détecte pas")),
+              vides.map(function (l) { return ligneSemaine(l, jours, rafraichir); }))
+          : null),
 
       el("div.sm-d", {},
-        el("div.smd-t", {}, "CE QUE ÇA DÉPLACE"),
+        el("h3", {}, "Ce que ça déplace"),
         el("p", {}, deplacement(enMur, vides)),
         el("div.form-actions", {},
           GESTE.bouton("charge", {}, null, "b.or"),
@@ -125,7 +139,7 @@ window.VUE_DIRECTION = (function () {
 
   /* Les cinq jours ouvrés de la semaine courante. */
   function cinqJours() {
-    var NOMS = ["LUN", "MAR", "MER", "JEU", "VEN"];
+    var NOMS = ["Lun", "Mar", "Mer", "Jeu", "Ven"];
     var auj = new Date(O.jour() + "T12:00:00");
     var lundi = new Date(auj);
     lundi.setDate(auj.getDate() - ((auj.getDay() + 6) % 7));
@@ -183,24 +197,28 @@ window.VUE_DIRECTION = (function () {
         UI.avatar(pe, 32),
         el("div", {},
           el("div.smrq-n", {}, pe.nom,
-            pe.seniorite === "junior" ? UI.eti("junior", "or") : null),
+            pe.seniorite === "junior" ? UI.eti("Junior", "or") : null),
           el("div.smrq-p", {}, O.poste(pe.poste).nom),
           cums.length
-            ? el("div.smrq-c", {}, "cumule " + cums.map(function (c) {
+            ? el("div.smrq-c", {}, "Cumule " + cums.map(function (c) {
                 return O.poste(c.poste).court + (c.part ? "\u00a0" + c.part + "\u00a0%" : ""); }).join(", "))
             : null)),
 
       el("div.smr-j", {},
         !l.pieces.length
-          ? el("div.smr-rien", {}, "aucun livrable ne lui est affecté — c'est un talent qu'on ne détecte pas")
+          ? el("div.smr-rien", {}, "Aucun livrable ne lui est affecté — c'est un talent qu'on ne détecte pas")
           : parJour.every(function (g) { return !g.length; })
-            ? el("div.smr-rien", {}, "rien cette semaine — "
+            ? el("div.smr-rien", {}, "Rien cette semaine — "
                 + (apres.length ? apres.length + (apres.length > 1 ? " livrables attendus plus tard" : " livrable attendu plus tard") : "")
                 + (apres.length && sansDate.length ? ", " : "")
                 + (sansDate.length ? sansDate.length + (sansDate.length > 1 ? " sans date" : " sans date") : ""))
             : parJour.map(function (g, i) {
+              /* Trois blocs par jour, puis le compte : deux cents livrables dus
+               * le même lundi faisaient une colonne de sept mille pixels. */
               return el("div.smr-c" + (jours[i].auj ? ".auj" : ""), {},
-                g.map(function (x) {
+                g.length > 3 ? el("span.smr-plus", { title: g.slice(3).map(function (x) { return x.nom; }).join("\n") },
+                  "+ " + (g.length - 3) + (g.length - 3 > 1 ? " autres" : " autre")) : null,
+                g.slice(0, 3).map(function (x) {
                   return el("button.smr-b" + (x.retard ? ".retard" : ""), { type: "button",
                     title: x.nom + (x.charge ? "  ·  " + x.charge + " j" : "  ·  sans estimation"),
                     onclick: function () { VUE_ASSET.ouvrir(x.projet, x.objet, rafraichir); } },
@@ -209,15 +227,15 @@ window.VUE_DIRECTION = (function () {
             }),
         /* La ligne de capacité : ce qui la dépasse se voit. */
         el("div.smr-mur", { style: { left: Math.min(100, Math.round((100 / Math.max(1, l.c.part)) * 100)) + "%" } },
-          el("span", {}, "mur"))),
+          el("span", {}, "Mur"))),
 
       el("div.smr-t" + (mur ? ".alerte" : ""), {},
-        el("span", {}, l.c.jours + " j sur " + l.c.capacite),
+        el("span", {}, mur ? el("span.sm-signe", { "aria-hidden": "true" }, "● ") : null, l.c.jours + " j sur " + l.c.capacite),
         apres.length ? el("span.smr-ap", {}, apres.length
           + (apres.length > 1 ? " livrables plus tard" : " livrable plus tard")) : null,
         sansDate.length ? el("span.smr-sd", {}, sansDate.length
           + (sansDate.length > 1 ? " sans date — invisibles ici" : " sans date — invisible ici")) : null,
-        l.conflit ? el("span.smr-x", {}, "2 dossiers, même jour") : null));
+        l.conflit ? el("span.smr-x", {}, el("span.sm-signe", { "aria-hidden": "true" }, "● "), "2 dossiers, même jour") : null));
   }
 
   function materiel() {
@@ -252,7 +270,7 @@ window.VUE_DIRECTION = (function () {
   function panneauMateriel(manquantes, gabarits) {
     PANNEAU.ouvrir("Mes moyens", "ce qui manque pour produire", el("div", {},
       manquantes.length ? el("div.sousbloc", {},
-        el("h3", {}, "ENTRÉES SANS FOURNISSEUR"),
+        el("h3", {}, "Entrées sans fournisseur"),
         UI.banniere("", REGLES.prix("entree-sans-fournisseur")),
         el("div", {}, manquantes.map(function (m) {
           return el("div.file-item", {},
@@ -261,12 +279,12 @@ window.VUE_DIRECTION = (function () {
             el("button.b.nu", { type: "button", onclick: function () {
               PANNEAU.fermer();
               RENVOI.ouvrir({ quoi: m.quoi, projet: m.projet.ref, projetId: m.projet.id, objet: m.livrable.id });
-            } }, "réclamer"));
+            } }, "Réclamer"));
         }))
       ) : null,
       gabarits ? el("div.sousbloc", {},
-        el("h3", {}, "GABARITS NON RENSEIGNÉS"),
-        el("p", { style: { "font-size": ".84rem", color: "var(--clair-doux)" } },
+        el("h3", {}, "Gabarits non renseignés"),
+        el("p.sousbloc-q", {},
           gabarits + " croisement" + (gabarits > 1 ? "s" : "") + " support × marché sans dimensions."),
         el("button.b", { type: "button", onclick: function () {
           PANNEAU.fermer(); GESTE.ouvrir("marches"); } }, "Renseigner les gabarits")
@@ -296,27 +314,34 @@ window.VUE_DIRECTION = (function () {
   function centre(visibles, nADiriger, total) {
     return el("div.cmd-centre", {},
       el("div.cc-tete", {},
-        el("div.chips", {},
-          el("button.chip", { type: "button", "aria-pressed": vue === "adiriger" ? "true" : "false",
-            onclick: function () { vue = "adiriger"; rafraichir(); } },
-            "à diriger", el("span.n", {}, String(nADiriger))),
-          el("button.chip", { type: "button", "aria-pressed": vue === "tout" ? "true" : "false",
-            onclick: function () { vue = "tout"; rafraichir(); } },
-            "tout", el("span.n", {}, String(total)))
-        ),
-        el("span.cc-compte", {}, visibles.length + (visibles.length > 1 ? " livrables" : " livrable"))
+        el("h2", {}, "Ce que je dirige"),
+        el("div.studio-statuts", { role: "group", "aria-label": "Livrables montrés" },
+          [["adiriger", "À diriger", nADiriger], ["tout", "Tout", total]].map(function (x) {
+            return el("button" + (vue === x[0] ? ".active" : ""), { type: "button",
+              "aria-pressed": vue === x[0] ? "true" : "false",
+              onclick: function () { vue = x[0]; montres = LOT; rafraichir(); } },
+              x[1], el("span.studio-compte", {}, String(x[2])));
+          })),
+        el("span.cc-compte", {}, Math.min(montres, visibles.length) + " sur " + visibles.length
+          + (visibles.length > 1 ? " livrables" : " livrable"))
       ),
 
       visibles.length
-        ? el("div.cc-mur", {}, visibles.map(carte))
+        ? el("div.cc-mur", {}, visibles.slice(0, montres).map(carte))
         : el("div.cc-rien", {},
             el("span", {}, vue === "adiriger"
               ? "Tous les livrables ont leur responsable, leur charge et leur date."
               : "Rien à ce filtre."),
             vue === "adiriger" && total
-              ? el("button.b.nu", { type: "button", onclick: function () { vue = "tout"; rafraichir(); } },
-                  "voir les " + total + " livrables")
-              : null)
+              ? el("button.studio-lien", { type: "button", onclick: function () { vue = "tout"; rafraichir(); } },
+                  "Voir les " + total + " livrables")
+              : null),
+      visibles.length > montres
+        ? el("button.studio-lien.cc-plus", { type: "button",
+            onclick: function () { montres += LOT; rafraichir(); } },
+            "Afficher les " + Math.min(LOT, visibles.length - montres) + " suivants · "
+            + (visibles.length - montres) + " restent")
+        : null
     );
   }
 
@@ -344,15 +369,15 @@ window.VUE_DIRECTION = (function () {
       el("div.pc-nom", {}, pc.nom),
 
       el("div.pc-cmd", {},
-        bouton("qui", resp ? resp.nom.split(" ")[0] : "qui ?", !resp, function () { commander(pc, "qui"); }, resp),
-        bouton("combien", pc.charge !== null ? pc.charge + " j" : "combien ?", pc.charge === null, function () { commander(pc, "combien"); }),
-        bouton("quand", pc.date ? O.joli(pc.date) : "quand ?", !pc.date, function () { commander(pc, "quand"); })
+        bouton("qui", resp ? resp.nom.split(" ")[0] : "Qui ?", !resp, function () { commander(pc, "qui"); }, resp),
+        bouton("combien", pc.charge !== null ? pc.charge + " j" : "Combien ?", pc.charge === null, function () { commander(pc, "combien"); }),
+        bouton("quand", pc.date ? O.joli(pc.date) : "Quand ?", !pc.date, function () { commander(pc, "quand"); })
       ),
 
       el("button.pc-select", {
         type: "button",
         onclick: function () { selection[pc.id] = !choisie; rafraichir(); },
-      }, choisie ? "retirer" : "sélectionner")
+      }, choisie ? "Retirer" : "Sélectionner")
     );
   }
 
@@ -391,9 +416,9 @@ window.VUE_DIRECTION = (function () {
             },
               UI.avatar(d.personne, 30),
               el("div.a-corps", {},
-                el("div.a-nom", {}, d.personne.nom, jr ? UI.eti("junior", "or") : null),
+                el("div.a-nom", {}, d.personne.nom, jr ? UI.eti("Junior", "or") : null),
                 el("div.a-jauge", {}, el("i", { style: { width: Math.min(100, d.charge.part) + "%" } })),
-                el("div.a-air", {}, d.air > 0 ? d.air + " j d'air" : "aucun air — " + d.charge.part + " %")
+                el("div.a-air", {}, d.air > 0 ? d.air + " j d'air" : "Aucun air — " + d.charge.part + " %")
               )
             );
           }))
@@ -434,27 +459,38 @@ window.VUE_DIRECTION = (function () {
   /* ————————————————————— 4 · Ce qui s'impose ————————————————————— */
 
   function bandeEngagements() {
-    var eng = OBJECTIFS.engagements();
-    return el("div.bande-eng", {},
-      el("div.be-titre", {}, "CE QUI S'IMPOSE"),
-      el("div.be-liste", {}, eng.map(function (e) {
-        var ton = e.tenable === null ? "inconnu" : e.tenable ? "tenable" : "intenable";
-        return el("button.eng." + ton, {
-          type: "button",
-          onclick: function () { GESTE.ouvrir("brief", { p: e.projet }); },
-        },
-          el("span.e-nom", {}, e.projet.ref),
-          el("span.e-date", {}, e.echeance ? O.joli(e.echeance) : "sans échéance"),
-          el("span.e-charge", {},
-            (e.charge ? e.charge + " j de travail" : "charge inconnue")
-            + (e.joursRestants !== null
-                ? " · " + (e.joursRestants >= 0 ? Math.max(0, e.joursRestants) + " j avant l'échéance" : "échéance dépassée de " + (-e.joursRestants) + " j")
-                : "")),
-          e.tenable === false ? el("span.e-manque", {}, "intenable en l'état") : null,
-          e.inconnues ? el("span.e-inconnu", {}, e.inconnues + " sans estimation") : null,
-          !e.echeance ? el("span.e-manque", {}, "date non fixée") : null
-        );
-      }))
+    /* Les dossiers clos n'imposent plus rien : ils versaient cent quarante
+     * échéances passées dans la bande. L'intenable passe devant. */
+    var eng = OBJECTIFS.engagements().filter(function (e) {
+      return !(window.CLOTURE && CLOTURE.est(e.projet)); });
+    var rang = function (e) { return e.tenable === false ? 0 : e.tenable === null ? 1 : 2; };
+    eng.sort(function (a, b) { return rang(a) - rang(b); });
+    function pastille(e) {
+      var ton = e.tenable === null ? "inconnu" : e.tenable ? "tenable" : "intenable";
+      return el("button.eng." + ton, {
+        type: "button",
+        onclick: function () { GESTE.ouvrir("brief", { p: e.projet }); },
+      },
+        el("span.e-nom", {}, e.projet.ref),
+        el("span.e-date", {}, e.echeance ? O.joli(e.echeance) : "Sans échéance"),
+        el("span.e-charge", {},
+          (e.charge ? e.charge + " j de travail" : "Charge inconnue")
+          + (e.joursRestants !== null
+              ? " · " + (e.joursRestants >= 0 ? Math.max(0, e.joursRestants) + " j avant l'échéance" : "échéance dépassée de " + (-e.joursRestants) + " j")
+              : "")),
+        e.tenable === false ? el("span.e-manque", {}, el("span.sm-signe", { "aria-hidden": "true" }, "● "), "Intenable en l'état") : null,
+        e.inconnues ? el("span.e-inconnu", {}, el("span.sm-signe", { "aria-hidden": "true" }, "◐ "), e.inconnues + " sans estimation") : null,
+        !e.echeance ? el("span.e-manque", {}, el("span.sm-signe", { "aria-hidden": "true" }, "◐ "), "Date non fixée") : null
+      );
+    }
+    return el("section.bande-eng", {},
+      el("h2", {}, "Ce qui s'impose", el("span", {}, eng.length + (eng.length > 1 ? " dossiers ouverts" : " dossier ouvert"))),
+      el("div.be-liste", {}, eng.slice(0, 8).map(pastille)),
+      eng.length > 8
+        ? el("details.sm-vides", {},
+            el("summary.smv-t", {}, "Les " + (eng.length - 8) + " autres"),
+            el("div.be-liste", {}, eng.slice(8).map(pastille)))
+        : null
     );
   }
 
@@ -478,7 +514,7 @@ window.VUE_DIRECTION = (function () {
         verbe("propulser", "Propulser", function () { onde(PLATEAU.simulerPropulser(ids)); }),
         verbe("annuler", "Annuler", function () { onde(PLATEAU.simulerAnnuler(ids)); })
       ),
-      el("button.b.nu", { type: "button", onclick: function () { selection = {}; rafraichir(); } }, "désélectionner")
+      el("button.b.nu", { type: "button", onclick: function () { selection = {}; rafraichir(); } }, "Désélectionner")
     );
   }
 
@@ -495,11 +531,11 @@ window.VUE_DIRECTION = (function () {
     }
     return el("div.zone-gestes.repos", {},
       f.length
-        ? el("div.filtres-l", {}, el("span.f-t", {}, "filtré sur"),
+        ? el("div.filtres-l", {}, el("span.f-t", {}, "Filtré sur"),
             f.map(function (x) { return el("span.chip", {}, x); }),
             el("button.b.nu", { type: "button", onclick: function () {
               filtreSemaine = null; filtrePersonne = null; rafraichir();
-            } }, "tout voir"))
+            } }, "Tout voir"))
         : el("span.f-aide", {}, "Qui · combien · quand — les trois décisions qui font avancer un livrable")
     );
   }
@@ -526,7 +562,7 @@ window.VUE_DIRECTION = (function () {
     return el("div", {},
       comparaison(sim.avant, sim.apres),
       sim.casse.length ? UI.banniere("rouge", sim.casse.join(" · ")) : UI.banniere("vert", "Rien ne casse."),
-      el("div.sousbloc", {}, el("h3", {}, "CE QUI BOUGE"),
+      el("div.sousbloc", {}, el("h3", {}, "Ce qui bouge"),
         el("div", {}, sim.touches.map(function (t) {
           return UI.fileItem(t.piece.objet, t.piece.nom,
             (t.de ? O.joli(t.de) : "sans date") + "  →  " + (t.vers ? O.joli(t.vers) : "sans date"), null);
@@ -536,7 +572,7 @@ window.VUE_DIRECTION = (function () {
   function ondeVentiler(sim) {
     return el("div", {},
       sim.casse.length ? UI.banniere("", sim.casse.join(" · ")) : UI.banniere("vert", "Tout trouve preneur."),
-      el("div.sousbloc", {}, el("h3", {}, "QUI PREND QUOI"),
+      el("div.sousbloc", {}, el("h3", {}, "Qui prend quoi"),
         el("div", {}, sim.repartition.map(function (r) {
           var de = r.de ? DEPOT.trouve("personnes", r.de) : null;
           return el("div.ventil-l", {},
@@ -552,12 +588,12 @@ window.VUE_DIRECTION = (function () {
   function ondeAnnuler(sim) {
     return el("div", {},
       el("div.stats", {},
-        UI.stat("LIVRABLES", sim.touches.length, "retirées du plan", "alerte"),
-        UI.stat("AIR LIBÉRÉ", (sim.libere || "—") + " j", sim.libere ? "rendus à l'équipe" : "charge inconnue", "vert")),
+        UI.stat("Livrables", sim.touches.length, "retirées du plan", "alerte"),
+        UI.stat("Air libéré", (sim.libere || "—") + " j", sim.libere ? "rendus à l'équipe" : "charge inconnue", "vert")),
       sim.consequences.length
         ? el("div", { style: { "margin-top": ".8rem" } }, sim.consequences.map(function (c) { return UI.banniere("rouge", c); }))
         : UI.banniere("vert", "Aucune conséquence de périmètre."),
-      el("div.sousbloc", {}, el("h3", {}, "CE QUI DISPARAÎT"),
+      el("div.sousbloc", {}, el("h3", {}, "Ce qui disparaît"),
         el("div", {}, sim.touches.map(function (t) {
           return UI.fileItem(t.objet, t.nom, t.projet.ref + (t.date ? " · " + O.joli(t.date) : ""), null);
         }))));
@@ -568,7 +604,7 @@ window.VUE_DIRECTION = (function () {
       sim.repousses.length
         ? UI.banniere("", "En le remontant, tu repousses : " + sim.repousses.join(" · "))
         : UI.banniere("vert", "Personne n'est repoussé."),
-      el("div.sousbloc", {}, el("h3", {}, "CE QUI PASSE DEVANT"),
+      el("div.sousbloc", {}, el("h3", {}, "Ce qui passe devant"),
         el("div", {}, sim.touches.map(function (t) {
           return UI.fileItem(t.objet, t.nom, (t.date ? O.joli(t.date) + "  →  une semaine plus tôt" : "sans date"), null);
         }))));
@@ -577,9 +613,9 @@ window.VUE_DIRECTION = (function () {
   function comparaison(avant, apres) {
     var max = Math.max(120, Math.max.apply(null, avant.concat(apres).map(function (s) { return s.part; })));
     return el("div.comparaison", {},
-      el("div.comp-c", {}, el("div.comp-t", {}, "AVANT"), mini(avant, max)),
+      el("div.comp-c", {}, el("div.comp-t", {}, "Avant"), mini(avant, max)),
       el("div.comp-fleche", {}, "→"),
-      el("div.comp-c", {}, el("div.comp-t", {}, "APRÈS"), mini(apres, max)));
+      el("div.comp-c", {}, el("div.comp-t", {}, "Après"), mini(apres, max)));
   }
 
   function mini(pression, max) {

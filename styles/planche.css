@@ -718,24 +718,9 @@
 .fi-x { max-width: calc(var(--mesure-large) + 12rem); }
 .fi-tete { max-width: var(--mesure-large); }
 
-.cmd-rien { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
-  border-top: 1px solid var(--trait); margin-top: 1.6rem; padding-top: 1rem;
-  font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); }
-
 /* Le document compilé se lit à la mesure du papier, pas de l'écran. */
 .co-doc { max-width: calc(var(--mesure) + 4rem); }
 
-/* Une colonne sans contenu rend sa place au lieu de tenir un vide — mais
- * seulement quand il y a deux colonnes. En étroit, tout s'empile. */
-@media (min-width: 1121px) {
-  .cmd-corps.seule { grid-template-columns: minmax(0, 22rem) minmax(0, 1fr); }
-}
-@media (max-width: 1120px) {
-  .cmd-corps, .cmd-corps.seule { grid-template-columns: minmax(0, 1fr); }
-}
-.cc-rien { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
-  font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne);
-  border: 1px dashed var(--trait); padding: .9rem 1rem; align-self: start; }
 
 /* Le rythme vertical : les séparations de section respirent sans creuser. */
 .cmd-sep { margin: 1.4rem 0 .4rem; }
@@ -1256,9 +1241,6 @@
 .rgt-j i { display: block; height: 3px; background: var(--arbitrage);
   border-radius: var(--r-pilule); }
 .rgt-j span { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
-.cmd-file { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
-  margin-bottom: 1.2rem; }
-.cmd-file span { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
 
 /* ————————————————————— Mon équipe : le tableau comparable ————————————————————— */
 
@@ -1312,71 +1294,6 @@
 .prov.navigateur, .prov.fichier-impossible { color: var(--arbitrage); }
 .prov.attente, .prov.exemple { color: var(--clair-terne); }
 
-/* ————————————————————— Les gens : la semaine ————————————————————— */
-
-/* Une barre de pourcentage dit combien, jamais quand. Cinq jours en colonnes,
- * une personne par ligne, et une ligne de capacité qu'on voit dépasser. */
-.sm { display: grid; gap: 1.4rem; margin-bottom: 1.6rem; }
-.sm-t { display: grid; gap: .3rem; }
-.sm-t h3 { font-size: var(--t-ecran); line-height: var(--lh-ecran);
-  letter-spacing: var(--ls-ecran); font-weight: 500; }
-.sm-t p { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-terne);
-  max-width: var(--mesure); }
-
-.sm-g { display: grid; gap: .1rem; }
-.smg-h { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: .8rem;
-  border-bottom: 1px solid var(--trait); padding-bottom: .4rem; }
-.smgh-l { display: grid; grid-template-columns: repeat(5, 1fr); gap: .4rem; }
-.smgh-j { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em;
-  color: var(--clair-terne); }
-.smgh-j.auj { color: var(--or); }
-
-.sm-r { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: .8rem;
-  align-items: start; padding: .7rem 0; border-bottom: 1px solid var(--trait);
-  border-left: 2px solid transparent; }
-.sm-r.mur { border-left-color: var(--bloquant); }
-.sm-r.vide { border-left-color: var(--trait-clair); }
-.smr-q { display: flex; gap: .6rem; align-items: flex-start; padding-left: .6rem; }
-.smrq-n { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap;
-  font-size: var(--t-lire); line-height: var(--lh-lire); }
-.smrq-p, .smrq-c { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-
-.smr-j { position: relative; display: grid; grid-template-columns: repeat(5, 1fr);
-  gap: .4rem; min-height: 46px; align-content: start; }
-.smr-c { display: grid; gap: .2rem; align-content: start;
-  border-left: 1px solid var(--trait); padding-left: .3rem; min-height: 46px; }
-.smr-c.auj { border-left-color: var(--or); }
-.smr-b { font: inherit; font-size: var(--t-micro); line-height: var(--lh-micro);
-  background: var(--arbitrage); color: var(--n900); border: 0; border-radius: var(--r-xs);
-  padding: .3rem .4rem; cursor: pointer; text-align: left; overflow: hidden; min-height: 26px; }
-.smr-b span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.smr-b.retard { background: var(--bloquant); }
-.smr-b:hover { filter: brightness(1.12); }
-.smr-rien { grid-column: 1 / -1; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-terne); font-style: italic; align-self: center; }
-.smr-mur { position: absolute; top: -.2rem; bottom: -.2rem; width: 0;
-  border-left: 1px dashed var(--clair-terne); pointer-events: none; }
-.smr-mur span { position: absolute; top: -.9rem; left: .2rem;
-  font-size: var(--t-micro); line-height: 1; color: var(--clair-terne); }
-.smr-t { grid-column: 2; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-terne); display: flex; gap: .8rem; flex-wrap: wrap; }
-.smr-t.alerte { color: var(--bloquant-txt); }
-.smr-x { color: var(--bloquant-txt); }
-.smr-ap { color: var(--clair-terne); }
-.smr-sd { color: var(--arbitrage); }
-
-.sm-d { display: grid; gap: .4rem; padding: .9rem 1rem; background: var(--surface-2);
-  border-radius: var(--r-m); border-left: 2px solid var(--or); max-width: var(--mesure-large); }
-.smd-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--or); }
-.sm-d p { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux);
-  max-width: var(--mesure); }
-
-@media (max-width: 900px) {
-  .smg-h { display: none; }
-  .sm-r { grid-template-columns: minmax(0, 1fr); }
-  .smr-t { grid-column: 1; }
-}
 
 /* ————————————————————— Qui bouscule : le grand livre ————————————————————— */
 

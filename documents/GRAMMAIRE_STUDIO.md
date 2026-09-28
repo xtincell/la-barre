@@ -444,3 +444,19 @@ conflit « du spéculatif devant du ferme » deviennent des sections blanches, l
 avec le filet de l'alerte. Le mur de charge garde ses images — elles sont le contenu
 — et dit le risque par le filet sous l'image et le signe, plus par l'encre rouge.
 Mesure à 1280 et 375 px : à zéro, hors données (noms de livrables).
+
+**Passe 9b — Planning : l'équipe (28/09).** L'écran faisait **80 012 px** et portait
+208 textes à **1,55:1** : les blocs de la semaine écrivaient du texte sombre sur un
+aplat rouge ou ambre. Ils deviennent des étiquettes claires à filet (ambre dû, rouge
+en retard), avec une zone de 44 px. Trois replis de densité, chacun avec sa raison
+écrite : une case jour montre trois livrables puis « + N autres » (deux cents
+livrables dus le même lundi faisaient une colonne de sept mille pixels) ; les
+personnes sans livrable se replient sous leur compte ; le mur « ce que je dirige »
+se lit par tranches de vingt-quatre. « Ce qui s'impose » ne compte plus que les
+dossiers ouverts — il versait cent quarante échéances de dossiers clos — et met
+l'intenable devant. La bascule « à diriger / tout » passe au sélecteur Studio ; la
+puce `.chip`, partagée, est réécrite au §2 (l'active écrivait du noir sur l'accent
+plein, 2,86:1). Trouvé : `.cmd-corps.seule` posait son unique enfant dans une
+colonne de 22 rem. Libellés en casse de phrase, y compris dans les panneaux de
+simulation (« Ce qui bouge », « Avant », « Après »). L'écran tombe à **3 254 px**.
+Mesure à 1280 et 375 px : à zéro.

@@ -503,16 +503,7 @@ body {
 .b.nu:hover { color: var(--clair); border-color: var(--trait); }
 .b:disabled { opacity: .4; cursor: not-allowed; }
 
-/* ————————————————————— Chips ————————————————————— */
-
-.chips { display: flex; gap: .35rem; flex-wrap: wrap; }
-.chip {
-  font: inherit; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); background: var(--nuit-carte); color: var(--clair-doux);
-  border: 1px solid var(--trait); padding: .28rem .6rem; cursor: pointer;
-}
-.chip:hover { border-color: var(--trait-clair); color: var(--clair); }
-.chip[aria-pressed="true"] { background: var(--or); color: #1a1408; border-color: var(--or); font-weight: 600; }
-.chip .n { opacity: .7; margin-left: .3rem; }
+/* Les puces (.chips, .chip) sont réécrites dans studio-vues.css, §2. */
 
 /* ————————————————————— Étiquettes ————————————————————— */
 

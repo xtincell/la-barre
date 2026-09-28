@@ -216,6 +216,16 @@
 .onglet .etat { margin-left: 4px; font-weight: 400; font-size: 12px; color: var(--clair-terne); }
 .onglet .etat.manque { color: var(--bloquant); }
 
+/* Les puces : blanches à filet ; l'active prend le bleu pâle et l'encre bleue
+ * (du noir sur l'accent plein tombait à 2,86:1). Un bouton-puce garde 44 px. */
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px;
+  background: var(--surface-1); border: 1px solid var(--trait); font: 500 12px var(--affichage); color: var(--clair); }
+button.chip { min-height: 44px; padding: 0 12px; font-size: 13px; cursor: pointer; }
+button.chip:hover { border-color: var(--trait-clair); }
+.chip[aria-pressed="true"] { background: var(--studio-bleu-pale); border-color: var(--studio-bleu); color: var(--studio-bleu); }
+.chip .n { color: var(--clair-terne); }
+
 /* Le sous-bloc d'une fiche ou d'un panneau : un titre 12 px, puis son contenu. */
 .sousbloc { margin-top: 16px; }
 .sousbloc h3 { font: 700 12px var(--affichage); color: var(--clair); letter-spacing: 0; text-transform: none; margin-bottom: 8px; }
@@ -2022,4 +2032,130 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 @media (max-width: 700px) {
   .pp-bal, .pp-d, .pp-conflit, .pp-mur { padding: 16px; }
   .pp-titre h2 { font-size: 21px; }
+}
+
+/* ═════════════════════ Passe 9b · Planning : l'équipe ═════════════════════ */
+/* La semaine, puis ce que je dirige, puis ce qui s'impose. Trois sections
+ * blanches ; les blocs de la semaine perdent leurs aplats rouge et ambre
+ * (texte sombre dessus : 1,55:1) pour un filet et l'encre. */
+.cmd-file { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; margin-bottom: 16px; font-size: 13px; color: var(--clair-terne); }
+.cmd-rien, .cc-rien { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; font-size: 13px; color: var(--clair-terne); }
+.cmd-corps { display: block; }
+.sm-signe { color: var(--ton, var(--bloquant)); }
+
+.sm, .cmd-centre, .bande-eng { display: grid; gap: 14px; background: var(--surface-1); border: 1px solid var(--trait);
+  border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; min-width: 0; }
+.sm-t { display: grid; gap: 6px; }
+.sm-t h2, .cc-tete h2, .bande-eng h2 { font: 550 21px/1.3 var(--affichage); letter-spacing: -.02em; color: var(--clair); }
+.bande-eng h2 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.bande-eng h2 span { font: 400 12px var(--affichage); letter-spacing: 0; color: var(--clair-terne); }
+.sm-t p { font-size: 13px; line-height: 1.6; color: var(--clair-terne); max-width: 65ch; }
+
+/* Cinq jours en colonnes, une personne par ligne, la ligne de capacité. */
+.sm-g { display: grid; }
+.smg-h { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 14px; padding-bottom: 6px; border-bottom: 1px solid var(--trait); }
+.smgh-l { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.smgh-j { font-size: 11px; color: var(--clair-terne); }
+.smgh-j.auj { color: var(--studio-bleu); font-weight: 550; }
+.sm-r { --ton: transparent; display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 6px 14px; align-items: start;
+  padding: 12px 0; border-bottom: 1px solid var(--trait); border-left: 3px solid var(--ton); }
+.sm-r.mur { --ton: var(--bloquant); }
+.smr-q { display: flex; gap: 10px; align-items: flex-start; padding-left: 8px; min-width: 0; }
+.smrq-n { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font: 550 14px var(--affichage); color: var(--clair); }
+.smrq-p, .smrq-c { font-size: 12px; color: var(--clair-terne); }
+.smr-j { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; min-height: 46px; align-content: start; }
+.smr-c { display: flex; flex-direction: column; gap: 3px; align-content: start; min-height: 46px; padding-left: 5px; border-left: 1px solid var(--trait); }
+.smr-c.auj { border-left-color: var(--studio-bleu); }
+.smr-b { --ton: var(--arbitrage); position: relative; display: block; min-height: 28px; padding: 5px 6px 5px 8px; overflow: hidden;
+  text-align: left; cursor: pointer; font: 500 11px/1.3 var(--affichage); color: var(--clair);
+  background: var(--surface-4); border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 4px; }
+.smr-b.retard { --ton: var(--bloquant); }
+.smr-b::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); min-height: 44px; }
+.smr-b:hover { border-color: var(--trait-clair); border-left-color: var(--ton); }
+.smr-b span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.smr-plus { order: 9; font-size: 11px; color: var(--clair-terne); padding: 2px 0 0 2px; }
+.smr-rien { grid-column: 1 / -1; align-self: center; font-size: 12px; color: var(--clair-terne); }
+.smr-mur { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1px dashed var(--clair-terne); pointer-events: none; }
+.smr-mur span { position: absolute; top: -14px; left: 3px; font-size: 10px; line-height: 1; color: var(--clair-terne); }
+.smr-t { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--clair-terne); }
+.smr-t.alerte { --ton: var(--bloquant); }
+.smr-x { --ton: var(--bloquant); }
+.sm-vides { border-top: 1px solid var(--trait); }
+.bande-eng .sm-vides { border-top: 0; }
+.smv-t { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; min-height: 48px; cursor: pointer; list-style: none;
+  font: 550 13px var(--affichage); color: var(--studio-bleu); }
+.smv-t::-webkit-details-marker { display: none; }
+.smv-t::before { content: "›"; color: var(--clair-terne); font-size: 16px; width: 12px; transition: transform var(--tr-rapide); }
+.sm-vides[open] > .smv-t::before { transform: rotate(90deg); }
+.smv-t span { font: 400 12px var(--affichage); color: var(--clair-terne); }
+.sm-d { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--trait); }
+.sm-d h3 { font: 550 17px var(--affichage); color: var(--clair); }
+.sm-d p { font-size: 14px; line-height: 1.6; color: var(--clair); max-width: 65ch; }
+
+/* Ce que je dirige : des cartes qui portent les trois décisions. */
+.cc-tete { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; }
+.cc-compte { margin-left: auto; font-size: 12px; color: var(--clair-terne); }
+.cc-mur { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; align-content: start; }
+.cc-plus { justify-self: start; }
+.piece-c { display: grid; overflow: hidden; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px; }
+.piece-c.choisie { border-color: var(--studio-bleu); box-shadow: inset 0 0 0 1px var(--studio-bleu); }
+.piece-c.attend { box-shadow: inset 3px 0 0 var(--violet); }
+.pc-visuel { position: relative; display: block; padding: 0; cursor: pointer; background: none; border: 0; }
+.pc-visuel .vignette { height: 96px; border: 0; border-bottom: 1px solid var(--trait); }
+.pc-bat { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--violet); }
+.pc-coche { position: absolute; top: 5px; left: 5px; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px;
+  border-radius: 4px; background: var(--studio-bleu); color: var(--surface-1); font-size: 11px; }
+.pc-nom { padding: 8px 10px 6px; font: 550 12px/1.35 var(--affichage); color: var(--clair); overflow-wrap: anywhere; }
+.pc-cmd { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--trait); }
+.cmd-b { position: relative; display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 0; min-height: 36px;
+  padding: 4px; cursor: pointer; background: var(--surface-1); border: 0; box-shadow: inset -1px 0 0 var(--trait);
+  font: 500 12px var(--affichage); color: var(--clair); }
+.cmd-b:last-child { box-shadow: none; }
+.cmd-b::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); min-height: 44px; }
+.cmd-b span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmd-b:hover { background: var(--surface-4); }
+.cmd-b.manque { color: var(--clair-terne); }
+.cmd-b.manque span::before { content: "◐ "; color: var(--arbitrage); }
+.pc-select { position: relative; min-height: 32px; padding: 4px; cursor: pointer; background: none; border: 0; border-top: 1px solid var(--trait);
+  font: 500 12px var(--affichage); color: var(--clair-terne); }
+.pc-select::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); min-height: 44px; }
+.pc-select:hover { color: var(--studio-bleu); }
+
+/* Ce qui s'impose : une pastille par dossier ouvert, l'intenable devant. */
+.be-liste { display: flex; flex-wrap: wrap; gap: 8px; }
+.eng { --ton: var(--trait-clair); display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-height: 44px; padding: 8px 12px;
+  cursor: pointer; text-align: left; font: inherit; color: var(--clair); background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 6px; }
+.eng:hover { border-color: var(--trait-clair); border-left-color: var(--ton); }
+.eng.tenable { --ton: var(--succes); }
+.eng.intenable { --ton: var(--bloquant); }
+.eng.inconnu { --ton: var(--arbitrage); }
+.e-nom { font: 550 13px var(--affichage); }
+.e-date, .e-charge, .e-inconnu, .e-manque { font-size: 12px; color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+
+/* Les gestes sur une sélection. */
+.zone-gestes { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; padding: 10px 16px; background: var(--surface-1);
+  border: 1px solid var(--studio-bleu); border-radius: 10px; }
+.zone-gestes.repos { border-color: var(--trait); }
+.g-selection { display: flex; align-items: baseline; gap: 6px; }
+.g-selection b { font: 550 21px var(--affichage); color: var(--studio-bleu); }
+.g-selection span { font-size: 12px; color: var(--clair-terne); }
+.g-verbes { display: flex; flex-wrap: wrap; gap: 6px; }
+.verbe { min-height: 44px; padding: 0 14px; cursor: pointer; font: 500 14px var(--affichage); color: var(--clair);
+  background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px; }
+.verbe:hover { border-color: var(--studio-bleu); color: var(--studio-bleu); }
+.filtres-l { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.filtres-l .f-t, .f-aide { font-size: 12px; color: var(--clair-terne); }
+.sousbloc-q { font-size: 13px; color: var(--clair-terne); margin-bottom: 8px; }
+@media (max-width: 900px) {
+  .smg-h { display: none; }
+  .sm-r { grid-template-columns: minmax(0, 1fr); }
+  .smr-t { grid-column: 1; }
+  /* Empilée, la ligne de capacité passe sous le portrait : son étiquette le
+   * chevauchait. Le pointillé suffit. */
+  .smr-mur span { display: none; }
+}
+@media (max-width: 700px) {
+  .sm, .cmd-centre, .bande-eng { padding: 16px; }
+  .smr-j { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
 }

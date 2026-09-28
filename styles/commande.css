@@ -41,11 +41,6 @@
 .obj.tenu .o-j i { background: var(--vert); }
 .obj.manque .o-j i { background: var(--alerte); }
 
-/* ————————————————————— Le corps : ressources + centre ————————————————————— */
-
-.cmd-corps { display: grid; grid-template-columns: minmax(0, 17rem) minmax(0, 1fr);
-  gap: 1.2rem; align-items: start; }
-
 /* ————————————————————— 2 · Ce dont je dispose ————————————————————— */
 
 .cmd-ressources {
@@ -96,81 +91,6 @@
 .mat-manque .m-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); }
 .mat-manque .m-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
 
-/* ————————————————————— 3 · Le centre ————————————————————— */
-
-.cmd-centre { display: grid; gap: .7rem; align-content: start; }
-.cc-tete { display: flex; align-items: center; gap: .8rem; }
-.cc-compte { margin-left: auto; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-
-.cc-mur { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: .7rem; align-content: start; }
-
-.piece-c { background: var(--nuit-carte); display: grid; gap: 0; }
-.piece-c.choisie { border-color: var(--or); box-shadow: inset 0 0 0 1px var(--or); }
-.piece-c.attend { border-color: var(--violet); }
-
-.pc-visuel { background: none; border: 0; padding: 0; cursor: pointer; position: relative; display: block; }
-.pc-visuel .vignette { height: 96px; border: 0; border-bottom: 1px solid var(--trait); }
-.pc-bat { position: absolute; top: .35rem; right: .35rem; width: .5rem; height: .5rem;
-  border-radius: 50%; background: var(--violet); box-shadow: 0 0 0 3px rgba(139,111,212,.25); }
-.pc-coche { position: absolute; top: .3rem; left: .3rem; width: 1.1rem; height: 1.1rem;
-  background: var(--or); color: var(--nuit); display: flex; align-items: center;
-  justify-content: center; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
-
-.pc-nom { font-size: var(--t-eti); letter-spacing: var(--ls-eti); line-height: 1.3; padding: .45rem .5rem .35rem; color: var(--clair-doux); }
-
-.pc-cmd { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--trait); }
-.cmd-b { background: var(--nuit-carte); border: 0; font: inherit; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-doux); padding: .35rem .2rem; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: .25rem; min-width: 0; }
-.cmd-b span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cmd-b:hover { background: var(--nuit-relief); color: var(--clair); }
-.cmd-b.manque { color: var(--attente); }
-.cmd-b.manque:hover { color: var(--or); }
-
-.pc-select { background: none; border: 0; border-top: 1px solid var(--trait);
-  font: inherit; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); padding: .25rem; cursor: pointer; }
-.pc-select:hover { color: var(--or); }
-
-.cc-vide { display: grid; justify-items: center; align-content: center; gap: .5rem;
-  color: var(--clair-terne); font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: 3rem 0; }
-
-/* ————————————————————— 4 · Ce qui s'impose ————————————————————— */
-
-.bande-eng { display: grid; gap: .4rem; }
-.be-titre { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .18em; color: var(--clair-terne); }
-.be-liste { display: flex; gap: .5rem; flex-wrap: wrap; }
-.eng { display: flex; gap: .6rem; align-items: baseline; background: var(--nuit-carte);
-  border: 1px solid var(--trait); border-bottom: 2px solid var(--trait-clair);
-  padding: .4rem .7rem; font: inherit; color: inherit; cursor: pointer; }
-.eng:hover { border-color: var(--trait-clair); }
-.eng.tenable { border-bottom-color: var(--vert); }
-.eng.intenable { border-bottom-color: var(--bloquant-txt); }
-.eng.inconnu { border-bottom-color: var(--attente); }
-.eng .e-nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.eng .e-date { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); }
-.eng .e-charge { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); font-variant-numeric: tabular-nums; }
-.eng .e-inconnu, .eng .e-manque { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--attente); }
-
-/* ————————————————————— 5 · Les gestes ————————————————————— */
-
-.zone-gestes { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
-  background: var(--nuit-panneau); border: 1px solid var(--or); padding: .5rem .8rem; }
-.zone-gestes.repos { border-color: var(--trait); }
-.g-selection { display: flex; align-items: baseline; gap: .35rem; }
-.g-selection b { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre); color: var(--or); }
-.g-selection span { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); }
-.g-jours { color: var(--clair-terne) !important; }
-.g-verbes { display: flex; gap: .4rem; }
-.verbe { font: inherit; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); background: var(--nuit-relief);
-  border: 1px solid var(--trait-clair); color: var(--clair); padding: .38rem .85rem; cursor: pointer; }
-.verbe:hover { border-color: var(--or); color: var(--or); }
-.verbe.annuler:hover { border-color: var(--alerte); color: var(--bloquant-txt); }
-.verbe.propulser:hover { border-color: var(--vert); color: var(--vert); }
-.filtres-l { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; }
-.filtres-l .f-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.f-aide { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-
 /* ————————————————————— Affectation ————————————————————— */
 
 .affect { display: grid; gap: .35rem; }
@@ -217,10 +137,8 @@
 
 @media (max-width: 1000px) {
   .zone.commande { gap: 1rem; }
-  .cmd-corps { grid-template-columns: minmax(0, 1fr); }
   .cmd-ressources { grid-template-rows: none; }
   .cr-gens { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); display: grid; }
-  .cc-mur { overflow: visible; }
 }
 
 /* ————————————————————— LA REVUE — une pièce à la fois ————————————————————— */
