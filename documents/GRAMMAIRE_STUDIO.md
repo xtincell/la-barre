@@ -270,3 +270,11 @@ gestes en minuscules (« retenir », « écarter », « répondre ») prennent l
 phrase. Tranché au §2 : l'étiquette `UI.eti` (26 emplois) perd ses capitales et garde
 son signe d'état (● ◐ ✓), réécrit avec elle. Mesure à 1280 et 375 px : à zéro, hors
 données.
+
+**Passe 4b — Dossier : la big idea et son rail (28/09).** L'idée prend l'aplat
+d'intention du Bureau en Asap 500 (elle était en sérif italique) ; les idées de
+l'atelier deviennent une section blanche ; le rail de validation (« VALIDATION »,
+« CENTRALE », « LOCALES », « ACTIVITÉ ») passe en casse de phrase. Tranché au §2 :
+la ligne d'état `ETAT.ligne` et ses variantes (`.bic-etat`, `.dmd-etat`…). Signalé,
+non traité : `colonneRoute` et `executions`, dans `vue-bigidea.js`, ne sont plus
+appelées nulle part. Mesure à 1280 et 375 px : à zéro, hors données.

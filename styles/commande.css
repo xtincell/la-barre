@@ -424,22 +424,6 @@
 
 /* ————————————————————— LA BIG IDEA ————————————————————— */
 
-.bi { display: grid; gap: 1rem; }
-
-.bi-idee { background: var(--nuit-relief); padding: 1.1rem 1.2rem 1.2rem; }
-.bii-nom { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .18em; color: var(--or); }
-.bii-phrase { font-family: var(--ecrit); font-style: italic; font-size: var(--t-ecran); letter-spacing: var(--ls-ecran); line-height: 1.35; margin-top: .5rem; }
-.bii-sign { font-family: var(--ecrit); font-style: italic; font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--or); margin-top: .6rem; }
-.bii-pied { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
-  margin-top: .8rem; padding-top: .7rem; border-top: 1px solid var(--trait); }
-.bii-a { display: flex; gap: .4rem; align-items: center; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
-.bii-m { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); }
-
-.bi-routes, .bi-exec { display: grid; gap: .6rem; }
-.bir-tete { display: flex; align-items: baseline; gap: .8rem;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em; color: var(--clair-terne); }
-.bir-e { margin-left: auto; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: 0; }
-
 .routes { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: .7rem; }
 .route { background: var(--nuit-carte); border: 1px solid var(--trait);
   border-top: 3px solid var(--trait-clair); display: grid; align-content: start; }

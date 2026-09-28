@@ -15,7 +15,7 @@ window.VUE_BIGIDEA = (function () {
     var def = CHAMPS.section("bigidea");
     if (!def) return null;
     return el("div.se-champs", {},
-      el("div.sec-t", {}, "TOUS LES CHAMPS", el("span", {}, def.champs.length)),
+      el("div.sec-t", {}, "Tous les champs", el("span.studio-compte", {}, String(def.champs.length))),
       FORM.lire(def.champs, p.sections["bigidea"] || {},
         { projet: p, section: "bigidea",
           editer: function (k) { VUE_PROJETS.editerChamp(p, "bigidea", k, rafraichir); } }));
@@ -107,7 +107,7 @@ window.VUE_BIGIDEA = (function () {
 
     PANNEAU.ouvrir("Les critères d'acceptation", "les seuls éléments opposables", el("div", {},
       UI.banniere("", "Ce sont eux — et eux seuls — qu'on pourra opposer au travail du DA. Tout le reste est du goût."),
-      el("div.sousbloc", {}, el("h3", {}, "CE QUE J'EXIGE"), boite, champ),
+      el("div.sousbloc", {}, el("h3", {}, "Ce que j'exige"), boite, champ),
       el("div.form-actions", { style: { "margin-top": "1rem" } },
         el("button.b.or", { type: "button", onclick: function () {
           if (!lignes.length) { alert("Au moins un critère."); return; }
@@ -147,7 +147,7 @@ window.VUE_BIGIDEA = (function () {
     if (!b.idee) return null;
     var auteur = b.auteur ? DEPOT.trouve("personnes", b.auteur) : null;
     return el("div.bi-idee", {},
-      el("div.bii-nom", {}, b.campagne || "sans nom de campagne"),
+      el("div.bii-nom", {}, b.campagne || "Sans nom de campagne"),
       el("div.bii-phrase", {}, b.idee),
       b.signature ? el("div.bii-sign", {}, "« " + b.signature + " »") : null,
       el("div.bii-pied", {},
@@ -230,8 +230,8 @@ window.VUE_BIGIDEA = (function () {
     var is = VUE_ATELIER.idees(p);
     if (!is.length) {
       return el("div.bi-atelier", {},
-        el("div.bir-tete", {}, el("span", {}, "LES IDÉES DE L'ATELIER"),
-          el("span.bir-e", { style: { color: "var(--alerte)" } }, "aucune idée posée")),
+        el("div.bir-tete", {}, el("span", {}, "Les idées de l'atelier"),
+          el("span.bir-e.alerte", {}, "Aucune idée posée")),
         el("p.rien", {}, "Aucune idée n'a été posée en atelier. L'indicateur « idées retenues émanant de juniors » reste donc à zéro, quoi qu'il arrive."),
         el("div.form-actions", {},
           GESTE.bouton("atelier", { p: p })));
@@ -244,10 +244,10 @@ window.VUE_BIGIDEA = (function () {
 
     return el("div.bi-atelier", {},
       el("div.bir-tete", {},
-        el("span", {}, "LES IDÉES DE L'ATELIER"),
+        el("span", {}, "Les idées de l'atelier"),
         el("span.bir-e", {}, retenues.length + " retenues sur " + is.length
-          + "  ·  " + reprises + " reprises dans une piste"
-          + (juniors ? "  ·  " + juniors + " de juniors" : ""))),
+          + " · " + reprises + " reprises dans une piste"
+          + (juniors ? " · " + juniors + " de juniors" : ""))),
 
       reprises < retenues.length
         ? UI.banniere("", (retenues.length - reprises)
@@ -262,14 +262,14 @@ window.VUE_BIGIDEA = (function () {
           el("div.bii-t", {}, i.texte),
           el("div.bii-m", {},
             a ? UI.avatar(a, 18) : null,
-            el("span", {}, a ? a.nom : "auteur non nommé"),
+            el("span", {}, a ? a.nom : "Auteur non nommé"),
             ETAT.pastille(ETAT.seniorite(a)),
             pi ? el("span.bii-r", {}, "→ " + pi.titre) : null),
           ETAT.ligne(ETAT.idee(p, i), "bii-etat"),
           i.motif ? el("div.bii-mo", {}, i.motif) : null,
           i.statut === "retenue" && !pi
-            ? el("button.b.nu", { type: "button", onclick: function () { rattacher(p, i, rafraichir); } },
-                "rattacher à une piste")
+            ? el("button.studio-lien", { type: "button", onclick: function () { rattacher(p, i, rafraichir); } },
+                "Rattacher à une piste →")
             : null);
       }))
     );
@@ -301,15 +301,15 @@ window.VUE_BIGIDEA = (function () {
 
     PANNEAU.ouvrir("Retenir « " + (pi.titre || "cette piste") + " »", "ce que ça change", el("div", {},
       c.alertes.length ? el("div", {}, c.alertes.map(function (a) { return UI.banniere("rouge", a); })) : null,
-      c.gagne.length ? el("div.sousbloc", {}, el("h3", {}, "CE QUE ÇA DÉBLOQUE"),
+      c.gagne.length ? el("div.sousbloc", {}, el("h3", {}, "Ce que ça débloque"),
         el("div", {}, c.gagne.map(function (g) {
           return el("div.oc-l.gagne", {}, UI.icone("revue", 13), el("span", {}, g));
         }))) : null,
-      c.effets.length ? el("div.sousbloc", {}, el("h3", {}, "CE QUE ÇA ENTRAÎNE"),
+      c.effets.length ? el("div.sousbloc", {}, el("h3", {}, "Ce que ça entraîne"),
         el("div", {}, c.effets.map(function (e) {
           return el("div.oc-l", {}, el("span.puce"), el("span", {}, e));
         }))) : null,
-      el("div.sousbloc", {}, el("h3", {}, "L'ARGUMENT"), motif),
+      el("div.sousbloc", {}, el("h3", {}, "L'argument"), motif),
       el("div.form-actions", { style: { "margin-top": "1rem" } },
         el("button.b.or", { type: "button", onclick: function () {
           if (!motif.value.trim()) { alert("Un arbitrage sans argument écrit n'en est pas un."); return; }
@@ -357,7 +357,7 @@ window.VUE_BIGIDEA = (function () {
     });
 
     return el("div.bi-exec", {},
-      el("div.bir-tete", {}, el("span", {}, "CE QUE CETTE IDÉE A PRODUIT"),
+      el("div.bir-tete", {}, el("span", {}, "Ce que cette idée a produit"),
         el("span.bir-e", {}, issues.length + " livrables")),
       UI.mur(groupes, function (it) { VUE_LIVRABLE.ouvrir(p, it.livrable, rafraichir); })
     );
@@ -372,11 +372,11 @@ window.VUE_BIGIDEA = (function () {
 
     return el("div", {},
       el("div.panneau-lat", {},
-        el("h3", {}, "VALIDATION"),
-        el("div.val-l", {}, el("span.v-t", {}, "CENTRALE"),
+        el("h3", {}, "Validation"),
+        el("div.val-l", {}, el("span.v-t", {}, "Centrale"),
           el("span.v-v" + ((p.sections.identite || {}).decideur ? "" : ".vide"), {},
-            (p.sections.identite || {}).decideur || "décideur non nommé")),
-        codes.length ? el("div.val-locales", {}, el("span.v-t", {}, "LOCALES"),
+            (p.sections.identite || {}).decideur || "Décideur non nommé")),
+        codes.length ? el("div.val-locales", {}, el("span.v-t", {}, "Locales"),
           codes.map(function (c) {
             var prets = (p.livrables || []).filter(function (l) {
               return l.marche === c && (l.points || {}).local === "pret"; }).length;
@@ -386,7 +386,7 @@ window.VUE_BIGIDEA = (function () {
           })) : null
       ),
       el("div.panneau-lat", {},
-        el("h3", {}, "ACTIVITÉ"),
+        el("h3", {}, "Activité"),
         el("div", {}, DEPOT.journal().filter(function (l) { return l.id === p.id; }).slice(0, 6).map(function (l) {
           return UI.fileItem(null, l.detail || l.action, O.joli(l.quand) + " · " + l.action, null);
         }))

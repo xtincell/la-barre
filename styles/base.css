@@ -753,7 +753,7 @@ input[type="date"], select, textarea { border-radius: var(--r-s); }
 
 .kpi, .pi-k, .rv-kpi, .stat-c, .carte-n, .eg-c, .eq-p, .ju-cr, .ju-g, .ju-fc,
 .carte-projet, .piece, .piece-c, .obj, .reglage, .ref-carte, .bic,
-.dm-d, .as-c, .br-c, .mq-s, .cs-o, .rc-idee, .br-bloc, .br-verbatim, .bi-idee,
+.dm-d, .as-c, .br-c, .mq-s, .cs-o, .rc-idee, .br-bloc, .br-verbatim,
 .mk-c, .pr-p, .col-msg, .ou-en, .attente-l, .cmd-ressources, .rv-piece,
 .carte-phrase, .graphe-boite, .pi-fb, .pi-au, .pr-apres, .pr-band,
 .mur-panneau, .co-doc { border-radius: var(--r-m); }

@@ -171,6 +171,18 @@
 .eti.attente::before { content: "◐"; font-size: .9em; }
 .eti.vert::before { content: "✓"; font-size: .9em; }
 
+/* L'état et sa conséquence (`ETAT.ligne`) : le nom court en couleur, puis ce
+ * qu'il produit ou empêche, en gris. La pastille seule reste l'exception. */
+.etat-l, .bic-etat, .bii-etat, .ati-etat, .dmd-etat { display: block; font-size: 12px; line-height: 1.5;
+  color: var(--clair-terne); max-width: 70ch; letter-spacing: 0; }
+.etat-l b, .bic-etat b, .bii-etat b, .ati-etat b, .dmd-etat b { font-weight: 550; color: var(--clair); margin-right: 6px; }
+.etat-l.vert b, .bic-etat.vert b, .bii-etat.vert b, .ati-etat.vert b, .dmd-etat.vert b { color: var(--succes); }
+.etat-l.attente b, .bic-etat.attente b, .bii-etat.attente b, .ati-etat.attente b, .dmd-etat.attente b { color: var(--arbitrage); }
+.etat-l.alerte b, .bic-etat.alerte b, .bii-etat.alerte b, .ati-etat.alerte b, .dmd-etat.alerte b { color: var(--bloquant); }
+.etat-l.or b, .bic-etat.or b, .bii-etat.or b, .ati-etat.or b, .dmd-etat.or b { color: var(--studio-bleu); }
+.bic-etat { padding: 0 12px 2px; }
+.dmd-etat { padding: 0 14px 3px; }
+
 /* ═════════════════════ Passe 1 · Décisions ═════════════════════ */
 
 .dc { display: block; min-width: 0; }
@@ -824,3 +836,46 @@ button.st-e:hover { background: var(--surface-4); }
 
 @media (max-width: 900px) { .at-corps { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 560px) { .aj { align-items: flex-start; } .aj-c { font-size: 28px; } }
+
+/* ═════════════════════ Passe 4b · Dossier : la big idea ═════════════════════ */
+
+.bi { display: grid; gap: 16px; }
+/* L'idée est la plus grosse chose à l'écran, et elle passe devant ses
+ * conditions. C'est ce qu'un humain a écrit : l'aplat d'intention du Bureau. */
+.bi-idee { display: grid; gap: 12px; padding: 24px 26px; background: var(--studio-intention); border-radius: 10px; color: var(--studio-encre); }
+.bii-nom { font: 550 12px var(--affichage); color: var(--studio-encre); opacity: 1; }
+.bii-phrase { font: 500 clamp(22px, 2.2vw, 32px)/1.25 var(--affichage); letter-spacing: -.025em; color: var(--studio-encre);
+  overflow-wrap: anywhere; text-wrap: balance; }
+.bii-sign { font: 500 15px/1.5 var(--affichage); color: var(--studio-encre); }
+.bii-pied { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid rgba(25,51,71,.15); }
+.bii-a { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--studio-encre); }
+.bi-idee .bii-m { font-size: 13px; line-height: 1.5; color: var(--studio-encre); }
+
+/* Les idées de l'atelier : ont-elles servi ? */
+.bi-atelier { display: grid; gap: 12px; padding: 18px 20px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; }
+.bir-tete { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; font: 550 17px var(--affichage); color: var(--clair); }
+.bir-e { margin-left: auto; font: 500 12px var(--affichage); color: var(--clair-terne); }
+.bir-e.alerte { color: var(--bloquant); font-weight: 550; }
+.bi-idees { display: grid; gap: 8px; }
+.bii { --ton: var(--trait-clair); display: grid; gap: 6px; padding: 12px 14px; background: var(--surface-4);
+  border-left: 3px solid var(--ton); border-radius: 0 6px 6px 0; }
+.bii.retenue { --ton: var(--succes); }
+.bii.ecartee { --ton: var(--trait); }
+.bii-t { font: 500 14px/1.45 var(--affichage); color: var(--studio-encre); overflow-wrap: anywhere; }
+.bii.ecartee .bii-t { color: var(--clair-terne); }
+.bii .bii-m { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--clair-terne); }
+.bii-r { color: var(--succes); font-weight: 550; }
+.bii-r.vide { color: var(--clair-terne); }
+.bii-mo { font-size: 12px; line-height: 1.5; color: var(--clair-terne); font-style: italic; }
+.bii > .studio-lien { justify-self: start; margin-left: -8px; }
+.bi-exec { display: grid; gap: 12px; }
+
+/* Le rail de la big idea : la validation, centrale puis locale. */
+.val-l { display: grid; gap: 2px; }
+.val-l .v-t, .val-locales .v-t { font-size: 11px; color: var(--clair-terne); }
+.val-l .v-v { font-size: 13px; color: var(--clair); }
+.val-l .v-v.vide { color: var(--clair-terne); }
+.val-locales { display: grid; gap: 6px; padding-top: 10px; margin-top: 10px; border-top: 1px solid var(--trait); }
+.val-m { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.val-m .v-etat { margin-left: auto; font: 550 12px var(--affichage); color: var(--arbitrage); font-variant-numeric: tabular-nums; }
+.val-m .v-etat.ok { color: var(--succes); }

@@ -268,23 +268,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 
 /* ————————————————————— Big idea ————————————————————— */
 
-.bi-tete { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-.bi-nom { font-family: var(--lecture); font-size: var(--t-ecran); letter-spacing: var(--ls-ecran); font-weight: 400; line-height: 1.1; }
-.bi-sous { display: flex; gap: .4rem; margin-top: .4rem; flex-wrap: wrap; }
-.bi-auteur { margin-left: auto; display: flex; gap: .55rem; align-items: center; }
-.bi-auteur .a-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
-.bi-auteur .a-v { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.bi-auteur .a-v.vide { color: var(--bloquant-txt); font-style: italic; }
-
 .validation { display: grid; gap: .55rem; }
-.val-l { display: grid; gap: .15rem; }
-.val-l .v-t, .val-locales .v-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
-.val-l .v-v { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.val-l .v-v.vide { color: var(--bloquant-txt); font-style: italic; }
-.val-locales { display: grid; gap: .3rem; padding-top: .5rem; border-top: 1px solid var(--trait); }
-.val-m { display: flex; align-items: center; gap: .5rem; }
-.val-m .v-etat { margin-left: auto; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--attente); font-variant-numeric: tabular-nums; }
-.val-m .v-etat.ok { color: var(--vert); }
 
 /* ————————————————————— Socle ————————————————————— */
 

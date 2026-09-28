@@ -472,7 +472,6 @@
 
 /* ————————————————————— La comparaison des routes ————————————————————— */
 
-.bi-comp { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: .9rem; }
 .bic { display: grid; gap: .45rem; align-content: start;
   background: var(--nuit-carte); border: 1px solid var(--trait);
   border-top: 2px solid var(--trait-clair); padding-bottom: .6rem; }
@@ -509,20 +508,6 @@
 .bic-g .b { width: 100%; }
 
 /* ————————————————————— Les idées de l'atelier, dans la big idea ————————————————————— */
-
-.bi-atelier { display: grid; gap: .6rem; margin-top: 1.4rem; }
-.bi-idees { display: grid; gap: .35rem; }
-.bii { background: var(--nuit-carte); border-left: 2px solid var(--trait-clair);
-  padding: .4rem .6rem; display: grid; gap: .2rem; }
-.bii.retenue { border-left-color: var(--vert); }
-.bii.ecartee { opacity: .55; }
-.bii-t { font-size: var(--t-meta); letter-spacing: var(--ls-meta); font-family: var(--lecture); line-height: 1.35; }
-.bii-m { display: flex; align-items: center; gap: .35rem; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-terne); flex-wrap: wrap; }
-.bii-r { color: var(--vert); }
-.bii-r.vide { color: var(--bloquant-txt); font-style: italic; }
-.bii-mo { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); border-left: 2px solid var(--trait);
-  padding-left: .5rem; }
 
 /* ————————————————————— Le dispositif ————————————————————— */
 
@@ -1093,7 +1078,7 @@
 .cob-c, .cob-p li, .bic-c, .bica .v,
 .rtb .v, .dia-q, .rep-q { max-width: var(--mesure); }
 
-.pifb-t, .ifm-t, .bii-t, .fb-texte, .vsv-m { max-width: var(--mesure-large); }
+.pifb-t, .ifm-t, .fb-texte, .vsv-m { max-width: var(--mesure-large); }
 
 /* Une ligne de file ne s'étire pas non plus : elle garde sa mesure et laisse
  * le reste respirer. */
@@ -2407,10 +2392,10 @@
 /* Une idée écartée porte le motif qui l'a écartée — c'est la matière de la
  * jurisprudence, et c'est justement ce qu'on relit. L'atténuer à .55 la faisait
  * passer sous le seuil : elle s'atténue par la bordure et l'encre. */
-.bic.ecartee, .bii.ecartee, .route.ecartee { opacity: 1; }
-.bic.ecartee .bic-t, .bii.ecartee .bii-t { color: var(--clair-doux); }
-.bic.ecartee .bic-m, .bii.ecartee .bii-m { color: var(--clair-terne); }
-.bic.ecartee, .bii.ecartee,
+.bic.ecartee, .route.ecartee { opacity: 1; }
+.bic.ecartee .bic-t { color: var(--clair-doux); }
+.bic.ecartee .bic-m { color: var(--clair-terne); }
+.bic.ecartee,
 .route.ecartee { border-left: 2px solid var(--trait-clair); }
 
 /* Le gris atténué frôle le seuil sur les fonds de surface : deux crans plus
@@ -3126,19 +3111,19 @@ button.mrmq-t:focus-visible, button.mrg-tete:focus-visible {
 .atdq-o, .auteurs, .codt-s, .sld-m, .e-charge, .slp-a, .atx-k, .bri-s,
 .rail-q, .fi-meta, .rd-ref, .poste, .pil-n, .mrg-n, .eqp-q,
 .pirc-d, .egc-verdict, .pip-n, .atdq-p, .cobl-v, .l-v, .b-v, .critere,
-.ecx-m, .ecx-k, .fix-k, .dmd-etat, .etat-l, .bic-etat, .bii-etat, .ati-etat {
+.ecx-m, .ecx-k, .fix-k {
   font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
 }
 
 /* Ce qui porte un motif, un argument, un coût écrit — la matière du poste. */
-.bii-mo, .bii-m, .pir-regle, .jum, .bic-src, .bir-e, .egc-cout,
+.pir-regle, .jum, .bic-src, .egc-cout,
 .f-aide, .vide, .cout, .b-texte, .prix span, .fix-k {
   font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire);
   max-width: var(--mesure);
 }
 
 /* Un verbatim se lit comme une citation, pas comme une note de bas de page. */
-blockquote, .message, .verbatim, .bii-t {
+blockquote, .message, .verbatim {
   font-size: var(--t-lire); line-height: 1.6;
 }
 

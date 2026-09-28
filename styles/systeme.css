@@ -231,25 +231,7 @@
 /* Le rendu par défaut d'un état : le nom court, puis ce qu'il produit ou
  * empêche. La pastille seule reste l'exception, réservée aux places serrées —
  * elle porte alors la conséquence en attribut title. */
-.etat-l, .bic-etat, .bii-etat, .ati-etat, .dmd-etat {
-  display: block; font-size: var(--t-eti); letter-spacing: var(--ls-eti); line-height: 1.4;
-  color: var(--clair-terne); max-width: var(--mesure);
-}
-.etat-l b, .bic-etat b, .bii-etat b, .ati-etat b, .dmd-etat b {
-  font-weight: 500; color: var(--clair-doux); margin-right: .4rem;
-}
-.etat-l.vert b, .bic-etat.vert b, .bii-etat.vert b,
-.ati-etat.vert b, .dmd-etat.vert b { color: var(--vert); }
-.etat-l.attente b, .bic-etat.attente b, .bii-etat.attente b,
-.ati-etat.attente b, .dmd-etat.attente b { color: var(--attente); }
-.etat-l.alerte b, .bic-etat.alerte b, .bii-etat.alerte b,
-.ati-etat.alerte b, .dmd-etat.alerte b { color: var(--bloquant-txt); }
-.etat-l.or b, .bic-etat.or b, .bii-etat.or b,
-.ati-etat.or b, .dmd-etat.or b { color: var(--or); }
 
-.bic-etat { padding: 0 .7rem .1rem; }
-.bii-etat, .ati-etat { margin-top: .3rem; }
-.dmd-etat { padding: 0 .8rem .15rem; }
 .critere-etat { display: block; font-size: var(--t-eti); letter-spacing: var(--ls-eti); line-height: 1.4;
   color: var(--encre-terne, var(--clair-terne)); max-width: var(--mesure); }
 .critere-etat b { font-weight: 500; margin-right: .4rem; }
