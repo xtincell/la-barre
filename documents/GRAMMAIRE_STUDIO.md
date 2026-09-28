@@ -567,3 +567,27 @@ zéro, hors données (intitulés relevés dans People, en capitales à la source
 **Passe 11d — Ressources : doctrine et paramètres (28/09).** Déjà à zéro sous le
 nouvel en-tête : rien à reprendre, mesure à 1280 et 375 px faite. Les sept modes des
 Ressources sont à zéro, hors données.
+
+**Passe 12 — Panneaux et modales (28/09).** Plutôt que d'ouvrir les panneaux un à un,
+le code a été relu pour ce qui restait écrit en capitales : une cinquantaine de
+libellés d'interface (le geste guidé « POURQUOI MAINTENANT », « CE QU'ON Y FAIT, DANS
+L'ORDRE » ; les statistiques des retours, des versions, de l'importeur de fil ; les
+onglets et blocs de la fiche détaillée du livrable ; l'ingesteur ; la doctrine ; la
+revue) passent en casse de phrase, sigles et noms propres préservés. Restent écrits
+en capitales, et c'est voulu : les clés internes (`module: "DEMANDE"`), les données
+d'amorce, les exports en texte brut pour les mails et le manifeste de remise. Dans les
+anciennes feuilles, les `text-transform: uppercase` restants tombent (sauf le code de
+langue d'un drapeau, qui est un sigle) et les espacements de lettres larges repassent
+à zéro. Le jeton d'un poste n'avait aucune règle : texte sombre sur la couleur du
+poste, **2,12:1** — il devient une étiquette à filet, la couleur dans la pastille. Le
+texte d'un retour client, en sérif, prend l'aplat d'intention ; une zone de texte ne
+descend plus sous 44 px ; les `alert()` deviennent des avis du produit (les `confirm()`
+avant un retrait restent : c'est une garde). Mesuré ouverts, sans rien enregistrer :
+geste guidé, renvoi, clôture, chiffrage, enregistrer et trancher un retour, annoter,
+inférences, question, brief de production, capture — à zéro, hors données.
+
+Incident de mesure, consigné : `VERSION.ouvrir` ne montre pas un panneau, il crée une
+version. Appelé par erreur pendant la mesure, il en a ajouté deux au dossier PRJ-BTS26
+— en mémoire seulement : ni le fichier du serveur ni le cache du navigateur ne les
+contenaient, et un rechargement les a effacées. Depuis, seules les fonctions lues
+avant d'être appelées servent à mesurer.

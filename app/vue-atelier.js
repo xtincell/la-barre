@@ -183,7 +183,7 @@ window.VUE_ATELIER = (function () {
         el("div.champ", {}, el("label", {}, "De qui"), selA)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          if (!champ.value.trim()) { alert("Une idée sans texte n'est pas une idée."); return; }
+          if (!champ.value.trim()) { AVIS.refus("Une idée sans texte n'est pas une idée."); return; }
           if (!i) {
             if (!p.idees) p.idees = [];
             p.idees.push({ id: O.id("ID"), texte: champ.value.trim(), auteur: selA.value || null,
@@ -214,7 +214,7 @@ window.VUE_ATELIER = (function () {
         el("div.indice", {}, "Il rejoint la jurisprudence : c'est ce qui reste quand je ne suis pas dans la pièce."), champ)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          if (!champ.value.trim()) { alert("Trancher sans argument écrit, c'est trancher par goût."); return; }
+          if (!champ.value.trim()) { AVIS.refus("Trancher sans argument écrit, c'est trancher par goût."); return; }
           i.statut = statut; i.motif = champ.value.trim();
           i.arbitre_le = new Date().toISOString();
           DEPOT.ajoute("decisions", { objet: i.id, type: "idee", projet: p.id,
@@ -284,7 +284,7 @@ window.VUE_ATELIER = (function () {
         el("div.champ", {}, el("label", {}, "Le message"), premier)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          if (!sujet.value.trim()) { alert("Un fil sans sujet ne se retrouve pas."); return; }
+          if (!sujet.value.trim()) { AVIS.refus("Un fil sans sujet ne se retrouve pas."); return; }
           if (!p.fils) p.fils = [];
           p.fils.push({ id: O.id("FI"), sujet: sujet.value.trim(), clos: false,
             ouvert_le: new Date().toISOString(),
@@ -328,7 +328,7 @@ window.VUE_ATELIER = (function () {
       el("div.form", {}, el("div.champ", {}, el("label", {}, "La conclusion"), champ)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          if (!champ.value.trim()) { alert("Une conclusion vide n'en est pas une."); return; }
+          if (!champ.value.trim()) { AVIS.refus("Une conclusion vide n'en est pas une."); return; }
           f.clos = true; f.conclusion = champ.value.trim(); f.clos_le = new Date().toISOString();
           DEPOT.enregistrer(); PANNEAU.fermerSur(); rafraichir();
         } }, "Conclure"),

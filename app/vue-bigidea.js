@@ -110,7 +110,7 @@ window.VUE_BIGIDEA = (function () {
       el("div.sousbloc", {}, el("h3", {}, "Ce que j'exige"), boite, champ),
       el("div.form-actions", { style: { "margin-top": "1rem" } },
         el("button.b.or", { type: "button", onclick: function () {
-          if (!lignes.length) { alert("Au moins un critère."); return; }
+          if (!lignes.length) { AVIS.refus("Au moins un critère."); return; }
           b.criteres = (b.criteres || []).concat(lignes);
           if (!p.sections.bigidea) p.sections.bigidea = b;
           DEPOT.tracer("critères", "projets", p.id, lignes.length + " critères écrits");
@@ -191,11 +191,11 @@ window.VUE_BIGIDEA = (function () {
       /* Les deux lignes qui décident. Sans elles, la piste est irrecevable. */
       el("div.bic-arg", {},
         el("div.bica.sacrifice", {},
-          el("div.t", {}, "CE QU'ELLE SACRIFIE"),
+          el("div.t", {}, "Ce qu'elle sacrifie"),
           el("div.v" + (pi.sacrifice ? "" : ".vide"), {},
             pi.sacrifice || "non écrit — la piste n'est pas arbitrable, §8")),
         el("div.bica.argument", {},
-          el("div.t", {}, "L'ARGUMENT"),
+          el("div.t", {}, "L'argument"),
           el("div.v" + (pi.argument ? "" : ".vide"), {},
             pi.argument || "non écrit — elle ne se défend que par le goût"))),
 
@@ -312,7 +312,7 @@ window.VUE_BIGIDEA = (function () {
       el("div.sousbloc", {}, el("h3", {}, "L'argument"), motif),
       el("div.form-actions", { style: { "margin-top": "1rem" } },
         el("button.b.or", { type: "button", onclick: function () {
-          if (!motif.value.trim()) { alert("Un arbitrage sans argument écrit n'en est pas un."); return; }
+          if (!motif.value.trim()) { AVIS.refus("Un arbitrage sans argument écrit n'en est pas un."); return; }
           (p.sections.pistes || []).forEach(function (x) {
             if (x.id !== pi.id && x.statut === "retenue") x.statut = "ecartee";
           });

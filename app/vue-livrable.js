@@ -14,12 +14,12 @@ window.VUE_LIVRABLE = (function () {
   var ETAPES = PRODUCTION.ETAPES;
 
   var ONGLETS = [
-    { cle: "apercu", nom: "APERÇU" },
-    { cle: "criteres", nom: "CRITÈRES & REVIEW" },
-    { cle: "retours", nom: "RETOURS & SITUATION" },
-    { cle: "production", nom: "PRODUCTION" },
-    { cle: "dependances", nom: "DÉPENDANCES" },
-    { cle: "historique", nom: "HISTORIQUE" },
+    { cle: "apercu", nom: "Aperçu" },
+    { cle: "criteres", nom: "Critères & review" },
+    { cle: "retours", nom: "Retours & situation" },
+    { cle: "production", nom: "Production" },
+    { cle: "dependances", nom: "Dépendances" },
+    { cle: "historique", nom: "Historique" },
   ];
 
   /* L'écran d'un livrable, c'est VUE_ASSET. Celui-ci ne sert plus que de source
@@ -83,7 +83,7 @@ window.VUE_LIVRABLE = (function () {
             el("div.v", {}, phrase(p, l))
           ),
           el("div.stats", {},
-            UI.stat("TOURS CONSOMMÉS", t.faits + " / " + (t.vendus || "—"),
+            UI.stat("Tours consommés", t.faits + " / " + (t.vendus || "—"),
               t.vendus && t.faits > t.vendus ? "au-delà du vendu" : "dans le périmètre",
               t.vendus && t.faits > t.vendus ? "alerte" : ""),
             /* Le réel se saisit ICI, et nulle part ailleurs.
@@ -100,13 +100,13 @@ window.VUE_LIVRABLE = (function () {
              * s'allument. */
             el("button.st.nu", { type: "button", title: "saisir le temps réel",
               onclick: function () { saisirReel(projet, l, rafraichir); } },
-              UI.stat("TEMPS", l.reel ? l.reel + " j" : "à saisir",
+              UI.stat("Temps", l.reel ? l.reel + " j" : "à saisir",
                 l.estime
                   ? "estimé : " + l.estime + " j" + (l.reel ? " · " + ecart(l) : "")
                   : "aucune estimation",
                 l.reel && l.estime && l.reel > l.estime ? "alerte"
                   : l.estime && !l.reel ? "attente" : "")),
-            UI.stat("COMPLÉTUDE", REGLES.pretSur(l).part + " %",
+            UI.stat("Complétude", REGLES.pretSur(l).part + " %",
               REGLES.pretSur(l).pret + (REGLES.pretSur(l).pret > 1 ? " points prêts sur " : " point prêt sur ")
                 + REGLES.pretSur(l).total, "")
           )
@@ -292,7 +292,7 @@ window.VUE_LIVRABLE = (function () {
 
     return el("div", {},
       el("div.sousbloc", {},
-        el("h3", {}, "RETOURS SUR LE VISUEL",
+        el("h3", {}, "Retours sur le visuel",
           el("span.droite", {}, ann.length ? ouvertes.length + " à traiter sur " + ann.length : "aucun")),
         reprises
           ? UI.banniere("rouge", reprises + (reprises > 1 ? " retours arrivent" : " retour arrive")
@@ -325,12 +325,12 @@ window.VUE_LIVRABLE = (function () {
         UI.recevabilite("Ce KV est-il conforme à " + (m ? m.nom : "son marché") + " ?",
           KV.conformite(p, l), null, [])) : null,
       el("div.sousbloc", {},
-        el("h3", {}, "COMPLÉTUDE — DIX AXES"),
+        el("h3", {}, "Complétude — dix axes"),
         axes(l, apres),
         el("div.points-legende", {}, "cliquer un point le fait passer de en attente à prêt, puis sans objet")
       ),
       el("div.sousbloc", {},
-        el("h3", {}, "INFORMATIONS"),
+        el("h3", {}, "Informations"),
         el("div.ligne", {}, el("span.etiq", {}, "Support"), el("span.val", {}, s ? s.nom : "—")),
         el("div.ligne", {}, el("span.etiq", {}, "Marché"), el("span.val", {}, m ? m.nom + " · " + (m.langues || []).join(", ") : "—")),
         el("div.ligne", {}, el("span.etiq", {}, "Format"), el("span.val" + (g && g.dimensions ? "" : ".vide"), {}, g && g.dimensions ? g.dimensions : "gabarit non renseigné")),
@@ -340,7 +340,7 @@ window.VUE_LIVRABLE = (function () {
           l.origine === "prevu" ? "prévu par la proposition retenue" : "ajouté après validation — une reprise s'ouvre"))
       ),
       (l.entrees || []).length ? el("div.sousbloc", {},
-        el("h3", {}, "ÉLÉMENTS D'ENTRÉE"),
+        el("h3", {}, "Éléments d'entrée"),
         el("div", {}, l.entrees.map(function (e) {
           var f = e.fournisseur ? DEPOT.trouve("personnes", e.fournisseur) : null;
           return UI.fileItem(null, e.quoi, f ? f.nom : "aucun fournisseur nommé",

@@ -892,13 +892,13 @@ window.VUE_PROJETS = (function () {
 
     if (!tous.length) {
       return el("aside.dl-mur", {},
-        el("div.dlm-t", {}, "CE QUI BLOQUE, TOUS DOSSIERS"),
+        el("div.dlm-t", {}, "Ce qui bloque, tous dossiers"),
         el("p.rien", {}, "Rien n'est ouvert. C'est rare — vérifie que les dossiers "
           + "récents ont bien leur cadrage."));
     }
 
     return el("aside.dl-mur", {},
-      el("div.dlm-t", {}, "CE QUI BLOQUE, TOUS DOSSIERS"),
+      el("div.dlm-t", {}, "Ce qui bloque, tous dossiers"),
       el("div.dlm-l", {}, tous.map(function (t) {
         var dur = t.type !== "infere-non-contresigne";
         return el("div.dlm-b" + (dur ? ".dur" : ""), {},

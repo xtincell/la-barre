@@ -321,21 +321,21 @@ window.GESTE = (function () {
        * que de poser un lien : le coût de ne pas y aller ne tient pas dans
        * une flèche. */
       cout ? el("div.geste-pourquoi", {},
-        el("div.gp-t", {}, "POURQUOI MAINTENANT"),
+        el("div.gp-t", {}, "Pourquoi maintenant"),
         el("div.gp-v", {}, cout)) : null,
 
       el("div.geste-quoi", {},
-        el("div.gq-t", {}, "CE QU'ON Y TROUVE"),
+        el("div.gq-t", {}, "Ce qu'on y trouve"),
         el("div.gq-v", {}, L.quoi)),
 
       el("div.geste-faire", {},
-        el("div.gf-t", {}, "CE QU'ON Y FAIT, DANS L'ORDRE"),
+        el("div.gf-t", {}, "Ce qu'on y fait, dans l'ordre"),
         el("ol.gf-l", {}, (L.faire || []).map(function (x, i) {
           return el("li", {}, el("span.gf-n", {}, String(i + 1)), el("span", {}, x));
         }))),
 
       el("div.geste-change", {},
-        el("div.gc-t", {}, "CE QUE ÇA CHANGE"),
+        el("div.gc-t", {}, "Ce que ça change"),
         el("div.gc-v", {}, L.change)),
 
       el("div.form-actions", {},
@@ -399,10 +399,10 @@ window.GESTE = (function () {
   function improvise(ou, libelle, sec) {
     PANNEAU.ouvrir(libelle || "Y aller", null, el("div.geste", {},
       sec.cout ? el("div.geste-pourquoi", {},
-        el("div.gp-t", {}, "POURQUOI MAINTENANT"),
+        el("div.gp-t", {}, "Pourquoi maintenant"),
         el("div.gp-v", {}, sec.cout)) : null,
       sec.quoi ? el("div.geste-quoi", {},
-        el("div.gq-t", {}, "CE QU'ON Y TROUVE"),
+        el("div.gq-t", {}, "Ce qu'on y trouve"),
         el("div.gq-v", {}, sec.quoi)) : null,
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {

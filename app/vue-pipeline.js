@@ -17,8 +17,8 @@ window.VUE_PIPELINE = (function () {
    * appartient donc à Constater. Deux vérités sur le même fait, c'est une de
    * trop. */
   var VUES = [
-    { cle: "ordre", nom: "L'ORDRE" },
-    { cle: "charge", nom: "LA CHARGE" },
+    { cle: "ordre", nom: "L'ordre" },
+    { cle: "charge", nom: "La charge" },
   ];
 
   /* Le pipeline n'est plus une destination : c'est le corps de deux modes de

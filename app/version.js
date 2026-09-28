@@ -83,11 +83,11 @@ window.VERSION = (function () {
       var o = ORIGINES[selO.value];
       var suite = options.perime ? options.perime() : [];
       onde.appendChild(el("div.stats", {},
-        UI.stat("VERSION", "V" + num(objet) + "  →  V" + (num(objet) + 1), "", ""),
-        UI.stat("COMPTÉE", o.cout ? "oui" : "non",
+        UI.stat("Version", "V" + num(objet) + "  →  V" + (num(objet) + 1), "", ""),
+        UI.stat("Comptée", o.cout ? "oui" : "non",
           o.cout ? "elle entre dans les allers-retours de révision" : "le coût reste pour nous",
           o.cout ? "alerte" : ""),
-        suite.length ? UI.stat("PÉRIME", String(suite.length),
+        suite.length ? UI.stat("Périme", String(suite.length),
           suite.length > 1 ? "livrables à regénérer" : "livrable à regénérer", "alerte") : null
       ));
       if (suite.length) {

@@ -234,10 +234,10 @@ window.INGESTEUR = (function () {
       bande,
       el("div.ing-corps", {},
         el("div.ing-gauche", {},
-          el("div.ing-t", {}, "CE QUI EST ARRIVÉ", el("span", {}, "la source, intacte")),
+          el("div.ing-t", {}, "Ce qui est arrivé", el("span", {}, "la source, intacte")),
           source),
         el("div", {},
-          el("div.ing-t", {}, "LA STRUCTURE", el("span", {}, "un champ, une citation")),
+          el("div.ing-t", {}, "La structure", el("span", {}, "un champ, une citation")),
           colD)),
       pied
     ));

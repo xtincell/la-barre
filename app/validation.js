@@ -140,7 +140,7 @@ window.VALIDATION = (function () {
       verdict.motifRequis
         ? el("div", {},
             criteres.length
-              ? el("div.sousbloc", {}, el("h3", {}, "LE MOTIF, D'ABORD DANS LES CRITÈRES ÉCRITS"), liste)
+              ? el("div.sousbloc", {}, el("h3", {}, "Le motif, d'abord dans les critères écrits"), liste)
               : UI.banniere("", "Aucun critère écrit pour ce document : le refus ne pourra s'appuyer que sur du texte libre. C'est exactement la dérive que le §8 nomme."),
             el("div.form", {}, el("div.champ", {},
               el("label", {}, criteres.length ? "Ou en toutes lettres" : "Le motif"), libre)))

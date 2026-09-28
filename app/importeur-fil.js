@@ -148,10 +148,10 @@ window.IMPORT_FIL = (function () {
       var retenues = msgs.filter(function (m) { return choix[m.id]; }).length;
 
       zone.appendChild(el("div.stats", {},
-        UI.stat("MESSAGES", String(msgs.length), "découpés du fil", ""),
-        UI.stat("IDÉES REPÉRÉES", String(retenues), "à poser en atelier", retenues ? "vert" : ""),
+        UI.stat("Messages", String(msgs.length), "découpés du fil", ""),
+        UI.stat("Idées repérées", String(retenues), "à poser en atelier", retenues ? "vert" : ""),
         Object.keys(noms).length
-          ? UI.stat("AUTEURS INCONNUS", String(Object.keys(noms).length),
+          ? UI.stat("Auteurs inconnus", String(Object.keys(noms).length),
               Object.keys(noms).join(", "), "attente")
           : null
       ));

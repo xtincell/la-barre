@@ -170,7 +170,9 @@ window.O = (function () {
 
   function jeton(cleP, texte) {
     var p = poste(cleP);
-    return el("span.jeton", { style: { background: p.couleur } }, texte || p.court);
+    /* La couleur du poste identifie : elle tient la pastille, jamais le fond
+     * sous le texte (du sombre sur ces couleurs tombait à 2,12:1). */
+    return el("span.jeton", { style: { "--poste": p.couleur } }, texte || p.court);
   }
 
   /* Recherche insensible aux accents et à la casse. */

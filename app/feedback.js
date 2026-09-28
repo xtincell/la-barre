@@ -315,9 +315,9 @@ window.FEEDBACK = (function () {
       O.vider(apercu);
       var dn = NIVEAUX[selPortee.value];
       apercu.appendChild(el("div.stats", {},
-        UI.stat("LIVRABLES TOUCHÉS", String(i.assets), i.marches.length + " marchés", i.assets > 5 ? "alerte" : ""),
+        UI.stat("Livrables touchés", String(i.assets), i.marches.length + " marchés", i.assets > 5 ? "alerte" : ""),
         UI.stat("COÛT ESTIMÉ", i.jours + " j", "à mi-estimation par livrable", i.jours > 5 ? "alerte" : ""),
-        i.enProduction ? UI.stat("DÉJÀ EN PRODUCTION", String(i.enProduction),
+        i.enProduction ? UI.stat("Déjà en production", String(i.enProduction),
           "BAT signé — les rappeler coûte", "alerte") : null
       ));
       apercu.appendChild(UI.banniere(dn.ton === "alerte" ? "rouge" : "",
@@ -342,7 +342,7 @@ window.FEEDBACK = (function () {
         el("div.champ", {}, el("label", {}, "Par quel canal"), selCanal),
         el("div.champ", {}, el("label", {}, "À quel niveau il s'applique"), selPortee, aideN)),
       zoneCibles,
-      el("div.sousbloc", {}, el("h3", {}, "CE QUE ÇA TOUCHE"), apercu),
+      el("div.sousbloc", {}, el("h3", {}, "Ce que ça touche"), apercu),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           if (!champ.value.trim()) { AVIS.refus("Un retour sans texte n'est pas un retour."); return; }
@@ -360,7 +360,7 @@ window.FEEDBACK = (function () {
     ));
   }
 
-  function bloc(t, n) { return el("div.sousbloc", {}, el("h3", {}, t.toUpperCase()), n); }
+  function bloc(t, n) { return el("div.sousbloc", {}, el("h3", {}, t.charAt(0).toUpperCase() + t.slice(1)), n); }
 
   function clientDe(p) {
     var nom = (p.sections.identite || {}).client;
@@ -416,14 +416,14 @@ window.FEEDBACK = (function () {
     PANNEAU.ouvrir("Trancher — " + O.joli(f.quand), p ? p.ref : "", el("div", {},
       el("div.fb-texte", {}, f.texte),
       el("div.stats", {},
-        UI.stat("LIVRABLES", String(i.assets), i.marches.length + " marchés", ""),
-        UI.stat("COÛT", i.jours + " j", "de reprise estimée", i.jours > 5 ? "alerte" : ""),
-        UI.stat("VERSIONS", String(i.assets), "s'ouvriront si on l'applique", "")
+        UI.stat("Livrables", String(i.assets), i.marches.length + " marchés", ""),
+        UI.stat("Coût", i.jours + " j", "de reprise estimée", i.jours > 5 ? "alerte" : ""),
+        UI.stat("Versions", String(i.assets), "s'ouvriront si on l'applique", "")
       ),
 
       motifs.length
         ? el("div.sousbloc", {},
-            el("h3", {}, "SUR QUOI JE PEUX M'OPPOSER",
+            el("h3", {}, "Sur quoi je peux m'opposer",
               el("span.droite", {}, motifs.length + (motifs.length > 1 ? " motifs opposables" : " motif opposable"))),
             listeM)
         : UI.banniere("", "Aucun motif opposable : ce retour arrive avant validation, dans les allers-retours vendus, sur du périmètre prévu. Il se traite, il ne se conteste pas."),

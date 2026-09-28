@@ -284,7 +284,7 @@ body {
 }
 .rail-marque .os {
   font-size: var(--t-micro); line-height: var(--lh-micro);
-  letter-spacing: .22em;
+  letter-spacing: 0;
   color: var(--clair-terne);
   margin-top: .15rem;
 }
@@ -324,7 +324,7 @@ body {
 
 .rail-titre {
   font-size: var(--t-micro); line-height: var(--lh-micro);
-  letter-spacing: .18em;
+  letter-spacing: 0;
   color: var(--clair-terne);
   padding: .9rem 1rem .35rem;
 }
@@ -340,7 +340,7 @@ body {
 .bloc-projets .rail-titre { display: flex; align-items: baseline; justify-content: space-between;
   padding-left: .3rem; padding-right: .1rem; }
 .rd-changer { background: none; border: 0; color: var(--clair-terne); font: inherit;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .06em; cursor: pointer;
+  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: 0; cursor: pointer;
   /* 17 px de haut n'est pas une cible : on garde la discrétion du texte et on
    * rend la zone cliquable au doigt. */
   min-height: var(--cible); padding: 0 .4rem; }
@@ -514,7 +514,7 @@ body {
   background: var(--nuit-carte); border: 1px solid var(--trait); padding: .8rem .85rem .9rem;
 }
 .panneau-lat h3 {
-  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .14em; color: var(--clair-terne);
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: 0; color: var(--clair-terne);
   display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem;
 }
 .panneau-lat h3 .droite { margin-left: auto; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
@@ -523,7 +523,7 @@ body {
   background: #efe4c8; color: #2a2418; padding: 1rem .9rem 1.1rem;
   border: 1px solid #d9c9a3;
 }
-.regle .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .16em; color: #8a7a55; }
+.regle .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: 0; color: #8a7a55; }
 .regle .texte { font-family: var(--ecrit); font-style: italic; font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.25; margin-top: .4rem; }
 .regle .signe { text-align: right; font-family: var(--ecrit); font-style: italic; font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: #8a7a55; margin-top: .4rem; }
 

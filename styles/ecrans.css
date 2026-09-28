@@ -30,7 +30,7 @@
 
 /* Les deux chiffres qui comptent */
 .mesures { display: grid; gap: .55rem; min-width: 8.5rem; }
-.mesure .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
+.mesure .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: 0; color: var(--clair-terne); }
 .mesure .v { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); margin-top: .1rem; }
 .mesure .v.bon { color: var(--vert); }
 .mesure .v.limite { color: var(--attente); }
@@ -52,7 +52,7 @@
 }
 .carte-projet:hover { border-color: var(--or); }
 .carte-projet .corps-carte { padding: .75rem .85rem .9rem; display: grid; gap: .25rem; }
-.carte-projet .ref { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em; color: var(--clair-terne); }
+.carte-projet .ref { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: 0; color: var(--clair-terne); }
 .carte-projet h4 { font-size: var(--t-lire); letter-spacing: var(--ls-lire); font-weight: 400; line-height: 1.25; }
 .carte-projet .meta { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
 .carte-projet .pastilles { display: flex; gap: 2px; margin-top: .45rem; }
@@ -74,7 +74,7 @@
 .route.ecartee { opacity: .55; }
 .route .tete-route { display: flex; align-items: center; gap: .5rem; padding: .55rem .7rem;
   border-bottom: 1px solid var(--trait); }
-.route .tete-route .nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: .06em; color: var(--or); }
+.route .tete-route .nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: 0; color: var(--or); }
 
 .route .corps-route { padding: .65rem .7rem .8rem; display: grid; gap: .3rem; }
 .route .phrase { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; }
@@ -92,7 +92,7 @@
 
 .matrice { width: 100%; border-collapse: collapse; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
 .matrice th { background: var(--nuit-relief); color: var(--clair-doux); font-weight: 400;
-  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .08em; padding: .35rem .5rem; text-align: center; }
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: 0; padding: .35rem .5rem; text-align: center; }
 .matrice th:first-child { text-align: left; }
 .matrice td { border: 1px solid var(--trait); padding: 0; text-align: center; }
 .matrice td.entete-ligne { text-align: left; padding: .4rem .55rem; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
@@ -210,7 +210,7 @@
 .brief-cote { display: grid; gap: .8rem; }
 
 .carte-phrase { background: var(--nuit-relief); padding: 1rem 1.1rem 1.1rem; }
-.carte-phrase .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .12em; color: var(--clair-terne); }
+.carte-phrase .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: 0; color: var(--clair-terne); }
 .carte-phrase .phrase { font-family: var(--ecrit); font-style: italic; font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.4; margin-top: .5rem; }
 .carte-phrase .signe { text-align: right; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .5rem; }
 .carte-phrase .signature { font-family: var(--ecrit); font-style: italic; color: var(--or); font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); margin-top: .6rem; }
@@ -221,7 +221,7 @@
 .deux-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .7rem; align-items: start; }
 .col-msg { background: var(--nuit-carte); padding: .75rem .8rem .85rem; }
 .col-msg .c-ico { color: var(--or); display: block; margin-bottom: .4rem; }
-.col-msg .c-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
+.col-msg .c-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: 0; color: var(--clair-terne); }
 .col-msg .c-v { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.5; margin-top: .3rem; }
 .col-msg .c-v.vide { color: var(--bloquant-txt); font-style: italic; }
 .col-msg .c-i { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .4rem; font-style: italic; }
@@ -233,7 +233,7 @@
 .objectifs { display: grid; gap: .5rem; }
 .objectif { display: grid; grid-template-columns: 2rem 1fr; gap: .5rem; padding: .5rem 0; border-bottom: 1px solid var(--trait); }
 .objectif .n { color: var(--or); font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.objectif .t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .06em; color: var(--clair-terne); }
+.objectif .t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: 0; color: var(--clair-terne); }
 .objectif .v { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.5; margin-top: .15rem; }
 .objectif .v.vide { color: var(--bloquant-txt); font-style: italic; }
 
@@ -280,7 +280,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 .liv-apercu { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 1rem; align-items: start; }
 
 .ou-en { background: var(--nuit-carte); padding: .7rem .8rem; margin: .8rem 0; }
-.ou-en .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
+.ou-en .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: 0; color: var(--clair-terne); }
 .ou-en .v { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.5; margin-top: .25rem; }
 
 .points-legende { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .4rem; font-style: italic; }
@@ -358,7 +358,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 .stc-b, .stc-g { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
   color: var(--clair-terne); margin: 0; }
 .stc-g { color: var(--arbitrage); }
-.stc-e { letter-spacing: .1em; color: var(--clair-terne); }
+.stc-e { letter-spacing: 0; color: var(--clair-terne); }
 
 .autref { margin: .6rem 0; }
 .autref summary { min-height: var(--cible); display: flex; align-items: center; cursor: pointer;
@@ -409,7 +409,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
   border-bottom: 1px solid var(--trait);
   font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
   color: var(--clair-doux); }
-.doc-t th { color: var(--clair-terne); letter-spacing: .08em; }
+.doc-t th { color: var(--clair-terne); letter-spacing: 0; }
 .doc-t tr.corpus td { font-style: italic; }
 .doc-t tr.maison { background: var(--surface-3); }
 .doc-n { display: block; font-size: var(--t-meta); line-height: var(--lh-meta);
@@ -431,7 +431,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
   letter-spacing: var(--ls-meta); color: var(--clair-doux); }
 .doc-imp { margin: 0; padding: 0; list-style: none; display: grid; gap: .35rem; max-width: var(--mesure); }
 .doc-imp li { display: grid; gap: .02rem; }
-.doc-h { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .08em;
+.doc-h { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: 0;
   color: var(--clair-terne); margin: .7rem 0 .3rem; }
 .doc-note { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
   color: var(--clair-terne); margin: .4rem 0 0; max-width: var(--mesure); }
@@ -439,7 +439,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 /* Une règle du métier qu'il faut retenir : encadrée, pas décorée. */
 .doc-regle { display: grid; gap: .2rem; padding: .6rem .7rem; margin: .5rem 0;
   background: var(--surface-3); border-left: 3px solid var(--clair); max-width: var(--mesure); }
-.docr-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
+.docr-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: 0; color: var(--clair-terne); }
 .doc-regle p { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
   color: var(--clair-doux); margin: 0; }
 .docr-cas { color: var(--clair-terne) !important; font-size: var(--t-micro) !important;
@@ -449,7 +449,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
  * de cet écran qui se change sans toucher au code. */
 .doc-reg { display: grid; gap: .1rem; padding: .55rem .7rem; margin: .5rem 0;
   background: var(--surface-1); border: 1px dashed var(--or); max-width: var(--mesure); }
-.docg-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--or); }
+.docg-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: 0; color: var(--or); }
 .docg-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair); }
 .docg-v { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
 .docg-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
@@ -496,13 +496,13 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
   letter-spacing: var(--ls-h2); color: var(--clair); margin: .2rem 0; max-width: var(--mesure); text-wrap: balance; }
 .prdp-corps { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire);
   color: var(--clair-doux); margin: 0; max-width: var(--mesure); }
-.prdp-sign { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: .1em;
+.prdp-sign { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: 0;
   color: var(--or); margin: .2rem 0 0; }
 .prdp-note { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
   color: var(--clair-terne); margin: 0; }
 .prdp-blocs { display: grid; gap: .35rem; margin: .3rem 0 0; max-width: var(--mesure); }
 .prdp-blocs > div { display: grid; gap: .05rem; }
-.prdp-blocs dt { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
+.prdp-blocs dt { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: 0; color: var(--clair-terne); }
 .prdp-blocs dd { margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta);
   letter-spacing: var(--ls-meta); color: var(--clair-doux); }
 

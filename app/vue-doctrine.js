@@ -272,7 +272,7 @@ window.VUE_DOCTRINE = (function () {
           " — l'idée en une phrase, avec sa signature et ses exécutions. Un territoire "
           + "en produit plusieurs.")),
       el("div.doc-regle", {},
-        el("span.docr-t", {}, "LE TEST D'UNE MINUTE"),
+        el("span.docr-t", {}, "Le test d'une minute"),
         el("p", {}, "Remonter chaque axe jusqu'à son insight. Si les insights diffèrent, "
           + "ce ne sont pas des axes — ce sont des recommandations concurrentes dans le "
           + "même document, et c'est le client qui recomposera."),
@@ -312,7 +312,7 @@ window.VUE_DOCTRINE = (function () {
         return el("li", {}, el("span.doc-n", {}, t.nom), " — " + t.quoi);
       })),
       el("div.doc-regle", {},
-        el("span.docr-t", {}, "CAS MAISON — NSIA TONTINES"),
+        el("span.docr-t", {}, "Cas maison — NSIA Tontines"),
         el("p", {}, "Account Planning pour l'insight, Disruption pour le territoire, "
           + "Ehrenberg-Bass pour la diffusion. Trois écoles, aucune contradiction : "
           + "elles n'opèrent pas au même étage."),
@@ -328,7 +328,7 @@ window.VUE_DOCTRINE = (function () {
           el("span.doc-x", {}, n.force));
       })),
       el("div.doc-regle", {},
-        el("span.docr-t", {}, "SI AUCUN NIVEAU N'EST ATTEIGNABLE"),
+        el("span.docr-t", {}, "Si aucun niveau n'est atteignable"),
         el("p", {}, "Ce n'est pas le diagnostic qui manque : c'est Consulting qui n'est "
           + "pas la bonne structure."),
         el("p.docr-cas", {}, "Cas maison — AFG Bank : pas de panel sur ce marché. Dix "
@@ -393,7 +393,7 @@ window.VUE_DOCTRINE = (function () {
   /* Un réglage de maison, signalé comme tel au milieu du métier. */
   function reglage(nom, valeur, quoi, cle) {
     return el("div.doc-reg", {},
-      el("span.docg-t", {}, "RÉGLAGE DE LA MAISON"),
+      el("span.docg-t", {}, "Réglage de la maison"),
       el("span.docg-n", {}, nom),
       el("span.docg-v", {}, valeur),
       el("p.docg-q", {}, quoi),

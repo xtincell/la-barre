@@ -304,6 +304,17 @@ button.chip:hover { border-color: var(--trait-clair); }
   .co-b { break-inside: avoid; }
 }
 
+/* Le jeton d'un poste : une étiquette à filet, la couleur du poste dans la
+ * pastille. */
+.jeton { display: inline-flex; align-items: center; gap: 5px; padding: 1px 7px; border: 1px solid var(--trait); border-radius: 4px;
+  font: 500 11px var(--affichage); color: var(--clair); background: var(--surface-1); white-space: nowrap; }
+.jeton::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--poste, var(--clair-terne)); }
+/* Une zone de texte se vise au doigt, même sur deux lignes. */
+textarea { min-height: 44px; }
+/* Le texte d'un retour : c'est un humain qui l'a écrit — l'aplat d'intention. */
+.fb-texte { padding: 12px 14px; border-radius: 5px; background: var(--studio-intention); font: 500 15px/1.5 var(--affichage);
+  color: var(--studio-encre); overflow-wrap: anywhere; max-width: 70ch; }
+
 /* Le sous-bloc d'une fiche ou d'un panneau : un titre 12 px, puis son contenu. */
 .sousbloc { margin-top: 16px; }
 .sousbloc h3 { font: 700 12px var(--affichage); color: var(--clair); letter-spacing: 0; text-transform: none; margin-bottom: 8px; }

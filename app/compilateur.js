@@ -318,7 +318,7 @@ window.COMPILATEUR = (function () {
         INSIGHT.normaliser(i);
         var c = i.couche ? INSIGHT.couche(i.couche) : null;
         var v = INSIGHT.verdict(i);
-        return { q: c ? c.nom.toUpperCase() : "COUCHE NON NOMMÉE",
+        return { q: c ? c.nom : "Couche non nommée",
           v: INSIGHT.texte(i)
             + (c ? "  —  commande " + c.commande : "")
             + "  ·  " + v.nom

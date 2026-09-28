@@ -139,7 +139,7 @@ window.VUE_REVUE = (function () {
       /* Ce contre quoi on le juge */
       el("div.rv-contre", {},
         el("div.rc-idee", {},
-          el("div.rc-t", {}, "L'IDÉE EN VIGUEUR"),
+          el("div.rc-t", {}, "L'idée en vigueur"),
           el("div.rc-phrase", {}, b.idee || "Aucune idée écrite sur ce projet."),
           b.signature ? el("div.rc-sign", {}, "« " + b.signature + " »") : null
         ),
@@ -221,7 +221,7 @@ window.VUE_REVUE = (function () {
         : null,
 
       c.gagne.length
-        ? el("div.sousbloc", {}, el("h3", {}, "CE QUE ÇA DÉBLOQUE"),
+        ? el("div.sousbloc", {}, el("h3", {}, "Ce que ça débloque"),
             el("div", {}, c.gagne.map(function (g) {
               return el("div.oc-l.gagne", {}, UI.icone("revue", 13), el("span", {}, g));
             })))

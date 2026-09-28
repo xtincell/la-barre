@@ -266,7 +266,7 @@ window.PRODUCTION = (function () {
         : null,
 
       el("div.sousbloc", {},
-        el("h3", {}, "LES FICHIERS", el("span.droite", {}, fs.length ? String(fs.length) : "aucun")),
+        el("h3", {}, "Les fichiers", el("span.droite", {}, fs.length ? String(fs.length) : "aucun")),
         fs.length
           ? el("div", {}, fs.map(function (f) {
               var t = TYPES[f.type] || { nom: f.type };
