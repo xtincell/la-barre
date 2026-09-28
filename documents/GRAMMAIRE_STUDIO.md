@@ -279,11 +279,18 @@ la ligne d'état `ETAT.ligne` et ses variantes (`.bic-etat`, `.dmd-etat`…). Si
 non traité : `colonneRoute` et `executions`, dans `vue-bigidea.js`, ne sont plus
 appelées nulle part. Mesure à 1280 et 375 px : à zéro, hors données.
 
-**Passe 4c — Dossier : les pistes (en cours, interrompue le 28/09).** Fait, non
-encore vérifié à l'écran : casse de phrase dans les six modules de la section ;
-vignette vide passée au §2 (elle portait 175 sérifs sur PRJ-BTS26) ; route retenue
-réécrite (`rt-*`), KV maîtres en grille compacte au lieu de grandes cartes, groupes
-de déclinaisons repliables (la section faisait 24 817 px) ; bloc de l'axe créatif
-renommé `.axe-bloc` (collision avec les puces `.axe` du livrable) et réécrit. Reste :
-le comparateur (`cmp-*`, sans toucher aux `cmp-*` de la campagne), la bande de
-priorité (`prb-*`), le rétroplanning (`re-*`, `rep-*`), puis mesure 1280/375.
+**Passe 4c — Dossier : les pistes (28/09).** Six modules composent la section
+(`vue-pistes`, `vue-route`, `axe`, `priorite`, `retroplanning`, `dispositif`) ; tous
+passent en casse de phrase, `UI.stat` compris. Tranché au §2 : la vignette vide
+(`IMAGE.vignette`), qui portait 175 sérifs sur PRJ-BTS26. La densité, surtout : la
+section de PRJ-BTS26 faisait **24 817 px**. Les 34 KV maîtres étaient de grandes
+cartes à deux colonnes, une par rangée — ils passent en grille compacte ; les 155
+déclinaisons, et les productions lourdes du rétroplanning, deviennent repliables, leur
+tête disant le compte et ce qui cloche (maîtres dépassés, retours, débordement de
+fenêtre). La section tombe à 7 463 px. Une carte sans visuel prend la hauteur de son
+texte au lieu de le cacher sous son bandeau. Trouvé : `.axe` nommait deux composants
+(le bloc de l'axe créatif et les puces d'axe du livrable) dont les règles
+s'appliquaient l'une à l'autre — le bloc devient `.axe-bloc`. Le bouton vert plein
+« Bon de commande reçu » passe au bleu du geste principal. Treize commentaires
+orphelins retirés, dont celui qui imposait les capitales sous `--t-eti`, règle que le
+Studio abolit. Mesure à 1280 et 375 px sur quatre dossiers : à zéro, hors données.

@@ -375,8 +375,6 @@
 .motif:hover { border-color: var(--trait-clair); }
 .motif.actif { border-color: var(--or); color: var(--clair); }
 
-/* ————————————————————— L'atelier ————————————————————— */
-
 /* ————————————————————— La comparaison des routes ————————————————————— */
 
 .bic { display: grid; gap: .45rem; align-content: start;
@@ -413,8 +411,6 @@
 .bic-n .alerte, .bic-n .alerte b { color: var(--bloquant-txt); }
 .bic-g { padding: .2rem .65rem 0; }
 .bic-g .b { width: 100%; }
-
-/* ————————————————————— Les idées de l'atelier, dans la big idea ————————————————————— */
 
 /* ————————————————————— Le dispositif ————————————————————— */
 
@@ -661,27 +657,6 @@
 .dme-c { margin-top: .2rem; }
 .dme-c textarea, .dme-c select, .dme-c input { width: 100%; }
 
-/* ————————————————————— Le rétroplanning ————————————————————— */
-
-.re-l { display: grid; gap: 2px; }
-.re-p { display: grid; grid-template-columns: 1fr auto; gap: .1rem .6rem; text-align: left;
-  background: var(--nuit-carte); border: 0; border-left: 2px solid var(--trait-clair);
-  padding: .4rem .6rem; cursor: pointer; font: inherit; color: var(--clair); }
-.re-p:hover { background: var(--nuit-relief); }
-.re-p.faite { border-left-color: var(--vert); }
-.re-p.ici { border-left-color: var(--or); background: var(--nuit-relief); }
-.re-p.retard { border-left-color: var(--bloquant-txt); }
-.re-p.hors { opacity: .4; cursor: default; }
-.rep-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); grid-column: 1; }
-.rep-n i { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); font-style: normal; margin-left: .4rem; }
-.rep-d { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); grid-column: 1; }
-.rep-q { font-size: var(--t-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); grid-column: 1; line-height: 1.35; }
-.rep-e { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); grid-column: 2; grid-row: 1; text-align: right; color: var(--clair-terne); }
-.re-p.faite .rep-e { color: var(--vert); }
-.re-p.ici .rep-e { color: var(--or); }
-.re-p.retard .rep-e { color: var(--bloquant-txt); }
-.rep-w { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); grid-column: 2; grid-row: 2; text-align: right; color: var(--clair-terne); }
-
 /* ————————————————————— L'ordre du pipeline ————————————————————— */
 
 .pi-conflit { background: var(--nuit-carte); border: 1px solid var(--alerte);
@@ -727,38 +702,6 @@
 .pirc-d { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
 .pil-exe { position: absolute; left: 0; top: 0; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em;
   padding: .08rem .3rem; background: var(--vert); color: var(--clair); }
-
-/* ————————————————————— L'état commercial d'une route ————————————————————— */
-
-.pr-band { background: var(--nuit-carte); 
- border-left: 3px solid var(--trait-clair); padding: .65rem .8rem; display: grid; gap: .45rem; }
-.pr-band.vert { border-left-color: var(--vert); }
-.pr-band.or { border-left-color: var(--or); }
-.pr-band.attente { border-left-color: var(--attente); }
-.prb-h { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; }
-.prb-r { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: .1em; }
-.pr-band.vert .prb-r { color: var(--vert); }
-.pr-band.or .prb-r { color: var(--or); }
-.pr-band.attente .prb-r { color: var(--attente); }
-.pr-band.terne .prb-r { color: var(--clair-terne); }
-.prb-q { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); flex: 1; }
-.prb-m { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.prb-regle { font-size: var(--t-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); line-height: 1.45; }
-.prb-jalons { display: flex; gap: .3rem; flex-wrap: wrap; }
-.prbj { display: flex; align-items: center; gap: .25rem; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-terne); border: 1px solid var(--trait); padding: .1rem .35rem; }
-/* Le jeton de filet porté par du texte : 1,57:1. Un jalon non atteint se lit,
- * sinon il ne dit rien. */
-.prbj .m { color: var(--clair-terne); }
-.prbj.ok { color: var(--clair-doux); border-color: var(--trait-clair); }
-.prbj.ok .m { color: var(--vert); }
-.prbj.min:not(.ok) { border-color: var(--alerte); color: var(--bloquant-txt); }
-.prbj.min:not(.ok) .m { color: var(--bloquant-txt); }
-.prb-dates { display: flex; gap: .8rem; flex-wrap: wrap; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); }
-.prb-dates .vide { color: var(--clair-terne); }
-.prb-dates .vert { color: var(--vert); }
-.prb-g { display: flex; gap: .4rem; flex-wrap: wrap; }
-.prb-g .b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .2rem .5rem; }
 
 /* ————————————————————— L'ingesteur de brief ————————————————————— */
 
@@ -877,25 +820,6 @@
 .ecx-g { display: flex; gap: .3rem; flex-wrap: wrap; margin-top: .15rem; }
 .ecx-g .b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .1rem .3rem; }
 
-/* Les productions lourdes, imbriquées dans le rétroplanning de campagne */
-.re-prod { display: grid; gap: .45rem; margin: .6rem 0; }
-.rep-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em; color: var(--clair-terne);
-  display: flex; gap: .5rem; }
-.rep-t span { color: var(--clair-doux); letter-spacing: 0; }
-.rep-p { background: var(--nuit-carte); border-left: 2px solid var(--trait-clair);
-  padding: .45rem .6rem; display: grid; gap: .3rem; }
-.rep-p.deborde { border-left-color: var(--bloquant-txt); }
-.repp-t { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
-.repp-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.repp-j { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); }
-.repp-f { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-left: auto; }
-.repp-l { display: grid; gap: .15rem; }
-.repp-x { display: grid; gap: .02rem; border-left: 1px solid var(--trait); padding-left: .5rem; }
-.reppx-n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
-.reppx-n i { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); font-style: normal; margin-left: .35rem; }
-.reppx-d { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); }
-.reppx-q { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-
 /* Un retour client hiérarchisé : son niveau, son onde, et ce qui passe avant */
 .ec-x.fb { border-left-width: 2px; }
 .ec-x.fb.attend { opacity: .72; border-left-style: dashed; }
@@ -981,9 +905,9 @@
  * toujours au même endroit. */
 .fix-c, .fix-q, .fix-k,
 .ecx-q, .ecx-k, .ecx-att, .ecx-pret,
-.pir-regle, .prb-regle, .brc-p,
+.pir-regle, .brc-p,
 .cob-c, .cob-p li, .bic-c, .bica .v,
-.rtb .v, .dia-q, .rep-q { max-width: var(--mesure); }
+.rtb .v, .dia-q { max-width: var(--mesure); }
 
 .pifb-t, .ifm-t, .fb-texte, .vsv-m { max-width: var(--mesure-large); }
 
@@ -2073,107 +1997,6 @@
   .dl-r.grand .dlr-d { flex-direction: row; align-items: center; }
 }
 
-/* ————————————————————— Les routes : le comparateur ————————————————————— */
-
-/* Des cartes empilées se lisent verticalement — on découvre une route, puis
- * l'autre, et on compare de mémoire. La décision, elle, est une comparaison :
- * elle se lit en travers. Une colonne de libellés, une par route, et chaque
- * ligne pose la même question à toutes. */
-.cmp { display: grid; gap: 1rem; }
-.cmp-t { font-size: var(--t-ecran); line-height: var(--lh-ecran); letter-spacing: var(--ls-ecran);
-  color: var(--clair); text-align: center; max-width: 34ch; margin: 0 auto; }
-.cmp-s { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-terne);
-  text-align: center; max-width: var(--mesure); margin: 0 auto; }
-
-.cmp-g { display: grid; align-items: start; column-gap: 0; row-gap: 0;
-  border-top: 1px solid var(--trait); margin-top: .6rem; }
-
-.cmpg-l { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .12em;
-  color: var(--clair-terne); padding: 1rem .8rem 1rem 0;
-  border-bottom: 1px solid var(--trait); }
-
-.cmp-h { display: grid; gap: .2rem; justify-items: center; padding: .9rem .9rem;
-  border-bottom: 1px solid var(--trait); border-left: 1px solid var(--trait); }
-.cmph-n { font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); }
-.cmp-h.retenue { border-bottom-color: var(--succes); }
-.cmph-e { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .12em;
-  color: var(--succes); }
-
-.cmp-c { padding: 1rem .9rem; border-bottom: 1px solid var(--trait);
-  border-left: 1px solid var(--trait); display: grid; gap: .4rem; align-content: start; }
-.cmp-c.visuel { padding: .9rem; background: transparent; border-top: 0; cursor: pointer; }
-.cmp-c.visuel .vignette { width: 100%; aspect-ratio: 16 / 10; overflow: hidden;
-  border-radius: var(--r-s); }
-.cmp-c.visuel .vignette img { width: 100%; height: 100%; object-fit: cover; }
-.cmp-c.visuel:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
-
-.cmpc-p { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux);
-  max-width: var(--mesure); }
-.cmpc-n { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair); }
-
-/* Une case vide n'est pas un blanc : elle dit ce qui manque et ce que ça coûte. */
-.cmp-vide { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-.cmp-vide b { color: var(--arbitrage); font-weight: 400; }
-.cmp-al { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--bloquant-txt); }
-
-.cmp-chips { display: flex; flex-wrap: wrap; gap: .3rem; }
-.cmp-chip { font-size: var(--t-meta); line-height: 1; padding: .4rem .6rem;
-  border: 1px solid var(--trait-clair); border-radius: var(--r-xs); color: var(--clair-doux); }
-
-.cmp-disp { display: grid; gap: .3rem; }
-.cmpd { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: .5rem;
-  align-items: baseline; }
-.cmpd-c { font-size: var(--t-micro); line-height: 1; letter-spacing: .08em;
-  color: var(--clair-terne); border: 1px solid var(--trait-clair);
-  border-radius: var(--r-xs); padding: .25rem 0; text-align: center; }
-.cmpd-n { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux); }
-
-/* La frise portait cinq jalons en flex sans permission de rétrécir : les
- * dates et les libellés fixaient une largeur minimale, et la colonne débordait
- * de trente pixels. Chaque jalon peut maintenant se serrer, et son libellé se
- * coupe plutôt que de pousser la grille. */
-/* Le libellé de gauche porte le coût de la ligne — une fois, au lieu d'une
- * fois par colonne. Il se lit en second : c'est une consigne, pas un titre. */
-.cmpgl-c { display: block; margin-top: .2rem; font-size: var(--t-micro);
-  line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--clair-terne); text-transform: none; letter-spacing: 0; }
-
-/* Une case vide dit ce qui manque, en trois mots. Le pourquoi est à gauche. */
-.cmp-manque { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  color: var(--bloquant-txt); font-style: italic; }
-
-.cmp-frise { display: flex; gap: .1rem; min-width: 0; }
-.cmpf { display: grid; justify-items: center; gap: .25rem; flex: 1 1 0; min-width: 0; }
-.cmpf-d { font-size: var(--t-micro); line-height: 1; color: var(--clair);
-  font-variant-numeric: tabular-nums; }
-.cmpf-r { width: 7px; height: 7px; border-radius: 50%; background: var(--trait-clair);
-  position: relative; }
-.cmpf-r::before { content: ""; position: absolute; top: 50%; left: -50%; right: 50%;
-  height: 1px; background: var(--trait); }
-.cmpf:first-child .cmpf-r::before { display: none; }
-.cmpf-d, .cmpf-n { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cmpf-n { font-size: var(--t-micro); line-height: 1.2; color: var(--clair-terne);
-  text-align: center; }
-
-.cmp-v { padding: 1.1rem .9rem; border-left: 1px solid var(--trait); display: grid;
-  justify-items: center; }
-.cmpv-b { width: 100%; }
-.cmpv-ok { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--succes);
-  text-align: center; }
-
-.cmp-pied { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  text-align: center; font-style: italic; margin-top: .4rem; }
-
-/* Au doigt, on ne compare pas en travers : chaque route devient un bloc, et
- * le libellé de ligne repasse au-dessus de sa valeur. */
-@media (max-width: 900px) {
-  .cmp-g { display: grid; grid-template-columns: minmax(0, 1fr) !important; border-top: 0; }
-  .cmpg-l { padding: .9rem 0 .1rem; border-bottom: 0; }
-  .cmp-c, .cmp-h, .cmp-v { border-left: 0; }
-  .cmp-t { text-align: left; margin: 0; }
-  .cmp-s, .cmp-pied { text-align: left; margin: 0; }
-}
-
 /* ————————————————————— Le référentiel : une hiérarchie ————————————————————— */
 
 /* Trois piles de même poids disaient trois inventaires. Le marché gouverne :
@@ -2265,8 +2088,6 @@
 @media (max-width: 1100px) {
   .pr-deux { grid-template-columns: minmax(0, 1fr); }
 }
-
-/* ————————————————————— L'atelier : l'indicateur qui décide ————————————————————— */
 
 /* ————————————————————— La planche : les manquements, pas un score ————————————————————— */
 
@@ -2830,10 +2651,6 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 }
 .pe-people.multiple .pep-n { color: var(--attente); }
 
-/* ————————————————————— Un chiffre porte sa conséquence ————————————————————— */
-
-/* La route d'un cycle porte ses publications. */
-
 /* ————————————————————— Une pièce qui dure ————————————————————— */
 
 /* Un film se regarde. Il s'affichait par son arrêt sur image, ce qui revenait
@@ -3030,21 +2847,6 @@ button.mrmq-t:focus-visible, button.mrg-tete:focus-visible {
 blockquote, .message, .verbatim {
   font-size: var(--t-lire); line-height: 1.6;
 }
-
-/* Et la règle qui empêche la dérive de revenir : au-dessous de --t-eti, on ne
- * met que des capitales espacées. Un texte en bas de casse à cette taille est
- * un défaut, pas un choix. */
-
-/* ————————————————————— L'axe créatif ————————————————————— */
-/* Ce qui sépare une piste d'une autre. Il se lit avant l'argumentaire :
- * le sacrifice défend quelque chose, et ce quelque chose est l'axe. */
-
-/* Le ton, en grand : c'est le mot qui doit sauter aux yeux quand on met
- * trois colonnes côte à côte. */
-
-/* Ce que la marque impose, pendant qu'on écrit l'axe. Pluriannuel au-dessus
- * du saisonnier : le produit ne juge pas le sens, il met la règle sous les
- * yeux de celui qui écrit. */
 
 /* ————————————————————— Ce qui est tracé, et ce qui ne l'est pas ————————————————————— */
 /* « 0 soumis » lu sans contexte accuse une personne d'un défaut d'outil.

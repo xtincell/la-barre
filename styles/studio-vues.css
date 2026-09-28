@@ -1013,3 +1013,135 @@ button.st-e:hover { background: var(--surface-4); }
 .axsocr-s { font-size: 11px; color: var(--clair-terne); }
 .axsoc-i { font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
 @media (max-width: 560px) { .axsoc-r { grid-template-columns: 1fr; gap: 2px; } }
+/* Une carte sans visuel porte du texte, et un ratio fixe l'ampute : elle prend
+ * la hauteur qu'il lui faut, le bandeau passe dessous, et le texte d'attente
+ * descend sous la pastille de code. */
+.rt-c:has(> .vignette.vide) { display: grid; grid-template-rows: minmax(0, 1fr) auto; aspect-ratio: auto; min-height: 118px; }
+.rt-c:has(> .vignette.vide) .rtc-bas { position: static; }
+.rt-c:has(> .rtc-code) > .vignette.vide.attente { padding-top: 30px; align-content: start; }
+/* La scène vide garde une hauteur de scène. */
+.rts-toile .vignette.vide { min-height: 180px; }
+
+/* ——— La bande de priorité : où en est la piste, commercialement ——— */
+.pr-band { --ton: var(--trait-clair); display: grid; gap: 10px; padding: 16px 18px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 10px; }
+.pr-band.vert { --ton: var(--succes); }
+.pr-band.or { --ton: var(--studio-bleu); }
+.pr-band.attente { --ton: var(--arbitrage); }
+.prb-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.prb-r { font: 600 14px var(--affichage); color: var(--ton); }
+.pr-band.terne .prb-r { color: var(--clair-terne); }
+.prb-q { flex: 1; font-size: 13px; color: var(--clair-terne); }
+.prb-m { font: 550 12px var(--affichage); color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+.prb-regle { font-size: 14px; line-height: 1.55; color: var(--clair); max-width: 70ch; }
+.prb-jalons { display: flex; gap: 6px; flex-wrap: wrap; }
+.prbj { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 5px;
+  background: var(--surface-4); border: 1px solid var(--trait); font-size: 12px; color: var(--clair-terne); }
+.prbj .m { color: var(--clair-terne); }
+.prbj.ok { color: var(--clair); }
+.prbj.ok .m { color: var(--succes); }
+.prbj.min:not(.ok) { color: var(--clair); box-shadow: inset 3px 0 0 var(--bloquant); }
+.prbj.min:not(.ok) .m { color: var(--bloquant); }
+.prb-dates { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--clair); font-variant-numeric: tabular-nums; }
+.prb-dates .vide { color: var(--clair-terne); }
+.prb-dates .vert { color: var(--succes); font-weight: 550; }
+.prb-g { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ——— Le rétroplanning : les phases, et les productions lourdes dans leur fenêtre ——— */
+.re-l { display: grid; gap: 0; border-top: 1px solid var(--trait); }
+.re-p { --ton: transparent; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 14px; width: 100%;
+  text-align: left; padding: 10px 10px 10px 12px; background: none; border: 0; border-left: 3px solid var(--ton);
+  border-bottom: 1px solid var(--trait); cursor: pointer; font: inherit; color: inherit; min-height: 44px; }
+.re-p:hover { background: var(--surface-4); }
+.re-p.faite { --ton: var(--succes); }
+.re-p.ici { --ton: var(--studio-bleu); background: var(--surface-4); }
+.re-p.retard { --ton: var(--bloquant); }
+.re-p.hors { cursor: default; color: var(--clair-terne); }
+.re-p.hors:hover { background: none; }
+.rep-n { grid-column: 1; font: 550 14px var(--affichage); color: var(--clair); }
+.re-p.hors .rep-n { color: var(--clair-terne); font-weight: 400; }
+.rep-n i { font: 400 12px var(--affichage); color: var(--clair-terne); font-style: normal; margin-left: 6px; }
+.rep-d { grid-column: 1; font-size: 12px; color: var(--clair); font-variant-numeric: tabular-nums; }
+.rep-q { grid-column: 1; font-size: 12px; line-height: 1.45; color: var(--clair-terne); max-width: 70ch; }
+.rep-e { grid-column: 2; grid-row: 1; text-align: right; font: 550 12px var(--affichage); color: var(--clair-terne); }
+.re-p.faite .rep-e { color: var(--succes); }
+.re-p.ici .rep-e { color: var(--studio-bleu); }
+.re-p.retard .rep-e { color: var(--bloquant); }
+.rep-w { grid-column: 2; grid-row: 2; text-align: right; font-size: 11px; color: var(--clair-terne); }
+
+.re-prod { display: grid; gap: 8px; }
+.rep-t { display: flex; align-items: center; gap: 10px; font: 700 12px var(--affichage); color: var(--clair); }
+.rep-t span { font: 500 12px var(--affichage); color: var(--clair-terne); background: var(--surface-3); border-radius: 5px; padding: 3px 7px; }
+.rep-p { --ton: var(--trait-clair); background: var(--surface-4); border-left: 3px solid var(--ton); border-radius: 0 6px 6px 0; }
+.rep-p.deborde { --ton: var(--bloquant); }
+.repp-t { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 44px; padding: 8px 12px; cursor: pointer; list-style: none; }
+.repp-t::-webkit-details-marker { display: none; }
+.repp-t::before { content: "›"; color: var(--clair-terne); font-size: 16px; width: 10px; transition: transform var(--tr-rapide); }
+.rep-p[open] > .repp-t::before { transform: rotate(90deg); }
+.repp-n { font: 550 13px var(--affichage); color: var(--clair); }
+.repp-j { font-size: 12px; color: var(--clair); font-variant-numeric: tabular-nums; }
+.repp-x-d { font: 550 12px var(--affichage); color: var(--bloquant); }
+.repp-f { margin-left: auto; font-size: 12px; color: var(--clair-terne); }
+.rep-p > .banniere { margin: 0 12px 10px; }
+.repp-l { display: grid; gap: 6px; padding: 0 12px 12px 34px; }
+.repp-x { display: grid; gap: 1px; padding-left: 10px; border-left: 1px solid var(--trait-clair); }
+.reppx-n { font: 550 12px var(--affichage); color: var(--clair); }
+.reppx-n i { font: 400 11px var(--affichage); color: var(--clair-terne); font-style: normal; margin-left: 6px; }
+.reppx-d { font-size: 12px; color: var(--clair); font-variant-numeric: tabular-nums; }
+.reppx-q { font-size: 12px; line-height: 1.45; color: var(--clair-terne); }
+
+/* ——— Le comparateur de pistes ———
+ * Des cartes empilées se lisent verticalement : on découvre une piste, puis
+ * l'autre, et on compare de mémoire. La décision est une comparaison : elle se
+ * lit en travers. Une colonne de libellés, une colonne par piste. */
+.cmp { display: grid; gap: 16px; }
+.cmp-t { font: 550 21px/1.3 var(--affichage); letter-spacing: -.02em; color: var(--clair); max-width: 40ch; text-wrap: balance; }
+.cmp-s { font-size: 14px; line-height: 1.6; color: var(--clair-terne); max-width: 65ch; }
+.cmp-g { display: grid; align-items: stretch; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; overflow: hidden; }
+/* Le libellé de ligne porte le coût, une fois, au lieu d'une fois par colonne. */
+.cmpg-l { display: grid; align-content: start; gap: 3px; padding: 14px 12px 14px 16px; border-bottom: 1px solid var(--trait);
+  font: 700 12px var(--affichage); color: var(--clair); background: var(--surface-4); }
+.cmpgl-c { font: 400 11px/1.45 var(--affichage); color: var(--clair-terne); }
+.cmp-h { display: grid; gap: 4px; align-content: start; padding: 14px 16px; border-bottom: 1px solid var(--trait); border-left: 1px solid var(--trait); }
+.cmp-h.retenue { box-shadow: inset 0 -3px 0 var(--succes); }
+.cmph-n { font: 550 15px var(--affichage); color: var(--clair); }
+.cmph-e { font: 550 12px var(--affichage); color: var(--succes); }
+.cmp-c { display: grid; gap: 6px; align-content: start; padding: 14px 16px; border-bottom: 1px solid var(--trait); border-left: 1px solid var(--trait); min-width: 0; }
+.cmp-c.visuel { padding: 12px; background: none; border-top: 0; border-right: 0; cursor: pointer; font: inherit; text-align: left; }
+.cmp-c.visuel .vignette { width: 100%; height: auto; aspect-ratio: 16 / 10; border-radius: 5px; }
+.cmp-c.visuel .vignette img { width: 100%; height: 100%; object-fit: cover; }
+.cmp-c.visuel:hover .vignette { box-shadow: 0 0 0 2px var(--studio-bleu); }
+.cmpc-p { font-size: 14px; line-height: 1.55; color: var(--clair); }
+.cmpc-n { font-size: 14px; color: var(--clair); }
+/* Une case vide dit ce qui manque, en trois mots ; le pourquoi est à gauche. */
+.cmp-vide { font-size: 13px; line-height: 1.5; color: var(--clair-terne); }
+.cmp-vide b { color: var(--clair); font-weight: 550; }
+.cmp-manque { font-size: 13px; color: var(--clair-terne); }
+.cmp-al { font: 550 12px var(--affichage); color: var(--bloquant); }
+.cmp-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cmp-chip { font-size: 12px; padding: 3px 8px; border-radius: 5px; background: var(--surface-3); color: var(--clair); }
+.cmp-disp { display: grid; gap: 6px; }
+.cmpd { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: 8px; align-items: baseline; }
+.cmpd-c { font: 550 11px var(--affichage); color: var(--clair); background: var(--surface-3); border-radius: 4px; padding: 2px 0; text-align: center; }
+.cmpd-n { font-size: 13px; color: var(--clair); }
+/* La frise : chaque jalon peut se serrer, et son libellé se coupe plutôt que
+ * de pousser la grille. */
+.cmp-frise { display: flex; gap: 2px; min-width: 0; }
+.cmpf { display: grid; justify-items: center; gap: 4px; flex: 1 1 0; min-width: 0; }
+.cmpf-d { font: 550 11px var(--affichage); color: var(--clair); font-variant-numeric: tabular-nums; }
+.cmpf-r { width: 7px; height: 7px; border-radius: 50%; background: var(--studio-bleu); position: relative; }
+.cmpf-r::before { content: ""; position: absolute; top: 50%; left: -50%; right: 50%; height: 1px; background: var(--trait-clair); }
+.cmpf:first-child .cmpf-r::before { display: none; }
+.cmpf-d, .cmpf-n { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmpf-n { font-size: 11px; color: var(--clair-terne); text-align: center; }
+.cmp-v { display: grid; align-content: center; justify-items: center; padding: 14px 16px; border-left: 1px solid var(--trait); }
+.cmpv-b { width: 100%; justify-content: center; white-space: normal; text-align: center; }
+.cmpv-ok { font: 550 13px/1.45 var(--affichage); color: var(--succes); text-align: center; }
+.cmp-pied { font-size: 13px; line-height: 1.55; color: var(--clair-terne); }
+/* Au doigt, on ne compare pas en travers : chaque piste devient un bloc, et le
+ * libellé repasse au-dessus de sa valeur. */
+@media (max-width: 900px) {
+  .cmp-g { grid-template-columns: minmax(0, 1fr) !important; }
+  .cmpg-l { padding: 12px 16px 4px; border-bottom: 0; }
+  .cmp-c, .cmp-h, .cmp-v { border-left: 0; }
+}

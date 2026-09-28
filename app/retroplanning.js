@@ -140,15 +140,15 @@ window.RETRO = (function () {
       return el("div.rt-bloc", {},
         el("div.rtbl-tete", {}, el("span.t", {}, "Le rétroplanning"),
           el("span.n", {}, "Aucune date d'exécution"),
-          el("button.b.nu", { type: "button", onclick: function () { editer(p, pi, apres); } }, "régler")),
+          el("button.b.nu", { type: "button", onclick: function () { editer(p, pi, apres); } }, "Régler")),
         el("p.rien", {}, "Ni activité datée, ni échéance de dossier : impossible de dire quand il faut commencer."));
     }
 
     return el("div.rt-bloc", {},
       el("div.rtbl-tete", {},
         el("span.t", {}, "Le rétroplanning"),
-        el("span.n", {}, e.total + " jours ouvrés  ·  exécution le " + O.joli(e.fin)),
-        el("button.b.nu", { type: "button", onclick: function () { editer(p, pi, apres); } }, "régler")),
+        el("span.n", {}, e.total + " jours ouvrés · exécution le " + O.joli(e.fin)),
+        el("button.b.nu", { type: "button", onclick: function () { editer(p, pi, apres); } }, "Régler")),
 
       e.commenceHier
         ? UI.banniere("rouge", "À ce rythme il fallait commencer le " + O.joli(e.demarrage)
@@ -170,7 +170,7 @@ window.RETRO = (function () {
           onclick: function () { basculer(pi, x.ph.cle, apres); },
         },
           el("span.rep-n", {}, x.ph.nom, el("i", {}, x.jours + " j")),
-          el("span.rep-d", {}, O.joli(x.debut) + "  →  " + O.joli(x.fin)),
+          el("span.rep-d", {}, O.joli(x.debut) + " → " + O.joli(x.fin)),
           el("span.rep-q", {}, x.ph.quoi),
           el("span.rep-e", {}, ETAT.phase(x, faite, ici, passee, e.phases.length - n - 1).quoi),
           el("span.rep-w", {}, O.poste(x.ph.poste).court));
@@ -196,11 +196,14 @@ window.RETRO = (function () {
       el("div", {}, ls.map(function (l) {
         var pl = planProduction(p, pi, l);
         if (!pl) return null;
-        return el("div.rep-p" + (pl.deborde ? ".deborde" : ""), {},
-          el("div.repp-t", {},
+        /* Repliée : sa tête dit la durée, la fenêtre, et si elle déborde. Dépliées
+         * toutes ensemble, les productions faisaient deux mille pixels. */
+        return el("details.rep-p" + (pl.deborde ? ".deborde" : ""), {},
+          el("summary.repp-t", {},
             el("span.repp-n", {}, l.nom),
             el("span.repp-j", {}, pl.total + " j ouvrés"),
-            el("span.repp-f", {}, "dans la fenêtre du " + O.joli(pl.fenetre.debut)
+            pl.deborde ? el("span.repp-x-d", {}, "déborde de " + pl.manque + " j") : null,
+            el("span.repp-f", {}, "Fenêtre du " + O.joli(pl.fenetre.debut)
               + " au " + O.joli(pl.fenetre.fin))),
 
           pl.deborde
@@ -213,7 +216,7 @@ window.RETRO = (function () {
             if (x.hors) return null;
             return el("div.repp-x", {},
               el("span.reppx-n", {}, x.ph.nom, el("i", {}, x.jours + " j")),
-              el("span.reppx-d", {}, O.joli(x.debut) + "  →  " + O.joli(x.fin)),
+              el("span.reppx-d", {}, O.joli(x.debut) + " → " + O.joli(x.fin)),
               el("span.reppx-q", {}, x.ph.quoi));
           })));
       })));

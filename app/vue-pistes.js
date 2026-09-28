@@ -77,8 +77,8 @@ window.VUE_PISTES = (function () {
    * même campagne — c'est le ton et l'univers qui les séparent. */
   var LIGNES = [
     { cle: "visuel",     nom: "Visuel" },
-    { cle: "axe",        nom: "AXE" },
-    { cle: "ton",        nom: "TON" },
+    { cle: "axe",        nom: "Axe" },
+    { cle: "ton",        nom: "Ton" },
     { cle: "univers",    nom: "Univers visuel" },
     { cle: "concept",    nom: "Concept" },
     { cle: "sacrifice",  nom: "Sacrifice" },
@@ -119,7 +119,7 @@ window.VUE_PISTES = (function () {
       el("div.cmpg-l", {}),
       vives.map(function (pi) {
         return el("div.cmp-v", {}, pi.statut === "retenue"
-          ? el("span.cmpv-ok", {}, "✓ retenue — le sacrifice de l'autre est écrit")
+          ? el("span.cmpv-ok", {}, "✓ Retenue — le sacrifice de l'autre est écrit")
           : el("button.b.or.cmpv-b", { type: "button",
               onclick: function () { VUE_ROUTE.ouvrir(p, pi, rafraichir); } },
               "Retenir « " + (pi.titre || "cette piste") + " »"));
@@ -135,7 +135,7 @@ window.VUE_PISTES = (function () {
     if (cle === "visuel") {
       return el("button.cmp-c.visuel", { type: "button",
         onclick: function () { ouverte = pi.id; rafraichir(); },
-        title: "ouvrir « " + (pi.titre || "cette piste") + " »" },
+        title: "Ouvrir « " + (pi.titre || "cette piste") + " »" },
         IMAGE.vignette(pi, "grande"));
     }
 
@@ -146,19 +146,19 @@ window.VUE_PISTES = (function () {
     if (cle === "concept") {
       return el("div.cmp-c", {}, pi.concept
         ? el("p.cmpc-p", {}, pi.concept)
-        : vide("aucun concept écrit — ", "il n'y a rien à comparer, et rien à refuser."));
+        : vide("Aucun concept écrit — ", "il n'y a rien à comparer, et rien à refuser."));
     }
 
     if (cle === "sacrifice") {
       return el("div.cmp-c", {}, pi.sacrifice
         ? el("p.cmpc-p", {}, pi.sacrifice)
-        : vide("sacrifice non écrit — ", "refusable au §8 : une piste qui ne renonce à rien n'a pas choisi."));
+        : vide("Sacrifice non écrit — ", "refusable au §8 : une piste qui ne renonce à rien n'a pas choisi."));
     }
 
     if (cle === "argument") {
       return el("div.cmp-c", {}, pi.argument
         ? el("p.cmpc-p", {}, pi.argument)
-        : vide("argument non écrit — ", "refusable au §8 : elle ne se défendra que par le goût."));
+        : vide("Argument non écrit — ", "refusable au §8 : elle ne se défendra que par le goût."));
     }
 
     if (cle === "porteurs") {
@@ -178,7 +178,7 @@ window.VUE_PISTES = (function () {
     if (cle === "dispositif") {
       var ds = pi.dispositif || [];
       if (!ds.length) return el("div.cmp-c", {},
-        vide("aucun dispositif — ", "on ne sait pas ce que cette piste coûte à produire."));
+        vide("Aucun dispositif — ", "on ne sait pas ce que cette piste coûte à produire."));
       return el("div.cmp-c", {}, el("div.cmp-disp", {}, ds.slice(0, 5).map(function (a) {
         return el("div.cmpd", {},
           el("span.cmpd-c", {}, a.canal || "—"),
@@ -189,7 +189,7 @@ window.VUE_PISTES = (function () {
     if (cle === "delai") {
       var fin = RETRO.finDe(p, pi);
       if (!fin) return el("div.cmp-c", {},
-        vide("aucune date de fin — ", "le rétroplanning de cette piste ne se calcule pas."));
+        vide("Aucune date de fin — ", "le rétroplanning de cette piste ne se calcule pas."));
       var c = RETRO.calculer(pi, fin);
       var jal = c.phases.filter(function (x) { return !x.hors && x.fin; });
       return el("div.cmp-c", {}, el("div.cmp-frise", {}, jal.map(function (x) {

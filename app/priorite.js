@@ -178,7 +178,7 @@ window.PRIORITE = (function () {
       el("div.prb-h", {},
         el("span.prb-r", {}, d.nom),
         el("span.prb-q", {}, d.quoi),
-        el("span.prb-m", {}, "maturité " + m.part + " %")),
+        el("span.prb-m", {}, "Maturité " + m.part + " %")),
 
       el("div.prb-regle", {}, d.regle),
 
@@ -200,7 +200,7 @@ window.PRIORITE = (function () {
         ligneDate("Présentée", c.presente_le),
         ligneDate("Validée", c.valide_le),
         ligneDate("Payée", c.paye_le),
-        c.montant ? el("span", {}, "montant : " + c.montant) : null,
+        c.montant ? el("span", {}, "Montant : " + c.montant) : null,
         nExe ? el("span.vert", {}, nExe + " livrables en EXE") : null),
 
       el("div.prb-g", {},
@@ -213,7 +213,7 @@ window.PRIORITE = (function () {
               "Le client a validé")
           : null,
         c.valide_le && !c.paye_le
-          ? el("button.b.vert", { type: "button", onclick: function () { payer(p, pi, apres); } },
+          ? el("button.b.or", { type: "button", onclick: function () { payer(p, pi, apres); } },
               "Bon de commande reçu")
           : null)
     );
