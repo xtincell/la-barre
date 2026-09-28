@@ -59,6 +59,12 @@ window.ECARTS = (function () {
     var out = [];
     DEPOT.liste("projets").forEach(function (p) {
       if (projetId && p.id !== projetId) return;
+      /* Un dossier clos ne doit plus rien à personne : on ne réclame pas une
+       * reprise sur une campagne partie. Sans ce filtre, l'inventaire du corpus
+       * versait 775 « choses dues » dans Retours attendus. Ouvert seul, le
+       * dossier montre toujours ses écarts ; ce qui mord encore — un SKU hors
+       * zone, une faute diffusée — reste un blocage, qui survit à la clôture. */
+      if (!projetId && window.CLOTURE && CLOTURE.est(p)) return;
       out = out.concat(duBrief(p), deLaPlateforme(p), deLaBigIdea(p), duDonneur(p), deLAgence(p));
     });
     out.forEach(function (x) { if (!x.quand) x.quand = depuisQuand(x); });

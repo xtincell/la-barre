@@ -1,0 +1,127 @@
+/* studio-vues.css — la grammaire Studio appliquée page par page.
+ *
+ * studio.css porte la coque et les deux écrans de référence (le Bureau, la
+ * liste des projets). Ce fichier porte le reste, dans l'ordre des passes de
+ * documents/GRAMMAIRE_STUDIO.md §4 : d'abord ce que la grammaire tranche pour
+ * tout le produit (§2), puis une section par page. Aucune valeur neuve : tout
+ * vient des jetons relevés sur les écrans de référence. */
+
+/* ═════════════════════ §2 · Ce que la grammaire tranche ═════════════════════ */
+
+/* Les cibles : les segments et les listes du Studio mesuraient 38 px. La
+ * règle d'accessibilité (§14) est de 44 ; elle vaut aussi pour la référence. */
+.studio-statuts button { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; }
+.studio-filtre select { min-height: 44px; }
+
+/* Le sélecteur de mode : segments, pastille, la question dessous. */
+.st-modes { margin: 0 0 24px; }
+.st-modes .studio-statuts { display: inline-flex; flex-wrap: wrap; max-width: 100%; }
+.st-modes .studio-statuts button { font-weight: 500; }
+.st-modes-q { margin-top: 10px; font-size: 13px; color: var(--clair-terne); }
+.studio-statuts .studio-compte { background: var(--surface-1); }
+.studio-statuts button.active .studio-compte { background: var(--surface-3); }
+/* Le compteur d'alerte : la couleur est dans le texte, jamais en aplat. */
+.studio-compte.alerte { color: var(--bloquant); font-weight: 600; }
+
+/* Le geste texte. Bleu hors d'une rangée d'actions ; gris dedans, comme
+ * « Ouvrir le dossier » sous la pièce du Bureau. */
+.studio-lien { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px;
+  background: none; border: 0; border-radius: 6px; cursor: pointer;
+  font: 500 13px var(--affichage); color: var(--studio-bleu); text-decoration: none; }
+.studio-lien:hover { text-decoration: underline; text-underline-offset: 3px; }
+.studio-actions .studio-lien { font-size: 14px; font-weight: 400; color: var(--clair-terne); }
+.studio-actions .studio-lien:hover { color: var(--clair); }
+
+/* L'état par la forme : un filet de 3 px et la couleur dans le texte. */
+.f-alerte { --ton: var(--bloquant); }
+.f-attente { --ton: var(--arbitrage); }
+.f-or { --ton: var(--info); }
+.f-calme { --ton: var(--trait-clair); }
+.studio-piece.f-alerte, .studio-piece.f-attente, .studio-piece.f-or, .studio-piece.f-calme {
+  border-left: 3px solid var(--ton); border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
+
+/* ═════════════════════ Passe 1 · Décisions ═════════════════════ */
+
+.dc { display: block; min-width: 0; }
+/* La zone historique est une grille : sans min-width, une file qui défile à
+ * l'horizontale élargit toute la page au lieu de défiler. */
+.dc-corps, .dc-corps > *, .studio-table > * { min-width: 0; max-width: 100%; }
+.dc .studio-entete { padding-bottom: 24px; }
+.dc .studio-entete h1 { font-size: clamp(30px, 3vw, 44px); }
+
+/* À traiter — la table du Bureau, à l'identique. */
+.dx .studio-table { grid-template-columns: 230px minmax(0, 1fr) 280px; }
+.dx .studio-file { max-height: 720px; }
+.dx-i strong { font-size: 14px; line-height: 1.4; }
+.dx-i .studio-piece-ref { color: var(--ton, var(--clair-terne)); font-weight: 500; }
+.dx-i.active .studio-piece-ref { color: var(--ton, var(--studio-bleu)); }
+.dx-age { color: var(--clair-terne); }
+.dx-scene { gap: 0; }
+.dx-depuis { color: var(--ton); font-weight: 550; }
+.dx-titre { font: 550 21px/1.3 var(--affichage); letter-spacing: -.02em; color: var(--clair); }
+.dx-quoi { margin-top: 6px; font-size: 14px; line-height: 1.6; color: var(--clair-terne); max-width: 65ch; }
+.dx-visuels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.dx-visuel { margin: 0; min-width: 0; }
+.dx-visuel .vignette { width: 100%; height: auto; aspect-ratio: 4 / 3; background: var(--surface-3);
+  border-radius: 3px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.dx-visuel .vignette img { width: 100%; height: 100%; object-fit: contain; }
+.dx-visuel figcaption { margin-top: 6px; font-size: 11px; color: var(--clair-terne); }
+.dx-action { margin: 22px 0 16px; padding-top: 18px; border-top: 1px solid var(--trait); }
+.dx-action h4 { font-size: 12px; font-weight: 700; color: var(--clair); margin-bottom: 6px; }
+.dx-action p { font-size: 14px; line-height: 1.6; max-width: 65ch; }
+.dx-contexte h3 { margin-bottom: 12px; }
+.dx-pourquoi { line-height: 1.65; color: var(--clair-terne); }
+.dx-verbatim { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--trait); }
+.dx-verbatim h4 { font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+/* Ce qu'un humain a écrit : l'aplat d'intention, en Asap 500. */
+.dx-verbatim blockquote { margin: 0; padding: 16px; background: var(--studio-intention); border-radius: 5px;
+  font: 500 15px/1.45 var(--affichage); color: var(--studio-encre); overflow-wrap: anywhere;
+  max-height: 260px; overflow-y: auto; }
+.dx-verbatim small { display: block; margin-top: 8px; font-size: 11px; color: var(--clair-terne); }
+
+/* Retours attendus — les débiteurs en file, leurs dettes en lignes. */
+.du .studio-table { grid-template-columns: 230px minmax(0, 1fr) 260px; }
+.du .studio-file { max-height: 720px; }
+.du-debiteur strong { font-size: 14px; }
+.du-debiteur small { color: var(--ton); font-weight: 550; }
+.du-lignes { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--trait); }
+.du-ligne { display: grid; grid-template-columns: minmax(0, 1fr) 120px auto; gap: 16px; align-items: center;
+  min-height: 56px; padding: 12px 0; border-bottom: 1px solid var(--trait); }
+.dul-texte { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.dul-cat { font-size: 11px; color: var(--clair-terne); letter-spacing: .02em; }
+.dul-texte strong { font-size: 14px; font-weight: 550; color: var(--clair); line-height: 1.4; }
+.dul-meta { font-size: 12px; color: var(--clair-terne); overflow-wrap: anywhere; }
+.dul-age { display: flex; flex-direction: column; gap: 5px; }
+.dul-j { font-size: 12px; font-weight: 550; color: var(--ton); }
+.f-calme .dul-j { color: var(--clair-terne); }
+/* L'âge est l'axe : un filet dont la longueur est l'âge, sur l'échelle commune. */
+.dul-barre { display: block; height: 4px; background: var(--surface-3); border-radius: 2px; overflow: hidden; }
+.dul-barre i { display: block; height: 100%; background: var(--ton); border-radius: 2px; }
+.du-qui { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.du-qui h3 { margin: 0; }
+.du-qui small { font-size: 12px; color: var(--clair-terne); }
+.du-contexte dl { margin-top: 16px; }
+.du-revenues { padding: 20px 24px; border-top: 1px solid var(--trait); }
+.du-revenues h3 { display: flex; align-items: center; gap: 10px; font: 550 17px var(--affichage); margin-bottom: 10px; }
+.du-rev { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0;
+  border-bottom: 1px solid var(--trait); font-size: 13px; }
+.du-rev-j { color: var(--succes); white-space: nowrap; }
+.du-revenues-rien { padding: 20px 24px; font-size: 13px; color: var(--clair-terne); }
+
+@media (max-width: 1200px) {
+  .dx .studio-table, .du .studio-table { grid-template-columns: 190px minmax(0, 1fr); }
+  .dx-contexte, .du-contexte { grid-column: 1 / -1; }
+}
+@media (max-width: 800px) {
+  .du-ligne { grid-template-columns: minmax(0, 1fr) auto; }
+  .dul-age { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (max-width: 560px) {
+  .dx .studio-table, .du .studio-table { display: flex; flex-direction: column; }
+  .dx .studio-file, .du .studio-file { display: flex; overflow-x: auto; max-height: none; border-right: 0;
+    border-bottom: 1px solid var(--trait); gap: 8px; align-items: flex-start; }
+  .dx-i, .du-debiteur { min-width: 190px; width: 190px; margin: 0; flex-shrink: 0; }
+  .dx-visuels { grid-template-columns: 1fr; }
+  .dx-contexte, .du-contexte { border-left: 0; border-top: 1px solid var(--trait); }
+  .du-scene { padding: 16px; }
+}

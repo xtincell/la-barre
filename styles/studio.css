@@ -144,21 +144,6 @@ a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .dc-tete h2, .dl-t { font-weight: 550; letter-spacing: -.035em; }
 .dc-modes { margin-top: 24px; }
 .dcm, .pld { text-transform: none; letter-spacing: 0; }
-.sl { grid-template-columns: 240px minmax(0, 1fr); gap: 24px; align-items: start; }
-.sl-file { background: var(--surface-1); border: 1px solid var(--trait); border-radius: 8px; padding: 12px; }
-.slf-l { max-height: 65vh; overflow-y: auto; }
-.slf-i { border-left: 0; border-radius: 5px; margin-bottom: 5px; padding: 12px; }
-.slf-i.ici { background: var(--studio-bleu-pale); }
-.slfi-c { font-size: 14px; }
-.slfi-n { display: none; }
-.slfi-f { color: var(--clair-terne); }
-.sl-d { background: var(--surface-1); padding: 28px; border-radius: 8px; border: 1px solid var(--trait); }
-.sld-c { font: 550 clamp(24px, 2.3vw, 36px)/1.2 var(--affichage); color: var(--clair); }
-.sld-s { font-size: 14px; line-height: 1.6; color: var(--clair-terne); }
-.sl-pr { grid-column: 2; }
-.sld-r, .sldt-l, .slp-t, .slf-t { letter-spacing: 0; text-transform: none; font-size: 12px; }
-.sld-g { flex-wrap: wrap; }
-.studio-file-filtre { width: 100%; margin-bottom: 12px; min-height: 40px; padding: 8px; font: 13px var(--affichage); }
 @media (min-width: 1700px) { .studio-table { grid-template-columns: 230px minmax(0, 1fr) 290px; } .studio-visuel { max-height: 460px; } }
 @media (max-width: 1200px) {
   :root { --rail: 180px; }
@@ -200,8 +185,6 @@ a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   .studio-visuel { min-height: 250px; }
   .studio-intention { padding: 24px; }
   .studio-demo { align-items: flex-start; }
-  .sl { grid-template-columns: 190px minmax(0, 1fr); gap: 16px; }
-  .sl-d { padding: 20px; }
   .aller-contenu { left: 20px; }
 }
 @media (max-width: 560px) {
@@ -222,9 +205,6 @@ a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   .studio-projets { grid-template-columns: 1fr; }
   .studio-couverture { aspect-ratio: 2.8; }
   .studio-suite { flex-direction: column; align-items: flex-start; }
-  .sl { display: flex; flex-direction: column; }
-  .sl-file, .sl-d, .sl-pr { width: 100%; }
-  .slf-l { max-height: 220px; }
   .dcm-q { display: none; }
   .dc-modes { grid-template-columns: 1fr 1fr; }
   .avec-rail { display: block; }

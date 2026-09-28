@@ -49,24 +49,18 @@ window.VUE_DECIDER = (function () {
     var du = ECARTS.total() + RENVOI.ouvertes().length;
     var p = mode === "du" ? pireDu(du) : pireFile(n);
 
+    /* L'en-tête d'écran du Studio : le titre dit l'état du mode, le chapô sa
+     * conséquence ; le sélecteur vient dessous. Seul le compteur du mode
+     * actif porte l'alerte : si tous sont rouges, la priorité cesse d'être rare. */
     hote.appendChild(el("div.dc", {},
-      el("div.dc-tete", {},
-        el("div.dct-c", {},
-          el("h2", {}, p.t),
-          el("div.dct-q", {}, p.q))),
-
-      /* Les trois modes. Pas des catégories : trois façons de faire la même chose. */
-      /* Deux modes. Seul le compteur du mode actif porte l'alerte : si tous
-       * les compteurs sont rouges, la priorité cesse d'être rare. */
-      el("div.dc-modes", {}, MODES.map(function (m) {
-        var c = m.cle === "du" ? du : n;
-        return el("button.dcm" + (mode === m.cle ? ".ici" : ""), { type: "button",
-          onclick: function () { mode = m.cle; rendre(hote); } },
-          el("span.dcm-n", {}, m.nom),
-          el("span.dcm-q", {}, m.quoi),
-          c ? el("span.dcm-c" + (mode === m.cle ? "" : ".terne"), {}, String(c)) : null);
-      })),
-
+      el("header.studio-entete.dc-tete", {},
+        el("div", {},
+          el("h1", {}, p.t),
+          el("p.studio-intro", {}, p.q))),
+      UI.modes(MODES, mode, function (cle) { mode = cle; rendre(hote); }, {
+        titre: "Modes de Décisions",
+        compte: function (m) { return m.cle === "du" ? du : n; },
+        alerte: function (m) { return m.cle === mode; } }),
       el("div.dc-corps", {},
         mode === "file" ? FILE.salle(function () { rendre(hote); }) : du_(hote))
     ));

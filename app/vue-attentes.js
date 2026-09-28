@@ -54,6 +54,25 @@ window.VUE_ATTENTES = (function () {
     return out.sort(function (a, b) { return b.pire - a.pire; });
   }
 
+  var choisi = null;
+
+  /* Les dettes identiques se regroupent : « « SK-2 » n'est pas distribué sur
+   * ce marché », huit fois de suite, livrable par livrable, faisait lire la
+   * même phrase au lieu de lire le retard. Une ligne par cause, et les
+   * livrables qu'elle touche en méta. */
+  function regrouper(l) {
+    var par = {}, ordre = [];
+    l.forEach(function (x) {
+      var cle = (x.attente ? "a:" + x.attente.id : (x.quoi || "") + "|" + (x.critere || ""));
+      if (!par[cle]) { par[cle] = { tete: x, l: [], age: 0 }; ordre.push(cle); }
+      par[cle].l.push(x);
+      par[cle].age = Math.max(par[cle].age, x.age || 0);
+    });
+    return ordre.map(function (k) { return par[k]; });
+  }
+
+  function ton(age) { return age >= 15 ? "alerte" : age >= 7 ? "attente" : "calme"; }
+
   function rendre(hote) {
     O.vider(hote);
     var groupes = dettes();
@@ -62,74 +81,103 @@ window.VUE_ATTENTES = (function () {
     var echelle = Math.max(5, Math.ceil(pire / 5) * 5);
 
     if (!total) {
-      hote.appendChild(UI.banniere("vert", "Rien ne m'est dû. Les livrables tiennent le brief, "
-        + "la plateforme et les critères, et aucun renvoi n'attend de retour."));
+      hote.appendChild(el("div.studio-revue", {}, el("div.studio-vide", {},
+        el("div.studio-vide-signe", { "aria-hidden": "true" }, "✓"),
+        el("h3", {}, "Rien ne m'est dû."),
+        el("p", {}, "Les livrables tiennent le brief, la plateforme et les critères, "
+          + "et aucun renvoi n'attend de retour."),
+        resoluesBouton(hote))));
+      if (montrerResolues) hote.appendChild(resolues());
       return;
     }
 
-    hote.appendChild(el("div.at", {},
-      el("div.at-tete", {},
-        el("h3", {}, total + (total > 1 ? " choses me sont dues" : " chose m'est due")),
-        el("p", {}, (pire ? "La plus vieille depuis " + pire + (pire > 1 ? " jours. " : " jour. ") : "")
-          + "Le seul endroit où le retard des autres est visible sans avoir à les déranger.")),
+    var g = groupes.filter(function (x) { return x.cle === choisi; })[0] || groupes[0];
+    choisi = g.cle;
+    var neuve = window.RENVOI && RENVOI.consommerDernier ? RENVOI.consommerDernier() : null;
 
-      /* L'axe du temps, une fois pour toutes : les barres s'y rapportent. */
-      el("div.at-axe", {}, [0, 0.25, 0.5, 0.75, 1].map(function (t) {
-        return el("span.ata", { style: { left: (t * 100) + "%" } },
-          Math.round(t * echelle) + (t === 1 ? " jours" : ""));
-      })),
-
-      /* Ce qui vient d'être renvoyé arrive au lieu d'apparaître : l'horloge
-       * bascule visiblement de mon côté au sien. */
-      el("div.at-g", {}, (function () {
-        var neuve = window.RENVOI && RENVOI.consommerDernier ? RENVOI.consommerDernier() : null;
-        return groupes.map(function (g) { return groupe(g, echelle, hote, neuve); });
-      })()),
-
-      montrerResolues ? resolues() : null,
-      el("div.at-pied", {},
-        el("button.b.nu", { type: "button",
-          onclick: function () { montrerResolues = !montrerResolues; rendre(hote); } },
-          montrerResolues ? "masquer les résolues" : "voir les résolues"))
-    ));
+    /* La grammaire du Bureau : la file, ce sont les débiteurs — savoir chez qui
+     * ça dort vaut mieux que savoir de quelle catégorie ça relève. */
+    hote.appendChild(el("section.studio-revue.du", { "aria-label": "Ce qui m'est dû" },
+      el("div.studio-section-tete", {},
+        el("h2", {}, "Chez qui ça dort", el("span.studio-compte", {}, String(groupes.length))),
+        resoluesBouton(hote)),
+      el("div.studio-table.du-table", {},
+        el("div.studio-file", { "aria-label": "Débiteurs" }, groupes.map(function (d) {
+          return el("button.studio-piece.du-debiteur" + (d.cle === g.cle ? ".active" : "") + ".f-" + ton(d.pire), {
+            type: "button", "aria-pressed": d.cle === g.cle ? "true" : "false",
+            onclick: function () { choisi = d.cle; rendre(hote); } },
+            el("span.studio-piece-ref", {}, d.poste || "Destinataire non nommé"),
+            el("strong", {}, d.nom),
+            el("span", {}, d.l.length + (d.l.length > 1 ? " choses dues" : " chose due")),
+            d.pire ? el("small", {}, "la plus vieille : " + d.pire + " j") : null);
+        })),
+        scene(g, echelle, hote, neuve),
+        contexte(g)),
+      montrerResolues ? resolues() : null));
   }
 
-  function groupe(g, echelle, hote, neuve) {
-    return el("div.at-d", {},
-      el("div.atd-q", {},
-        g.personne ? UI.avatar(g.personne, 36) : UI.avatar(null, 36),
-        el("div", {},
-          el("div.atdq-n", {}, g.nom),
-          g.poste ? el("div.atdq-p", {}, g.poste) : null,
-          el("div.atdq-c", {}, g.l.length + (g.l.length > 1 ? " choses dues" : " chose due")),
-          /* L'origine se dit une fois pour le groupe, pas à chaque ligne. */
-          (function () {
-            var o = {}; g.l.forEach(function (x) { if (x.origine) o[x.origine] = 1; });
-            var k = Object.keys(o);
-            return k.length ? el("div.atdq-o", {}, k.join(" · ")) : null;
-          })())),
+  function resoluesBouton(hote) {
+    return el("button.studio-lien", { type: "button",
+      onclick: function () { montrerResolues = !montrerResolues; rendre(hote); } },
+      montrerResolues ? "Masquer les attentes revenues" : "Voir les attentes revenues");
+  }
 
-      el("div.atd-b", {}, g.l.map(function (x) {
-        var part = Math.max(6, Math.round((x.age / echelle) * 100));
-        var ton = x.age >= 15 ? "alerte" : x.age >= 7 ? "attente" : "calme";
-        var n = el("div.at-x", {},
-          el("button.atx-b." + ton, { type: "button",
-            style: { width: part + "%" },
-            title: x.quoi,
-            onclick: function () { agir(x, hote); } },
-            el("span", {}, x.quoi)),
-          el("span.atx-j." + ton, {}, x.age + " j"),
-          el("span.atx-k", {}, x.critere || x.source));
-        return neuve && x.id === neuve ? O.arrive(n) : n;
+  /* Une ligne par cause. L'âge se lit avant le texte : un filet dont la
+   * longueur est l'âge, sur l'échelle commune à tous les débiteurs. */
+  function scene(g, echelle, hote, neuve) {
+    var lignes = regrouper(g.l);
+    return el("div.studio-scene.du-scene", {},
+      el("div.studio-scene-tete", {},
+        el("span", {}, lignes.length + (lignes.length > 1 ? " causes" : " cause") + " · "
+          + g.l.length + (g.l.length > 1 ? " livrables touchés" : " livrable touché")),
+        el("span", {}, "échelle : " + echelle + " jours")),
+      el("ul.du-lignes", {}, lignes.map(function (r) {
+        var x = r.tete, t = ton(r.age);
+        var part = Math.max(3, Math.round((r.age / echelle) * 100));
+        var cibles = r.l.map(function (y) { return y.ecart && y.ecart.livrable ? y.ecart.livrable.nom : null; })
+          .filter(Boolean);
+        var projets = {};
+        r.l.forEach(function (y) { if (y.ecart && y.ecart.projet) projets[y.ecart.projet.ref || y.ecart.projet.id] = 1; });
+        var li = el("li.du-ligne.f-" + t, {},
+          el("div.dul-texte", {},
+            el("span.dul-cat", {}, x.critere && x.critere !== x.quoi ? x.quoi : (x.origine || x.source)),
+            el("strong", {}, x.critere || x.quoi),
+            el("span.dul-meta", {}, [Object.keys(projets).join(", "),
+              cibles.length ? cibles.slice(0, 2).join(" · ")
+                + (cibles.length > 2 ? " et " + (cibles.length - 2) + " autres" : "") : null]
+              .filter(Boolean).join(" — "))),
+          el("div.dul-age", {},
+            el("span.dul-j", {}, r.age + " j"),
+            el("span.dul-barre", { "aria-hidden": "true" }, el("i", { style: { width: part + "%" } }))),
+          el("button.studio-lien", { type: "button", onclick: function () { agir(x, hote, r.l.length); } },
+            x.attente ? "Voir le message" : "Réclamer"));
+        return neuve && x.id === neuve ? O.arrive(li) : li;
       })));
   }
 
+  function contexte(g) {
+    var origines = {};
+    g.l.forEach(function (x) { if (x.origine) origines[x.origine] = (origines[x.origine] || 0) + 1; });
+    return el("aside.studio-contexte.du-contexte", {},
+      el("div.du-qui", {},
+        g.personne ? UI.avatar(g.personne, 36) : UI.avatar(null, 36),
+        el("div", {}, el("h3", {}, g.nom), g.poste ? el("small", {}, g.poste) : null)),
+      el("dl", {},
+        el("dt", {}, "Dû"), el("dd", {}, g.l.length + (g.l.length > 1 ? " choses" : " chose")),
+        el("dt", {}, "La plus vieille"), el("dd", {}, g.pire + (g.pire > 1 ? " jours" : " jour")),
+        Object.keys(origines).length ? [el("dt", {}, "D'où ça vient"),
+          el("dd", {}, Object.keys(origines).map(function (o) { return o + " (" + origines[o] + ")"; }).join(" · "))] : null),
+      el("p.studio-contexte-note", {}, "Mon horloge est arrêtée sur ces dettes. L'outil n'envoie rien : "
+        + "« Réclamer » rédige le message, je le porte par mon canal."));
+  }
+
   /* Le geste : réclamer. L'outil n'envoie rien — il écrit. */
-  function agir(x, hote) {
+  function agir(x, hote, n) {
     if (x.attente) { messagePret(x.attente, hote); return; }
     var e = x.ecart;
-    RENVOI.ouvrir({ quoi: e.quoi, projet: e.projet.ref, projetId: e.projet.id,
-      objet: e.livrable ? e.livrable.id : null, motif: e.quoi });
+    RENVOI.ouvrir({ quoi: (e.cout || e.quoi) + (n > 1 ? " — " + n + " livrables" : ""),
+      projet: e.projet.ref, projetId: e.projet.id,
+      objet: n > 1 ? null : e.livrable ? e.livrable.id : null, motif: e.quoi });
   }
 
   /* Le message part rédigé : l'outil n'envoie rien, il écrit. C'est le geste
@@ -160,14 +208,14 @@ window.VUE_ATTENTES = (function () {
 
   function resolues() {
     var r = DEPOT.liste("attentes").filter(function (a) { return a.resolu_le; });
-    if (!r.length) return el("p.rien", {}, "Aucune attente résolue pour l'instant.");
-    return el("div.at-res", {},
-      el("div.atr-t", {}, "REVENUES  ·  " + r.length),
+    if (!r.length) return el("p.du-revenues-rien", {}, "Aucune attente revenue pour l'instant.");
+    return el("div.du-revenues", {},
+      el("h3", {}, "Revenues", el("span.studio-compte", {}, String(r.length))),
       r.map(function (a) {
         var j = Math.max(0, Math.round((new Date(a.resolu_le) - new Date(a.envoye_le)) / 86400000));
-        return el("div.atr-x", {},
+        return el("div.du-rev", {},
           el("span", {}, a.quoi),
-          el("span.atr-j", {}, "rendue en " + j + (j > 1 ? " jours" : " jour")));
+          el("span.du-rev-j", {}, "rendue en " + j + (j > 1 ? " jours" : " jour")));
       }));
   }
 

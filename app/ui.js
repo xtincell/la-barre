@@ -301,6 +301,33 @@ window.UI = (function () {
     }));
   }
 
+  /* ————————————————————— 16 bis · Le sélecteur de mode ————————————————————— */
+
+  /* La grammaire Studio (documents/GRAMMAIRE_STUDIO.md §2) : des segments en
+   * minuscules, une pastille de compte, et la question du mode actif dessous —
+   * une seule ligne. Les quatre intentions dessinaient chacune leurs onglets à
+   * deux étages, en capitales ; il n'y a plus qu'un dessin.
+   *
+   * `compte(m)` rend un nombre ou rien ; `alerte(m)` colore la pastille du
+   * mode qui porte l'urgence. Si tout est rouge, la priorité cesse d'être
+   * rare : c'est à l'appelant de n'en désigner qu'un. */
+  function modes(liste, courant, quand, opts) {
+    opts = opts || {};
+    var actif = liste.filter(function (m) { return m.cle === courant; })[0] || liste[0];
+    return el("div.st-modes", {},
+      el("div.studio-statuts", { role: "group", "aria-label": opts.titre || "Modes" },
+        liste.map(function (m) {
+          var n = opts.compte ? opts.compte(m) : null;
+          return el("button" + (m.cle === actif.cle ? ".active" : ""), {
+            type: "button", "aria-pressed": m.cle === actif.cle ? "true" : "false",
+            title: m.quoi || null,
+            onclick: function () { quand(m.cle); } },
+            m.nom,
+            n ? el("span.studio-compte" + (opts.alerte && opts.alerte(m) ? ".alerte" : ""), {}, String(n)) : null);
+        })),
+      actif.quoi ? el("p.st-modes-q", {}, actif.quoi.charAt(0).toUpperCase() + actif.quoi.slice(1) + ".") : null);
+  }
+
   /* ————————————————————— 17 · La bande de recevabilité ————————————————————— */
 
   /* Le motif central du produit : une question, des contrôles, le prix de
@@ -376,7 +403,7 @@ window.UI = (function () {
     icone: icone, avatar: avatar, drapeau: drapeau, anneau: anneau, barre: barre,
     sparkline: sparkline, repartition: repartition, filEtapes: filEtapes, stat: stat,
     banniere: banniere, mur: mur, strip: strip, frise: frise,
-    carteNumerotee: carteNumerotee, graphe: graphe, onglets: onglets,
+    carteNumerotee: carteNumerotee, graphe: graphe, onglets: onglets, modes: modes,
     recevabilite: recevabilite,
     eti: eti, meta: meta, fileItem: fileItem, titreEcran: titreEcran, sectionTitre: sectionTitre,
   };

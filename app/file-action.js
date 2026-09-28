@@ -77,10 +77,12 @@ window.FILE = (function () {
       if (!p || CLOTURE.est(p)) return;
       var impact = FEEDBACK.impact(f);
       out.push(item("trancher", p.nom + " : retour client",
-        impact.assets + " livrable(s) concernés par ce retour.",
+        !impact.assets ? "Ce retour ne désigne aucun livrable : il faut d'abord dire ce qu'il touche."
+          : impact.assets + (impact.assets > 1 ? " livrables concernés par ce retour." : " livrable concerné par ce retour."),
         95 + impact.assets, "#/projets/" + p.id + "/livrables",
         impact.pieces.filter(function (l) { return l.vignette; }).slice(0, 2),
-        { chiffre: p.ref + " · " + impact.assets + " livrable(s)",
+        { chiffre: p.ref + " · retour client" + (!impact.assets ? ", aucun livrable rattaché"
+            : " sur " + impact.assets + (impact.assets > 1 ? " livrables" : " livrable")),
           depuis: f.quand ? O.depuis(f.quand) : 0,
           trancher: "Décider si ce retour est absorbé, facturé ou refusé, avec son motif.",
           verbatim: f.texte, verbatimPar: f.auteur, verbatimLe: f.quand,
@@ -204,86 +206,87 @@ window.FILE = (function () {
     if (courant >= items.length) courant = 0;
     var x = items[courant];
 
-    return el("div.sl", {},
-      spine(items, rafraichir),
-      O.arrive(decision(x, items.length, rafraichir)),
-      preuve(x)
-    );
+    /* La grammaire du Bureau, reprise telle quelle : une section, sa tête, et
+     * la table en trois colonnes — la file, la scène, le contexte. Décider et
+     * regarder sont le même geste ; ils ne doivent pas avoir deux dessins. */
+    var filtre = el("select", { id: "file-famille", onchange: function (e) {
+      famille = e.target.value; courant = 0; rafraichir(); } },
+      el("option", { value: "" }, "Tous les gestes"),
+      Object.keys(FAMILLES).map(function (key) { return el("option", { value: key }, FAMILLES[key].nom); }));
+    filtre.value = famille;
+
+    return el("section.studio-revue.dx", { "aria-label": "Sujets à traiter" },
+      el("div.studio-section-tete", {},
+        el("h2", {}, famille ? FAMILLES[famille].nom : "Dans l'ordre du coût",
+          el("span.studio-compte", {}, String(items.length))),
+        el("div.studio-filtre", {}, el("label", { for: "file-famille" }, "Geste"), filtre)),
+      el("div.studio-table", {},
+        spine(items, rafraichir),
+        O.arrive(decision(x, items.length, rafraichir)),
+        preuve(x)));
   }
 
   function vide() {
-    return el("div.fi-vide", {},
-      el("div.fiv-s", {}, "Rien n'attend de décision. C'est le seul moment où l'on peut "
-        + "faire mûrir une piste spéculative — celles qui sont mûres se valident plus souvent."),
-      GESTE.bouton("ordre", {}, "Voir ce qui peut mûrir"));
+    return el("div.studio-revue", {}, el("div.studio-vide", {},
+      el("div.studio-vide-signe", { "aria-hidden": "true" }, "✓"),
+      el("h3", {}, "Rien n'attend de décision."),
+      el("p", {}, "C'est le seul moment où l'on peut faire mûrir une piste spéculative — "
+        + "celles qui sont mûres se valident plus souvent."),
+      GESTE.bouton("ordre", {}, "Voir ce qui peut mûrir")));
   }
 
-  /* La file, réduite à des coûts. Elle navigue, elle ne se lit pas. */
+  function age(x) {
+    return x.depuis ? "depuis " + x.depuis + (x.depuis > 1 ? " jours" : " jour") : null;
+  }
+
+  /* La file, réduite à ce qui diffère d'une ligne à l'autre : le geste, le
+   * sujet, l'âge. Le filet de gauche prend le ton de la famille — on voit les
+   * bandes avant de lire les mots. Le rang n'est plus écrit : l'ordre le dit. */
   function spine(items, rafraichir) {
-    var filtre = el("select.studio-file-filtre", { "aria-label": "Filtrer les sujets", onchange: function (e) { famille = e.target.value; courant = 0; rafraichir(); } },
-      el("option", { value: "" }, "Tous les sujets"),
-      Object.keys(FAMILLES).map(function (key) { return el("option", { value: key }, FAMILLES[key].nom); }));
-    filtre.value = famille;
-    return el("div.sl-file", {}, filtre,
-      el("div.slf-t", {}, "À traiter · " + items.length
-        + (items.length > 1 ? " sujets" : " sujet")),
-      /* La seconde ligne redisait la première, tronquée : « William Kwin
-       * Mandengue tient du spéculatif » au-dessus de « William Kwin Mandengue
-       * tient du spécul… ». Vingt-trois lignes grises identiques, et le
-       * principe qui les ordonne — le geste, et depuis quand — invisible.
-       *
-       * Elle porte maintenant ce qui diffère : le geste que ça demande, et
-       * l'âge quand on le connaît. Le filet de gauche prend le ton de la
-       * famille : on voit les bandes avant de lire les mots. */
-      el("div.slf-l", {}, items.map(function (x, n) {
-        var f = FAMILLES[x.famille] || {};
-        return el("button.slf-i" + (n === courant ? ".ici" : "")
-          + (f.ton ? ".f-" + f.ton : ""), { type: "button",
-          onclick: function () { courant = n; rafraichir(); } },
-          el("span.slfi-n", {}, String(n + 1)),
-          el("span.slfi-c", {}, x.chiffre),
-          el("span.slfi-q", {},
-            el("span.slfi-f", {}, f.nom || x.famille),
-            x.depuis ? el("span.slfi-d", {}, "depuis " + x.depuis
-              + (x.depuis > 1 ? " jours" : " jour")) : null));
-      })),
-      el("div.slf-p", {},
-        el("span", {}, (courant + 1) + " sur " + items.length),
-        el("i", { style: { width: Math.round(((courant + 1) / items.length) * 100) + "%" } })));
+    return el("div.studio-file.dx-file", { "aria-label": "Sujets" }, items.map(function (x, n) {
+      var f = FAMILLES[x.famille] || {};
+      return el("button.studio-piece.dx-i" + (n === courant ? ".active" : "")
+        + (f.ton ? ".f-" + f.ton : ""), { type: "button",
+        "aria-pressed": n === courant ? "true" : "false",
+        onclick: function () { courant = n; rafraichir(); } },
+        el("span.studio-piece-ref", {}, f.nom || x.famille),
+        el("strong", {}, x.chiffre),
+        age(x) ? el("small.dx-age", {}, age(x)) : null);
+    }));
   }
 
   /* La décision elle-même. Le chiffre domine : c'est lui qui justifie le rang. */
   function decision(x, total, rafraichir) {
     var d = FAMILLES[x.famille] || {};
-    return el("div.sl-d", {},
-      el("div.sld-r", {}, "Sujet " + (courant + 1) + " sur " + total
-        + (courant === 0 ? " · priorité proposée" : "")),
+    return el("div.studio-scene.dx-scene", {},
+      el("div.studio-scene-tete", {},
+        el("span", {}, "Sujet " + (courant + 1) + " sur " + total
+          + (courant === 0 ? " · priorité proposée" : "")),
+        age(x) ? el("span.dx-depuis.f-" + (d.ton || "or"), {}, age(x)) : null),
 
-      el("div.sld-c", {}, x.chiffre),
-      el("div.sld-s", {},
-        (x.depuis ? "depuis " + x.depuis + (x.depuis > 1 ? " jours" : " jour") + "  ·  " : "")
-        + x.quoi),
+      el("h3.dx-titre", {}, x.chiffre),
+      el("p.dx-quoi", {}, x.quoi),
 
       x.visuels && x.visuels.length
-        ? el("div.sld-v", {}, x.visuels.slice(0, 2).map(function (v) {
-            return el("div.sldv", {}, IMAGE.vignette(v, "planche"),
-              el("span", {}, v.nom || ""));
+        ? el("div.dx-visuels", {}, x.visuels.slice(0, 2).map(function (v) {
+            return el("figure.dx-visuel", {}, IMAGE.vignette(v, "planche"),
+              el("figcaption", {}, v.nom || ""));
           }))
         : null,
 
-      el("div.sld-t", {},
-        el("div.sldt-l", {}, "La prochaine action"),
+      el("div.dx-action", {},
+        el("h4", {}, "La prochaine action"),
         el("p", {}, x.trancher || x.cout)),
 
-      el("div.sld-g", {},
+      el("div.studio-actions", {},
         /* Le geste rendu : la carte se retire avant que la suivante arrive.
          * Sur un écran où l'on tranche vingt-trois fois de suite, c'est la
          * seule chose qui dit que le clic a porté. Si l'animation n'a pas
          * lieu, le geste part quand même — O.sortir le garantit. */
         (x.gestes || []).map(function (g) {
-          return el("button.b" + (g.fort ? ".or" : ""), { type: "button",
+          return el(g.fort ? "button.b.or" : "button.studio-lien", { type: "button",
             onclick: function () {
-              var carte = document.querySelector(".sl-d");
+              var carte = document.querySelector(".dx-scene");
               O.sortir(carte, g.quand);
             } }, g.nom);
         }),
@@ -293,40 +296,32 @@ window.FILE = (function () {
          * ce que ça coûte — la modale se monte avec. */
         GESTE.lien(x.ou,
           (x.gestes || []).length ? "Ouvrir le dossier" : d.nom || "Ouvrir",
-          "b" + ((x.gestes || []).length ? ".nu" : ".or"),
+          (x.gestes || []).length ? "studio-lien" : "b.or",
           { quoi: x.quoi, cout: x.trancher || x.cout }),
-        el("button.b.nu", { type: "button", onclick: function () {
-          var carte = document.querySelector(".sl-d");
+        el("button.studio-lien", { type: "button", onclick: function () {
+          var carte = document.querySelector(".dx-scene");
           O.sortir(carte, function () {
             courant = (courant + 1) % total; rafraichir();
           });
-        } }, "Sujet suivant")),
-
-      el("div.sld-m", {}, "Consulter un sujet ou passer au suivant ne le résout pas."));
+        } }, "Sujet suivant →")));
   }
 
-  /* Ce qu'il faut avoir sous les yeux pour trancher — et rien de plus. */
+  /* Ce qu'il faut avoir sous les yeux pour trancher — et rien de plus. Le
+   * panneau de contexte du Bureau : le retour client est ce qu'un humain a
+   * écrit, il prend l'aplat d'intention ; le pourquoi reste en texte second. */
   function preuve(x) {
-    var b = [];
-
-    if (x.verbatim) {
-      var pe = x.verbatimPar ? DEPOT.trouve("personnes", x.verbatimPar) : null;
-      var ct = x.verbatimPar ? DEPOT.trouve("contacts", x.verbatimPar) : null;
-      b.push(el("div.sl-p", {},
-        el("div.slp-t", {}, "Le retour client"),
-        el("blockquote", {}, "« " + x.verbatim + " »"),
-        el("div.slp-a", {}, (pe || ct ? (pe || ct).nom : "auteur non nommé")
-          + (x.verbatimLe ? "  ·  " + O.joli(x.verbatimLe) : ""))));
-    }
-
     var d = FAMILLES[x.famille] || {};
-    if (d.quoi) {
-      b.push(el("div.sl-p", {},
-        el("div.slp-t", {}, "Pourquoi agir"),
-        el("p", {}, d.quoi.charAt(0).toUpperCase() + d.quoi.slice(1) + ".")));
-    }
-
-    return el("div.sl-pr", {}, b);
+    var pe = x.verbatimPar ? DEPOT.trouve("personnes", x.verbatimPar) : null;
+    var ct = x.verbatimPar ? DEPOT.trouve("contacts", x.verbatimPar) : null;
+    return el("aside.studio-contexte.dx-contexte", {},
+      el("h3", {}, "Pourquoi agir"),
+      d.quoi ? el("p.dx-pourquoi", {}, d.quoi.charAt(0).toUpperCase() + d.quoi.slice(1) + ".") : null,
+      x.verbatim ? el("div.dx-verbatim", {},
+        el("h4", {}, "Le retour client"),
+        el("blockquote", {}, "« " + x.verbatim + " »"),
+        el("small", {}, (pe || ct ? (pe || ct).nom : "auteur non nommé")
+          + (x.verbatimLe ? " · " + O.joli(x.verbatimLe) : ""))) : null,
+      el("p.studio-contexte-note", {}, "Consulter un sujet ou passer au suivant ne le résout pas."));
   }
 
   return { FAMILLES: FAMILLES, tout: tout, salle: salle,
