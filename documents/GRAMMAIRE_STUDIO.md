@@ -356,3 +356,18 @@ distingue l'aperçu du fichier plat, et la porte comme l'étage lisent la même 
 précédentes n'en sont que plus sévères, pas moins. Mesure à 1280 et 375 px sur trois
 livrables (maître avec vignette, maître sans vignette, Beignet Paradise) : à zéro, hors
 données (noms de livrables et de SKU).
+
+**Passe 7a — La marque : la lentille (28/09).** La passe 7 est coupée en trois
+(lentille, page de marque, socle). La lentille « par marque » héritait du titre de la
+liste des dossiers — « 2 dossiers tiennent, 99 blocages… », qui ne dit rien des
+marques — et d'un sélecteur en capitales (« CE QUI NE TIENT PAS / PAR MARQUE », cibles
+de 20 px) dont l'autre bouton renvoyait de toute façon à l'index Studio. Elle a
+désormais son en-tête (« Vos marques. », retour vers « Vos projets »), une ligne par
+marque dans une section blanche, et le filet et le signe de l'attente sur la seule
+marque qui appelle un geste : celle qui a un dossier ouvert sans campagne ni cycle.
+Le corpus avait versé 32 marques dont plus rien n'est ouvert : elles se replient sous
+leur compte, et l'en-tête ne compte plus que les vivantes (« 27 sans rythme »
+comptait 22 marques d'historique). La page tombe de **3 028 à 1 170 px**. Collision
+évitée : `.mq-r` et `.mq-p` appartiennent déjà au bloc marque de `marque.js`, d'où le
+préfixe `mql-`. Mesure à 1280 et 375 px : à zéro, hors données (noms de marque en
+capitales).

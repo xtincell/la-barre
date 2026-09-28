@@ -30,14 +30,14 @@ window.VUE_PROJETS = (function () {
    * Une intention, deux lentilles — le produit fait déjà ça dans Décider et
    * dans Constater. Aucune destination de plus. */
   var LENTILLES = [
-    { cle: "defaut", nom: "CE QUI NE TIENT PAS", quoi: "classé par ce qui bloque, pas par date" },
-    { cle: "marque", nom: "PAR MARQUE", quoi: "la marque, son rythme, ses campagnes" },
+    { cle: "defaut", nom: "Ce qui ne tient pas", quoi: "classé par ce qui bloque, pas par date" },
+    { cle: "marque", nom: "Par marque", quoi: "la marque, son rythme, ses campagnes" },
   ];
   var LENTILLE = "defaut";
 
   function rendre(hote, projetId, section) {
     if (!projetId && window.VUE_STUDIO) return VUE_STUDIO.projets(hote);
-    if (projetId === "marques") { projetId = null; LENTILLE = "marque"; }
+    if (projetId === "marques") return lentilleMarques(hote);
     if (projetId && /^MQ-/.test(projetId)) return marcheDeMarque(hote, projetId);
     if (projetId && /^CMP-/.test(projetId)) return ecranCampagne(hote, projetId);
     if (projetId) return projet(hote, projetId, section);
@@ -324,6 +324,82 @@ window.VUE_PROJETS = (function () {
    * ce qui tourne. On descend d'un clic. Les marques sans dossier n'y figurent
    * pas — ce mur montre le travail, pas le référentiel. */
   function murDesMarques() {
+    var lignes = marquesEnLignes();
+    if (!lignes.length) {
+      return el("p.rien", {}, "Aucun dossier n'est rattaché à une marque.");
+    }
+    return el("section.mql-liste", {}, lignes.map(ligneMarque));
+  }
+
+  /* La lentille par marque a son propre en-tête. Elle héritait du titre de la
+   * liste des dossiers — « 2 dossiers tiennent, 99 blocages… » —, qui ne dit
+   * rien des marques, et d'un sélecteur dont l'autre bouton renvoyait de toute
+   * façon à l'index. Le retour devient un lien, le titre parle des marques. */
+  function lentilleMarques(hote) {
+    hote.className = "zone studio";
+    O.vider(hote);
+    var lignes = marquesEnLignes();
+    /* Le corpus a versé trente marques dont plus rien n'est ouvert. Elles se
+     * replient sous leur compte : sinon la marque qui tourne cette semaine
+     * se cherche entre deux annuaires. Le compte de l'en-tête ne porte que
+     * sur les vivantes — une marque sans dossier ouvert n'a pas à « manquer »
+     * de rythme. */
+    var vivantes = lignes.filter(function (x) { return x.vivants.length; });
+    var dormantes = lignes.filter(function (x) { return !x.vivants.length; });
+    var muettes = vivantes.filter(function (x) { return !x.campagnes.length; }).length;
+    var intro = !lignes.length ? "Aucun dossier n'est encore rattaché à une marque."
+      : !vivantes.length ? "Aucune marque n'a de dossier ouvert."
+      : vivantes.length + (vivantes.length > 1 ? " marques ont" : " marque a") + " un dossier ouvert. "
+        + (muettes
+          ? muettes + (muettes > 1 ? " n'ont" : " n'a") + " ni campagne ni cycle : leur rythme "
+            + "n'existe que dans la tête de ceux qui le tiennent."
+          : "Toutes ont un rythme : un cycle qui tourne, ou des temps forts.");
+
+    hote.appendChild(el("header.studio-entete", {},
+      el("div", {},
+        el("p.studio-date", {}, el("a.mql-fil", { href: "#/projets" }, "Vos projets"), " · par marque"),
+        el("h1", {}, "Vos marques."),
+        el("p.studio-intro", {}, intro)),
+      el("button.b.or", { type: "button", onclick: nouveau }, "+ Nouveau projet")));
+
+    if (!lignes.length) {
+      hote.appendChild(el("div.studio-vide", {}, el("h3", {}, "Aucune marque ici."),
+        el("p", {}, "Une marque apparaît dès qu'un dossier la nomme.")));
+    }
+    if (vivantes.length) hote.appendChild(el("section.mql-liste", {}, vivantes.map(ligneMarque)));
+    if (dormantes.length) {
+      var sansC = dormantes.filter(function (x) { return !x.campagnes.length; }).length;
+      hote.appendChild(el("details.mql-dort", vivantes.length ? {} : { open: true },
+        el("summary.mql-dort-t", {},
+          dormantes.length + (dormantes.length > 1 ? " marques sans dossier ouvert" : " marque sans dossier ouvert"),
+          el("span", {}, "leur histoire reste entière"
+            + (sansC ? " · " + sansC + " sans campagne rattachée" : ""))),
+        el("section.mql-liste", {}, dormantes.map(ligneMarque))));
+    }
+    hote.appendChild(el("p.mql-pied", {}, "Une marque est toujours en campagne : un cycle "
+      + "qui tourne, et des temps forts. Ce qui n'est rattaché à ni l'un ni l'autre se voit."));
+  }
+
+  /* Une marque sur une ligne : son nom, ce qui tourne, son rythme, son socle.
+   * Une marque sans rythme porte le filet et le signe de l'attente — c'est la
+   * seule qui appelle un geste. */
+  function ligneMarque(x) {
+    var sansRythme = !x.campagnes.length;
+    var n = window.VAULT ? VAULT.CHAMPS.length : 0;
+    return el("a.mql-r" + (sansRythme ? ".f-attente" : ""), { href: "#/projets/" + x.id },
+      el("span.mql-n", {}, x.nom),
+      el("span.mql-o", {},
+        x.vivants.length
+          ? x.vivants.length + (x.vivants.length > 1 ? " projets ouverts" : " projet ouvert")
+          : "Rien d'ouvert",
+        el("small", {}, x.lot.length + " au total")),
+      el("span.mql-c", {}, sansRythme
+        ? [el("span.mql-signe", { "aria-hidden": "true" }, "◐ "), "Aucune campagne, aucun cycle"]
+        : x.campagnes.length + (x.campagnes.length > 1 ? " campagnes" : " campagne")),
+      el("span.mql-s", {}, x.socle + " / " + n + " au socle"));
+  }
+
+  function marquesEnLignes() {
     var ps = DEPOT.liste("projets");
     var par = {};
     ps.forEach(function (p) {
@@ -345,25 +421,7 @@ window.VUE_PROJETS = (function () {
     }).sort(function (a, b) {
       return b.vivants.length - a.vivants.length || b.lot.length - a.lot.length;
     });
-
-    if (!lignes.length) {
-      return el("p.rien", {}, "Aucun dossier n'est rattaché à une marque.");
-    }
-
-    return el("div.dl-mq", {}, lignes.map(function (x) {
-      var sansRythme = !x.campagnes.length;
-      return el("a.mqr" + (sansRythme ? ".muet" : ""), { href: "#/projets/" + x.id },
-        el("span.mqr-n", {}, x.nom),
-        el("span.mqr-s", {},
-          x.vivants.length
-            ? x.vivants.length + (x.vivants.length > 1 ? " projets ouverts" : " projet ouvert")
-            : "rien d'ouvert",
-          el("span.mqr-t", {}, x.lot.length + " au total")),
-        el("span.mqr-r", {}, sansRythme
-          ? "aucune campagne, aucun cycle"
-          : x.campagnes.length + (x.campagnes.length > 1 ? " campagnes" : " campagne")),
-        el("span.mqr-so", {}, x.socle + " / " + (window.VAULT ? VAULT.CHAMPS.length : 0) + " au socle"));
-    }));
+    return lignes;
   }
 
   /* La marche : une marque, son rythme, ses campagnes, ses projets. */

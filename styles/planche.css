@@ -2503,23 +2503,7 @@ blockquote, .message, .verbatim {
 }
 
 /* ————— L'arbre par marque : marque → campagne → projet ————— */
-.dl-lent { display: inline-flex; gap: .2rem; margin-right: .7rem; }
-
-.dl-mq { display: grid; margin-top: .4rem; }
-.mqr { display: grid; grid-template-columns: minmax(0, 1fr) 11rem 10rem 9rem;
-  gap: .8rem; align-items: baseline; padding: .75rem .9rem;
-  border-bottom: 1px solid var(--trait); border-left: 2px solid transparent;
-  text-decoration: none; color: inherit; min-height: var(--cible);
-  transition: background var(--tr-rapide); }
-.mqr:hover { background: var(--surface-2); }
-.mqr.muet { border-left-color: var(--attente); }
-.mqr-n { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair); }
-.mqr-s, .mqr-r, .mqr-so { font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-doux); font-variant-numeric: tabular-nums; }
-.mqr-t { display: block; font-size: var(--t-micro); line-height: var(--lh-micro);
-  color: var(--clair-terne); }
-.mqr.muet .mqr-r { color: var(--attente); }
-.mqr-so { color: var(--clair-terne); }
+/* La lentille par marque est réécrite dans studio-vues.css (passe 7a). */
 
 .dl-fil { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
   margin: 0 0 .2rem; }
@@ -2561,12 +2545,6 @@ blockquote, .message, .verbatim {
 .dlo-t { font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); }
 .dlo-q { margin: .2rem 0 .5rem; font-size: var(--t-meta); line-height: var(--lh-meta);
   color: var(--clair-terne); max-width: var(--mesure); }
-
-@media (max-width: 900px) {
-  .mqr { grid-template-columns: minmax(0, 1fr) 9rem; }
-  .mqr-r, .mqr-so { grid-column: 2; }
-  .mqr-so { display: none; }
-}
 
 /* ————— Le chiffrage : jours par poste ————— */
 .chf-l { display: grid; gap: .3rem; }
