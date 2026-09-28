@@ -171,6 +171,18 @@ window.PRODUCTION = (function () {
 
   /* ————————————————————— La porte ————————————————————— */
 
+  /* Ce que coûte un étage absent, pour ce livrable-ci. Une vignette n'est pas
+   * l'asset : elle montre le livrable sans dire quel fichier le client valide.
+   * Écrire « il n'existe qu'en tête » sous une image affichée, c'est faire
+   * mentir l'écran. La porte et la fiche lisent la même phrase. */
+  function coutDe(l, t) {
+    if (t === "asset" && l.vignette) {
+      return "la vignette n'est qu'un aperçu : aucun fichier plat n'est rattaché à la V"
+        + (l.version || 1) + ", on ne sait pas ce que le client valide";
+    }
+    return TYPES[t].cout;
+  }
+
   /* Peut-on produire ce livrable ? Quatre conditions, et chacune dit son prix. */
   function porte(p, l) {
     var piste = (p.sections.pistes || []).filter(function (x) { return x.id === l.pisteId; })[0];
@@ -192,7 +204,10 @@ window.PRODUCTION = (function () {
       var faits = t === "situation"
         ? de(l, t).filter(function (f) { return (f.version || 1) === v; }).length + mks
         : de(l, t).filter(function (f) { return (f.version || 1) === v; }).length;
-      out.push({ quoi: def.nom, ok: faits > 0, poids: def.signable ? 5 : 3, cout: def.cout });
+      /* Une vignette n'est pas l'asset : elle montre le livrable sans dire quel
+       * fichier le client valide. Dire « il n'existe qu'en tête » sous une image
+       * affichée, c'est faire mentir l'écran. */
+      out.push({ quoi: def.nom, ok: faits > 0, poids: def.signable ? 5 : 3, cout: coutDe(l, t) });
     });
 
     if (mks) {
@@ -333,7 +348,7 @@ window.PRODUCTION = (function () {
     return out;
   }
 
-  return { TYPES: TYPES, exiges: exiges, etages: etages,
+  return { TYPES: TYPES, exiges: exiges, etages: etages, coutDe: coutDe,
     ETAPES: ETAPES, etape: etape,
     fichiers: fichiers, de: de, perimes: perimes,
     poser: poser, retirer: retirer, porte: porte, ouverte: ouverte, pretes: pretes,

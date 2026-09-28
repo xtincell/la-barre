@@ -160,7 +160,7 @@ window.VUE_REVUE = (function () {
       var tenus = g.filter(function (c) { return etat[c.cle] === true; }).length;
 
       boite.appendChild(el("div.rg-tete", {},
-        el("span", {}, "CE QUI LE FAIT REFUSER"),
+        el("span", {}, "Ce qui le fait refuser"),
         el("span.rg-c" + (tenus === g.length ? ".ok" : ""), {}, tenus + " / " + g.length + " tenus")
       ));
       g.forEach(function (c) {
@@ -188,7 +188,7 @@ window.VUE_REVUE = (function () {
         type: "button",
         onclick: function () { confirmer(pc, v, c); },
       },
-        el("span.v-signe", { style: { color: v.couleur } }, v.signe),
+        el("span.v-signe", {}, v.signe),
         el("span.v-nom", {}, v.nom),
         el("span.v-cout" + (c.alertes.length ? ".alerte" : ""), {}, resume.slice(0, 62))
       );

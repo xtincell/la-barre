@@ -388,11 +388,11 @@ window.VUE_LIVRABLE = (function () {
     dessiner();
 
     return el("div", {},
-      el("div.sousbloc", {}, el("h3", {}, "CRITÈRES D'ACCEPTATION DE L'IDÉE"),
+      el("div.sousbloc", {}, el("h3", {}, "Critères d'acceptation de l'idée"),
         (b.criteres && b.criteres.length) ? PANNEAU.puces(b.criteres)
           : UI.banniere("", REGLES.prix("criteres-absents"))),
-      el("div.sousbloc", {}, el("h3", {}, "CE QUI LE FAIT REFUSER"), boite),
-      el("div.sousbloc", {}, el("h3", {}, "VERDICT — chacun porte son coût"),
+      el("div.sousbloc", {}, el("h3", {}, "Ce qui le fait refuser"), boite),
+      el("div.sousbloc", {}, el("h3", {}, "Verdict — chacun porte son coût"),
         el("div.rc-verdicts", {}, MAISON.verdicts.map(function (v) {
           var piece = { type: "livrable", objet: l, projet: p, titre: l.nom,
             semaine: PLATEAU.semaineDe(PLATEAU.echeanceDe(p, l)) };
@@ -401,7 +401,7 @@ window.VUE_LIVRABLE = (function () {
             : c.jours ? "+" + c.jours + " j"
             : c.gagne.length ? c.gagne[0] : (c.effets[0] || "");
           return el("button.rc-v." + v.cle, { type: "button", onclick: function () { juger(p, l, v, apres); } },
-            el("span.v-signe", { style: { color: v.couleur } }, v.signe),
+            el("span.v-signe", {}, v.signe),
             el("span.v-nom", {}, v.nom),
             el("span.v-cout" + (c.alertes.length ? ".alerte" : ""), {}, resume.slice(0, 58)));
         })))

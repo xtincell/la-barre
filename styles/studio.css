@@ -238,4 +238,4 @@ a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .studio-index .studio-vide { grid-column: 1 / -1; width: 100%; }
 @media (max-width: 1200px) { .studio-index .studio-projets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .studio-index-outils { flex-wrap: wrap; gap: 12px; } .studio-index-outils input { order: 3; width: 100%; flex-basis: 100%; } .studio-index .studio-projets { grid-template-columns: 1fr; } }
-button.critere-l { width: 100%; text-align: left; font-family: var(--affichage); cursor: pointer; min-height: 44px; }
+

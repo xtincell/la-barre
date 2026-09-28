@@ -19,6 +19,10 @@ window.FEEDBACK = (function () {
       cout: "un retour WhatsApp n'a pas de version : on ne saura pas sur quoi il portait" },
     oral: { nom: "À l'oral", trace: false,
       cout: "aucune trace côté client : il pourra dire qu'il n'a jamais demandé ça" },
+    /* Les retours relevés dans les commentaires de tâche de Matanga People. Ce
+     * canal n'était dans aucune table : la fiche du livrable plantait dessus.
+     * Il se relève, il ne se saisit pas — le formulaire ne le propose pas. */
+    people: { nom: "Relevé de Matanga People", trace: true, releve: true },
   };
 
   /* Le niveau auquel un retour s'applique. C'est lui qui dit l'onde de choc et
@@ -262,7 +266,8 @@ window.FEEDBACK = (function () {
 
     var champ = el("textarea", { rows: 3, placeholder: "Ce que le client a demandé, dans ses mots" });
     var selCanal = el("select", {});
-    Object.keys(CANAUX).forEach(function (k) { selCanal.appendChild(el("option", { value: k }, CANAUX[k].nom)); });
+    Object.keys(CANAUX).filter(function (k) { return !CANAUX[k].releve; })
+      .forEach(function (k) { selCanal.appendChild(el("option", { value: k }, CANAUX[k].nom)); });
     var selAuteur = el("select", {});
     selAuteur.appendChild(el("option", { value: "" }, "— qui l'a formulé —"));
     DEPOT.liste("contacts").filter(function (c) {

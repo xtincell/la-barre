@@ -42,22 +42,6 @@
 .anl-gestes .b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .12rem .3rem; }
 .anl-etat { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .2rem; }
 
-/* ————————————————————— Les mockups ————————————————————— */
-
-.mk { display: grid; gap: .5rem; }
-.mk-tete { display: flex; align-items: baseline; gap: .5rem; }
-.mk-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em; color: var(--clair-terne); }
-.mk-n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); flex: 1; }
-.mk-bande { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .5rem; }
-.mk-c { background: var(--nuit-carte); }
-.mk-c.perime { border-color: var(--alerte); }
-.mk-l { font-size: var(--t-eti); letter-spacing: var(--ls-eti); padding: .3rem .4rem 0; line-height: 1.3; }
-.mk-g { display: flex; justify-content: space-between; align-items: center; padding: .15rem .4rem .35rem; }
-.mk-v { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.mk-g .b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .1rem .28rem; }
-.mk-vide { font-size: var(--t-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); font-style: italic; line-height: 1.45; }
-.mk-apercu { margin-top: .4rem; max-width: 200px; }
-
 /* ————————————————————— La présentation ————————————————————— */
 
 .pr-apres { background: var(--nuit-carte); padding: .7rem .8rem; display: grid; gap: .5rem; }
@@ -401,7 +385,6 @@
 
 /* ————————————————————— L'écran d'asset ————————————————————— */
 
-.as { display: grid; gap: 1rem; }
 .as-cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .6rem; }
 .as-c { background: var(--nuit-carte); 
  border-top: 2px solid var(--trait-clair); padding: .55rem .6rem; display: grid; gap: .4rem;
@@ -435,26 +418,6 @@
 .ascf-m { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
 .ascf .b { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); padding: .08rem .25rem; justify-self: start; }
 .asc-g .b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .12rem .3rem; }
-
-.as-bloc { display: grid; gap: .5rem; }
-.asb-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .16em; color: var(--or);
-  border-bottom: 1px solid var(--trait); padding-bottom: .3rem;
-  display: flex; justify-content: space-between; }
-.asb-t span { color: var(--clair-terne); letter-spacing: 0; }
-.as-fb { border-left: 2px solid var(--trait-clair); padding: .35rem .6rem; display: grid; gap: .2rem;
-  background: var(--nuit-carte); }
-.as-fb.attente { border-left-color: var(--attente); }
-.as-fb.alerte { border-left-color: var(--bloquant-txt); }
-.as-fb.vert { border-left-color: var(--vert); }
-.asfb-t { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.4; }
-.asfb-m { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center;
-  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.asfb-mo { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); }
-.as-prec { display: grid; gap: .3rem; }
-.asp-v span { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); font-style: italic; }
-.aspc-o { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
-.aspc-m { font-size: var(--t-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); line-height: 1.4; }
-.aspc-q, .aspc-d { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
 
 /* ————————————————————— Mes briefs et leur chaîne ————————————————————— */
 
@@ -824,21 +787,6 @@
 .rail-plein:hover { text-decoration: underline; }
 
 /* L'en-tête d'une pièce : ce qu'on voit avant de juger */
-.as-tete { display: flex; gap: .9rem; align-items: flex-start; }
-.ast-v { flex: 0 0 12rem; }
-.ast-v .vignette { height: 8rem; }
-.ast-c { min-width: 0; display: grid; gap: .3rem; align-content: start; }
-.ast-n { font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.25; }
-.ast-m { display: flex; gap: .45rem; align-items: center; flex-wrap: wrap;
-  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.ast-r { display: flex; gap: .45rem; align-items: center; flex-wrap: wrap;
-  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); }
-.ast-r .alerte { color: var(--bloquant-txt); }
-
-@media (max-width: 700px) {
-  .as-tete { flex-direction: column; }
-  .ast-v { flex: none; width: 100%; }
-}
 
 .o-v.sans { color: var(--clair-terne); }
 
@@ -1606,102 +1554,6 @@
   .glr-d { grid-column: 1; }
 }
 
-/* ————————————————————— Produire : la porte ————————————————————— */
-
-/* Quatre cases égales niaient l'essentiel : on ne franchit pas un BAT comme on
- * pose une vignette. Le passage est vertical, il a un chambranle, une ligne de
- * non-retour, et un seul étage occupé à la fois. */
-.pt { display: grid; gap: 1rem; }
-
-.pt-c { display: grid; gap: .3rem; padding: 1rem 1.2rem; background: var(--surface-2);
-  border-radius: var(--r-m); border-left: 3px solid var(--succes); }
-.pt-c.hors { border-left-color: var(--bloquant); }
-.ptc-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--clair-terne); }
-.ptc-n { font-size: var(--t-ecran); line-height: var(--lh-ecran); color: var(--clair);
-  display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; }
-.ptc-n span { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-.ptc-r { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux);
-  max-width: var(--mesure); }
-.pt-c.hors .ptc-r { color: var(--bloquant-txt); }
-
-.pt-p { display: grid; }
-.pt-e { display: grid; }
-
-.pt-l { display: grid; gap: .15rem; margin: .5rem 0; padding: .5rem .9rem;
-  border-top: 2px solid var(--bloquant); border-bottom: 2px solid var(--bloquant);
-  background: rgba(255, 77, 79, .07); }
-.ptl-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em;
-  color: var(--bloquant-txt); }
-.ptl-s { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-
-.pt-f { display: grid; gap: .35rem; padding: .8rem 0;
-  border-bottom: 1px solid var(--trait); }
-.ptf-h { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; }
-.ptf-c { color: var(--succes); font-size: var(--t-lire); }
-.ptf-n { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair); }
-.ptf-q, .ptf-x { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-.ptf-x { font-style: italic; }
-.ptf-fs { display: grid; gap: .2rem; padding-left: 1.5rem; }
-.ptff { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap; }
-.ptff-n { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux); }
-.ptff-m { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
-.ptf-v { display: flex; gap: .6rem; padding-left: 1.5rem; flex-wrap: wrap; }
-.ptfv { display: grid; gap: .2rem; width: 8rem; }
-.ptfv span { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
-.pt-f > .b.nu { justify-self: start; margin-left: 1.5rem; }
-
-.pt-o { display: grid; gap: .7rem; padding: 1.1rem 1.2rem; background: var(--surface-2);
-  border-radius: var(--r-m); border: 1px solid var(--trait-clair); }
-.pt-o.dur { border-color: var(--bloquant); }
-.pto-h { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap; }
-.pto-i { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .12em;
-  color: var(--n900); background: var(--accent); padding: .15rem .45rem;
-  border-radius: var(--r-xs); }
-.pto-n { font-size: var(--t-h2); line-height: var(--lh-h2); color: var(--clair); }
-.pto-e { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-
-.pto-b { display: grid; gap: .25rem; }
-.ptob { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: .8rem;
-  align-items: baseline; font-size: var(--t-lire); line-height: var(--lh-lire);
-  color: var(--clair-doux); }
-.ptob b { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em;
-  color: var(--clair-terne); font-weight: 400; }
-.ptob i { color: var(--arbitrage); font-style: normal; }
-
-.pto-z { display: flex; align-items: center; gap: .6rem; justify-self: start;
-  min-height: var(--cible); padding: 0 1rem; background: transparent;
-  border: 1px dashed var(--trait-clair); border-radius: var(--r-s); cursor: pointer;
-  transition: border-color var(--tr-rapide), background var(--tr-rapide); }
-.pto-z:hover { border-color: var(--accent); background: var(--surface-3); }
-.ptoz-p { font-size: var(--t-h2); color: var(--accent); line-height: 1; }
-.ptoz-t { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair); }
-
-.pto-c { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: .8rem;
-  align-items: baseline; font-size: var(--t-lire); line-height: var(--lh-lire);
-  color: var(--arbitrage); max-width: var(--mesure-large); }
-.pto-c b { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em;
-  color: var(--clair-terne); font-weight: 400; }
-.pto-a { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--bloquant-txt);
-  max-width: var(--mesure); }
-
-.pt-x { display: grid; grid-template-columns: 1.2rem 11rem minmax(0, 1fr);
-  gap: .3rem .6rem; align-items: baseline; padding: .7rem 0;
-  border-bottom: 1px solid var(--trait); opacity: .62; }
-.ptx-c { color: var(--clair-terne); }
-.ptx-n { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux); }
-.ptx-q { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-.ptx-o { grid-column: 2 / -1; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-terne); max-width: var(--mesure); }
-
-.pt-hs { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-
-@media (max-width: 700px) {
-  .ptob, .pto-c { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
-  .pt-x { grid-template-columns: 1.2rem minmax(0, 1fr); }
-  .ptx-q { grid-column: 2; }
-}
-
 /* ————————————————————— La matrice : le trou nommé ————————————————————— */
 
 /* Un marché promis que rien ne porte occupait un blanc — donc rien. Il occupe
@@ -2237,38 +2089,10 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 
 /* Une pièce montre des produits. Lesquels, ça ne se devine pas — et c'est le
  * seul endroit d'où l'on voit qu'un pack apparaît là où il n'est pas vendu. */
-.pm { display: grid; gap: .6rem; margin-top: 1.2rem; padding: 1rem 1.1rem;
-  background: var(--surface-2); border-radius: var(--r-m);
-  border-left: 3px solid var(--trait-clair); }
-.pm.alerte { border-left-color: var(--bloquant); }
-.pm-t { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--clair-terne); }
-.pm-t span { letter-spacing: 0; }
-.pm-x { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-terne);
-  max-width: var(--mesure); }
 
-.pm-h { display: grid; gap: .1rem; padding: .6rem .8rem; border-radius: var(--r-s);
-  background: rgba(255, 77, 79, .08); }
 .pmh-t { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--bloquant-txt); }
 .pmh-x { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux);
   max-width: var(--mesure); }
-.pm-m { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--arbitrage);
-  max-width: var(--mesure); }
-
-.pm-l { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-  gap: .35rem; }
-.pmp { display: grid; gap: .1rem; padding: .45rem; text-align: left;
-  background: var(--surface-3); border: 0; border-left: 2px solid transparent;
-  border-radius: var(--r-xs); cursor: pointer; color: inherit; font: inherit;
-  opacity: .62; }
-.pmp:hover { opacity: 1; }
-.pmp.ici { opacity: 1; border-left-color: var(--succes); background: var(--surface-2); }
-.pmp.hors { border-left-color: var(--bloquant); }
-.pmp-v { display: block; width: 100%; height: 52px; overflow: hidden; }
-.pmp-v img { width: 100%; height: 100%; object-fit: contain; }
-.pmp-n { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair); }
-.pmp-m { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
 
 /* ————— La gamme sur la plateforme de marque ————— */
 /* Le nom de la campagne est un geste. */
@@ -2395,7 +2219,7 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 /* Ce qui porte une phrase de contexte ou de conséquence — se lit vraiment. */
 .dcm-q, .juj, .vide-ref, .eqpd, .cobm-q, .cobe-c, .cobe-m, .slfi-q, .stc-q, .pir-q, .pirc-p, .mqs-q,
 .atdq-o, .auteurs, .codt-s, .sld-m, .e-charge, .slp-a, .atx-k, .bri-s,
-.rail-q, .fi-meta, .rd-ref, .poste, .pil-n, .eqp-q,
+.rail-q, .rd-ref, .poste, .pil-n, .eqp-q,
 .pirc-d, .egc-verdict, .pip-n, .atdq-p, .cobl-v, .l-v, .b-v, .critere,
 .ecx-m, .ecx-k, .fix-k {
   font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
@@ -2505,7 +2329,7 @@ blockquote, .message, .verbatim {
 
 /* Une personne archivée garde sa place au rail — on n'efface pas une
  * paternité — mais elle ne se lit plus comme quelqu'un qu'on peut affecter. */
-.file-item.parti .fi-nom { color: var(--clair-terne); }
+
 .fi-parti { margin-left: .45rem; font-size: var(--t-eti); line-height: var(--lh-eti);
   letter-spacing: var(--ls-eti); color: var(--bloquant-txt); }
 .fi-motif { margin-top: .25rem; font-size: var(--t-eti); line-height: var(--lh-eti);

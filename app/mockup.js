@@ -45,9 +45,9 @@ window.MOCKUP = (function () {
 
     return el("div.mk", {},
       el("div.mk-tete", {},
-        el("span.mk-t", {}, "EN SITUATION"),
-        el("span.mk-n", {}, ms.length ? ms.length + (ms.length > 1 ? " mises en situation" : " mise en situation") : "aucune"),
-        el("button.b.nu", { type: "button", onclick: function () { ajouter(p, l, rafraichir); } }, "+ mockup")
+        el("span.mk-t", {}, "En situation"),
+        el("span.mk-n", {}, ms.length ? ms.length + (ms.length > 1 ? " mises en situation" : " mise en situation") : "Aucune"),
+        el("button.b.nu", { type: "button", onclick: function () { ajouter(p, l, rafraichir); } }, "+ Mockup")
       ),
 
       vieux.length
@@ -59,13 +59,13 @@ window.MOCKUP = (function () {
         ? el("div.mk-bande", {}, ms.map(function (m) {
             return el("div.mk-c" + ((m.version || 1) < (l.version || 1) ? ".perime" : ""), {},
               IMAGE.vignette(m, "carte"),
-              el("div.mk-l", {}, m.contexte || "contexte non dit"),
+              el("div.mk-l", {}, m.contexte || "Contexte non dit"),
               el("div.mk-g", {},
                 el("span.mk-v", {}, "V" + (m.version || 1)),
                 el("button.b.nu", { type: "button", onclick: function () {
                   if (!window.confirm("Retirer cette mise en situation ?")) return;
                   retirer(l, m.id); DEPOT.enregistrer(); if (rafraichir) rafraichir();
-                } }, "retirer"))
+                } }, "Retirer"))
             );
           }))
         : el("div.mk-vide", {}, "Le visuel n'a jamais été vu dans son support. C'est là que se voit une accroche trop longue.")

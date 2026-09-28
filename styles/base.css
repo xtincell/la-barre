@@ -573,13 +573,6 @@ body {
 .ligne .val { line-height: 1.45; }
 .ligne .val.vide { color: var(--bloquant-txt); font-style: italic; }
 
-.sousbloc { margin-top: 1rem; }
-.sousbloc h3 { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em; color: var(--clair-terne); margin-bottom: .4rem; }
-
-ul.puces { list-style: none; }
-ul.puces li { position: relative; padding: .18rem 0 .18rem .8rem; font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; }
-ul.puces li::before { content: ""; position: absolute; left: 0; top: .68rem; width: 4px; height: 4px; background: var(--or); }
-
 /* ————————————————————— Bannières ————————————————————— */
 
 .prix {
@@ -685,7 +678,6 @@ ul.puces li::before { content: ""; position: absolute; left: 0; top: .68rem; wid
 *::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb { background: var(--trait); border-radius: 4px; }
 *::-webkit-scrollbar-thumb:hover { background: var(--trait-clair); }
-.onglets::-webkit-scrollbar { height: 3px; }
 
 /* ═══════════════════ DESIGN SYSTEM 2.0 — LES COUCHES SYSTÉMATIQUES ═══════════════════
  *
@@ -708,9 +700,8 @@ input[type="date"], select, textarea { border-radius: var(--r-s); }
 
 .kpi, .pi-k, .rv-kpi, .stat-c, .carte-n, .eg-c, .eq-p, .ju-cr, .ju-g, .ju-fc,
 .carte-projet, .piece, .piece-c, .obj, .reglage, .ref-carte, .bic,
-.dm-d, .as-c, .br-c, .mq-s, .cs-o, .rc-idee, .br-bloc, .br-verbatim,
-.mk-c, .pr-p, .col-msg, .ou-en, .attente-l, .cmd-ressources, .rv-piece,
-.carte-phrase, .graphe-boite, .pi-fb, .pi-au, .pr-apres, .pr-band,
+.dm-d, .as-c, .br-c, .mq-s, .cs-o, .rc-idee, .br-bloc, .br-verbatim, .pr-p, .col-msg, .ou-en, .attente-l, .cmd-ressources, .rv-piece,
+.carte-phrase, .pi-fb, .pi-au, .pr-apres, .pr-band,
 .mur-panneau, .co-doc { border-radius: var(--r-m); }
 
 .panneau, .resultats, .capture-boite, .panneau-lat { border-radius: var(--r-l); }
@@ -836,7 +827,7 @@ button, a, input, select, textarea, summary {
 
 /* Les contrôles qui ont la place la prennent en vrai : c'est plus honnête
  * qu'une zone invisible, et ça sert la lisibilité autant que l'accessibilité. */
-.rg-l, .rc-v, .res-proteger, .mat-manque, .chip, .eng, .fmb, .dcm, .jul {
+.rg-l, .res-proteger, .mat-manque, .chip, .eng, .fmb, .dcm, .jul {
   min-height: var(--cible);
 }
 .res-proteger, .fmb, .chip { display: inline-flex; align-items: center; justify-content: center; }

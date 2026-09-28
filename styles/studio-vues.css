@@ -120,6 +120,10 @@
 .rc-i.ok .m { color: var(--succes); }
 .rv-prix { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.55; color: var(--clair); }
 .rv-prix svg { color: var(--ton); margin-top: 3px; flex: 0 0 auto; }
+/* Un coût s'écrit en minuscules pour s'insérer dans une phrase ; seul en tête
+ * de ligne, il prend sa majuscule. */
+.rv-prix > span { display: block; }
+.rv-prix > span::first-letter { text-transform: uppercase; }
 .rv-gestes { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* La validation d'un document : sa version, puis les verdicts. */
@@ -202,6 +206,62 @@
   border: 1px solid var(--trait); font: 500 13px var(--affichage); color: var(--clair); }
 .vtf:hover { border-color: var(--trait-clair); }
 .vtf.ici { background: var(--studio-bleu-pale); border-color: var(--studio-bleu); color: var(--studio-bleu); font-weight: 600; }
+
+/* Les onglets d'une fiche (`UI.onglets`) : texte, filet bleu sous l'actif. */
+.onglets { display: flex; gap: 4px 20px; flex-wrap: wrap; border-bottom: 1px solid var(--trait); overflow-x: auto; }
+.onglet { min-height: 44px; padding: 8px 0 10px; background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  cursor: pointer; font: 550 13px var(--affichage); color: var(--clair-terne); white-space: nowrap; }
+.onglet:hover { color: var(--clair); }
+.onglet[aria-current="true"] { color: var(--clair); border-bottom-color: var(--studio-bleu); }
+.onglet .etat { margin-left: 4px; font-weight: 400; font-size: 12px; color: var(--clair-terne); }
+.onglet .etat.manque { color: var(--bloquant); }
+
+/* Le sous-bloc d'une fiche ou d'un panneau : un titre 12 px, puis son contenu. */
+.sousbloc { margin-top: 16px; }
+.sousbloc h3 { font: 700 12px var(--affichage); color: var(--clair); letter-spacing: 0; text-transform: none; margin-bottom: 8px; }
+ul.puces { list-style: none; padding: 0; margin: 0; }
+ul.puces li { position: relative; padding: 3px 0 3px 14px; font-size: 13px; line-height: 1.5; color: var(--clair); }
+ul.puces li::before { content: ""; position: absolute; left: 2px; top: 11px; width: 5px; height: 5px; border-radius: 50%; background: var(--studio-bleu); }
+
+/* La ligne de liste (`UI.fileItem`) : vignette, nom, méta, étiquette. */
+.file-item { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--trait); }
+.file-item:last-child { border-bottom: 0; }
+.fi-corps { min-width: 0; flex: 1; }
+.fi-nom { font: 550 13px/1.4 var(--affichage); color: var(--clair); }
+.file-item:hover .fi-nom { color: var(--studio-bleu); }
+.file-item.parti .fi-nom { color: var(--clair-terne); }
+.fi-meta { font-size: 12px; line-height: 1.45; color: var(--clair-terne); }
+.fi-eti { flex: 0 0 auto; }
+
+/* La liste de critères d'un verdict : le signe se colore, le texte reste lisible. */
+.criteres-l { display: grid; gap: 2px; }
+.critere-l { display: grid; grid-template-columns: 1.4rem 1fr; gap: 8px; align-items: baseline; padding: 8px 0;
+  border-bottom: 1px solid var(--trait); font-size: 13px; line-height: 1.5; color: var(--clair); }
+button.critere-l { width: 100%; text-align: left; background: none; border-left: 0; border-right: 0; border-top: 0; cursor: pointer; font: inherit; min-height: 44px; }
+.critere-l .marque { color: var(--clair-terne); }
+.critere-l.tenu .marque { color: var(--succes); }
+.critere-l.rate .marque { color: var(--bloquant); }
+
+/* Les verdicts (la revue, la fiche, le panneau d'examen du Bureau). */
+.rc-verdicts { display: grid; gap: 6px; }
+.rc-v { display: grid; grid-template-columns: 1.4rem auto 1fr; gap: 10px; align-items: baseline; width: 100%; min-height: 44px;
+  padding: 10px 12px; text-align: left; cursor: pointer; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px;
+  font: inherit; color: var(--clair); }
+.rc-v:hover { border-color: var(--trait-clair); background: var(--surface-4); }
+.rc-v .v-signe { font-size: 15px; }
+.rc-v .v-signe { color: var(--clair-terne); }
+/* Le signe porte la couleur du verdict, et elle vient des jetons : la couleur
+ * écrite dans la maison (#B07714, #C7501F) tombait à 3,2:1 sur le blanc. */
+.rc-v.approuve .v-signe { color: var(--succes); }
+.rc-v.reserve .v-signe, .rc-v.retour .v-signe { color: var(--arbitrage); }
+.rc-v.hors .v-signe { color: var(--bloquant); }
+.rc-v .v-nom { font: 550 14px var(--affichage); }
+.rc-v .v-cout { font-size: 12px; line-height: 1.45; color: var(--clair-terne); text-align: right; }
+.rc-v .v-cout.alerte { color: var(--bloquant); }
+.rc-v.pasamoi { border-style: dashed; }
+
+/* Le graphe des dépendances : une boîte pâle sous le dessin. */
+.graphe-boite { background: var(--surface-4); border: 1px solid var(--trait); border-radius: 8px; padding: 10px; margin-bottom: 12px; overflow-x: auto; }
 
 /* L'état et sa conséquence (`ETAT.ligne`) : le nom court en couleur, puis ce
  * qu'il produit ou empêche, en gris. La pastille seule reste l'exception. */
@@ -1456,3 +1516,144 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .prr-d { font-size: 12px; color: var(--clair-terne); }
 .prr-p { font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
 @media print { .prp-gestes, .pr-pages, .pr-deux { display: none !important; } }
+
+/* ═════════════════════ Passe 6 · Le livrable (la fiche) ═════════════════════ */
+
+.as { display: grid; gap: 16px; }
+.as-tete { display: flex; gap: 16px; align-items: flex-start; }
+.ast-v { flex: 0 0 12rem; }
+.ast-v .vignette { height: 8rem; border-radius: 6px; }
+.ast-c { min-width: 0; display: grid; gap: 6px; align-content: start; }
+.ast-n { font: 550 19px/1.3 var(--affichage); letter-spacing: -.01em; color: var(--clair); }
+.ast-m, .ast-r { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--clair-terne); }
+.ast-r .alerte { color: var(--bloquant); font-weight: 550; }
+
+/* La porte de production : on ne franchit pas un BAT comme on pose une
+ * vignette. Le passage est vertical, il a un chambranle, une ligne de
+ * non-retour, et un seul étage occupé à la fois. */
+.pt { display: grid; gap: 12px; }
+.pt-c { --ton: var(--succes); display: grid; gap: 4px; padding: 16px 18px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 10px; }
+.pt-c.hors { --ton: var(--bloquant); }
+.ptc-t { font: 700 12px var(--affichage); color: var(--clair); }
+.ptc-n { font: 550 24px/1.2 var(--affichage); color: var(--clair); font-variant-numeric: tabular-nums; }
+.ptc-n span { margin-left: 8px; font: 400 13px var(--affichage); color: var(--clair-terne); }
+.ptc-r { font-size: 13px; line-height: 1.55; color: var(--clair); }
+.pt-p { display: grid; gap: 8px; }
+.pt-e { display: grid; }
+/* La ligne de non-retour : le seul endroit où le coût est irréversible. */
+.pt-l { display: grid; gap: 2px; margin: 4px 0; padding: 10px 14px; border-top: 2px dashed var(--bloquant); border-bottom: 2px dashed var(--bloquant); }
+.ptl-t { font: 700 12px var(--affichage); color: var(--bloquant); }
+.ptl-s { font-size: 12px; color: var(--clair-terne); }
+.pt-f { display: grid; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--trait); }
+.ptf-h { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ptf-c { color: var(--succes); font-size: 14px; }
+.ptf-n { font: 550 14px var(--affichage); color: var(--clair); }
+.ptf-q, .ptf-x { font-size: 12px; color: var(--clair-terne); }
+.ptf-x { font-style: italic; }
+.ptf-fs { display: grid; gap: 4px; padding-left: 22px; }
+.ptff { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ptff-n { font-size: 13px; color: var(--clair); }
+.ptff-m { font-size: 11px; color: var(--clair-terne); }
+.ptf-v { display: flex; gap: 8px; padding-left: 22px; flex-wrap: wrap; }
+.ptfv { display: grid; gap: 3px; width: 8rem; }
+.ptfv span { font-size: 11px; color: var(--clair-terne); }
+.pt-f > .b.nu { justify-self: start; margin-left: 14px; }
+/* L'étage où l'on est : le seul qui prend de la place. */
+.pt-o { --ton: var(--studio-bleu); display: grid; gap: 12px; padding: 16px 18px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 10px; }
+.pt-o.dur { --ton: var(--bloquant); }
+.pto-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.pto-i { font: 550 11px var(--affichage); color: var(--ton); background: var(--studio-bleu-pale); border-radius: 5px; padding: 3px 8px; }
+.pt-o.dur .pto-i { background: var(--surface-4); }
+.pto-n { font: 550 19px var(--affichage); color: var(--clair); }
+.pto-e { font-size: 12px; color: var(--clair-terne); }
+.pto-b { display: grid; gap: 0; }
+.ptob, .pto-c { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: 12px; padding: 6px 0; border-top: 1px solid var(--trait);
+  font-size: 13px; line-height: 1.5; color: var(--clair); }
+.ptob b, .pto-c b { font: 400 12px var(--affichage); color: var(--clair-terne); letter-spacing: 0; text-transform: none; }
+.ptob i { font-style: normal; color: var(--clair-terne); }
+.ptob i::before { content: "◐ "; color: var(--arbitrage); }
+.pto-z { display: flex; align-items: center; gap: 10px; justify-self: start; min-height: 44px; padding: 8px 14px;
+  background: var(--surface-4); border: 1px dashed var(--trait-clair); border-radius: 6px; cursor: pointer; font: inherit; color: inherit; }
+.pto-z:hover { border-color: var(--studio-bleu); }
+.ptoz-p { font: 550 18px/1 var(--affichage); color: var(--studio-bleu); }
+.ptoz-t { font: 550 14px var(--affichage); color: var(--clair); }
+.pto-a { font-size: 13px; line-height: 1.5; color: var(--clair); }
+.pto-a::before { content: "● "; color: var(--bloquant); }
+.pt-x { display: grid; grid-template-columns: 1.2rem 11rem minmax(0, 1fr); gap: 4px 10px; padding: 8px 0; border-bottom: 1px solid var(--trait); }
+.ptx-c { color: var(--clair-terne); }
+.ptx-n { font-size: 13px; color: var(--clair-terne); }
+.ptx-q { font-size: 12px; color: var(--clair-terne); }
+.ptx-o { grid-column: 2 / -1; font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
+.pt-hs { font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
+
+/* Les packs montrés : le contrôle qui vaut le plus cher. */
+.pm { --ton: var(--trait-clair); display: grid; gap: 10px; margin-top: 16px; padding: 16px 18px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 10px; }
+.pm.alerte { --ton: var(--bloquant); }
+.pm-t { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font: 550 15px var(--affichage); color: var(--clair); }
+.pm-t span { font: 400 12px var(--affichage); color: var(--clair-terne); }
+.pm-x { font-size: 13px; line-height: 1.55; color: var(--clair-terne); }
+.pm-h { display: grid; gap: 2px; padding: 10px 12px; border-radius: 6px; background: var(--surface-4); box-shadow: inset 3px 0 0 var(--bloquant); }
+.pmh-t { font: 550 13px var(--affichage); color: var(--clair); }
+.pmh-x { font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
+.pm-m { font-size: 12px; line-height: 1.5; color: var(--clair); }
+.pm-m::before { content: "◐ "; color: var(--arbitrage); }
+.pmc-t { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 44px; cursor: pointer; list-style: none;
+  font: 550 13px var(--affichage); color: var(--accent); }
+.pmc-t::-webkit-details-marker { display: none; }
+.pmc-t::before { content: "›"; color: var(--clair-terne); font-size: 16px; width: 12px; transition: transform var(--tr-rapide); }
+.pm-cat[open] > .pmc-t::before { transform: rotate(90deg); }
+.pmc-t span { font: 400 12px var(--affichage); color: var(--clair-terne); }
+.pm-l { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 6px; }
+.pmp { display: grid; gap: 2px; padding: 8px; text-align: left; background: var(--surface-1); border: 1px solid var(--trait);
+  border-radius: 6px; cursor: pointer; font: inherit; color: inherit; min-height: 44px; }
+.pmp:hover { border-color: var(--trait-clair); }
+.pmp.ici { box-shadow: inset 3px 0 0 var(--succes); background: var(--surface-4); }
+.pmp.hors { box-shadow: inset 3px 0 0 var(--bloquant); }
+.pmp-v { display: block; width: 100%; height: 52px; overflow: hidden; }
+.pmp-v img { width: 100%; height: 100%; object-fit: contain; }
+.pmp-n { font: 550 12px var(--affichage); color: var(--clair); }
+.pmp-m { font-size: 11px; color: var(--clair-terne); }
+
+/* Ce que le client en a dit, et la version précédente. */
+.as-bloc { display: grid; gap: 8px; }
+.asb-t { display: flex; align-items: baseline; gap: 10px; font: 700 12px var(--affichage); color: var(--clair); letter-spacing: 0; }
+.asb-t span { font-weight: 400; color: var(--clair-terne); }
+.as-fb { --ton: var(--trait-clair); display: grid; gap: 4px; padding: 10px 12px; background: var(--surface-4);
+  border-left: 3px solid var(--ton); border-radius: 0 6px 6px 0; }
+.as-fb.attente { --ton: var(--arbitrage); }
+.as-fb.alerte { --ton: var(--bloquant); }
+.as-fb.vert { --ton: var(--succes); }
+/* Le retour client est ce qu'un humain a écrit : Asap 500. */
+.asfb-t { font: 500 14px/1.5 var(--affichage); color: var(--studio-encre); }
+.asfb-m { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--clair-terne); }
+.asfb-mo { font-size: 12px; line-height: 1.5; color: var(--clair-terne); font-style: italic; }
+.as-prec { display: grid; gap: 6px; }
+.asp-v span { font-size: 12px; color: var(--clair-terne); }
+.asp-c { display: grid; gap: 2px; padding: 10px 12px; background: var(--surface-4); border-radius: 6px; }
+.aspc-o { font: 550 12px var(--affichage); color: var(--clair); }
+.aspc-m { font-size: 13px; line-height: 1.5; color: var(--clair); }
+.aspc-q, .aspc-d { font-size: 12px; color: var(--clair-terne); }
+
+/* Les mises en situation. */
+.mk { display: grid; gap: 8px; margin-top: 20px; }
+.mk-tete { display: flex; align-items: center; gap: 10px; }
+.mk-t { font: 700 12px var(--affichage); color: var(--clair); }
+.mk-n { flex: 1; font-size: 12px; color: var(--clair-terne); }
+.mk-bande { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+.mk-c { background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px; overflow: hidden; }
+.mk-c.perime { box-shadow: inset 0 3px 0 var(--bloquant); }
+.mk-l { font: 550 12px/1.3 var(--affichage); color: var(--clair); padding: 6px 8px 0; }
+.mk-g { display: flex; justify-content: space-between; align-items: center; padding: 0 0 0 8px; }
+.mk-v { font-size: 11px; color: var(--clair-terne); }
+.mk-vide { font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
+.mk-apercu { margin-top: 6px; max-width: 200px; }
+@media (max-width: 700px) {
+  .as-tete { flex-direction: column; }
+  .ast-v { flex: none; width: 100%; }
+  .ptob, .pto-c { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .pt-x { grid-template-columns: 1.2rem minmax(0, 1fr); }
+  .ptx-q { grid-column: 2; }
+}

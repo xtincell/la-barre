@@ -185,29 +185,7 @@
 
 /* ————————————————————— 16 · Onglets ————————————————————— */
 
-.onglets { display: flex; border-bottom: 1px solid var(--trait); overflow-x: auto; }
-.onglet {
-  font: inherit; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); background: none; border: 0;
-  border-bottom: 2px solid transparent; color: var(--clair-terne);
-  padding: .55rem .85rem; cursor: pointer; white-space: nowrap;
-  display: flex; align-items: center; gap: .4rem;
-}
-.onglet:hover { color: var(--clair); }
-.onglet[aria-current] { color: var(--or); border-bottom-color: var(--or); }
-.onglet .etat { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.onglet .etat.manque { color: var(--bloquant-txt); }
-
 /* ————————————————————— Communs ————————————————————— */
-
-.file-item { display: flex; gap: .55rem; align-items: center; padding: .4rem 0;
-  border-bottom: 1px solid var(--trait); }
-.file-item:last-child { border-bottom: 0; }
-.file-item:hover .fi-nom { color: var(--or); }
-.fi-corps { min-width: 0; flex: 1; }
-.fi-nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.fi-meta { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.fi-eti { flex: 0 0 auto; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .06em; text-transform: uppercase;
-  color: var(--clair-terne); border: 1px solid var(--trait); padding: .08rem .3rem; }
 
 @media (max-width: 820px) {
   .fil-etapes.grand .etape-g .nom { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); }

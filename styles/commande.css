@@ -206,7 +206,7 @@
 .ventil-l { display: flex; gap: .55rem; align-items: center; padding: .4rem 0;
   border-bottom: 1px solid var(--trait); }
 .v-corps { flex: 1; min-width: 0; }
-.v-nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
+
 .v-flux { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); display: flex; gap: .35rem; align-items: center; }
 .v-flux .fleche { color: var(--or); }
 .v-flux .vers { color: var(--vert); }
@@ -273,18 +273,6 @@
 .rg-l .m { color: var(--clair-terne); }
 .rg-l.tenu { color: var(--clair); }
 .rg-l.tenu .m { color: var(--vert); }
-
-.rc-verdicts { display: grid; gap: 2px; }
-.rc-v { display: grid; grid-template-columns: 1.4rem auto 1fr; gap: .5rem; align-items: baseline;
-  background: var(--nuit-carte); border: 1px solid var(--trait); text-align: left;
-  font: inherit; color: inherit; padding: .5rem .7rem; cursor: pointer; }
-.rc-v:hover { border-color: var(--trait-clair); background: var(--nuit-relief); }
-.rc-v .v-signe { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); }
-.rc-v .v-nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.rc-v .v-cout { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); text-align: right;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rc-v .v-cout.alerte { color: var(--bloquant-txt); }
-.rc-v.pasamoi { border-style: dashed; }
 
 .rv-nav { display: flex; align-items: center; gap: .8rem; }
 .rv-file { display: flex; gap: 3px; overflow-x: auto; flex: 1; }

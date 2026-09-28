@@ -1,7 +1,8 @@
 /* La mesure de la grammaire Studio (documents/GRAMMAIRE_STUDIO.md §3), à charger dans
  * la console : capitales, sérif, aplats d'état, cibles, contraste, débordement.
  * Usage : await __mesure(["valider/file", "planning/ordre"])
- * Option : await __mesure(routes, ".pj-section") ignore ce qui vit sous ce sélecteur. */
+ * Option : await __mesure(routes, ".pj-section") ignore ce qui vit sous ce sélecteur.
+ * Un panneau : window.__racine = ".panneau" ; await __mesure([location.hash.slice(2)]) */
 window.__mesure = async function (routes, exclure) {
   function rgb(s) { var m = s.match(/[\d.]+/g); return m ? m.map(Number) : [0,0,0,0]; }
   function hsl(r, g, b) { r/=255; g/=255; b/=255; var mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2, s=0, h=0;
@@ -13,11 +14,14 @@ window.__mesure = async function (routes, exclure) {
   for (var i = 0; i < routes.length; i++) {
     var r = routes[i];
     location.hash = "#/" + r; await new Promise(function (ok) { setTimeout(ok, 700); });
-    var z = document.querySelector(".zone"); if (!z) { res.push({ r: r, erreur: "pas de zone" }); continue; }
+    var z = document.querySelector(window.__racine || ".zone"); if (!z) { res.push({ r: r, erreur: "pas de zone" }); continue; }
     var caps = [], serif = [], aplats = [], cibles = [], contraste = [], titres = 0;
     z.querySelectorAll("*").forEach(function (e) {
       if (exclure && e.closest(exclure)) return;
       if (!e.offsetParent && getComputedStyle(e).position !== "fixed") return;
+      /* Le contenu d'un <details> fermé garde un offsetParent : sans ce test,
+       * un catalogue replié comptait comme s'il était étalé. */
+      if (e.checkVisibility && !e.checkVisibility()) return;
       var cs = getComputedStyle(e);
       var t = Array.prototype.filter.call(e.childNodes, function (n) { return n.nodeType === 3; }).map(function (n) { return n.textContent; }).join("").trim();
       var bg = rgb(cs.backgroundColor);

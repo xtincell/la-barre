@@ -331,3 +331,28 @@ deux boutons pleins côte à côte : le second devient un geste visible sans êt
 seconde action principale. Hors passe, et assumé : la vue de lecture compilée
 (`pr-dossier`, `prd-doc`), document destiné au papier avec ses propres règles
 d'impression. Mesure à 1280 et 375 px : à zéro, hors données.
+
+**Passe 6 — La fiche du livrable (28/09).** Le panneau ouvert depuis n'importe quel
+livrable, sur ses trois onglets (visuels et fichiers · critères et verdict · versions et
+dépendances). La porte de production, l'étage « Vous êtes ici », les packs montrés, ce
+que le client en a dit, la version précédente et la mise en situation passent en
+sections blanches ; libellés en casse de phrase (« Critères d'acceptation de l'idée »,
+« Ce qui le fait refuser », qui étaient en capitales écrites dans le code, y compris
+dans la revue du Bureau). Les signes des verdicts prenaient la couleur écrite dans la
+maison (#B07714, #C7501F : **3,2:1** sur le blanc) : ils lisent désormais les jetons
+par classe. Le catalogue des packs étalait **51 pastilles** sous chaque fiche Bonnet
+Rouge : les packs retenus restent visibles, le catalogue se replie derrière « Choisir
+les packs montrés ».
+
+Trois défauts de fond, trouvés en passant. **Le panneau se fermait au premier clic
+d'onglet** : changer d'onglet redessine la fiche, qui plantait sur deux retours relevés
+de Matanga People (canal `people` inconnu). Le canal existe maintenant — relevé, absent
+du formulaire de saisie —, et un canal ou une issue inconnus s'affichent au lieu de
+tout faire tomber. **L'écran se contredisait** : sous une vignette affichée, la porte
+disait « rien à montrer : le livrable n'existe qu'en tête ». `PRODUCTION.coutDe()`
+distingue l'aperçu du fichier plat, et la porte comme l'étage lisent la même phrase.
+**L'instrument comptait le contenu des `<details>` fermés** (ils gardent un
+`offsetParent`) : il teste désormais `checkVisibility()` — les mesures des passes
+précédentes n'en sont que plus sévères, pas moins. Mesure à 1280 et 375 px sur trois
+livrables (maître avec vignette, maître sans vignette, Beignet Paradise) : à zéro, hors
+données (noms de livrables et de SKU).

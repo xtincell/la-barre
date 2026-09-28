@@ -65,8 +65,8 @@ window.VUE_ASSET = (function () {
           pr ? UI.eti(pr.nom, pr.ton) : null),
         el("div.ast-r", {},
           resp ? UI.avatar(resp, 22) : UI.avatar(null, 22),
-          el("span", {}, resp ? resp.nom : "sans responsable"),
-          piste ? el("span", {}, "piste « " + piste.titre + " »") : el("span.alerte", {}, "hors piste"))
+          el("span", {}, resp ? resp.nom : "Sans responsable"),
+          piste ? el("span", {}, "piste « " + piste.titre + " »") : el("span.alerte", {}, "Hors piste"))
       ));
   }
 
@@ -121,7 +121,7 @@ window.VUE_ASSET = (function () {
           i < ici || (!e.exige && e.n) ? franchi(p, l, e, apres)
             : i === ici ? ouvert(p, l, e, apres, retenue)
             : e.ok ? franchi(p, l, e, apres)
-            : ferme(e, et[i - 1]));
+            : ferme(l, e, et[i - 1]));
       })),
       /* Énumérer quatre absences n'apprend rien. Ce qui compte, c'est ce que
        * le support épargne : un seul étage veut dire que rien ne part en
@@ -145,10 +145,10 @@ window.VUE_ASSET = (function () {
     var faits = exiges.filter(function (e) { return e.ok; }).length;
 
     return el("div.pt-c" + (retenue ? "" : ".hors"), {},
-      el("div.ptc-t", {}, "LA PORTE"),
+      el("div.ptc-t", {}, "La porte"),
       el("div.ptc-n", {}, faits + " sur " + exiges.length,
         el("span", {}, faits === exiges.length
-          ? "la porte est franchie — le livrable peut partir"
+          ? "la porte est franchie : le livrable peut partir"
           : exiges.length - faits === 1 ? "un étage reste à franchir"
           : (exiges.length - faits) + " étages restent à franchir")),
       retenue
@@ -165,8 +165,8 @@ window.VUE_ASSET = (function () {
    * qui engage. C'est le seul endroit du produit où le coût est irréversible. */
   function ligne() {
     return el("div.pt-l", {},
-      el("span.ptl-t", {}, "AU-DELÀ DE CETTE LIGNE, L'ERREUR EST POUR L'AGENCE"),
-      el("span.ptl-s", {}, "un BAT signé part en fabrication — aucune correction sans tout refaire"));
+      el("span.ptl-t", {}, "Au-delà de cette ligne, l'erreur est pour l'agence"),
+      el("span.ptl-s", {}, "Un BAT signé part en fabrication — aucune correction sans tout refaire."));
   }
 
   /* Un étage franchi n'a plus besoin de place : son fichier, son emplacement,
@@ -181,21 +181,21 @@ window.VUE_ASSET = (function () {
       el("div.ptf-fs", {}, e.fichiers.map(function (f) {
         return el("div.ptff", {},
           el("span.ptff-n", {}, f.nom),
-          el("span.ptff-m", {}, (f.emplacement || "emplacement non dit")
-            + (f.signataire ? "  ·  signé " + f.signataire : e.def.signable ? "  ·  non signé" : "")),
+          el("span.ptff-m", {}, (f.emplacement || "Emplacement non dit")
+            + (f.signataire ? " · signé " + f.signataire : e.def.signable ? " · non signé" : "")),
           el("button.b.nu", { type: "button", onclick: function () {
             if (!window.confirm("Retirer « " + f.nom + " » ?")) return;
             PRODUCTION.retirer(l, f.id); DEPOT.enregistrer(); apres();
-          } }, "retirer"));
+          } }, "Retirer"));
       })),
       e.cle === "situation" && (l.mockups || []).length
         ? el("div.ptf-v", {}, (l.mockups || []).slice(0, 3).map(function (mk) {
             return el("div.ptfv", {}, IMAGE.vignette(mk, "planche"),
-              el("span", {}, mk.contexte || "sans contexte"));
+              el("span", {}, mk.contexte || "Sans contexte"));
           }))
         : null,
       el("button.b.nu", { type: "button",
-        onclick: function () { PRODUCTION.ajouter(p, l, apres); } }, "+ remplacer"));
+        onclick: function () { PRODUCTION.ajouter(p, l, apres); } }, "+ Remplacer"));
   }
 
   /* L'étage où l'on est. C'est le seul qui prend de la place, et il porte tout
@@ -207,26 +207,26 @@ window.VUE_ASSET = (function () {
 
     return el("div.pt-o" + (e.def.signable ? ".dur" : ""), {},
       el("div.pto-h", {},
-        el("span.pto-i", {}, "VOUS ÊTES ICI"),
+        el("span.pto-i", {}, "Vous êtes ici"),
         el("span.pto-n", {}, e.def.nom),
         el("span.pto-e", {}, e.def.ext)),
 
       el("div.pto-b", {},
-        el("div.ptob", {}, el("b", {}, "ce qu'on attend"), e.def.quoi),
-        el("div.ptob", {}, el("b", {}, "pour qui"), e.def.pour),
-        el("div.ptob", {}, el("b", {}, "format"), g && g.dimensions
-          ? g.dimensions + (g.fond_perdu ? "  ·  fond perdu " + g.fond_perdu : "")
-          : el("i", {}, "gabarit " + (s ? s.nom : "ce support") + (m ? " · " + m.code : "")
+        el("div.ptob", {}, el("b", {}, "Ce qu'on attend"), e.def.quoi),
+        el("div.ptob", {}, el("b", {}, "Pour qui"), e.def.pour),
+        el("div.ptob", {}, el("b", {}, "Format"), g && g.dimensions
+          ? g.dimensions + (g.fond_perdu ? " · fond perdu " + g.fond_perdu : "")
+          : el("i", {}, "Gabarit " + (s ? s.nom : "ce support") + (m ? " · " + m.code : "")
               + " non renseigné — le fichier partira sans qu'on ait vérifié sa taille")),
-        m ? el("div.ptob", {}, el("b", {}, "langue"),
+        m ? el("div.ptob", {}, el("b", {}, "Langue"),
               (m.langues || []).map(O.langue).join(", ")) : null),
 
       el("button.pto-z", { type: "button",
         onclick: function () { PRODUCTION.ajouter(p, l, apres); } },
         el("span.ptoz-p", {}, "+"),
-        el("span.ptoz-t", {}, "poser " + minuscule(e.def.nom))),
+        el("span.ptoz-t", {}, "Poser " + minuscule(e.def.nom))),
 
-      el("div.pto-c", {}, el("b", {}, "sans lui"), e.def.cout),
+      el("div.pto-c", {}, el("b", {}, "Sans lui"), PRODUCTION.coutDe(l, e.cle)),
       !retenue && e.def.signable
         ? el("div.pto-a", {}, "Et la piste n'est pas arbitrée : ce serait signer un bon "
             + "à tirer sur une idée que personne n'a retenue.")
@@ -235,14 +235,14 @@ window.VUE_ASSET = (function () {
 
   /* Un étage fermé dit par quoi il est fermé. « Pas encore » n'apprend rien ;
    * « le BAT n'est pas posé » se corrige. */
-  function ferme(e, avant) {
+  function ferme(l, e, avant) {
     return el("div.pt-x", {},
       el("span.ptx-c", {}, "·"),
       el("span.ptx-n", {}, e.def.nom),
       el("span.ptx-q", {}, avant && !avant.ok
-        ? "fermé — " + minuscule(avant.def.nom) + " n'est pas pos" + (avant.def.f ? "ée" : "é")
-        : "à venir"),
-      el("span.ptx-o", {}, e.def.cout));
+        ? "Fermé — " + minuscule(avant.def.nom) + " n'est pas pos" + (avant.def.f ? "ée" : "é")
+        : "À venir"),
+      el("span.ptx-o", {}, PRODUCTION.coutDe(l, e.cle)));
   }
 
 
@@ -261,16 +261,16 @@ window.VUE_ASSET = (function () {
 
     if (!l.marqueId) {
       return el("div.pm", {},
-        el("div.pm-t", {}, "LES PACKS MONTRÉS"),
+        el("div.pm-t", {}, "Les packs montrés"),
         el("p.pm-x", {}, "Ce livrable n'est rattaché à aucune marque : on ne peut "
           + "lui proposer aucun catalogue, et rien ne dira si elle montre un produit "
           + "qui n'est pas vendu ici."));
     }
 
     return el("div.pm" + (z.hors.length ? ".alerte" : ""), {},
-      el("div.pm-t", {}, "LES PACKS MONTRÉS",
+      el("div.pm-t", {}, "Les packs montrés",
         el("span", {}, choisis.length + " sur " + cat.length
-          + "  ·  catalogue " + (mq ? mq.nom : ""))),
+          + " · catalogue " + (mq ? mq.nom : ""))),
 
       /* Le contrôle qui vaut le plus cher. */
       z.hors.length
@@ -278,7 +278,7 @@ window.VUE_ASSET = (function () {
             el("span.pmh-t", {}, z.hors.length
               + (z.hors.length > 1 ? " packs ne sont pas distribués" : " pack n'est pas distribué")
               + (m ? " sur " + m.nom : " sur ce marché")),
-            el("span.pmh-x", {}, z.hors.map(function (s) { return s.nom; }).join("  ·  ")
+            el("span.pmh-x", {}, z.hors.map(function (s) { return s.nom; }).join(" · ")
               + " — un livrable qui montre un produit qu'on n'y vend pas se rappelle, "
               + "et le rappel est pour l'agence."))
         : null,
@@ -290,27 +290,38 @@ window.VUE_ASSET = (function () {
             + " : le contrôle ne peut pas se faire. À renseigner sur leur fiche.")
         : null,
 
+      /* Les packs retenus restent sous les yeux ; le catalogue se replie. Une
+       * marque en porte cinquante : les étaler, c'est enterrer la fiche sous
+       * un rayon. Le titre du repli nomme le geste. */
+      cat.length && choisis.length
+        ? el("div.pm-l", {}, choisis.map(function (s) { return pack(s); }))
+        : null,
       cat.length
-        ? el("div.pm-l", {}, cat.map(function (s) {
-            var ici = choisis.some(function (x) { return x.id === s.id; });
-            var hors = ici && z.hors.some(function (x) { return x.id === s.id; });
-            return el("button.pmp" + (ici ? ".ici" : "") + (hors ? ".hors" : ""), {
-              type: "button",
-              title: (s.marches || []).length
-                ? "distribué sur " + (s.marches || []).map(function (id) {
-                    var x = DEPOT.trouve("marches", id); return x ? x.code : id; }).join(", ")
-                : "marchés de distribution non renseignés",
-              onclick: function () {
-                VAULT.basculerPack(l, s.id); DEPOT.enregistrer(); apres();
-              } },
-              s.vignette ? el("span.pmp-v", {}, el("img", { src: s.vignette, alt: s.nom })) : null,
-              el("span.pmp-n", {}, s.nom),
-              el("span.pmp-m", {}, [s.format, s.variante].filter(Boolean).join(" · ")
-                || "à qualifier"));
-          }))
+        ? el("details.pm-cat", {},
+            el("summary.pmc-t", {}, choisis.length ? "Changer les packs montrés" : "Choisir les packs montrés",
+              el("span", {}, cat.length + (cat.length > 1 ? " packs au catalogue" : " pack au catalogue"))),
+            el("div.pm-l", {}, cat.map(function (s) { return pack(s); })))
         : el("p.pm-x", {}, "Le catalogue de " + (mq ? mq.nom : "cette marque")
             + " est vide. Un pack se crée à la bibliothèque de marque.")
     );
+
+    function pack(s) {
+      var ici = choisis.some(function (x) { return x.id === s.id; });
+      var hors = ici && z.hors.some(function (x) { return x.id === s.id; });
+      return el("button.pmp" + (ici ? ".ici" : "") + (hors ? ".hors" : ""), {
+        type: "button",
+        title: (s.marches || []).length
+          ? "distribué sur " + (s.marches || []).map(function (id) {
+              var x = DEPOT.trouve("marches", id); return x ? x.code : id; }).join(", ")
+          : "marchés de distribution non renseignés",
+        onclick: function () {
+          VAULT.basculerPack(l, s.id); DEPOT.enregistrer(); apres();
+        } },
+        s.vignette ? el("span.pmp-v", {}, el("img", { src: s.vignette, alt: s.nom })) : null,
+        el("span.pmp-n", {}, s.nom),
+        el("span.pmp-m", {}, [s.format, s.variante].filter(Boolean).join(" · ")
+          || "À qualifier"));
+    }
   }
 
   /* ————————————————————— Ce que le client en a dit ————————————————————— */
@@ -323,21 +334,24 @@ window.VUE_ASSET = (function () {
     if (!fbs.length && !annots.length) return null;
 
     return el("div.as-bloc", {},
-      el("div.asb-t", {}, "CE QUE LE CLIENT EN A DIT",
+      el("div.asb-t", {}, "Ce que le client en a dit",
         el("span", {}, (fbs.length + annots.length) + " retours")),
 
       fbs.map(function (f) {
         var i = FEEDBACK.impact(f);
-        return el("div.as-fb." + FEEDBACK.ISSUES[f.issue].ton, {},
+        /* Un retour relevé ailleurs (Matanga People) peut arriver sans issue :
+         * il est alors non traité, pas illisible. */
+        var iss = FEEDBACK.ISSUES[f.issue] || FEEDBACK.ISSUES.ouvert;
+        return el("div.as-fb" + (iss.ton ? "." + iss.ton : ""), {},
           el("div.asfb-t", {}, f.texte),
           el("div.asfb-m", {},
             el("span", {}, FEEDBACK.nomAuteur(f.auteur)),
             el("span", {}, O.joli(f.quand)),
-            el("span", {}, FEEDBACK.CANAUX[f.canal].nom),
+            el("span", {}, (FEEDBACK.CANAUX[f.canal] || { nom: f.canal || "Canal non dit" }).nom),
             el("span", {}, i.assets + (i.assets > 1 ? " livrables touchés" : " livrable touché")),
-            UI.eti(FEEDBACK.ISSUES[f.issue].nom, FEEDBACK.ISSUES[f.issue].ton)),
+            UI.eti(iss.nom, iss.ton)),
           f.issue === "ouvert"
-            ? el("button.b.nu", { type: "button", onclick: function () { FEEDBACK.trancher(f, apres); } }, "trancher")
+            ? el("button.b.nu", { type: "button", onclick: function () { FEEDBACK.trancher(f, apres); } }, "Trancher")
             : f.motif ? el("div.asfb-mo", {}, f.motif) : null);
       }),
 
@@ -357,17 +371,17 @@ window.VUE_ASSET = (function () {
     var o = VERSION.ORIGINES[d.origine] || { nom: d.origine };
 
     return el("div.as-bloc", {},
-      el("div.asb-t", {}, "LA VERSION PRÉCÉDENTE", el("span", {}, "V" + d.n)),
+      el("div.asb-t", {}, "La version précédente", el("span", {}, "V" + d.n)),
       el("div.as-prec", {},
         d.etat && d.etat.avaitVisuel
-          ? el("div.asp-v", {}, el("span", {}, "le visuel de la V" + d.n + " n'est pas conservé — seul le dernier l'est"))
+          ? el("div.asp-v", {}, el("span", {}, "Le visuel de la V" + d.n + " n'est pas conservé — seul le dernier l'est."))
           : null,
         el("div.asp-c", {},
           el("div.aspc-o", {}, "Fermée par : " + o.nom),
           el("div.aspc-m", {}, d.motif),
           el("div.aspc-q", {}, O.joli(d.close_le)),
           d.etat && d.etat.kv && d.etat.kv.copy
-            ? el("div.aspc-d", {}, "accroche d'alors : « " + d.etat.kv.copy + " »")
+            ? el("div.aspc-d", {}, "Accroche d'alors : « " + d.etat.kv.copy + " »")
             : null)
       ),
       VERSION.fil(l, l.toursVendus));
