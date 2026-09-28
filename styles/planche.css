@@ -4,10 +4,6 @@
  * son commentaire. Ici la vignette occupe la place, le reste se range autour.
  */
 
-/* ————————————————————— La planche ————————————————————— */
-
-.plv-t { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
-
 /* ————————————————————— L'annotation ————————————————————— */
 
 .an { display: grid; gap: .9rem; }
@@ -2567,48 +2563,6 @@ blockquote, .message, .verbatim {
 
 /* ————————————————————— La planche de présentation / livraison ————————————————————— */
 
-.plv { display: grid; gap: 1.2rem; }
-
-.plv-tete { display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 1rem; flex-wrap: wrap; border-bottom: 1px solid var(--trait); padding-bottom: .5rem; }
-.plv-t { display: grid; gap: .1rem; }
-.plv-n { font-size: var(--t-h2); line-height: var(--lh-h2); letter-spacing: var(--ls-h2);
-  font-family: var(--affichage); color: var(--clair); }
-.plv-q { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
-.plv-modes { display: flex; gap: .3rem; }
-
-.plv-familles { display: grid; gap: 1.4rem; }
-
-/* Une famille de SKU : le niveau sur lequel une décision technique se prend
- * une fois. Elle a son titre et son compte — c'est à ce niveau qu'on réclame,
- * jamais livrable par livrable. */
-.plv-f { display: grid; gap: .55rem; }
-.plvf-tete { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap;
-  border-bottom: 1px solid var(--trait); padding-bottom: .3rem; }
-.plvf-tete h3 { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre);
-  font-family: var(--affichage); color: var(--clair); margin: 0; }
-.plvf-v { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.plvf-n { margin-left: auto; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
-
-.plvf-mur { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: .55rem; }
-
-.plvc { position: relative; display: grid; grid-template-rows: minmax(0,1fr) auto;
-  padding: 0; cursor: pointer; overflow: hidden; text-align: left;
-  background: var(--surface-2); border: 0; border-top: 2px solid var(--trait-clair);
-  min-height: 150px; }
-.plvc.pleine { aspect-ratio: 4 / 3; }
-.plvc.pleine .plvc-bas { position: absolute; left: 0; right: 0; bottom: 0; }
-.plvc.tracee { border-top-color: var(--succes); }
-.plvc:hover { outline: 1px solid var(--or); outline-offset: -1px; }
-.plvc .vignette { height: 100%; }
-.plvc .vignette img { height: 100%; object-fit: cover; }
-.plvc.vide .vignette.vide.attente { align-content: start; padding: .45rem .5rem; gap: .12rem; }
-
-.plvc-bas { display: grid; gap: .05rem; padding: .34rem .45rem .38rem;
-  background: var(--surface-1); border-top: 1px solid var(--trait); }
-.plvc-n { font-size: var(--t-eti); line-height: 1.2; letter-spacing: var(--ls-eti); color: var(--clair); }
-.plvc-m { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
-
 /* Un lot survolé. Le pointillé dit la cible, jamais un remplissage : on doit
  * continuer à lire ce qu'il y a dessous pour savoir où on lâche. */
 .survol-lot { outline: 2px dashed var(--or); outline-offset: 4px; }
@@ -2632,14 +2586,6 @@ blockquote, .message, .verbatim {
 
 @media (max-width: 760px) {
   .arb-l { grid-template-columns: 1fr; gap: .3rem; }
-}
-
-/* La planche s'imprime : c'est l'écran de séance. Les trous, les gestes et les
- * modes n'ont rien à faire sur le papier qu'on tend au client. */
-@media print {
-  .plv-modes, .plvc.vide { display: none; }
-  .plvc { break-inside: avoid; }
-  .plv-f { break-inside: avoid; }
 }
 
 /* ————————————————————— Les diapositives que le deck ne savait pas rendre ————————————————————— */

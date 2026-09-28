@@ -56,8 +56,8 @@ window.VUE_LIVRAISON = (function () {
         ? el("p.rien", {}, "Rien à présenter : aucune des " + ls.length
             + " cases ne porte de visuel. Passe en livraison et dépose les rendus — "
             + "la planche de séance se compose de ce qui est effectivement livré.")
-        : el("div.plv-familles", {}, familles.map(function (f) {
-            return famille(p, f, rafraichir);
+        : el("div.plv-familles", {}, familles.map(function (f, i) {
+            return famille(p, f, rafraichir, i);
           }))
     );
 
@@ -99,15 +99,15 @@ window.VUE_LIVRAISON = (function () {
       el("div.plv-t", {},
         el("span.plv-n", {}, pleins.length + " / " + ls.length),
         el("span.plv-q", {}, pleins.length === ls.length
-          ? "la planche est complète — elle se montre telle quelle"
+          ? "La planche est complète — elle se montre telle quelle."
           : (ls.length - pleins.length) + " cases attendent leur visuel. "
             + "Tire le dossier de rendus n'importe où sur la planche.")),
-      el("div.plv-modes", {}, [
-        { cle: "livraison", nom: "LIVRAISON", quoi: "tout, les trous compris" },
-        { cle: "presentation", nom: "PRÉSENTATION", quoi: "ce qui est livré, imprimable" },
+      el("div.plv-modes.studio-statuts", { role: "group", "aria-label": "Mode de la planche" }, [
+        { cle: "livraison", nom: "Livraison", quoi: "Tout, les trous compris" },
+        { cle: "presentation", nom: "Présentation", quoi: "Ce qui est livré, imprimable" },
       ].map(function (m) {
-        return el("button.b" + (mode === m.cle ? ".or" : ".nu"), { type: "button",
-          title: m.quoi,
+        return el("button" + (mode === m.cle ? ".active" : ""), { type: "button",
+          title: m.quoi, "aria-pressed": mode === m.cle ? "true" : "false",
           onclick: function () { mode = m.cle; rafraichir(); } }, m.nom);
       })));
   }
@@ -135,13 +135,19 @@ window.VUE_LIVRAISON = (function () {
     return ordre;
   }
 
-  function famille(p, f, rafraichir) {
+  function famille(p, f, rafraichir, i) {
     var pleins = f.ls.filter(function (l) { return !!l.vignette; });
     var montres = mode === "presentation" ? pleins : f.ls;
     if (mode === "presentation" && !montres.length) return null;
 
-    var noeud = el("section.plv-f", {},
-      el("div.plvf-tete", {},
+    /* En livraison, une famille se replie : cent quatre-vingt-neuf cases à plat
+     * faisaient onze mille pixels. On ouvre la première, et toute famille assez
+     * courte pour se lire d'un coup. En présentation — la planche qu'on imprime —
+     * tout reste déplié. */
+    var repliable = mode !== "presentation";
+    var noeud = el((repliable ? "details" : "section") + ".plv-f",
+      repliable ? { open: (i === 0 || f.ls.length <= 24) ? "" : null } : {},
+      el((repliable ? "summary" : "div") + ".plvf-tete", {},
         el("h3", {}, f.nom),
         f.volet ? el("span.plvf-v", {}, f.volet) : null,
         el("span.plvf-n", {}, mode === "presentation"
@@ -172,7 +178,7 @@ window.VUE_LIVRAISON = (function () {
           "V" + (l.version || 1),
           (l.fichiers || []).length ? (l.fichiers || []).length + " fichiers" : null,
           l.responsable ? null : "sans responsable",
-        ].filter(Boolean).join("  ·  "))));
+        ].filter(Boolean).join(" · "))));
 
     return mode === "presentation" ? noeud
       : IMAGE.accepterDepot(noeud, l, rafraichir);

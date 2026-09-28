@@ -315,3 +315,10 @@ puces de filtre (`vtf`), partagées avec le catalogue du vault — l'active écr
 noir sur l'accent plein (3,28:1). Le titre de bloc peut désormais passer à la ligne
 (débordement à 375 px sur Ecobank). Mesure à 1280 et 375 px sur quatre dossiers : à
 zéro, hors données.
+
+**Passe 5c — Dossier : la livraison (28/09).** La planche de livraison de PRJ-BTS26
+faisait **10 929 px** : 189 cases dépliées en trois familles. En mode livraison, chaque
+famille se replie (ouverte si elle est la première ou assez courte pour se lire d'un
+coup) et sa tête garde le compte des visuels posés ; en mode présentation — la planche
+qu'on imprime — tout reste déplié. La page tombe à 5 179 px. Le choix de mode devient
+un sélecteur Studio. Mesure à 1280 et 375 px : à zéro, hors données.
