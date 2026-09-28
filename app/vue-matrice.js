@@ -89,11 +89,12 @@ window.VUE_MATRICE = (function () {
     return el("div", {},
       planDeCampagne(p),
       el("div.section-titre", {}, nat === "cycle" ? "Publications" : "Livrables",
-        el("span.taille", {}, "· " + tout.length),
-        el("span.droite", {}, el("div.pl-densite", {},
+        el("span.taille", {}, String(tout.length)),
+        el("span.droite", {}, el("div.pl-densite.studio-statuts", { role: "group", "aria-label": "Vue des livrables" },
           modes.map(function (m) {
-            return el("button.pld" + (MODE === m ? ".actif" : ""), { type: "button",
-              onclick: function () { MODES[p.id] = m; rafraichir(); } }, m);
+            return el("button.pld" + (MODE === m ? ".active" : ""), { type: "button",
+              "aria-pressed": MODE === m ? "true" : "false",
+              onclick: function () { MODES[p.id] = m; rafraichir(); } }, m.charAt(0).toUpperCase() + m.slice(1));
           })))),
 
       MODE === "calendrier" ? VUE_CYCLE.rendre(p, rafraichir)
@@ -129,16 +130,16 @@ window.VUE_MATRICE = (function () {
     return el("div.pc", {},
       el("div.pc-h", {},
         el("div.pch-o", {},
-          el("span.pcho-t", {}, "MARQUE OMBRELLE"),
+          el("span.pcho-t", {}, "Marque ombrelle"),
           el("span.pcho-n", {}, c.ombrelle ? c.ombrelle.nom : "—"),
           c.ombrelle && !c.ombrelle.logo
-            ? el("span.pcho-x", {}, c.ombrelle.note || "logo non fourni")
+            ? el("span.pcho-x", {}, c.ombrelle.note || "Logo non fourni")
             : null),
         el("div.pch-n", {}, c.marques.length + " marques produit, une seule campagne")),
 
       /* Ce qui est partagé : c'est ce qui se produit une fois et sert partout. */
       el("div.pc-p", {},
-        el("div.pcp-t", {}, "CE QUI EST PARTAGÉ",
+        el("div.pcp-t", {}, "Ce qui est partagé",
           el("span", {}, "produit une fois, sert aux trois")),
         el("div.pcp-l", {}, (c.partage || []).map(function (x) {
           return el("div.pcp-i", {},
@@ -170,14 +171,14 @@ window.VUE_MATRICE = (function () {
       el("div.pcm-t", {},
         el("span.pcmt-n", {}, el("span.pcmt-p", { style: { background: couleur } }), m.nom),
         el("a.pcmt-v", { href: "#/referentiel/marques" },
-          e.ecrits ? "sa bibliothèque de marque →" : "aucune plateforme de marque →")),
+          e.ecrits ? "Sa bibliothèque de marque →" : "Aucune plateforme de marque →")),
 
       /* La sélection : c'est ça, une campagne. */
       el("div.pcm-b", {},
-        el("span.pcmb-t", {}, "CE QUE LA CAMPAGNE RETIENT"),
+        el("span.pcmb-t", {}, "Ce que la campagne retient"),
         el("div.pcm-sel", {},
           ligneSel(sel.marchesRetenus.length, sel.marchesDisponibles, "marchés",
-            sel.marchesRetenus.map(function (x) { return x.code; }).join("  ·  ")),
+            sel.marchesRetenus.map(function (x) { return x.code; }).join(" · ")),
           ligneSel(sel.skuRetenus, sel.skuCatalogue, "packs",
             sel.skuRetenus ? null : "aucun pack déclaré sur les livrables"),
           el("div.pcms", {},
@@ -187,7 +188,7 @@ window.VUE_MATRICE = (function () {
 
       /* Ce qui appartient à cette campagne, et à elle seule : le message. */
       el("div.pcm-b", {},
-        el("span.pcmb-t", {}, "SON MESSAGE, CETTE SAISON"),
+        el("span.pcmb-t", {}, "Son message, cette saison"),
         Object.keys(m.claim || {}).map(function (lg) {
           return el("div.pcmb-l", {},
             el("span.pcmbl-lg", {}, lg.toUpperCase()),
@@ -195,13 +196,13 @@ window.VUE_MATRICE = (function () {
         }),
         m.mecaniquePromo
           ? el("div.pcmb-promo", {},
-              el("span.pcmbl-lg", {}, "PROMO"),
+              el("span.pcmbl-lg", {}, "Promo"),
               el("span.pcmbl-v", {}, m.mecaniquePromo.titre,
                 el("i", {}, m.mecaniquePromo.detail)))
           : null),
 
       el("div.pcm-b", {},
-        el("span.pcmb-t", {}, "SIGNATURE"),
+        el("span.pcmb-t", {}, "Signature"),
         Object.keys(m.signature || {}).map(function (lg) {
           return el("div.pcmb-l", {},
             el("span.pcmbl-lg", {}, lg.toUpperCase()),
@@ -209,7 +210,7 @@ window.VUE_MATRICE = (function () {
         })),
 
       el("div.pcm-b", {},
-        el("span.pcmb-t", {}, "OMBRE PORTÉE"),
+        el("span.pcmb-t", {}, "Ombre portée"),
         el("div.pcm-chips", {}, (m.ombres || []).map(function (o) {
           return el("span.pcm-chip", {}, o); }))),
 
@@ -220,7 +221,7 @@ window.VUE_MATRICE = (function () {
                 ? " — " + (kvs.length - poses)
                   + (kvs.length - poses > 1 ? " marchés attendent leur visuel" : " marché attend son visuel")
                 : " — tous les marchés ont le leur")
-          : "aucune adaptation : cette marque n'est servie nulle part"),
+          : "Aucune adaptation : cette marque n'est servie nulle part"),
 
       m.note ? el("div.pcm-n", {}, m.note) : null
     );
@@ -317,7 +318,7 @@ window.VUE_MATRICE = (function () {
 
       mqs.length > 1
         ? el("div.vtf-g", {},
-            bouton(!filtre.marque, "toutes les marques", function () { filtre.marque = null; }),
+            bouton(!filtre.marque, "Toutes les marques", function () { filtre.marque = null; }),
             mqs.filter(function (m) { return compteMq(m.id); }).map(function (m) {
               return bouton(filtre.marque === m.id, m.nom + " · " + compteMq(m.id),
                 function () { filtre.marque = filtre.marque === m.id ? null : m.id; });
@@ -326,7 +327,7 @@ window.VUE_MATRICE = (function () {
 
       marches.length > 1
         ? el("div.vtf-g", {},
-            bouton(!filtre.marche, "tous les marchés", function () { filtre.marche = null; }),
+            bouton(!filtre.marche, "Tous les marchés", function () { filtre.marche = null; }),
             marches.map(function (id) {
               var m = DEPOT.trouve("marches", id);
               return bouton(filtre.marche === id, (m ? m.code : id) + " · " + compteMa(id),
@@ -366,10 +367,10 @@ window.VUE_MATRICE = (function () {
        * de produit chacun. « La référence » au singulier les rendait tous
        * identiques à l'œil : on nomme celui dont il s'agit. */
       var nom;
-      if (!maitre) nom = m ? "Adaptation " + m.nom : "sans marché";
+      if (!maitre) nom = m ? "Adaptation " + m.nom : "Sans marché";
       else if (plusieursMaitres) nom = kv.nom.replace(/^KV master\s*·\s*/, "") + " — la référence";
       else nom = "La référence — aucun marché";
-      return { kv: kv, code: maitre ? "MAÎTRE" : (m ? m.code : "?"), nom: nom,
+      return { kv: kv, code: maitre ? "Maître" : (m ? m.code : "?"), nom: nom,
         ls: reste.filter(function (l) { return l.maitre === kv.id; }) };
     });
     var orphelins = reste.filter(function (l) {
@@ -407,9 +408,9 @@ window.VUE_MATRICE = (function () {
           : (conformite ? "Reprise de conformité" : "Hors piste")),
         ETAT.pastille(ETAT.piste(p, pi, ls[0])),
         el("span.mrt-n", {}, ls.length + (ls.length > 1 ? " livrables" : " livrable")
-          + (perimes ? "  ·  " + perimes + " à regénérer" : "")),
-        pi ? el("button.b.nu", { type: "button", onclick: function () { VUE_ROUTE.ouvrir(p, pi, rafraichir); } },
-          "la piste →") : null
+          + (perimes ? " · " + perimes + " à regénérer" : "")),
+        pi ? el("button.studio-lien", { type: "button", onclick: function () { VUE_ROUTE.ouvrir(p, pi, rafraichir); } },
+          "Ouvrir la piste →") : null
       ),
 
       parMarque.map(function (bloc) {
@@ -429,9 +430,9 @@ window.VUE_MATRICE = (function () {
                 /* Replié, ce bloc doit se lire sans s'ouvrir : combien de
                  * livrables, sur combien de KV, et ce qui bloque. */
                 el("span.mrmqt-q", {}, bloc.n + (bloc.n > 1 ? " livrables" : " livrable")
-                  + "  ·  " + bloc.groupes.length + " KV"
-                  + (sansVisuel ? "  ·  " + sansVisuel + " sans visuel" : "")
-                  + (bloques ? "  ·  " + bloques + (bloques > 1 ? " bloquées" : " bloquée") : "")),
+                  + " · " + bloc.groupes.length + " KV"
+                  + (sansVisuel ? " · " + sansVisuel + " sans visuel" : "")
+                  + (bloques ? " · " + bloques + (bloques > 1 ? " bloquées" : " bloquée") : "")),
                 el("span.mrmqt-x", {}, mqOuvert ? "−" : "+"))
             : null,
 
@@ -450,8 +451,8 @@ window.VUE_MATRICE = (function () {
             el("span.mrg-n", {}, (g.ls.length
               ? g.ls.length + (g.ls.length > 1 ? " formats" : " format")
               : KV.estMaitre(g.kv) ? "les formats naissent des adaptations" : "rien à imprimer")
-              + (mu ? "  ·  " + mu + " sans visuel" : "")
-              + (bl ? "  ·  " + bl + (bl > 1 ? " bloquées" : " bloquée") : "")),
+              + (mu ? " · " + mu + " sans visuel" : "")
+              + (bl ? " · " + bl + (bl > 1 ? " bloquées" : " bloquée") : "")),
             el("span.mrg-x", {}, kvOuvert ? "−" : "+")),
 
           kvOuvert ? el("div.rt-mur", {},
@@ -466,7 +467,7 @@ window.VUE_MATRICE = (function () {
 
       trous.length ? el("div.mr-groupe.trou", {},
         el("div.mrg-tete", {},
-          el("span.mrg-code", {}, "VIDE"),
+          el("span.mrg-code", {}, "Vide"),
           el("span.mrg-nom", {}, trous.length > 1
             ? trous.length + " marchés promis, rien de produit"
             : "Un marché promis, rien de produit"),
@@ -541,7 +542,7 @@ window.VUE_MATRICE = (function () {
           mk ? mk + " en situation" : null,
           perime ? "maître dépassé" : null,
           !l.responsable ? "sans responsable" : null,
-        ].filter(Boolean).join("  ·  "))
+        ].filter(Boolean).join(" · "))
       )
     );
 
@@ -574,7 +575,7 @@ window.VUE_MATRICE = (function () {
         rafraichir();
       } },
       el("span.rtct-c", {}, m.code),
-      el("span.rtct-x", {}, "aucun livrable"),
+      el("span.rtct-x", {}, "Aucun livrable"),
       el("span.rtc-bas", {},
         el("span.rtc-n", {}, m.nom),
         el("span.rtc-m", {}, "promis au volet  ·  " + ((m.langues || []).map(O.langue).join(", ") || "langue non dite")))
@@ -741,7 +742,7 @@ window.VUE_MATRICE = (function () {
         },
           el("div.tete", {},
             el("b", {}, l.nom),
-            l.maitre ? el("span.critere", {}, "adaptation") : el("span.critere", {}, "maître"),
+            l.maitre ? el("span.critere", {}, "Adaptation") : el("span.critere", {}, "Maître"),
             el("span.age", {}, pr.pret + "/" + pr.total + " volets")
           )
         );

@@ -304,3 +304,14 @@ une section blanche. Trouvé : la base `.vignette` centrait sa piste de grille
 (`justify-content: center`), si bien que le texte d'attente s'affichait centré malgré
 son alignement à gauche — corrigé pour toutes les vignettes vides. `.atx-b`, reste de
 l'ancien écran des attentes, retiré. Mesure à 1280 et 375 px : à zéro, hors données.
+
+**Passe 5b — Dossier : les livrables (28/09).** Le plan de campagne à plusieurs marques
+(ce qui est partagé, puis une colonne par marque), le mur par piste, marque et KV maître,
+et le calendrier d'un cycle éditorial (Ecobank) passent en sections blanches ; le
+message et la signature de chaque marque — ce qu'un humain a écrit — en Asap 500 ;
+l'avertissement du logo ombrelle perd son encre ambre au profit d'un signe. Le basculeur
+de mode (mur, grille, calendrier) devient un sélecteur Studio. Tranché au §2 : les
+puces de filtre (`vtf`), partagées avec le catalogue du vault — l'active écrivait du
+noir sur l'accent plein (3,28:1). Le titre de bloc peut désormais passer à la ligne
+(débordement à 375 px sur Ecobank). Mesure à 1280 et 375 px sur quatre dossiers : à
+zéro, hors données.

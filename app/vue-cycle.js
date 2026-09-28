@@ -161,7 +161,7 @@ window.VUE_CYCLE = (function () {
   function barre(p, etats, rafraichir) {
     function compte(c) { return etats.filter(function (x) { return c.indexOf(x.e.cle) !== -1; }).length; }
     var f = [
-      { cle: "tout", nom: "les " + etats.length + " publications" },
+      { cle: "tout", nom: "Les " + etats.length + " publications" },
       { cle: "bloque", nom: compte(["remiseRatee", "sansqui"]) + " bloquées" },
       { cle: "documenter", nom: compte(["aDocumenter"]) + " à documenter" },
       { cle: "demandee", nom: compte(["demandee"]) + " demandées" },
@@ -196,10 +196,10 @@ window.VUE_CYCLE = (function () {
       return el("div.cys", {},
         el("div.cys-t", {},
           el("span.cyst-n", {}, g.d ? "Semaine " + O.semaine(new Date(g.d)) : "Sans date"),
-          el("span.cyst-d", {}, g.d ? "à remettre à partir du " + O.joli(g.d)
-            : "ni remise ni parution"),
+          el("span.cyst-d", {}, g.d ? "À remettre à partir du " + O.joli(g.d)
+            : "Ni remise ni parution"),
           el("span.cyst-q", {}, g.items.length + (g.items.length > 1 ? " publications" : " publication")
-            + (bloques ? "  ·  " + bloques + (bloques > 1 ? " bloquées" : " bloquée") : ""))),
+            + (bloques ? " · " + bloques + (bloques > 1 ? " bloquées" : " bloquée") : ""))),
         el("div.cys-l", {}, g.items.map(function (x) { return publication(p, x, rafraichir); })));
     });
   }
@@ -220,16 +220,16 @@ window.VUE_CYCLE = (function () {
         /* Les deux dates, dans l'ordre où elles arrivent : on remet, puis ça
          * paraît. Une seule des deux à l'écran, et on pilote à l'aveugle. */
         el("span.cyph-d", {},
-          el("span.cyphd-r", {}, l.remise ? O.jourCourt(l.remise) : "remise ?"),
+          el("span.cyphd-r", {}, l.remise ? O.jourCourt(l.remise) : "Remise ?"),
           el("span.cyphd-f", {}, "→"),
-          el("span.cyphd-p", {}, l.publication ? O.jourCourt(l.publication) : "parution ?")),
+          el("span.cyphd-p", {}, l.publication ? O.jourCourt(l.publication) : "Parution ?")),
         el("span.cyph-c", {},
           el("span.cyph-n", {}, b.concept || l.nom),
           el("span.cyph-m", {}, [
             s ? s.nom : null,
             b.rubrique || null,
             b.produit || null,
-          ].filter(Boolean).join("  ·  "))),
+          ].filter(Boolean).join(" · "))),
         el("span.cyph-e." + e.cle, {}, e.nom),
         el("span.cyph-x", {}, ici ? "−" : "+")),
 
@@ -243,12 +243,12 @@ window.VUE_CYCLE = (function () {
   function corps(p, l, b, resp, rafraichir) {
     return el("div.cyp-b", {},
       /* Le contenu, tel qu'il a été arrêté. */
-      bloc("SUR LE VISUEL", b.texteVisuel),
-      bloc("EN PUBLICATION", b.textePublication),
+      bloc("Sur le visuel", b.texteVisuel),
+      bloc("En publication", b.textePublication),
       el("div.cyp-r", {},
-        b.cta ? el("div.cypr", {}, el("b", {}, "appel à l'action"), b.cta) : null,
-        b.hashtags ? el("div.cypr", {}, el("b", {}, "mots-dièse"), b.hashtags) : null,
-        b.objectif ? el("div.cypr", {}, el("b", {}, "objectif"), b.objectif) : null),
+        b.cta ? el("div.cypr", {}, el("b", {}, "Appel à l'action"), b.cta) : null,
+        b.hashtags ? el("div.cypr", {}, el("b", {}, "Mots-dièse"), b.hashtags) : null,
+        b.objectif ? el("div.cypr", {}, el("b", {}, "Objectif"), b.objectif) : null),
 
       (b.scenes || []).length
         ? el("div.cyp-sc", {},

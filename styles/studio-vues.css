@@ -90,12 +90,12 @@
 
 /* Le titre de bloc (`.section-titre`) : une tête de section Studio, en
  * minuscules — titre 550, pastille de compte, et ce qui va à droite. */
-.section-titre { display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+.section-titre { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;
   font: 550 17px/1.3 var(--affichage); letter-spacing: -.01em; color: var(--clair); text-transform: none; }
 .section-titre .n { color: var(--studio-bleu); }
 .section-titre .compte, .section-titre .taille { font: 500 12px var(--affichage); color: var(--clair-terne);
   background: var(--surface-3); border-radius: 5px; padding: 3px 7px; letter-spacing: 0; }
-.section-titre .droite { margin-left: auto; font: 500 12px var(--affichage); letter-spacing: 0; color: var(--clair-terne); }
+.section-titre .droite { margin-left: auto; max-width: 100%; font: 500 12px var(--affichage); letter-spacing: 0; color: var(--clair-terne); }
 /* Une taille n'est pas une priorité : « 9 supports » est un inventaire, « 7
  * décisions » est une réclamation. Deux sens, deux classes. */
 .taille { color: var(--clair-terne); font-size: 12px; }
@@ -193,6 +193,15 @@
 .va-f.sans { color: var(--clair-terne); }
 .va-q { font-size: 11px; line-height: 1.4; color: var(--clair-terne); overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+
+/* Les puces de filtre (`vtf`) : blanches à filet ; l'active prend le bleu pâle
+ * et l'encre bleue — du noir sur l'accent plein tombait à 3,28:1. */
+.vt-f { display: grid; gap: 8px; }
+.vtf-g { display: flex; flex-wrap: wrap; gap: 6px; }
+.vtf { min-height: 44px; padding: 0 12px; border-radius: 6px; cursor: pointer; background: var(--surface-1);
+  border: 1px solid var(--trait); font: 500 13px var(--affichage); color: var(--clair); }
+.vtf:hover { border-color: var(--trait-clair); }
+.vtf.ici { background: var(--studio-bleu-pale); border-color: var(--studio-bleu); color: var(--studio-bleu); font-weight: 600; }
 
 /* L'état et sa conséquence (`ETAT.ligne`) : le nom court en couleur, puis ce
  * qu'il produit ou empêche, en gris. La pastille seule reste l'exception. */
@@ -1209,3 +1218,147 @@ button.st-e:hover { background: var(--surface-4); }
 .pl-grille.dense .pl-c:hover .plc-gestes, .pl-grille.dense .pl-c:focus-within .plc-gestes { display: flex; }
 @media (max-width: 900px) { .pl-cases { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; } }
 @media print { .pl-cases { grid-template-columns: repeat(4, 1fr) !important; } .plc-gestes { display: none !important; } }
+
+/* ═════════════════════ Passe 5b · Dossier : les livrables ═════════════════════ */
+
+/* Une ombrelle, plusieurs marques : ce qui se produit une fois, puis ce qui se
+ * produit — et se valide — une fois par marque. */
+.pc { display: grid; gap: 16px; margin-bottom: 28px; }
+.pc-h { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.pch-o { display: grid; gap: 3px; }
+.pcho-t { font-size: 12px; color: var(--clair-terne); }
+.pcho-n { font: 550 21px var(--affichage); letter-spacing: -.02em; color: var(--clair); }
+.pcho-x { font-size: 13px; line-height: 1.5; color: var(--clair); max-width: 60ch; }
+.pcho-x::before { content: "◐ "; color: var(--arbitrage); }
+.pch-n { font-size: 13px; color: var(--clair-terne); }
+.pc-p { display: grid; gap: 8px; padding: 16px 20px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; }
+.pcp-t { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font: 550 15px var(--affichage); color: var(--clair); }
+.pcp-t span { font: 400 12px var(--affichage); color: var(--clair-terne); }
+.pcp-l { display: grid; gap: 0; }
+.pcp-i { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: 14px; padding: 8px 0; border-top: 1px solid var(--trait); }
+.pcpi-q { font-size: 12px; color: var(--clair-terne); }
+.pcpi-v { font-size: 14px; line-height: 1.55; color: var(--clair); }
+.pc-m { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+/* La couleur de la marque identifie : elle tient la pastille et le filet ; le
+ * nom garde une encre lisible. */
+.pcm { display: grid; gap: 12px; align-content: start; padding: 16px 18px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-top: 3px solid var(--trait-clair); border-radius: 10px; min-width: 0; }
+.pcm-t { display: grid; gap: 2px; }
+.pcmt-n { display: flex; align-items: center; gap: 8px; font: 550 16px var(--affichage); color: var(--clair); }
+.pcmt-p { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto; }
+.pcmt-v { font-size: 13px; color: var(--clair-terne); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+.pcmt-v:hover { color: var(--studio-bleu); }
+.pcm-b { display: grid; gap: 4px; padding-top: 10px; border-top: 1px solid var(--trait); }
+.pcmb-t { font: 700 12px var(--affichage); color: var(--clair); margin-bottom: 2px; }
+.pcmb-l, .pcmb-promo { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: 8px; align-items: baseline; }
+.pcmbl-lg { font: 550 11px var(--affichage); color: var(--clair-terne); }
+.pcmb-promo .pcmbl-lg { color: var(--arbitrage); }
+/* Le message et la signature sont ce qu'un humain a écrit : Asap 500. */
+.pcmbl-v { font: 500 15px/1.4 var(--affichage); color: var(--studio-encre); }
+.pcmbl-v i { display: block; font: 400 12px var(--affichage); color: var(--clair-terne); font-style: normal; }
+.pcm-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pcm-chip { font-size: 12px; padding: 3px 8px; border-radius: 5px; background: var(--surface-3); color: var(--clair); }
+.pcm-sel { display: grid; gap: 4px; }
+.pcmsel { display: grid; grid-template-columns: 4.5rem auto; gap: 2px 10px; align-items: baseline; }
+.pcmsel-c { font: 550 15px var(--affichage); color: var(--clair); font-variant-numeric: tabular-nums; }
+.pcmsel-n { font-size: 13px; color: var(--clair-terne); }
+.pcmsel-d { grid-column: 2; font-size: 11px; color: var(--clair-terne); }
+.pcms { display: flex; align-items: baseline; gap: 6px; margin-top: 4px; }
+.pcms-c { font: 550 24px/1 var(--affichage); color: var(--clair); font-variant-numeric: tabular-nums; }
+.pcms-n { font-size: 14px; color: var(--clair); }
+.pcms-x { font-size: 13px; color: var(--clair-terne); }
+.pcm-e { font-size: 13px; line-height: 1.5; color: var(--clair); padding-top: 10px; border-top: 1px solid var(--trait); }
+.pcm-e::before { content: "◐ "; color: var(--arbitrage); }
+.pcm-e.ok::before { content: "✓ "; color: var(--succes); }
+.pcm-n { font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
+
+/* Le mur, par piste puis par marque puis par KV maître ; replié, chaque bloc
+ * ne garde que sa ligne, et c'est elle qui doit suffire. */
+.mr-f { margin-bottom: 16px; }
+.mrf-e { font-size: 13px; line-height: 1.55; color: var(--clair-terne); }
+.mur-r { display: grid; gap: 16px; }
+.mr-piste { --ton: var(--trait-clair); display: grid; gap: 10px; padding: 18px 20px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 10px; min-width: 0; }
+.mr-piste.retenue { --ton: var(--succes); }
+.mr-piste.hors { --ton: var(--bloquant); }
+.mr-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mrt-nom { font: 550 17px var(--affichage); color: var(--clair); text-transform: none; letter-spacing: 0; }
+.mrt-n { flex: 1; font-size: 12px; color: var(--clair-terne); }
+/* Un en-tête de bloc est un bouton : il hérite explicitement de la couleur et
+ * de la fonte, que le navigateur remet sinon à ses valeurs. */
+.mr-mq { display: grid; gap: 6px; padding-left: 12px; border-left: 3px solid var(--trait-clair); }
+.mrmq-t, .mrg-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; min-height: 44px;
+  padding: 6px 0; background: none; border: 0; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.mrmqt-n { display: flex; align-items: center; gap: 8px; font: 550 15px var(--affichage); color: var(--clair); }
+.mrmqt-q { flex: 1; font-size: 12px; color: var(--clair-terne); }
+.mrmqt-x, .mrg-x { margin-left: auto; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 5px;
+  background: var(--surface-3); color: var(--clair); font: 550 14px var(--affichage); }
+.mr-groupe { display: grid; gap: 6px; }
+.mr-groupe > .rt-mur { padding-bottom: 8px; }
+.mrg-code { font: 550 11px var(--affichage); padding: 2px 6px; border-radius: 4px; background: var(--surface-3); color: var(--clair); }
+.mr-groupe.orphelin .mrg-code, .mr-groupe.trou .mrg-code { background: none; color: var(--bloquant); border: 1px dashed var(--bloquant); }
+.mrg-nom { font: 550 13px var(--affichage); color: var(--clair); }
+.mrg-n { font-size: 12px; color: var(--clair-terne); }
+@media (max-width: 560px) { .pcp-i { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+/* ——— Le calendrier d'un cycle éditorial ———
+ * Un cycle se pilote sur deux dates : celle où l'on remet, celle où ça paraît ;
+ * et sur le texte du post, qui est tout ce dont l'équipe a besoin. */
+.cy { display: grid; gap: 16px; }
+.cy-f { margin-bottom: 4px; }
+.cy-sem { display: grid; gap: 16px; }
+.cys { display: grid; gap: 8px; padding: 16px 18px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; }
+.cys-t { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.cyst-n { font: 550 17px var(--affichage); color: var(--clair); }
+.cyst-d { font-size: 13px; color: var(--clair-terne); }
+.cyst-q { margin-left: auto; font-size: 12px; color: var(--clair-terne); }
+.cys-l { display: grid; gap: 6px; }
+/* Une publication : sa ligne dit déjà ce qu'elle coûte ; on ne déplie que pour
+ * agir. Parue sans trace, c'est une documentation en retard, pas un défaut. */
+.cyp { --ton: var(--trait-clair); background: var(--surface-4); border-left: 3px solid var(--ton); border-radius: 0 6px 6px 0; }
+.cyp.remiseRatee, .cyp.sansqui { --ton: var(--bloquant); }
+.cyp.aDocumenter, .cyp.demandee { --ton: var(--arbitrage); }
+.cyp.soumise { --ton: var(--studio-bleu); }
+.cyp.prete { --ton: var(--succes); }
+.cyp-h { display: grid; grid-template-columns: 11rem minmax(0, 1fr) auto auto; align-items: center; gap: 12px; width: 100%;
+  min-height: 44px; padding: 8px 12px; background: none; border: 0; text-align: left; cursor: pointer; color: inherit; font: inherit; }
+.cyp-h:hover .cyph-n { color: var(--studio-bleu); }
+.cyph-d { display: flex; align-items: baseline; gap: 5px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.cyphd-r { color: var(--clair); font-weight: 550; }
+.cyphd-f { color: var(--clair-terne); }
+.cyphd-p { color: var(--clair-terne); }
+.cyp.remiseRatee .cyphd-r { color: var(--bloquant); }
+.cyp.aDocumenter .cyphd-p { color: var(--arbitrage); }
+.cyph-c { display: grid; gap: 2px; min-width: 0; }
+.cyph-n { font: 550 14px/1.4 var(--affichage); color: var(--clair); }
+.cyph-m { font-size: 12px; color: var(--clair-terne); }
+.cyph-e { font: 550 11px var(--affichage); padding: 2px 7px; border-radius: 5px; background: var(--surface-1);
+  border: 1px solid var(--trait); color: var(--ton); white-space: nowrap; }
+.cyph-x { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 5px; background: var(--surface-3);
+  font: 550 14px var(--affichage); color: var(--clair); }
+.cyp-q { padding: 0 12px 10px calc(11rem + 24px); font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
+/* Le contenu du post, tel qu'il a été arrêté : c'est ce qu'on venait chercher. */
+.cyp-b { display: grid; gap: 12px; padding: 12px; border-top: 1px solid var(--trait); background: var(--surface-1); border-radius: 0 0 6px 0; }
+.cypb { display: grid; gap: 3px; }
+.cypb-t { font: 700 12px var(--affichage); color: var(--clair); text-transform: none; letter-spacing: 0; }
+.cypb-c { font: 500 14px/1.55 var(--affichage); color: var(--studio-encre); white-space: pre-wrap; max-width: 70ch; }
+.cyp-r { display: grid; gap: 4px; }
+.cypr { font-size: 13px; line-height: 1.5; color: var(--clair); }
+.cypr b { display: inline-block; min-width: 9rem; font: 400 12px var(--affichage); color: var(--clair-terne); text-transform: none; letter-spacing: 0; }
+/* Le découpage d'une animatique : sans lui, c'est une intention, pas un brief. */
+.cyp-sc { display: grid; gap: 6px; padding-top: 8px; border-top: 1px dashed var(--trait-clair); }
+.cypsc-t { font: 700 12px var(--affichage); color: var(--clair); text-transform: none; letter-spacing: 0; }
+.cypsc { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); gap: 8px; }
+.cypsc-n { font: 550 12px var(--affichage); color: var(--studio-bleu); }
+.cypsc-c { display: grid; gap: 2px; }
+.cypsc-e { font-size: 13px; line-height: 1.5; color: var(--clair); }
+.cypsc-i, .cypsc-v { font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
+.cyp-qui { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--clair); }
+.cyp-dm { display: flex; gap: 6px; flex-wrap: wrap; }
+.cypdm { font: 550 11px var(--affichage); padding: 2px 7px; border-radius: 5px; border: 1px solid var(--trait); color: var(--arbitrage); background: var(--surface-1); }
+.cypdm.rendu { color: var(--succes); }
+@media (max-width: 760px) {
+  .cyp-h { grid-template-columns: minmax(0, 1fr) auto; }
+  .cyph-d { grid-column: 1 / -1; }
+  .cyp-q { padding-left: 12px; }
+}
