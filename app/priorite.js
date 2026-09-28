@@ -176,7 +176,7 @@ window.PRIORITE = (function () {
 
     return el("div.pr-band." + d.ton, {},
       el("div.prb-h", {},
-        el("span.prb-r", {}, d.nom.toUpperCase()),
+        el("span.prb-r", {}, d.nom),
         el("span.prb-q", {}, d.quoi),
         el("span.prb-m", {}, "maturité " + m.part + " %")),
 
@@ -245,11 +245,11 @@ window.PRIORITE = (function () {
 
     PANNEAU.sur("Le client a validé « " + (pi.titre || "cette piste") + " »", "ce que ça change", el("div", {},
       el("div.stats", {},
-        UI.stat("EN EXÉCUTION", String(ls.length),
+        UI.stat("En exécution", String(ls.length),
           ls.length > 1 ? "livrables passent en demande d'EXE" : "livrable passe en demande d'EXE", "vert"),
-        UI.stat("PRIORITÉ", "Engagé", "passe devant tout le spéculatif", "vert"),
+        UI.stat("Priorité", "Engagé", "passe devant tout le spéculatif", "vert"),
         speculatifsAilleurs.length
-          ? UI.stat("REPOUSSÉ", String(speculatifsAilleurs.length),
+          ? UI.stat("Repoussé", String(speculatifsAilleurs.length),
               "livrables spéculatifs passent après", "")
           : null
       ),

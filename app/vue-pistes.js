@@ -76,17 +76,17 @@ window.VUE_PISTES = (function () {
    * concept : deux pistes peuvent porter le même concept et ne pas être la
    * même campagne — c'est le ton et l'univers qui les séparent. */
   var LIGNES = [
-    { cle: "visuel",     nom: "VISUEL" },
+    { cle: "visuel",     nom: "Visuel" },
     { cle: "axe",        nom: "AXE" },
     { cle: "ton",        nom: "TON" },
-    { cle: "univers",    nom: "UNIVERS VISUEL" },
-    { cle: "concept",    nom: "CONCEPT" },
-    { cle: "sacrifice",  nom: "SACRIFICE" },
-    { cle: "argument",   nom: "ARGUMENT" },
-    { cle: "porteurs",   nom: "PORTEURS" },
-    { cle: "dispositif", nom: "DISPOSITIF" },
-    { cle: "delai",      nom: "DÉLAI" },
-    { cle: "pieces",     nom: "LIVRABLES" },
+    { cle: "univers",    nom: "Univers visuel" },
+    { cle: "concept",    nom: "Concept" },
+    { cle: "sacrifice",  nom: "Sacrifice" },
+    { cle: "argument",   nom: "Argument" },
+    { cle: "porteurs",   nom: "Porteurs" },
+    { cle: "dispositif", nom: "Dispositif" },
+    { cle: "delai",      nom: "Délai" },
+    { cle: "pieces",     nom: "Livrables" },
   ];
   var LETTRES = "ABCDEF";
 
@@ -101,7 +101,7 @@ window.VUE_PISTES = (function () {
         var etat = pi.statut === "retenue" ? "retenue" : "";
         return el("div.cmp-h" + (etat ? "." + etat : ""), {},
           el("span.cmph-n", {}, LETTRES[i] + " — " + (pi.titre || "Sans titre")),
-          pi.statut === "retenue" ? el("span.cmph-e", {}, "retenue") : null);
+          pi.statut === "retenue" ? el("span.cmph-e", {}, "Retenue") : null);
       }),
 
       LIGNES.map(function (L) {

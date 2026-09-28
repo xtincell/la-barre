@@ -281,63 +281,6 @@
 
 /* ————————————————————— La route, en entier ————————————————————— */
 
-.rt { display: grid; gap: 1.1rem; }
-
-.rt-scene { display: grid; gap: .4rem; }
-.rts-toile { background: var(--nuit-carte); }
-.rts-toile .vignette { height: auto; border: 0; }
-.rts-toile .vignette img { height: auto; width: 100%; object-fit: contain; max-height: 46vh; }
-.rts-pied { display: flex; justify-content: space-between; align-items: center; gap: .6rem; }
-.rts-auteurs { display: flex; align-items: center; gap: .3rem; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); }
-
-.rt-arg { display: grid; gap: .7rem; }
-.rta-accroches { display: flex; gap: .4rem; flex-wrap: wrap; }
-.rta-a {
-  font-family: var(--lecture); font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre); color: var(--clair);
-  border-left: 2px solid var(--or); padding: .1rem .6rem;
-}
-.rta-a.trop { border-left-color: var(--bloquant-txt); color: var(--bloquant-txt); }
-
-.rt-blocs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .7rem; }
-.rtb { border-left: 2px solid var(--trait-clair); padding: .1rem .6rem; }
-.rtb.alerte { border-left-color: var(--bloquant-txt); }
-.rtb.vert { border-left-color: var(--vert); }
-.rtb .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em; color: var(--clair-terne); margin-bottom: .2rem; }
-.rtb .v { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.5; color: var(--clair-doux); }
-
-.rta-porteurs { display: flex; gap: .35rem; align-items: center; flex-wrap: wrap; }
-.rta-porteurs .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em; color: var(--clair-terne); }
-
-.rt-bloc { display: grid; gap: .6rem; }
-.rtbl-tete { display: flex; align-items: baseline; gap: .6rem;
-  border-bottom: 1px solid var(--trait); padding-bottom: .3rem; }
-.rtbl-tete .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .16em; color: var(--or); }
-.rtbl-tete .n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-
-.rt-groupe { display: grid; gap: .4rem; }
-.rt-groupe.orphelin .rtg-code { background: var(--alerte); color: var(--n900); }
-.rtg-tete { display: flex; align-items: baseline; gap: .5rem; }
-.rtg-code { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .08em; padding: .08rem .34rem;
-  background: var(--nuit-relief); color: var(--clair-doux); }
-.rtg-nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.rtg-n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-
-/* Le mur : une image, son nom, sa qualification. Rien d'autre. */
-.rt-mur { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: .5rem; }
-
-.rt-c {
-  position: relative; display: block; padding: 0; cursor: pointer; overflow: hidden;
-  background: var(--nuit-carte); border: 0; border-top: 2px solid var(--trait-clair);
-  aspect-ratio: 4 / 3;
-}
-.rt-c:hover { outline: 1px solid var(--or); outline-offset: -1px; }
-.rt-c.grand { grid-column: span 2; aspect-ratio: 16 / 9; border-top-color: var(--or); }
-.rt-c.ecart { border-top-color: var(--bloquant-txt); }
-.rt-c.perime { border-top-color: var(--bloquant-txt); }
-.rt-c .vignette { height: 100%; }
-.rt-c .vignette img { height: 100%; object-fit: cover; }
-/* Le vide nommé occupe la carte moins son bandeau : deux lignes de texte ne
- * se lisent pas à moitié cachées. */
 /* Le texte décide de la hauteur, jamais l'inverse.
  *
  * Une carte à visuel tient son 4/3 : l'image y est recadrée sans perte de
@@ -352,33 +295,6 @@
 @media (max-width: 760px) {
   .rt-c.sans-visuel .vignette.vide.attente .va-q { -webkit-line-clamp: 2; }
 }
-
-.rtc-code {
-  position: absolute; left: 0; top: 0; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em;
-  padding: .1rem .38rem; background: var(--n950); color: var(--n100);
-}
-.rtc-r {
-  position: absolute; right: .25rem; top: .25rem; min-width: 18px; height: 18px;
-  display: grid; place-items: center; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); border-radius: 9px;
-  padding: 0 .26rem; background: var(--or); color: var(--nuit);
-}
-/* Le bandeau de la carte : un bloc opaque, pas un dégradé.
- *
- * Le dégradé venait du thème sombre, où le texte était clair et le fond noir.
- * En clair il est resté noir sous une encre devenue sombre : du #241C18 sur du
- * #0E0F11, soit la bande illisible du mur Panzani. Une carte se lit ou n'existe
- * pas — le bandeau prend donc la surface haute du produit, et un filet le
- * détache de l'image au lieu d'un fondu qui ne détache rien. */
-.rtc-bas {
-  position: absolute; left: 0; right: 0; bottom: 0; display: grid; gap: .05rem;
-  padding: .34rem .45rem .38rem; text-align: left;
-  background: var(--surface-1); border-top: 1px solid var(--trait);
-}
-.rtc-n { font-size: var(--t-eti); letter-spacing: var(--ls-eti); color: var(--clair); line-height: 1.2; }
-.rt-c.grand .rtc-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); }
-.rtc-m { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-doux); }
-.rtc-e { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--bloquant-txt); }
-.rtc-ok { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--vert); }
 
 /* ————————————————————— Le mur des livrables, par route ————————————————————— */
 
@@ -425,18 +341,9 @@
 .rf b { color: var(--clair); font-weight: 600; }
 .rf.alerte, .rf.alerte b { color: var(--bloquant-txt); }
 
-@media (max-width: 900px) {
-  .rt-c.grand { grid-column: span 2; }
-  .rt-mur { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
-}
-
 /* Une IA a un poste, pas un blanc-seing : son avatar le dit. */
 .avatar.ia { border-style: dashed; }
 
-.rt-tete { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; }
-.rt-tete h2 { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: .01em; }
-.rt-controle { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--attente); border: 1px solid var(--attente);
-  padding: .08rem .38rem; margin-left: auto; }
 .retour { background: none; border: 0; color: var(--clair-terne); font: inherit; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
   cursor: pointer; padding: 0 0 .7rem; }
 .retour:hover { color: var(--or); }
@@ -2401,7 +2308,6 @@
 /* Le gris atténué frôle le seuil sur les fonds de surface : deux crans plus
  * clair, et il le passe partout. */
 .dlr-m, .dlr-b2 { color: var(--clair-doux); }
-.vignette .absente { color: var(--clair-doux); }
 
 /* ————————————————————— Une ombrelle, plusieurs marques ————————————————————— */
 
@@ -2927,8 +2833,6 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 /* ————————————————————— Un chiffre porte sa conséquence ————————————————————— */
 
 /* La route d'un cycle porte ses publications. */
-.rt-q { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  color: var(--clair-doux); margin: 0 0 .5rem; max-width: var(--mesure); }
 
 /* ————————————————————— Une pièce qui dure ————————————————————— */
 
@@ -3135,62 +3039,12 @@ blockquote, .message, .verbatim {
 /* Ce qui sépare une piste d'une autre. Il se lit avant l'argumentaire :
  * le sacrifice défend quelque chose, et ce quelque chose est l'axe. */
 
-.axe { background: var(--nuit-carte); border-left: 2px solid var(--or);
-  padding: .8rem .9rem; display: grid; gap: .6rem; margin-bottom: 1rem; }
-.axe.vide { border-left-color: var(--bloquant); }
-
-.axe-t { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; }
-.axet-l { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--or); }
-.axet-e { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
-.axet-e.vert { color: var(--vert); }
-.axet-e.attente { color: var(--attente); }
-.axet-e.alerte { color: var(--bloquant-txt); }
-
-.axe-q { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  color: var(--clair-doux); max-width: var(--mesure); }
-.axe-rien { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux);
-  max-width: var(--mesure); }
-
-.axe-c { display: grid; gap: .55rem; }
-.axec { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: .7rem; align-items: start; }
-.axec-l { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-terne); }
-.axec-v { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair);
-  max-width: var(--mesure); }
-.axec-v.manque { color: var(--bloquant-txt); font-style: italic; }
-.axec-p { display: flex; gap: .35rem; flex-wrap: wrap; }
-.axe-val { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-doux); border: 1px solid var(--trait); padding: .1rem .4rem; }
-
 /* Le ton, en grand : c'est le mot qui doit sauter aux yeux quand on met
  * trois colonnes côte à côte. */
-.axe-ton { font-family: var(--lecture); font-size: var(--t-titre);
-  letter-spacing: var(--ls-titre); line-height: 1.25; color: var(--clair); }
-.axe-jum { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--bloquant-txt); margin-top: .3rem; }
 
 /* Ce que la marque impose, pendant qu'on écrit l'axe. Pluriannuel au-dessus
  * du saisonnier : le produit ne juge pas le sens, il met la règle sous les
  * yeux de celui qui écrit. */
-.axe-socle { border: 1px solid var(--trait); padding: .7rem .8rem; display: grid; gap: .45rem;
-  margin-bottom: .9rem; }
-.axsoc-l { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-terne); }
-.axsoc-r { display: grid; grid-template-columns: 11rem minmax(0, 1fr) auto; gap: .6rem;
-  align-items: baseline; }
-.axsocr-n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-terne); }
-.axsocr-v { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  color: var(--clair); }
-.axsocr-s { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--clair-terne); }
-.axsoc-i { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-doux); }
-
-@media (max-width: 700px) {
-  .axec, .axsoc-r { grid-template-columns: minmax(0, 1fr); gap: .2rem; }
-}
 
 /* ————————————————————— Ce qui est tracé, et ce qui ne l'est pas ————————————————————— */
 /* « 0 soumis » lu sans contexte accuse une personne d'un défaut d'outil.

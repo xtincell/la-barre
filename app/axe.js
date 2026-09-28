@@ -193,9 +193,11 @@ window.AXE = (function () {
     var a = de(pi);
     var e = etat(p, pi);
 
-    return el("div.axe" + (a.vide ? ".vide" : ""), {},
+    /* `.axe-bloc`, pas `.axe` : ce nom était déjà celui des puces d'axe du
+     * livrable, et les deux règles s'appliquaient aux deux éléments. */
+    return el("div.axe-bloc" + (a.vide ? ".vide" : ""), {},
       el("div.axe-t", {},
-        el("span.axet-l", {}, "L'AXE CRÉATIF"),
+        el("span.axet-l", {}, "L'axe créatif"),
         el("span.axet-e." + e.ton, {}, e.nom)),
 
       el("div.axe-q", {}, e.quoi),
@@ -221,7 +223,7 @@ window.AXE = (function () {
     return el("div.axec" + (vide ? ".vide" : ""), {},
       el("div.axec-l", {}, c.court),
       vide
-        ? el("div.axec-v.manque", {}, c.requis ? c.cout : "non écrit")
+        ? el("div.axec-v.manque", {}, c.requis ? c.cout : "Non écrit")
         : c.type === "puces"
           ? el("div.axec-p", {}, (v || []).map(function (x) { return el("span.axe-val", {}, x); }))
           : el("div.axec-v", {}, v)
@@ -239,9 +241,9 @@ window.AXE = (function () {
    * gauche, dans le libellé de la ligne. La cellule ne porte que la différence
    * — ou son absence, en trois mots. */
   var MANQUE = {
-    axe: "aucun axe écrit",
-    ton: "sans ton",
-    univers: "univers non décrit",
+    axe: "Aucun axe écrit",
+    ton: "Sans ton",
+    univers: "Univers non décrit",
   };
 
   /* Ce que coûte la ligne quand elle est vide — pour le libellé de gauche. */
@@ -269,8 +271,8 @@ window.AXE = (function () {
       return el("div.cmp-c", {},
         el("div.axe-ton", {}, a.ton),
         /* Celui-là reste dans la cellule : il ne vaut que pour cette colonne. */
-        j.length ? el("div.axe-jum", {}, "même ton que "
-          + j.map(function (x) { return "« " + (x.titre || "sans titre") + " »"; }).join(", ")) : null);
+        j.length ? el("div.axe-jum", {}, "Même ton que "
+          + j.map(function (x) { return "« " + (x.titre || "Sans titre") + " »"; }).join(", ")) : null);
     }
 
     return a.univers
@@ -299,7 +301,7 @@ window.AXE = (function () {
     var f = FORM.rendre(CHAMPS, pi || {});
     var s = socle(p);
 
-    PANNEAU.ouvrir("L'axe créatif", pi.titre || "piste sans titre", el("div", {},
+    PANNEAU.ouvrir("L'axe créatif", pi.titre || "Piste sans titre", el("div", {},
 
       el("div.prix", {}, el("span.signe", {}, "⚠"),
         "Trois pistes sans axe ne sont pas trois propositions : ce sont trois "
@@ -307,7 +309,7 @@ window.AXE = (function () {
 
       /* La marque d'abord : elle est pluriannuelle, l'axe est saisonnier. */
       s ? el("div.axe-socle", {},
-          el("div.axsoc-l", {}, "CE QUE LA MARQUE IMPOSE DÉJÀ"
+          el("div.axsoc-l", {}, "Ce que la marque impose déjà"
             + (s.marque ? "  ·  " + s.marque : "")),
           s.directrice ? ligneSocle("Idée directrice pluriannuelle", s.directrice.valeur, s.directrice) : null,
           s.ton ? ligneSocle("Ton de la marque", s.ton.valeur, s.ton) : null,

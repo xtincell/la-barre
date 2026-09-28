@@ -171,6 +171,29 @@
 .eti.attente::before { content: "◐"; font-size: .9em; }
 .eti.vert::before { content: "✓"; font-size: .9em; }
 
+/* La vignette (`IMAGE.vignette`) : l'aplat pâle des couvertures du Bureau. */
+.vignette { background: var(--surface-3); border: 0; border-radius: 4px; display: flex; align-items: center;
+  justify-content: center; overflow: hidden; flex: 0 0 auto; position: relative; }
+.vignette img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vignette .absente { font-size: 11px; line-height: 1.4; color: var(--clair-terne); text-align: center; padding: 6px; }
+.vignette.v-ligne { width: 100%; max-width: 118px; height: 74px; }
+.vignette.v-carte { width: 100%; height: 128px; }
+.vignette.v-mini { width: 44px; height: 44px; }
+.vignette.v-grande { width: 100%; height: 260px; }
+.vignette.v-planche { width: 100%; height: 100%; border: 0; border-radius: 0; }
+/* Le vide qui se nomme : sous quel nom le fichier arrivera, et ce qui manque
+ * pour qu'il arrive. Il se lit comme du texte — aligné à gauche, en haut — et
+ * le pointillé dit la seule chose qu'une bordure a le droit de dire ici :
+ * quelque chose se pose là. Un nom trop long se coupe par les points de
+ * suspension, jamais par le bord ; le nom entier reste dans l'infobulle. */
+.vignette.vide.attente { display: grid; align-content: center; justify-items: start; gap: 3px; padding: 8px 10px;
+  text-align: left; background: var(--surface-4); border: 1px dashed var(--trait-clair); }
+.va-f { font-size: 12px; line-height: 1.4; color: var(--clair); overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.va-f.sans { color: var(--clair-terne); }
+.va-q { font-size: 11px; line-height: 1.4; color: var(--clair-terne); overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+
 /* L'état et sa conséquence (`ETAT.ligne`) : le nom court en couleur, puis ce
  * qu'il produit ou empêche, en gris. La pastille seule reste l'exception. */
 .etat-l, .bic-etat, .bii-etat, .ati-etat, .dmd-etat { display: block; font-size: 12px; line-height: 1.5;
@@ -879,3 +902,114 @@ button.st-e:hover { background: var(--surface-4); }
 .val-m { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .val-m .v-etat { margin-left: auto; font: 550 12px var(--affichage); color: var(--arbitrage); font-variant-numeric: tabular-nums; }
 .val-m .v-etat.ok { color: var(--succes); }
+
+/* ═════════════════════ Passe 4c · Dossier : les pistes ═════════════════════ */
+
+/* ——— La route retenue ——— */
+.rt { display: grid; gap: 16px; }
+.rt-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rt-tete h2 { font: 550 21px/1.3 var(--affichage); letter-spacing: -.02em; color: var(--clair); }
+.rt-controle { margin-left: auto; font: 550 12px var(--affichage); color: var(--arbitrage); }
+/* Le visuel maître, en grand : c'est lui qu'on juge. */
+.rt-scene { display: grid; gap: 8px; }
+.rts-toile { background: var(--surface-3); border-radius: 8px; overflow: hidden; }
+.rts-toile .vignette { height: auto; border-radius: 0; }
+.rts-toile .vignette img { height: auto; width: 100%; object-fit: contain; max-height: 46vh; }
+.rts-pied { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rts-auteurs { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--clair-terne); }
+/* L'argumentaire : accroches (ce qu'un humain a écrit), sacrifice, argument. */
+.rt-arg { display: grid; gap: 12px; padding: 18px 20px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; }
+.rta-accroches { display: flex; gap: 8px; flex-wrap: wrap; }
+.rta-a { font: 500 17px/1.4 var(--affichage); color: var(--studio-encre); background: var(--studio-intention);
+  padding: 8px 12px; border-radius: 5px; }
+.rta-a.trop { background: var(--surface-1); color: var(--clair); box-shadow: inset 3px 0 0 var(--bloquant); border: 1px solid var(--trait); }
+.rt-blocs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.rtb { --ton: var(--trait-clair); padding: 2px 0 2px 12px; border-left: 3px solid var(--ton); }
+.rtb.alerte { --ton: var(--bloquant); }
+.rtb.vert { --ton: var(--succes); }
+.rtb .t { font: 700 12px var(--affichage); color: var(--clair); margin-bottom: 4px; letter-spacing: 0; }
+.rtb .v { font-size: 13px; line-height: 1.55; color: var(--clair); }
+.rta-porteurs { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.rta-porteurs .t { font: 700 12px var(--affichage); color: var(--clair); letter-spacing: 0; margin-right: 4px; }
+
+/* Les blocs de la route : chacun une section blanche. */
+.rt-bloc { display: grid; gap: 12px; padding: 18px 20px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; min-width: 0; }
+.rtbl-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rtbl-tete .t { font: 550 17px var(--affichage); color: var(--clair); letter-spacing: 0; }
+.rtbl-tete .n { font: 500 12px var(--affichage); color: var(--clair-terne); background: var(--surface-3); border-radius: 5px; padding: 3px 7px; letter-spacing: 0; }
+.rtbl-tete .b, .rtbl-tete .b.nu { margin-left: auto; }
+
+/* Le mur : une image, son nom, sa qualification. Rien d'autre. */
+.rt-mur { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.rt-c { --ton: transparent; position: relative; display: block; padding: 0; cursor: pointer; overflow: hidden;
+  background: var(--surface-3); border: 1px solid var(--trait); border-radius: 6px; aspect-ratio: 4 / 3;
+  box-shadow: inset 0 3px 0 var(--ton); font: inherit; color: inherit; text-align: left; }
+.rt-c:hover { border-color: var(--trait-clair); box-shadow: inset 0 3px 0 var(--ton), var(--elev-1); }
+.rt-c.maitre { --ton: var(--studio-bleu); }
+.rt-c.ecart, .rt-c.perime { --ton: var(--bloquant); }
+.rt-c .vignette { height: 100%; border-radius: 0; }
+.rt-c .vignette img { height: 100%; object-fit: cover; }
+.rtc-code { position: absolute; left: 6px; top: 8px; z-index: 1; font: 550 11px var(--affichage);
+  padding: 2px 6px; border-radius: 4px; background: var(--surface-1); color: var(--clair); }
+.rtc-r { position: absolute; right: 6px; top: 8px; z-index: 1; min-width: 20px; height: 20px; display: grid; place-items: center;
+  font: 550 11px var(--affichage); border-radius: 10px; padding: 0 6px; background: var(--arbitrage); color: var(--surface-1); }
+/* Le bandeau de la carte : un bloc opaque, pas un dégradé — une carte se lit
+ * ou n'existe pas. */
+.rtc-bas { position: absolute; left: 0; right: 0; bottom: 0; display: grid; gap: 1px; padding: 6px 8px 7px;
+  text-align: left; background: var(--surface-1); border-top: 1px solid var(--trait); }
+.rtc-n { font: 550 12px/1.3 var(--affichage); color: var(--clair); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rtc-m { font-size: 11px; color: var(--clair-terne); }
+.rtc-e { font: 550 11px var(--affichage); color: var(--bloquant); }
+.rtc-ok { font: 550 11px var(--affichage); color: var(--succes); }
+
+/* Les déclinaisons, repliées par groupe ; la tête dit ce que le groupe cache. */
+.rt-groupe { border-top: 1px solid var(--trait); }
+.rt-groupe:first-of-type { border-top: 0; }
+.rtg-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 48px; padding: 6px 0;
+  cursor: pointer; list-style: none; }
+.rtg-tete::-webkit-details-marker { display: none; }
+.rtg-tete::before { content: "›"; color: var(--clair-terne); font-size: 16px; width: 12px; transition: transform var(--tr-rapide); }
+.rt-groupe[open] > .rtg-tete::before { transform: rotate(90deg); }
+.rtg-code { font: 550 11px var(--affichage); padding: 2px 6px; border-radius: 4px; background: var(--surface-3); color: var(--clair); }
+.rt-groupe.orphelin .rtg-code { color: var(--bloquant); background: none; border: 1px dashed var(--bloquant); }
+.rtg-nom { font: 550 13px var(--affichage); color: var(--clair); flex: 1; min-width: 0; }
+.rtg-x { font: 550 11px var(--affichage); }
+.rtg-x.alerte { color: var(--bloquant); }
+.rtg-x.attente { color: var(--arbitrage); }
+.rtg-n { font-size: 12px; color: var(--clair-terne); }
+.rt-groupe > .rt-mur { padding: 4px 0 16px; }
+
+/* ——— L'axe créatif ———
+ * L'axe avant l'argumentaire : le sacrifice et l'argument défendent quelque
+ * chose, et ce quelque chose est l'axe. */
+.axe-bloc { --ton: var(--studio-bleu); display: grid; gap: 12px; padding: 18px 20px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 10px; }
+.axe-bloc.vide { --ton: var(--bloquant); }
+.axe-t { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.axet-l { font: 550 17px var(--affichage); color: var(--clair); }
+.axet-e { margin-left: auto; font: 550 12px var(--affichage); color: var(--clair-terne); }
+.axet-e.vert { color: var(--succes); }
+.axet-e.attente { color: var(--arbitrage); }
+.axet-e.alerte { color: var(--bloquant); }
+.axe-q { font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 70ch; }
+.axe-rien { font-size: 14px; line-height: 1.6; color: var(--clair); max-width: 70ch; }
+.axe-c { display: grid; gap: 10px; }
+.axec { display: grid; gap: 2px; }
+.axec-l { font-size: 11px; color: var(--clair-terne); }
+.axec-v { font-size: 14px; line-height: 1.55; color: var(--clair); }
+.axec-v.manque { font-size: 13px; color: var(--clair-terne); }
+.axec-p { display: flex; gap: 6px; flex-wrap: wrap; }
+.axe-val { font: 500 12px var(--affichage); color: var(--clair); background: var(--surface-3); border-radius: 5px; padding: 3px 8px; }
+/* Le ton est ce qu'un humain a écrit : Asap 500, pas le sérif. */
+.axe-ton { font: 500 15px/1.45 var(--affichage); color: var(--studio-encre); }
+.axe-jum { font-size: 12px; line-height: 1.5; color: var(--arbitrage); }
+/* Ce que la marque impose déjà, sous les yeux de qui écrit l'axe. */
+.axe-socle { display: grid; gap: 8px; padding: 14px 16px; background: var(--surface-4); border: 1px solid var(--trait); border-radius: 8px; }
+.axsoc-l { font: 700 12px var(--affichage); color: var(--clair); }
+.axsoc-r { display: grid; grid-template-columns: 11rem minmax(0, 1fr) auto; gap: 10px; align-items: baseline;
+  padding: 6px 0; border-top: 1px solid var(--trait); }
+.axsocr-n { font-size: 12px; color: var(--clair-terne); }
+.axsocr-v { font-size: 13px; line-height: 1.5; color: var(--clair); }
+.axsocr-s { font-size: 11px; color: var(--clair-terne); }
+.axsoc-i { font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
+@media (max-width: 560px) { .axsoc-r { grid-template-columns: 1fr; gap: 2px; } }

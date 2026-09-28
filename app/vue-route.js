@@ -39,7 +39,7 @@ window.VUE_ROUTE = (function () {
   }
 
   function etiquette(pi) {
-    return pi.statut === "retenue" ? "retenue" : pi.statut === "ecartee" ? "écartée" : "en lice";
+    return pi.statut === "retenue" ? "Retenue" : pi.statut === "ecartee" ? "Écartée" : "En lice";
   }
 
   function rendre(p, pi, apres) {
@@ -179,7 +179,7 @@ window.VUE_ROUTE = (function () {
           el("div.t", {}, b.t), el("div.v", {}, b.v));
       })),
       (pi.porteurs || []).length
-        ? el("div.rta-porteurs", {}, el("span.t", {}, "PORTEURS DE RECONNAISSANCE"),
+        ? el("div.rta-porteurs", {}, el("span.t", {}, "Porteurs de reconnaissance"),
             pi.porteurs.map(function (x) { return UI.eti(x, "terne"); }),
             pi.porteurs.length < 3 ? UI.eti("il en faut trois", "alerte") : null)
         : null
@@ -191,13 +191,15 @@ window.VUE_ROUTE = (function () {
   function blocKV(p, pi, mes, apres) {
     return el("div.rt-bloc", {},
       el("div.rtbl-tete", {},
-        el("span.t", {}, "LES KV MASTERS"),
+        el("span.t", {}, "Les KV maîtres"),
         el("span.n", {}, mes.length + (mes.length > 1 ? " marchés" : " marché"))),
       el("div.rt-mur", {}, mes.map(function (l) {
         var m = DEPOT.trouve("marches", l.marche);
         var ecarts = KV.conformite(p, l).filter(function (c) { return !c.ok; });
         var n = KV.declinaisons(p, l.id).length;
-        return el("button.rt-c.grand" + (ecarts.length ? ".ecart" : ""), { type: "button",
+        /* Une carte de la grille, pas une affiche : trente-quatre maîtres en
+         * grandes cartes faisaient neuf mille pixels, une par rangée. */
+        return el("button.rt-c.maitre" + (ecarts.length ? ".ecart" : ""), { type: "button",
           onclick: function () { VUE_ASSET.ouvrir(p, l, apres); } },
           IMAGE.vignette(l, "carte"),
           el("span.rtc-code", {}, m ? m.code : "?"),
@@ -207,7 +209,7 @@ window.VUE_ROUTE = (function () {
               + (n ? "  ·  " + n + (n > 1 ? " formats" : " format") : "  ·  aucun format")),
             ecarts.length
               ? el("span.rtc-e", {}, ecarts.length + (ecarts.length > 1 ? " écarts" : " écart"))
-              : el("span.rtc-ok", {}, "conforme"))
+              : el("span.rtc-ok", {}, "Conforme"))
         );
       })));
   }
@@ -234,7 +236,7 @@ window.VUE_ROUTE = (function () {
           var g = groupes.filter(function (x) { return x.code === code; })[0];
           if (!g) {
             g = { code: code, ls: [],
-              nom: d ? "à remettre à partir du " + O.joli(d) : "sans date" };
+              nom: d ? "À remettre à partir du " + O.joli(d) : "Sans date" };
             groupes.push(g);
           }
           g.ls.push(l);
@@ -255,18 +257,25 @@ window.VUE_ROUTE = (function () {
 
     return el("div.rt-bloc", {},
       el("div.rtbl-tete", {},
-        el("span.t", {}, cycle ? "LES PUBLICATIONS DE CETTE ROUTE" : "LES DÉCLINAISONS"),
+        el("span.t", {}, cycle ? "Les publications de cette route" : "Les déclinaisons"),
         el("span.n", {}, decl.length + (cycle
           ? (decl.length > 1 ? " publications" : " publication")
           : (decl.length > 1 ? " formats" : " format")))),
       cycle ? el("p.rt-q", {}, "Chacune sert la piste ou n'appartient pas au mois. "
         + "C'est ce qui permet de refuser une publication sur autre chose que le goût.") : null,
 
-      groupes.map(function (g) {
-        return el("div.rt-groupe" + (g.orphelin ? ".orphelin" : ""), {},
-          el("div.rtg-tete", {},
+      /* Chaque groupe se replie, et sa tête dit ce qu'il cache : le compte, et
+       * ce qui y cloche. Cent cinquante-cinq formats dépliés faisaient onze
+       * mille pixels ; on ouvre le marché qu'on travaille. Le premier est ouvert. */
+      groupes.map(function (g, i) {
+        var perimes = g.ls.filter(function (l) { return REGLES.maitrePerime(p, l); }).length;
+        var retours = g.ls.reduce(function (n, l) { return n + ANNOT.ouvertes(l).length; }, 0);
+        return el("details.rt-groupe" + (g.orphelin ? ".orphelin" : ""), { open: i === 0 ? "" : null },
+          el("summary.rtg-tete", {},
             el("span.rtg-code", {}, g.code),
             el("span.rtg-nom", {}, g.nom),
+            perimes ? el("span.rtg-x.alerte", {}, perimes + (perimes > 1 ? " maîtres dépassés" : " maître dépassé")) : null,
+            retours ? el("span.rtg-x.attente", {}, retours + (retours > 1 ? " retours" : " retour")) : null,
             el("span.rtg-n", {}, g.ls.length + (g.ls.length > 1 ? " formats" : " format"))),
           el("div.rt-mur", {}, g.ls.map(function (l) { return case_(p, l, apres); })));
       })
@@ -297,14 +306,14 @@ window.VUE_ROUTE = (function () {
   function blocSituation(p, mks, apres) {
     return el("div.rt-bloc", {},
       el("div.rtbl-tete", {},
-        el("span.t", {}, "EN SITUATION"),
+        el("span.t", {}, "En situation"),
         el("span.n", {}, mks.length + (mks.length > 1 ? " mises en situation" : " mise en situation"))),
       el("div.rt-mur", {}, mks.map(function (x) {
         return el("button.rt-c", { type: "button",
           onclick: function () { VUE_LIVRABLE.ouvrir(p, x.l, apres); } },
           IMAGE.vignette(x.m, "carte"),
           el("span.rtc-bas", {},
-            el("span.rtc-n", {}, x.m.contexte || "contexte non dit"),
+            el("span.rtc-n", {}, x.m.contexte || "Contexte non dit"),
             el("span.rtc-m", {}, x.l.nom))
         );
       })));
@@ -341,14 +350,14 @@ window.VUE_ROUTE = (function () {
 
     PANNEAU.sur("Retenir « " + (pi.titre || "cette piste") + " »", "ce que ça ouvre", el("div", {},
       el("div.stats", {},
-        UI.stat("ACTIVITÉS", String(DISPOSITIF.liste(pi).length),
+        UI.stat("Activités", String(DISPOSITIF.liste(pi).length),
           "passent en production", DISPOSITIF.liste(pi).length ? "vert" : "alerte"),
-        UI.stat("LIVRABLES À CRÉER", String(d.aCreer.length),
+        UI.stat("Livrables à créer", String(d.aCreer.length),
           d.aCreer.length ? "croisements du dispositif non couverts" : "tout existe déjà", ""),
-        UI.stat("BAT MANQUANTS", String(d.sansBAT.length),
+        UI.stat("BAT manquants", String(d.sansBAT.length),
           d.sansBAT.length ? "sur les livrables existantes" : "tous posés",
           d.sansBAT.length ? "alerte" : "vert"),
-        UI.stat("ORPHELINS", String(perdues),
+        UI.stat("Orphelins", String(perdues),
           perdues ? "livrables faits sur les autres pistes" : "rien de perdu", perdues ? "alerte" : "")
       ),
 
@@ -360,7 +369,7 @@ window.VUE_ROUTE = (function () {
 
       d.aCreer.length
         ? el("div.sousbloc", {},
-            el("h3", {}, "CE QUE LE DISPOSITIF EXIGE ET QUI N'EXISTE PAS"),
+            el("h3", {}, "Ce que le dispositif exige et qui n'existe pas"),
             el("div.chips", {}, d.aCreer.slice(0, 12).map(function (x) {
               return el("span.chip", {}, x.support.nom + " · " + x.marche.code); })),
             d.aCreer.length > 12 ? el("div.indice", {}, "et " + (d.aCreer.length - 12) + " autres") : null,

@@ -138,15 +138,15 @@ window.RETRO = (function () {
     var e = etat(p, pi);
     if (!e) {
       return el("div.rt-bloc", {},
-        el("div.rtbl-tete", {}, el("span.t", {}, "LE RÉTROPLANNING"),
-          el("span.n", {}, "aucune date d'exécution"),
+        el("div.rtbl-tete", {}, el("span.t", {}, "Le rétroplanning"),
+          el("span.n", {}, "Aucune date d'exécution"),
           el("button.b.nu", { type: "button", onclick: function () { editer(p, pi, apres); } }, "régler")),
         el("p.rien", {}, "Ni activité datée, ni échéance de dossier : impossible de dire quand il faut commencer."));
     }
 
     return el("div.rt-bloc", {},
       el("div.rtbl-tete", {},
-        el("span.t", {}, "LE RÉTROPLANNING"),
+        el("span.t", {}, "Le rétroplanning"),
         el("span.n", {}, e.total + " jours ouvrés  ·  exécution le " + O.joli(e.fin)),
         el("button.b.nu", { type: "button", onclick: function () { editer(p, pi, apres); } }, "régler")),
 
@@ -161,7 +161,7 @@ window.RETRO = (function () {
       el("div.re-l", {}, e.phases.map(function (x, n) {
         if (x.hors) return el("div.re-p.hors", {},
           el("span.rep-n", {}, x.ph.nom),
-          el("span.rep-q", {}, "ne s'applique pas"));
+          el("span.rep-q", {}, "Ne s'applique pas"));
         var faite = plan(pi) && (plan(pi).faites || []).indexOf(x.ph.cle) !== -1;
         var passee = x.fin < O.jour();
         var ici = e.enCours && e.enCours.ph.cle === x.ph.cle;
@@ -185,7 +185,7 @@ window.RETRO = (function () {
     var rang = window.PRIORITE ? PRIORITE.rang(pi) : 3;
 
     return el("div.re-prod", {},
-      el("div.rep-t", {}, "PRODUCTIONS LOURDES",
+      el("div.rep-t", {}, "Productions lourdes",
         el("span", {}, ls.length + (ls.length > 1 ? " livrables" : " livrable"))),
 
       rang >= 2

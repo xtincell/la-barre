@@ -88,7 +88,7 @@ window.DISPOSITIF = (function () {
 
     return el("div.rt-bloc", {},
       el("div.rtbl-tete", {},
-        el("span.t", {}, "LE DISPOSITIF"),
+        el("span.t", {}, "Le dispositif"),
         el("span.n", {}, acts.length
           ? acts.length + (acts.length > 1 ? " activités" : " activité")
           : "aucune activité"),
@@ -125,7 +125,7 @@ window.DISPOSITIF = (function () {
         (a.marches || []).length
           ? el("span", {}, (a.marches || []).map(function (id) {
               var m = DEPOT.trouve("marches", id); return m ? m.code : "?"; }).join(" · "))
-          : el("span.alerte", {}, "aucun marché"),
+          : el("span.alerte", {}, "Aucun marché"),
         a.debut ? el("span", {}, "exécution " + O.joli(a.debut)) : null,
         a.productionAvant ? el("span", {}, "production avant " + O.joli(a.productionAvant)) : null)
     );
@@ -171,12 +171,12 @@ window.DISPOSITIF = (function () {
       var manq = manquantes(p, pi, faux);
       O.vider(onde);
       onde.appendChild(el("div.stats", {},
-        UI.stat("LIVRABLES EXISTANTS", String(ls.length), "déjà au dossier", ""),
-        UI.stat("À CRÉER", String(manq.length),
+        UI.stat("Livrables existants", String(ls.length), "déjà au dossier", ""),
+        UI.stat("À créer", String(manq.length),
           manq.length ? "croisements non couverts" : "rien ne manque",
           manq.length ? "alerte" : ""),
         prod.value && debut.value
-          ? UI.stat("MARGE", Math.round((new Date(debut.value) - new Date(prod.value)) / 86400000) + " j",
+          ? UI.stat("Marge", Math.round((new Date(debut.value) - new Date(prod.value)) / 86400000) + " j",
               "entre remise et exécution",
               (new Date(debut.value) - new Date(prod.value)) < 0 ? "alerte" : "")
           : null

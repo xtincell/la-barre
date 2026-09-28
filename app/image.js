@@ -174,11 +174,11 @@ window.IMAGE = (function () {
 
     if (!a) {
       return O.el("div." + classe.replace(/ /g, ".") + ".vide", {},
-        O.el("span.absente", {}, "aucun visuel"));
+        O.el("span.absente", {}, "Aucun visuel"));
     }
     return O.el("div." + classe.replace(/ /g, ".") + ".vide.attente", {},
       O.el("span.va-f" + (a.nomme ? "" : ".sans"), { title: a.fichier || "" },
-        a.fichier || "nom de fichier non arrêté"),
+        a.fichier || "Nom de fichier non arrêté"),
       a.quoi ? O.el("span.va-q", { title: a.quoi }, a.quoi) : null);
   }
 

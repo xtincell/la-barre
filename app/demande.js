@@ -64,7 +64,7 @@ window.DEMANDE = (function () {
     var ds = toutes(p);
     return el("div.dm", {},
       el("div.rtbl-tete", {},
-        el("span.t", {}, "LES DEMANDES DE PROPOSITION"),
+        el("span.t", {}, "Les demandes de proposition"),
         el("span.n", {}, ds.length ? ds.length + (ds.length > 1 ? " émises" : " émise") : "aucune"),
         el("button.b.nu", { type: "button", onclick: function () { editer(p, null, rafraichir); } },
           "+ demande")),
@@ -89,14 +89,14 @@ window.DEMANDE = (function () {
       ETAT.ligne(ETAT.demande(d), "dmd-etat"),
       el("div.dmd-m", {},
         el("span", {}, da ? da.nom : "aucun DA nommé"),
-        e ? el("span", {}, "étage " + e.n + " · " + e.effort + " %") : el("span.alerte", {}, "étage non fixé"),
+        e ? el("span", {}, "Étage " + e.n + " · " + e.effort + " %") : el("span.alerte", {}, "Étage non fixé"),
         el("span", {}, (d.criteres || []).length + " critères"),
         el("span" + ((d.latitude || []).length ? "" : ".alerte"), {},
           (d.latitude || []).length + " points de latitude"),
         d.echeance
           ? el("span" + (retard < 0 ? ".alerte" : retard < 3 ? ".attente" : ""), {},
               retard < 0 ? "en retard de " + (-retard) + " j" : "dans " + retard + " j")
-          : el("span.alerte", {}, "sans délai")),
+          : el("span.alerte", {}, "Sans délai")),
       manque ? el("div.dmd-k", {}, manque + (manque > 1 ? " conditions manquantes" : " condition manquante")) : null
     );
   }

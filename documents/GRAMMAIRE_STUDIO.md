@@ -278,3 +278,12 @@ l'atelier deviennent une section blanche ; le rail de validation (« VALIDATION 
 la ligne d'état `ETAT.ligne` et ses variantes (`.bic-etat`, `.dmd-etat`…). Signalé,
 non traité : `colonneRoute` et `executions`, dans `vue-bigidea.js`, ne sont plus
 appelées nulle part. Mesure à 1280 et 375 px : à zéro, hors données.
+
+**Passe 4c — Dossier : les pistes (en cours, interrompue le 28/09).** Fait, non
+encore vérifié à l'écran : casse de phrase dans les six modules de la section ;
+vignette vide passée au §2 (elle portait 175 sérifs sur PRJ-BTS26) ; route retenue
+réécrite (`rt-*`), KV maîtres en grille compacte au lieu de grandes cartes, groupes
+de déclinaisons repliables (la section faisait 24 817 px) ; bloc de l'axe créatif
+renommé `.axe-bloc` (collision avec les puces `.axe` du livrable) et réécrit. Reste :
+le comparateur (`cmp-*`, sans toucher aux `cmp-*` de la campagne), la bande de
+priorité (`prb-*`), le rétroplanning (`re-*`, `rep-*`), puis mesure 1280/375.
