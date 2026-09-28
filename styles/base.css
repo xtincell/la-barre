@@ -371,7 +371,7 @@ body {
 
 /* Les sections : la couleur dit l'état, le clic emmène. Pas une liste de liens
  * qui redouble les onglets — une jauge navigable. */
-.rd-pips { display: flex; flex-wrap: wrap; gap: 2px; margin-top: .3rem; }
+
 .rdp {
   flex: 1 1 auto; min-width: 10px; height: 14px; position: relative;
   background: var(--trait); text-decoration: none; display: block;

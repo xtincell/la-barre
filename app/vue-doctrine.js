@@ -53,13 +53,13 @@ window.VUE_DOCTRINE = (function () {
   function lien(type) {
     var r = renvoi(type);
     if (!r) return null;
-    return el("button.b.nu.doc-lien", { type: "button",
-      title: "ouvrir la doctrine — " + r.quoi,
+    return el("button.studio-lien.doc-lien", { type: "button",
+      title: "Ouvrir la doctrine — " + r.quoi,
       onclick: function (e) {
         e.stopPropagation();
         ouvert = r.bloc;
         location.hash = "#/referentiel/doctrine";
-      } }, "pourquoi →");
+      } }, "Pourquoi →");
   }
 
   /* ————————————————————— L'écran ————————————————————— */

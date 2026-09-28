@@ -217,9 +217,9 @@ window.APP = (function () {
     var visuel = premierVisuel(p);
 
     return el("div.bloc-projets" + (ici ? ".ici" : ""), {},
-      el("div.rail-titre", {}, "LE DOSSIER OUVERT",
+      el("div.rail-titre", {}, "Le dossier ouvert",
         projets.length > 1
-          ? el("button.rd-changer", { type: "button", onclick: function () { choisir(projets, p); } }, "changer")
+          ? el("button.rd-changer", { type: "button", onclick: function () { choisir(projets, p); } }, "Changer")
           : null),
 
       el("a.rd", { href: "#/projets/" + p.id },
@@ -233,23 +233,17 @@ window.APP = (function () {
                 title: blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; })
                   .map(function (b) { return b.quoi + " — " + REGLES.prix(b.type); }).join("\n"),
               }, durs + (durs > 1 ? " blocages" : " blocage"))
-            : el("span.rde.vert", {}, "rien ne bloque"),
-          infs ? el("span.rde.attente", {}, infs + " inférés") : null),
+            : el("span.rde.vert", {}, "Rien ne bloque"),
+          infs ? el("span.rde.attente", {}, infs + (infs > 1 ? " inférés" : " inféré")) : null),
         jours !== null
           ? el("span.rd-ech" + (jours < 0 ? ".alerte" : jours < 15 ? ".attente" : ""), {},
-              jours < 0 ? "échéance dépassée de " + (-jours) + " j"
-                : jours === 0 ? "échéance aujourd'hui" : "échéance dans " + jours + " j")
-          : el("span.rd-ech.alerte", {}, "aucune échéance")
-      ),
-
-      /* Les sections en pastilles : la couleur dit l'état, le clic emmène. */
-      el("div.rd-pips", {}, sectionsDe(p).map(function (sc) {
-        var e = VUE_PROJETS.etatSection(p, sc.cle);
-        return el("a.rdp." + e.classe + (r.arg === p.id && r.sous === sc.cle ? ".ici" : ""), {
-          href: "#/projets/" + p.id + "/" + sc.cle,
-          title: sc.nom + " — " + e.texte,
-        }, el("span", {}, sc.nom));
-      }))
+              jours < 0 ? "Échéance dépassée de " + (-jours) + " j"
+                : jours === 0 ? "Échéance aujourd'hui" : "Échéance dans " + jours + " j")
+          : el("span.rd-ech.alerte", {}, "Aucune échéance")
+      )
+      /* Les pastilles de sections sont parties : le navigateur à trois temps,
+       * juste à droite, dit la même chose avec les noms. Le rail rappelle où
+       * l'on est ; il ne double pas l'écran. */
     );
   }
 

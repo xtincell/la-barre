@@ -208,3 +208,23 @@ du Bureau telle quelle (`studio-revue` · `studio-table` · `studio-piece` ·
 
 Mesure à 1280 et 375 px : zéro capitale, zéro sérif, zéro aplat, zéro cible sous
 44 px, zéro contraste sous 4,5:1, zéro débordement.
+
+**Passe 2 — Dossier : en-tête, navigateur, rail (28/09).** L'en-tête devient l'en-tête
+d'écran Studio (surtitre *MT-0043 · Campagne*, titre Asap, client) et le bloc d'état
+qui flottait à droite du titre devient une **ligne d'état** sous le chapô. La bande de
+méta en capitales devient une liste de définitions dans une section blanche. Le
+navigateur à trois temps prend la forme du sélecteur de mode, avec son avancement ; les
+étapes deviennent une sous-navigation en texte (signe ✓ ◐ ○, filet bleu sous l'étape
+active). Le rail gauche perd ses pastilles de sections, qui doublaient le navigateur.
+Tranché au §2 pour tout le produit, parce que ce sont des composants partagés :
+`.prix` et `.banniere` perdent leurs aplats et leurs couleurs écrites pour le sombre
+(texte `#e5c88c` sur blanc) ; `.panneau-lat` devient une section blanche ; `.blocage`
+un élément à filet ; `.b`, `.b.nu`, `.bouton`, `.bouton.creux` rejoignent les deux
+gestes de la référence ; le lien « Pourquoi → » vers la doctrine devient un geste texte.
+CSS mort retiré : l'ancien en-tête, les tuiles d'état, le navigateur `.np-*`, la bande
+`.bande-meta` — trois commentaires orphelins retirés avec.
+
+Mesure hors contenu de section, à 1280 et 375 px : zéro sérif, zéro aplat, zéro cible
+sous 44 px, zéro contraste sous 4,5:1, zéro débordement. Restent en capitales deux
+données (le nom du dossier chez People, des initiales) et le rail propre à la big idea,
+repris en passe 4.

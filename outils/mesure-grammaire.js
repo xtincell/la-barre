@@ -1,7 +1,8 @@
 /* La mesure de la grammaire Studio (documents/GRAMMAIRE_STUDIO.md §3), à charger dans
- * la console : capitales, sérif, aplats d état, cibles, contraste, débordement.
- * Usage : await __mesure(["valider/file", "planning/ordre"]) */
-window.__mesure = async function (routes) {
+ * la console : capitales, sérif, aplats d'état, cibles, contraste, débordement.
+ * Usage : await __mesure(["valider/file", "planning/ordre"])
+ * Option : await __mesure(routes, ".pj-section") ignore ce qui vit sous ce sélecteur. */
+window.__mesure = async function (routes, exclure) {
   function rgb(s) { var m = s.match(/[\d.]+/g); return m ? m.map(Number) : [0,0,0,0]; }
   function hsl(r, g, b) { r/=255; g/=255; b/=255; var mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2, s=0, h=0;
     if (mx!==mn) { var d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn); h = mx===r?((g-b)/d+(g<b?6:0)):mx===g?((b-r)/d+2):((r-g)/d+4); h*=60; } return [h,s,l]; }
@@ -15,6 +16,7 @@ window.__mesure = async function (routes) {
     var z = document.querySelector(".zone"); if (!z) { res.push({ r: r, erreur: "pas de zone" }); continue; }
     var caps = [], serif = [], aplats = [], cibles = [], contraste = [], titres = 0;
     z.querySelectorAll("*").forEach(function (e) {
+      if (exclure && e.closest(exclure)) return;
       if (!e.offsetParent && getComputedStyle(e).position !== "fixed") return;
       var cs = getComputedStyle(e);
       var t = Array.prototype.filter.call(e.childNodes, function (n) { return n.nodeType === 3; }).map(function (n) { return n.textContent; }).join("").trim();

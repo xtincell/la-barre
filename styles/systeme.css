@@ -199,15 +199,6 @@
 
 /* ————————————————————— Communs ————————————————————— */
 
-.bande-meta {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1px; background: var(--trait); border: 1px solid var(--trait);
-}
-.bande-meta .bloc { background: var(--nuit-carte); padding: .55rem .7rem; }
-.bande-meta .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
-.bande-meta .v { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); margin-top: .15rem; }
-.bande-meta .v.vide { color: var(--bloquant-txt); font-style: italic; }
-
 .file-item { display: flex; gap: .55rem; align-items: center; padding: .4rem 0;
   border-bottom: 1px solid var(--trait); }
 .file-item:last-child { border-bottom: 0; }

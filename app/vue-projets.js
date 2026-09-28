@@ -122,7 +122,7 @@ window.VUE_PROJETS = (function () {
     var rs = BOUCLES.resultats(p);
 
     return el("div.panneau-lat", {},
-      el("h3", {}, "LE RÉSULTAT",
+      el("h3", {}, "Le résultat",
         el("span.droite", { style: { color: e.ton === "vert" ? "var(--vert)"
           : e.ton === "attente" ? "var(--attente)" : "var(--clair-terne)" } }, e.nom)),
       el("p.psa-q", {}, e.quoi),
@@ -184,7 +184,7 @@ window.VUE_PROJETS = (function () {
     if (e.cle === "rien") return null;
 
     return el("div.panneau-lat", {},
-      el("h3", {}, "LA REMISE",
+      el("h3", {}, "La remise",
         el("span.droite", { style: { color: e.ton === "alerte" ? "var(--bloquant-txt)"
           : e.ton === "vert" ? "var(--vert)" : "var(--attente)" } }, e.nom)),
       el("p.psa-q", {}, e.quoi),
@@ -206,7 +206,7 @@ window.VUE_PROJETS = (function () {
     var bdc = b ? CHIFFRAGE.BDC[b] : null;
 
     return el("div.panneau-lat", {},
-      el("h3", {}, "LE COÛT",
+      el("h3", {}, "Le coût",
         el("span.droite", { style: { color: e.ton === "alerte" ? "var(--bloquant-txt)"
           : e.ton === "vert" ? "var(--vert)" : "var(--attente)" } }, e.nom)),
       el("p.psa-q", {}, e.quoi),
@@ -231,7 +231,7 @@ window.VUE_PROJETS = (function () {
     var a = r.annonce;
 
     return el("div.panneau-lat", {},
-      el("h3", {}, "RELEVÉ",
+      el("h3", {}, "Relevé",
         el("span.droite", { style: { color: "var(--clair-terne)" } },
           r.niveau === "fort" ? "preuve solide"
             : r.niveau === "moyen" ? "preuve partielle" : "trace ténue")),
@@ -241,14 +241,14 @@ window.VUE_PROJETS = (function () {
 
       (r.rolesNoms || []).length
         ? el("div", { style: { "margin-top": ".7rem" } },
-            el("div.rlv-eti", {}, "RÔLES TENUS"),
+            el("div.rlv-eti", {}, "Rôles tenus"),
             el("div", {}, r.rolesNoms.map(function (x) {
               return el("div.rlv-r", {}, x); })))
         : null,
 
       r.preuve
         ? el("div", { style: { "margin-top": ".7rem" } },
-            el("div.rlv-eti", {}, "LA PREUVE, MOT POUR MOT"),
+            el("div.rlv-eti", {}, "La preuve, mot pour mot"),
             el("p.rlv-p", {}, r.preuve))
         : null,
 
@@ -256,7 +256,7 @@ window.VUE_PROJETS = (function () {
        * les pièces manquantes : on affiche l'écart, qui est l'information. */
       a
         ? el("div", { style: { "margin-top": ".7rem" } },
-            el("div.rlv-eti", {}, "CE QUI EST ANNONCÉ"),
+            el("div.rlv-eti", {}, "Ce qui est annoncé"),
             el("p.rlv-p", {}, "« " + a.phrase + " » au document, "
               + (a.traces ? a.traces + (a.traces > 1 ? " tracés ici" : " tracé ici")
                           : "aucun tracé ici")
@@ -268,11 +268,11 @@ window.VUE_PROJETS = (function () {
 
       (r.radar || []).length
         ? el("div", { style: { "margin-top": ".7rem" } },
-            el("div.rlv-eti", {}, "AU RADAR MATANGA"),
+            el("div.rlv-eti", {}, "Au Radar Matanga"),
             el("p.rlv-p", {}, r.radar.join("  ·  ")),
-            el("a.b.nu", { href: "#/referentiel/radar" }, "voir le registre →"))
+            el("a.b.nu", { href: "#/referentiel/radar" }, "Voir le registre →"))
         : el("div", { style: { "margin-top": ".7rem" } },
-            el("div.rlv-eti", {}, "AU RADAR MATANGA"),
+            el("div.rlv-eti", {}, "Au Radar Matanga"),
             el("p.rlv-p", {}, "Aucun brief apparié. La campagne est documentée, "
               + "sa demande d'origine n'a pas été retrouvée au registre.")));
   }
@@ -289,7 +289,7 @@ window.VUE_PROJETS = (function () {
     var bilan = clos ? ((p.cloture.bilan || "").trim()) : "";
 
     return el("div.panneau-lat", {},
-      el("h3", {}, "LA BOUCLE",
+      el("h3", {}, "La boucle",
         el("span.droite", { style: { color: clos && !infere ? "var(--clair-terne)" : "var(--attente)" } },
           infere ? "close, inférée" : clos ? "close" : "ouverte")),
 
@@ -942,67 +942,71 @@ window.VUE_PROJETS = (function () {
     var ident = p.sections.identite || {};
     var rafraichir = function () { projet(hote, id, courante); };
 
-    hote.className = "zone avec-rail";
+    hote.className = "zone avec-rail pj";
     O.vider(hote);
 
-    var gauche = el("div", {},
-      el("div.projet-entete", {},
-        MARQUE.pastille(p, 52),
-        el("div.titre", {},
-          el("span.ref", { style: { "font-size": "var(--t-micro)", "letter-spacing": ".1em", color: "var(--clair-terne)" } },
-            p.ref + " · " + g.nom.toUpperCase()),
-          el("h2", {}, p.nom),
-          el("div.sous", {}, ident.client || "client non renseigné")
-        ),
-        etatDuDossier(p, blocs, durs, infs)
-      ),
+    /* L'en-tête d'écran du Studio (GRAMMAIRE_STUDIO §2) : surtitre, titre,
+     * client, puis une ligne d'état — le compte qui coûte et la phrase du plus
+     * ancien. Le bloc qui flottait à droite du titre disait la même chose en
+     * plus grand, et poussait le titre sur trois lignes. */
+    var gauche = el("div.pj-corps", {},
+      el("header.studio-entete.pj-entete", {},
+        el("div.pj-id", {},
+          MARQUE.pastille(p, 44),
+          el("div.pj-id-t", {},
+            el("p.studio-date", {}, p.ref + " · " + g.nom),
+            el("h1", {}, p.nom),
+            el("p.studio-intro", {}, ident.client || "Client non renseigné"),
+            etatDuDossier(p, blocs, durs, infs)))),
 
-      el("div.bande-meta", { style: { "margin-top": "1rem" } },
-        meta("MARCHÉS", marches(p)),
-        meta("SUPPORTS", supports(p)),
-        meta("ÉCHÉANCE", ident.echeance ? O.joli(ident.echeance) : null),
-        meta("DÉCIDEUR FINAL", nomDecideur(p)),
-        meta("FENÊTRE", ident.fenetre)
+      el("dl.pj-meta", {},
+        meta("Marchés", marches(p)),
+        meta("Supports", supports(p)),
+        meta("Échéance", ident.echeance ? O.joli(ident.echeance) : null),
+        meta("Décideur final", nomDecideur(p)),
+        meta("Fenêtre", ident.fenetre)
       ),
 
       chezPeople(p),
 
       navigateur(p, g, courante, hote),
 
-      el("div", { style: { "margin-top": "1.2rem" } }, corpsSection(p, courante, rafraichir))
+      el("div.pj-section", {}, corpsSection(p, courante, rafraichir))
     );
 
     var particulier = courante === "bigidea" ? VUE_BIGIDEA.rail(p) : null;
-    var droite = el("div.aside", {},
+    var droite = el("div.aside.pj-rail", {},
       particulier,
-      blocs.length ? el("div.panneau-lat", {},
-        el("h3", {}, "CE QUI BLOQUE ICI", el("span.droite", {}, String(blocs.length))),
+      blocs.length ? el("div.panneau-lat.pj-blocages", {},
+        el("h3", {}, "Ce qui bloque ici", el("span.studio-compte.alerte", {}, String(blocs.length))),
         /* Chaque blocage porte sa clé : quand il tombe, il tombe aux quatre
          * endroits où il vit — le rail, la carte du dossier, la charge, la
          * file — et pas seulement là où on l'a résolu. C'est ce qui rend la
          * résolution croyable. */
         el("div.blocages", {}, blocs.map(function (b) {
-          return el("div.blocage", { "data-blocage": b.cle },
+          var infere = b.type === "infere-non-contresigne";
+          return el("div.blocage.f-" + (infere ? "attente" : "alerte"), { "data-blocage": b.cle },
             el("b", {}, b.quoi),
             el("span.quand", {}, b.jours === 0 ? "depuis aujourd'hui" : "depuis " + b.jours + (b.jours > 1 ? " jours" : " jour")),
             b.prix ? el("span.cout", {}, b.prix) : null,
-            (b.pieces || []).length
-              ? el("button.b.nu", { type: "button", style: { "font-size": "var(--t-micro)", "margin-top": ".25rem" },
-                  onclick: function () { lesPieces(p, b, rafraichir); } },
-                  "les " + b.pieces.length + " livrables →")
-              : null,
-            /* Le renvoi à la doctrine. Un contrôle qui refuse sans dire selon
-             * quel critère refait exactement ce que la doctrine reproche aux
-             * agences : « on te dira ça ne marche pas sans te dire selon quel
-             * critère ». Celui qui remplace le DC doit pouvoir lire la règle. */
-            window.VUE_DOCTRINE ? VUE_DOCTRINE.lien(b.type) : null,
-            b.type === "infere-non-contresigne"
-              ? el("button.b.nu", { type: "button", style: { "font-size": "var(--t-micro)", "margin-top": ".25rem" },
-                  onclick: function () { INFERENCE.panneau(p, rafraichir); } }, "faire contresigner →")
-              : null
+            el("span.gestes", {},
+              (b.pieces || []).length
+                ? el("button.studio-lien", { type: "button",
+                    onclick: function () { lesPieces(p, b, rafraichir); } },
+                    "Les " + b.pieces.length + " livrables →")
+                : null,
+              /* Le renvoi à la doctrine. Un contrôle qui refuse sans dire selon
+               * quel critère refait exactement ce que la doctrine reproche aux
+               * agences : « on te dira ça ne marche pas sans te dire selon quel
+               * critère ». Celui qui remplace le DC doit pouvoir lire la règle. */
+              window.VUE_DOCTRINE ? VUE_DOCTRINE.lien(b.type) : null,
+              infere
+                ? el("button.studio-lien", { type: "button",
+                    onclick: function () { INFERENCE.panneau(p, rafraichir); } }, "Faire contresigner →")
+                : null)
           );
         }))
-      ) : el("div.panneau-lat", {}, el("h3", {}, "ÉTAT"), el("div.prix.vert", {}, el("span.signe", {}, "✓"), "Rien ne bloque ce projet.")),
+      ) : el("div.panneau-lat", {}, el("h3", {}, "État"), el("div.prix.vert", {}, el("span.signe", {}, "✓"), "Rien ne bloque ce projet.")),
       panneauSante(p, g, durs),
       panneauReleve(p),
       panneauChiffrage(p, rafraichir),
@@ -1026,7 +1030,7 @@ window.VUE_PROJETS = (function () {
     if (!x) return null;
     var n = (x.refs || []).length;
     return el("div.pe-people" + (n > 1 ? ".multiple" : n ? "" : ".absent"), {},
-      el("span.pep-t", {}, "MATANGA PEOPLE"),
+      el("span.pep-t", {}, "Chez Matanga People"),
       el("span.pep-r", {}, n
         ? (x.refs || []).join("  ·  ") + (x.nom ? "  —  " + x.nom : "")
         : "aucun dossier correspondant"),
@@ -1048,56 +1052,47 @@ window.VUE_PROJETS = (function () {
    * c'est ce qu'elle coûte qu'on dit. */
   function etatDuDossier(p, blocs, durs, infs) {
     var n = (p.livrables || []).filter(function (l) { return !l.annule; }).length;
+    /* Une ligne, pas un bloc : le signe, le compte qui coûte, puis la phrase.
+     * La couleur est dans le signe et le compte, jamais en aplat. */
+    function ligne(ton, signe, compte, phrase) {
+      return el("p.pj-etat.f-" + ton, {},
+        el("span.pj-signe", { "aria-hidden": "true" }, signe),
+        el("b", {}, compte),
+        phrase ? el("span", {}, " — " + phrase) : null);
+    }
+    function pl(k, un, plusieurs) { return k + " " + (k > 1 ? plusieurs : un); }
 
     /* Un dossier clos ne se lit pas par ce qui le bloque : il n'y a plus rien
      * à débloquer. Il se lit par ce qu'il laisse au suivant. */
     if (window.CLOTURE && CLOTURE.est(p)) {
       var e = CLOTURE.etat(p);
       var avecBilan = e.cle === "clos";
-      return el("div.cotes", {}, el("div.pe-etat." + (avecBilan ? "terne" : "attente"), {},
-        el("span.pee-c", {}, String(n)),
-        el("span.pee-n", {}, n > 1 ? "livrables" : "livrable"),
-        el("p.pee-q", {}, e.quoi
-          + (durs ? "  " + durs + (durs > 1 ? " risques restent" : " risque reste")
-              + " : les pièces sont toujours dehors." : ""))));
+      return ligne(avecBilan ? "calme" : "attente", avecBilan ? "✓" : "◐",
+        (avecBilan ? "Clos" : "Clos sans bilan") + " · " + pl(n, "livrable", "livrables"),
+        e.quoi + (durs ? " " + pl(durs, "risque reste", "risques restent")
+          + " : les pièces sont toujours dehors." : ""));
     }
 
-    /* REGLES.blocages trie du plus ancien au plus récent. */
+    /* REGLES.blocages trie du plus ancien au plus récent. Le rail les liste
+     * tous ; ici on dit ce que coûte celui qui traîne depuis le plus longtemps,
+     * et on le nomme — sinon son prix a l'air d'être celui de tous. */
     var vieux = blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; })[0];
-
     if (durs) {
-      return el("div.cotes", {}, el("div.pe-etat.alerte", {},
-        el("span.pee-c", {}, String(durs)),
-        el("span.pee-n", {}, durs > 1 ? "blocages" : "blocage"),
-        /* Le rail les liste déjà tous. Ce qu'on dit ici, c'est ce que coûte
-         * celui qui traîne depuis le plus longtemps — et on le nomme, sinon
-         * son prix a l'air d'être celui des trois. */
-        el("p.pee-q", {},
-          (vieux
-            ? (durs > 1 ? "Le plus ancien" : "Le seul")
-              + (vieux.jours > 0
-                  ? ", depuis " + vieux.jours + (vieux.jours > 1 ? " jours" : " jour") : "")
-              + " : " + vieux.quoi + ". "
-              + (vieux.prix || "")
-            : "Rien ne se livre tant qu'ils tiennent.")
-          + (infs ? "  " + infs + (infs > 1 ? " champs tiennent" : " champ tient")
-              + " en plus sur une hypothèse." : ""))));
+      return ligne("alerte", "●", pl(durs, "blocage", "blocages"),
+        (vieux
+          ? (durs > 1 ? "le plus ancien" : "le seul")
+            + (vieux.jours > 0 ? ", depuis " + pl(vieux.jours, "jour", "jours") : "")
+            + " : " + vieux.quoi + ". " + (vieux.prix || "")
+          : "rien ne se livre tant qu'ils tiennent.")
+        + (infs ? " " + pl(infs, "champ tient", "champs tiennent") + " en plus sur une hypothèse." : ""));
     }
-
     if (infs) {
-      return el("div.cotes", {}, el("div.pe-etat.attente", {},
-        el("span.pee-c", {}, String(infs)),
-        el("span.pee-n", {}, infs > 1 ? "champs inférés" : "champ inféré"),
-        el("p.pee-q", {}, "Utilisables pour travailler, pas opposables au client : "
-          + "le jour où il conteste, rien ne tient.")));
+      return ligne("attente", "◐", pl(infs, "champ inféré", "champs inférés"),
+        "utilisables pour travailler, pas opposables au client : le jour où il conteste, rien ne tient.");
     }
-
-    return el("div.cotes", {}, el("div.pe-etat.vert", {},
-      el("span.pee-c", {}, String(n)),
-      el("span.pee-n", {}, n > 1 ? "livrables" : "livrable"),
-      el("p.pee-q", {}, n
-        ? "Rien ne bloque ce dossier. Ce qui reste est du travail, pas une décision."
-        : "Aucun livrable. Une piste retenue les engendre — c'est là qu'elles naissent.")));
+    return ligne("vert", "✓", pl(n, "livrable", "livrables"), n
+      ? "rien ne bloque ce dossier. Ce qui reste est du travail, pas une décision."
+      : "aucun livrable. Une piste retenue les engendre — c'est là qu'elles naissent.");
   }
 
   /* Un blocage de lot s'ouvre : la liste des livrables qu'il porte, chacune
@@ -1140,34 +1135,36 @@ window.VUE_PROJETS = (function () {
     var phs = phases(p, g);
     var ici = phs.filter(function (x) { return x.cles.indexOf(courante) !== -1; })[0] || phs[0];
     var rang = phs.indexOf(ici);
+    var SIGNES = { plein: "✓", partiel: "◐", vide: "○" };
 
-    return el("div.nav-p", {},
-      /* Les trois temps. Toujours les mêmes, toujours au même endroit. */
-      el("div.np-phases", {}, phs.map(function (x, i) {
+    return el("nav.pj-nav", { "aria-label": "Les temps du dossier" },
+      /* Les trois temps. Toujours les mêmes, toujours au même endroit : le
+       * sélecteur de mode du Studio, qui porte en plus son avancement. */
+      el("div.pj-phases", {}, phs.map(function (x, i) {
         var amont = phs.slice(0, i).filter(function (y) { return y.etat !== "fait"; });
-        return el("button.npp." + x.etat + (x === ici ? ".ici" : ""), {
-          type: "button",
+        return el("button.pj-phase." + x.etat + (x === ici ? ".active" : ""), {
+          type: "button", "aria-pressed": x === ici ? "true" : "false",
           title: x.ph.quoi + (amont.length ? "  —  " + x.ph.sans : ""),
           onclick: function () { location.hash = "#/projets/" + p.id + "/" + premierUtile(x); },
         },
-          el("span.npp-r", {}, String(i + 1)),
-          el("span.npp-c", {},
-            el("span.npp-n", {}, x.ph.nom),
-            el("span.npp-q", {}, x.etat === "fait" ? x.ph.quoi
-              : x.bloque ? nomSection(x.bloque.cle).toLowerCase() + " · " + x.bloque.e.texte
-              : x.ph.quoi)),
-          el("span.npp-j", {}, x.pleins + "/" + x.total),
-          el("span.npp-b", {}, el("i", { style: { width: Math.round((x.pleins / x.total) * 100) + "%" } }))
+          el("span.pjp-tete", {},
+            el("span.pjp-n", {}, (i + 1) + " · " + x.ph.nom),
+            el("span.studio-compte", {}, x.pleins + "/" + x.total)),
+          el("span.pjp-q", {}, x.etat === "fait" ? x.ph.quoi
+            : x.bloque ? nomSection(x.bloque.cle) + " · " + x.bloque.e.texte
+            : x.ph.quoi),
+          el("span.pjp-b", { "aria-hidden": "true" }, el("i", { style: { width: Math.round((x.pleins / x.total) * 100) + "%" } }))
         );
       })),
 
-      /* Les étapes du temps où l'on est. */
-      el("div.np-etapes", {}, ici.etats.map(function (x) {
-        return el("button.npe." + x.e.classe + (x.cle === courante ? ".ici" : ""), {
-          type: "button",
+      /* Les étapes du temps où l'on est : une sous-navigation en texte. */
+      el("div.pj-etapes", {}, ici.etats.map(function (x) {
+        return el("button.pj-etape." + x.e.classe + (x.cle === courante ? ".active" : ""), {
+          type: "button", "aria-current": x.cle === courante ? "page" : null,
           onclick: function () { location.hash = "#/projets/" + p.id + "/" + x.cle; },
-        }, el("span.npe-n", {}, nomSection(x.cle)),
-          el("span.npe-e", {}, x.e.texte));
+        },
+          el("span.pje-n", {}, el("span.pje-s", { "aria-hidden": "true" }, SIGNES[x.e.classe] || "○"), nomSection(x.cle)),
+          el("span.pje-e", {}, x.e.texte));
       })),
 
       /* Le document qui fait passer au temps suivant. */
@@ -1176,25 +1173,27 @@ window.VUE_PROJETS = (function () {
         if (!doc) return null;
         var d = COMPILATEUR.DOCS[doc];
         var m = COMPILATEUR.controles(p, doc).filter(function (c) { return !c.ok; }).length;
-        return el("div.np-doc" + (m ? ".manque" : ""), {},
-          el("div.npd-c", {},
+        return el("div.pj-ligne.f-" + (m ? "attente" : "vert"), {},
+          el("div.pjl-t", {},
             el("b", {}, d.nom),
             el("span", {}, m
               ? m + (m > 1 ? " manques — " : " manque — ") + d.sans
-              : "complet — " + d.ouvre + " peut s'ouvrir")),
-          el("button.b" + (m ? ".nu" : ".or"), { type: "button",
+              : "Complet — " + d.ouvre + " peut s'ouvrir.")),
+          el("button" + (m ? ".studio-lien" : ".b.or"), { type: "button",
             onclick: function () { COMPILATEUR.ouvrir(p, doc, function () { projet(hote, p.id, courante); }); } },
-            "ouvrir"));
+            "Ouvrir le document"));
       })(),
 
       /* Ce que ce temps coûte s'il démarre sans que l'amont soit fait. */
       (function () {
         var amont = phs.slice(0, rang).filter(function (y) { return y.etat !== "fait"; });
         if (!amont.length) return null;
-        return el("div.np-cout", {},
-          el("b", {}, amont.map(function (y) { return y.ph.nom.toLowerCase(); }).join(" et ")
-            + (amont.length > 1 ? " ne sont pas finis" : " n'est pas fini")),
-          el("span", {}, ici.ph.sans));
+        var noms = amont.map(function (y) { return y.ph.nom.toLowerCase(); }).join(" et ");
+        return el("div.pj-ligne.f-alerte", {},
+          el("div.pjl-t", {},
+            el("b", {}, noms.charAt(0).toUpperCase() + noms.slice(1)
+              + (amont.length > 1 ? " ne sont pas finis" : " n'est pas fini")),
+            el("span", {}, ici.ph.sans)));
       })()
     );
   }
@@ -1205,7 +1204,7 @@ window.VUE_PROJETS = (function () {
   }
 
   function meta(t, v) {
-    return el("div.bloc", {}, el("div.t", {}, t), el("div.v" + (v ? "" : ".vide"), {}, v || "non renseigné"));
+    return el("div.pj-m", {}, el("dt", {}, t), el("dd" + (v ? "" : ".vide"), {}, v || "Non renseigné"));
   }
 
   function marches(p) {
@@ -1244,7 +1243,7 @@ window.VUE_PROJETS = (function () {
     var montres = manquants.slice(0, 6);
 
     return el("div.panneau-lat", {},
-      el("h3", {}, "SANTÉ DU DOSSIER", el("span.droite", { style: { color: part === 100 ? "var(--vert)" : "var(--attente)" } }, part + " %")),
+      el("h3", {}, "Santé du dossier", el("span.droite", { style: { color: part === 100 ? "var(--vert)" : "var(--attente)" } }, part + " %")),
       el("div.jauge." + (part === 100 ? "" : part >= 70 ? "limite" : "depasse"), {}, el("i", { style: { width: part + "%" } })),
 
       el("p.psa-q", {}, (window.CLOTURE && CLOTURE.est(p))
@@ -1280,7 +1279,7 @@ window.VUE_PROJETS = (function () {
   function panneauEquipe(p) {
     var equipe = p.equipe || [];
     return el("div.panneau-lat", {},
-      el("h3", {}, "ÉQUIPE"),
+      el("h3", {}, "Équipe"),
       /* Une personne archivée qui a signé quelque chose ici reste au rail : on
        * n'efface pas une paternité. Mais elle ne s'affiche pas comme si elle
        * était au plateau — le rail disait « Claude · Concepteur-Rédacteur »

@@ -64,11 +64,6 @@
 
 /* ————————————————————— Projet : ruban de sections ————————————————————— */
 
-.projet-entete { display: flex; gap: 1.2rem; align-items: flex-start; flex-wrap: wrap; }
-.projet-entete .titre h2 { font-family: var(--lecture); font-size: var(--t-nombre); letter-spacing: var(--ls-nombre); font-weight: 400; line-height: 1.1; }
-.projet-entete .titre .sous { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); margin-top: .2rem; }
-.projet-entete .cotes { margin-left: auto; display: flex; gap: 1.2rem; align-items: center; }
-
 /* ————————————————————— Pistes ————————————————————— */
 
 .routes { display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); gap: .7rem; }
@@ -345,7 +340,6 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 .livf.vide .livf-n { color: var(--clair-terne); }
 .livf.ici .livf-n { color: var(--clair); }
 .livf-c { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); }
-
 
 .liv-p { display: flex; align-items: center; gap: .45rem; max-width: 100%; }
 .liv-p select { flex: 1 1 auto; min-width: 0; }
@@ -792,9 +786,6 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 .docg-c { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
-/* Le renvoi depuis un blocage. */
-.doc-lien { font-size: var(--t-micro) !important; margin-top: .25rem; color: var(--or) !important; }
-
 @media (max-width: 760px) {
   .docs-src { margin-left: 0; }
   .doc-s { overflow-x: auto; }
@@ -875,7 +866,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 @media print {
   .panneau-lat, .pr-lat, .recev, .salle, .dc-modes, .pr-modes, .liv-filtres,
   .prd-dette, .prd-manque, .prp-gestes, .pr-pages, .pr-deux,
-  .nav3, .fil, .chapeau, .projet-entete .droite { display: none !important; }
+  .nav3, .fil, .chapeau { display: none !important; }
 
   /* Le dossier prend toute la feuille, et chaque document commence sa page. */
   .zone, .dc, .dc-corps { display: block !important; padding: 0 !important; margin: 0 !important; }

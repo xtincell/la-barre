@@ -40,6 +40,54 @@
 .studio-piece.f-alerte, .studio-piece.f-attente, .studio-piece.f-or, .studio-piece.f-calme {
   border-left: 3px solid var(--ton); border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
 
+/* Les boutons : deux gestes dans la référence, le plein bleu et le geste
+ * texte. `.b` seul garde un filet pour se voir hors d'une rangée ; `.bouton`,
+ * resté sans règle depuis la v3, prend les mêmes. */
+.b { background: var(--surface-1); color: var(--clair); border: 1px solid var(--trait);
+  font: 500 14px var(--affichage); padding: 6px 12px; }
+.b:hover { border-color: var(--trait-clair); color: var(--clair); }
+.b.nu { background: none; border-color: transparent; color: var(--clair-terne); }
+.b.nu:hover { color: var(--clair); border-color: transparent; }
+.bouton { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  background: var(--studio-bleu); color: var(--surface-1); border: 1px solid var(--studio-bleu);
+  font: 600 14px var(--affichage); padding: 6px 14px; }
+.bouton.creux { background: none; border-color: transparent; color: var(--studio-bleu);
+  font-weight: 500; padding: 0 8px; }
+.bouton.creux:hover { text-decoration: underline; text-underline-offset: 3px; filter: none; }
+
+/* Les bannières et les prix : filet d'état, texte à l'encre, pas d'aplat.
+ * Leurs couleurs étaient écrites en dur pour le sombre (#e5c88c sur blanc). */
+.prix, .banniere { background: var(--surface-1); border: 1px solid var(--trait);
+  border-left: 3px solid var(--ton, var(--arbitrage)); border-radius: 6px;
+  color: var(--clair); padding: 10px 14px; font-size: 13px; line-height: 1.5; }
+.prix .signe, .banniere .b-ico { color: var(--ton, var(--arbitrage)); }
+.prix.rouge, .banniere.rouge { --ton: var(--bloquant); color: var(--clair); background: var(--surface-1); border-color: var(--trait); border-left-color: var(--bloquant); }
+.prix.vert, .banniere.vert { --ton: var(--succes); color: var(--clair); background: var(--surface-1); border-color: var(--trait); border-left-color: var(--succes); }
+
+/* Le rail d'une page : une pile de sections blanches. Le panneau de contexte
+ * gris ne vit que dans une table ; sur la toile grise, le rail est blanc. */
+.aside { gap: 16px; }
+.panneau-lat { background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px;
+  padding: 18px 20px 20px; font-size: 13px; }
+.panneau-lat h3 { font: 550 17px/1.3 var(--affichage); letter-spacing: -.01em; color: var(--clair);
+  text-transform: none; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+.panneau-lat h3 .droite { margin-left: auto; font: 550 12px var(--affichage); letter-spacing: 0; }
+.panneau-lat .jauge { height: 4px; background: var(--surface-3); border-radius: 2px; margin: 4px 0 10px; overflow: hidden; }
+.panneau-lat .jauge i { border-radius: 2px; }
+
+/* Le blocage : un élément de liste blanc à filet gauche coloré — quoi, depuis
+ * (coloré), coût (gris), gestes (texte bleu). */
+.blocages { display: grid; gap: 8px; }
+.blocage { --ton: var(--bloquant); background: var(--surface-1); border: 1px solid var(--trait);
+  border-left: 3px solid var(--ton); border-radius: 6px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 4px; }
+.blocage.f-attente { --ton: var(--arbitrage); }
+.blocage b { font: 550 13px/1.45 var(--affichage); color: var(--clair); letter-spacing: 0; }
+.blocage .quand { font: 550 12px var(--affichage); color: var(--ton); letter-spacing: 0; }
+.blocage .cout { font-size: 12px; line-height: 1.5; color: var(--clair-terne); letter-spacing: 0; }
+.blocage .gestes { display: flex; flex-wrap: wrap; gap: 0 4px; margin: 2px 0 -8px -8px; }
+.blocage .gestes:empty { display: none; }
+
 /* ═════════════════════ Passe 1 · Décisions ═════════════════════ */
 
 .dc { display: block; min-width: 0; }
@@ -124,4 +172,127 @@
   .dx-visuels { grid-template-columns: 1fr; }
   .dx-contexte, .du-contexte { border-left: 0; border-top: 1px solid var(--trait); }
   .du-scene { padding: 16px; }
+}
+
+/* ═════════════════════ Passe 2 · Dossier : en-tête, navigateur, rail ═════════════════════ */
+
+.pj { gap: 28px; }
+.pj-corps { min-width: 0; }
+.pj-entete { padding: 0 0 20px; align-items: flex-start; }
+.pj-id { display: flex; gap: 18px; align-items: flex-start; min-width: 0; }
+.pj-id .pastille, .pj-id > :first-child { flex-shrink: 0; margin-top: 2px; }
+.pj-id-t { min-width: 0; }
+.pj-id-t .studio-date { margin-bottom: 8px; }
+.pj-entete h1 { font: 600 clamp(28px, 2.8vw, 42px)/1.08 var(--affichage); letter-spacing: -.045em;
+  color: var(--studio-encre); text-wrap: balance; overflow-wrap: anywhere; }
+.pj-entete .studio-intro { margin-top: 8px; }
+
+/* La ligne d'état : le signe et le compte portent la couleur, la phrase non. */
+.pj-etat { margin-top: 14px; max-width: 75ch; font-size: 13px; line-height: 1.6; color: var(--clair-terne); }
+.pj-etat .pj-signe { color: var(--ton); margin-right: 6px; }
+.pj-etat b { color: var(--ton); font-weight: 600; }
+.pj-etat.f-vert { --ton: var(--succes); }
+.pj-etat.f-calme b, .pj-etat.f-calme .pj-signe { color: var(--clair); }
+
+/* La méta : une section blanche, des définitions. */
+.pj-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0;
+  margin: 0; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; overflow: hidden; }
+.pj-m { padding: 14px 18px; border-right: 1px solid var(--trait); min-width: 0; }
+.pj-m:last-child { border-right: 0; }
+.pj-m dt { font-size: 11px; color: var(--clair-terne); margin-bottom: 4px; }
+.pj-m dd { margin: 0; font-size: 13px; line-height: 1.5; color: var(--clair); overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.pj-m dd.vide { color: var(--clair-terne); }
+
+/* Le même dossier chez People : une ligne de contexte, pas un encadré. */
+.pj-corps .pe-people { margin: 12px 0 0; padding: 10px 14px; background: none; border: 0;
+  border-left: 3px solid var(--trait-clair); display: grid; gap: 2px; }
+.pj-corps .pe-people.multiple { border-left-color: var(--arbitrage); }
+.pj-corps .pep-t { font-size: 11px; letter-spacing: 0; text-transform: none; color: var(--clair-terne); }
+.pj-corps .pep-r { font-size: 13px; color: var(--clair); }
+.pj-corps .pep-n { font-size: 12px; line-height: 1.55; color: var(--clair-terne); }
+.pj-corps .pe-people.multiple .pep-n { color: var(--clair-terne); }
+
+/* Le navigateur : le sélecteur de mode, qui porte son avancement. */
+.pj-nav { margin-top: 24px; }
+.pj-phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 4px;
+  background: var(--surface-3); padding: 4px; border-radius: 8px; }
+.pj-phase { display: flex; flex-direction: column; gap: 4px; min-width: 0; min-height: 44px; text-align: left;
+  padding: 10px 12px; border: 0; border-radius: 6px; background: transparent; cursor: pointer;
+  font: 13px var(--affichage); color: var(--clair-terne); }
+.pj-phase:hover { background: var(--surface-4); }
+.pj-phase.active { background: var(--surface-1); color: var(--clair); box-shadow: var(--elev-1); }
+.pjp-tete { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pjp-n { font-weight: 550; font-size: 14px; color: var(--clair); }
+.pj-phase .studio-compte { background: var(--surface-1); }
+.pj-phase.active .studio-compte { background: var(--surface-3); }
+.pjp-q { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pjp-b { display: block; height: 3px; background: var(--trait); border-radius: 2px; overflow: hidden; }
+.pjp-b i { display: block; height: 100%; background: var(--studio-bleu); }
+.pj-phase.fait .pjp-b i { background: var(--succes); }
+
+.pj-etapes { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: 14px; border-bottom: 1px solid var(--trait); }
+.pj-etape { display: flex; flex-direction: column; gap: 2px; min-height: 44px; padding: 6px 0 10px;
+  background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer;
+  text-align: left; font: 13px var(--affichage); color: var(--clair-terne); }
+.pj-etape:hover { color: var(--clair); }
+.pj-etape.active { border-bottom-color: var(--studio-bleu); color: var(--clair); }
+.pje-n { font-weight: 550; display: flex; align-items: center; gap: 6px; }
+.pje-s { font-size: 11px; }
+.pj-etape.plein .pje-s { color: var(--succes); }
+.pj-etape.partiel .pje-s { color: var(--arbitrage); }
+.pj-etape.vide .pje-s { color: var(--clair-terne); }
+.pje-e { font-size: 11px; color: var(--clair-terne); }
+
+/* Les lignes d'état du navigateur : filet, texte à l'encre, geste à droite. */
+.pj-ligne { --ton: var(--arbitrage); display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  margin-top: 12px; padding: 10px 14px; background: var(--surface-1); border: 1px solid var(--trait);
+  border-left: 3px solid var(--ton); border-radius: 6px; }
+.pj-ligne.f-vert { --ton: var(--succes); }
+.pj-ligne.f-alerte { --ton: var(--bloquant); }
+.pjl-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 12px; color: var(--clair-terne); line-height: 1.5; }
+.pjl-t b { font: 550 13px var(--affichage); color: var(--clair); }
+.pj-ligne > button { flex-shrink: 0; }
+.pj-section { margin-top: 24px; }
+
+/* Le rail du dossier. */
+.pj-rail .psa-q { margin: 0; font-size: 13px; line-height: 1.6; color: var(--clair-terne); letter-spacing: 0; }
+.pj-rail .psa-q + .psa-q { margin-top: 6px; }
+.pj-rail .psa-reste { font-size: 12px; color: var(--clair-terne); letter-spacing: 0; }
+.pj-rail .file-item { border-bottom-color: var(--trait); }
+.pj-rail .fi-nom { font-size: 13px; }
+.pj-rail .fi-meta { font-size: 12px; color: var(--clair-terne); }
+.pj-rail .rlv-eti { font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none; color: var(--clair); margin-bottom: 4px; }
+.pj-rail .rlv-r { font-size: 13px; color: var(--clair); }
+/* La preuve est ce qu'un humain a écrit : l'aplat d'intention, en Asap. */
+.pj-rail .rlv-p { font: 500 13px/1.55 var(--affichage); font-style: normal; color: var(--studio-encre);
+  background: var(--studio-intention); padding: 10px 12px; border-radius: 5px; max-width: none; }
+.pj-rail .res-l { border-top-color: var(--trait); }
+.pj-rail .res-l b { font: 550 13px var(--affichage); }
+.pj-rail .res-s { font-size: 12px; color: var(--clair-terne); letter-spacing: 0; }
+.pj-rail .panneau-lat > div > .studio-lien:first-child, .pj-rail .panneau-lat .bouton.creux { margin-left: -8px; }
+
+/* Le rail de navigation : le dossier ouvert, sans doublon de l'écran. */
+.rail .bloc-projets .rail-titre { display: flex; justify-content: space-between; align-items: baseline; }
+.rail .rd-changer { font: 12px var(--affichage); letter-spacing: 0; min-height: 32px; cursor: pointer; }
+.rail .rd { border-radius: 7px; overflow: hidden; }
+.rail .rd-nom { font: 550 13px/1.35 var(--affichage); letter-spacing: 0; color: var(--studio-rail-texte); }
+.rail .rd-ref { font-size: 11px; letter-spacing: 0; }
+.rail .rde { font-size: 11px; letter-spacing: 0; padding: 0; border: 0; background: none; color: var(--studio-rail-secondaire); }
+.rail .rde.alerte::before { content: "● "; color: #f19aa6; }
+.rail .rde.attente::before { content: "◐ "; color: #e8c07a; }
+.rail .rde.vert::before { content: "✓ "; color: #8fd3b4; }
+.rail .rd-ech, .rail .rd-ech.alerte, .rail .rd-ech.attente { font-size: 11px; letter-spacing: 0; color: var(--studio-rail-secondaire); }
+
+@media (max-width: 1200px) {
+  .pj-m { border-bottom: 1px solid var(--trait); }
+}
+@media (max-width: 800px) {
+  .pj-phases { grid-template-columns: 1fr; }
+  .pj-ligne { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 560px) {
+  .pj-id { gap: 12px; }
+  .pj-id > :first-child { width: 36px; height: 36px; }
+  .pj-meta { grid-template-columns: 1fr 1fr; }
 }

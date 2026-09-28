@@ -934,60 +934,6 @@
 
 /* ————————————————————— Le navigateur du dossier ————————————————————— */
 
-.nav-p { display: grid; gap: .5rem; margin-top: 1.2rem; }
-
-.np-phases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; }
-.npp { position: relative; display: grid; grid-template-columns: auto 1fr auto;
-  align-items: center; gap: .5rem; text-align: left; cursor: pointer; font: inherit;
-  background: var(--nuit-carte); border: 1px solid var(--trait);
-  border-top: 2px solid var(--trait); color: var(--clair); padding: .5rem .6rem .55rem; }
-.npp:hover { border-color: var(--trait-clair); }
-.npp.vierge { border-top-color: var(--trait); }
-.npp.encours { border-top-color: var(--attente); }
-.npp.fait { border-top-color: var(--vert); }
-.npp.ici { background: var(--nuit-relief); border-top-color: var(--or); }
-
-.npp-r { display: grid; place-items: center; width: 22px; height: 22px; flex: 0 0 auto;
-  border: 1px solid var(--trait-clair); border-radius: 11px;
-  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.npp.fait .npp-r { border-color: var(--vert); color: var(--vert); }
-.npp.ici .npp-r { border-color: var(--or); color: var(--or); }
-.npp-c { min-width: 0; display: grid; gap: .05rem; }
-.npp-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: .02em; }
-.npp-q { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap; }
-.npp.encours .npp-q { color: var(--attente); }
-.npp-j { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.npp-b { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--nuit); }
-.npp-b i { display: block; height: 100%; background: var(--trait-clair); }
-.npp.encours .npp-b i { background: var(--attente); }
-.npp.fait .npp-b i { background: var(--vert); }
-.npp.ici .npp-b i { background: var(--or); }
-
-.np-etapes { display: flex; gap: 2px; flex-wrap: wrap; }
-.npe { flex: 1 1 auto; min-width: 0; text-align: left; cursor: pointer; font: inherit;
-  background: none; border: 0; border-bottom: 2px solid var(--trait);
-  color: var(--clair-doux); padding: .32rem .5rem; display: grid; gap: .05rem; }
-.npe:hover { background: var(--nuit-carte); color: var(--clair); }
-.npe.partiel { border-bottom-color: var(--attente); }
-.npe.plein { border-bottom-color: var(--vert); }
-.npe.ici { border-bottom-color: var(--or); background: var(--nuit-carte); color: var(--clair); }
-.npe-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.npe-e { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
-.npe.partiel .npe-e { color: var(--attente); }
-.npe.vide .npe-e { color: var(--clair-terne); }
-.npe.plein .npe-e { color: var(--vert); }
-
-.np-cout { display: grid; gap: .05rem; border-left: 2px solid var(--attente);
-  padding: .1rem .55rem; }
-.np-cout b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); font-weight: 400; color: var(--attente); }
-.np-cout span { font-size: var(--t-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); line-height: 1.4; }
-
-@media (max-width: 820px) {
-  .np-phases { grid-template-columns: minmax(0, 1fr); }
-  .npe { flex: 1 1 40%; }
-}
-
 /* ————————————————————— L'ingesteur de brief ————————————————————— */
 
 .br-ing { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin: .8rem 0; }
@@ -1179,15 +1125,13 @@
 .co-doc .rtc-n, .co-doc .rtc-m { color: var(--clair); }
 
 /* Le briefing de l'atelier, et le document du navigateur */
-.at-brief, .np-doc { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
+.at-brief { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
   background: var(--nuit-carte); border: 1px solid var(--trait);
   border-left: 2px solid var(--vert); padding: .55rem .7rem; }
-.at-brief.manque, .np-doc.manque { border-left-color: var(--attente); }
-.atb-c, .npd-c { flex: 1; min-width: 0; display: grid; gap: .1rem; }
+.at-brief.manque { border-left-color: var(--attente); }
+.atb-c { flex: 1; min-width: 0; display: grid; gap: .1rem; }
 .atb-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em; color: var(--clair-terne); }
 .atb-q { font-size: var(--t-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); line-height: 1.4; }
-.npd-c b { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); font-weight: 400; }
-.npd-c span { font-size: var(--t-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); line-height: 1.4; }
 
 /* ————————————————————— L'importeur de fil ————————————————————— */
 
@@ -1220,8 +1164,7 @@
  * toujours au même endroit. */
 .fix-c, .fix-q, .fix-k,
 .ecx-q, .ecx-k, .ecx-att, .ecx-pret,
-.pir-regle, .prb-regle, .brc-p,
-.np-cout span, .npd-c span, .atb-q,
+.pir-regle, .prb-regle, .brc-p, .atb-q,
 .cob-c, .cob-p li, .bic-c, .bica .v,
 .rtb .v, .dia-q, .rep-q { max-width: var(--mesure); }
 
@@ -1347,9 +1290,6 @@
 .co-g .vignette { height: 5.5rem; border: 0; background: rgba(0,0,0,.05); }
 .cog-n { display: block; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); margin-top: .2rem; }
 .cog-q, .cog-m { display: block; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); opacity: .65; }
-
-/* L'en-tête de projet accueille la pastille */
-.projet-entete { display: flex; gap: .9rem; align-items: flex-start; }
 
 /* ————————————————————— Une intention, trois modes ————————————————————— */
 
@@ -1800,7 +1740,6 @@
   transform: translateY(-50%); min-height: var(--cible); height: 100%; }
 .plc-ecart { min-height: var(--cible); display: inline-flex; align-items: center; }
 
-
 /* ————————————————————— Mon équipe : le tableau comparable ————————————————————— */
 
 /* Cinq cartes dépliables rendaient la comparaison impossible. Des colonnes
@@ -1842,19 +1781,16 @@
   .eqtr-m { padding-left: .8rem; }
 }
 
-
 /* Les initiales d'un avatar sont du texte : la couleur du poste reste au
  * filet, l'encre passe le minimum de contraste. */
 .avatar { color: var(--clair-doux); border-width: 2px; font-weight: 500; }
 .avatar.vide { color: var(--clair-terne); }
-
 
 /* D'où vient ce que ce navigateur détient. */
 .prov { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .04em; }
 .prov.disque { color: var(--clair-terne); }
 .prov.navigateur, .prov.fichier-impossible { color: var(--arbitrage); }
 .prov.attente, .prov.exemple { color: var(--clair-terne); }
-
 
 /* ————————————————————— L'ordre : la balance ————————————————————— */
 
@@ -1909,7 +1845,6 @@
   .bl-c.vendu .blc-b { justify-items: start; }
 }
 
-
 /* ————————————————————— La charge : le mur ordonné par le risque ————————————————————— */
 
 /* Le seul écran où les images ont le droit d'occuper la majorité de la
@@ -1945,7 +1880,6 @@
 .mup-c { font-size: var(--t-eti); line-height: var(--lh-eti); color: var(--clair-terne); }
 .mup-c.alerte { color: var(--bloquant-txt); }
 .mup-q { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
-
 
 /* ————————————————————— Les gens : la semaine ————————————————————— */
 
@@ -2013,7 +1947,6 @@
   .smr-t { grid-column: 1; }
 }
 
-
 /* ————————————————————— Qui bouscule : le grand livre ————————————————————— */
 
 /* Des tuiles disaient des totaux. Ce qu'il faut voir, c'est une asymétrie :
@@ -2076,7 +2009,6 @@
   .glr-a { justify-content: flex-start; }
   .glr-d { grid-column: 1; }
 }
-
 
 /* ————————————————————— Produire : la porte ————————————————————— */
 
@@ -2174,7 +2106,6 @@
   .ptx-q { grid-column: 2; }
 }
 
-
 /* ————————————————————— La matrice : le trou nommé ————————————————————— */
 
 /* Un marché promis que rien ne porte occupait un blanc — donc rien. Il occupe
@@ -2201,8 +2132,6 @@
   text-align: center; }
 
 .mr-groupe.trou .mrg-code { background: var(--bloquant); color: var(--n900); }
-
-
 
 /* ————————————————————— La liste des dossiers ————————————————————— */
 
@@ -2327,7 +2256,6 @@
   .dl-r.grand .dlr-d { flex-direction: row; align-items: center; }
 }
 
-
 /* ————————————————————— Les routes : le comparateur ————————————————————— */
 
 /* Des cartes empilées se lisent verticalement — on découvre une route, puis
@@ -2429,7 +2357,6 @@
   .cmp-s, .cmp-pied { text-align: left; margin: 0; }
 }
 
-
 /* ————————————————————— Le référentiel : une hiérarchie ————————————————————— */
 
 /* Trois piles de même poids disaient trois inventaires. Le marché gouverne :
@@ -2495,7 +2422,6 @@
 .rfa-e { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux); }
 .rf-as.bientot .rfa-e, .rfa-e.manque { color: var(--arbitrage); }
 .rf-as.perime .rfa-e { color: var(--bloquant-txt); }
-
 
 /* ————————————————————— L'identité : un document à signer ————————————————————— */
 
@@ -2567,7 +2493,6 @@
   .id-g { grid-template-columns: minmax(0, 1fr); gap: 1.4rem; }
 }
 
-
 /* ————————————————————— Le socle : ce qui sert à refuser passe devant ————————————————————— */
 
 /* Onze cartes de poids égal faisaient de la page la plus longue du produit une
@@ -2624,7 +2549,6 @@
   .pr-deux { grid-template-columns: minmax(0, 1fr); }
 }
 
-
 /* ————————————————————— L'atelier : l'indicateur qui décide ————————————————————— */
 
 /* « Idées retenues émanant de juniors » est une ligne de la fiche 03, et cet
@@ -2658,7 +2582,6 @@
 .plcm-q { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux); }
 .plcm-x { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
 
-
 /* ————————————————————— Le papier a sa propre encre ————————————————————— */
 
 /* Un document imprimable est un fond clair : le gris des fonds sombres y
@@ -2687,7 +2610,6 @@
  * clair, et il le passe partout. */
 .dlr-m, .dlr-b2 { color: var(--clair-doux); }
 .vignette .absente { color: var(--clair-doux); }
-
 
 /* ————————————————————— Une ombrelle, plusieurs marques ————————————————————— */
 
@@ -2773,7 +2695,6 @@
   .pcp-i { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
 }
 
-
 /* ————————————————————— Chaque champ porte son geste ————————————————————— */
 
 /* Rouvrir tout le formulaire pour corriger une ligne fait relire trente champs
@@ -2812,7 +2733,6 @@ button.st-e { padding: .6rem .8rem; margin-left: -.8rem; }
 .rfm-h { position: relative; }
 .ids-g { display: flex; gap: .7rem; flex-wrap: wrap; }
 
-
 /* ————— Les champs d'une section, sous sa mise en scène ————— */
 .se-champs { display: grid; gap: .3rem; margin-top: 2rem; }
 .sec-t { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem;
@@ -2831,7 +2751,6 @@ button.st-e { padding: .6rem .8rem; margin-left: -.8rem; }
   padding: 0; cursor: pointer; border-radius: var(--r-s);
   color: inherit; font: inherit; }
 .sh-c:hover { outline: 1px solid var(--accent); outline-offset: 2px; }
-
 
 /* ————————————————————— Le vault de marque ————————————————————— */
 
@@ -2944,7 +2863,6 @@ button.st-e { padding: .6rem .8rem; margin-left: -.8rem; }
 .pcms-n { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair); }
 .pcms-x { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
 
-
 /* ————————————————————— La fiche d'un pack ————————————————————— */
 
 /* Un pack est un article, pas une vignette : son code, ses mentions, les
@@ -3001,7 +2919,6 @@ button.vtp { text-align: left; cursor: pointer; color: inherit; font: inherit;
 button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 .vtp-ok { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--succes); }
 
-
 /* ————— Créer, archiver, remettre ————— */
 .fi-g { display: flex; gap: .6rem; flex-wrap: wrap; }
 .vtb-a { display: grid; gap: .4rem; }
@@ -3015,7 +2932,6 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 .vta-m { overflow-wrap: anywhere; grid-column: 1; font-size: var(--t-micro); line-height: var(--lh-micro);
   color: var(--clair-terne); }
 .vta .b.nu { grid-column: 2; grid-row: 1 / 3; }
-
 
 /* ————— Se retrouver dans un catalogue ————— */
 .vt-f { display: grid; gap: .3rem; margin-bottom: .6rem; }
@@ -3045,7 +2961,6 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
   color: var(--clair-terne); border: 1px solid var(--trait-clair);
   border-radius: var(--r-xs); padding: .1rem .35rem; margin-left: .4rem; }
 .fic-q { display: flex; align-items: center; gap: .1rem; flex-wrap: wrap; }
-
 
 /* ————————————————————— Le socle vient du vault ————————————————————— */
 
@@ -3126,7 +3041,6 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 .ch-mi:hover { border-color: var(--accent); color: var(--clair); }
 .ch-mi.ici { background: var(--accent); border-color: var(--accent); color: var(--n900); }
 
-
 /* ————————————————————— L'arbre des socles ————————————————————— */
 
 /* Trois niveaux : l'ombrelle, la marque, la gamme. L'indentation dit la
@@ -3201,7 +3115,6 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
   .vn-c { padding-left: .6rem; }
 }
 
-
 /* ————————————————————— Les packs montrés par une pièce ————————————————————— */
 
 /* Une pièce montre des produits. Lesquels, ça ne se devine pas — et c'est le
@@ -3239,7 +3152,6 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 .pmp-n { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair); }
 .pmp-m { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
 
-
 /* ————— La gamme sur la plateforme de marque ————— */
 /* Un DA doit avoir les packs sous les yeux avant de dessiner ; ceux que la
  * campagne retient passent devant. */
@@ -3267,7 +3179,6 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 .pe-nom::after { content: ""; position: absolute; left: 0; right: 0; top: 50%;
   transform: translateY(-50%); min-height: var(--cible); height: 100%; }
 .pe-nom:hover h2 { color: var(--accent); }
-
 
 /* ————— La plateforme complète : la tête en grand, le reste en retrait ————— */
 
@@ -3300,7 +3211,6 @@ a.svf.vide .svf-v { color: var(--clair-terne); font-style: italic; }
   background: var(--surface-3); border-radius: var(--r-xs); overflow: hidden; }
 .sve-v img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .sve-x { font-size: var(--t-micro); color: var(--clair-terne); }
-
 
 /* ————————————————————— Les types de brief ————————————————————— */
 
@@ -3350,7 +3260,6 @@ a.svf.vide .svf-v { color: var(--clair-terne); font-style: italic; }
   .bfc-e { margin-left: 0; }
 }
 
-
 /* ————— Le brief qui commande le socle ————— */
 .vtb-bp { display: grid; gap: .45rem; padding: .8rem 1rem; background: var(--surface-3);
   border-radius: var(--r-s); border-left: 3px solid var(--trait-clair); }
@@ -3373,7 +3282,6 @@ a.svf.vide .svf-v { color: var(--clair-terne); font-style: italic; }
 .rf-plus.manque { border-color: var(--attente); color: var(--attente); }
 .rf-plus.ici { border-style: solid; border-color: var(--accent); color: var(--clair); }
 
-
 /* La santé du dossier ne commande jamais. */
 .psa-q {
   margin: .5rem 0 0;
@@ -3385,7 +3293,6 @@ a.svf.vide .svf-v { color: var(--clair-terne); font-style: italic; }
   font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
   color: var(--clair-terne);
 }
-
 
 /* ————————————————————— Le même dossier, chez People ————————————————————— */
 
@@ -3409,43 +3316,7 @@ a.svf.vide .svf-v { color: var(--clair-terne); font-style: italic; }
 }
 .pe-people.multiple .pep-n { color: var(--attente); }
 
-
 /* ————————————————————— Un chiffre porte sa conséquence ————————————————————— */
-
-/* Les trois tuiles de l'en-tête — blocages, inférés, livrables — étaient
- * trois nombres de même taille : on les lisait, on ne faisait rien. Il en
- * reste un, celui qui coûte le plus cher aujourd'hui, et il porte la phrase
- * qui dit ce qu'il coûte. */
-.projet-entete .cotes { max-width: 30ch; }
-.pe-etat {
-  display: grid; grid-template-columns: auto 1fr; align-items: baseline;
-  column-gap: .5rem; row-gap: .3rem;
-  background: var(--nuit-carte); padding: .7rem .85rem .8rem;
-}
-.pee-c {
-  font-size: var(--t-ecran); line-height: 1; letter-spacing: var(--ls-ecran);
-  color: var(--clair);
-}
-.pee-n {
-  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  text-transform: uppercase; color: var(--clair-terne);
-}
-.pee-q {
-  grid-column: 1 / -1;
-  font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  color: var(--clair-doux); margin: 0;
-}
-.pe-etat.alerte .pee-c { color: var(--bloquant-txt); }
-.pe-etat.attente .pee-c { color: var(--attente); }
-.pe-etat.vert .pee-c { color: var(--vert); }
-/* Clos : le chiffre reste lisible mais cesse d'appeler. On éteint par l'encre,
-   jamais par l'opacité — un gris choisi se mesure, une transparence non. */
-.pe-etat.terne .pee-c { color: var(--clair-terne); }
-
-@media (max-width: 760px) {
-  .projet-entete .cotes { max-width: none; margin-left: 0; }
-}
-
 
 /* La route d'un cycle porte ses publications. */
 .rt-q { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
@@ -3476,7 +3347,6 @@ a.svf.vide .svf-v { color: var(--clair-terne); font-style: italic; }
   font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
   cursor: pointer; white-space: nowrap; }
 .anl-tc:hover { background: var(--accent); color: #000; }
-
 
 /* ————————————————————— Le calendrier d'un cycle ————————————————————— */
 
@@ -3581,7 +3451,6 @@ a.svf.vide .svf-v { color: var(--clair-terne); font-style: italic; }
   .cyp-q { padding-left: .8rem; }
 }
 
-
 /* ————————————————————— Replier ce qu'on ne travaille pas ————————————————————— */
 
 /* Un en-tête de bloc devient un geste. Le piège est connu : un <button>
@@ -3613,8 +3482,6 @@ button.mrmq-t:focus-visible, button.mrg-tete:focus-visible {
   color: var(--clair-terne); margin-bottom: .2rem;
 }
 
-
-
 /* ————— Les champs d'une section, sous sa mise en scène ————— */
 .se-champs { display: grid; gap: .3rem; margin-top: 2rem; }
 .sec-t { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem;
@@ -3644,7 +3511,7 @@ button.mrmq-t:focus-visible, button.mrg-tete:focus-visible {
  */
 
 /* Ce qui porte une phrase de contexte ou de conséquence — se lit vraiment. */
-.npp-q, .dcm-q, .juj, .vide-ref, .eqpd, .prp-tire, .cobm-q, .cobe-c, .cobe-m,
+.dcm-q, .juj, .vide-ref, .eqpd, .prp-tire, .cobm-q, .cobe-c, .cobe-m,
 .plc-sous, .rq-etat, .slfi-q, .stc-q, .plc-ecart, .pir-q, .pirc-p, .mqs-q,
 .atdq-o, .auteurs, .codt-s, .sld-m, .e-charge, .slp-a, .atx-k, .bri-s,
 .rail-q, .fi-meta, .rd-ref, .poste, .pil-n, .mrg-n, .atfm-q, .eqp-q,
