@@ -15,16 +15,16 @@ window.VUE_PLACER = (function () {
   var mode = "ordre";
 
   var MODES = [
-    { cle: "ordre", nom: "PRIORITÉS", quoi: "ce qui passe avant, et pourquoi" },
-    { cle: "charge", nom: "PLAN DE CHARGE", quoi: "où en sont les livrables" },
-    { cle: "gens", nom: "ÉQUIPE", quoi: "la capacité de chacun" },
-    { cle: "livraisons", nom: "LIVRAISONS", quoi: "ce qui est dû et n'est pas arrivé" },
+    { cle: "ordre", nom: "Priorités", quoi: "ce qui passe avant, et pourquoi" },
+    { cle: "charge", nom: "Plan de charge", quoi: "où en sont les livrables" },
+    { cle: "gens", nom: "Équipe", quoi: "la capacité de chacun" },
+    { cle: "livraisons", nom: "Livraisons", quoi: "ce qui est dû et n'est pas arrivé" },
   ];
 
   function rendre(hote, arg) {
     if (arg && MODES.some(function (m) { return m.cle === arg; })) mode = arg;
 
-    hote.className = "zone";
+    hote.className = "zone studio";
     O.vider(hote);
 
     var pieces = PRODUCTION.toutesLesPieces();
@@ -39,23 +39,21 @@ window.VUE_PLACER = (function () {
       : mode === "charge" ? pireCharge(pieces, sansPlace)
       : pireOrdre(c, sansPlace);
 
+    /* Le même en-tête que Décisions : le titre dit l'état du mode et sa
+     * conséquence, le sélecteur vient dessous, seul le mode actif porte
+     * l'alerte de son compteur. */
     hote.appendChild(el("div.dc", {},
-      el("div.dc-tete", {},
-        el("div.dct-c", {},
-          el("h2", {}, p.t),
-          el("div.dct-q", {}, p.q))),
-
-      el("div.dc-modes", {}, MODES.map(function (m) {
-        var n = m.cle === "ordre" ? c.conflits.length
-          : m.cle === "charge" ? sansPlace
-          : m.cle === "livraisons" ? souffrance.length : 0;
-        return el("button.dcm" + (mode === m.cle ? ".ici" : ""), { type: "button",
-          onclick: function () { mode = m.cle; rendre(hote); } },
-          el("span.dcm-n", {}, m.nom),
-          el("span.dcm-q", {}, m.quoi),
-          n ? el("span.dcm-c", {}, String(n)) : null);
-      })),
-
+      el("header.studio-entete.dc-tete", {},
+        el("div", {},
+          el("h1", {}, p.t),
+          el("p.studio-intro", {}, p.q))),
+      UI.modes(MODES, mode, function (cle) { mode = cle; rendre(hote); }, {
+        titre: "Modes du Planning",
+        compte: function (m) {
+          return m.cle === "ordre" ? c.conflits.length
+            : m.cle === "charge" ? sansPlace
+            : m.cle === "livraisons" ? souffrance.length : 0; },
+        alerte: function (m) { return m.cle === mode; } }),
       el("div.dc-corps", {}, corps(hote))
     ));
   }

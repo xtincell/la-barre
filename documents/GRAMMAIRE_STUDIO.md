@@ -429,3 +429,18 @@ pistes (passe 4c). Corrigé : l'alerte « N projets se fabriquent sans savoir qu
 concept fait autorité » comptait les projets clos — elle s'affichait sous « Les 2
 projets sont clos ». Mesure à 1280 et 375 px sur cinq campagnes (piste retenue, sans
 piste, sans occasion, écarts datés) : à zéro.
+
+**Passe 9a — Planning : priorités et plan de charge (28/09).** La passe 9 est coupée
+en trois (priorités et charge, qui partagent leur module ; équipe ; livraisons).
+L'en-tête du Planning prend celui des Décisions : titre du mode, et `UI.modes` à la
+place des quatre boutons en capitales (« PRIORITÉS », « PLAN DE CHARGE »…). Les cinq
+chiffres du haut perdent leur couleur — 0 / 559 en rouge, 213 / 559 en vert — pour
+un filet haut et un signe dans la ligne de conséquence. La balance garde son dessin
+(la hauteur des plateaux est le temps consommé) mais perd ses aplats ambre et verts
+translucides : chaque bloc porte le filet de son côté, vendu ou parié ; ses libellés
+(« CE QUI EST VENDU », « FERME », « ENGAGÉ »…, ces derniers mis en capitales par un
+`toUpperCase()`) passent en casse de phrase. « Ce qui débloquerait la balance » et le
+conflit « du spéculatif devant du ferme » deviennent des sections blanches, le second
+avec le filet de l'alerte. Le mur de charge garde ses images — elles sont le contenu
+— et dit le risque par le filet sous l'image et le signe, plus par l'encre rouge.
+Mesure à 1280 et 375 px : à zéro, hors données (noms de livrables).

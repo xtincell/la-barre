@@ -56,7 +56,7 @@ window.VUE_PIPELINE = (function () {
       if (PRIORITE.rangPiece(x.projet, x.l) <= 1) fermes++; else specu++;
     });
 
-    return el("div.pi-haut", {},
+    return el("section.pp-k", {},
       kpi(String(pieces.length), "assets en cours",
         Object.keys(parProjet).length + " dossiers", ""),
       kpi(fermes + " / " + pieces.length, "engagés ou fermes",
@@ -70,9 +70,13 @@ window.VUE_PIPELINE = (function () {
     );
   }
 
+  /* Un chiffre à l'encre ; l'état dans le filet et le signe, jamais dans la
+   * couleur du nombre. */
+  var SIGNES = { alerte: "● ", attente: "◐ ", vert: "✓ " };
   function kpi(v, t, s, ton) {
-    return el("div.pi-k" + (ton ? "." + ton : ""), {},
-      el("b", {}, v), el("span.pik-t", {}, t), el("span.pik-s", {}, s));
+    return el("div.pp-s" + (ton ? ".t-" + ton : ""), {},
+      el("b", {}, v), el("span.pps-t", {}, t),
+      el("span.pps-s", {}, SIGNES[ton] ? el("span.pp-signe", { "aria-hidden": "true" }, SIGNES[ton]) : null, s));
   }
 
   /* ————————————————————— L'ordre : ce qui passe avant ————————————————————— */
@@ -112,9 +116,9 @@ window.VUE_PIPELINE = (function () {
     var haut = Math.max(vendu.j, parie.j, 1);
     var c = PRIORITE.conflits();
 
-    return el("div.bl", {},
-      el("div.bl-t", {},
-        el("h3", {}, parie.n && !vendu.n
+    return el("div.pp", {},
+      el("div.pp-titre", {},
+        el("h2", {}, parie.n && !vendu.n
           ? parie.n + " livrables se fabriquent, aucune n'est vendue"
           : vendu.n && parie.n
             ? Math.round(parie.j) + " j pariés contre " + Math.round(vendu.j) + " j vendus"
@@ -124,37 +128,37 @@ window.VUE_PIPELINE = (function () {
           : "Ce qui est payé passe avant ce qui espère l'être. Aucun client ne doit souffrir.")),
 
       /* Les deux plateaux, de part et d'autre d'un axe. */
-      el("div.bl-b", {},
-        cote("vendu", "CE QUI EST VENDU", vendu, haut, [
+      el("section.pp-bal", {},
+        cote("vendu", "Ce qui est vendu", vendu, haut, [
           { r: PRIORITE.RANGS[0], g: rangs[0] }, { r: PRIORITE.RANGS[1], g: rangs[1] },
         ], hote),
-        el("div.bl-axe", {}),
-        cote("parie", "CE QUI EST PARIÉ", parie, haut, [
+        el("div.pp-axe", {}),
+        cote("parie", "Ce qui est parié", parie, haut, [
           { r: PRIORITE.RANGS[2], g: rangs[2] }, { r: PRIORITE.RANGS[3], g: rangs[3] },
         ], hote)),
 
       /* Ce qui ferait basculer la balance — le geste, pas le constat. */
-      el("div.bl-d", {},
-        el("div.bld-t", {}, "CE QUI DÉBLOQUERAIT LA BALANCE"),
+      el("section.pp-d", {},
+        el("h3", {}, "Ce qui débloquerait la balance"),
         el("p", {}, debloquer(rangs)),
         el("div.form-actions", {}, gestesBalance(rangs))),
 
       c.conflits.length
-        ? el("div.pi-conflit", {},
-            el("div.pic-t", {}, "DU SPÉCULATIF DEVANT DU FERME"),
+        ? el("section.pp-conflit.f-alerte", {},
+            el("h3", {}, el("span.pp-signe", { "aria-hidden": "true" }, "● "), "Du spéculatif devant du ferme"),
             c.conflits.map(function (x) {
-              return el("div.pic-l", {},
+              return el("div.ppc-l", {},
                 x.personne ? UI.avatar(x.personne, 24) : null,
                 el("div", {},
-                  el("div.picl-n", {}, (x.personne ? x.personne.nom : "quelqu'un")
+                  el("div.ppcl-n", {}, (x.personne ? x.personne.nom : "quelqu'un")
                     + " tient " + x.speculatif.length
                     + (x.speculatif.length > 1 ? " livrables spéculatifs" : " livrable spéculatif")
                     + " pendant que " + x.ferme.length
                     + (x.ferme.length > 1 ? " livrables engagés sont" : " livrable engagé est") + " en retard."),
-                  el("div.picl-d", {}, x.ferme.slice(0, 3).map(function (f) {
+                  el("div.ppcl-d", {}, x.ferme.slice(0, 3).map(function (f) {
                     return f.p.ref + " · " + f.l.nom; }).join("  ·  "))));
             }),
-            el("div.pic-r", {}, "Ce n'est pas un reproche : c'est l'ordre qui n'a pas été dit."))
+            el("p.ppc-r", {}, "Ce n'est pas un reproche : c'est l'ordre qui n'a pas été dit."))
         : null
     );
   }
@@ -162,24 +166,24 @@ window.VUE_PIPELINE = (function () {
   /* Un plateau : sa hauteur est proportionnelle aux jours consommés. */
   function cote(cle, titre, tot, haut, blocs, hote) {
     var vide = !tot.n;
-    return el("div.bl-c." + cle, {},
-      el("div.blc-t", {}, titre),
-      el("div.blc-p", {}, blocs.map(function (b) {
+    return el("div.pp-c." + cle, {},
+      el("h3.ppc-t", {}, titre),
+      el("div.ppc-p", {}, blocs.map(function (b) {
         var j = b.g.reduce(function (t, x) {
           return t + x.ls.reduce(function (n, l) { return n + (l.estime || 0); }, 0); }, 0);
         var n = b.g.reduce(function (t, x) { return t + x.ls.length; }, 0);
         var h = Math.max(n ? 54 : 34, Math.round((j / haut) * 260));
-        return el("div.blc-b." + b.r.ton + (n ? "" : ".creux"), {
+        return el("div.pp-b." + b.r.ton + (n ? "" : ".creux"), {
           style: { height: h + "px" },
           title: b.r.regle,
         },
-          el("span.blcb-n", {}, b.r.nom.toUpperCase()),
-          el("span.blcb-c", {}, n ? n + (n > 1 ? " livrables · " : " livrable · ") + Math.round(j) + " j"
-            : "aucun livrable"),
-          n && b.g.length ? el("div.blcb-v", {}, vignettesDe(b.g)) : null);
+          el("span.ppb-n", {}, b.r.nom),
+          el("span.ppb-c", {}, n ? n + (n > 1 ? " livrables · " : " livrable · ") + Math.round(j) + " j"
+            : "Aucun livrable"),
+          n && b.g.length ? el("div.ppb-v", {}, vignettesDe(b.g)) : null);
       })),
-      el("div.blc-s" + (vide ? ".creux" : ""), {}, vide
-        ? (cle === "vendu" ? "0 jour engagé contractuellement" : "rien de parié")
+      el("div.ppc-s" + (vide ? ".creux" : ""), {}, vide
+        ? (cle === "vendu" ? "0 jour engagé contractuellement" : "Rien de parié")
         : Math.round(tot.j) + " j sur " + tot.n + (tot.n > 1 ? " livrables" : " livrable")));
   }
 
@@ -314,44 +318,47 @@ window.VUE_PIPELINE = (function () {
     var chaud = tout.filter(function (x) { return x.r.pts >= 30; });
     var calme = tout.filter(function (x) { return x.r.pts < 30; });
 
-    return el("div.mu", {},
-      el("div.mu-t", {},
-        el("h3", {}, chaud.length
+    return el("div.pp", {},
+      el("div.pp-titre", {},
+        el("h2", {}, chaud.length
           ? chaud.length + (chaud.length > 1 ? " livrables vont manquer leur date" : " livrable va manquer sa date")
           : tout.length + (tout.length > 1 ? " livrables, aucune en risque" : " livrable, aucune en risque")),
         el("p", {}, "Classées par ce qui va tomber, pas par volet. Un livrable sans estimation "
           + "est invisible dans la semaine — le mur arrive sans prévenir.")),
 
       chaud.length
-        ? el("div.mu-g", {},
-            el("div.mug-t", {}, "CE QUI VA TOMBER"),
-            el("div.mu-l.chaud", {}, chaud.slice(0, 8).map(function (x) { return piece(x, hote, true); })))
+        ? el("section.pp-mur", {},
+            el("h3.ppm-t", {}, el("span.pp-signe.t-alerte", { "aria-hidden": "true" }, "● "), "Ce qui va tomber"),
+            el("div.ppm-l.chaud", {}, chaud.slice(0, 8).map(function (x) { return piece(x, hote, true); })))
         : null,
 
       calme.length
-        ? el("div.mu-g", {},
-            el("div.mug-t.calme", {}, "CE QUI TIENT",
-              el("span", {}, "au-delà de cette ligne, la semaine tient")),
-            el("div.mu-l.calme", {}, calme.slice(0, 12).map(function (x) { return piece(x, hote, false); })))
+        ? el("section.pp-mur", {},
+            el("h3.ppm-t", {}, "Ce qui tient",
+              el("span", {}, "Au-delà de cette ligne, la semaine tient")),
+            el("div.ppm-l.calme", {}, calme.slice(0, 12).map(function (x) { return piece(x, hote, false); })))
         : null,
 
       tout.length > 20
-        ? el("a.pip-plus", { href: "#/projets/" + tout[0].p.id + "/livrables" },
-            "les " + tout.length + " livrables →")
+        ? el("a.studio-lien", { href: "#/projets/" + tout[0].p.id + "/livrables" },
+            "Les " + tout.length + " livrables →")
         : null);
   }
 
   function piece(x, hote, chaud) {
     var pe = x.l.responsable ? DEPOT.trouve("personnes", x.l.responsable) : null;
     var m = DEPOT.trouve("marches", x.l.marche);
-    return el("button.mu-p" + (chaud ? ".chaud" : ""), { type: "button",
+    return el("button.ppm-p" + (chaud ? ".chaud" : ""), { type: "button",
       onclick: function () { VUE_ASSET.ouvrir(x.p, x.l, function () { rendre(hote); }); } },
       IMAGE.vignette(x.l, "planche"),
-      el("span.mup-n", {}, x.l.nom + (m ? "  ·  " + m.code : "")),
-      el("span.mup-c" + (chaud ? ".alerte" : ""), {},
-        x.r.causes.length ? x.r.causes.slice(0, 2).join("  ·  ")
-          : x.r.jours !== null ? "remise dans " + x.r.jours + " j" : "prête"),
-      el("span.mup-q", {}, pe ? pe.nom.split(" ")[0] : "personne"));
+      el("span.ppmp-n", {}, x.l.nom + (m ? " · " + m.code : "")),
+      el("span.ppmp-c", {}, chaud ? el("span.pp-signe", { "aria-hidden": "true" }, "● ") : null,
+        cap(x.r.causes.length ? x.r.causes.slice(0, 2).join(" · ")
+          : x.r.jours !== null ? "remise dans " + x.r.jours + " j" : "prête")),
+      el("span.ppmp-q", {}, pe ? pe.nom.split(" ")[0] : "Personne"));
+  }
+
+  function cap(t) { return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
   }
 
   return { rendre: rendre, titre: "Pipeline" };

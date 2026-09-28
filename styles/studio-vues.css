@@ -1947,3 +1947,79 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
   .cg-piste, .cg-bloc { padding: 16px; }
   .cg-g { margin-left: 0; width: 100%; }
 }
+
+/* ═════════════════════ Passe 9a · Planning : priorités et plan de charge ═════════════════════ */
+/* Les cinq chiffres : une section blanche de cellules. Le nombre reste à
+ * l'encre ; l'état se dit par le filet haut et le signe. */
+.pp-k { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); background: var(--surface-1);
+  border: 1px solid var(--trait); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+.pp-s { --ton: transparent; display: grid; align-content: start; gap: 2px; padding: 14px 16px; border-top: 3px solid var(--ton);
+  box-shadow: inset -1px 0 0 var(--trait); }
+.pp-s.t-alerte { --ton: var(--bloquant); }
+.pp-s.t-attente { --ton: var(--arbitrage); }
+.pp-s.t-vert { --ton: var(--succes); }
+.pp-s b { font: 550 28px/1.1 var(--affichage); letter-spacing: -.03em; color: var(--clair); font-variant-numeric: tabular-nums; }
+.pps-t { font-size: 13px; color: var(--clair); }
+.pps-s { font-size: 12px; line-height: 1.45; color: var(--clair-terne); }
+.pp-signe { color: var(--ton, var(--clair-terne)); }
+.pp-signe.t-alerte { color: var(--bloquant); }
+
+.pp { display: grid; gap: 20px; }
+.pp-titre { display: grid; gap: 6px; }
+.pp-titre h2 { font: 550 24px/1.25 var(--affichage); letter-spacing: -.03em; color: var(--clair); text-wrap: balance; }
+.pp-titre p { font-size: 14px; line-height: 1.6; color: var(--clair-terne); max-width: 65ch; }
+
+/* La balance : deux plateaux qui se font face, dont la hauteur est le temps
+ * consommé — le déséquilibre se voit avant de se lire. Le côté porte sa
+ * couleur par le filet, jamais par un aplat. */
+.pp-bal { display: grid; grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr); gap: 24px; align-items: end;
+  background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; padding: 20px 22px; }
+.pp-axe { align-self: stretch; background: var(--trait); }
+.pp-c { display: grid; gap: 8px; align-content: end; min-width: 0; }
+.pp-c.vendu { --ton: var(--succes); }
+.pp-c.parie { --ton: var(--arbitrage); }
+.ppc-t { font: 550 17px var(--affichage); color: var(--clair); }
+.ppc-p { display: grid; gap: 6px; align-content: end; }
+.pp-b { display: grid; gap: 2px; align-content: start; padding: 10px 12px; overflow: hidden; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 6px; }
+.pp-b.creux { border-style: dashed; border-left: 3px dashed var(--trait-clair); }
+.ppb-n { font: 550 14px var(--affichage); color: var(--clair); }
+.ppb-c { font-size: 12px; color: var(--clair-terne); }
+.ppb-v { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 6px; }
+.ppb-v .vignette { width: 34px; height: 22px; border-radius: 2px; }
+.ppc-s { font-size: 12px; color: var(--clair-terne); }
+
+.pp-d, .pp-conflit, .pp-mur { display: grid; gap: 10px; background: var(--surface-1); border: 1px solid var(--trait);
+  border-radius: 10px; padding: 18px 22px; }
+.pp-d h3, .pp-conflit h3, .ppm-t { font: 550 17px var(--affichage); color: var(--clair); }
+.pp-d p { font-size: 14px; line-height: 1.6; color: var(--clair); max-width: 65ch; }
+.pp-conflit { border-left: 3px solid var(--ton); }
+.ppc-l { display: flex; gap: 10px; align-items: flex-start; padding-top: 10px; border-top: 1px solid var(--trait); }
+.ppcl-n { font-size: 14px; line-height: 1.5; color: var(--clair); }
+.ppcl-d { font-size: 12px; color: var(--clair-terne); }
+.ppc-r { font-size: 12px; color: var(--clair-terne); }
+
+/* Le mur : les images SONT le contenu. Ce qui va tomber passe devant et plus
+ * grand ; ce qui tient descend. Le risque se dit par le filet sous l'image. */
+.ppm-t { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.ppm-t span:not(.pp-signe) { font: 400 12px var(--affichage); color: var(--clair-terne); }
+.ppm-l { display: grid; gap: 14px; }
+.ppm-l.chaud { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.ppm-l.calme { grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); }
+.ppm-p { --ton: var(--trait); display: grid; gap: 3px; min-width: 0; padding: 0; text-align: left; cursor: pointer;
+  color: var(--clair); font: inherit; background: none; border: 0; }
+.ppm-p.chaud { --ton: var(--bloquant); }
+.ppm-p .vignette { width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 6px; border-bottom: 3px solid var(--ton); }
+.ppm-p:hover .vignette { box-shadow: 0 0 0 2px var(--studio-bleu); }
+.ppmp-n { font: 550 13px/1.4 var(--affichage); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ppm-l.chaud .ppmp-n { font-size: 14px; }
+.ppmp-c { font-size: 12px; color: var(--clair-terne); }
+.ppmp-q { font-size: 11px; color: var(--clair-terne); }
+@media (max-width: 900px) {
+  .pp-bal { grid-template-columns: minmax(0, 1fr); }
+  .pp-axe { display: none; }
+}
+@media (max-width: 700px) {
+  .pp-bal, .pp-d, .pp-conflit, .pp-mur { padding: 16px; }
+  .pp-titre h2 { font-size: 21px; }
+}
