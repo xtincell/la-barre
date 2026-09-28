@@ -26,18 +26,18 @@ window.TERRITOIRE = (function () {
   var el = O.el;
 
   var CHAMPS = [
-    { cle: "nom", nom: "Nom du territoire", court: "NOM", type: "texte", requis: true,
+    { cle: "nom", nom: "Nom du territoire", court: "Nom", type: "texte", requis: true,
       aide: "Court, retenable. « La banque de l'année scolaire entière. »",
       cout: "Un territoire sans nom ne se cite pas en réunion, donc il ne survit "
         + "pas à la séance où il a été présenté." },
 
-    { cle: "quoi", nom: "L'espace qu'il ouvre", court: "CE QU'IL OUVRE",
+    { cle: "quoi", nom: "L'espace qu'il ouvre", court: "Ce qu'il ouvre",
       type: "long", requis: true,
       aide: "Ce qu'on peut y raconter, et sur plusieurs vagues. Pas une idée : un espace.",
       cout: "Sans espace décrit, la première piste qui sort devient le territoire — "
         + "et les suivantes n'ont plus de place où exister." },
 
-    { cle: "insightId", nom: "L'insight dont il découle", court: "RACINE",
+    { cle: "insightId", nom: "L'insight dont il découle", court: "Racine",
       type: "insight", requis: true,
       aide: "Un territoire sans racine est une intuition. Avec, il est défendable.",
       cout: "La piste qui en sort ne remontera à rien : impossible de dire si elle "

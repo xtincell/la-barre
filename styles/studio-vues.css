@@ -88,6 +88,73 @@
 .blocage .gestes { display: flex; flex-wrap: wrap; gap: 0 4px; margin: 2px 0 -8px -8px; }
 .blocage .gestes:empty { display: none; }
 
+/* Le titre de bloc (`.section-titre`) : une tête de section Studio, en
+ * minuscules — titre 550, pastille de compte, et ce qui va à droite. */
+.section-titre { display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  font: 550 17px/1.3 var(--affichage); letter-spacing: -.01em; color: var(--clair); text-transform: none; }
+.section-titre .n { color: var(--studio-bleu); }
+.section-titre .compte, .section-titre .taille { font: 500 12px var(--affichage); color: var(--clair-terne);
+  background: var(--surface-3); border-radius: 5px; padding: 3px 7px; letter-spacing: 0; }
+.section-titre .droite { margin-left: auto; font: 500 12px var(--affichage); letter-spacing: 0; color: var(--clair-terne); }
+/* Une taille n'est pas une priorité : « 9 supports » est un inventaire, « 7
+ * décisions » est une réclamation. Deux sens, deux classes. */
+.taille { color: var(--clair-terne); font-size: 12px; }
+
+/* La bande de recevabilité — le motif central : une question, des contrôles,
+ * le prix de l'écart, le geste. Une section blanche à filet d'état. */
+.recev { --ton: var(--trait-clair); display: grid; gap: 12px; padding: 16px 18px;
+  background: var(--surface-1); border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 10px; }
+.recev.tenu { --ton: var(--succes); }
+.recev.manque { --ton: var(--bloquant); }
+.recev.flou { --ton: var(--arbitrage); }
+.rv-question { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.rq-t { font: 550 17px/1.35 var(--affichage); color: var(--clair); }
+.rq-etat { margin-left: auto; font: 550 12px var(--affichage); color: var(--ton); }
+.recev.flou .rq-etat { color: var(--clair-terne); }
+.rq-etat:first-letter { text-transform: uppercase; }
+.rv-controles { display: flex; gap: 6px; flex-wrap: wrap; }
+.rc-i { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 5px;
+  background: var(--surface-4); border: 1px solid var(--trait); font-size: 12px; color: var(--clair); }
+.rc-i .m { color: var(--bloquant); font-size: 11px; }
+.rc-i.ok { color: var(--clair-terne); }
+.rc-i.ok .m { color: var(--succes); }
+.rv-prix { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.55; color: var(--clair); }
+.rv-prix svg { color: var(--ton); margin-top: 3px; flex: 0 0 auto; }
+.rv-gestes { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* La validation d'un document : sa version, puis les verdicts. */
+.vd { display: grid; gap: 8px; }
+.vd-gestes { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.vd-v { font: 500 12px var(--affichage); color: var(--clair-terne); background: var(--surface-3);
+  border-radius: 5px; padding: 3px 7px; margin-right: 4px; }
+.vd-gestes .b { font-size: 13px; }
+/* Le verdict positif garde sa couleur dans le texte, pas en aplat : sur un
+ * écran qui a déjà son action principale, il n'en devient pas une seconde. */
+.vd-gestes .b.vert { background: var(--surface-1); color: var(--succes); border-color: var(--trait); font-weight: 600; }
+.vd-gestes .b.vert:hover { border-color: var(--succes); }
+
+/* Les champs d'une section : chaque champ est un bouton — et un champ vide se
+ * voit, puisque c'est celui qu'on vient remplir. Une section blanche de lignes. */
+.se-champs { margin-top: 28px; background: var(--surface-1); border: 1px solid var(--trait);
+  border-radius: 10px; padding: 18px 22px 8px; }
+.sec-t { display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+  font: 550 17px var(--affichage); color: var(--clair); text-transform: none; letter-spacing: 0; }
+.sec-t span { font: 500 12px var(--affichage); }
+.ch-e { display: grid; gap: 3px; width: calc(100% + 16px); margin: 0 -8px; text-align: left; padding: 12px 8px 12px 11px;
+  color: inherit; font: inherit; background: none; border: 0; border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--trait); cursor: pointer; min-height: 44px; }
+.se-champs .ch-e:last-child { border-bottom: 0; }
+.ch-e:hover { background: var(--surface-4); }
+.che-n { display: flex; align-items: baseline; gap: 8px; font-size: 11px; color: var(--clair-terne); }
+.che-i { color: var(--arbitrage); font-weight: 550; }
+.che-v { font-size: 14px; line-height: 1.55; color: var(--clair); max-width: 65ch; overflow-wrap: anywhere; }
+.ch-e.vide .che-v { color: var(--clair-terne); }
+.ch-e.infere { border-left-color: var(--arbitrage); }
+.ch-e.autrui { border-left-color: var(--info); }
+.ch-aide { font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 65ch; margin-bottom: 10px; }
+
+@media print { .recev { display: none !important; } }
+
 /* ═════════════════════ Passe 1 · Décisions ═════════════════════ */
 
 .dc { display: block; min-width: 0; }
@@ -296,3 +363,383 @@
   .pj-id > :first-child { width: 36px; height: 36px; }
   .pj-meta { grid-template-columns: 1fr 1fr; }
 }
+
+/* ═════════════════════ Passe 3 · Dossier : les sections Cadrer ═════════════════════
+ *
+ * À partir d'ici, une classe encore vivante n'est plus surchargée : son
+ * ancienne définition est retirée et elle est écrite ici, une fois. */
+
+/* Le titre et le chapô d'une section : titre de section Studio, chapô gris. */
+.pj-section h3.id-t, .pj-section .se-t { font: 550 21px/1.3 var(--affichage); letter-spacing: -.02em;
+  color: var(--clair); max-width: 40ch; text-wrap: balance; }
+.pj-section .id-s { margin-top: 6px; font-size: 14px; line-height: 1.6; color: var(--clair-terne); max-width: 65ch; }
+
+/* ——— Identité : un document à signer ———
+ * Une grille uniforme ne distingue pas ce qui est reçu de ce qui est supposé.
+ * C'est pourtant la seule chose qui compte : l'un s'oppose au client, l'autre
+ * fait travailler l'équipe et ne prouve rien. Deux colonnes dans une section. */
+.id { display: grid; gap: 16px; }
+.id-g { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin-top: 4px;
+  background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; overflow: hidden; }
+.id-col { padding: 18px 22px 10px; min-width: 0; }
+.id-col + .id-col { border-left: 1px solid var(--trait); }
+.id-col.infere { background: var(--surface-4); }
+.idc-t { display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+  font: 700 12px var(--affichage); color: var(--clair); }
+.id-col.infere .idc-t { color: var(--arbitrage); }
+.id-l { display: grid; gap: 2px; padding: 12px 0; border-bottom: 1px solid var(--trait); }
+.id-l:last-child { border-bottom: 0; }
+button.id-l, button.id-v, .idl-h { width: 100%; text-align: left; background: none; border: 0;
+  cursor: pointer; font: inherit; color: inherit; border-radius: 5px; }
+button.id-l, button.id-v { padding: 12px 8px; margin: 0 -8px; width: calc(100% + 16px); border-bottom: 1px solid var(--trait); border-radius: 0; }
+button.id-l:hover, button.id-v:hover, .idl-h:hover { background: var(--surface-4); }
+.idl-h { display: grid; gap: 2px; padding: 0; position: relative; min-height: 0; }
+.idl-h::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+  min-height: 44px; height: 100%; }
+.idl-n { font-size: 11px; color: var(--clair-terne); }
+.idl-v { font-size: 14px; line-height: 1.55; color: var(--clair); }
+.idl-p { margin-top: 4px; font-size: 12px; line-height: 1.55; color: var(--clair-terne); font-style: italic; max-width: 65ch; }
+.idl-g { display: flex; flex-wrap: wrap; gap: 0 4px; margin: 2px 0 -6px -8px; }
+.idl-g .idl-faux { color: var(--clair-terne); }
+
+.id-vides { background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; padding: 18px 22px 8px; }
+.id-v { display: grid; gap: 2px; }
+.id-vides button.id-v:last-child { border-bottom: 0; }
+.idv-n { font: 550 14px var(--affichage); color: var(--clair); display: flex; align-items: center; gap: 8px; }
+.idv-s { color: var(--arbitrage); font-size: 12px; }
+.idv-x { font-size: 12px; line-height: 1.55; color: var(--clair-terne); padding-left: 20px; max-width: 65ch; }
+
+/* La bande de contreseing : une ligne d'état, qui nomme qui doit signer. */
+.id-sign { --ton: var(--arbitrage); display: grid; gap: 8px; padding: 16px 18px;
+  background: var(--surface-1); border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 6px; }
+.id-sign.ok { --ton: var(--succes); }
+.ids-t { font: 700 12px var(--affichage); color: var(--ton); }
+.ids-c p { font-size: 14px; line-height: 1.6; color: var(--clair); max-width: 65ch; }
+.ids-g { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+@media (max-width: 900px) {
+  .id-g { grid-template-columns: minmax(0, 1fr); }
+  .id-col + .id-col { border-left: 0; border-top: 1px solid var(--trait); }
+}
+/* (passe 2, rattrapé en passe 3) Le champ manquant : le signe se colore, pas le texte. */
+.pj-rail .psa-m { display: flex; gap: 8px; font-size: 13px; color: var(--clair); }
+.pj-rail .psa-s { color: var(--arbitrage); flex-shrink: 0; }
+
+/* ——— Brief : ce dossier est-il fondé ? ——— */
+.bf { display: grid; gap: 20px; }
+.bf-vide { display: grid; gap: 6px; }
+.bf-vide p { font-size: 14px; line-height: 1.6; color: var(--clair-terne); max-width: 70ch; }
+.bf-vide a { color: var(--studio-bleu); font-weight: 550; text-decoration: none; }
+.bf-vide a:hover { text-decoration: underline; }
+.bf-l { display: grid; gap: 10px; }
+.bfl-t { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font: 550 17px var(--affichage); color: var(--clair); }
+.bfl-q { font: 400 13px var(--affichage); color: var(--clair-terne); }
+/* Une carte de brief : section blanche à filet d'état ; son coût reste gris. */
+.bfc { --ton: var(--bloquant); display: grid; gap: 6px; padding: 16px 18px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 8px; }
+.bfc.ok { --ton: var(--succes); }
+.bfc.partiel { --ton: var(--arbitrage); }
+.bfc-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.bfc-n { font: 550 16px var(--affichage); color: var(--clair); }
+.bfc-f { font-size: 11px; color: var(--clair-terne); background: var(--surface-3); border-radius: 5px; padding: 3px 7px; }
+.bfc-e { margin-left: auto; font: 550 12px var(--affichage); color: var(--ton); }
+.bfc-q { font-size: 14px; line-height: 1.6; color: var(--clair); max-width: 70ch; }
+.bfc-c { font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 70ch; }
+.bfc-c.ok { color: var(--succes); }
+.bfc-g { display: flex; gap: 0 8px; flex-wrap: wrap; margin: 0 0 -8px -8px; }
+@media (max-width: 560px) { .bfc-e { margin-left: 0; } }
+
+/* ——— Le rendu générique d'une section (brief-back, et toute section sans vue propre) ——— */
+.se-propre { display: grid; gap: 14px; }
+.section-titre.se-titre { font-size: 21px; letter-spacing: -.02em; margin-bottom: 0; }
+.se-propre > .se-champs { margin-top: 0; }
+.se-propre .form-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ——— Plateforme de marque (le socle) ———
+ * Ce qui définit une marque vaut plusieurs années. La campagne le LIT ; ce qui
+ * manque au vault manque à toutes ses campagnes, et le geste renvoie là-bas. */
+.so, .sv { display: grid; gap: 20px; }
+.sv-h { display: grid; gap: 8px; justify-items: start; }
+.sv-t { font: 550 21px/1.3 var(--affichage); letter-spacing: -.02em; color: var(--clair); max-width: 40ch; text-wrap: balance; }
+.sv-s { font-size: 14px; line-height: 1.6; color: var(--clair-terne); max-width: 65ch; }
+.sv-h .b.or { margin-top: 4px; text-decoration: none; }
+.sv-l { display: grid; gap: 16px; }
+/* Une marque : une section blanche. */
+.svm { display: grid; gap: 18px; padding: 20px 22px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-radius: 10px; min-width: 0; }
+.svm-h { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.svm-l { display: grid; place-items: center; width: 64px; height: 44px; border-radius: 6px;
+  background: var(--surface-4); overflow: hidden; flex-shrink: 0; }
+.svm-l img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.svm-l.vide { font-size: 11px; color: var(--clair-terne); }
+.svm-i { display: grid; gap: 2px; flex: 1 1 auto; min-width: 0; }
+.svm-n { font: 550 17px var(--affichage); color: var(--clair); }
+.svm-q { font-size: 12px; color: var(--clair-terne); }
+.svm-v { font-size: 13px; color: var(--clair-terne); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+.svm-v:hover { color: var(--studio-bleu); }
+.svmg-t { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font: 700 12px var(--affichage); color: var(--clair); }
+.svmg-t span { font-weight: 400; color: var(--clair-terne); }
+
+/* Deux champs servent à refuser, ils passent devant et en grand ; les sept
+ * autres se consultent. La section annonce neuf champs, elle en montre neuf.
+ * Le champ est un lien vers la bibliothèque : il s'écrit là où il appartient. */
+.svm-f { display: grid; gap: 10px; }
+.svf { --ton: var(--studio-bleu); display: grid; gap: 3px; padding: 10px 12px; border-left: 3px solid var(--ton);
+  border-radius: 0 6px 6px 0; background: var(--surface-4); color: inherit; text-decoration: none; min-width: 0; }
+.svf:hover { background: var(--surface-3); }
+.svf.vide { --ton: var(--trait-clair); }
+/* Seuls les deux champs qui servent à refuser crient quand ils manquent :
+ * dix-sept filets rouges sur ce qui se consulte, c'est du bruit. */
+.svf.grand.vide { --ton: var(--bloquant); }
+.svf.herite { --ton: var(--trait-clair); }
+.svf-n { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--clair-terne); }
+.svf-h { font-style: italic; }
+.svf-v { font-size: 13px; line-height: 1.55; color: var(--clair); overflow-wrap: anywhere; }
+.svf.grand .svf-v { font: 500 17px/1.45 var(--affichage); color: var(--studio-encre); }
+.svf.vide .svf-v, .svf.grand.vide .svf-v { font: 400 13px/1.55 var(--affichage); color: var(--clair-terne); }
+.svm-r { display: grid; gap: 10px; }
+.svm-rc { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+
+/* La gamme : un DA doit avoir les packs sous les yeux avant de dessiner ; ceux
+ * que la campagne retient passent devant, et se distinguent par un filet — pas
+ * par l'opacité, qui fait tomber un libellé sous 4,5:1. */
+.svm-p { display: grid; gap: 10px; }
+.svp-l { display: flex; flex-wrap: wrap; gap: 8px; }
+.svp { display: grid; gap: 4px; justify-items: center; width: 84px; padding: 6px; border-radius: 6px;
+  background: var(--surface-1); border: 1px solid var(--trait); }
+.svp.ici { border-color: var(--succes); box-shadow: inset 0 -2px 0 var(--succes); }
+.svp img { width: 100%; height: 54px; object-fit: contain; }
+.svp-v { display: grid; place-items: center; width: 100%; height: 54px; color: var(--clair-terne); }
+.svp-n { font-size: 11px; line-height: 1.3; color: var(--clair-terne); text-align: center; overflow-wrap: anywhere; }
+.svp.ici .svp-n { color: var(--clair); }
+.svp-x { font-size: 12px; line-height: 1.55; color: var(--clair-terne); max-width: 70ch; }
+
+/* Les éléments de marque, par rôle. */
+.svm-e { display: grid; gap: 10px; }
+.svm-ec { display: grid; gap: 10px; }
+.sve { display: grid; gap: 4px; }
+.sve-r { font-size: 11px; color: var(--clair-terne); }
+.sve-l { display: flex; flex-wrap: wrap; gap: 6px; }
+.sve-v { display: grid; place-items: center; width: 70px; height: 50px; padding: 4px; border-radius: 5px; background: var(--surface-4); }
+.sve-v img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.sve-x { font-size: 11px; color: var(--clair-terne); }
+
+/* Les gammes qui ont leur propre socle. */
+.svm-g { display: grid; gap: 8px; }
+.svm-gc { display: flex; flex-wrap: wrap; gap: 6px; }
+.svg { display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 10px; border-radius: 5px;
+  background: var(--surface-4); border: 1px solid var(--trait); font-size: 12px; color: var(--clair-terne); }
+.svg.ici { color: var(--clair); box-shadow: inset 3px 0 0 var(--studio-bleu); }
+.svg i { font-style: normal; font-size: 11px; color: var(--clair-terne); }
+
+/* Le socle d'un dossier sans marque au vault : les deux cartes qui servent à
+ * refuser montent, le reste se consulte. */
+.sh { display: grid; gap: 20px; }
+.sh-haut { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.sh-f { --ton: var(--studio-bleu); display: grid; gap: 8px; padding: 16px 18px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 8px; }
+.sh-f.vide { --ton: var(--bloquant); }
+/* Un bouton remet la couleur et la fonte à celles du navigateur : tout
+ * enrobage de contenu hérite donc explicitement. */
+.shf-h, .sh-c { display: grid; gap: 8px; width: 100%; text-align: left; background: none; border: 0; padding: 0;
+  cursor: pointer; color: inherit; font: inherit; }
+.shf-t { display: grid; gap: 2px; font: 700 12px var(--affichage); color: var(--clair); }
+.shf-r { font: 400 12px var(--affichage); color: var(--clair-terne); }
+.shf-v { font: 500 17px/1.45 var(--affichage); color: var(--studio-encre); }
+.shf-h:hover .shf-v { color: var(--studio-bleu); }
+.shf-x { display: grid; gap: 6px; justify-items: start; font-size: 13px; line-height: 1.55; color: var(--clair-terne); }
+.shf-a { font: 500 13px var(--affichage); color: var(--studio-bleu); }
+.sh-t { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font: 550 17px var(--affichage); color: var(--clair); }
+.sh-t span { font: 400 12px var(--affichage); color: var(--clair-terne); }
+.sh-reste { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.sh-c:hover .carte-n { border-color: var(--trait-clair); }
+
+/* Le moodboard : chaque image dit ce qu'elle fait là. */
+.mb { display: grid; gap: 12px; padding: 20px 22px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; }
+.mb-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mb-tete .t { font: 550 17px var(--affichage); color: var(--clair); }
+.mb-tete .n { flex: 1; font: 500 12px var(--affichage); color: var(--clair-terne); }
+.mb-groupe { display: grid; gap: 8px; }
+.mbg-t { display: flex; gap: 8px; align-items: center; font: 700 12px var(--affichage); color: var(--clair); }
+.mbg-t span { font-weight: 500; color: var(--clair-terne); }
+
+/* ——— Stratégie : insight → territoire → axes ———
+ * Rendus en profondeur. C'est l'emboîtement qui porte l'information : une piste
+ * qui ne remonte à rien flotte visiblement, et deux racines dans un même
+ * dossier se voient d'un seul regard. */
+.rais { display: grid; gap: 20px; }
+.rais-arbre { display: grid; gap: 16px; }
+.rin { --ton: var(--trait-clair); display: grid; gap: 14px; padding: 20px 22px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 10px; min-width: 0; }
+.rin.alerte { --ton: var(--bloquant); }
+.rin.attente { --ton: var(--arbitrage); }
+.rin.vert { --ton: var(--succes); }
+.rin-tete { display: grid; gap: 8px; }
+.rin-c { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.rin-couche { font: 550 12px var(--affichage); color: var(--clair); background: var(--surface-3); border-radius: 5px; padding: 3px 8px; }
+.rin-couche.sans { color: var(--bloquant); background: none; border: 1px dashed var(--bloquant); }
+.rin-v { font: 550 12px var(--affichage); color: var(--clair-terne); }
+.rin-v.alerte { color: var(--bloquant); }
+.rin-v.attente { color: var(--arbitrage); }
+.rin-v.vert { color: var(--succes); }
+/* L'insight est ce qu'un humain a écrit : l'aplat d'intention, en Asap 500. */
+.rin-p { font: 500 19px/1.4 var(--affichage); letter-spacing: -.01em; color: var(--studio-encre);
+  background: var(--studio-intention); padding: 14px 16px; border-radius: 6px; overflow-wrap: anywhere; text-wrap: pretty; }
+.rin-cmd { font-size: 13px; line-height: 1.55; color: var(--clair); }
+.rin-e { font-size: 12px; line-height: 1.55; color: var(--clair-terne); }
+.rin-g { display: flex; gap: 4px; flex-wrap: wrap; margin-left: -8px; }
+/* Le décalage de couche : la faute la plus chère, dite à l'endroit où elle se
+ * décide, avec la seule chose qui la ferme. */
+.rin-dec { display: grid; gap: 6px; justify-items: start; padding: 12px 14px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--arbitrage); border-radius: 6px; }
+.rind-t { font: 550 13px/1.45 var(--affichage); color: var(--clair); }
+.rind-q { font-size: 12px; line-height: 1.55; color: var(--clair-terne); }
+
+/* Le chemin — trois passes de l'insight, trois versions de la réduction. */
+.chem { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.chem-e { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; }
+.chem-n { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 10px;
+  background: var(--surface-3); font: 550 11px var(--affichage); color: var(--clair); }
+.chem-e.vide .chem-n { color: var(--clair-terne); }
+.chem-c { display: grid; gap: 2px; min-width: 0; }
+.chem-t { font-size: 11px; color: var(--clair-terne); }
+.chem-x { font-size: 14px; line-height: 1.6; color: var(--clair); max-width: 70ch; }
+.chem-e.vide .chem-x { color: var(--clair-terne); }
+.chem-m { font-size: 11px; color: var(--clair-terne); }
+
+/* Les territoires, emboîtés dans leur insight. */
+.rin-ter { display: grid; gap: 10px; justify-items: start; padding-top: 14px; border-top: 1px solid var(--trait); }
+.rint-t { font: 700 12px var(--affichage); color: var(--clair); }
+.rin-ter > .b.nu { margin-left: -8px; }
+.rte { --ton: var(--trait-clair); display: grid; gap: 6px; width: 100%; padding: 12px 14px; background: var(--surface-4);
+  border-left: 3px solid var(--ton); border-radius: 0 6px 6px 0; }
+.rte.alerte { --ton: var(--bloquant); }
+.rte.attente { --ton: var(--arbitrage); }
+.rte.vert { --ton: var(--succes); }
+.rte-tete { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.rte-n { font: 550 15px var(--affichage); color: var(--clair); }
+.rte-ec { font-size: 11px; color: var(--clair); background: var(--surface-1); border: 1px solid var(--trait); border-radius: 5px; padding: 2px 7px; }
+.rte-c { margin-left: auto; font-size: 12px; color: var(--clair-terne); }
+.rte-q { font-size: 13px; line-height: 1.55; color: var(--clair); }
+.rte-e { font-size: 12px; line-height: 1.55; color: var(--clair-terne); }
+.rte-preuve { display: grid; gap: 2px; padding: 8px 10px; background: var(--surface-1); border: 1px dashed var(--trait-clair); border-radius: 5px; }
+.rte-preuve.ok { border-style: solid; border-color: var(--succes); }
+.rtp-t { font: 700 11px var(--affichage); color: var(--clair); }
+.rtp-x { font-size: 13px; line-height: 1.5; color: var(--clair); }
+.rtp-p { font-size: 12px; color: var(--arbitrage); }
+.rte-preuve.ok .rtp-p { color: var(--succes); }
+.rte-pi { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.rtep { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 13px; }
+.rtep-n { color: var(--clair); }
+.rtep-r { font-size: 11px; color: var(--clair-terne); }
+.rtep.defendue .rtep-r { color: var(--studio-bleu); font-weight: 550; }
+.rtep-s { font: 550 11px var(--affichage); color: var(--succes); }
+.rte-g { display: flex; gap: 4px; margin-left: -8px; }
+
+/* Les pistes qui ne remontent à rien. */
+.rais-orph { display: grid; gap: 8px; padding: 16px 18px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--bloquant); border-radius: 10px; }
+.rao-t { font: 550 15px var(--affichage); color: var(--clair); }
+.rao-q { font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 70ch; }
+.rao-l { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.rao-l li { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rao-n { font-size: 13px; color: var(--clair); }
+
+/* L'ordre de travail, quand rien n'est encore écrit. */
+.rais-vide { display: grid; gap: 14px; }
+.rais-ordre { display: grid; gap: 8px; padding: 18px 22px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; }
+.ro-t { font: 550 17px var(--affichage); color: var(--clair); }
+.ro-q { font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 70ch; }
+.ro-l { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.ro-l li { display: grid; gap: 2px; }
+.ro-n { font: 550 14px var(--affichage); color: var(--clair); }
+.ro-x { font-size: 12px; color: var(--clair); }
+.ro-s { font-size: 12px; color: var(--clair-terne); }
+
+/* L'école, étage par étage. */
+.eco { --ton: var(--trait-clair); display: grid; gap: 12px; padding: 20px 22px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 10px; }
+.eco.alerte { --ton: var(--bloquant); }
+.eco.attente { --ton: var(--arbitrage); }
+.eco.vert { --ton: var(--succes); }
+.eco-tete { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.eco-t { font: 550 17px var(--affichage); color: var(--clair); }
+.eco-e { margin-left: auto; font: 550 12px var(--affichage); color: var(--ton); }
+.eco.alerte .eco-e, .eco.attente .eco-e { color: var(--ton); }
+.eco-q { font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 70ch; }
+.eco-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.ecoe { --ton: var(--trait); display: grid; gap: 3px; justify-items: start; padding: 12px 14px; background: var(--surface-4);
+  border-top: 3px solid var(--ton); border-radius: 0 0 6px 6px; }
+.ecoe.posee { --ton: var(--succes); }
+.ecoe.manque { --ton: var(--bloquant); }
+.ecoe-t { font-size: 11px; color: var(--clair-terne); }
+.ecoe-n { font: 550 15px var(--affichage); color: var(--clair); }
+.ecoe.vide .ecoe-n { color: var(--clair-terne); font-weight: 400; }
+.ecoe-m { font-size: 11px; color: var(--clair-terne); }
+.ecoe-p { font-size: 12px; line-height: 1.5; color: var(--clair); }
+.ecoe-x, .ecoe-l { font-size: 12px; line-height: 1.5; color: var(--clair-terne); margin: 0; }
+.ecoe > .b.nu { margin-left: -8px; }
+.eco-tab summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font: 500 13px var(--affichage); color: var(--studio-bleu); }
+.eco-tab { overflow-x: auto; }
+.ecot { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ecot th, .ecot td { text-align: left; padding: 8px 10px; vertical-align: top; border-bottom: 1px solid var(--trait); }
+.ecot th { font-weight: 550; color: var(--clair-terne); }
+.ecot tr.corpus td { color: var(--clair-terne); }
+.eco-n { display: block; color: var(--clair); font-style: normal; font-weight: 550; }
+.eco-m { display: block; color: var(--clair-terne); }
+/* Les fiches d'école, au choix. */
+.ecc-l { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.ecc { display: grid; gap: 4px; padding: 12px 14px; text-align: left; cursor: pointer; font: inherit; color: inherit;
+  background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px; }
+.ecc:hover { border-color: var(--trait-clair); }
+.ecc.ici { box-shadow: inset 3px 0 0 var(--studio-bleu); border-color: var(--trait-clair); }
+.ecc.corpus { border-style: dashed; }
+.ecc-t { display: grid; gap: 1px; }
+.ecc-n { font: 550 14px var(--affichage); color: var(--clair); }
+.ecc-m { font-size: 11px; color: var(--clair-terne); }
+.ecc-p { font-size: 13px; line-height: 1.5; color: var(--clair); margin: 0; }
+.ecc-pr, .ecc-lim, .ecc-loc { font-size: 12px; line-height: 1.5; margin: 0; color: var(--clair-terne); }
+.ecc-e { font-weight: 700; color: var(--clair); }
+.ecc-ok { color: var(--bloquant); }
+.ecc-ok.ok { color: var(--succes); }
+
+/* L'efficacité : tout est en lecture, et chaque nombre porte sa réserve. C'est
+ * la condition pour emprunter un corpus sans refaire l'erreur qu'on reproche
+ * aux doctrines. */
+.eff { display: grid; gap: 12px; padding: 20px 22px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; }
+.eff-t { font: 550 17px var(--affichage); color: var(--clair); }
+.eff-q { font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 70ch; }
+.eff-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+.eff-c { display: grid; gap: 3px; justify-items: start; padding: 12px 14px; background: var(--surface-4); border-radius: 6px; }
+.effc-t { font-size: 11px; color: var(--clair-terne); }
+.effc-n { font: 550 24px/1.2 var(--affichage); color: var(--clair); font-variant-numeric: tabular-nums; }
+.effc-n.sans { font: 400 14px var(--affichage); color: var(--clair-terne); }
+.effc-x { font-size: 13px; line-height: 1.5; color: var(--clair); }
+.effc-r { font-size: 11px; line-height: 1.5; color: var(--clair-terne); }
+.eff-sharp { display: grid; gap: 8px; }
+.effs-l { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.effs { --ton: var(--trait); display: grid; gap: 1px; padding-left: 10px; border-left: 3px solid var(--ton); }
+.effs.ok { --ton: var(--succes); }
+.effs.non { --ton: var(--arbitrage); }
+.effs-n { font: 550 13px var(--affichage); color: var(--clair); }
+.effs-q, .effs-x { font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
+
+/* Les énoncés (le cadre de la stratégie, et partout où un texte se lit à la
+ * largeur d'une colonne de lecture) : chaque énoncé est un bouton. */
+.st { display: grid; gap: 0; max-width: 75ch; }
+.rais-reste { display: grid; gap: 10px; padding: 18px 22px 8px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; }
+.rais-reste .section-titre { margin-bottom: 0; }
+.rais-reste .st { max-width: none; }
+.st-e { display: grid; gap: 4px; }
+button.st-e { width: calc(100% + 16px); margin: 0 -8px; padding: 12px 8px; text-align: left; background: none; border: 0;
+  border-bottom: 1px solid var(--trait); border-radius: 0; cursor: pointer; color: inherit; font: inherit; min-height: 44px; }
+button.st-e:last-child { border-bottom: 0; }
+button.st-e:hover { background: var(--surface-4); }
+.ste-n { display: flex; align-items: baseline; gap: 8px; font-size: 11px; color: var(--clair-terne); }
+.ste-i { color: var(--arbitrage); font-weight: 550; }
+.ste-v { font-size: 15px; line-height: 1.6; color: var(--clair); }
+.ste-l { display: grid; gap: 6px; padding-left: 18px; margin: 0; }
+.ste-l li { font-size: 14px; line-height: 1.55; color: var(--clair); }
+.ste-x { font-size: 13px; line-height: 1.55; color: var(--clair-terne); }
+.st-e.vide .ste-n::before { content: "○"; color: var(--arbitrage); margin-right: 2px; }
+.ste-p { font-size: 12px; line-height: 1.55; color: var(--clair-terne); font-style: italic; }

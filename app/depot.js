@@ -501,10 +501,13 @@ window.DEPOT = (function () {
    * à comprendre : on reconnaît un mot. Ce qui n'est pas reconnu reste sans
    * campagne, et le dit. */
   function occasionDuNom(nom) {
-    var t = O.normalise(nom || "");
+    /* Les tirets se lisent comme des espaces : « Back-To-School » passait à
+     * côté de « back to school », et le dossier vivant de la rentrée 2026
+     * restait hors de sa campagne. */
+    var t = O.normalise(nom || "").replace(/[-_]+/g, " ");
     var table = [
       ["noel", /\bnoel\b|fin d annee|xmas|christmas/],
-      ["ramadan", /ramadan|aid|carem[e]? musulman/],
+      ["ramadan", /ramadan|\baid\b|carem[e]? musulman/],
       ["paques", /paques|careme/],
       ["rentree", /back to school|rentree|\bbts\b|cahiers/],
       ["fete", /fete des meres|fete des peres|journee mondiale|saint valentin/],
@@ -684,6 +687,9 @@ window.DEPOT = (function () {
 
     if (!d.campagnes) d.campagnes = [];
     if (d.schema < 5) rattacherAuxCampagnes(d);
+    /* Une seconde lecture, une seule fois, avec les tirets reconnus. Idempotente :
+     * un projet déjà rattaché n'est jamais déplacé. */
+    if (!d.rattachement2) { rattacherAuxCampagnes(d); d.rattachement2 = true; }
 
     if (!d.people) d.people = [];
     d.schema = VERSION_SCHEMA;

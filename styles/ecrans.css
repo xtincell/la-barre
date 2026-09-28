@@ -62,8 +62,6 @@
 .carte-projet .alerte-p { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--bloquant-txt); margin-top: .35rem; }
 .carte-projet .bien-p { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--vert); margin-top: .35rem; }
 
-/* ————————————————————— Projet : ruban de sections ————————————————————— */
-
 /* ————————————————————— Pistes ————————————————————— */
 
 .routes { display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); gap: .7rem; }
@@ -145,8 +143,6 @@
 .attente-l .message { font-size: var(--t-meta); letter-spacing: var(--ls-meta); background: var(--nuit); border: 1px solid var(--trait);
   padding: .5rem .6rem; margin-top: .3rem; white-space: pre-wrap; line-height: 1.45; color: var(--clair-doux); }
 .attente-l details summary { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); cursor: pointer; }
-
-/* ————————————————————— Rail droit : files ————————————————————— */
 
 /* ————————————————————— Référentiel ————————————————————— */
 
@@ -392,122 +388,6 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 
 /* ————————————————————— La chaîne du raisonnement ————————————————————— */
 
-/* Insight → territoire → axes, rendus en profondeur. C'est l'indentation qui
- * porte l'information : une piste qui ne remonte à rien flotte visiblement, et
- * deux racines dans un même dossier se voient d'un seul regard. */
-.rais { display: grid; gap: 1.2rem; }
-.rais-arbre { display: grid; gap: 1.1rem; }
-
-.rin { display: grid; gap: .6rem; padding: .85rem 1rem;
-  background: var(--surface-1); border-left: 3px solid var(--trait-clair); }
-.rin.alerte { border-left-color: var(--bloquant); }
-.rin.attente { border-left-color: var(--arbitrage); }
-.rin.vert { border-left-color: var(--succes); }
-
-.rin-tete { display: grid; gap: .3rem; }
-.rin-c { display: flex; gap: .45rem; align-items: baseline; flex-wrap: wrap; }
-.rin-couche { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em;
-  padding: .1rem .4rem; background: var(--n950); color: var(--n100); }
-.rin-couche.sans { background: transparent; color: var(--bloquant-txt);
-  border: 1px dashed var(--bloquant); }
-.rin-v { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); }
-.rin-v.alerte { color: var(--bloquant-txt); }
-.rin-v.attente { color: var(--arbitrage); }
-.rin-v.vert { color: var(--succes); }
-
-.rin-p { font-family: var(--lecture); font-size: var(--t-titre); line-height: var(--lh-titre);
-  letter-spacing: var(--ls-titre); color: var(--clair); margin: 0; }
-.rin-cmd { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  color: var(--clair-doux); margin: 0; }
-.rin-e { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--clair-terne); margin: 0; }
-.rin-g { display: flex; gap: .3rem; flex-wrap: wrap; margin-top: .15rem; }
-
-/* Le décalage de couche : la faute la plus chère, dite à l'endroit où elle se
- * décide, avec la seule chose qui la ferme. */
-.rin-dec { display: grid; gap: .25rem; justify-items: start; padding: .6rem .7rem;
-  background: var(--surface-3); border-left: 3px solid var(--bloquant); }
-.rind-t { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  color: var(--bloquant-txt); }
-.rind-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--clair-doux); margin: 0; }
-
-/* Le chemin — trois passes de l'insight, trois versions de la réduction. */
-.chem { display: grid; gap: .3rem; margin: 0; padding: 0; list-style: none;
-  border-top: 1px solid var(--trait); padding-top: .5rem; }
-.chem-e { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .5rem; align-items: start; }
-.chem-n { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 9px;
-  font-size: var(--t-micro); line-height: 1; background: var(--surface-3); color: var(--clair-doux); }
-.chem-e.vide .chem-n { color: var(--encre-pale); }
-.chem-c { display: grid; gap: .05rem; min-width: 0; }
-.chem-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.chem-x { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
-.chem-e.vide .chem-x { color: var(--clair-terne); font-family: var(--ecrit); font-style: italic; letter-spacing: 0; }
-.chem-m { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
-
-/* Les territoires, en retrait de leur insight. */
-.rin-ter { display: grid; gap: .5rem; justify-items: start;
-  border-top: 1px solid var(--trait); padding-top: .55rem; }
-.rint-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-
-.rte { display: grid; gap: .3rem; width: 100%; padding: .55rem .7rem;
-  background: var(--surface-3); border-left: 2px solid var(--trait-clair); }
-.rte.alerte { border-left-color: var(--bloquant); }
-.rte.attente { border-left-color: var(--arbitrage); }
-.rte.vert { border-left-color: var(--succes); }
-.rte-tete { display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
-.rte-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire);
-  color: var(--clair); margin: 0; }
-.rte-ec { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--or); }
-.rte-c { margin-left: auto; font-size: var(--t-micro); line-height: var(--lh-micro);
-  letter-spacing: var(--ls-micro); color: var(--clair-terne); }
-.rte-q { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  color: var(--clair-doux); margin: 0; }
-.rte-e { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--clair-terne); margin: 0; }
-
-.rte-preuve { display: grid; gap: .1rem; padding: .4rem .5rem; background: var(--surface-1);
-  border: 1px dashed var(--trait-clair); }
-.rte-preuve.ok { border-style: solid; border-color: var(--succes); }
-.rtp-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
-.rtp-x { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
-.rtp-p { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--arbitrage); }
-.rte-preuve.ok .rtp-p { color: var(--succes); }
-
-.rte-pi { margin: 0; padding: 0; list-style: none; display: grid; gap: .15rem; }
-.rtep { display: flex; gap: .4rem; align-items: baseline; flex-wrap: wrap;
-  font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.rtep-n { color: var(--clair-doux); }
-.rtep-r { font-size: var(--t-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
-.rtep.defendue .rtep-r { color: var(--or); }
-.rtep-s { font-size: var(--t-micro); letter-spacing: var(--ls-micro); color: var(--succes); }
-.rte-g { display: flex; gap: .3rem; }
-
-/* Les pistes qui ne remontent à rien. */
-.rais-orph { display: grid; gap: .35rem; padding: .7rem .85rem;
-  background: var(--surface-3); border-left: 3px solid var(--bloquant); }
-.rao-t { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--bloquant-txt); }
-.rao-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--clair-doux); margin: 0; }
-.rao-l { margin: 0; padding: 0; list-style: none; display: grid; gap: .2rem; }
-.rao-l li { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
-.rao-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
-
-/* L'ordre de travail, quand rien n'est encore écrit. */
-.rais-vide { display: grid; gap: .8rem; }
-.rais-ordre { display: grid; gap: .35rem; padding: .7rem .85rem; background: var(--surface-3); }
-.ro-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em; color: var(--clair-terne); }
-.ro-q { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  color: var(--clair-doux); margin: 0; }
-.ro-l { margin: 0; padding-left: 1.2rem; display: grid; gap: .25rem; }
-.ro-l li { display: grid; gap: .05rem; }
-.ro-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair); }
-.ro-x { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-doux); }
-.ro-s { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--arbitrage); }
-
-.rais-reste { display: grid; gap: .5rem; }
-
 /* Le test en trois questions, les sources, les imposteurs. */
 .tst { display: grid; gap: .7rem; margin: .6rem 0; }
 .tst-q { display: grid; gap: .2rem; padding-bottom: .5rem; border-bottom: 1px solid var(--trait); }
@@ -544,11 +424,6 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 .imp-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
 
 .indice-err { color: var(--arbitrage); }
-
-@media (max-width: 760px) {
-  .rin { padding: .7rem .75rem; }
-  .rte-c { margin-left: 0; }
-}
 
 /* ————————————————————— Lire la salle, choisir la structure ————————————————————— */
 
@@ -605,100 +480,6 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 .autref-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
 
 @media print { .salle button, .autref { display: none; } }
-
-/* ————————————————————— L'école par étage ————————————————————— */
-
-.eco { display: grid; gap: .5rem; padding: .8rem .95rem;
-  background: var(--surface-1); border-left: 3px solid var(--trait-clair); }
-.eco.alerte { border-left-color: var(--bloquant); }
-.eco.attente { border-left-color: var(--arbitrage); }
-.eco.vert { border-left-color: var(--succes); }
-.eco-tete { display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
-.eco-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
-.eco-e { margin-left: auto; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); }
-.eco-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--clair-terne); margin: 0; max-width: var(--mesure); }
-
-.eco-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: .5rem; }
-.ecoe { display: grid; gap: .12rem; justify-items: start; padding: .55rem .65rem;
-  background: var(--surface-3); border-top: 2px solid var(--trait-clair); align-content: start; }
-.ecoe.posee { border-top-color: var(--succes); }
-.ecoe.manque { border-top-color: var(--bloquant); }
-.ecoe.vide { border-top-color: var(--trait); }
-.ecoe-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
-.ecoe-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
-.ecoe.vide .ecoe-n { color: var(--clair-terne); font-family: var(--ecrit); font-style: italic; letter-spacing: 0; }
-.ecoe-m { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
-.ecoe-p { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-doux); }
-.ecoe-x { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--bloquant-txt); margin: 0; }
-.ecoe-l { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--or); margin: 0; }
-
-.eco-tab summary { min-height: var(--cible); display: flex; align-items: center; cursor: pointer;
-  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.ecot { width: 100%; border-collapse: collapse; }
-.ecot th, .ecot td { text-align: left; padding: .25rem .45rem; vertical-align: top;
-  border-bottom: 1px solid var(--trait);
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-doux); }
-.ecot th { color: var(--clair-terne); letter-spacing: .08em; }
-.ecot tr.corpus td { color: var(--clair-terne); font-style: italic; }
-.eco-n { display: block; color: var(--clair); font-style: normal; }
-.eco-m { display: block; color: var(--clair-terne); }
-.eco-tab { overflow-x: auto; }
-
-/* Les fiches d'école, au choix. */
-.ecc-l { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: .5rem; max-height: 52vh; overflow-y: auto; padding: .1rem; }
-.ecc { display: grid; gap: .25rem; padding: .6rem .7rem; text-align: left; cursor: pointer;
-  background: var(--surface-3); border: 1px solid var(--trait); align-content: start; }
-.ecc:hover { background: var(--surface-1); }
-.ecc.ici { background: var(--surface-1); border-color: var(--or); border-left-width: 3px; }
-.ecc.corpus { border-style: dashed; }
-.ecc-t { display: grid; gap: .02rem; }
-.ecc-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
-.ecc-m { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
-.ecc-p { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); margin: 0; }
-.ecc-pr, .ecc-lim, .ecc-loc { font-size: var(--t-micro); line-height: var(--lh-micro);
-  letter-spacing: var(--ls-micro); margin: 0; }
-.ecc-pr { color: var(--clair-doux); }
-.ecc-lim { color: var(--arbitrage); }
-.ecc-loc { color: var(--or); }
-.ecc-e { letter-spacing: .1em; color: var(--clair-terne); }
-.ecc-ok { color: var(--bloquant-txt); }
-.ecc-ok.ok { color: var(--succes); }
-
-/* ————————————————————— La lecture d'efficacité ————————————————————— */
-
-/* Tout est en lecture, et chaque nombre porte sa réserve. C'est la condition
- * pour emprunter un corpus sans refaire l'erreur qu'on reproche aux doctrines. */
-.eff { display: grid; gap: .55rem; padding: .8rem .95rem;
-  background: var(--surface-1); border-left: 3px solid var(--info); }
-.eff-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
-.eff-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--clair-terne); margin: 0; max-width: var(--mesure); }
-.eff-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .5rem; }
-.eff-c { display: grid; gap: .1rem; justify-items: start; padding: .55rem .65rem; background: var(--surface-3); }
-.effc-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
-.effc-n { font-family: var(--affichage); font-size: var(--t-h2); line-height: var(--lh-h2);
-  letter-spacing: var(--ls-h2); color: var(--clair); }
-.effc-n.sans { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-terne);
-  font-family: var(--ecrit); font-style: italic; letter-spacing: 0; }
-.effc-x { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); }
-.effc-r { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--clair-terne); margin: .15rem 0 0; }
-
-.eff-sharp { display: grid; gap: .25rem; }
-.effs-l { margin: 0; padding: 0; list-style: none; display: grid; gap: .3rem; }
-.effs { display: grid; gap: .03rem; padding-left: .55rem; border-left: 2px solid var(--trait); }
-.effs.ok { border-left-color: var(--succes); }
-.effs.non { border-left-color: var(--arbitrage); }
-.effs-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair); }
-.effs-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
-.effs-x { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--clair-doux); }
-
-@media print { .eco-tab, .eco button, .ecoe button { display: none; } }
 
 /* ————————————————————— La doctrine ————————————————————— */
 
@@ -864,7 +645,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
  * de droite ni les grilles de recevabilité, qui sont du chrome d'application
  * et n'ont rien à faire sur le papier qu'on tend à quelqu'un. */
 @media print {
-  .panneau-lat, .pr-lat, .recev, .salle, .dc-modes, .pr-modes, .liv-filtres,
+  .panneau-lat, .pr-lat, .salle, .dc-modes, .pr-modes, .liv-filtres,
   .prd-dette, .prd-manque, .prp-gestes, .pr-pages, .pr-deux,
   .nav3, .fil, .chapeau { display: none !important; }
 

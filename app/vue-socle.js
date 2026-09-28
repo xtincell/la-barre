@@ -74,13 +74,13 @@ window.VUE_SOCLE = (function () {
               : "le contrôle de vocabulaire s'y adosse")),
           estVide(v)
             ? el("div.shf-x", {}, "Non écrit — " + c.cout + ".",
-                el("span.shf-a", {}, "l'écrire →"))
+                el("span.shf-a", {}, "L'écrire →"))
             : el("div.shf-v", {}, contenu(c, v))));
       })),
 
-      el("div.sh-t", {}, "LE RESTE DU SOCLE",
+      el("div.sh-t", {}, "Le reste du socle",
         el("span", {}, reste.filter(function (c) { return !estVide(s[c.cle]); }).length
-          + " sur " + reste.length + " écrits  ·  consultable, pas opposable seul")),
+          + " sur " + reste.length + " écrits · consultable, pas opposable seul")),
       el("div.sh-reste", {}, reste.map(function (c) {
         var v = s[c.cle];
         return el("button.sh-c", { type: "button", title: "modifier — " + c.t,
@@ -137,14 +137,14 @@ window.VUE_SOCLE = (function () {
       el("div.svm-h", {},
         logo && logo.vignette
           ? el("span.svm-l", {}, el("img", { src: logo.vignette, alt: m.nom }))
-          : el("span.svm-l.vide", {}, "logo ?"),
+          : el("span.svm-l.vide", {}, "Logo ?"),
         el("div.svm-i", {},
           el("span.svm-n", {}, m.nom),
           el("span.svm-q", {}, e.propres + (e.propres > 1 ? " champs propres" : " champ propre")
-            + (e.herites ? "  ·  " + e.herites + (e.herites > 1 ? " hérités" : " hérité") : "")
-            + (e.vides.length ? "  ·  " + e.vides.length
+            + (e.herites ? " · " + e.herites + (e.herites > 1 ? " hérités" : " hérité") : "")
+            + (e.vides.length ? " · " + e.vides.length
                 + (e.vides.length > 1 ? " manquants" : " manquant") : ""))),
-        el("a.svm-v", { href: "#/referentiel/marques" }, "à la bibliothèque de marque →")),
+        el("a.svm-v", { href: "#/referentiel/marques" }, "À la bibliothèque de marque →")),
 
       /* Les deux qui servent à refuser passent devant et en grand. */
       el("div.svm-f", {}, TETE.map(function (cle) {
@@ -159,7 +159,7 @@ window.VUE_SOCLE = (function () {
       /* Les sept autres, en retrait mais lisibles. Les supprimer était une
        * amputation : la section annonce neuf champs, elle doit en montrer neuf. */
       el("div.svm-r", {},
-        el("span.svmg-t", {}, "LE RESTE DU SOCLE",
+        el("span.svmg-t", {}, "Le reste du socle",
           el("span", {}, reste.filter(function (c) {
             var h = VAULT.herite("marque", m.id, c.cle);
             return h.valeur !== null && h.valeur !== undefined
@@ -170,7 +170,7 @@ window.VUE_SOCLE = (function () {
       /* Les gammes : une marque × type de produit peut avoir son propre socle. */
       gammes.length
         ? el("div.svm-g", {},
-            el("span.svmg-t", {}, "GAMMES AVEC LEUR PROPRE SOCLE"),
+            el("span.svmg-t", {}, "Gammes avec leur propre socle"),
             el("div.svm-gc", {}, gammes.map(function (g) {
               var eg = VAULT.etatNiveau("gamme", m.id + "|" + g);
               return el("span.svg" + (eg.propres ? ".ici" : ""), {},
@@ -197,7 +197,7 @@ window.VUE_SOCLE = (function () {
             ? (c.cle === "idee_directrice"
                 ? "Non écrite — toute campagne de cette marque pourra être refusée sans recours."
                 : "Non écrits — le contrôle de vocabulaire n'a rien à vérifier.")
-            : (c.aide || "non écrit"))
+            : (c.aide || "Non écrit"))
         : Array.isArray(h.valeur) ? h.valeur.join("  ·  ") : String(h.valeur)));
   }
 
@@ -212,7 +212,7 @@ window.VUE_SOCLE = (function () {
       (parRole[r] = parRole[r] || []).push(a);
     });
     return el("div.svm-e", {},
-      el("span.svmg-t", {}, "LES ÉLÉMENTS DE MARQUE",
+      el("span.svmg-t", {}, "Les éléments de marque",
         el("span", {}, as.length + (as.length > 1 ? " éléments" : " élément"))),
       el("div.svm-ec", {}, Object.keys(parRole).map(function (r) {
         return el("div.sve", {},
@@ -237,7 +237,7 @@ window.VUE_SOCLE = (function () {
     var cat = window.COMPILATEUR ? COMPILATEUR.gammeDeLaCampagne(p, null, m.id) : tout;
     if (!cat.length) {
       return el("div.svm-p", {},
-        el("span.svmg-t", {}, "LA GAMME"),
+        el("span.svmg-t", {}, "La gamme"),
         el("p.svp-x", {}, "Aucun pack au catalogue de " + m.nom + ". Un DA qui dessine "
           + "sans les packs sous les yeux invente les proportions et les couleurs."));
     }
@@ -267,8 +267,8 @@ window.VUE_SOCLE = (function () {
     var qualifies = cat.length - muets;
 
     return el("div.svm-p", {},
-      el("span.svmg-t", {}, "LA GAMME",
-        el("span", {}, (noms.length ? noms.join(" · ") + "  ·  " : "")
+      el("span.svmg-t", {}, "La gamme",
+        el("span", {}, (noms.length ? noms.join(" · ") + " · " : "")
           + (n ? n + " retenus sur " + qualifies
                : qualifies + (qualifies > 1 ? " packs dans le périmètre" : " pack dans le périmètre")))),
       el("div.svp-l", {}, ordre.slice(0, 12).map(function (s) {
@@ -318,24 +318,24 @@ window.VUE_SOCLE = (function () {
 
     return el("div.mb", {},
       el("div.mb-tete", {},
-        el("span.t", {}, "MOODBOARD ET ANTÉRIEURS"),
-        el("span.n", {}, ms.length ? ms.length + " images" : "aucune image"),
-        el("button.b.nu", { type: "button", onclick: function () { ajouter(p, s, rafraichir); } }, "+ image")),
+        el("span.t", {}, "Moodboard et antérieurs"),
+        el("span.n", {}, ms.length ? ms.length + (ms.length > 1 ? " images" : " image") : "Aucune image"),
+        el("button.b.nu", { type: "button", onclick: function () { ajouter(p, s, rafraichir); } }, "+ Ajouter une image")),
 
       !ms.length
         ? el("p.rien", {}, "La plateforme de marque ne porte que du texte. Une plateforme sans images oblige chaque DA à réinventer l'univers, et à se tromper.")
         : Object.keys(ROLES).map(function (r) {
             if (!parRole[r].length) return null;
             return el("div.mb-groupe", {},
-              el("div.mbg-t", {}, ROLES[r].nom.toUpperCase(),
+              el("div.mbg-t", {}, ROLES[r].nom,
                 el("span", {}, String(parRole[r].length))),
               el("div.rt-mur", {}, parRole[r].map(function (m) {
                 return el("button.rt-c" + (r === "interdit" ? ".ecart" : ""), { type: "button",
                   title: m.legende || "", onclick: function () { detailImage(p, s, m, rafraichir); } },
                   IMAGE.vignette(m, "planche"),
                   el("span.rtc-bas", {},
-                    el("span.rtc-n", {}, m.legende || "sans légende"),
-                    el("span.rtc-m", {}, m.source || "source non dite")));
+                    el("span.rtc-n", {}, m.legende || "Sans légende"),
+                    el("span.rtc-m", {}, m.source || "Source non dite")));
               })));
           })
     );
@@ -502,7 +502,7 @@ window.VUE_SOCLE = (function () {
       trouves.length
         ? el("div", {},
             UI.banniere("rouge", trouves.length + (trouves.length > 1 ? " termes surveillés apparaissent" : " terme surveillé apparaît") + " dans ce projet."),
-            el("div.sousbloc", {}, el("h3", {}, "TROUVÉS"),
+            el("div.sousbloc", {}, el("h3", {}, "Trouvés"),
               el("div", {}, trouves.map(function (t) {
                 return UI.fileItem(null, "« " + t.mot + " »",
                   t.type === "retire" ? "nom retiré du nommage" : "la marque ne le dit jamais", null);

@@ -326,14 +326,14 @@ window.EFFICACITE = (function () {
     var pl = plafond(p);
 
     return el("div.eff", {},
-      el("div.eff-t", {}, "LECTURE D'EFFICACITÉ"),
+      el("div.eff-t", {}, "Lecture d'efficacité"),
       el("p.eff-q", {}, "Un corpus réfutable se cite avec ses controverses. Rien ici ne "
         + "lève de blocage : ce sont des lectures, et chacune porte sa réserve."),
 
       el("div.eff-g", {},
         /* La répartition. */
         el("div.eff-c", {},
-          el("span.effc-t", {}, "MARQUE / ACTIVATION"),
+          el("span.effc-t", {}, "Marque / activation"),
           r.lisible
             ? el("span.effc-n", {}, r.partMarque + " / " + (100 - r.partMarque))
             : el("span.effc-n.sans", {}, "non lisible"),
@@ -344,7 +344,7 @@ window.EFFICACITE = (function () {
 
         /* L'échelle de preuve. */
         el("div.eff-c", {},
-          el("span.effc-t", {}, "NIVEAU DE PREUVE"),
+          el("span.effc-t", {}, "Niveau de preuve"),
           pl ? el("span.effc-n", {}, String(pl.rang)) : el("span.effc-n.sans", {}, "—"),
           el("span.effc-x", {}, pl ? pl.nom : "aucun chiffre ne porte de niveau"),
           el("p.effc-r", {}, pl ? pl.force
@@ -361,7 +361,7 @@ window.EFFICACITE = (function () {
 
       /* Sharp, en cinq lignes. */
       el("div.eff-sharp", {},
-        el("span.effc-t", {}, "LA GRILLE DE SHARP"),
+        el("span.effc-t", {}, "La grille de Sharp"),
         el("ul.effs-l", {}, s.map(function (x) {
           return el("li.effs" + (x.ok === true ? ".ok" : x.ok === false ? ".non" : ""), {},
             el("span.effs-n", {}, x.nom),

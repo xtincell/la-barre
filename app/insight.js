@@ -42,7 +42,7 @@ window.INSIGHT = (function () {
    * une indication : une campagne ne répare pas un positionnement, et un
    * positionnement ne répare pas un service. */
   var COUCHES = [
-    { cle: "consommateur", nom: "Consommateur", court: "CONSOMMATEUR",
+    { cle: "consommateur", nom: "Consommateur", court: "Consommateur",
       trouve: "une tension vécue",
       cherche: "une contradiction dans le comportement d'une personne précise : ce "
         + "qu'elle fait et ce qu'elle voudrait, ce qu'elle dit et ce qu'elle vit",
@@ -56,7 +56,7 @@ window.INSIGHT = (function () {
         + "consommateur ne répare pas une marque mal placée : il la rend seulement "
         + "plus sympathique." },
 
-    { cle: "culture", nom: "Culture", court: "CULTURE",
+    { cle: "culture", nom: "Culture", court: "Culture",
       trouve: "une contradiction partagée",
       cherche: "une tension que la société porte sans la résoudre : tradition et "
         + "modernité, réussite individuelle et devoir familial, langue de la maison "
@@ -70,7 +70,7 @@ window.INSIGHT = (function () {
       erreur: "porter un sujet de société sans que la marque ait le droit d'en "
         + "parler. La contradiction doit croiser quelque chose que la marque fait déjà." },
 
-    { cle: "categorie", nom: "Catégorie", court: "CATÉGORIE",
+    { cle: "categorie", nom: "Catégorie", court: "Catégorie",
       trouve: "une convention non interrogée",
       cherche: "ce que tous les concurrents tiennent pour acquis : la promesse qu'ils "
         + "font tous, les codes visuels qu'ils partagent, le registre dont aucun ne sort",
@@ -83,7 +83,7 @@ window.INSIGHT = (function () {
       erreur: "casser la convention sans savoir ce qu'on met à la place. Une rupture "
         + "sans position produit un coup, pas une marque." },
 
-    { cle: "entreprise", nom: "Entreprise", court: "ENTREPRISE",
+    { cle: "entreprise", nom: "Entreprise", court: "Entreprise",
       trouve: "un écart entre promesse et réalité",
       cherche: "la distance entre ce que la marque promet et ce qu'elle livre : le "
         + "service, le réseau, le délai, l'accueil en agence",

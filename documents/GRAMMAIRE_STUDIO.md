@@ -228,3 +228,36 @@ Mesure hors contenu de section, à 1280 et 375 px : zéro sérif, zéro aplat, z
 sous 44 px, zéro contraste sous 4,5:1, zéro débordement. Restent en capitales deux
 données (le nom du dossier chez People, des initiales) et le rail propre à la big idea,
 repris en passe 4.
+
+**Passe 3 — Dossier : les sections Cadrer (28/09).** Identité, brief, brief-back,
+plateforme de marque, stratégie. **Changement de méthode à cette passe** : une classe
+encore vivante n'est plus surchargée ; son ancienne définition est retirée et elle est
+écrite une fois dans `studio-vues.css` — deux définitions qui se battent finissent par
+diverger (le fichier en portait déjà en double : `.se-champs`, `.sec-t`, `.shf-h`,
+`.svf-v`). Composants communs écrits au §2 : la bande de recevabilité, la barre de
+verdict (le verdict positif perd son aplat vert), l'affichage des champs, le titre de
+bloc. Chaque section range ses champs dans une section blanche ; les conséquences des
+champs vides passent en gris, le signe ○ porte l'état ; l'insight — ce qu'un humain a
+écrit — passe du sérif gras à l'aplat d'intention. Les libellés courts des couches,
+des territoires et de l'axe (`court: "CATÉGORIE"`) passent en casse de phrase dans les
+données. Une action principale par écran : les cartes de brief perdent leurs boutons
+bleus pleins. Trouvé en chemin, et réglé :
+- **« Tous les champs » s'affichait trois fois** sous le brief (`rendre()` l'appelait
+  trois fois, et `corpsCampagne` une quatrième).
+- **PRJ-BTS26 et son film n'étaient rattachés à aucune campagne** : « Back-To-School »,
+  avec des tirets, échappait à la reconnaissance de « back to school ». Les tirets se
+  lisent maintenant comme des espaces, et le rattachement tourne une seconde fois, une
+  seule (`d.rattachement2`) ; la correction ne déplace que ces deux dossiers. Au même
+  endroit, `aid` sans limite de mot aurait classé « Plaid » ou « aide » en Ramadan.
+- Le brief d'un projet de campagne disait « il n'a pas de brief de campagne, et c'est
+  normal » — vrai depuis que ce brief vit sur la campagne, mais sans y mener. Il nomme
+  maintenant la campagne et y renvoie.
+- Dans le socle, dix-sept filets rouges marquaient des champs qui se consultent ; seuls
+  les deux qui servent à refuser gardent le bloquant.
+- L'instrument de mesure comptait comme trop petits les boutons dont la zone invisible
+  `::after` porte la cible à 44 px ; il les reconnaît désormais.
+
+Mesure à 1280 et 375 px sur les dix adresses (deux dossiers × cinq sections) : zéro
+sérif, zéro aplat, zéro cible sous 44 px, zéro contraste sous 4,5:1, zéro débordement,
+zéro erreur console. Restent en capitales des données : codes de gamme, initiales, le
+nom du dossier chez People.

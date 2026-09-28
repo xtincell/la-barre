@@ -35,7 +35,7 @@ window.FORM = (function () {
            * seule pour l'œil : plus rien n'est comparable. On choisit dans une
            * liste, ou on n'écrit pas. */
           saisie = el("select", { disabled: !monPoste && options.frontiere ? true : null });
-          saisie.appendChild(el("option", { value: "" }, c.vide || "— non renseigné —"));
+          saisie.appendChild(el("option", { value: "" }, c.vide || "— Non renseigné —"));
           var choix = typeof c.options === "function" ? c.options(v) : (c.options || []);
           choix.forEach(function (x) {
             var val = typeof x === "string" ? x : x.cle;
@@ -49,7 +49,7 @@ window.FORM = (function () {
            * tapé à la main ne se lie à rien : ni au vault, ni aux packs, ni aux
            * décideurs. On convoque ce qui existe. */
           saisie = el("select", { disabled: !monPoste && options.frontiere ? true : null });
-          saisie.appendChild(el("option", { value: "" }, c.vide || "— non renseigné —"));
+          saisie.appendChild(el("option", { value: "" }, c.vide || "— Non renseigné —"));
           (typeof c.source === "function" ? c.source(v) : DEPOT.liste(c.source)).forEach(function (x) {
             var o = el("option", { value: x.id }, c.libelle ? c.libelle(x) : x.nom);
             if (v[c.cle] === x.id) o.selected = true;
@@ -216,7 +216,7 @@ window.FORM = (function () {
           onclick: function () { o.editer(c.cle); } },
           el("span.che-n", {}, c.nom,
             infereE ? el("span.che-i", {}, "inféré") : null),
-          el("span.che-v", {}, vide ? (c.aide || "non renseigné") : texte(c, brut)));
+          el("span.che-v", {}, vide ? (c.aide || "Non renseigné") : texte(c, brut)));
       }
 
       var infere = o.projet && o.section && INFERENCE.est(o.projet, o.section, c.cle);

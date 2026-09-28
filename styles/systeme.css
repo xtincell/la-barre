@@ -216,34 +216,6 @@
 
 /* ————————————————————— 17 · La bande de recevabilité ————————————————————— */
 
-.recev {
-  display: grid; gap: .6rem;
-  background: var(--nuit-carte); border: 1px solid var(--trait);
-  border-left: 3px solid var(--trait-clair); padding: .8rem .9rem .9rem;
-}
-.recev.tenu { border-left-color: var(--vert); }
-.recev.manque { border-left-color: var(--bloquant-txt); }
-.recev.flou { border-left-color: var(--attente); }
-
-.rv-question { display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; }
-.rq-t { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); }
-.rq-etat { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-left: auto; }
-.recev.manque .rq-etat { color: var(--bloquant-txt); }
-.recev.tenu .rq-etat { color: var(--vert); }
-
-.rv-controles { display: flex; gap: .45rem; flex-wrap: wrap; }
-.rc-i { display: flex; align-items: center; gap: .3rem; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-terne); border: 1px solid var(--trait); padding: .18rem .45rem; }
-.rc-i .m { color: var(--bloquant-txt); }
-.rc-i.ok { color: var(--clair-doux); border-color: var(--trait-clair); }
-.rc-i.ok .m { color: var(--vert); }
-
-.rv-prix { display: flex; gap: .5rem; align-items: flex-start; font-size: var(--t-meta); letter-spacing: var(--ls-meta);
-  line-height: 1.45; color: #e5c88c; }
-.rv-prix svg { color: var(--attente); margin-top: .1rem; flex: 0 0 auto; }
-
-.rv-gestes { display: flex; gap: .45rem; flex-wrap: wrap; }
-
 /* ————————————————————— Tailles de vignette ————————————————————— */
 
 .vignette.v-case { width: 100%; height: 96px; }

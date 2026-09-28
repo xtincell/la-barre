@@ -28,26 +28,26 @@ window.AXE = (function () {
    * la piste les concatène, l'écran de la piste les rend, le comparateur les
    * met côte à côte. Une seule définition, trois usages. */
   var CHAMPS = [
-    { cle: "axe_directrice", nom: "L'idée directrice de l'axe", court: "IDÉE DIRECTRICE",
+    { cle: "axe_directrice", nom: "L'idée directrice de l'axe", court: "Idée directrice",
       type: "texte", requis: true,
       aide: "Une phrase. « Le retour aux sources et le travail de l'artisan. »",
       cout: "L'axe n'a pas de phrase : on ne peut ni le défendre en séance, ni le "
         + "rappeler trois semaines plus tard quand l'exé dérive." },
 
-    { cle: "axe_ton", nom: "Le ton", court: "TON",
+    { cle: "axe_ton", nom: "Le ton", court: "Ton",
       type: "texte", requis: true,
       aide: "Deux ou trois mots. « Chaleureux, rassurant, terrien. »",
       cout: "Le DA et le rédacteur choisiront chacun le leur, et la piste s'écrira "
         + "deux fois — une en image, une en mots." },
 
-    { cle: "axe_univers", nom: "L'univers visuel", court: "UNIVERS VISUEL",
+    { cle: "axe_univers", nom: "L'univers visuel", court: "Univers visuel",
       type: "long", requis: true,
       aide: "Couleurs, typographies, textures, formes. « Bruns et terracotta, "
         + "empattements gravés, papier kraft. »",
       cout: "Deux pistes se ressembleront à l'écran, et le client choisira sur "
         + "l'humeur du visuel qu'on lui montre, pas sur l'axe." },
 
-    { cle: "axe_valeurs", nom: "Les valeurs véhiculées", court: "VALEURS",
+    { cle: "axe_valeurs", nom: "Les valeurs véhiculées", court: "Valeurs",
       type: "puces", requis: false,
       aide: "Une par ligne. Elles se lisent contre la plateforme de marque.",
       cout: "Rien ne permet de refuser un exé qui trahit la marque : le contrôle "

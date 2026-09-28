@@ -223,7 +223,6 @@
   .cc-mur { overflow: visible; }
 }
 
-
 /* ————————————————————— LA REVUE — une pièce à la fois ————————————————————— */
 
 /* L'écran finit où finit son contenu. Tenir une hauteur d'écran pour la forme
@@ -460,7 +459,6 @@
 
 /* ————————————————————— LE SOCLE ————————————————————— */
 
-.so { display: grid; gap: 1rem; }
 .carte-n.dette { border-style: dashed; border-color: rgba(217,83,74,.35); display: grid; gap: .5rem; }
 .carte-n.dette .carte-n-tete .n { color: var(--bloquant-txt); }
 .cn-cout { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; color: #eaa9a3; }

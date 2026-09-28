@@ -462,28 +462,11 @@
 
 /* ————————————————————— La validation d'un document ————————————————————— */
 
-.vd { display: grid; gap: .5rem; }
-.vd-gestes { display: flex; gap: .35rem; flex-wrap: wrap; align-items: center; }
-.vd-v { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); border: 1px solid var(--trait);
-  padding: .1rem .35rem; margin-right: .2rem; }
-.vd-gestes .b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .18rem .45rem; }
-
 .motifs { display: grid; gap: .25rem; }
 .motif { text-align: left; background: var(--nuit-carte); border: 1px solid var(--trait);
   color: var(--clair-doux); font: inherit; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: .3rem .5rem; cursor: pointer; }
 .motif:hover { border-color: var(--trait-clair); }
 .motif.actif { border-color: var(--or); color: var(--clair); }
-
-/* ————————————————————— Le moodboard ————————————————————— */
-
-.mb { display: grid; gap: .6rem; margin-top: 1.4rem; }
-.mb-tete { display: flex; align-items: baseline; gap: .6rem;
-  border-bottom: 1px solid var(--trait); padding-bottom: .3rem; }
-.mb-tete .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .16em; color: var(--or); }
-.mb-tete .n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); flex: 1; }
-.mb-groupe { display: grid; gap: .35rem; }
-.mbg-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); display: flex; gap: .4rem; }
-.mbg-t span { color: var(--clair-doux); }
 
 /* ————————————————————— L'atelier ————————————————————— */
 
@@ -931,8 +914,6 @@
 .prb-dates .vert { color: var(--vert); }
 .prb-g { display: flex; gap: .4rem; flex-wrap: wrap; }
 .prb-g .b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .2rem .5rem; }
-
-/* ————————————————————— Le navigateur du dossier ————————————————————— */
 
 /* ————————————————————— L'ingesteur de brief ————————————————————— */
 
@@ -1543,7 +1524,7 @@
  * recevabilité, les onglets d'intention, la barre de période. Reste la
  * feuille, qui est ce qu'on remet. */
 @media print {
-  .fm .recev, .fm-barre, .dc-modes, .dc-tete { display: none !important; }
+  .fm-barre, .dc-modes, .dc-tete { display: none !important; }
   .fm { gap: 0; }
   .fm .co-doc { max-width: none; padding: 0; }
   .cobm-v { color: #111 !important; }
@@ -2423,106 +2404,6 @@
 .rf-as.bientot .rfa-e, .rfa-e.manque { color: var(--arbitrage); }
 .rf-as.perime .rfa-e { color: var(--bloquant-txt); }
 
-/* ————————————————————— L'identité : un document à signer ————————————————————— */
-
-/* Une grille uniforme ne distingue pas ce qui est reçu de ce qui est supposé.
- * C'est pourtant la seule chose qui compte : l'un s'oppose au client, l'autre
- * fait travailler l'équipe et ne prouve rien. */
-.id { display: grid; gap: 1rem; }
-.id-t { font-size: var(--t-h2); line-height: var(--lh-h2); color: var(--clair);
-  max-width: 34ch; }
-.id-s { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-terne);
-  max-width: var(--mesure); }
-
-.id-g { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem;
-  align-items: start; }
-.id-col { display: grid; gap: .1rem; align-content: start; }
-.idc-t { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--clair-terne); border-bottom: 1px solid var(--trait);
-  padding-bottom: .35rem; margin-bottom: .5rem; }
-.idc-t span { font-variant-numeric: tabular-nums; }
-.id-col.infere .idc-t { color: var(--arbitrage); border-bottom-color: var(--arbitrage); }
-
-.id-l { display: grid; gap: .1rem; padding: .7rem 0; border-bottom: 1px solid var(--trait); }
-.idl-n { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em;
-  color: var(--clair-terne); }
-.idl-v { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair); }
-.idl-p { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  max-width: var(--mesure); margin-top: .25rem; font-style: italic; }
-.idl-g { display: flex; gap: .8rem; margin-top: .3rem; }
-
-.id-vides { display: grid; gap: .1rem; }
-.id-v { display: grid; gap: .05rem; padding: .6rem 0; border-bottom: 1px solid var(--trait); }
-.idv-n { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux); }
-.idv-x { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--bloquant-txt);
-  max-width: var(--mesure); }
-
-.id-sign { display: grid; gap: .5rem; padding: 1.1rem 1.3rem; border-radius: var(--r-m);
-  background: var(--surface-2); border-left: 3px solid var(--arbitrage); }
-.id-sign.ok { border-left-color: var(--succes); }
-.ids-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--arbitrage); }
-.id-sign.ok .ids-t { color: var(--succes); }
-.ids-c p { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux);
-  max-width: var(--mesure); }
-.id-sign .b.or { justify-self: start; }
-
-/* ————————————————————— La stratégie : une page de prose ————————————————————— */
-
-/* L'écran le plus court et le plus calme du produit. Ce sont des énoncés, pas
- * des champs : ils se lisent à la largeur d'une colonne de lecture. */
-.st { display: grid; gap: 2.2rem; max-width: var(--mesure-large); }
-.st-e { display: grid; gap: .5rem; }
-.ste-n { display: flex; align-items: baseline; gap: .6rem;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .16em;
-  color: var(--clair-terne); }
-.ste-i { letter-spacing: .08em; color: var(--arbitrage); }
-.ste-v { font-size: var(--t-titre); line-height: 1.55; letter-spacing: -0.005em;
-  color: var(--clair); max-width: var(--mesure); }
-.ste-l { display: grid; gap: .5rem; padding-left: 1.1rem; margin: 0; }
-.ste-l li { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux);
-  max-width: var(--mesure); }
-.ste-x { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--arbitrage);
-  max-width: var(--mesure); }
-.st-e.vide .ste-n { color: var(--arbitrage); }
-.ste-p { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  max-width: var(--mesure); font-style: italic; }
-
-@media (max-width: 900px) {
-  .id-g { grid-template-columns: minmax(0, 1fr); gap: 1.4rem; }
-}
-
-/* ————————————————————— Le socle : ce qui sert à refuser passe devant ————————————————————— */
-
-/* Onze cartes de poids égal faisaient de la page la plus longue du produit une
- * liste plate. Deux d'entre elles servent à refuser — elles montent. */
-.sh { display: grid; gap: 1.6rem; }
-.sh-haut { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-  gap: 1.2rem; }
-.sh-f { display: grid; gap: .5rem; padding: 1.3rem 1.4rem; background: var(--surface-2);
-  border-radius: var(--r-m); border-left: 3px solid var(--accent); }
-.sh-f.vide { border-left-color: var(--bloquant); }
-.shf-t { display: grid; gap: .15rem; font-size: var(--t-micro); line-height: var(--lh-micro);
-  letter-spacing: .14em; color: var(--clair-terne); }
-.shf-r { letter-spacing: 0; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-terne); }
-.shf-v { font-size: var(--t-h2); line-height: 1.4; letter-spacing: var(--ls-h2);
-  color: var(--clair); max-width: var(--mesure); }
-.shf-v .chip { font-size: var(--t-meta); }
-.shf-x { display: grid; gap: .5rem; justify-items: start;
-  font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--bloquant-txt);
-  max-width: var(--mesure); }
-
-.sh-t { display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--clair-terne); border-bottom: 1px solid var(--trait); padding-bottom: .4rem; }
-.sh-t span { letter-spacing: 0; }
-.sh-reste { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
-  gap: .7rem; }
-.sh-reste .carte-n { opacity: .82; }
-.sh-reste .carte-n:hover { opacity: 1; }
-
 /* ————————————————————— La présentation : deux registres ————————————————————— */
 
 /* Le montage client n'est pas le dossier amputé : c'est un choix, et le choix
@@ -2697,60 +2578,12 @@
 
 /* ————————————————————— Chaque champ porte son geste ————————————————————— */
 
-/* Rouvrir tout le formulaire pour corriger une ligne fait relire trente champs
- * pour en changer un. Un champ est donc un bouton — et un champ vide se voit,
- * puisque c'est celui qu'on vient remplir. */
-.ch-e { display: grid; gap: .1rem; width: 100%; text-align: left; padding: .6rem .7rem;
-  color: inherit; font: inherit;
-  background: none; border: 0; border-left: 2px solid transparent;
-  border-bottom: 1px solid var(--trait); cursor: pointer;
-  transition: background var(--tr-rapide), border-color var(--tr-rapide); }
-.ch-e:hover { background: var(--surface-2); border-left-color: var(--accent); }
-.che-n { display: flex; align-items: baseline; gap: .5rem;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em;
-  color: var(--clair-terne); }
-.che-i { letter-spacing: .06em; color: var(--arbitrage); }
-.che-v { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair);
-  max-width: var(--mesure); }
-.ch-e.vide { border-left-color: var(--trait-clair); }
-.ch-e.vide .che-v { color: var(--clair-terne); font-style: italic; }
-.ch-e.infere { border-left-color: var(--arbitrage); }
-.ch-aide { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  max-width: var(--mesure); margin-bottom: .6rem; }
-
 /* Les lignes de l'identité et les énoncés de la stratégie deviennent des
  * boutons : même geste, même retour visuel, aucune décoration en plus. */
-button.id-l, button.id-v, button.st-e, .idl-h {
-  width: 100%; text-align: left; background: none; border: 0; cursor: pointer; padding: 0;
-  color: inherit; font: inherit; }
-button.id-l, button.id-v { padding: .7rem 0; border-bottom: 1px solid var(--trait); }
-button.id-l:hover, button.id-v:hover, .idl-h:hover { background: var(--surface-2); }
-button.st-e:hover { background: var(--surface-2); border-radius: var(--r-s); }
-button.st-e { padding: .6rem .8rem; margin-left: -.8rem; }
-.idl-h { display: grid; gap: .1rem; position: relative; min-height: 0; }
-.idl-h::after, .rfm-h::after { content: ""; position: absolute; left: 0; right: 0;
+
+.rfm-h::after { content: ""; position: absolute; left: 0; right: 0;
   top: 50%; transform: translateY(-50%); min-height: var(--cible); height: 100%; }
 .rfm-h { position: relative; }
-.ids-g { display: flex; gap: .7rem; flex-wrap: wrap; }
-
-/* ————— Les champs d'une section, sous sa mise en scène ————— */
-.se-champs { display: grid; gap: .3rem; margin-top: 2rem; }
-.sec-t { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--clair-terne); border-bottom: 1px solid var(--trait); padding-bottom: .4rem; }
-
-/* Le socle : la carte est le champ, donc la carte est le geste. */
-.shf-h { display: grid; gap: .5rem; width: 100%; text-align: left; background: none;
-  border: 0; padding: 0; cursor: pointer; color: inherit; font: inherit; }
-.shf-h:hover .shf-v { color: var(--accent); }
-.shf-a { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair); }
-/* Un <button> remet la couleur et la fonte à celles du navigateur : le texte
- * des cartes enveloppées passait en noir sur fond sombre, à 1,3:1. Tout
- * enrobage de contenu hérite donc explicitement. */
-.sh-c { display: block; width: 100%; text-align: left; background: none; border: 0;
-  padding: 0; cursor: pointer; border-radius: var(--r-s);
-  color: inherit; font: inherit; }
-.sh-c:hover { outline: 1px solid var(--accent); outline-offset: 2px; }
 
 /* ————————————————————— Le vault de marque ————————————————————— */
 
@@ -2953,7 +2786,7 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 
 /* ————— Un champ qui appartient à quelqu'un d'autre ————— */
 /* Il ne s'invente pas : il se réclame. La couleur le dit avant le clic. */
-.ch-e.autrui { border-left-color: var(--info, var(--clair-terne)); }
+
 .che-p { font-size: var(--t-micro); line-height: 1; letter-spacing: .06em;
   color: var(--clair-terne); border: 1px solid var(--trait-clair);
   border-radius: var(--r-xs); padding: .1rem .35rem; }
@@ -2961,59 +2794,6 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
   color: var(--clair-terne); border: 1px solid var(--trait-clair);
   border-radius: var(--r-xs); padding: .1rem .35rem; margin-left: .4rem; }
 .fic-q { display: flex; align-items: center; gap: .1rem; flex-wrap: wrap; }
-
-/* ————————————————————— Le socle vient du vault ————————————————————— */
-
-/* Ce qui définit une marque vaut plusieurs années. La campagne le LIT ; ce qui
- * manque au vault manque à toutes ses campagnes, et le geste renvoie là-bas. */
-.sv { display: grid; gap: 1.2rem; }
-.sv-h { display: grid; gap: .35rem; justify-items: start; }
-.sv-t { font-size: var(--t-h2); line-height: var(--lh-h2); color: var(--clair);
-  max-width: 34ch; }
-.sv-s { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-terne);
-  max-width: var(--mesure); }
-.sv-h .b.or { text-decoration: none; }
-
-.sv-l { display: grid; gap: .9rem; }
-.svm { display: grid; gap: .8rem; padding: 1rem 1.2rem; background: var(--surface-2);
-  border-radius: var(--r-m); }
-.svm-h { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; }
-.svm-l { display: grid; place-items: center; width: 68px; height: 48px;
-  background: var(--surface-3); border-radius: var(--r-xs); overflow: hidden; padding: .25rem; }
-.svm-l img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.svm-l.vide { font-size: var(--t-micro); color: var(--clair-terne); }
-.svm-i { display: grid; gap: .1rem; flex: 1 1 auto; }
-.svm-n { font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); }
-.svm-q { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-.svm-v { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  text-decoration: none; position: relative; }
-.svm-v::after { content: ""; position: absolute; left: 0; right: 0; top: 50%;
-  transform: translateY(-50%); min-height: var(--cible); height: 100%; }
-.svm-v:hover { color: var(--accent); }
-
-.svm-f { display: grid; gap: .6rem; }
-.svf { display: grid; gap: .15rem; padding-left: .8rem;
-  border-left: 2px solid var(--accent); }
-.svf.vide { border-left-color: var(--bloquant); }
-.svf.herite { border-left-color: var(--trait-clair); }
-.svf-n { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .12em;
-  color: var(--clair-terne); }
-.svf-h { letter-spacing: 0; font-style: italic; }
-.svf-v { font-size: var(--t-titre); line-height: 1.45; color: var(--clair);
-  max-width: var(--mesure); }
-.svf.vide .svf-v { font-size: var(--t-lire); line-height: var(--lh-lire);
-  color: var(--bloquant-txt); }
-
-.svm-g { display: grid; gap: .3rem; }
-.svmg-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .12em;
-  color: var(--clair-terne); }
-.svm-gc { display: flex; flex-wrap: wrap; gap: .3rem; }
-.svg { display: inline-flex; align-items: baseline; gap: .4rem; padding: .35rem .7rem;
-  background: var(--surface-3); border-radius: var(--r-xs);
-  font-size: var(--t-meta); line-height: 1.3; color: var(--clair-terne); }
-.svg.ici { color: var(--clair); border-left: 2px solid var(--accent); }
-.svg i { font-style: normal; font-size: var(--t-micro); color: var(--clair-terne); }
 
 /* ————— Une campagne à plusieurs marques ————— */
 .mq-multi { display: grid; gap: .7rem; }
@@ -3153,26 +2933,6 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 .pmp-m { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
 
 /* ————— La gamme sur la plateforme de marque ————— */
-/* Un DA doit avoir les packs sous les yeux avant de dessiner ; ceux que la
- * campagne retient passent devant. */
-.svm-p { display: grid; gap: .4rem; }
-.svp-l { display: flex; flex-wrap: wrap; gap: .4rem; }
-.svp { display: grid; gap: .2rem; justify-items: center; width: 84px; padding: .35rem;
-  background: var(--surface-3); border-radius: var(--r-xs);
-  border-bottom: 2px solid var(--trait); }
-/* Ce que la campagne retient se distingue par sa bordure, pas par l'opacité —
- * un libellé atténué à .66 tombe à 3,7:1 et cesse d'être lisible. */
-.svp.ici { border-bottom-color: var(--succes); }
-.svp.ici .svp-n { color: var(--clair); }
-.svp img { width: 100%; height: 54px; object-fit: contain; }
-.svp-v { display: grid; place-items: center; width: 100%; height: 54px;
-  color: var(--clair-terne); }
-.svp-n { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-doux);
-  text-align: center; }
-.svp-x { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  max-width: var(--mesure); }
-.svmg-t span { letter-spacing: 0; margin-left: .5rem; }
-
 /* Le nom de la campagne est un geste. */
 .pe-nom { background: none; border: 0; padding: 0; cursor: pointer; text-align: left;
   color: inherit; font: inherit; position: relative; }
@@ -3180,67 +2940,10 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
   transform: translateY(-50%); min-height: var(--cible); height: 100%; }
 .pe-nom:hover h2 { color: var(--accent); }
 
-/* ————— La plateforme complète : la tête en grand, le reste en retrait ————— */
-
-/* Deux champs servent à refuser, sept se consultent. Les supprimer était une
- * amputation : la section annonce neuf champs, elle en montre neuf. */
-a.svf { text-decoration: none; display: grid; gap: .15rem; padding-left: .8rem;
-  border-left: 2px solid var(--trait-clair); }
-a.svf:hover { border-left-color: var(--accent); }
-a.svf.grand { border-left-color: var(--accent); }
-a.svf.grand.vide { border-left-color: var(--bloquant); }
-a.svf.herite { border-left-color: var(--trait-clair); }
-.svf-v { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux); }
-a.svf.grand .svf-v { font-size: var(--t-titre); line-height: 1.45; color: var(--clair); }
-a.svf.grand.vide .svf-v { font-size: var(--t-lire); line-height: var(--lh-lire);
-  color: var(--bloquant-txt); }
-a.svf.vide .svf-v { color: var(--clair-terne); font-style: italic; }
-
-.svm-r { display: grid; gap: .4rem; }
-.svm-rc { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
-  gap: .6rem .9rem; }
-
-/* Les éléments de marque, par rôle. */
-.svm-e { display: grid; gap: .4rem; }
-.svm-ec { display: grid; gap: .5rem; }
-.sve { display: grid; gap: .2rem; }
-.sve-r { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em;
-  color: var(--clair-terne); }
-.sve-l { display: flex; flex-wrap: wrap; gap: .35rem; }
-.sve-v { display: grid; place-items: center; width: 70px; height: 50px; padding: .2rem;
-  background: var(--surface-3); border-radius: var(--r-xs); overflow: hidden; }
-.sve-v img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.sve-x { font-size: var(--t-micro); color: var(--clair-terne); }
-
 /* ————————————————————— Les types de brief ————————————————————— */
 
 /* Un brief est le socle d'une demande et la boussole d'un suivi. Chaque carte
  * dit les deux : sans ça, c'est un formulaire de plus. */
-.bf { display: grid; gap: 1.6rem; }
-.bf-vide p { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-terne);
-  max-width: var(--mesure); }
-
-.bf-l { display: grid; gap: .7rem; }
-.bfl-t { display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--clair-terne); border-bottom: 1px solid var(--trait); padding-bottom: .4rem; }
-.bfl-t span { letter-spacing: 0; }
-
-.bfc { display: grid; gap: .5rem; padding: 1rem 1.2rem; background: var(--surface-2);
-  border-radius: var(--r-m); border-left: 3px solid var(--trait-clair); }
-.bfc.ok { border-left-color: var(--succes); }
-.bfc.partiel { border-left-color: var(--arbitrage); }
-.bfc.absent { border-left-color: var(--bloquant); }
-
-.bfc-h { display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; }
-.bfc-n { font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); }
-.bfc-f { font-size: var(--t-micro); line-height: 1; letter-spacing: .06em;
-  color: var(--clair-terne); border: 1px solid var(--trait-clair);
-  border-radius: var(--r-xs); padding: .2rem .45rem; }
-.bfc-e { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  margin-left: auto; }
-.bfc-q { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux);
-  max-width: var(--mesure); }
 
 .bfc-r { display: grid; gap: .2rem; }
 .bfcr { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: .7rem;
@@ -3249,15 +2952,9 @@ a.svf.vide .svf-v { color: var(--clair-terne); font-style: italic; }
 .bfcr b { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em;
   color: var(--clair-terne); font-weight: 400; }
 
-.bfc-c { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--arbitrage);
-  max-width: var(--mesure); }
-.bfc.absent .bfc-c { color: var(--bloquant-txt); }
-.bfc-c.ok { color: var(--succes); }
-.bfc-g { display: flex; gap: .6rem; flex-wrap: wrap; }
-
 @media (max-width: 700px) {
   .bfcr { grid-template-columns: minmax(0, 1fr); gap: .05rem; }
-  .bfc-e { margin-left: 0; }
+  
 }
 
 /* ————— Le brief qui commande le socle ————— */
@@ -3483,19 +3180,6 @@ button.mrmq-t:focus-visible, button.mrg-tete:focus-visible {
 }
 
 /* ————— Les champs d'une section, sous sa mise en scène ————— */
-.se-champs { display: grid; gap: .3rem; margin-top: 2rem; }
-.sec-t { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--clair-terne); border-bottom: 1px solid var(--trait); padding-bottom: .4rem; }
-
-/* Le socle : la carte est le champ, donc la carte est le geste. */
-.shf-h { display: grid; gap: .5rem; width: 100%; text-align: left; background: none;
-  border: 0; padding: 0; cursor: pointer; }
-.shf-h:hover .shf-v { color: var(--accent); }
-.shf-a { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--accent); }
-.sh-c { display: block; width: 100%; text-align: left; background: none; border: 0;
-  padding: 0; cursor: pointer; border-radius: var(--r-s); }
-.sh-c:hover { outline: 1px solid var(--accent); outline-offset: 2px; }
 
 /* ═══════════════ LA PROSE N'EST PAS UNE LÉGENDE ═══════════════
  *
@@ -3512,7 +3196,7 @@ button.mrmq-t:focus-visible, button.mrg-tete:focus-visible {
 
 /* Ce qui porte une phrase de contexte ou de conséquence — se lit vraiment. */
 .dcm-q, .juj, .vide-ref, .eqpd, .prp-tire, .cobm-q, .cobe-c, .cobe-m,
-.plc-sous, .rq-etat, .slfi-q, .stc-q, .plc-ecart, .pir-q, .pirc-p, .mqs-q,
+.plc-sous, .slfi-q, .stc-q, .plc-ecart, .pir-q, .pirc-p, .mqs-q,
 .atdq-o, .auteurs, .codt-s, .sld-m, .e-charge, .slp-a, .atx-k, .bri-s,
 .rail-q, .fi-meta, .rd-ref, .poste, .pil-n, .mrg-n, .atfm-q, .eqp-q,
 .pirc-d, .egc-verdict, .pip-n, .atdq-p, .cobl-v, .l-v, .b-v, .critere,
@@ -3767,7 +3451,7 @@ blockquote, .message, .verbatim, .bii-t, .ati-t {
 /* La planche s'imprime : c'est l'écran de séance. Les trous, les gestes et les
  * modes n'ont rien à faire sur le papier qu'on tend au client. */
 @media print {
-  .plv-modes, .plv .recev, .plvc.vide { display: none; }
+  .plv-modes, .plvc.vide { display: none; }
   .plvc { break-inside: avoid; }
   .plv-f { break-inside: avoid; }
 }

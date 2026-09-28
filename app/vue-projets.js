@@ -1264,7 +1264,7 @@ window.VUE_PROJETS = (function () {
         manquants.length
           ? el("div", {}, montres.map(function (m) {
               return el("div.file-item", {}, el("div.fi-corps", {},
-                el("div.fi-nom", { style: { color: "var(--attente)", "font-size": "var(--t-eti)" } }, "○ " + m)));
+                el("div.fi-nom.psa-m", {}, el("span.psa-s", { "aria-hidden": "true" }, "○"), m)));
             }).concat(
               /* Une liste coupée en silence se lit comme une liste complète. */
               manquants.length > montres.length
@@ -1388,8 +1388,8 @@ window.VUE_PROJETS = (function () {
 
       el("div.id-g", {},
         el("div.id-col", {},
-          el("div.idc-t", {}, "REÇU ET OPPOSABLE",
-            el("span", {}, String(recus.length))),
+          el("div.idc-t", {}, "Reçu et opposable",
+            el("span.studio-compte", {}, String(recus.length))),
           recus.length
             ? recus.map(function (x) {
                 return el("button.id-l", { type: "button", title: "modifier — " + x.c.nom,
@@ -1400,8 +1400,8 @@ window.VUE_PROJETS = (function () {
             : el("p.rien", {}, "Rien n'est reçu. Tout ce dossier tient sur ce qu'on a supposé.")),
 
         el("div.id-col.infere", {},
-          el("div.idc-t", {}, "INFÉRÉ, NON CONTRESIGNÉ",
-            el("span", {}, String(inferes.length))),
+          el("div.idc-t", {}, "Inféré, non contresigné",
+            el("span.studio-compte", {}, String(inferes.length))),
           inferes.length
             ? inferes.map(function (x) {
                 return el("div.id-l", {},
@@ -1411,24 +1411,24 @@ window.VUE_PROJETS = (function () {
                     el("span.idl-v", {}, valeurLisible(x.c, x.v))),
                   el("span.idl-p", {}, INFERENCE.pourquoi(p, "identite", x.c.cle)),
                   el("div.idl-g", {},
-                    el("button.b.nu", { type: "button", onclick: function () {
+                    el("button.studio-lien", { type: "button", onclick: function () {
                       INFERENCE.contresigner(p, "identite", x.c.cle, pe ? pe.nom : null);
                       DEPOT.enregistrer(); rafraichir();
-                    } }, "contresigné →"),
-                    el("button.b.nu", { type: "button", onclick: function () {
+                    } }, "Contresigné →"),
+                    el("button.studio-lien.idl-faux", { type: "button", onclick: function () {
                       INFERENCE.rejeter(p, "identite", x.c.cle);
                       DEPOT.enregistrer(); rafraichir();
-                    } }, "faux, à ressaisir")));
+                    } }, "Faux, à ressaisir")));
               })
             : el("p.rien", {}, "Aucune hypothèse. Tout ce qui est écrit ici a été reçu."))),
 
       vides.length
         ? el("div.id-vides", {},
-            el("div.idc-t", {}, "NI REÇU NI SUPPOSÉ", el("span", {}, String(vides.length))),
+            el("div.idc-t", {}, "Ni reçu ni supposé", el("span.studio-compte", {}, String(vides.length))),
             vides.map(function (c) {
               return el("button.id-v", { type: "button", title: "renseigner — " + c.nom,
                 onclick: function () { editerChamp(p, "identite", c.cle, rafraichir); } },
-                el("span.idv-n", {}, c.nom),
+                el("span.idv-n", {}, el("span.idv-s", { "aria-hidden": "true" }, "○"), c.nom),
                 el("span.idv-x", {}, c.critique
                   ? REGLES.prix(c.cle === "decideur" ? "decideur-absent"
                       : c.cle === "tueur" ? "tueur-absent"
@@ -1439,7 +1439,7 @@ window.VUE_PROJETS = (function () {
 
       /* La bande de contreseing : elle nomme qui doit signer, pas « le client ». */
       el("div.id-sign" + (inferes.length ? ".due" : ".ok"), {},
-        el("div.ids-t", {}, inferes.length ? "CONTRESEING DÛ" : "RIEN N'ATTEND DE SIGNATURE"),
+        el("div.ids-t", {}, inferes.length ? "Contreseing dû" : "Rien n'attend de signature"),
         el("div.ids-c", {}, inferes.length
           ? el("p", {}, "Ces " + inferes.length + " champs doivent être confirmés par "
               + (pe ? pe.nom : "la " + clientele.nom)
@@ -1529,18 +1529,19 @@ window.VUE_PROJETS = (function () {
     var e = CHAMPS.etat(cle, donnees);
     var monPoste = def.poste === MAISON.titulaire;
 
-    return el("div", {},
-      el("div.section-titre", {}, def.nom,
-        el("span.compte", {}, "· " + e.fait + " sur " + e.total + " champs"),
-        el("span.droite", {}, "propriétaire : " + O.poste(def.poste).nom)),
+    return el("div.se-propre", {},
+      el("div.section-titre.se-titre", {}, def.nom,
+        el("span.compte", {}, e.fait + " sur " + e.total + " champs"),
+        el("span.droite", {}, "Propriétaire : " + O.poste(def.poste).nom)),
 
       e.manquants.length ? el("div.prix", {}, el("span.signe", {}, "⚠"),
         e.manquants.length + (e.manquants.length > 1 ? " champs manquants : " : " champ manquant : ")
         + e.manquants.map(function (c) { return c.nom; }).join(" · ")) : null,
 
-      INFERENCE.compte(p, cle) ? el("div", { style: { margin: ".7rem 0" } }, INFERENCE.bande(p, rafraichir, cle)) : null,
+      INFERENCE.compte(p, cle) ? el("div.se-inference", {}, INFERENCE.bande(p, rafraichir, cle)) : null,
 
-      el("div", { style: { "margin-top": ".8rem" } },
+      /* Les champs dans une section blanche, comme partout ailleurs. */
+      el("div.se-champs.se-champs-seul", {},
         FORM.lire(def.champs, donnees, { projet: p, section: cle,
           editer: function (k) { editerChamp(p, cle, k, rafraichir); } })),
 

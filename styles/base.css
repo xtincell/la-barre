@@ -469,23 +469,13 @@ body {
 .titre-ecran .devise { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); margin-top: .2rem; }
 .titre-ecran .actions { margin-left: auto; display: flex; gap: .45rem; align-items: center; }
 
-.section-titre {
-  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .14em; color: var(--clair-terne);
-  display: flex; align-items: center; gap: .6rem; margin-bottom: .6rem;
-}
-.section-titre .n { color: var(--or); }
-.section-titre .compte { color: var(--clair-terne); }
 /* Une taille n'est pas une priorité : « 9 supports » est un inventaire, « 7
  * décisions » est une réclamation. Deux sens, deux classes — sinon la règle du
  * silence ne se mesure plus. */
-.taille { color: var(--clair-terne); font-size: var(--t-eti); }
-.section-titre .taille { color: var(--clair-terne); }
+
 /* Une taille n'est pas une priorité : « 9 supports » est un inventaire, « 7
  * décisions » est une réclamation. Deux sens, deux classes — sinon la règle du
  * silence ne se mesure plus. */
-.taille { color: var(--clair-terne); font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
-.section-titre .taille { color: var(--clair-terne); }
-.section-titre .droite { margin-left: auto; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
 
 /* ————————————————————— Cartes de compteur ————————————————————— */
 
@@ -787,7 +777,7 @@ input[type="date"], select, textarea { border-radius: var(--r-s); }
 .carte-phrase, .graphe-boite, .pi-fb, .pi-au, .pr-apres, .pr-band, .at-f,
 .mur-panneau, .co-doc { border-radius: var(--r-m); }
 
-.panneau, .resultats, .capture-boite, .panneau-lat, .recev { border-radius: var(--r-l); }
+.panneau, .resultats, .capture-boite, .panneau-lat { border-radius: var(--r-l); }
 
 .egc-barre, .egc-barre span, .eqdc-b, .eqdc-b i, .csl-b, .csl-b i,
 .b-charge, .cso-j, .cso-j i { border-radius: var(--r-pilule); }

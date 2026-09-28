@@ -14,7 +14,7 @@ window.VUE_BRIEF = (function () {
     var def = CHAMPS.section("brief");
     if (!def) return null;
     return el("div.se-champs", {},
-      el("div.sec-t", {}, "TOUS LES CHAMPS", el("span", {}, def.champs.length)),
+      el("div.sec-t", {}, "Tous les champs", el("span.studio-compte", {}, String(def.champs.length))),
       FORM.lire(def.champs, p.sections["brief"] || {},
         { projet: p, section: "brief",
           editer: function (k) { VUE_PROJETS.editerChamp(p, "brief", k, rafraichir); } }));
@@ -34,9 +34,6 @@ window.VUE_BRIEF = (function () {
       bandeBriefs(p, types),
       campagne ? corpsCampagne(p, rafraichir) : premierBrief(p, g, types, rafraichir),
       lesAutres(p, autres, rafraichir),
-      champsEditables(p, rafraichir)
-    ,
-      champsEditables(p, rafraichir),
       champsEditables(p, rafraichir));
   }
 
@@ -62,11 +59,18 @@ window.VUE_BRIEF = (function () {
   /* Le premier brief d'une nature qui n'en avait aucun. */
   function premierBrief(p, g, types, rafraichir) {
     var n = NATURE.de(p) || { nom: g, quoi: "" };
+    /* Le brief de campagne n'est pas absent : il vit un étage plus haut, sur la
+     * campagne qu'il fonde. La phrase disait « il n'a pas de brief de campagne,
+     * et c'est normal » sur un projet de nature campagne — vrai, et trompeur. */
+    var c = window.CAMPAGNE ? CAMPAGNE.de(p.campagneId) : null;
     return el("div.bf-vide", {},
       el("p", {}, "Ce dossier est un projet de nature « " + n.nom.toLowerCase() + " »"
-        + (n.quoi ? " — " + n.quoi.charAt(0).toLowerCase() + n.quoi.slice(1) : "")
-        + " Il n'a pas de brief de campagne, et c'est normal : "
-        + "ce sont les " + types.length + " types ci-dessous qui le fondent."));
+        + (n.quoi ? " — " + n.quoi.charAt(0).toLowerCase() + n.quoi.slice(1) : "")),
+      el("p", {}, c
+        ? ["Le brief de campagne se pose sur la campagne ",
+           el("a", { href: "#/projets/" + c.id }, "« " + c.nom + " »"),
+           " : c'est elle qu'il fonde. Ici, ce sont les " + types.length + " types ci-dessous."]
+        : "Ce sont les " + types.length + " types ci-dessous qui le fondent."));
   }
 
   /* ————————————————————— Les autres briefs ————————————————————— */
@@ -74,8 +78,9 @@ window.VUE_BRIEF = (function () {
   function lesAutres(p, types, rafraichir) {
     if (!types.length) return null;
     return el("div.bf-l", {},
-      el("div.bfl-t", {}, "LES AUTRES BRIEFS DE CE DOSSIER",
-        el("span", {}, types.length + "  ·  chacun fonde une demande et pilote un suivi")),
+      el("div.bfl-t", {}, "Les autres briefs de ce dossier",
+        el("span.studio-compte", {}, String(types.length)),
+        el("span.bfl-q", {}, "Chacun fonde une demande et pilote un suivi.")),
       types.map(function (t) { return carteBrief(p, t, rafraichir); }));
   }
 
@@ -92,7 +97,7 @@ window.VUE_BRIEF = (function () {
       el("div.bfc-h", {},
         el("span.bfc-n", {}, t.nom),
         el("span.bfc-f", {}, em.nom + "  →  " + de.nom),
-        el("span.bfc-e", {}, e.existe ? e.ecrits + " sur " + e.champs + " champs" : "non posé")),
+        el("span.bfc-e", {}, e.existe ? e.ecrits + " sur " + e.champs + " champs" : "Non posé")),
 
       el("div.bfc-q", {}, t.quoi),
 
@@ -100,14 +105,16 @@ window.VUE_BRIEF = (function () {
 
       el("div.bfc-g", {},
         t.module === "DEMANDE"
-          ? GESTE.bouton("pistes", { p: p }, null, "b.nu")
+          ? GESTE.bouton("pistes", { p: p }, null, "studio-lien")
           : t.section
-            ? el("button.b.nu", { type: "button", onclick: function () {
+            ? el("button.studio-lien", { type: "button", onclick: function () {
                 GESTE.ouvrir("projet", { p: p, section: t.section }); } },
-                "Ouvrir « " + VUE_PROJETS.nomSection(t.section) + " »")
-            : el("button.b" + (e.existe ? ".nu" : ".or"), { type: "button",
+                "Ouvrir « " + VUE_PROJETS.nomSection(t.section) + " » →")
+            /* Un geste texte par carte : six boutons pleins empilés, c'était six
+             * actions principales sur un écran qui n'en admet qu'une. */
+            : el("button.studio-lien", { type: "button",
                 onclick: function () { editerBrief(p, t, rafraichir); } },
-                e.existe ? "compléter" : "poser ce brief")));
+                e.existe ? "Compléter ce brief →" : "Poser ce brief →")));
   }
 
   /* Poser ou compléter un brief : ses champs, et à qui chacun appartient. */
@@ -147,13 +154,11 @@ window.VUE_BRIEF = (function () {
           onclick: function () { INGESTEUR.ouvrir(p, rafraichir); } },
           vide ? "Ingérer un brief reçu" : "Reprendre la mise en forme"),
         p.briefSource
-          ? el("span.bri-s", {}, "source conservée · "
+          ? el("span.bri-s", {}, "Source conservée · "
               + Math.round(p.briefSource.length / 100) / 10 + " k caractères")
-          : el("span.bri-s.vide", {}, "aucune source conservée — les champs n'ont pas de citation d'origine")),
+          : el("span.bri-s.vide", {}, "Aucune source conservée — les champs n'ont pas de citation d'origine.")),
 
-      corps(p, d, ident, rafraichir)
-    ,
-      champsEditables(p, rafraichir));
+      corps(p, d, ident, rafraichir));
   }
 
   /* ————————————————————— La question : est-ce que je l'accepte ? ————————————————————— */
@@ -250,12 +255,12 @@ window.VUE_BRIEF = (function () {
     var manques = r.controles.filter(function (c) { return !c.ok; });
     PANNEAU.ouvrir("Avant d'accepter", "ce que ça engage", el("div", {},
       UI.banniere("rouge", manques.length + " conditions ne sont pas remplies. Accepter, c'est renoncer à les opposer plus tard."),
-      el("div.sousbloc", {}, el("h3", {}, "CE QUE ÇA COÛTE"),
+      el("div.sousbloc", {}, el("h3", {}, "Ce que ça coûte"),
         el("div", {}, manques.map(function (c) {
           return el("div.oc-l", {}, el("span.puce"), el("span", {},
             c.quoi + (c.cout ? " — " + c.cout : "")));
         }))),
-      el("div.sousbloc", {}, el("h3", {}, "CE QUE ÇA DÉBLOQUE"),
+      el("div.sousbloc", {}, el("h3", {}, "Ce que ça débloque"),
         el("div.oc-l.gagne", {}, UI.icone("revue", 13),
           el("span", {}, "La plateforme créative peut être écrite, et le délai de réponse démarre."))),
       el("div.form-actions", { style: { "margin-top": "1.2rem" } },
@@ -285,7 +290,7 @@ window.VUE_BRIEF = (function () {
 
     PANNEAU.ouvrir("Retourner sous réserve", "l'horloge s'arrête", el("div", {},
       UI.banniere("", "Le délai de réponse créative est suspendu tant que la réserve n'est pas levée. C'est la règle la moins intuitive du processus, et la plus importante."),
-      el("div.sousbloc", {}, el("h3", {}, "LE MOTIF — une condition manquante d'abord"), boite, libre),
+      el("div.sousbloc", {}, el("h3", {}, "Le motif — une condition manquante d'abord"), boite, libre),
       el("div.form-actions", { style: { "margin-top": "1rem" } },
         el("button.b.or", { type: "button", onclick: function () {
           var motif = choisi || libre.value.trim();
@@ -309,19 +314,19 @@ window.VUE_BRIEF = (function () {
     return el("div.br-corps", {},
       /* La colonne de gauche : ce qu'il faut savoir, en cinq blocs courts */
       el("div.br-gauche", {},
-        bloc("LE PROBLÈME", d.probleme, "planning"),
-        bloc("LA PROMESSE", d.promesse, "planning"),
-        bloc("LA CIBLE", d.cible, "planning"),
-        d.contraintes ? bloc("LA CONTRAINTE DE PRODUCTION", d.contraintes, "clientele") : null,
+        bloc("Le problème", d.probleme, "planning"),
+        bloc("La promesse", d.promesse, "planning"),
+        bloc("La cible", d.cible, "planning"),
+        d.contraintes ? bloc("La contrainte de production", d.contraintes, "clientele") : null,
         d.verbatim ? el("div.br-verbatim", {},
-          el("div.b-t", {}, "CE QUE LE CLIENT A DIT"),
+          el("div.b-t", {}, "Ce que le client a dit"),
           el("blockquote", {}, "« " + d.verbatim + " »")) : null
       ),
 
       /* La colonne de droite : ce qui s'impose, en chiffres */
       el("div.br-droite", {},
         el("div.br-impose", {},
-          el("div.bi-t", {}, "CE QUE CE BRIEF M'IMPOSE"),
+          el("div.bi-t", {}, "Ce que ce brief m'impose"),
           ligne("Échéance", ident.echeance ? O.joli(ident.echeance) : null,
             eng && eng.joursRestants !== null
               ? (eng.joursRestants < 0 ? "dépassée de " + (-eng.joursRestants) + " j" : "dans " + eng.joursRestants + " j")
@@ -338,17 +343,17 @@ window.VUE_BRIEF = (function () {
           : null,
 
         marches.length ? el("div.br-marches", {},
-          el("div.bi-t", {}, "MARCHÉS"),
+          el("div.bi-t", {}, "Marchés"),
           el("div.drapeaux", {}, marches.map(function (m) { return UI.drapeau(m, true); }))
         ) : null,
 
         el("div.br-frise", {},
-          el("div.bi-t", {}, "LE CHEMIN"),
+          el("div.bi-t", {}, "Le chemin"),
           UI.frise(jalons(p, ident))
         ),
 
         (d.kpis || []).length ? el("div.br-kpis", {},
-          el("div.bi-t", {}, "CE QUI SERA MESURÉ"),
+          el("div.bi-t", {}, "Ce qui sera mesuré"),
           el("div", {}, d.kpis.map(function (k) {
             return el("div.oc-l", {}, el("span.puce"), el("span", {}, k));
           }))
@@ -360,14 +365,14 @@ window.VUE_BRIEF = (function () {
   function bloc(titre, texte, poste) {
     return el("div.br-bloc" + (texte ? "" : ".vide"), {},
       el("div.b-t", {}, titre, el("span.b-p", {}, O.poste(poste).court)),
-      el("div.b-v", {}, texte || "non renseigné")
+      el("div.b-v", {}, texte || "Non renseigné")
     );
   }
 
   function ligne(quoi, valeur, note) {
     return el("div.bi-l", {},
       el("span.l-q", {}, quoi),
-      el("span.l-v" + (valeur ? "" : ".vide"), {}, valeur === null || valeur === undefined ? "non renseigné" : String(valeur)),
+      el("span.l-v" + (valeur ? "" : ".vide"), {}, valeur === null || valeur === undefined ? "Non renseigné" : String(valeur)),
       note ? el("span.l-n", {}, note) : null
     );
   }

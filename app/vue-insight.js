@@ -43,7 +43,7 @@ window.VUE_INSIGHT = (function () {
 
     return el("section.eco." + e.ton, {},
       el("div.eco-tete", {},
-        el("span.eco-t", {}, "L'ÉCOLE QUI GOUVERNE CHAQUE ÉTAGE"),
+        el("span.eco-t", {}, "L'école qui gouverne chaque étage"),
         el("span.eco-e", {}, e.nom)),
       el("p.eco-q", {}, e.quoi),
 
@@ -58,9 +58,9 @@ window.VUE_INSIGHT = (function () {
 
         return el("div.ecoe" + (ec ? (pr && !pr.ok ? ".manque" : ".posee") : ".vide"), {},
           el("span.ecoe-t", {}, et.nom),
-          el("span.ecoe-n", {}, ec ? ec.nom : "non déclarée"),
+          el("span.ecoe-n", {}, ec ? ec.nom : "Non déclarée"),
           ec ? el("span.ecoe-m", {}, ec.maison) : null,
-          ec ? el("span.ecoe-p", {}, "preuve attendue : " + ec.preuve) : null,
+          ec ? el("span.ecoe-p", {}, "Preuve attendue : " + ec.preuve) : null,
           pr && !pr.ok ? el("p.ecoe-x", {}, pr.cout) : null,
           ec && ec.local ? el("p.ecoe-l", {}, "Ici : " + ec.local) : null,
           surT.length > 1
@@ -92,11 +92,11 @@ window.VUE_INSIGHT = (function () {
           el("span.ecc-n", {}, ec.nom),
           el("span.ecc-m", {}, ec.maison + " · " + ec.annee)),
         el("p.ecc-p", {}, ec.principe),
-        el("p.ecc-pr", {}, el("span.ecc-e", {}, "PREUVE ATTENDUE  "), ec.preuve,
+        el("p.ecc-pr", {}, el("span.ecc-e", {}, "Preuve attendue "), ec.preuve,
           pr ? el("span.ecc-ok" + (pr.ok ? ".ok" : ""), {},
             pr.ok ? "  — elle est au dossier" : "  — elle n'y est pas") : null),
-        el("p.ecc-lim", {}, el("span.ecc-e", {}, "LA LIMITE  "), ec.limite),
-        ec.local ? el("p.ecc-loc", {}, el("span.ecc-e", {}, "ICI  "), ec.local) : null);
+        el("p.ecc-lim", {}, el("span.ecc-e", {}, "La limite "), ec.limite),
+        ec.local ? el("p.ecc-loc", {}, el("span.ecc-e", {}, "Ici "), ec.local) : null);
       b.addEventListener("click", function () {
         choix = ec.cle;
         [].forEach.call(b.parentNode.children, function (x) { x.classList.remove("ici"); });
@@ -165,7 +165,7 @@ window.VUE_INSIGHT = (function () {
         + "se jugent au goût : rien ne dit à quelle profondeur le problème a été lu, "
         + "ni ce que cette profondeur commande."),
       el("div.rais-ordre", {},
-        el("div.ro-t", {}, "L'ORDRE DE TRAVAIL"),
+        el("div.ro-t", {}, "L'ordre de travail"),
         el("p.ro-q", {}, "Commencer par le consommateur est le réflexe le plus "
           + "répandu, et le plus coûteux : on trouve une jolie tension dans un espace "
           + "déjà pris."),
@@ -174,7 +174,7 @@ window.VUE_INSIGHT = (function () {
           return el("li", {},
             el("span.ro-n", {}, c.nom),
             el("span.ro-x", {}, "→ " + o.tire),
-            el("span.ro-s", {}, "sauté : " + o.saute));
+            el("span.ro-s", {}, "Sauté : " + o.saute));
         }))));
   }
 
@@ -192,9 +192,9 @@ window.VUE_INSIGHT = (function () {
       el("header.rin-tete", {},
         el("div.rin-c", {},
           el("span.rin-couche" + (c ? "" : ".sans"), {},
-            c ? c.court : "COUCHE NON NOMMÉE"),
+            c ? c.court : "Couche non nommée"),
           el("span.rin-v." + v.ton, { title: v.quoi }, v.nom)),
-        el("h3.rin-p", {}, INSIGHT.texte(i) || "insight vide"),
+        el("h3.rin-p", {}, INSIGHT.texte(i) || "Insight vide"),
         c ? el("p.rin-cmd", {}, "Cette couche commande " + c.commande + ".") : null,
         el("p.rin-e", {}, e.quoi),
         el("div.rin-g", {},
@@ -240,7 +240,7 @@ window.VUE_INSIGHT = (function () {
 
     return el("article.rte." + e.ton, {},
       el("div.rte-tete", {},
-        el("h4.rte-n", {}, t.nom || "territoire sans nom"),
+        el("h4.rte-n", {}, t.nom || "Territoire sans nom"),
         t.ecole && window.ECOLES
           ? el("span.rte-ec", {}, (ECOLES.de(t.ecole) || {}).nom || t.ecole) : null,
         el("span.rte-c", {}, pis.length + (pis.length > 1 ? " concepts" : " concept"))),
@@ -250,8 +250,8 @@ window.VUE_INSIGHT = (function () {
       /* La preuve que l'école réclame à cet étage. */
       t.ecole === "disruption"
         ? el("div.rte-preuve" + (conv.prouvee ? ".ok" : ""), {},
-            el("span.rtp-t", {}, "LA CONVENTION"),
-            el("span.rtp-x", {}, conv.enonce || "non énoncée"),
+            el("span.rtp-t", {}, "La convention"),
+            el("span.rtp-x", {}, conv.enonce || "Non énoncée"),
             el("span.rtp-p", {}, conv.prouvee
               ? conv.preuves.length + " visuels de concurrents"
               : conv.manque + " visuel" + (conv.manque > 1 ? "s" : "")
@@ -263,9 +263,9 @@ window.VUE_INSIGHT = (function () {
         ? el("ul.rte-pi", {}, pis.map(function (pi) {
             var r = pi.role ? RECO.role(pi.role) : null;
             return el("li.rtep" + (r ? "." + r.cle : ""), {},
-              el("span.rtep-n", {}, pi.titre || "piste sans titre"),
+              el("span.rtep-n", {}, pi.titre || "Piste sans titre"),
               r ? el("span.rtep-r", { title: r.quoi }, r.nom) : null,
-              pi.statut === "retenue" ? el("span.rtep-s", {}, "retenue") : null);
+              pi.statut === "retenue" ? el("span.rtep-s", {}, "Retenue") : null);
           }))
         : null,
 
@@ -285,7 +285,7 @@ window.VUE_INSIGHT = (function () {
         + "autres. Les rattacher à un territoire est le geste qui rend le deck défendable."),
       el("ul.rao-l", {}, r.orphelines.map(function (pi) {
         return el("li", {},
-          el("span.rao-n", {}, pi.titre || "piste sans titre"),
+          el("span.rao-n", {}, pi.titre || "Piste sans titre"),
           el("button.b.nu", { type: "button",
             onclick: function () { rattacher(p, pi, rafraichir); } }, "Rattacher"));
       })));
@@ -571,10 +571,10 @@ window.VUE_INSIGHT = (function () {
     ts.forEach(function (t) {
       var i = t.insightId ? INSIGHT.de(p, t.insightId) : null;
       sel.appendChild(el("option", { value: t.id },
-        (t.nom || "territoire sans nom") + (i ? "  ·  " + INSIGHT.texte(i).slice(0, 50) : "  ·  sans racine")));
+        (t.nom || "Territoire sans nom") + (i ? "  ·  " + INSIGHT.texte(i).slice(0, 50) : "  ·  sans racine")));
     });
 
-    PANNEAU.sur("Rattacher une piste", pi.titre || "piste sans titre", el("div", {},
+    PANNEAU.sur("Rattacher une piste", pi.titre || "Piste sans titre", el("div", {},
       UI.banniere("", "Une piste rattachée remonte à un insight. C'est ce qui permet de "
         + "dire, avant la séance, si les axes du deck traitent le même problème."),
       el("div.form", {}, el("div.champ", {}, el("label", {}, "Territoire"), sel)),

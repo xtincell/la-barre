@@ -8,7 +8,7 @@ window.__mesure = async function (routes, exclure) {
     if (mx!==mn) { var d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn); h = mx===r?((g-b)/d+(g<b?6:0)):mx===g?((b-r)/d+2):((r-g)/d+4); h*=60; } return [h,s,l]; }
   function lum(c) { var a = c.slice(0,3).map(function (v) { v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); }); return .2126*a[0]+.7152*a[1]+.0722*a[2]; }
   function fond(e) { while (e) { var c = rgb(getComputedStyle(e).backgroundColor); if (c.length<4 || c[3] > .5) return c; e = e.parentElement; } return [255,255,255,1]; }
-  var SIGLES = /^(MT|KV|BAT|PLV|SKU|POSM|OOH|DAM|IMP|EVAP|ESA|UEMOA|CEMAC|WAMEA|NSIA|FRC|CAD|ECO|XC|PDF|JSON|CMYK|RGB|TV|CI|CM|GH|BF|SN|GA|ML|BJ|TG|NE|CG|CD|CF|TD|ZA|SO|FR|EN|AD|DA|DC|DG|DAF|ECCP|IA|ADVE|OS|TG|ID|OK|URL|RDV|BTS|EOTY|HT|TTC|FCFA|XAF|XOF|GHS|USD|EUR)$/;
+  var SIGLES = /^(MT|KV|BAT|PLV|SKU|POSM|OOH|DAM|IMP|EVAP|ESA|UEMOA|CEMAC|WAMEA|NSIA|FRC|CAD|ECO|XC|PDF|JSON|CMYK|RGB|TV|CI|CM|GH|BF|SN|GA|ML|BJ|TG|NE|CG|CD|CF|TD|ZA|SO|FR|EN|AD|DA|DC|DG|DAF|ECCP|IA|ADVE|OS|TG|ID|OK|URL|RDV|BTS|EOTY|HT|TTC|FCFA|XAF|XOF|GHS|USD|EUR|ESOV|KPI|SOV|SOM)$/;
   var res = [];
   for (var i = 0; i < routes.length; i++) {
     var r = routes[i];
@@ -23,7 +23,11 @@ window.__mesure = async function (routes, exclure) {
       var bg = rgb(cs.backgroundColor);
       if (bg.length === 3 || bg[3] > .3) { var h = hsl(bg[0], bg[1], bg[2]); if (h[1] > .25 && h[2] > .6 && h[2] < .97 && (h[0] < 170 || h[0] > 290)) aplats.push((e.className + "").slice(0, 30)); }
       if (/^(A|BUTTON|SELECT|INPUT|SUMMARY|TEXTAREA)$/.test(e.tagName)) { var b = e.getBoundingClientRect(); var enLigne = cs.display === "inline" && /^(P|LI|SPAN|DD|TD)$/.test(e.parentElement.tagName);
-        if (b.height && b.height < 44 && b.width < 400 && !enLigne) cibles.push(e.tagName + "." + (e.className + "").slice(0, 20) + ":" + Math.round(b.height)); }
+        /* La zone invisible du design system (§14) : un ::after absolu d'au moins
+         * 44 px porte la cible sans grossir la ligne. Elle compte comme cible. */
+        var apres = getComputedStyle(e, "::after");
+        var zone = apres.content !== "none" && apres.position === "absolute" && parseFloat(apres.minHeight) >= 44;
+        if (b.height && b.height < 44 && b.width < 400 && !enLigne && !zone) cibles.push(e.tagName + "." + (e.className + "").slice(0, 20) + ":" + Math.round(b.height)); }
       if (!t) return;
       if (/Source Serif|Georgia/.test(cs.fontFamily.split(",")[0])) serif.push((e.className + "").slice(0, 20) + ":" + t.slice(0, 24));
       var vu = cs.textTransform === "uppercase" ? t.toUpperCase() : t;
