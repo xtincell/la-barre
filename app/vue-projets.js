@@ -425,6 +425,7 @@ window.VUE_PROJETS = (function () {
   }
 
   /* La marche : une marque, son rythme, ses campagnes, ses projets. */
+  var SOCLE_OUVERT = {};
   function marcheDeMarque(hote, marqueId) {
     var m = DEPOT.trouve("marques", marqueId);
     hote.className = "zone studio";
@@ -486,10 +487,18 @@ window.VUE_PROJETS = (function () {
      * ouvre une marque pour travailler. Replié : on ouvre une marque pour voir
      * ce qui tourne avant de voir ce qui dure. */
     if (window.VUE_VAULT && VUE_VAULT.dossierDeMarque) {
-      hote.appendChild(el("details.mqp-socle", {},
+      var socle = el("details.mqp-socle", SOCLE_OUVERT[marqueId] ? { open: true } : {},
         el("summary.mqp-socle-t", {}, "Le socle, le catalogue et la vie",
           el("span", {}, "Ce qui dure : identité, décideurs, packs, histoire")),
-        VUE_VAULT.dossierDeMarque(marqueId, hote)));
+        VUE_VAULT.dossierDeMarque(marqueId, function () {
+          var y = window.scrollY;
+          marcheDeMarque(hote, marqueId);
+          window.scrollTo(0, y);
+        }));
+      /* Un geste dans le socle redessine la page : il doit la retrouver ouverte
+       * là où on l'a laissée. */
+      socle.addEventListener("toggle", function () { SOCLE_OUVERT[marqueId] = socle.open; });
+      hote.appendChild(socle);
     }
   }
 

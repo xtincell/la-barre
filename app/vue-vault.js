@@ -16,8 +16,14 @@ window.VUE_VAULT = (function () {
    * fait sur ce qui distingue réellement un pack d'un autre : sa catégorie et
    * sa variante. */
   var filtre = { categorie: null, variante: null, etat: null };
+  var PILIERS_OUVERTS = {};
+  var CATALOGUE_OUVERT = {};
 
   function rendre(hote) {
+    /* Le dossier d'une marque, rendu dans sa page, se redessine lui-même : sans
+     * ce renvoi, le moindre geste du socle (un filtre, un décideur) remplaçait
+     * la page de la marque par l'arbre du portefeuille, l'adresse inchangée. */
+    if (hote && hote.redessiner) return hote.redessiner();
     var arbre = VAULT.arbre();
     O.vider(hote);
 
@@ -70,7 +76,7 @@ window.VUE_VAULT = (function () {
    * portefeuille ; Bonnet Rouge dit « Réussir dès le matin » ; Bonnet Rouge IMP
    * parle d'enfance et de famille. Sans cet arbre on écrit trois fois la même
    * promesse — ou on la contredit sans s'en apercevoir. */
-  var RANGS = { ombrelle: "OMBRELLE", marque: "MARQUE", gamme: "GAMME" };
+  var RANGS = { ombrelle: "Ombrelle", marque: "Marque", gamme: "Gamme" };
 
   function cle(n) { return n.type + ":" + n.id; }
 
@@ -182,7 +188,7 @@ window.VUE_VAULT = (function () {
    * marque sans Authenticité ne peut pas dire si une piste EST elle. Chaque
    * pilier annonce donc ce qu'il sert, et ce qu'on perd quand il est muet. */
   function socleDuNoeud(n, hote) {
-    return el("div", {}, VAULT.PILIERS.map(function (pil) {
+    return el("div.vtb-piliers", {}, VAULT.PILIERS.map(function (pil) {
       var champs = VAULT.champsDuPilier(pil.cle);
       if (!champs.length) return null;
 
@@ -195,7 +201,8 @@ window.VUE_VAULT = (function () {
        * ici pour lire un ÉTAT, pas pour parcourir un formulaire. L'en-tête
        * porte tout ce qu'un état demande — le compte, et ce qu'on perd quand
        * le pilier est muet. On ouvre celui qu'on travaille. */
-      return el("details.vtb-pil" + (remplis ? "" : ".muet"), {},
+      var cleP = n.type + ":" + n.id + ":" + pil.cle;
+      var d = el("details.vtb-pil" + (remplis ? "" : ".muet"), PILIERS_OUVERTS[cleP] ? { open: true } : {},
         el("summary", {},
           el("div.vtbp-t", {},
             el("b", {}, pil.nom),
@@ -205,6 +212,10 @@ window.VUE_VAULT = (function () {
             ? (pil.quoi || "")
             : "Muet — " + (pil.sert ? "sans lui, impossible de " + pil.sert + "." : "rien n'est écrit."))),
         el("div.vtb-s", {}, champs.map(function (c) { return carteChamp(n, c, hote); })));
+      /* Écrire un champ redessine le socle : le pilier qu'on travaille doit
+       * rester ouvert, sinon chaque écriture le referme sous la main. */
+      d.addEventListener("toggle", function () { PILIERS_OUVERTS[cleP] = d.open; });
+      return d;
     }));
   }
 
@@ -225,8 +236,8 @@ window.VUE_VAULT = (function () {
       onclick: function () { editer(n, c, hote); } },
       el("span.vtc-n", {}, c.nom,
         !vide && !h.propre && h.source
-          ? el("span.vtc-h", {}, "de " + h.source.nom) : null),
-      el("span.vtc-v", {}, vide ? (c.aide || "non écrit")
+          ? el("span.vtc-h", {}, "hérité de " + h.source.nom) : null),
+      el("span.vtc-v", {}, vide ? (c.aide || "Non écrit")
         : Array.isArray(h.valeur) ? h.valeur.join("  ·  ") : String(h.valeur)),
       revs.length
         ? el("span.vtc-r", {}, revs.length + (revs.length > 1 ? " révisions" : " révision")
@@ -243,11 +254,12 @@ window.VUE_VAULT = (function () {
     var e = BRIEFS.etat(t, m);
 
     return el("div.vtb-bp" + (e.recevable ? ".ok" : e.existe ? ".partiel" : ".absent"), {},
-      el("div.vtbk-t", {}, "LE BRIEF DE PLATEFORME",
-        el("span", {}, e.existe ? e.ecrits + " sur " + e.champs + " champs" : "non posé"),
+      el("div.vtbk-t", {}, el("h3", {}, "Le brief de plateforme"),
+        el("span", {}, el("span.vtb-signe", { "aria-hidden": "true" }, e.recevable ? "✓ " : e.existe ? "◐ " : "● "),
+          e.existe ? e.ecrits + " sur " + e.champs + " champs" : "Non posé"),
         el("button.b" + (e.existe ? ".nu" : ".or"), { type: "button",
           onclick: function () { editerBriefPlateforme(m, t, hote); } },
-          e.existe ? "compléter" : "poser ce brief")),
+          e.existe ? "Compléter" : "Poser ce brief")),
       el("div.bfc-r", {},
         el("div.bfcr", {}, el("b", {}, "il fonde"), t.fonde),
         el("div.bfcr", {}, el("b", {}, "il pilote"), t.boussole)),
@@ -280,10 +292,10 @@ window.VUE_VAULT = (function () {
     var propres = ds.filter(function (x) { return x.propre; });
 
     return el("div.vtb-d", {},
-      el("div.vtbk-t", {}, "QUI DÉCIDE",
+      el("div.vtbk-t", {}, el("h3", {}, "Qui décide"),
         el("span", {}, propres.length
           ? propres.length + (propres.length > 1 ? " décideurs nommés" : " décideur nommé")
-          : "aucun décideur nommé pour cette marque")),
+          : "Aucun décideur nommé pour cette marque")),
       ds.length
         ? el("div.vt-dec", {}, ds.map(function (x) {
             return el("button.vtd" + (x.propre ? ".ici" : ""), { type: "button",
@@ -294,7 +306,7 @@ window.VUE_VAULT = (function () {
               } },
               el("span.vtd-n", {}, x.contact.nom),
               el("span.vtd-r", {}, [x.contact.role, x.contact.niveau].filter(Boolean).join(" · ")),
-              el("span.vtd-x", {}, x.propre ? "nommé ici" : "du client"));
+              el("span.vtd-x", {}, x.propre ? [el("span.vtb-signe", { "aria-hidden": "true" }, "✓ "), "Nommé ici"] : "Du client"));
           }))
         : el("p.rien", {}, "Aucun contact chez ce client. Sans décideur nommé, "
             + "aucune validation ne prend effet."),
@@ -309,10 +321,10 @@ window.VUE_VAULT = (function () {
   function blocPromos(m, hote) {
     var ps = VAULT.promos(m.id);
     return el("div.vtb-p", {},
-      el("div.vtbk-t", {}, "MÉCANIQUES DE PROMO",
+      el("div.vtbk-t", {}, el("h3", {}, "Les mécaniques de promo"),
         el("span", {}, ps.length + (ps.length > 1 ? " connues" : " connue")),
         el("button.b.nu", { type: "button", onclick: function () { ajouterPromo(m, hote); } },
-          "+ en déclarer une")),
+          "+ En déclarer une")),
       ps.length
         ? el("div.vt-pr", {}, ps.map(function (x) {
             return el("div.vtpr" + (x.parLUsage ? ".usage" : ""), {},
@@ -320,8 +332,9 @@ window.VUE_VAULT = (function () {
               x.detail ? el("span.vtpr-d", {}, x.detail) : null,
               el("span.vtpr-q", {}, x.packs
                 ? x.packs + (x.packs > 1 ? " packs la portent" : " pack la porte")
-                : "aucun pack ne la porte")
-              , x.parLUsage ? el("span.vtpr-u", {}, "vue sur les packs, jamais déclarée") : null);
+                : "Aucun pack ne la porte")
+              , x.parLUsage ? el("span.vtpr-u", {}, el("span.vtb-signe", { "aria-hidden": "true" }, "◐ "),
+                "Vue sur les packs, jamais déclarée") : null);
           }))
         : el("p.rien", {}, "Aucune mécanique connue. Une promo qui s'invente au moment "
             + "de la campagne n'a ni coût ni historique."));
@@ -357,7 +370,7 @@ window.VUE_VAULT = (function () {
    * Beignet Paradise. Il n'appartient à personne, et il attend un geste. */
   function blocOrphelins(orphelins, marques, hote) {
     return el("div.vt-orph", {},
-      el("div.vto-t", {}, "PACKS SANS MARQUE",
+      el("div.vto-t", {}, "Packs sans marque",
         el("span", {}, orphelins.length + "  ·  ils n'entrent dans aucun catalogue")),
       el("p.vto-x", {}, "Leur nom de fichier ne dit ni la marque ni la catégorie. "
         + "Tant qu'ils ne sont pas rattachés, aucune campagne ne peut les montrer — "
@@ -376,7 +389,7 @@ window.VUE_VAULT = (function () {
 
   function choixMarque(s, marques, hote) {
     var sel = el("select", {});
-    sel.appendChild(el("option", { value: "" }, "à qui ?"));
+    sel.appendChild(el("option", { value: "" }, "À qui ?"));
     marques.forEach(function (m) { sel.appendChild(el("option", { value: m.id }, m.nom)); });
     sel.onchange = function () {
       if (!sel.value) return;
@@ -398,13 +411,31 @@ window.VUE_VAULT = (function () {
     var vus = filtrer(cat);
 
     return el("div.vtb-k", {},
-      el("div.vtbk-t", {}, "LE CATALOGUE",
+      el("div.vtbk-t", {}, el("h3", {}, "Le catalogue"),
         el("span", {}, vus.length + " sur " + cat.length
           + (cat.length > 1 ? " packs" : " pack")),
         el("button.b.nu", { type: "button", onclick: function () {
           var neufPack = VAULT.creerSku(m.id);
           DEPOT.enregistrer(); rendre(hote); fiche(neufPack, m, hote);
-        } }, "+ ajouter un pack")),
+        } }, "+ Ajouter un pack")),
+      /* Cinquante packs étalés faisaient huit mille pixels au téléphone et
+       * enterraient le reste du dossier. Au-delà d'une douzaine, le catalogue
+       * se parcourt sur demande ; l'état ouvert survit aux filtres. */
+      cat.length > 12
+        ? (function () {
+            var aq = cat.filter(function (s) { return VAULT.controles(s.id).length; }).length;
+            var d = el("details.vtk-d", CATALOGUE_OUVERT[m.id] ? { open: true } : {},
+              el("summary.vtk-dt", {}, "Parcourir le catalogue",
+                el("span", {}, cat.length + " packs" + (aq ? " · " + aq + " fiches incomplètes" : ""))),
+              listeCatalogue(m, cat, vus, hote));
+            d.addEventListener("toggle", function () { CATALOGUE_OUVERT[m.id] = d.open; });
+            return d;
+          })()
+        : listeCatalogue(m, cat, vus, hote));
+  }
+
+  function listeCatalogue(m, cat, vus, hote) {
+    return el("div.vtk-l", {},
       filtres(m, cat, hote),
       vus.length
         ? el("div.vt-packs", {}, vus.map(function (s) {
@@ -416,10 +447,11 @@ window.VUE_VAULT = (function () {
               el("span.vtp-n", {}, s.nom),
               el("span.vtp-m", {}, [s.categorie, s.format, s.variante,
                 s.langue ? O.langue(s.langue) : null, s.promo].filter(Boolean).join(" · ")
-                || "à qualifier"),
+                || "À qualifier"),
               ctrl
-                ? el("span.vtp-x", {}, ctrl + (ctrl > 1 ? " manques à la fiche" : " manque à la fiche"))
-                : el("span.vtp-ok", {}, "fiche complète"));
+                ? el("span.vtp-x", {}, el("span.vtb-signe", { "aria-hidden": "true" }, "◐ "),
+                    ctrl + (ctrl > 1 ? " manques à la fiche" : " manque à la fiche"))
+                : el("span.vtp-ok", {}, el("span.vtb-signe", { "aria-hidden": "true" }, "✓ "), "Fiche complète"));
           }))
         : el("p.rien", {}, cat.length
             ? "Aucun pack ne répond à ce filtre."
@@ -427,9 +459,9 @@ window.VUE_VAULT = (function () {
 
       VAULT.archives(m.id).length
         ? el("div.vtb-a", {},
-            el("div.vtbk-t", {}, "ARCHIVÉS",
+            el("div.vtbk-t", {}, el("h3", {}, "Archivés"),
               el("span", {}, VAULT.archives(m.id).length
-                + "  ·  hors catalogue, toujours à la base")),
+                + " · hors catalogue, toujours à la base")),
             el("div.vt-arch", {}, VAULT.archives(m.id).map(function (s) {
               return el("div.vta", {},
                 el("span.vta-n", {}, s.nom),
@@ -437,7 +469,7 @@ window.VUE_VAULT = (function () {
                   + (s.archive.motif ? "  ·  " + s.archive.motif : "")),
                 el("button.b.nu", { type: "button", onclick: function () {
                   VAULT.restaurer(s.id); DEPOT.enregistrer(); rendre(hote);
-                } }, "remettre au catalogue"));
+                } }, "Remettre au catalogue"));
             })))
         : null);
   }
@@ -447,7 +479,7 @@ window.VUE_VAULT = (function () {
   function blocMarches(m) {
     var mk = VAULT.marches(m.id);
     return el("div.vtb-m", {},
-      el("div.vtbk-t", {}, "DISTRIBUÉE SUR",
+      el("div.vtbk-t", {}, el("h3", {}, "Distribuée sur"),
         el("span", {}, mk.length + (mk.length > 1 ? " marchés" : " marché"))),
       mk.length
         ? el("div.vt-mk", {}, mk.map(function (x) {
@@ -472,7 +504,7 @@ window.VUE_VAULT = (function () {
     var e = VIE_MARQUE.etat(m.id);
     return el("details.vtb-vie" + (e.cle === "muette" ? ".muet" : ""), {},
       el("summary", {},
-        el("div.vtbk-t", {}, "LA VIE DE LA MARQUE",
+        el("div.vtbk-t", {}, el("h3", {}, "La vie de la marque"),
           el("span", {}, e.nom)),
         el("p.vtbp-q", {}, e.quoi)),
       VIE_MARQUE.rendre(m.id, 40));
@@ -481,18 +513,25 @@ window.VUE_VAULT = (function () {
   function blocCampagnes(m) {
     var cs = VAULT.campagnesDe(m.id);
     return el("div.vtb-c", {},
-      el("div.vtbk-t", {}, "CAMPAGNES QUI S'EN SERVENT",
-        el("span", {}, cs.length ? cs.length : "aucune")),
-      cs.length
-        ? el("div.vt-cp", {}, cs.map(function (p) {
-            var sel = VAULT.selection(p, m.id);
-            return el("a.vtcp", { href: "#/projets/" + p.id },
-              el("span.vtcp-n", {}, p.nom),
-              el("span.vtcp-q", {}, sel.pieces + " livrables  ·  "
-                + sel.marchesRetenus.length + " marchés sur " + sel.marchesDisponibles
-                + "  ·  " + sel.skuRetenus + " packs retenus sur " + sel.skuCatalogue));
-          }))
-        : el("p.rien", {}, "Aucune."));
+      el("div.vtbk-t", {}, el("h3", {}, "Les campagnes qui s'en servent"),
+        el("span", {}, cs.length ? cs.length : "Aucune")),
+      cs.length ? el("div.vt-cp", {}, cs.slice(0, 6).map(ligne)) : el("p.rien", {}, "Aucune."),
+      /* Les six premières se lisent ; le reste se déplie. Vingt-quatre
+       * campagnes à la file repoussaient la vie de la marque hors de vue. */
+      cs.length > 6
+        ? el("details.vtk-d", {},
+            el("summary.vtk-dt", {}, "Les " + (cs.length - 6) + " autres"),
+            el("div.vt-cp", {}, cs.slice(6).map(ligne)))
+        : null);
+
+    function ligne(p) {
+      var sel = VAULT.selection(p, m.id);
+      return el("a.vtcp", { href: "#/projets/" + p.id },
+        el("span.vtcp-n", {}, p.nom),
+        el("span.vtcp-q", {}, sel.pieces + " livrables · "
+          + sel.marchesRetenus.length + " marchés sur " + sel.marchesDisponibles
+          + " · " + sel.skuRetenus + " packs retenus sur " + sel.skuCatalogue));
+    }
   }
 
   function filtrer(cat) {
@@ -522,7 +561,7 @@ window.VUE_VAULT = (function () {
 
     return el("div.vt-f", {},
       el("div.vtf-g", {},
-        bouton(!filtre.categorie, "toutes", function () { filtre.categorie = null; }),
+        bouton(!filtre.categorie, "Toutes", function () { filtre.categorie = null; }),
         cats.map(function (c) {
           return bouton(filtre.categorie === c.cle, c.cle + " · " + compte("categorie", c.cle),
             function () { filtre.categorie = filtre.categorie === c.cle ? null : c.cle; });
@@ -611,7 +650,7 @@ window.VUE_VAULT = (function () {
         /* Les marchés qui le vendent. C'est ce champ qui empêche de le montrer
          * là où il n'existe pas. */
         el("div.fi-b", {},
-          el("div.fib-t", {}, "DISTRIBUÉ SUR",
+          el("div.fib-t", {}, "Distribué sur",
             el("span", {}, dist.length + (dist.length > 1 ? " marchés" : " marché")
               + "  ·  " + (VAULT.clientDe(s.marque) || {}).nom + " en sert "
               + VAULT.marchesPossibles(s).length)),
@@ -628,7 +667,7 @@ window.VUE_VAULT = (function () {
 
         /* Où il est montré — la relation que le modèle réclame. */
         el("div.fi-b", {},
-          el("div.fib-t", {}, "MONTRÉ SUR",
+          el("div.fib-t", {}, "Montré sur",
             el("span", {}, usage.length
               ? usage.length + (usage.length > 1 ? " livrables" : " livrable")
               : "aucun livrable")),
@@ -788,10 +827,10 @@ window.VUE_VAULT = (function () {
    * Il est rendu là où l'on travaille désormais. « La maison » garde ce qui
    * est vraiment du référentiel : quelles marques existent, l'arbre des
    * ombrelles, et ce qui manque à l'échelle du portefeuille. */
-  function dossierDeMarque(marqueId, hote) {
+  function dossierDeMarque(marqueId, redessiner) {
     var m = DEPOT.trouve("marques", marqueId);
     if (!m) return null;
-    return corps({ type: "marque", id: marqueId, nom: m.nom }, hote);
+    return corps({ type: "marque", id: marqueId, nom: m.nom }, { redessiner: redessiner });
   }
 
   return { rendre: rendre, dossierDeMarque: dossierDeMarque };

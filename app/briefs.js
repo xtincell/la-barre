@@ -34,7 +34,7 @@ window.BRIEFS = (function () {
       cle: "plateforme", nom: "Brief de plateforme de marque",
       porte: "marque",
       emetteur: "clientele", contributeur: "planning", destinataire: "creation",
-      fonde: "la commande du plateforme de marque — positionnement, promesse, idée directrice",
+      fonde: "la commande de la plateforme de marque — positionnement, promesse, idée directrice",
       boussole: "toutes les campagnes de la marque : chacune s'y rattache, ou justifie son écart",
       quoi: "Il commande la plateforme de marque. Sans elle, la bibliothèque se remplit au fil des campagnes "
           + "et finit par dire trois choses différentes.",
@@ -333,7 +333,10 @@ window.BRIEFS = (function () {
   /* Ce que coûte son absence — la phrase qui remplace « champ manquant ». */
   function cout(t, e) {
     if (!e.existe) {
-      return "Sans lui, " + t.fonde + " n'a pas de plateforme de marque : on ne pourra la refuser "
+      /* La phrase sert aux neuf types. Elle disait « n'a pas de plateforme de
+       * marque », reste d'un renommage de « socle » : appliquée au brief de
+       * plateforme lui-même, elle tournait en rond. */
+      return "Sans lui, " + t.fonde + " n'a pas de fondement écrit : on ne pourra la refuser "
         + "que par le goût, et rien ne dira si on a dérivé.";
     }
     if (e.manquants.length) {

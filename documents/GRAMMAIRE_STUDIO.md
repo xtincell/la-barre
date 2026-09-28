@@ -386,3 +386,31 @@ parce que la page de campagne la partage ; ses blocages portent le filet et le
 signe, le texte reste gris. Corrigé en passant : « Les 1 projets sont clos », « 1
 projets tournent » (`CAMPAGNE.etat`). Mesure à 1280 et 375 px sur Bonnet Rouge,
 Beignet Paradise et NSIA (sans campagne) : à zéro.
+
+**Passe 7c — La marque : le socle (28/09).** Le socle de marque — quatre piliers,
+brief de plateforme, décideurs, promos, catalogue, marchés, campagnes, vie — sert la
+page de marque et le portefeuille. Ses huit titres de bloc étaient en capitales
+écrites dans le code (« LE BRIEF DE PLATEFORME », « QUI DÉCIDE »…) et leurs gestes en
+minuscules (« compléter », « + ajouter un pack ») : casse de phrase partout. Chaque
+bloc devient une section blanche, les champs suivent le motif des champs de dossier
+(passe 3), et les états passent par le filet et le signe — brief recevable ✓,
+partiel ◐, absent ● ; décideur nommé ici ✓ ; promo vue sur les packs mais jamais
+déclarée ◐ ; fiche de pack incomplète ◐. Les codes de marché perdent leur encre
+bleue et verte, qui codait une origine sans le dire. Un pilier muet porte le filet
+une fois, pas sur chacun de ses champs. Au-delà de douze packs, le catalogue se
+parcourt sur demande, et au-delà de six campagnes, le reste se déplie : le socle
+Bonnet Rouge tombe de **11 908 à 2 444 px** au téléphone.
+
+Deux défauts de fond. **Un geste dans le socle remplaçait la page** : les blocs
+recevaient la zone de la page et appelaient `rendre(hote)`, c'est-à-dire l'arbre du
+portefeuille — un clic sur un filtre du catalogue, dans la page Bonnet Rouge, affichait
+« 68 marques n'ont pas de plateforme », l'adresse inchangée. `dossierDeMarque` reçoit
+désormais de quoi redessiner la page de marque, qui garde socle, piliers et catalogue
+ouverts d'un geste à l'autre. **La phrase de coût des briefs tournait en rond** :
+« Sans lui, la commande du plateforme de marque… n'a pas de plateforme de marque »,
+reste d'un renommage global de « socle ». Elle redevient générique (« n'a pas de
+fondement écrit ») ; « du plateforme » et « le plateforme » corrigés (`briefs.js`,
+`ecarts.js`). Les trois libellés en capitales qui restaient dans le fichier (rangs de
+l'arbre, fiche pack) sont passés en casse de phrase au passage ; le reste du
+portefeuille est pour la passe 11. Mesure à 1280 et 375 px sur Bonnet Rouge et
+Beignet Paradise, tout déplié : à zéro, hors données (catégorie « YAOURT »).

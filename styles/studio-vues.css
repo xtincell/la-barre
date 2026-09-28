@@ -581,6 +581,15 @@ button.id-l:hover, button.id-v:hover, .idl-h:hover { background: var(--surface-4
 .bfc-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .bfc-n { font: 550 16px var(--affichage); color: var(--clair); }
 .bfc-f { font-size: 11px; color: var(--clair-terne); background: var(--surface-3); border-radius: 5px; padding: 3px 7px; }
+/* Un brief est le socle d'une demande et la boussole d'un suivi : chaque carte
+ * dit les deux, sans quoi c'est un formulaire de plus. Le tableau des briefs
+ * et le brief de plateforme de la marque partagent ces deux lignes. */
+.bfc-r { display: grid; gap: 4px; }
+.bfcr { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: 12px; align-items: baseline;
+  font-size: 13px; line-height: 1.55; color: var(--clair); max-width: 70ch; }
+.bfcr b { font-size: 11px; font-weight: 400; color: var(--clair-terne); }
+.bfcr b:first-letter { text-transform: uppercase; }
+@media (max-width: 700px) { .bfcr { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
 .bfc-e { margin-left: auto; font: 550 12px var(--affichage); color: var(--ton); }
 .bfc-q { font-size: 14px; line-height: 1.6; color: var(--clair); max-width: 70ch; }
 .bfc-c { font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 70ch; }
@@ -1744,4 +1753,155 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
   .mqp-cmp, .mqp-vide { padding: 16px 16px 6px; }
   .mqp-cmp .mpl-liste { margin: 0 -16px; }
   .mqp-cmp .mpl { padding-left: 13px; padding-right: 16px; }
+}
+
+/* ═════════════════════ Passe 7c · La marque : le socle ═════════════════════ */
+/* Ce qui dure : les quatre piliers, le brief de plateforme, les décideurs, les
+ * promos, le catalogue, les marchés, les campagnes, la vie. Chaque bloc est
+ * une section blanche ; les champs suivent le motif des champs de dossier
+ * (passe 3). Le même corps sert la page de marque et le portefeuille. */
+.vn-b { display: grid; gap: 16px; }
+.vn > .vn-b { margin: 10px 0 6px 26px; }
+@media (max-width: 760px) { .vn > .vn-b { margin-left: 8px; } }
+.vtb-piliers { display: grid; gap: 12px; }
+.vtb-pil, .vtb-bp, .vtb-d, .vtb-p, .vtb-k, .vtb-m, .vtb-c, .vtb-vie {
+  display: grid; gap: 10px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px;
+  padding: 16px 22px; min-width: 0; }
+.vtb-signe { color: var(--ton, var(--clair-terne)); }
+
+/* Le titre d'un bloc : le nom, son compte, son geste à droite. */
+.vtbk-t { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; min-height: 44px; }
+.vtbk-t h3 { font: 550 17px/1.35 var(--affichage); color: var(--clair); }
+.vtbk-t > span { font-size: 12px; color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+.vtbk-t > .b { margin-left: auto; }
+
+/* Les piliers, repliés : on vient lire un état, pas parcourir un formulaire.
+ * L'en-tête porte le compte et ce qu'on perd quand le pilier est muet. */
+.vtb-pil { padding-top: 6px; padding-bottom: 6px; }
+.vtb-pil > summary { cursor: pointer; list-style: none; padding: 8px 0; min-height: 44px; }
+.vtb-pil > summary::-webkit-details-marker { display: none; }
+.vtbp-t { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.vtbp-t b { font: 550 17px/1.35 var(--affichage); color: var(--clair); }
+.vtbp-t b::before { content: "›"; display: inline-block; width: 14px; text-align: center; color: var(--clair-terne);
+  transform-origin: 50% 55%; transition: transform var(--tr-rapide); }
+.vtb-pil[open] > summary .vtbp-t b::before { transform: rotate(90deg); }
+.vtbp-f { font-size: 12px; color: var(--clair-terne); }
+.vtbp-t .droite { margin-left: auto; font-size: 12px; color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+.vtbp-q { margin-top: 4px; padding-left: 14px; font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 70ch; }
+/* Muet : l'encre pâlit, jamais l'opacité — et le signe de l'attente le dit. */
+.vtb-pil.muet { --ton: var(--arbitrage); border-left: 3px solid var(--ton); }
+.vtb-pil.muet .vtbp-t b { color: var(--clair-doux); }
+.vtb-pil[open] > summary { margin-bottom: 4px; }
+
+/* Les champs : chaque champ est un bouton, et le champ vide se voit. */
+.vtb-s { display: grid; border-top: 1px solid var(--trait); }
+.vtc { display: grid; gap: 3px; width: calc(100% + 16px); margin: 0 -8px; padding: 12px 8px 12px 11px; min-height: 44px;
+  text-align: left; color: inherit; font: inherit; background: none; border: 0; border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--trait); cursor: pointer; }
+.vtb-s .vtc:last-child { border-bottom: 0; }
+.vtc:hover { background: var(--surface-4); }
+.vtc-n { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; color: var(--clair-terne); }
+.vtc-h { font-size: 11px; color: var(--clair-terne); }
+.vtc-v { font-size: 14px; line-height: 1.55; color: var(--clair); max-width: 65ch; overflow-wrap: anywhere; }
+.vtc.herite .vtc-v { color: var(--clair-doux); }
+.vtc.vide { border-left-color: var(--arbitrage); }
+.vtc.vide .vtc-v { color: var(--clair-terne); }
+/* Dans un pilier muet, c'est le pilier qui porte le filet : le répéter sur
+ * chacun de ses champs doublait la barre sans rien dire de plus. */
+.vtb-pil.muet .vtc.vide { border-left-color: transparent; }
+/* Depuis quand la valeur tient, et ce qu'elle a remplacé. */
+.vtc-r { font-size: 11px; color: var(--clair-terne); }
+
+/* Le brief de plateforme : le filet et le signe disent s'il est recevable. */
+.vtb-bp { border-left: 3px solid var(--ton); }
+.vtb-bp.ok { --ton: var(--succes); }
+.vtb-bp.partiel { --ton: var(--arbitrage); }
+.vtb-bp.absent { --ton: var(--bloquant); }
+
+/* Qui décide, et les promos : des lignes. */
+.vt-dec, .vt-pr, .vt-cp, .vt-arch { display: grid; border-top: 1px solid var(--trait); }
+.vtd { --ton: transparent; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 14px; align-items: center;
+  width: calc(100% + 16px); margin: 0 -8px; padding: 10px 8px 10px 11px; min-height: 48px; text-align: left;
+  background: none; border: 0; border-left: 3px solid var(--ton); border-bottom: 1px solid var(--trait);
+  cursor: pointer; color: inherit; font: inherit; }
+.vtd:hover { background: var(--surface-4); }
+.vtd.ici { --ton: var(--succes); }
+.vtd-n { font: 550 14px var(--affichage); color: var(--clair); }
+.vtd-r { grid-column: 1; font-size: 12px; color: var(--clair-terne); }
+.vtd-x { grid-column: 2; grid-row: 1 / 3; font-size: 12px; color: var(--clair-terne); }
+.vtb-x { font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 70ch; }
+.vtpr { --ton: transparent; display: grid; gap: 2px; padding: 10px 0 10px 11px; border-left: 3px solid var(--ton);
+  border-bottom: 1px solid var(--trait); }
+.vtpr.usage { --ton: var(--arbitrage); }
+.vtpr-n { font: 550 14px var(--affichage); color: var(--clair); }
+.vtpr-d, .vtpr-q, .vtpr-u { font-size: 12px; color: var(--clair-terne); }
+
+/* Le catalogue : des tuiles blanches ; la fiche incomplète porte le filet. */
+.vt-packs { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 8px; }
+.vtp { --ton: transparent; display: grid; align-content: start; gap: 2px; padding: 8px; text-align: left; cursor: pointer;
+  color: inherit; font: inherit; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px;
+  box-shadow: inset 3px 0 0 var(--ton); }
+.vtp:hover { border-color: var(--trait-clair); }
+.vtp:hover .vtp-n { color: var(--studio-bleu); }
+.vtp.aq { --ton: var(--arbitrage); }
+.vtp-v { display: block; width: 100%; height: 76px; overflow: hidden; }
+.vtp-v img { width: 100%; height: 100%; object-fit: contain; }
+.vtp-n { font: 550 13px var(--affichage); color: var(--clair); overflow-wrap: anywhere; }
+.vtp-m, .vtp-x, .vtp-ok { font-size: 11px; color: var(--clair-terne); }
+.vtp-ok { --ton: var(--succes); }
+.vtb-a { display: grid; gap: 6px; margin-top: 8px; }
+.vta { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 14px; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--trait); }
+.vta-n { font-size: 13px; color: var(--clair-doux); }
+/* « archivé le 12 septembre 2026 » ne tient pas dans une colonne étroite au
+ * téléphone : la date porte des mots longs et sans point de coupe. */
+.vta-m { grid-column: 1; font-size: 11px; color: var(--clair-terne); overflow-wrap: anywhere; }
+.vta .b.nu { grid-column: 2; grid-row: 1 / 3; }
+
+/* Ce qui se déplie dans un bloc : le catalogue, les campagnes au-delà de six. */
+.vtk-l { display: grid; gap: 10px; }
+.vtk-dt { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; min-height: 44px; cursor: pointer;
+  list-style: none; font: 550 13px var(--affichage); color: var(--studio-bleu); }
+.vtk-dt::-webkit-details-marker { display: none; }
+.vtk-dt::before { content: "›"; color: var(--clair-terne); font-size: 16px; width: 12px; transition: transform var(--tr-rapide); }
+.vtk-d[open] > .vtk-dt { margin-bottom: 8px; }
+.vtk-d[open] > .vtk-dt::before { transform: rotate(90deg); }
+.vtk-dt span { font: 400 12px var(--affichage); color: var(--clair-terne); }
+
+/* Les marchés : des puces à filet, le code à l'encre. */
+.vt-mk { display: flex; flex-wrap: wrap; gap: 6px; }
+.vtmk { display: inline-flex; align-items: baseline; gap: 6px; min-height: 32px; padding: 6px 10px;
+  background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px; font-size: 13px; color: var(--clair); }
+.vtmk b { font-weight: 550; }
+.vtmk i { font-style: normal; font-size: 11px; color: var(--clair-terne); }
+
+/* Les campagnes qui s'en servent : des lignes, comme les projets. */
+.vtcp { display: grid; gap: 2px; min-height: 48px; padding: 10px 0; border-bottom: 1px solid var(--trait); text-decoration: none; }
+.vtcp:hover .vtcp-n { color: var(--studio-bleu); }
+.vtcp-n { font: 550 14px var(--affichage); color: var(--clair); }
+.vtcp-q { font-size: 12px; color: var(--clair-terne); }
+
+/* La vie de la marque : repliée ; une ligne par acte, datée, attribuée. Le
+ * filet dit la nature de l'acte ; on éteint par l'encre, pas par l'opacité. */
+.vtb-vie > summary { cursor: pointer; list-style: none; min-height: 44px; }
+.vtb-vie > summary::-webkit-details-marker { display: none; }
+.vtb-vie > summary .vtbk-t h3::before { content: "›"; display: inline-block; width: 14px; text-align: center; color: var(--clair-terne);
+  transform-origin: 50% 55%; transition: transform var(--tr-rapide); }
+.vtb-vie[open] > summary .vtbk-t h3::before { transform: rotate(90deg); }
+.vtb-vie.muet { --ton: var(--arbitrage); border-left: 3px solid var(--ton); }
+.vie-l { display: grid; border-top: 1px solid var(--trait); }
+.vie-a { --ton: transparent; display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 2px 14px; align-items: baseline;
+  padding: 10px 0 10px 11px; border-left: 3px solid var(--ton); border-bottom: 1px solid var(--trait); }
+.vie-a.vert { --ton: var(--succes); }
+.vie-a.attente { --ton: var(--arbitrage); }
+.viea-d { font-size: 11px; color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+.viea-q { font-size: 13px; color: var(--clair); }
+.vie-a.terne .viea-q { color: var(--clair-doux); }
+.viea-p { margin-left: 8px; font-size: 11px; color: var(--clair-terne); }
+.viea-x { grid-column: 2; font-size: 12px; color: var(--clair-terne); overflow-wrap: anywhere; }
+.vie-reste { margin-top: 8px; font-size: 12px; color: var(--clair-terne); }
+@media (max-width: 700px) {
+  .vtb-pil, .vtb-bp, .vtb-d, .vtb-p, .vtb-k, .vtb-m, .vtb-c, .vtb-vie { padding: 14px 16px; }
+  .vie-a { grid-template-columns: minmax(0, 1fr); }
+  .viea-x { grid-column: 1; }
 }

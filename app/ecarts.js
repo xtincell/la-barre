@@ -23,7 +23,7 @@ window.ECARTS = (function () {
       quoi: "le livrable ne tient pas ce que le brief demandait. La reprise est pour nous." },
     plateforme: { nom: "Non-respect de la plateforme", ton: "alerte", rang: 1,
       qui: "l'exécutant", facturable: false,
-      quoi: "elle contredit le plateforme de marque. Refusable en revue sans recours." },
+      quoi: "elle contredit la plateforme de marque. Refusable en revue sans recours." },
     bigidea: { nom: "Critère d'acceptation non tenu", ton: "alerte", rang: 2,
       qui: "l'exécutant", facturable: false,
       quoi: "un critère écrit avant le travail n'est pas tenu. C'est le seul refus opposable." },

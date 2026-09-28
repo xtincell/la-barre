@@ -1855,47 +1855,6 @@
 
 .vtm-b { display: grid; gap: 1.2rem; margin-top: .8rem; padding-top: .8rem;
   border-top: 1px solid var(--trait); }
-.vtb-s { display: grid; }
-.vtc { display: grid; gap: .1rem; width: 100%; text-align: left; padding: .55rem .7rem;
-  background: none; border: 0; border-left: 2px solid var(--trait-clair);
-  border-bottom: 1px solid var(--trait); cursor: pointer; color: inherit; font: inherit; }
-.vtc:hover { background: var(--surface-3); border-left-color: var(--accent); }
-.vtc.vide { border-left-color: var(--arbitrage); }
-.vtc-n { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em;
-  color: var(--clair-terne); }
-.vtc-v { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair);
-  max-width: var(--mesure); }
-.vtc.vide .vtc-v { color: var(--clair-terne); font-style: italic; }
-
-.vtbk-t { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--clair-terne); border-bottom: 1px solid var(--trait);
-  padding-bottom: .35rem; margin-bottom: .5rem; }
-.vt-packs { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-  gap: .5rem; }
-.vtp { display: grid; gap: .1rem; padding: .5rem; background: var(--surface-3);
-  border-radius: var(--r-xs); border-left: 2px solid transparent; }
-.vtp.aq { border-left-color: var(--arbitrage); }
-.vtp-v { display: block; width: 100%; height: 76px; overflow: hidden; }
-.vtp-v img { width: 100%; height: 100%; object-fit: contain; }
-.vtp-n { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair); }
-.vtp-m { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
-.vtp-x { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--arbitrage); }
-
-.vt-mk { display: flex; flex-wrap: wrap; gap: .35rem; }
-.vtmk { display: inline-flex; align-items: baseline; gap: .4rem; padding: .35rem .6rem;
-  background: var(--surface-3); border-radius: var(--r-xs);
-  font-size: var(--t-meta); line-height: 1.3; color: var(--clair-doux); }
-.vtmk b { color: var(--accent); font-weight: 400; }
-.vtmk i { font-style: normal; font-size: var(--t-micro); color: var(--clair-terne); }
-.vtmk.dit b { color: var(--succes); }
-
-.vt-cp { display: grid; gap: .3rem; }
-.vtcp { display: grid; gap: .05rem; padding: .55rem .7rem; background: var(--surface-3);
-  border-radius: var(--r-xs); text-decoration: none; }
-.vtcp:hover { background: var(--surface-2); }
-.vtcp-n { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair); }
-.vtcp-q { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
 
 /* ————————————————————— La fiche d'un pack ————————————————————— */
 
@@ -1947,25 +1906,9 @@
   overflow-wrap: anywhere; }
 .fif-v.alerte { color: var(--arbitrage); }
 
-/* Le pack au catalogue devient un bouton : il ouvre sa fiche. */
-button.vtp { text-align: left; cursor: pointer; color: inherit; font: inherit;
-  border: 0; border-left: 2px solid transparent; }
-button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
-.vtp-ok { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--succes); }
 
 /* ————— Créer, archiver, remettre ————— */
 .fi-g { display: flex; gap: .6rem; flex-wrap: wrap; }
-.vtb-a { display: grid; gap: .4rem; }
-.vt-arch { display: grid; gap: .25rem; }
-.vta { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .1rem .7rem;
-  align-items: center; padding: .5rem .7rem; background: var(--surface-3);
-  border-radius: var(--r-xs); opacity: .85; }
-.vta-n { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux); }
-/* « archivé le 12 septembre 2026 » ne tient pas dans une colonne de 55 px au
-   téléphone : la date porte des mots longs et sans point de coupe. */
-.vta-m { overflow-wrap: anywhere; grid-column: 1; font-size: var(--t-micro); line-height: var(--lh-micro);
-  color: var(--clair-terne); }
-.vta .b.nu { grid-column: 2; grid-row: 1 / 3; }
 
 /* ————— Passer d'une fiche à l'autre ————— */
 .fi-nav { display: flex; align-items: center; justify-content: space-between; gap: .6rem;
@@ -2046,42 +1989,9 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 .vn-c.manque { color: var(--arbitrage); }
 .vn.orphelin > .vn-h { cursor: default; }
 
-.vn-b { display: grid; gap: 1.3rem; margin: .6rem 0 .3rem 1.6rem;
-  padding: 1rem 1.1rem; background: var(--surface-2); border-radius: var(--r-m); }
-
-/* Un champ hérité se lit autrement qu'un champ propre. */
-.vtc.herite { border-left-color: var(--trait-clair); }
-.vtc.herite .vtc-v { color: var(--clair-doux); }
-.vtc-h { font-style: italic; letter-spacing: 0; margin-left: .4rem; }
-.vtc-n { display: flex; align-items: baseline; gap: .1rem; flex-wrap: wrap; }
-
-/* ————— Qui décide ————— */
-.vtb-d, .vtb-p, .vtb-m, .vtb-c, .vtb-k { display: grid; gap: .4rem; }
-.vt-dec { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-  gap: .3rem; }
-.vtd { display: grid; gap: .05rem; text-align: left; padding: .55rem .7rem;
-  background: var(--surface-3); border: 0; border-left: 2px solid var(--trait-clair);
-  border-radius: var(--r-xs); cursor: pointer; color: inherit; font: inherit; }
-.vtd:hover { background: var(--surface-2); }
-.vtd.ici { border-left-color: var(--succes); }
-.vtd-n { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair); }
-.vtd-r, .vtd-x { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
-.vtd.ici .vtd-x { color: var(--succes); }
-.vtb-x { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  max-width: var(--mesure); }
-
-/* ————— Les mécaniques de promo ————— */
-.vt-pr { display: grid; gap: .3rem; }
-.vtpr { display: grid; gap: .05rem; padding: .55rem .7rem; background: var(--surface-3);
-  border-radius: var(--r-xs); border-left: 2px solid var(--accent); }
-.vtpr.usage { border-left-color: var(--arbitrage); }
-.vtpr-n { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair); }
-.vtpr-d, .vtpr-q { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-.vtpr-u { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--arbitrage); }
 
 @media (max-width: 760px) {
   .vn.n1, .vn.n2 { margin-left: .5rem; padding-left: .6rem; }
-  .vn-b { margin-left: .5rem; }
   .vn-c { padding-left: .6rem; }
 }
 
@@ -2101,32 +2011,6 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
 .pe-nom::after { content: ""; position: absolute; left: 0; right: 0; top: 50%;
   transform: translateY(-50%); min-height: var(--cible); height: 100%; }
 .pe-nom:hover h2 { color: var(--accent); }
-
-/* ————————————————————— Les types de brief ————————————————————— */
-
-/* Un brief est le socle d'une demande et la boussole d'un suivi. Chaque carte
- * dit les deux : sans ça, c'est un formulaire de plus. */
-
-.bfc-r { display: grid; gap: .2rem; }
-.bfcr { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: .7rem;
-  align-items: baseline; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-doux); max-width: var(--mesure-large); }
-.bfcr b { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em;
-  color: var(--clair-terne); font-weight: 400; }
-
-@media (max-width: 700px) {
-  .bfcr { grid-template-columns: minmax(0, 1fr); gap: .05rem; }
-  
-}
-
-/* ————— Le brief qui commande le socle ————— */
-.vtb-bp { display: grid; gap: .45rem; padding: .8rem 1rem; background: var(--surface-3);
-  border-radius: var(--r-s); border-left: 3px solid var(--trait-clair); }
-.vtb-bp.ok { border-left-color: var(--succes); }
-.vtb-bp.partiel { border-left-color: var(--arbitrage); }
-.vtb-bp.absent { border-left-color: var(--bloquant); }
-.vtb-bp .vtbk-t { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
-.vtb-bp .vtbk-t .b { margin-left: auto; }
 
 /* Montrer ce qui va bien, sur demande. */
 .rf-plus {
@@ -2444,63 +2328,6 @@ blockquote, .message, .verbatim {
   font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux);
   margin: 0; max-width: var(--mesure); }
 
-/* ————— Le socle rangé par pilier —————
- *
- * Vingt et un champs à plat se lisent comme un formulaire. Par pilier, ils se
- * lisent comme un état — et le pilier muet se voit, ce qui est le but. */
-.vtb-pil { margin-bottom: 1.2rem; }
-.vtbp-t { display: flex; flex-wrap: wrap; align-items: baseline; gap: .55rem;
-  padding-bottom: .25rem; border-bottom: 1px solid var(--trait); }
-.vtbp-t b { font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); }
-.vtbp-f { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  text-transform: uppercase; color: var(--clair-terne); }
-.vtbp-t .droite { margin-left: auto; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-terne); font-variant-numeric: tabular-nums; }
-.vtbp-q { margin: .3rem 0 .6rem; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-doux); max-width: var(--mesure); }
-/* Muet : l'encre pâlit, jamais l'opacité — un gris choisi se mesure. */
-.vtb-pil.muet .vtbp-t b { color: var(--clair-doux); }
-.vtb-pil.muet .vtbp-q { color: var(--attente); }
-/* Depuis quand la valeur tient, et ce qu'elle a remplacé. */
-.vtc-r { display: block; margin-top: .25rem; font-size: var(--t-micro);
-  line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
-/* Replié par défaut : on vient lire un état, pas parcourir un formulaire. */
-.vtb-pil > summary { cursor: pointer; list-style: none; padding: .2rem 0;
-  min-height: var(--cible); }
-.vtb-pil > summary::-webkit-details-marker { display: none; }
-.vtb-pil > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.vtb-pil > summary .vtbp-t b::before { content: "▸ "; color: var(--clair-terne); }
-.vtb-pil[open] > summary .vtbp-t b::before { content: "▾ "; }
-.vtb-pil[open] > summary { margin-bottom: .5rem; }
-
-/* ————— La vie d'une marque : une ligne par acte, datée, attribuée ————— */
-.vtb-vie { margin-top: 1rem; border-top: 1px solid var(--trait); padding-top: .7rem; }
-.vtb-vie > summary { cursor: pointer; list-style: none; min-height: var(--cible); }
-.vtb-vie > summary::-webkit-details-marker { display: none; }
-.vtb-vie > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.vtb-vie > summary .vtbk-t::before { content: "▸ "; color: var(--clair-terne); }
-.vtb-vie[open] > summary .vtbk-t::before { content: "▾ "; }
-.vie-l { display: grid; gap: .1rem; margin-top: .5rem; }
-.vie-a { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: .7rem;
-  padding: .4rem 0 .4rem .7rem; border-left: 2px solid var(--trait);
-  align-items: baseline; }
-.viea-d { font-size: var(--t-micro); line-height: var(--lh-micro);
-  letter-spacing: var(--ls-micro); color: var(--clair-terne);
-  font-variant-numeric: tabular-nums; }
-.viea-q { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair); }
-.viea-p { margin-left: .45rem; font-size: var(--t-micro); color: var(--clair-terne); }
-.viea-x { grid-column: 2; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-doux); overflow-wrap: anywhere; }
-/* Le filet dit la nature de l'acte : on éteint par l'encre, pas par l'opacité. */
-.vie-a.vert { border-left-color: var(--vert); }
-.vie-a.attente { border-left-color: var(--attente); }
-.vie-a.terne .viea-q { color: var(--clair-doux); }
-.vie-reste { margin-top: .5rem; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-terne); font-style: italic; }
-@media (max-width: 700px) {
-  .vie-a { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
-  .viea-x { grid-column: 1; }
-}
 
 /* ————— L'arbre par marque : marque → campagne → projet ————— */
 /* La lentille par marque est réécrite dans studio-vues.css (passe 7a). */
