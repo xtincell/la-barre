@@ -591,3 +591,22 @@ version. Appelé par erreur pendant la mesure, il en a ajouté deux au dossier P
 — en mémoire seulement : ni le fichier du serveur ni le cache du navigateur ne les
 contenaient, et un rechargement les a effacées. Depuis, seules les fonctions lues
 avant d'être appelées servent à mesurer.
+
+**Passe 13 — Cohérence (28/09).** La mesure complète tourne désormais d'un appel
+(`outils/passe-complete.js`) : 51 adresses — Bureau, Décisions, la liste et la lentille
+des projets, deux marques, deux campagnes, deux dossiers complets sur leurs douze
+sections, les quatre modes du Planning, les cinq du Bilan, les sept des Ressources.
+Elle a trouvé cinq cibles sous 44 px dans les écrans de référence eux-mêmes (le lien
+du dossier ouvert, « Lire le brief », « Tous les projets », « Vue par marque », le
+repli des critères de revue), corrigées à leur source dans `studio.css`. Cinq en-têtes
+de section devenus vides après élagage sont retirés. Résultat, à 1280 comme à 375 px :
+**0 sérif, 0 aplat, 0 cible sous 44 px, 0 contraste sous 4,5:1, 0 débordement, 0 erreur
+de script** sur les 51 adresses ; les seules capitales qui restent sont des données
+(intitulés relevés dans People, noms de livrables et de marques écrits ainsi à la
+source, initiales).
+
+Reste hors de ces passes, et c'est dit : le code mort de l'ancienne liste des dossiers
+(`ligneDossier`, `murDesBlocages`, `blocClos` dans `vue-projets.js`), qui ne s'affiche
+plus depuis l'index Studio — l'information qu'il portait sur les clôtures inférées et
+les dossiers clos sans bilan n'a pas encore de place dans l'index, et ce manque est une
+question de produit, pas de grammaire.

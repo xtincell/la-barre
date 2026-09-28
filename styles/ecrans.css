@@ -289,9 +289,6 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
   .brief-grille, .liv-apercu { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* ————————————————————— Les livrables en souffrance ————————————————————— */
-
-
 /* ————————————————————— La chaîne du raisonnement ————————————————————— */
 
 /* Le test en trois questions, les sources, les imposteurs. */

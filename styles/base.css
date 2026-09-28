@@ -505,8 +505,6 @@ body {
 
 /* Les puces (.chips, .chip) sont réécrites dans studio-vues.css, §2. */
 
-/* ————————————————————— Étiquettes ————————————————————— */
-
 /* ————————————————————— Rail droit ————————————————————— */
 
 .aside { display: grid; gap: .8rem; align-content: start; }

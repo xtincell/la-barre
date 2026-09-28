@@ -1251,8 +1251,6 @@
   cursor: pointer; white-space: nowrap; }
 .anl-tc:hover { background: var(--accent); color: #000; }
 
-/* ————— Les champs d'une section, sous sa mise en scène ————— */
-
 /* ═══════════════ LA PROSE N'EST PAS UNE LÉGENDE ═══════════════
  *
  * Mesure faite sur l'application : 56 % des caractères affichés l'étaient à

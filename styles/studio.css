@@ -75,7 +75,7 @@ a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .studio-revue { background: var(--surface-1); border-radius: 10px; border: 1px solid var(--trait); overflow: hidden; }
 .studio-section-tete { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px; }
 .studio-section-tete h2 { font: 550 21px/1.3 var(--affichage); letter-spacing: -.02em; display: flex; align-items: center; gap: 12px; }
-.studio-section-tete > a { color: var(--clair-terne); font-size: 13px; }
+.studio-section-tete > a { display: inline-flex; align-items: center; min-height: 44px; color: var(--clair-terne); font-size: 13px; }
 .studio-compte { font-size: 12px; font-weight: 500; border-radius: 5px; padding: 3px 7px; color: var(--clair-terne); background: var(--surface-3); }
 .studio-filtre { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--clair-terne); }
 .studio-filtre select { max-width: 250px; min-height: 38px; font: 13px var(--affichage); border: 1px solid var(--trait); background: var(--surface-1); color: var(--clair); border-radius: 5px; padding: 6px 26px 6px 10px; }
@@ -103,16 +103,16 @@ a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .studio-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: auto; }
 .studio-contexte { padding: 23px 20px; background: var(--surface-4); border-left: 1px solid var(--trait); font-size: 13px; }
 .studio-contexte h3 { font: 550 17px var(--affichage); margin-bottom: 20px; }
-.studio-contexte-projet { font-weight: 550; color: var(--clair); text-decoration: none; line-height: 1.5; display: block; }
+.studio-contexte-projet { font-weight: 550; color: var(--clair); text-decoration: none; line-height: 1.5; display: flex; align-items: center; min-height: 44px; }
 .studio-contexte dl { margin: 20px 0; display: grid; gap: 4px; }
 .studio-contexte dt { font-size: 11px; color: var(--clair-terne); }
 .studio-contexte dd { margin: 0 0 10px; }
 .studio-brief { padding-bottom: 20px; }
 .studio-brief h4 { font-size: 12px; margin-bottom: 8px; }
 .studio-brief p { line-height: 1.65; color: var(--clair-terne); margin-bottom: 10px; max-height: 120px; overflow-y: auto; }
-.studio-brief a { color: var(--studio-bleu); font-size: 12px; }
+.studio-brief a { display: inline-flex; align-items: center; min-height: 44px; color: var(--studio-bleu); font-size: 12px; }
 .studio-criteres { border-top: 1px solid var(--trait); padding-top: 16px; }
-.studio-criteres summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; min-height: 30px; font-weight: 550; }
+.studio-criteres summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; min-height: 44px; font-weight: 550; }
 .studio-criteres summary:after { content: "+"; }
 .studio-criteres[open] summary:after { content: "−"; }
 .studio-criteres summary span { margin-left: auto; margin-right: 15px; color: var(--clair-terne); font-size: 11px; }
@@ -231,7 +231,7 @@ a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .studio-statuts button { min-height: 38px; border: 0; background: transparent; border-radius: 5px; font: 14px var(--affichage); color: var(--clair-terne); padding: 8px 16px; cursor: pointer; }
 .studio-statuts button.active { background: var(--surface-1); color: var(--clair); box-shadow: var(--elev-1); }
 .studio-index-outils input { min-height: 44px; min-width: 0; flex: 1; max-width: 340px; border: 1px solid var(--trait); border-radius: 6px; background: var(--surface-1); padding: 10px 14px; font: 14px var(--affichage); }
-.studio-index-outils > a { margin-left: auto; font-size: 13px; color: var(--clair-terne); }
+.studio-index-outils > a { display: inline-flex; align-items: center; min-height: 44px; margin-left: auto; font-size: 13px; color: var(--clair-terne); }
 .studio-resultats { font-size: 12px; margin: 0 0 20px; color: var(--clair-terne); }
 .studio-index .studio-projets { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .studio-index .studio-couverture { aspect-ratio: 1.7; }
