@@ -460,3 +460,15 @@ plein, 2,86:1). Trouvé : `.cmd-corps.seule` posait son unique enfant dans une
 colonne de 22 rem. Libellés en casse de phrase, y compris dans les panneaux de
 simulation (« Ce qui bouge », « Avant », « Après »). L'écran tombe à **3 254 px**.
 Mesure à 1280 et 375 px : à zéro.
+
+**Passe 9c — Planning : les livraisons (28/09).** L'écran qui remplace le tableur
+faisait **49 214 px**, portait 859 textes en sérif italique (« sans responsable »,
+« sans date », en `--ecrit`) et débordait. Les cinq filtres en capitales deviennent
+des puces Studio avec leur compte ; le champ « Dossier » un sélecteur Studio avec son
+libellé lié. Chaque ligne porte le filet et le signe de son degré (● le tableau ment,
+date dépassée ; ◐ sans trace, à tracer) ; « Importer » passe de bouton plein à bouton
+secondaire — cinq cents boutons pleins, c'était cinq cents actions principales — et
+« Ouvrir » devient un geste texte. Les lignes se lisent par tranches de trente. Le
+débordement venait du sélecteur, qui imposait la largeur de son plus long nom de
+dossier à toute la grille : la piste est désormais bornée. L'écran tombe à
+**3 234 px**. Mesure à 1280 et 375 px : à zéro, hors données (« DELYS »).

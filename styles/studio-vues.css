@@ -2159,3 +2159,46 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
   .sm, .cmd-centre, .bande-eng { padding: 16px; }
   .smr-j { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
 }
+
+/* ═════════════════════ Passe 9c · Planning : les livraisons ═════════════════════ */
+/* Ce qui remplace le tableur. Une ligne se lit de gauche à droite dans l'ordre
+ * du contrat : l'état, ce dont il s'agit, qui le porte, et le geste — à droite,
+ * parce qu'on y arrive après avoir lu. Pas de damier : un filet par ligne. */
+/* Une piste bornée : sans elle, le sélecteur imposait la largeur de son plus
+ * long nom de dossier à toute la grille, et la page débordait au téléphone. */
+.liv { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.liv-filtres { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; }
+.liv-deg { display: flex; flex-wrap: wrap; gap: 6px; }
+.liv-p { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+.liv-p label { font-size: 12px; color: var(--clair-terne); }
+.liv-p select { flex: 1 1 auto; width: 100%; min-width: 0; max-width: 22rem; min-height: 44px; padding: 6px 28px 6px 10px;
+  font: 13px var(--affichage); color: var(--clair); background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px; }
+.liv-liste { display: grid; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; padding: 4px 0; }
+.livl { --ton: var(--arbitrage); display: grid; grid-template-columns: 9rem minmax(0, 1fr) 11rem auto; gap: 6px 16px; align-items: start;
+  padding: 14px 20px 14px 17px; border-left: 3px solid var(--ton); border-bottom: 1px solid var(--trait); }
+.livl:last-child { border-bottom: 0; }
+.livl.alerte { --ton: var(--bloquant); }
+/* Plus clair, jamais plus sombre : le survol ne fait perdre aucun contraste. */
+.livl:hover { background: var(--surface-4); }
+.livl-e { display: grid; gap: 2px; }
+.livl-deg { font: 550 12px var(--affichage); color: var(--clair); }
+.livl-signe { color: var(--ton); }
+.livl-j { font-size: 11px; color: var(--clair-terne); }
+.livl-c { display: grid; gap: 2px; min-width: 0; }
+.livl-n { font: 550 14px/1.4 var(--affichage); color: var(--clair); overflow-wrap: anywhere; }
+.livl-m, .livl-q { font-size: 12px; color: var(--clair-terne); overflow-wrap: anywhere; }
+.livl-f { font-size: 12px; color: var(--clair); overflow-wrap: anywhere; }
+.livl-fe { margin-right: 6px; font-size: 11px; color: var(--clair-terne); }
+.livl-qui { display: grid; gap: 2px; }
+.livl-p { font-size: 13px; color: var(--clair); }
+.livl-d { font-size: 12px; color: var(--clair-terne); }
+.livl-p.sans, .livl-d.sans { font-size: 12px; color: var(--clair-terne); }
+.livl-g { display: flex; align-items: center; gap: 6px; }
+.liv-plus { justify-self: start; }
+@media (max-width: 900px) {
+  .livl { grid-template-columns: minmax(0, 1fr); padding: 12px 16px 12px 13px; }
+}
+@media print {
+  .liv-filtres, .livl-g, .liv-plus { display: none; }
+  .livl:hover { background: transparent; }
+}
