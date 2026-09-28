@@ -470,53 +470,6 @@
 
 /* ————————————————————— L'atelier ————————————————————— */
 
-.at { display: grid; gap: 1rem; }
-.at-corps { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 1.2rem; align-items: start; }
-.at-tete { display: flex; align-items: baseline; gap: .6rem;
-  border-bottom: 1px solid var(--trait); padding-bottom: .3rem; margin-bottom: .6rem; }
-.at-tete .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .16em; color: var(--or); }
-.at-tete .n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-
-.at-groupe { display: grid; gap: .4rem; margin-bottom: .9rem; }
-.atg-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .12em; color: var(--clair-terne); }
-.at-groupe.retenue .atg-t { color: var(--vert); }
-.at-groupe.ecartee { opacity: .55; }
-
-.at-i { display: flex; gap: .6rem; background: var(--nuit-carte);
- border-left: 2px solid var(--trait-clair); padding: .5rem .6rem; }
-.at-i.retenue { border-left-color: var(--vert); }
-.at-i.ecartee { border-left-color: var(--trait-clair); }
-.ati-v { flex: 0 0 92px; }
-.ati-v .vignette { height: 70px; }
-.ati-c { min-width: 0; flex: 1; }
-.ati-t { font-size: var(--t-lire); letter-spacing: var(--ls-lire); line-height: 1.35; font-family: var(--lecture); }
-.ati-m { display: flex; align-items: center; gap: .35rem; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-terne); margin-top: .3rem; flex-wrap: wrap; }
-.ati-q { margin-left: auto; }
-.ati-mo { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); margin-top: .3rem;
-  border-left: 2px solid var(--trait-clair); padding-left: .5rem; }
-.ati-g { display: flex; gap: .3rem; margin-top: .4rem; flex-wrap: wrap; }
-.ati-g .b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .14rem .32rem; }
-
-.at-f { background: var(--nuit-carte); padding: .5rem .6rem;
- margin-bottom: .5rem; display: grid; gap: .4rem; }
-/* Un fil clos garde son texte lisible : c'est son relief qui baisse, pas son encre. */
-.at-f.clos { border-left-color: var(--trait-clair); }
-.at-f.clos .atf-c, .at-f.clos .atfm-q { color: var(--clair-terne); }
-.atf-tete { display: flex; align-items: center; gap: .5rem; }
-.atf-s { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); flex: 1; }
-.atf-msgs { display: grid; gap: .45rem; }
-.atf-m { display: flex; gap: .45rem; align-items: flex-start; }
-.atfm-t { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; }
-.atfm-q { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.atf-c { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--vert); border-left: 2px solid var(--vert); padding-left: .5rem; }
-.atf-g { display: flex; gap: .3rem; flex-wrap: wrap; }
-.atf-g .b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .14rem .32rem; }
-
-@media (max-width: 1000px) {
-  .at-corps { grid-template-columns: minmax(0, 1fr); }
-}
-
 /* ————————————————————— La comparaison des routes ————————————————————— */
 
 .bi-comp { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: .9rem; }
@@ -1105,15 +1058,6 @@
 .co-doc .rtc-bas { background: linear-gradient(to top, rgba(0,0,0,.75) 40%, rgba(0,0,0,0)); }
 .co-doc .rtc-n, .co-doc .rtc-m { color: var(--clair); }
 
-/* Le briefing de l'atelier, et le document du navigateur */
-.at-brief { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
-  background: var(--nuit-carte); border: 1px solid var(--trait);
-  border-left: 2px solid var(--vert); padding: .55rem .7rem; }
-.at-brief.manque { border-left-color: var(--attente); }
-.atb-c { flex: 1; min-width: 0; display: grid; gap: .1rem; }
-.atb-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em; color: var(--clair-terne); }
-.atb-q { font-size: var(--t-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); line-height: 1.4; }
-
 /* ————————————————————— L'importeur de fil ————————————————————— */
 
 .if { display: grid; gap: .8rem; }
@@ -1145,11 +1089,11 @@
  * toujours au même endroit. */
 .fix-c, .fix-q, .fix-k,
 .ecx-q, .ecx-k, .ecx-att, .ecx-pret,
-.pir-regle, .prb-regle, .brc-p, .atb-q,
+.pir-regle, .prb-regle, .brc-p,
 .cob-c, .cob-p li, .bic-c, .bica .v,
 .rtb .v, .dia-q, .rep-q { max-width: var(--mesure); }
 
-.pifb-t, .ifm-t, .ati-t, .bii-t, .fb-texte, .vsv-m { max-width: var(--mesure-large); }
+.pifb-t, .ifm-t, .bii-t, .fb-texte, .vsv-m { max-width: var(--mesure-large); }
 
 /* Une ligne de file ne s'étire pas non plus : elle garde sa mesure et laisse
  * le reste respirer. */
@@ -2432,23 +2376,6 @@
 
 /* ————————————————————— L'atelier : l'indicateur qui décide ————————————————————— */
 
-/* « Idées retenues émanant de juniors » est une ligne de la fiche 03, et cet
- * écran est le seul endroit où elle bouge. Enfouie dans une liste de gestes,
- * elle ne pesait sur rien. */
-.aj { display: flex; align-items: baseline; gap: 1.1rem; padding: 1.1rem 1.3rem;
-  background: var(--surface-2); border-radius: var(--r-m);
-  border-left: 3px solid var(--trait-clair); margin-bottom: 1.2rem; }
-.aj.ok { border-left-color: var(--succes); }
-.aj.zero { border-left-color: var(--arbitrage); }
-.aj-c { font-size: var(--t-display); line-height: 1; letter-spacing: var(--ls-display);
-  color: var(--clair-terne); font-variant-numeric: tabular-nums; }
-.aj.ok .aj-c { color: var(--succes); }
-.aj.zero .aj-c { color: var(--arbitrage); }
-.aj-t { display: grid; gap: .2rem; }
-.aj-n { font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); }
-.aj-x { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-terne);
-  max-width: var(--mesure); }
-
 /* ————————————————————— La planche : les manquements, pas un score ————————————————————— */
 
 /* Un « 3 » en pastille ne dit pas ce qui ne va pas, et ne dit pas ce que ça
@@ -2480,11 +2407,10 @@
 /* Une idée écartée porte le motif qui l'a écartée — c'est la matière de la
  * jurisprudence, et c'est justement ce qu'on relit. L'atténuer à .55 la faisait
  * passer sous le seuil : elle s'atténue par la bordure et l'encre. */
-.at-groupe.ecartee, .bic.ecartee, .bii.ecartee, .route.ecartee { opacity: 1; }
-.at-groupe.ecartee .ati-t, .bic.ecartee .bic-t, .bii.ecartee .bii-t { color: var(--clair-doux); }
-.at-groupe.ecartee .ati-q, .at-groupe.ecartee .atg-t,
+.bic.ecartee, .bii.ecartee, .route.ecartee { opacity: 1; }
+.bic.ecartee .bic-t, .bii.ecartee .bii-t { color: var(--clair-doux); }
 .bic.ecartee .bic-m, .bii.ecartee .bii-m { color: var(--clair-terne); }
-.at-groupe.ecartee .at-i, .bic.ecartee, .bii.ecartee,
+.bic.ecartee, .bii.ecartee,
 .route.ecartee { border-left: 2px solid var(--trait-clair); }
 
 /* Le gris atténué frôle le seuil sur les fonds de surface : deux crans plus
@@ -3198,21 +3124,21 @@ button.mrmq-t:focus-visible, button.mrg-tete:focus-visible {
 .dcm-q, .juj, .vide-ref, .eqpd, .prp-tire, .cobm-q, .cobe-c, .cobe-m,
 .plc-sous, .slfi-q, .stc-q, .plc-ecart, .pir-q, .pirc-p, .mqs-q,
 .atdq-o, .auteurs, .codt-s, .sld-m, .e-charge, .slp-a, .atx-k, .bri-s,
-.rail-q, .fi-meta, .rd-ref, .poste, .pil-n, .mrg-n, .atfm-q, .eqp-q,
+.rail-q, .fi-meta, .rd-ref, .poste, .pil-n, .mrg-n, .eqp-q,
 .pirc-d, .egc-verdict, .pip-n, .atdq-p, .cobl-v, .l-v, .b-v, .critere,
 .ecx-m, .ecx-k, .fix-k, .dmd-etat, .etat-l, .bic-etat, .bii-etat, .ati-etat {
   font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
 }
 
 /* Ce qui porte un motif, un argument, un coût écrit — la matière du poste. */
-.ati-mo, .bii-mo, .bii-m, .pir-regle, .jum, .bic-src, .bir-e, .egc-cout,
+.bii-mo, .bii-m, .pir-regle, .jum, .bic-src, .bir-e, .egc-cout,
 .f-aide, .vide, .cout, .b-texte, .prix span, .fix-k {
   font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire);
   max-width: var(--mesure);
 }
 
 /* Un verbatim se lit comme une citation, pas comme une note de bas de page. */
-blockquote, .message, .verbatim, .bii-t, .ati-t {
+blockquote, .message, .verbatim, .bii-t {
   font-size: var(--t-lire); line-height: 1.6;
 }
 

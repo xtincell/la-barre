@@ -261,3 +261,12 @@ Mesure à 1280 et 375 px sur les dix adresses (deux dossiers × cinq sections) :
 sérif, zéro aplat, zéro cible sous 44 px, zéro contraste sous 4,5:1, zéro débordement,
 zéro erreur console. Restent en capitales des données : codes de gamme, initiales, le
 nom du dossier chez People.
+
+**Passe 4a — Dossier : l'atelier (28/09).** La passe 4 est coupée en trois (atelier,
+big idea, pistes) : Pistes seule rend 109 classes. Le compteur d'idées juniors devient
+un chiffre-clé à filet ; les idées et la conversation deviennent deux sections
+blanches ; une idée — ce qu'un humain a écrit — quitte le sérif pour l'Asap 500 ; les
+gestes en minuscules (« retenir », « écarter », « répondre ») prennent la casse de
+phrase. Tranché au §2 : l'étiquette `UI.eti` (26 emplois) perd ses capitales et garde
+son signe d'état (● ◐ ✓), réécrit avec elle. Mesure à 1280 et 375 px : à zéro, hors
+données.

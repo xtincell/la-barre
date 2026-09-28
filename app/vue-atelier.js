@@ -71,7 +71,7 @@ window.VUE_ATELIER = (function () {
     var manques = COMPILATEUR.controles(p, "cadrage").filter(function (c) { return !c.ok; });
     return el("div.at-brief" + (manques.length ? ".manque" : ""), {},
       el("div.atb-c", {},
-        el("div.atb-t", {}, "LE BRIEFING DE CET ATELIER"),
+        el("div.atb-t", {}, "Le briefing de cet atelier"),
         el("div.atb-q", {}, manques.length
           ? manques.length + (manques.length > 1 ? " manques au cadrage" : " manque au cadrage")
             + " — l'atelier partira d'une page blanche sur : "
@@ -119,7 +119,7 @@ window.VUE_ATELIER = (function () {
     is.forEach(function (i) { (parStatut[i.statut] || parStatut.proposee).push(i); });
 
     return el("div.at-idees", {},
-      el("div.at-tete", {}, el("span.t", {}, "LES IDÉES"),
+      el("div.at-tete", {}, el("span.t", {}, "Les idées"),
         el("span.n", {}, is.length + (is.length > 1 ? " posées" : " posée"))),
 
       !is.length
@@ -129,7 +129,7 @@ window.VUE_ATELIER = (function () {
       ["retenue", "proposee", "ecartee"].map(function (st) {
         if (!parStatut[st].length) return null;
         return el("div.at-groupe." + st, {},
-          el("div.atg-t", {}, st === "retenue" ? "RETENUES" : st === "ecartee" ? "ÉCARTÉES" : "EN LICE"),
+          el("div.atg-t", {}, st === "retenue" ? "Retenues" : st === "ecartee" ? "Écartées" : "En lice"),
           parStatut[st].map(function (i) { return carteIdee(p, i, rafraichir); }));
       })
     );
@@ -145,19 +145,19 @@ window.VUE_ATELIER = (function () {
         el("div.ati-t", {}, i.texte),
         el("div.ati-m", {},
           a ? UI.avatar(a, 20) : null,
-          el("span", {}, a ? a.nom : "auteur non nommé"),
+          el("span", {}, a ? a.nom : "Auteur non nommé"),
           junior ? UI.eti("junior", "or") : null,
           el("span.ati-q", {}, O.joli(i.quand))
         ),
         i.motif ? el("div.ati-mo", {}, i.motif) : null,
         el("div.ati-g", {},
           i.statut === "proposee"
-            ? el("button.b.nu", { type: "button", onclick: function () { trancher(p, i, "retenue", rafraichir); } }, "retenir")
+            ? el("button.b.nu", { type: "button", onclick: function () { trancher(p, i, "retenue", rafraichir); } }, "Retenir")
             : null,
           i.statut === "proposee"
-            ? el("button.b.nu", { type: "button", onclick: function () { trancher(p, i, "ecartee", rafraichir); } }, "écarter")
+            ? el("button.b.nu", { type: "button", onclick: function () { trancher(p, i, "ecartee", rafraichir); } }, "Écarter")
             : null,
-          el("button.b.nu", { type: "button", onclick: function () { poserIdee(p, i, rafraichir); } }, "modifier"),
+          el("button.b.nu", { type: "button", onclick: function () { poserIdee(p, i, rafraichir); } }, "Modifier"),
           IMAGE.bouton(i, rafraichir)
         )
       )
@@ -231,7 +231,7 @@ window.VUE_ATELIER = (function () {
   function colonneFil(p, rafraichir) {
     var fs = fils(p);
     return el("div.at-fil", {},
-      el("div.at-tete", {}, el("span.t", {}, "LA CONVERSATION"),
+      el("div.at-tete", {}, el("span.t", {}, "La conversation"),
         el("span.n", {}, fs.length + (fs.length > 1 ? " fils" : " fil"))),
 
       !fs.length
@@ -257,11 +257,11 @@ window.VUE_ATELIER = (function () {
       })),
       f.conclusion ? el("div.atf-c", {}, "Conclusion : " + f.conclusion) : null,
       el("div.atf-g", {},
-        !f.clos ? el("button.b.nu", { type: "button", onclick: function () { repondre(p, f, rafraichir); } }, "répondre") : null,
-        !f.clos ? el("button.b.nu", { type: "button", onclick: function () { clore(p, f, rafraichir); } }, "conclure") : null,
+        !f.clos ? el("button.b.nu", { type: "button", onclick: function () { repondre(p, f, rafraichir); } }, "Répondre") : null,
+        !f.clos ? el("button.b.nu", { type: "button", onclick: function () { clore(p, f, rafraichir); } }, "Conclure") : null,
         (f.messages || []).length
           ? el("button.b.nu", { type: "button", onclick: function () { IMPORT_FIL.extraire(p, f, rafraichir); } },
-              "→ extraire les idées")
+              "Extraire les idées →")
           : null
       )
     );

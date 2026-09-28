@@ -75,7 +75,7 @@
 .route .tete-route { display: flex; align-items: center; gap: .5rem; padding: .55rem .7rem;
   border-bottom: 1px solid var(--trait); }
 .route .tete-route .nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: .06em; color: var(--or); }
-.route .tete-route .eti { margin-left: auto; }
+
 .route .corps-route { padding: .65rem .7rem .8rem; display: grid; gap: .3rem; }
 .route .phrase { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; }
 .route .auteurs { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
@@ -197,7 +197,6 @@
   padding: .35rem 0; border-bottom: 1px solid var(--trait); }
 .etape-suite .n { width: 1.35rem; height: 1.35rem; border-radius: 50%; border: 1px solid var(--trait-clair);
   display: flex; align-items: center; justify-content: center; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.etape-suite .eti { margin-left: auto; }
 
 @media (max-width: 1180px) {
   .piece { grid-template-columns: 108px minmax(0, 1fr) auto; }

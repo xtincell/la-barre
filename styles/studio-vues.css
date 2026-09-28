@@ -155,6 +155,22 @@
 
 @media print { .recev { display: none !important; } }
 
+/* L'étiquette d'état (`UI.eti`) : minuscules, contour, couleur dans le texte.
+ * Un état encodé par la seule couleur n'existe pas pour qui ne la distingue
+ * pas : chaque étiquette d'état porte un signe avant son texte (§14). */
+.eti { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 5px;
+  border: 1px solid var(--trait); background: var(--surface-1); color: var(--clair);
+  font: 550 11px/1.4 var(--affichage); letter-spacing: 0; text-transform: none; white-space: nowrap; }
+.eti.vert { color: var(--succes); }
+.eti.attente { color: var(--arbitrage); }
+.eti.alerte { color: var(--bloquant); }
+.eti.or { color: var(--studio-bleu); }
+.eti.terne { color: var(--clair-terne); }
+.eti.plein { color: var(--surface-1); background: var(--clair); border-color: var(--clair); }
+.eti.alerte::before { content: "●"; font-size: .9em; }
+.eti.attente::before { content: "◐"; font-size: .9em; }
+.eti.vert::before { content: "✓"; font-size: .9em; }
+
 /* ═════════════════════ Passe 1 · Décisions ═════════════════════ */
 
 .dc { display: block; min-width: 0; }
@@ -743,3 +759,68 @@ button.st-e:hover { background: var(--surface-4); }
 .ste-x { font-size: 13px; line-height: 1.55; color: var(--clair-terne); }
 .st-e.vide .ste-n::before { content: "○"; color: var(--arbitrage); margin-right: 2px; }
 .ste-p { font-size: 12px; line-height: 1.55; color: var(--clair-terne); font-style: italic; }
+
+/* ═════════════════════ Passe 4a · Dossier : l'atelier ═════════════════════ */
+
+.at { display: grid; gap: 16px; }
+/* « Idées retenues émanant de juniors » est une ligne de la fiche 03, et cet
+ * écran est le seul endroit où elle bouge : un chiffre-clé, en tête. */
+.aj { --ton: var(--trait-clair); display: flex; align-items: center; gap: 18px; padding: 16px 20px;
+  background: var(--surface-1); border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 10px; }
+.aj.ok { --ton: var(--succes); }
+.aj.zero { --ton: var(--arbitrage); }
+.aj-c { font: 550 36px/1 var(--affichage); color: var(--clair); font-variant-numeric: tabular-nums; }
+.aj.ok .aj-c { color: var(--succes); }
+.aj.zero .aj-c { color: var(--arbitrage); }
+.aj-t { display: grid; gap: 3px; }
+.aj-n { font: 550 15px var(--affichage); color: var(--clair); }
+.aj-x { font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 70ch; }
+/* Le briefing de l'atelier : une ligne d'état, et le document qui la ferme. */
+.at-brief { --ton: var(--succes); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 16px;
+  background: var(--surface-1); border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 6px; }
+.at-brief.manque { --ton: var(--arbitrage); }
+.atb-c { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.atb-t { font: 700 12px var(--affichage); color: var(--clair); }
+.atb-q { font-size: 13px; line-height: 1.5; color: var(--clair-terne); }
+
+/* Deux colonnes : les idées, la conversation. Chacune une section blanche. */
+.at-corps { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.at-idees, .at-fil { display: grid; gap: 12px; padding: 18px 20px; background: var(--surface-1);
+  border: 1px solid var(--trait); border-radius: 10px; min-width: 0; }
+.at-tete { display: flex; align-items: center; gap: 10px; }
+.at-tete .t { font: 550 17px var(--affichage); color: var(--clair); }
+.at-tete .n { font: 500 12px var(--affichage); color: var(--clair-terne); background: var(--surface-3); border-radius: 5px; padding: 3px 7px; }
+.at-groupe { display: grid; gap: 8px; }
+.atg-t { font: 700 12px var(--affichage); color: var(--clair-terne); }
+.at-groupe.retenue .atg-t { color: var(--succes); }
+/* Une idée : ce qu'un humain a écrit, en Asap 500, avec son auteur. */
+.at-i { --ton: var(--trait-clair); display: flex; gap: 12px; padding: 12px 14px; background: var(--surface-4);
+  border-left: 3px solid var(--ton); border-radius: 0 6px 6px 0; }
+.at-i.retenue { --ton: var(--succes); }
+.at-i.ecartee { --ton: var(--trait); }
+.ati-v { flex: 0 0 92px; }
+.ati-v .vignette { height: 70px; border-radius: 4px; overflow: hidden; }
+.ati-c { min-width: 0; flex: 1; display: grid; gap: 6px; }
+.ati-t { font: 500 15px/1.45 var(--affichage); color: var(--studio-encre); overflow-wrap: anywhere; }
+.at-groupe.ecartee .ati-t { color: var(--clair-terne); }
+.ati-m { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--clair-terne); }
+.ati-q { margin-left: auto; }
+.ati-mo { font-size: 12px; line-height: 1.5; color: var(--clair-terne); font-style: italic; }
+.ati-g { display: flex; gap: 0 4px; flex-wrap: wrap; margin: 0 0 -8px -8px; }
+
+/* Un fil de conversation. Clos, il garde son texte lisible : c'est son relief
+ * qui baisse, pas son encre. */
+.at-f { --ton: var(--arbitrage); display: grid; gap: 10px; padding: 12px 14px; background: var(--surface-4);
+  border-left: 3px solid var(--ton); border-radius: 0 6px 6px 0; }
+.at-f.clos { --ton: var(--trait-clair); }
+.atf-tete { display: flex; align-items: center; gap: 8px; }
+.atf-s { flex: 1; font: 550 14px/1.4 var(--affichage); color: var(--clair); }
+.atf-msgs { display: grid; gap: 10px; }
+.atf-m { display: flex; gap: 8px; align-items: flex-start; }
+.atfm-t { font-size: 13px; line-height: 1.55; color: var(--clair); overflow-wrap: anywhere; }
+.atfm-q { font-size: 11px; color: var(--clair-terne); margin-top: 2px; }
+.atf-c { font-size: 13px; line-height: 1.5; color: var(--clair); padding-left: 10px; border-left: 3px solid var(--succes); }
+.atf-g { display: flex; gap: 0 4px; flex-wrap: wrap; margin: 0 0 -8px -8px; }
+
+@media (max-width: 900px) { .at-corps { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) { .aj { align-items: flex-start; } .aj-c { font-size: 28px; } }

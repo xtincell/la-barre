@@ -469,14 +469,6 @@ body {
 .titre-ecran .devise { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); margin-top: .2rem; }
 .titre-ecran .actions { margin-left: auto; display: flex; gap: .45rem; align-items: center; }
 
-/* Une taille n'est pas une priorité : « 9 supports » est un inventaire, « 7
- * décisions » est une réclamation. Deux sens, deux classes — sinon la règle du
- * silence ne se mesure plus. */
-
-/* Une taille n'est pas une priorité : « 9 supports » est un inventaire, « 7
- * décisions » est une réclamation. Deux sens, deux classes — sinon la règle du
- * silence ne se mesure plus. */
-
 /* ————————————————————— Cartes de compteur ————————————————————— */
 
 .compteurs { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .55rem; }
@@ -523,17 +515,6 @@ body {
 .chip .n { opacity: .7; margin-left: .3rem; }
 
 /* ————————————————————— Étiquettes ————————————————————— */
-
-.eti {
-  display: inline-block; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .06em; text-transform: uppercase;
-  padding: .12rem .38rem; border: 1px solid currentColor;
-}
-.eti.plein { color: #12100c; border-color: transparent; }
-.eti.vert { color: var(--vert); }
-.eti.attente { color: var(--attente); }
-.eti.alerte { color: var(--bloquant-txt); }
-.eti.or { color: var(--or); }
-.eti.terne { color: var(--clair-terne); }
 
 /* ————————————————————— Rail droit ————————————————————— */
 
@@ -767,14 +748,14 @@ ul.puces li::before { content: ""; position: absolute; left: 0; top: .68rem; wid
 input[type="text"], input[type="search"], input[type="number"],
 input[type="date"], select, textarea { border-radius: var(--r-s); }
 
-.eti, .rde, .compte, .egc-bloc, .egc-ok, .eqpd, .juj,
+.rde, .compte, .egc-bloc, .egc-ok, .eqpd, .juj,
 .badge, .chip { border-radius: var(--r-xs); }
 
 .kpi, .pi-k, .rv-kpi, .stat-c, .carte-n, .eg-c, .eq-p, .ju-cr, .ju-g, .ju-fc,
-.carte-projet, .piece, .piece-c, .obj, .reglage, .ref-carte, .at-i, .bic,
+.carte-projet, .piece, .piece-c, .obj, .reglage, .ref-carte, .bic,
 .dm-d, .as-c, .br-c, .mq-s, .cs-o, .rc-idee, .br-bloc, .br-verbatim, .bi-idee,
 .mk-c, .pr-p, .col-msg, .ou-en, .attente-l, .cmd-ressources, .rv-piece,
-.carte-phrase, .graphe-boite, .pi-fb, .pi-au, .pr-apres, .pr-band, .at-f,
+.carte-phrase, .graphe-boite, .pi-fb, .pi-au, .pr-apres, .pr-band,
 .mur-panneau, .co-doc { border-radius: var(--r-m); }
 
 .panneau, .resultats, .capture-boite, .panneau-lat { border-radius: var(--r-l); }
@@ -794,8 +775,8 @@ input[type="date"], select, textarea { border-radius: var(--r-s); }
 
 /* Rapide pour un changement d'état, standard pour tout le reste. Rien ne
  * s'anime au chargement : une interface de décision ne fait pas de spectacle. */
-.b, .eti, .dcm, .jul, .fmb, .rail-i, .eqp-tete, .jucr-t, .cs-o, .bic, .dm-d,
-.eg-c, .eq-p, .ju-cr, .at-i, .rt-c, .pil, .plc-visuel, .bic-v,
+.b, .dcm, .jul, .fmb, .rail-i, .eqp-tete, .jucr-t, .cs-o, .bic, .dm-d,
+.eg-c, .eq-p, .ju-cr, .rt-c, .pil, .plc-visuel, .bic-v,
 button, a, input, select, textarea, summary {
   transition: background-color var(--tr-rapide) var(--easing),
               border-color var(--tr-rapide) var(--easing),
@@ -806,7 +787,7 @@ button, a, input, select, textarea, summary {
 }
 
 /* Hover : un cran d'élévation, et rien de plus — pas de saut, pas de zoom. */
-.eg-c:hover, .eq-p:hover, .ju-cr:hover, .dm-d:hover, .cs-o:hover, .at-i:hover {
+.eg-c:hover, .eq-p:hover, .ju-cr:hover, .dm-d:hover, .cs-o:hover {
   box-shadow: var(--elev-2);
 }
 
@@ -916,10 +897,9 @@ button, a, input, select, textarea, summary {
 
 /* Un état encodé par la seule couleur n'existe pas pour qui ne la distingue
  * pas. Chaque étiquette d'état porte donc un signe, avant son texte. */
-.eti.alerte::before, .eti.attente::before, .eti.vert::before,
 .rde.alerte::before, .rde.attente::before, .rde.vert::before {
   margin-right: .3em; font-size: .9em;
 }
-.eti.alerte::before, .rde.alerte::before { content: "●"; }
-.eti.attente::before, .rde.attente::before { content: "◐"; }
-.eti.vert::before, .rde.vert::before { content: "✓"; }
+.rde.alerte::before { content: "●"; }
+.rde.attente::before { content: "◐"; }
+.rde.vert::before { content: "✓"; }
