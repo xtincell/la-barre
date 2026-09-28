@@ -515,7 +515,7 @@ window.VUE_PROJETS = (function () {
    * rediscute deux fois, une case écartée avec sa date ne se rediscute plus. */
   function ecranCampagne(hote, campagneId) {
     var c = window.CAMPAGNE ? CAMPAGNE.de(campagneId) : null;
-    hote.className = "zone";
+    hote.className = "zone studio";
     O.vider(hote);
     if (!c) {
       hote.appendChild(el("p.rien", {}, "Campagne inconnue — ",
@@ -528,86 +528,93 @@ window.VUE_PROJETS = (function () {
     var mq = (c.marqueIds || [])[0];
     var m = mq ? DEPOT.trouve("marques", mq) : null;
     var ref = CAMPAGNE.pisteDeReference(c.id);
+    var vifs = ps.filter(function (p) { return !(window.CLOTURE && CLOTURE.est(p)); });
 
-    hote.appendChild(el("div.dl", {},
-      el("div.dl-h", {},
-        el("div", {},
-          el("p.dl-fil", {},
-            el("a", { href: "#/projets" }, "Les dossiers"), " / ",
-            m ? el("a", { href: "#/projets/" + m.id }, m.nom) : "sans marque", " / ",
-            c.regime === "always-on" ? "le cycle" : "temps fort"),
-          el("h2.dl-t", {}, c.nom),
-          el("p.dl-s", {}, e ? e.quoi : "")),
-        el("a.b", { href: "#/projets/" + (m ? m.id : "") }, "← la marque")),
+    hote.className = "zone studio";
+    hote.appendChild(el("header.studio-entete.pj-entete", {},
+      el("div.pj-id", {},
+        mq && window.MARQUE ? MARQUE.pastille({ sections: { identite: { marqueIds: [mq] } } }, 44) : null,
+        el("div.pj-id-t", {},
+          el("p.studio-date", {}, el("a.mql-fil", { href: "#/projets" }, "Vos projets"), " · ",
+            m ? el("a.mql-fil", { href: "#/projets/" + m.id }, m.nom) : "Sans marque", " · ",
+            c.regime === "always-on" ? "le cycle qui tourne" : "temps fort"),
+          el("h1", {}, c.nom),
+          el("p.studio-intro", {}, e ? e.quoi : "")))));
 
-      /* La piste qui gouverne les frères. Sans elle, le film et l'activation
-       * de la même campagne ignorent le concept qu'on vient d'arbitrer. */
-      ref
-        ? el("div.cmp-piste", {},
-            el("div.cmpp-t", {}, "LA PISTE QUI GOUVERNE"),
-            el("b", {}, ref.piste.titre || "piste retenue"),
-            el("p.cmpp-q", {}, "Arbitrée sur « " + ref.projet.nom + " ». "
-              + "Les autres projets de cette campagne en héritent — celui qui s'en "
-              + "écarte doit le dire."))
-        : ps.length > 1
-          ? el("div.cmp-piste.vide", {},
-              el("div.cmpp-t", {}, "AUCUNE PISTE RETENUE"),
-              el("p.cmpp-q", {}, ps.length + " projets se fabriquent sans savoir quel "
-                + "concept fait autorité. Deux signatures peuvent sortir du même temps fort."))
-          : null,
+    /* La piste qui gouverne les frères. Sans elle, le film et l'activation
+     * de la même campagne ignorent le concept qu'on vient d'arbitrer. Son
+     * titre est ce qu'un humain a écrit : il prend l'aplat d'intention. */
+    if (ref) {
+      hote.appendChild(el("section.cg-piste", {},
+        el("p.cg-l", {}, "La piste qui gouverne"),
+        el("p.cg-titre", {}, ref.piste.titre || "Piste retenue"),
+        el("p.cg-q", {}, "Arbitrée sur « " + ref.projet.nom + " ». Les autres projets de cette "
+          + "campagne en héritent — celui qui s'en écarte doit le dire.")));
+    } else if (vifs.length > 1) {
+      /* Seuls les projets ouverts se fabriquent : deux projets clos sans piste
+       * commune ne produiront plus rien. */
+      hote.appendChild(el("section.cg-piste.f-attente", {},
+        el("p.cg-l", {}, el("span.cg-signe", { "aria-hidden": "true" }, "◐ "), "Aucune piste retenue"),
+        el("p.cg-q", {}, vifs.length + " projets se fabriquent sans savoir quel concept fait "
+          + "autorité. Deux signatures peuvent sortir du même temps fort.")));
+    }
 
-      blocComposition(c, rafraichir),
+    hote.appendChild(blocComposition(c, rafraichir));
 
-      ps.length
-        ? el("div", { style: { "margin-top": "1.2rem" } },
-            el("div.section-titre", {}, "Les projets", el("span.taille", {}, "· " + ps.length)),
-            el("p.cmpc-q", {}, "Un projet peut en attendre un autre. Le dire fait apparaître "
-              + "les jours de production qui courent à vide."),
-            el("div.dl-liste", {}, ps.map(function (x) {
-              return ligneProjetChainee(x, ps, rafraichir); })))
-        : null
-    ));
+    if (ps.length) {
+      hote.appendChild(el("section.cg-bloc", {},
+        el("div.section-titre", {}, "Les projets", el("span.taille", {}, "· " + ps.length)),
+        el("p.cg-q", {}, "Un projet peut en attendre un autre. Le dire fait apparaître "
+          + "les jours de production qui courent à vide."),
+        el("div.mpl-liste", {}, ps.map(function (x) {
+          return ligneProjetChainee(x, ps, rafraichir); }))));
+    }
   }
 
   /* La composition : ce que l'occasion appelle, et ce qui est déjà ouvert. */
   function blocComposition(c, rafraichir) {
     var comp = CAMPAGNE.composition(c);
     if (!comp.length) {
-      return el("p.rien", {}, "Cette campagne n'a pas d'occasion déclarée : "
-        + "la maison ne sait pas ce qu'elle appelle d'habitude.");
+      return el("section.cg-bloc", {},
+        el("div.section-titre", {}, "Ce que cette occasion appelle"),
+        el("p.cg-q", {}, "Cette campagne n'a pas d'occasion déclarée : la maison ne sait "
+          + "pas ce qu'elle appelle d'habitude."));
     }
     var manquants = comp.filter(function (x) { return !x.projet && !x.ecarte; }).length;
 
-    return el("div.cmp-comp", {},
+    return el("section.cg-bloc", {},
       el("div.section-titre", {}, "Ce que cette occasion appelle",
         el("span.taille", {}, manquants
           ? "· " + manquants + " à décider" : "· tout est décidé")),
-      el("p.cmpc-q", {}, "La maison propose ; elle n'ouvre rien seule. Ce qu'on écarte "
+      el("p.cg-q", {}, "La maison propose ; elle n'ouvre rien seule. Ce qu'on écarte "
         + "garde sa date, pour ne pas se rediscuter deux fois."),
-      el("div.cmp-l", {}, comp.map(function (x) {
+      el("div.cg-liste", {}, comp.map(function (x) {
         return ligneComposition(c, x, rafraichir); }))
     );
   }
 
   function ligneComposition(c, x, rafraichir) {
+    /* Proposé : l'attente, filet et signe. Ouvert : le signe du fait. Écarté :
+     * l'encre pâlit, la date et le motif restent. */
     var etat = x.projet ? "ouvert" : x.ecarte ? "ecarte" : "propose";
-    return el("div.cmpl." + etat, {},
-      el("span.cmpl-n", {}, x.nature.nom,
-        x.nature.quoi ? el("span.cmpl-q", {}, x.nature.quoi) : null),
-      el("span.cmpl-e", {},
-        etat === "ouvert" ? el("a", { href: "#/projets/" + x.projet.id }, x.projet.ref)
-          : etat === "ecarte" ? "écarté le " + O.jourCourt(x.ecarte.quand)
-            + (x.ecarte.motif ? "  ·  " + x.ecarte.motif : "")
-          : "pas encore ouvert"),
-      el("span.cmpl-g", {},
+    return el("div.cg-c." + etat + (etat === "propose" ? ".f-attente" : ""), {},
+      el("span.cg-n", {}, x.nature.nom,
+        x.nature.quoi ? el("span.cg-nq", {}, x.nature.quoi) : null),
+      el("span.cg-e", {},
+        etat === "ouvert" ? [el("span.cg-signe", { "aria-hidden": "true" }, "✓ "),
+            el("a", { href: "#/projets/" + x.projet.id }, x.projet.ref)]
+          : etat === "ecarte" ? "Écarté le " + O.jourCourt(x.ecarte.quand)
+            + (x.ecarte.motif ? " · " + x.ecarte.motif : "")
+          : [el("span.cg-signe", { "aria-hidden": "true" }, "◐ "), "Pas encore ouvert"]),
+      el("span.cg-g", {},
         etat === "ecarte"
-          ? el("button.b.nu", { type: "button", onclick: function () {
-              CAMPAGNE.reprendre(c, x.nature.cle); rafraichir(); } }, "reprendre")
+          ? el("button.studio-lien", { type: "button", onclick: function () {
+              CAMPAGNE.reprendre(c, x.nature.cle); rafraichir(); } }, "Reprendre")
           : etat === "propose"
-            ? el("span", {},
-                el("button.b.nu", { type: "button", onclick: function () {
-                  ouvrirDepuisCampagne(c, x.nature, rafraichir); } }, "ouvrir"),
-                el("button.b.nu", { type: "button", onclick: function () {
+            ? [
+                el("button.studio-lien", { type: "button", onclick: function () {
+                  ouvrirDepuisCampagne(c, x.nature, rafraichir); } }, "Ouvrir"),
+                el("button.studio-lien", { type: "button", onclick: function () {
                   PANNEAU.demander("Écarter « " + x.nature.nom + " »", {
                     label: "Pourquoi",
                     aide: "Pourquoi cette campagne n'en a pas besoin. La réponse est "
@@ -615,7 +622,7 @@ window.VUE_PROJETS = (function () {
                     lignes: 2, requis: "Un écart sans motif se rediscute la semaine suivante.",
                   }, function (motif) {
                     CAMPAGNE.ecarter(c, x.nature.cle, motif); rafraichir(); });
-                } }, "écarter"))
+                } }, "Écarter")]
             : null));
   }
 
@@ -676,13 +683,14 @@ window.VUE_PROJETS = (function () {
     var amonts = (p.attend || []).map(function (id) {
       var a = DEPOT.trouve("projets", id); return a ? a.nom : null; }).filter(Boolean);
 
-    var sel = el("select", { onclick: function (e) { e.preventDefault(); e.stopPropagation(); } });
-    sel.appendChild(el("option", { value: "" }, "— n'attend rien —"));
+    var sel = el("select", { "aria-label": "Ce que « " + p.nom + " » attend",
+      onclick: function (e) { e.preventDefault(); e.stopPropagation(); } });
+    sel.appendChild(el("option", { value: "" }, "N'attend aucun autre projet"));
     freres.forEach(function (f) {
       if (f.id === p.id) return;
       sel.appendChild(el("option", { value: f.id,
         selected: (p.attend || []).indexOf(f.id) !== -1 ? "" : null },
-        "attend « " + f.nom.slice(0, 38) + " »"));
+        "Attend « " + f.nom.slice(0, 38) + " »"));
     });
     sel.onchange = function () {
       p.attend = sel.value ? [sel.value] : [];
@@ -691,9 +699,10 @@ window.VUE_PROJETS = (function () {
       rafraichir();
     };
 
-    return el("div.cmp-pr", {}, ligne,
-      el("div.cmp-ch", {}, sel,
-        amonts.length ? el("span.cmp-cha", {}, "en attente de " + amonts.join(", ")) : null));
+    return el("div.cg-pr" + (amonts.length ? ".f-attente" : ""), {}, ligne,
+      el("div.cg-ch", {}, sel,
+        amonts.length ? el("span.cg-cha", {}, el("span.cg-signe", { "aria-hidden": "true" }, "◐ "),
+          "En attente de " + amonts.join(", ")) : null));
   }
 
   function ligneProjetCourte(p) {

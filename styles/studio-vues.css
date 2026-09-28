@@ -1905,3 +1905,45 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
   .vie-a { grid-template-columns: minmax(0, 1fr); }
   .viea-x { grid-column: 1; }
 }
+
+/* ═════════════════════ Passe 8 · La campagne ═════════════════════ */
+/* L'étage où une campagne se compose : la piste qui gouverne les frères, ce que
+ * l'occasion appelle, et les projets avec leur chaînage. Préfixe `cg-` : `cmp-`
+ * est la grille de comparaison des pistes (passe 4c). */
+.cg-piste, .cg-bloc { background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px;
+  padding: 18px 22px; margin-bottom: 16px; min-width: 0; }
+.cg-piste.f-attente { border-left: 3px solid var(--ton); }
+.cg-l { font-size: 11px; color: var(--clair-terne); }
+.cg-signe { color: var(--ton, var(--clair-terne)); }
+/* Le titre de la piste, écrit par quelqu'un : l'aplat d'intention. */
+.cg-titre { display: inline-block; margin-top: 8px; padding: 8px 12px; border-radius: 5px; background: var(--studio-intention);
+  font: 500 19px/1.35 var(--affichage); color: var(--studio-encre); overflow-wrap: anywhere; }
+.cg-q { margin-top: 6px; font-size: 13px; line-height: 1.6; color: var(--clair-terne); max-width: 65ch; }
+.cg-bloc .cg-q { margin: 0 0 12px; }
+.cg-l + .cg-q { margin-top: 6px; }
+.cg-liste { display: grid; }
+.cg-c { --ton: transparent; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; min-height: 56px;
+  padding: 8px 0 8px 11px; border-left: 3px solid var(--ton); border-top: 1px solid var(--trait); }
+.cg-c.f-attente { --ton: var(--arbitrage); }
+.cg-c.ouvert { --ton: transparent; }
+.cg-c.ouvert .cg-signe { color: var(--succes); }
+.cg-n { flex: 1 1 15rem; min-width: 0; display: grid; gap: 2px; font: 550 14px var(--affichage); color: var(--clair); }
+.cg-nq { font: 400 12px/1.5 var(--affichage); color: var(--clair-terne); overflow-wrap: anywhere; }
+.cg-c.ecarte .cg-n { font-weight: 500; color: var(--clair-doux); }
+.cg-e { flex: 0 1 auto; font-size: 12px; color: var(--clair-terne); overflow-wrap: anywhere; }
+.cg-e a { color: var(--studio-bleu); text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }
+.cg-g { flex: 0 0 auto; margin-left: auto; display: flex; gap: 4px; }
+/* Le chaînage se déclare là où l'on voit les frères ensemble. */
+.cg-pr { --ton: transparent; border-bottom: 1px solid var(--trait); }
+.cg-pr .mpl { border-bottom: 0; }
+.cg-ch { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; min-width: 0; padding: 0 14px 12px 14px; }
+/* Le sélecteur prend la largeur qu'on lui laisse : fixé à 22 rem, il poussait
+ * la page hors de l'écran au téléphone. */
+.cg-ch select { width: 100%; max-width: 24rem; min-width: 0; min-height: 44px; padding: 6px 28px 6px 10px;
+  font: 13px var(--affichage); color: var(--clair); background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px; }
+.cg-pr.f-attente { --ton: var(--arbitrage); }
+.cg-cha { font-size: 12px; color: var(--clair-terne); overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  .cg-piste, .cg-bloc { padding: 16px; }
+  .cg-g { margin-left: 0; width: 100%; }
+}

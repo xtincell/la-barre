@@ -2344,52 +2344,6 @@ blockquote, .message, .verbatim {
   font-variant-numeric: tabular-nums; margin-left: auto; }
 @media (max-width: 700px) { .chf-r { grid-template-columns: minmax(0, 1fr) 4.5rem auto; } }
 
-/* ————— La campagne : la piste qui gouverne, et la composition ————— */
-.cmp-piste { margin-top: 1rem; padding: .7rem .9rem; border-left: 2px solid var(--vert);
-  background: var(--surface-2); }
-.cmp-piste.vide { border-left-color: var(--attente); }
-.cmpp-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  text-transform: uppercase; color: var(--clair-terne); }
-.cmp-piste b { display: block; font-size: var(--t-titre); line-height: var(--lh-titre);
-  color: var(--clair); margin-top: .15rem; }
-.cmpp-q { margin: .25rem 0 0; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-doux); max-width: var(--mesure); }
-
-.cmp-comp { margin-top: 1.4rem; }
-.cmpc-q { margin: .1rem 0 .6rem; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-terne); max-width: var(--mesure); }
-.cmp-l { display: grid; }
-.cmpl { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .8rem;
-  padding: .55rem 0; border-top: 1px solid var(--trait); min-height: var(--cible);
-  border-left: 2px solid transparent; padding-left: .6rem; }
-.cmpl.ouvert { border-left-color: var(--vert); }
-.cmpl.propose { border-left-color: var(--attente); }
-.cmpl.ecarte .cmpl-n { color: var(--clair-terne); }
-.cmpl-n { flex: 1 1 15rem; min-width: 0; font-size: var(--t-meta);
-  line-height: var(--lh-meta); color: var(--clair); }
-.cmpl-q { display: block; font-size: var(--t-micro); line-height: var(--lh-micro);
-  color: var(--clair-terne); overflow-wrap: anywhere; }
-.cmpl-e { flex: 0 1 auto; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-doux); overflow-wrap: anywhere; }
-.cmpl-g { flex: 0 0 auto; margin-left: auto; display: flex; gap: .3rem; }
-/* Les gestes d'une ligne de composition restent atteignables au doigt. */
-.cmpl-g .b, .cmpl-g button { min-height: var(--cible); display: inline-flex;
-  align-items: center; }
-@media (max-width: 700px) {
-  .cmpl-g { margin-left: 0; width: 100%; }
-  .cmp-piste, .cmp-comp { min-width: 0; }
-}
-/* Le chaînage se déclare là où l'on voit les frères ensemble. */
-.cmp-pr { border-top: 1px solid var(--trait); }
-.cmp-pr .mpl { border-top: 0; }
-.cmp-ch { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
-  padding: 0 0 .5rem .3rem; }
-/* 22 rem font 352 px : avec les gouttières, le sélecteur poussait la page
-   hors de l'écran au téléphone. Il prend la largeur qu'on lui laisse. */
-.cmp-ch select { width: 100%; max-width: 22rem; min-width: 0; }
-.cmp-ch { min-width: 0; }
-.cmp-cha { font-size: var(--t-micro); line-height: var(--lh-micro);
-  color: var(--attente); overflow-wrap: anywhere; }
 
 /* ————— Le manifeste de remise ————— */
 .rms { display: grid; gap: .5rem; }

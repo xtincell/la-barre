@@ -414,3 +414,18 @@ fondement écrit ») ; « du plateforme » et « le plateforme » corrigés (`br
 l'arbre, fiche pack) sont passés en casse de phrase au passage ; le reste du
 portefeuille est pour la passe 11. Mesure à 1280 et 375 px sur Bonnet Rouge et
 Beignet Paradise, tout déplié : à zéro, hors données (catégorie « YAOURT »).
+
+**Passe 8 — La campagne (28/09).** L'en-tête reprend celui du dossier (pastille de
+la marque, fil « Vos projets · marque · régime ») ; le bouton « ← la marque », qui
+doublait le fil, disparaît. « LA PISTE QUI GOUVERNE » et « AUCUNE PISTE RETENUE »
+passent en étiquettes de casse de phrase ; le titre de la piste — ce qu'un humain a
+écrit — prend l'aplat d'intention. La composition devient une section de lignes :
+proposé (filet et signe de l'attente), ouvert (✓ et la référence), écarté (l'encre
+pâlit, la date et le motif restent) ; « ouvrir », « écarter », « reprendre » passent
+en gestes texte capitalisés. Le chaînage garde son sélecteur, désormais un champ
+Studio de 44 px avec son libellé d'accessibilité, et la ligne qui attend un amont
+porte le filet de l'attente. Préfixe `cg-` : `cmp-` est la grille de comparaison des
+pistes (passe 4c). Corrigé : l'alerte « N projets se fabriquent sans savoir quel
+concept fait autorité » comptait les projets clos — elle s'affichait sous « Les 2
+projets sont clos ». Mesure à 1280 et 375 px sur cinq campagnes (piste retenue, sans
+piste, sans occasion, écarts datés) : à zéro.
