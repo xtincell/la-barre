@@ -1122,36 +1122,6 @@
   top: 50%; transform: translateY(-50%); min-height: var(--cible); height: 100%; }
 .rfm-h { position: relative; }
 
-/* ————————————————————— Le vault de marque ————————————————————— */
-
-/* Ce qui définit une marque ne change pas d'une saison à l'autre. Ça vit ici,
- * hors des campagnes — qui n'y puisent que ce qu'elles retiennent. */
-.vt { display: grid; gap: 1.2rem; }
-.vt-h { display: grid; gap: .3rem; }
-.vt-t { font-size: var(--t-h2); line-height: var(--lh-h2); color: var(--clair);
-  max-width: 32ch; }
-.vt-s { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-terne);
-  max-width: var(--mesure); }
-
-.vt-orph { display: grid; gap: .5rem; padding: 1rem 1.2rem; background: var(--surface-2);
-  border-radius: var(--r-m); border-left: 3px solid var(--arbitrage); }
-.vto-t { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--arbitrage); }
-.vto-t span { letter-spacing: 0; color: var(--clair-terne); }
-.vto-x { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  max-width: var(--mesure); }
-.vt-og { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: .4rem; }
-.vto { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: .5rem;
-  align-items: center; padding: .35rem; background: var(--surface-3);
-  border-radius: var(--r-xs); }
-.vto-v { display: block; width: 34px; height: 34px; background: var(--surface-2);
-  border-radius: var(--r-xs); overflow: hidden; }
-.vto-v img { width: 100%; height: 100%; object-fit: contain; }
-.vto-n { grid-column: 2; font-size: var(--t-micro); line-height: var(--lh-micro);
-  color: var(--clair-doux); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.vto select { grid-column: 2; font-size: var(--t-micro); min-height: 30px; }
 
 .vt-l { display: grid; gap: .5rem; }
 .vt-m { display: grid; gap: .3rem; padding: .9rem 1.1rem; background: var(--surface-2);
@@ -1272,46 +1242,6 @@
 .ch-mi:hover { border-color: var(--accent); color: var(--clair); }
 .ch-mi.ici { background: var(--accent); border-color: var(--accent); color: var(--n900); }
 
-/* ————————————————————— L'arbre des socles ————————————————————— */
-
-/* Trois niveaux : l'ombrelle, la marque, la gamme. L'indentation dit la
- * descendance, et un champ hérité porte le nom de celui dont il vient. */
-.vt-arbre { display: grid; gap: .5rem; }
-.vn { display: grid; gap: .25rem; }
-.vn.n1 { margin-left: 1.4rem; padding-left: .9rem; border-left: 1px solid var(--trait); }
-.vn.n2 { margin-left: 1.2rem; padding-left: .8rem; border-left: 1px solid var(--trait); }
-.vn-k { display: grid; gap: .4rem; margin-top: .35rem; }
-
-.vn-h { display: flex; align-items: center; gap: .55rem; flex-wrap: wrap; width: 100%;
-  min-height: var(--cible);
-  text-align: left; background: none; border: 0; padding: .5rem .6rem; cursor: pointer;
-  color: inherit; font: inherit; border-radius: var(--r-s); }
-.vn-h:hover { background: var(--surface-2); }
-.vn.ici > .vn-h { background: var(--surface-2); }
-.vn-e { width: 1rem; text-align: center; color: var(--clair-terne);
-  font-size: var(--t-titre); line-height: 1; }
-.vn-p { width: 11px; height: 11px; border-radius: 3px; background: var(--trait-clair);
-  flex: 0 0 auto; }
-.vn-l { display: grid; place-items: center; width: 40px; height: 28px; padding: .15rem;
-  background: var(--surface-3); border-radius: var(--r-xs); overflow: hidden; flex: 0 0 auto; }
-.vn-l img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.vn-n { font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); }
-.vn.n1 .vn-n, .vn.n2 .vn-n { font-size: var(--t-lire); line-height: var(--lh-lire); }
-.vn-r { font-size: var(--t-micro); line-height: 1; letter-spacing: .1em;
-  color: var(--clair-terne); border: 1px solid var(--trait-clair);
-  border-radius: var(--r-xs); padding: .18rem .4rem; }
-.vn-q { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  flex: 1 1 auto; }
-.vn-c { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  padding-left: 1.6rem; max-width: var(--mesure-large); }
-.vn-c.manque { color: var(--arbitrage); }
-.vn.orphelin > .vn-h { cursor: default; }
-
-
-@media (max-width: 760px) {
-  .vn.n1, .vn.n2 { margin-left: .5rem; padding-left: .6rem; }
-  .vn-c { padding-left: .6rem; }
-}
 
 /* ————————————————————— Les packs montrés par une pièce ————————————————————— */
 

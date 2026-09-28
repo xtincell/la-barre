@@ -16,23 +16,23 @@ window.VUE_MAISON = (function () {
     /* Le vault vit ici, hors des campagnes : ce qui définit une marque ne
      * change pas d'une saison à l'autre, et n'a rien à faire dans le dossier
      * qui l'a écrit en premier. */
-    { cle: "marques", nom: "MARQUES", quoi: "plateforme, catalogue, marchés — la bibliothèque de marque" },
-    { cle: "marches", nom: "MARCHÉS & SUPPORTS", quoi: "marchés, supports, gabarits, éléments de marque" },
+    { cle: "marques", nom: "Marques", quoi: "plateforme, catalogue, marchés — la bibliothèque de marque" },
+    { cle: "marches", nom: "Marchés et supports", quoi: "marchés, supports, gabarits, éléments de marque" },
     /* Le registre de l'autre outil. Il n'a pas sa place dans les projets : ce
      * n'est pas du travail, c'est ce qui dit lequel manque. */
-    { cle: "people", nom: "MATANGA PEOPLE", quoi: "ce qui existe là-bas, et n'existe pas ici" },
-    { cle: "radar", nom: "RADAR MATANGA", quoi: "les 366 briefs du registre, et lesquels ont un dossier ici" },
-    { cle: "intake", nom: "BOÎTE D'ENTRÉE", quoi: "ce qui est tombé au vol, et qu'il reste à ranger" },
+    { cle: "people", nom: "Matanga People", quoi: "ce qui existe là-bas, et n'existe pas ici" },
+    { cle: "radar", nom: "Radar Matanga", quoi: "les 366 briefs du registre, et lesquels ont un dossier ici" },
+    { cle: "intake", nom: "Boîte d'entrée", quoi: "ce qui est tombé au vol, et qu'il reste à ranger" },
     /* La doctrine : d'où viennent les règles que le produit applique. Elle vit
      * ici parce que ce n'est pas du travail — c'est ce qui le rend jugeable. */
-    { cle: "doctrine", nom: "DOCTRINE", quoi: "les couches, les écoles, les structures — et ce que la maison en a réglé" },
-    { cle: "parametres", nom: "PARAMÈTRES", quoi: "base, règles, équipe, journal" },
+    { cle: "doctrine", nom: "Doctrine", quoi: "les couches, les écoles, les structures — et ce que la maison en a réglé" },
+    { cle: "parametres", nom: "Paramètres", quoi: "base, règles, équipe, journal" },
   ];
 
   function rendre(hote, arg) {
     if (arg && MODES.some(function (m) { return m.cle === arg; })) mode = arg;
 
-    hote.className = "zone";
+    hote.className = "zone studio";
     O.vider(hote);
 
     var trous = 0;
@@ -45,25 +45,24 @@ window.VUE_MAISON = (function () {
     var vides = vaultsVides();
     var p = pire(mode, { trous: trous, w: w, age: age, vides: vides });
 
+    /* Le même en-tête que les autres intentions : le titre dit l'état de ce
+     * qu'on regarde, le sélecteur vient dessous. */
     hote.appendChild(el("div.dc", {},
-      el("div.dc-tete", {},
-        el("div.dct-c", {},
-          el("h2", {}, p.t),
-          el("div.dct-q", {}, p.q))),
-
-      el("div.dc-modes", {}, MODES.map(function (m) {
-        var n = m.cle === "marques" ? vides + VAULT.orphelins().length
-          : m.cle === "marches" ? trous
-          : m.cle === "people" ? REGISTRE.bilan().aveugles
-          : m.cle === "radar" ? REGISTRE_RADAR.bilan().siensAveugles
-          : m.cle === "intake" ? INTAKE.pile().length
-          : (w.grave || (!w.surDisque && (age === null || age > 2))) ? 1 : 0;
-        return el("button.dcm" + (mode === m.cle ? ".ici" : ""), { type: "button",
-          onclick: function () { mode = m.cle; rendre(hote); } },
-          el("span.dcm-n", {}, m.nom),
-          el("span.dcm-q", {}, m.quoi),
-          n ? el("span.dcm-c", {}, m.cle === "parametres" ? "!" : String(n)) : null);
-      })),
+      el("header.studio-entete.dc-tete", {},
+        el("div", {},
+          el("h1", {}, p.t),
+          el("p.studio-intro", {}, p.q))),
+      UI.modes(MODES, mode, function (cle) { mode = cle; rendre(hote); }, {
+        titre: "Modes des Ressources",
+        compte: function (m) {
+          if (m.cle === "doctrine") return 0;
+          return m.cle === "marques" ? vides + VAULT.orphelins().length
+            : m.cle === "marches" ? trous
+            : m.cle === "people" ? REGISTRE.bilan().aveugles
+            : m.cle === "radar" ? REGISTRE_RADAR.bilan().siensAveugles
+            : m.cle === "intake" ? INTAKE.pile().length
+            : (w.grave || (!w.surDisque && (age === null || age > 2))) ? "!" : 0; },
+        alerte: function (m) { return m.cle === mode; } }),
 
       el("div.dc-corps", {}, corps(hote))
     ));

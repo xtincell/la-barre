@@ -525,3 +525,18 @@ il la porte par classe, dans le signe seul, comme les verdicts de la fiche (pass
 Le champ de recherche du fil gagne son libellé d'accessibilité. Mesure à 1280 et
 375 px, fil ouvert : à zéro. Les cinq modes du Bilan sont désormais à zéro, hors
 données.
+
+**Passe 11a — Ressources : le portefeuille (28/09).** La passe 11 est coupée en quatre
+(portefeuille ; marchés et supports ; les trois registres ; doctrine et paramètres).
+L'en-tête des Ressources prend celui des autres intentions, `UI.modes` à la place des
+sept boutons en capitales — et « Doctrine », qui tombait dans la branche par défaut,
+ne porte plus le compteur d'alerte des paramètres. L'arbre du portefeuille faisait
+**12 631 px** : chaque ombrelle devient une section blanche ; celle dont aucune marque
+n'a de dossier ouvert replie ses marques sous leur compte, et dans une ombrelle
+vivante les marques sans dossier se replient aussi (Panzani en porte dix-huit pour un
+seul dossier). Le nœud qu'on vient d'ouvrir ne disparaît jamais dans un repli. Une
+gamme qui hérite tout ne répète plus « Hérite tout de sa marque… », que son résumé
+dit déjà ; « Servi par » s'arrête à cinq références. Le titre de l'arbre répétait
+celui de l'en-tête : seule reste sa règle de lecture, et `phrase()`, devenue sans
+appelant, est retirée (sa logique vit dans `pireMarques`). La page tombe à
+**5 815 px**. Mesure à 1280 et 375 px : à zéro, hors données (noms de marque).

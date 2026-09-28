@@ -17,6 +17,7 @@ window.VUE_VAULT = (function () {
    * sa variante. */
   var filtre = { categorie: null, variante: null, etat: null };
   var PILIERS_OUVERTS = {};
+  var ARBRE_OUVERT = {};
   var CATALOGUE_OUVERT = {};
 
   function rendre(hote) {
@@ -35,38 +36,17 @@ window.VUE_VAULT = (function () {
 
     var orphelins = VAULT.orphelins();
 
+    /* L'en-tête des Ressources dit déjà l'état en titre : la phrase ne se répète
+     * pas ici, seule reste la règle de lecture de l'arbre. */
     hote.appendChild(el("div.vt", {},
-      el("div.vt-h", {},
-        el("h3.vt-t", {}, phrase(arbre, orphelins)),
-        el("p.vt-s", {}, "Ce qui est ici vaut plusieurs années. Une campagne y puise — "
-          + "elle n'y écrit pas. Chaque niveau hérite du précédent : ce qu'on n'écrit "
-          + "pas plus bas vaut tel quel.")),
+      el("p.vt-s", {}, "Ce qui est ici vaut plusieurs années. Une campagne y puise — "
+        + "elle n'y écrit pas. Chaque niveau hérite du précédent : ce qu'on n'écrit "
+        + "pas plus bas vaut tel quel."),
 
       orphelins.length ? blocOrphelins(orphelins, DEPOT.liste("marques"), hote) : null,
 
       el("div.vt-arbre", {}, arbre.map(function (n) { return noeud(n, 0, hote); }))
     ));
-  }
-
-  /* L'état de l'ensemble en une phrase, avec sa conséquence. */
-  function phrase(arbre, orphelins) {
-    var marques = [];
-    arbre.forEach(function (o) { marques = marques.concat(o.enfants); });
-    var sansSocle = marques.filter(function (m) {
-      return VAULT.etatNiveau("marque", m.id).propres === 0
-        && VAULT.etatNiveau("marque", m.id).herites === 0; });
-    if (sansSocle.length) {
-      return sansSocle.length
-        + (sansSocle.length > 1 ? " marques n'ont pas de plateforme" : " marque n'a pas de plateforme")
-        + " — chaque campagne le réécrira depuis zéro";
-    }
-    if (orphelins.length) {
-      return orphelins.length
-        + (orphelins.length > 1 ? " packs n'appartiennent" : " pack n'appartient")
-        + " à aucune marque";
-    }
-    return marques.length + (marques.length > 1 ? " marques tenues" : " marque tenue")
-      + ", plateforme de marque et catalogue renseignés";
   }
 
   /* ————————————————————— Un nœud de l'arbre ————————————————————— */
@@ -100,16 +80,65 @@ window.VUE_VAULT = (function () {
         el("span.vn-q", {}, resume(n, e))),
 
       /* La conséquence, avant d'ouvrir. */
-      el("div.vn-c" + (e.propres || e.herites ? "" : ".manque"), {}, consequence(n, e)),
+      /* Une gamme qui hérite tout sans rien dire de particulier n'a rien à
+       * signaler : son résumé le dit, et la même phrase répétée trente fois
+       * sous Panzani noyait les marques qui manquent vraiment. */
+      n.type === "gamme" && !e.propres && e.herites ? null
+        : el("div.vn-c" + (e.propres || e.herites ? "" : ".manque"), {},
+            e.propres || e.herites ? null : el("span.vn-signe", { "aria-hidden": "true" }, "◐ "),
+            consequence(n, e)),
 
       ici ? corps(n, hote) : null,
 
-      /* Les enfants restent visibles même replié : c'est l'arbre qu'on lit. */
+      /* Les enfants restent visibles même replié : c'est l'arbre qu'on lit.
+       * Sauf sous une ombrelle dont aucune marque n'a de dossier ouvert : le
+       * corpus en a versé une vingtaine, et l'arbre faisait douze mille pixels.
+       * Elles se replient sous leur compte ; l'état ouvert survit aux gestes. */
       (n.enfants || []).length
-        ? el("div.vn-k", {}, n.enfants.map(function (k) {
-            return noeud(k, profondeur + 1, hote); }))
+        ? (profondeur === 0 && !vivante(n)
+            ? (function () {
+                var dedans = (n.enfants || []).some(function (k) {
+                  return ouverte === cle(k) || (k.enfants || []).some(function (g) { return ouverte === cle(g); }); });
+                var d = el("details.vn-kd", ARBRE_OUVERT[cle(n)] || dedans ? { open: true } : {},
+                  el("summary.vn-kdt", {}, n.enfants.length + (n.enfants.length > 1 ? " marques" : " marque"),
+                    el("span", {}, "aucun dossier ouvert")),
+                  el("div.vn-k", {}, n.enfants.map(function (k) { return noeud(k, profondeur + 1, hote); })));
+                d.addEventListener("toggle", function () { ARBRE_OUVERT[cle(n)] = d.open; });
+                return d;
+              })()
+            : profondeur === 0
+              ? enfantsVivants(n, hote)
+              : el("div.vn-k", {}, n.enfants.map(function (k) {
+                  return noeud(k, profondeur + 1, hote); })))
         : null
     );
+  }
+
+  /* Sous une ombrelle vivante, les marques qui travaillent restent dépliées ;
+   * les autres se replient sous leur compte — Panzani en porte dix-huit pour
+   * un seul dossier ouvert. */
+  function enfantsVivants(n, hote) {
+    var vifs = n.enfants.filter(function (k) { return vivante({ enfants: [k] }); });
+    var dormants = n.enfants.filter(function (k) { return vifs.indexOf(k) === -1; });
+    var cleD = cle(n) + ":dormants";
+    /* Le nœud qu'on vient d'ouvrir ne disparaît pas dans un repli. */
+    var contient = dormants.some(function (k) {
+      return ouverte === cle(k) || (k.enfants || []).some(function (g) { return ouverte === cle(g); }); });
+    var d = dormants.length ? el("details.vn-kd", ARBRE_OUVERT[cleD] || contient ? { open: true } : {},
+      el("summary.vn-kdt", {}, dormants.length + (dormants.length > 1 ? " autres marques" : " autre marque"),
+        el("span", {}, "aucun dossier ouvert")),
+      el("div.vn-k", {}, dormants.map(function (k) { return noeud(k, 1, hote); }))) : null;
+    if (d) d.addEventListener("toggle", function () { ARBRE_OUVERT[cleD] = d.open; });
+    return el("div.vn-k", {}, vifs.map(function (k) { return noeud(k, 1, hote); }), d);
+  }
+
+  /* Un nœud vit si l'un de ses enfants — ou lui-même — a un dossier ouvert. */
+  function vivante(n) {
+    var ids = (n.enfants || []).map(function (k) { return k.id; });
+    return DEPOT.liste("projets").some(function (p) {
+      if (window.CLOTURE && CLOTURE.est(p)) return false;
+      return ((p.sections.identite || {}).marqueIds || []).some(function (id) { return ids.indexOf(id) !== -1; });
+    });
   }
 
   function resume(n, e) {
@@ -132,7 +161,8 @@ window.VUE_VAULT = (function () {
       }
       var c = n.type === "marque" ? VAULT.campagnesDe(n.id) : [];
       return (c.length
-        ? "Servi par " + c.map(function (p) { return p.ref; }).join(", ")
+        ? "Servi par " + c.slice(0, 5).map(function (p) { return p.ref; }).join(", ")
+          + (c.length > 5 ? " et " + (c.length - 5) + " autres" : "")
         : "Aucune campagne ne s'en sert encore.")
         + (e.vides.length ? "  ·  " + e.vides.length + " champs manquent encore" : "");
     }
@@ -151,13 +181,13 @@ window.VUE_VAULT = (function () {
   /* Les marques qu'aucune ombrelle ne revendique. */
   function sansOmbrelle(n, hote) {
     return el("div.vn.n0.orphelin", {},
-      el("div.vn-h", {},
+      el("div.vn-h.fixe", {},
         el("span.vn-p", {}),
         el("span.vn-n", {}, n.nom),
         el("span.vn-q", {}, n.enfants.length
           + (n.enfants.length > 1 ? " marques" : " marque"))),
-      el("div.vn-c.manque", {}, "Sans client déclaré, ces marques n'héritent de rien "
-        + "et ne se regroupent nulle part."),
+      el("div.vn-c.manque", {}, el("span.vn-signe", { "aria-hidden": "true" }, "◐ "),
+        "Sans client déclaré, ces marques n'héritent de rien et ne se regroupent nulle part."),
       el("div.vn-k", {}, n.enfants.map(function (k) { return noeud(k, 1, hote); })));
   }
 
@@ -370,8 +400,8 @@ window.VUE_VAULT = (function () {
    * Beignet Paradise. Il n'appartient à personne, et il attend un geste. */
   function blocOrphelins(orphelins, marques, hote) {
     return el("div.vt-orph", {},
-      el("div.vto-t", {}, "Packs sans marque",
-        el("span", {}, orphelins.length + "  ·  ils n'entrent dans aucun catalogue")),
+      el("h3.vto-t", {}, "Packs sans marque",
+        el("span", {}, orphelins.length + " · ils n'entrent dans aucun catalogue")),
       el("p.vto-x", {}, "Leur nom de fichier ne dit ni la marque ni la catégorie. "
         + "Tant qu'ils ne sont pas rattachés, aucune campagne ne peut les montrer — "
         + "et c'est voulu : un pack attribué au hasard se retrouve sur le KV d'une "
