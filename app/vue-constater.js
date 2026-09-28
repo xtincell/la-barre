@@ -16,33 +16,29 @@ window.VUE_CONSTATER = (function () {
   var mode = "indicateurs";
 
   var MODES = [
-    { cle: "indicateurs", nom: "INDICATEURS", quoi: "ce sur quoi je suis évalué" },
-    { cle: "reprises", nom: "REPRISES", quoi: "ce que les retours hors périmètre ont coûté, et à qui" },
-    { cle: "equipe", nom: "ÉVALUATION", quoi: "ce qu'ils ont produit, et ce que je leur ai dit" },
-    { cle: "bilan", nom: "BILAN MENSUEL", quoi: "ce qui sort, compilé sans ressaisie" },
-    { cle: "arbitrages", nom: "ARBITRAGES", quoi: "comment j'ai tranché, et sur quel critère" },
+    { cle: "indicateurs", nom: "Indicateurs", quoi: "ce sur quoi je suis évalué" },
+    { cle: "reprises", nom: "Reprises", quoi: "ce que les retours hors périmètre ont coûté, et à qui" },
+    { cle: "equipe", nom: "Évaluation", quoi: "ce qu'ils ont produit, et ce que je leur ai dit" },
+    { cle: "bilan", nom: "Bilan mensuel", quoi: "ce qui sort, compilé sans ressaisie" },
+    { cle: "arbitrages", nom: "Arbitrages", quoi: "comment j'ai tranché, et sur quel critère" },
   ];
 
   function rendre(hote, arg) {
     if (arg && MODES.some(function (m) { return m.cle === arg; })) mode = arg;
 
-    hote.className = "zone";
+    hote.className = "zone studio";
     O.vider(hote);
 
     var s = standardChiffres();
 
+    /* Le même en-tête que Décisions et Planning : le titre dit le pire état du
+     * mode regardé, le sélecteur vient dessous. */
     hote.appendChild(el("div.dc", {},
-      el("div.dc-tete", {},
-        el("div.dct-c", {},
-          el("h2", {}, titre(s)),
-          el("div.dct-q", {}, sousTitre(s)))),
-
-      el("div.dc-modes", {}, MODES.map(function (m) {
-        return el("button.dcm" + (mode === m.cle ? ".ici" : ""), { type: "button",
-          onclick: function () { mode = m.cle; rendre(hote); } },
-          el("span.dcm-n", {}, m.nom),
-          el("span.dcm-q", {}, m.quoi));
-      })),
+      el("header.studio-entete.dc-tete", {},
+        el("div", {},
+          el("h1", {}, titre(s)),
+          el("p.studio-intro", {}, sousTitre(s)))),
+      UI.modes(MODES, mode, function (cle) { mode = cle; rendre(hote); }, { titre: "Modes du Bilan" }),
 
       el("div.dc-corps", {},
         mode === "indicateurs" ? standard(s, hote)
@@ -344,41 +340,44 @@ window.VUE_CONSTATER = (function () {
     var autres = ind.filter(function (i) { return i !== gros; });
 
     return el("div", {},
-      el("div.st-gros" + (gros.ko ? ".ko" : gros.creux ? ".creux" : ".ok"), {},
-        el("div.stg-r", {}, gros.ko ? "L'INDICATEUR QUI DÉCROCHE  ·  1 SUR 6"
-          : gros.creux ? "L'INDICATEUR QUI NE SE CALCULE PAS  ·  1 SUR 6"
-          : "MON STANDARD  ·  1 SUR 6"),
-        el("div.stg-h", {},
-          el("span.stg-v", {}, gros.v),
-          el("span.stg-n", {}, gros.nom)),
-        el("div.stg-q", {}, gros.quoi),
+      /* Le nombre reste à l'encre : l'état se dit par le filet et le signe. */
+      el("section.sd-gros" + (gros.ko ? ".ko" : gros.creux ? ".creux" : ".ok"), {},
+        el("p.sdg-r", {},
+          el("span.sd-signe", { "aria-hidden": "true" }, gros.ko ? "● " : gros.creux ? "◐ " : "✓ "),
+          gros.ko ? "L'indicateur qui décroche · 1 sur 6"
+            : gros.creux ? "L'indicateur qui ne se calcule pas · 1 sur 6"
+            : "Mon standard · 1 sur 6"),
+        el("div.sdg-h", {},
+          el("span.sdg-v", {}, gros.v),
+          el("span.sdg-n", {}, gros.nom)),
+        el("p.sdg-q", {}, gros.quoi),
         gros.pourquoi
-          ? el("div.stg-p", {},
-              el("span", {}, "POURQUOI ÇA COMPTE"),
+          ? el("div.sdg-p", {},
+              el("span", {}, "Pourquoi ça compte"),
               el("p", {}, gros.pourquoi))
           : null,
         gros.geste
-          ? el("div.stg-g", {}, GESTE.lien(gros.geste.ou,
+          ? el("div.sdg-g", {}, GESTE.lien(gros.geste.ou,
               gros.geste.nom.replace(/\s*→\s*$/, ""), "b.or",
               { quoi: gros.quoi, cout: gros.pourquoi }))
           : null),
 
       /* Les cinq autres : lisibles, sans rien réclamer. */
-      el("div.st-cinq", {}, autres.map(function (i) {
-        return el("div.stc" + (i.creux ? ".creux" : i.ko ? ".ko" : ""), {},
-          el("span.stc-v", {}, i.v),
-          el("span.stc-n", {}, i.nom),
-          el("span.stc-q", {}, i.quoi));
+      el("section.sd-cinq", {}, autres.map(function (i) {
+        return el("div.sd-c" + (i.creux ? ".creux" : i.ko ? ".ko" : ""), {},
+          el("span.sdc-v", {}, i.v),
+          el("span.sdc-n", {}, i.ko ? el("span.sd-signe", { "aria-hidden": "true" }, "● ") : null, i.nom),
+          el("span.sdc-q", {}, i.quoi));
       })),
 
       /* L'exigence par compte et par marché : la ligne « constante y compris sur
        * les petits projets » de la grille d'évaluation. */
-      ventilation("PAR COMPTE", s.parCompte),
-      ventilation("PAR MARCHÉ", s.parMarche),
+      ventilation("Par compte", s.parCompte),
+      ventilation("Par marché", s.parMarche),
 
       s.depassements
-        ? el("div.cs-bloc", {},
-            el("div.csb-t", {}, "AU-DELÀ DU PÉRIMÈTRE VENDU"),
+        ? el("section.cs-bloc", {},
+            el("h3.csb-t", {}, "Au-delà du périmètre vendu"),
             UI.banniere("rouge", s.depassements
               + (s.depassements > 1 ? " livrables ont consommé" : " livrable a consommé")
               + " plus d'allers-retours que ce qui a été vendu — soit "
@@ -388,10 +387,10 @@ window.VUE_CONSTATER = (function () {
               GESTE.bouton("reprises", {}, "Voir qui les a demandés")))
         : null,
 
-      el("div.st-cibles", {},
-        el("button.b.nu", { type: "button", onclick: function () { cibles(hote); } },
-          "mes cibles"),
-        el("span", {}, "ce que je vise sur ces six lignes — modifiable"))
+      el("div.sd-cibles", {},
+        el("button.studio-lien", { type: "button", onclick: function () { cibles(hote); } },
+          "Mes cibles"),
+        el("span", {}, "Ce que je vise sur ces six lignes — modifiable"))
     );
   }
 
@@ -420,8 +419,8 @@ window.VUE_CONSTATER = (function () {
     var max = cles.reduce(function (n, k) {
       var r = m[k].n ? m[k].r / m[k].n : 0; return Math.max(n, r); }, 0) || 1;
 
-    return el("div.cs-bloc", {},
-      el("div.csb-t", {}, t),
+    return el("section.cs-bloc", {},
+      el("h3.csb-t", {}, t),
       el("div.cs-v", {}, cles.sort(function (a, b) {
         return (m[b].r / m[b].n) - (m[a].r / m[a].n);
       }).map(function (k) {
@@ -431,7 +430,8 @@ window.VUE_CONSTATER = (function () {
           el("span.csl-b", {}, el("i", {
             style: { width: Math.round((part / (max * 100)) * 100) + "%" } })),
           el("span.csl-c" + (part > 20 ? ".alerte" : ""), {},
-            part + " %  ·  " + m[k].r + " sur " + m[k].n));
+            part > 20 ? el("span.sd-signe", { "aria-hidden": "true" }, "● ") : null,
+            part + " % · " + m[k].r + " sur " + m[k].n));
       })));
   }
 
@@ -518,9 +518,9 @@ window.VUE_CONSTATER = (function () {
             + "pas le paragraphe du contrat.")),
 
       el("div.gl-h", {},
-        el("span.glh-a", {}, "ABSORBÉ"),
+        el("span.glh-a", {}, "Absorbé par l'agence"),
         el("span.glh-x", {}),
-        el("span.glh-f", {}, "FACTURÉ")),
+        el("span.glh-f", {}, "Facturé au client")),
 
       el("div.gl-l", {}, as.map(function (a) {
         var client = FEEDBACK.estClient(a.cle);
@@ -533,9 +533,9 @@ window.VUE_CONSTATER = (function () {
              * lit dans un grand livre. */
             UI.avatar(pe && pe.poste ? pe : { nom: a.nom, poste: client ? "client" : "interne" }, 32),
             el("div", {},
-              el("div.glrq-n", {}, a.nom, client ? UI.eti("client", "or") : UI.eti("interne", "terne")),
+              el("div.glrq-n", {}, a.nom, client ? UI.eti("Client", "or") : UI.eti("Interne", "terne")),
               el("div.glrq-p", {}, a.n + (a.n > 1 ? " retours" : " retour")
-                + "  ·  " + a.assets + (a.assets > 1 ? " livrables touchés" : " livrable touché")))),
+                + " · " + a.assets + (a.assets > 1 ? " livrables touchés" : " livrable touché")))),
 
           /* Le plateau gauche : ce que l'agence a payé. */
           el("div.glr-a", {},
@@ -556,7 +556,7 @@ window.VUE_CONSTATER = (function () {
             a.factures
               ? el("span.glr-b.fac", { style: { width: Math.round((a.factures / max) * 100) + "%" } },
                   el("b", {}, O.decimal(a.factures) + " j"))
-              : el("span.glr-rien", {}, "rien de facturé")),
+              : el("span.glr-rien", {}, "Rien de facturé")),
 
           /* Ce qui compose la ligne — les retours eux-mêmes. */
           el("div.glr-d", {}, retoursDe(a.cle).slice(0, 3).map(function (f) {
@@ -565,14 +565,14 @@ window.VUE_CONSTATER = (function () {
               el("span.glrd-d", {}, O.joli(f.quand)),
               el("span.glrd-t", {}, String(f.texte).slice(0, 78)
                 + (String(f.texte).length > 78 ? "…" : "")),
-              el("span.glrd-n", {}, (f.niveau ? "niveau " + f.niveau + "  ·  " : "")
+              el("span.glrd-n", {}, (f.niveau ? "Niveau " + f.niveau + " · " : "")
                 + i.assets + (i.assets > 1 ? " livrables" : " livrable")));
           })));
       })),
 
       ouverts
-        ? el("div.gl-g", {},
-            el("div.glg-t", {}, "DEUX ISSUES, JAMAIS TROIS"),
+        ? el("section.gl-g", {},
+            el("h3.glg-t", {}, "Deux issues, jamais trois"),
             el("p", {}, ouverts + (ouverts > 1 ? " retours ne sont ni absorbés ni facturés" : " retour n'est ni absorbé ni facturé")
               + ". Tant que ce n'est pas dit, les livrables restent suspendus et le coût reste chez nous."),
             el("div.form-actions", {},

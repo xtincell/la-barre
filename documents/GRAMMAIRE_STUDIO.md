@@ -472,3 +472,16 @@ secondaire — cinq cents boutons pleins, c'était cinq cents actions principale
 débordement venait du sélecteur, qui imposait la largeur de son plus long nom de
 dossier à toute la grille : la piste est désormais bornée. L'écran tombe à
 **3 234 px**. Mesure à 1280 et 375 px : à zéro, hors données (« DELYS »).
+
+**Passe 10a — Bilan : indicateurs et reprises (28/09).** La passe 10 est coupée en
+quatre (indicateurs et reprises, qui partagent leur module ; évaluation ; bilan
+mensuel ; arbitrages). L'en-tête du Bilan prend celui des Décisions et du Planning,
+`UI.modes` à la place des cinq boutons en capitales. L'indicateur qui décroche garde
+sa place — un grand, cinq en ligne — mais son chiffre passe à l'encre : l'état se dit
+par le filet et le signe (● décroche, ◐ ne se calcule pas, ✓ tient). Les libellés
+écrits en capitales dans le code (« L'INDICATEUR QUI DÉCROCHE · 1 SUR 6 »,
+« POURQUOI ÇA COMPTE », « PAR COMPTE », « AU-DELÀ DU PÉRIMÈTRE VENDU ») passent en
+casse de phrase. Le grand livre des reprises garde ses barres colorées — elles sont
+la donnée — mais le nombre sort de la barre : écrit dessus, il tombait à **1,55:1**.
+Collision évitée : `.stc` est la fiche de structure de deck de la présentation, d'où
+le préfixe `sd-`. Mesure à 1280 et 375 px : à zéro, hors données (nom de compte).
