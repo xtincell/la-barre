@@ -260,6 +260,25 @@ button.critere-l { width: 100%; text-align: left; background: none; border-left:
 .rc-v .v-cout.alerte { color: var(--bloquant); }
 .rc-v.pasamoi { border-style: dashed; }
 
+/* La ligne d'un projet dans sa marque ou sa campagne. Elle s'appelait `.dlp`,
+ * comme les carrés d'avancement du navigateur : les deux règles se
+ * marchaient dessus (10 px de large d'un côté, 100 % de l'autre). Un flux qui
+ * passe à la ligne : une grille fixe coinçait le nom à zéro quand le rail
+ * réduisait la place. */
+.mpl-liste { display: grid; border-top: 1px solid var(--trait); }
+.mpl { --ton: transparent; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; width: 100%;
+  min-height: 48px; padding: 12px 14px 12px 11px; border-left: 3px solid var(--ton); border-bottom: 1px solid var(--trait);
+  color: var(--clair); text-decoration: none; }
+.mpl.f-alerte { --ton: var(--bloquant); }
+.mpl:hover { background: var(--surface-4); }
+.mpl:hover .mpl-n { color: var(--studio-bleu); }
+.mpl-r { flex: 0 0 auto; font-size: 11px; color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+.mpl-n { flex: 1 1 14rem; min-width: 0; font: 550 14px/1.4 var(--affichage); overflow-wrap: anywhere; }
+.mpl-t, .mpl-q { flex: 0 0 auto; font-size: 12px; color: var(--clair-terne); }
+.mpl-signe { color: var(--ton); }
+.mpl.clos .mpl-n { font-weight: 500; color: var(--clair-doux); }
+.mpl.clos .mpl-signe { color: var(--clair-terne); }
+
 /* Le graphe des dépendances : une boîte pâle sous le dessin. */
 .graphe-boite { background: var(--surface-4); border: 1px solid var(--trait); border-radius: 8px; padding: 10px; margin-bottom: 12px; overflow-x: auto; }
 
@@ -1689,4 +1708,40 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
   .mql-r { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 12px 16px 12px 13px; }
   .mql-o { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
   .mql-s { display: none; }
+}
+
+/* ═════════════════════ Passe 7b · La marque : sa page ═════════════════════ */
+/* Le rythme d'abord (les campagnes), puis ce qui n'est rattaché à rien, puis
+ * le socle replié. Une campagne est une section ; son régime est une
+ * étiquette, pas un état. */
+.mqp-vie { margin-top: 6px; font-size: 13px; color: var(--clair-terne); max-width: 65ch; line-height: 1.6; }
+.mqp-cmps { display: grid; gap: 16px; }
+.mqp-cmp, .mqp-vide { background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; padding: 20px 22px 8px; }
+.mqp-orph { margin-top: 16px; }
+.mqp-t { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; }
+.mqp-t h2 { font: 550 21px/1.3 var(--affichage); letter-spacing: -.02em; color: var(--clair); min-width: 0; overflow-wrap: anywhere; }
+.mqp-t h2 a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-decoration: none; }
+.mqp-t h2 a:hover { color: var(--studio-bleu); }
+.mqp-r, .mqp-i { font-size: 11px; color: var(--clair-terne); }
+.mqp-i { --ton: var(--arbitrage); }
+.mqp-signe { color: var(--ton); }
+.mqp-q { margin: 6px 0 14px; font-size: 13px; color: var(--clair-terne); max-width: 65ch; line-height: 1.6; }
+.mqp-cmp .mpl-liste { margin: 0 -22px; }
+.mqp-cmp .mpl:last-child { border-bottom: 0; }
+.mqp-cmp .mpl { padding-left: 19px; padding-right: 22px; }
+.mqp-vide { padding-bottom: 20px; border-left: 3px solid var(--ton); }
+.mqp-vide h2 { font: 550 21px/1.3 var(--affichage); color: var(--clair); }
+.mqp-vide p { margin-top: 8px; font-size: 13px; color: var(--clair-terne); max-width: 65ch; line-height: 1.6; }
+.mqp-socle { margin-top: 24px; }
+.mqp-socle-t { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; min-height: 48px; cursor: pointer;
+  list-style: none; font: 550 15px var(--affichage); color: var(--clair); }
+.mqp-socle-t::-webkit-details-marker { display: none; }
+.mqp-socle-t::before { content: "›"; color: var(--clair-terne); font-size: 16px; width: 12px; transition: transform var(--tr-rapide); }
+.mqp-socle[open] > .mqp-socle-t { margin-bottom: 12px; }
+.mqp-socle[open] > .mqp-socle-t::before { transform: rotate(90deg); }
+.mqp-socle-t span { font: 400 12px var(--affichage); color: var(--clair-terne); }
+@media (max-width: 700px) {
+  .mqp-cmp, .mqp-vide { padding: 16px 16px 6px; }
+  .mqp-cmp .mpl-liste { margin: 0 -16px; }
+  .mqp-cmp .mpl { padding-left: 13px; padding-right: 16px; }
 }

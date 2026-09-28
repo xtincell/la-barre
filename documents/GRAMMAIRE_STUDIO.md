@@ -371,3 +371,18 @@ comptait 22 marques d'historique). La page tombe de **3 028 à 1 170 px**. Colli
 évitée : `.mq-r` et `.mq-p` appartiennent déjà au bloc marque de `marque.js`, d'où le
 préfixe `mql-`. Mesure à 1280 et 375 px : à zéro, hors données (noms de marque en
 capitales).
+
+**Passe 7b — La marque : sa page (28/09).** L'en-tête reprend celui du dossier
+(pastille de marque, fil « Vos projets · Vos marques », le compte de ce qui tourne) ;
+« Le portefeuille » devient un geste texte, faute d'action principale sur cette page.
+Chaque campagne est une section blanche : son titre en titre de section (zone de
+44 px), son régime en étiquette grise — « Temps fort », « Le cycle qui tourne » —,
+et le filet vert du cycle disparaît, parce qu'un régime n'est pas un état ; le
+rattachement inféré garde le signe de l'attente, c'est un contreseing dû. Les
+projets sans campagne passent sous les campagnes, le socle replié en dernier. La
+ligne de projet s'appelait `.dlp`, comme les carrés d'avancement du navigateur
+(10 px de large d'un côté, 100 % de l'autre) : elle devient `.mpl`, écrite au §2
+parce que la page de campagne la partage ; ses blocages portent le filet et le
+signe, le texte reste gris. Corrigé en passant : « Les 1 projets sont clos », « 1
+projets tournent » (`CAMPAGNE.etat`). Mesure à 1280 et 375 px sur Bonnet Rouge,
+Beignet Paradise et NSIA (sans campagne) : à zéro.

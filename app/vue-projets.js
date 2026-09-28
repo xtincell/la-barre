@@ -427,7 +427,7 @@ window.VUE_PROJETS = (function () {
   /* La marche : une marque, son rythme, ses campagnes, ses projets. */
   function marcheDeMarque(hote, marqueId) {
     var m = DEPOT.trouve("marques", marqueId);
-    hote.className = "zone";
+    hote.className = "zone studio";
     O.vider(hote);
     if (!m) {
       hote.appendChild(el("p.rien", {}, "Marque inconnue — ",
@@ -442,42 +442,55 @@ window.VUE_PROJETS = (function () {
     var sansCampagne = ps.filter(function (p) { return !p.campagneId; });
     var vie = window.VIE_MARQUE ? VIE_MARQUE.etat(marqueId) : null;
 
-    hote.appendChild(el("div.dl", {},
-      el("div.dl-h", {},
-        el("div", {},
-          el("p.dl-fil", {}, el("a", { href: "#/projets" }, "Les dossiers"), " / ", m.nom),
-          el("h2.dl-t", {}, m.nom),
-          el("p.dl-s", {}, vie ? vie.quoi : "")),
-        el("a.b", { href: "#/referentiel/marques" }, "Le portefeuille →")),
+    var vivants = ps.filter(function (p) { return !(window.CLOTURE && CLOTURE.est(p)); }).length;
 
-      cs.length
-        ? el("div", {}, cs.map(function (c) { return blocCampagne(c); }))
-        : el("p.rien", {}, "Aucune campagne, aucun cycle. Une marque est pourtant "
-            + "toujours en campagne : tant que rien n'est ouvert ici, son rythme "
-            + "n'existe que dans la tête de ceux qui le tiennent."),
+    hote.appendChild(el("header.studio-entete.pj-entete", {},
+      el("div.pj-id", {},
+        window.MARQUE ? MARQUE.pastille({ sections: { identite: { marqueIds: [marqueId] } } }, 44) : null,
+        el("div.pj-id-t", {},
+          el("p.studio-date", {}, el("a.mql-fil", { href: "#/projets" }, "Vos projets"), " · ",
+            el("a.mql-fil", { href: "#/projets/marques" }, "Vos marques")),
+          el("h1", {}, m.nom),
+          el("p.studio-intro", {}, [
+            vivants ? vivants + (vivants > 1 ? " projets ouverts" : " projet ouvert") : "Rien d'ouvert",
+            ps.length + " au total",
+            cs.length ? cs.length + (cs.length > 1 ? " campagnes" : " campagne") : "aucune campagne",
+          ].join(" · ")),
+          vie ? el("p.mqp-vie", {}, vie.quoi) : null)),
+      el("a.studio-lien", { href: "#/referentiel/marques" }, "Le portefeuille →")));
 
-      /* Le dossier de marque au complet : les quatre piliers, le brief de
-       * plateforme, les décideurs, le catalogue, la vie. Il était dans
-       * « La maison » ; il est ici, sous le rythme, parce que c'est ici qu'on
-       * ouvre une marque pour travailler. */
-      window.VUE_VAULT && VUE_VAULT.dossierDeMarque
-        ? el("details.dl-socle", {},
-            el("summary", {},
-              el("b", {}, "Le socle, le catalogue et la vie"),
-              el("span.dl-clos-q", {}, "ce qui dure — identité, décideurs, packs, histoire")),
-            VUE_VAULT.dossierDeMarque(marqueId, hote))
-        : null,
+    hote.appendChild(cs.length
+      ? el("div.mqp-cmps", {}, cs.map(function (c) { return blocCampagne(c); }))
+      : el("section.mqp-vide.f-attente", {},
+          el("h2", {}, el("span.mqp-signe", { "aria-hidden": "true" }, "◐ "), "Aucune campagne, aucun cycle"),
+          el("p", {}, "Une marque est pourtant toujours en campagne : tant que rien n'est ouvert "
+            + "ici, son rythme n'existe que dans la tête de ceux qui le tiennent.")));
 
-      sansCampagne.length
-        ? el("div.dl-orph", {},
-            el("div.dlo-t", {}, sansCampagne.length
-              + (sansCampagne.length > 1 ? " projets ne sont rattachés" : " projet n'est rattaché")
-              + " à aucun moment de la vie de la marque"),
-            el("p.dlo-q", {}, "Ce n'est pas une faute : personne n'a encore dit "
-              + "à quelle campagne ils appartiennent."),
-            el("div.dl-liste", {}, sansCampagne.map(ligneProjetCourte)))
-        : null
-    ));
+    /* Ce qui n'est rattaché à aucun moment de la vie de la marque, sous les
+     * campagnes : ce n'est pas une faute, c'est un rattachement que personne
+     * n'a encore dit. */
+    if (sansCampagne.length) {
+      hote.appendChild(el("section.mqp-cmp.mqp-orph", {},
+        el("div.mqp-t", {},
+          el("h2", {}, sansCampagne.length
+            + (sansCampagne.length > 1 ? " projets ne sont rattachés" : " projet n'est rattaché")
+            + " à aucune campagne")),
+        el("p.mqp-q", {}, "Ce n'est pas une faute : personne n'a encore dit à quel moment "
+          + "de la vie de la marque ils appartiennent."),
+        el("div.mpl-liste", {}, sansCampagne.map(ligneProjetCourte))));
+    }
+
+    /* Le dossier de marque au complet : les quatre piliers, le brief de
+     * plateforme, les décideurs, le catalogue, la vie. Il était dans
+     * « La maison » ; il est ici, sous le rythme, parce que c'est ici qu'on
+     * ouvre une marque pour travailler. Replié : on ouvre une marque pour voir
+     * ce qui tourne avant de voir ce qui dure. */
+    if (window.VUE_VAULT && VUE_VAULT.dossierDeMarque) {
+      hote.appendChild(el("details.mqp-socle", {},
+        el("summary.mqp-socle-t", {}, "Le socle, le catalogue et la vie",
+          el("span", {}, "Ce qui dure : identité, décideurs, packs, histoire")),
+        VUE_VAULT.dossierDeMarque(marqueId, hote)));
+    }
   }
 
   /* ————————————————————— La campagne —————————————————————
@@ -629,16 +642,21 @@ window.VUE_PROJETS = (function () {
     location.hash = "#/projets/" + p.id;
   }
 
+  /* Une campagne dans la vie de sa marque : une section, son régime en
+   * étiquette, son état en une phrase, ses projets en lignes. Le régime n'est
+   * pas un état : il ne porte ni filet ni couleur. L'inférence du
+   * rattachement, si — c'est une attente de contreseing. */
   function blocCampagne(c) {
     var ps = window.CAMPAGNE ? CAMPAGNE.projets(c.id) : [];
     var e = window.CAMPAGNE ? CAMPAGNE.etat(c) : null;
-    return el("div.dl-cmp" + (c.regime === "always-on" ? ".continu" : ""), {},
-      el("div.dlc-t", {},
-        el("b", {}, el("a", { href: "#/projets/" + c.id }, c.nom)),
-        el("span.dlc-r", {}, c.regime === "always-on" ? "le cycle qui tourne" : "temps fort"),
-        c.infere ? el("span.dlc-i", {}, "rattachement inféré") : null),
-      e ? el("p.dlc-q", {}, e.quoi) : null,
-      ps.length ? el("div.dl-liste", {}, ps.map(ligneProjetCourte)) : null);
+    return el("section.mqp-cmp", {},
+      el("div.mqp-t", {},
+        el("h2", {}, el("a", { href: "#/projets/" + c.id }, c.nom)),
+        el("span.mqp-r", {}, c.regime === "always-on" ? "Le cycle qui tourne" : "Temps fort"),
+        c.infere ? el("span.mqp-i", {}, el("span.mqp-signe", { "aria-hidden": "true" }, "◐ "),
+          "Rattachement inféré") : null),
+      e ? el("p.mqp-q", {}, e.quoi) : null,
+      ps.length ? el("div.mpl-liste", {}, ps.map(ligneProjetCourte)) : null);
   }
 
   /* La ligne d'un projet dans sa campagne, avec ce qu'il attend de ses frères.
@@ -674,13 +692,16 @@ window.VUE_PROJETS = (function () {
     var durs = blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; }).length;
     var clos = window.CLOTURE && CLOTURE.est(p);
     var n = (p.livrables || []).filter(function (l) { return !l.annule; }).length;
-    return el("a.dlp" + (clos ? ".clos" : durs ? ".dur" : ""), { href: "#/projets/" + p.id },
-      el("span.dlp-r", {}, p.ref),
-      el("span.dlp-n", {}, p.nom),
-      el("span.dlp-t", {}, window.NATURE ? NATURE.nom(p) : ""),
-      el("span.dlp-q", {}, clos ? "clos"
-        : durs ? durs + (durs > 1 ? " blocages" : " blocage")
-        : n ? n + (n > 1 ? " livrables" : " livrable") : "rien encore"));
+    /* L'état par la forme : le filet et le signe disent ce qui bloque, le
+     * texte reste gris. Un dossier clos pâlit sans rien réclamer. */
+    return el("a.mpl" + (clos ? ".clos" : durs ? ".f-alerte" : ""), { href: "#/projets/" + p.id },
+      el("span.mpl-r", {}, p.ref),
+      el("span.mpl-n", {}, p.nom),
+      el("span.mpl-t", {}, window.NATURE ? NATURE.nom(p) : ""),
+      el("span.mpl-q", {}, clos ? [el("span.mpl-signe", { "aria-hidden": "true" }, "✓ "), "Clos"]
+        : durs ? [el("span.mpl-signe", { "aria-hidden": "true" }, "● "),
+            durs + (durs > 1 ? " blocages" : " blocage")]
+        : n ? n + (n > 1 ? " livrables" : " livrable") : "Rien encore"));
   }
 
   /* Les dossiers clos, repliés. Le compte dit aussi combien n'ont pas de bilan :

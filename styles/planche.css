@@ -2509,43 +2509,6 @@ blockquote, .message, .verbatim {
   margin: 0 0 .2rem; }
 .dl-fil a { color: var(--clair-terne); }
 
-.dl-cmp { margin-top: 1.1rem; border-left: 2px solid var(--trait); padding-left: .9rem; }
-.dl-cmp.continu { border-left-color: var(--vert); }
-.dlc-t { display: flex; flex-wrap: wrap; align-items: baseline; gap: .55rem; }
-.dlc-t b { font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); }
-.dlc-r, .dlc-i { font-size: var(--t-eti); line-height: var(--lh-eti);
-  letter-spacing: var(--ls-eti); text-transform: uppercase; color: var(--clair-terne); }
-.dlc-i { color: var(--attente); }
-.dlc-q { margin: .25rem 0 .5rem; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-doux); max-width: var(--mesure); }
-
-/* Une grille à quatre colonnes fixes se coince dès que le rail réduit la
-   place : la colonne du nom tombait à zéro et la ligne débordait de 432 px.
-   Un flux qui passe à la ligne tient à toutes les largeurs sans point de
-   rupture à deviner. */
-.dlp { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .7rem;
-  /* `.dl-liste` centre ses items : sans largeur pleine, la ligne se réduit à
-     son contenu le plus court et tout le reste déborde. */
-  width: 100%;
-  padding: .5rem 0; border-top: 1px solid var(--trait);
-  text-decoration: none; color: inherit; min-height: var(--cible); }
-.dlp-n { flex: 1 1 14rem; min-width: 0; }
-.dlp-r { flex: 0 0 auto; }
-.dlp-t, .dlp-q { flex: 0 0 auto; }
-.dlp:hover { background: var(--surface-2); }
-.dlp-r { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-terne); font-variant-numeric: tabular-nums; }
-.dlp-n { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair);
-  overflow-wrap: anywhere; }
-.dlp-t, .dlp-q { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-.dlp.dur .dlp-q { color: var(--bloquant-txt); }
-.dlp.clos .dlp-n { color: var(--clair-doux); }
-
-.dl-orph { margin-top: 1.6rem; border-top: 1px solid var(--trait); padding-top: .9rem; }
-.dlo-t { font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); }
-.dlo-q { margin: .2rem 0 .5rem; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-terne); max-width: var(--mesure); }
-
 /* ————— Le chiffrage : jours par poste ————— */
 .chf-l { display: grid; gap: .3rem; }
 .chf-r { display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem auto;
@@ -2591,7 +2554,7 @@ blockquote, .message, .verbatim {
 }
 /* Le chaînage se déclare là où l'on voit les frères ensemble. */
 .cmp-pr { border-top: 1px solid var(--trait); }
-.cmp-pr .dlp { border-top: 0; }
+.cmp-pr .mpl { border-top: 0; }
 .cmp-ch { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
   padding: 0 0 .5rem .3rem; }
 /* 22 rem font 352 px : avec les gouttières, le sélecteur poussait la page
@@ -2646,12 +2609,3 @@ button.st.nu:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
 .inkr-g { flex: 0 0 auto; margin-left: auto; display: flex; gap: .3rem; }
 .inkr-g .b { min-height: var(--cible); display: inline-flex; align-items: center; }
 @media (max-width: 700px) { .inkr-g { margin-left: 0; width: 100%; } }
-/* Le socle sous le rythme : replié, parce qu'on ouvre une marque pour voir
-   ce qui tourne avant de voir ce qui dure. */
-.dl-socle { margin-top: 1.6rem; border-top: 1px solid var(--trait); padding-top: .9rem; }
-.dl-socle > summary { cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline;
-  gap: .6rem; min-height: var(--cible); padding: .4rem 0;
-  font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux); }
-.dl-socle > summary b { color: var(--clair); }
-.dl-socle > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.dl-socle[open] > summary { margin-bottom: .7rem; }

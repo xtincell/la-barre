@@ -73,17 +73,19 @@ window.CAMPAGNE = (function () {
       var avecBilan = !!((c.bilan || "").trim());
       return { cle: "close", nom: "tous les projets clos", ton: avecBilan ? "terne" : "attente",
         quoi: avecBilan ? "Le bilan est au dossier."
-          : "Les " + n + " projets sont clos et la campagne n'a pas de bilan : "
-            + "la suivante repartira sans son diagnostic." };
+          : (n > 1 ? "Les " + n + " projets sont clos" : "Son seul projet est clos")
+            + " et la campagne n'a pas de bilan : la suivante repartira sans son diagnostic." };
     }
     /* Ce qui retarde le reste : la première arête du chaînage qui ne tient pas. */
     var bloquants = ps.filter(function (p) {
       return (p.attend || []).length && !(window.CLOTURE && CLOTURE.est(p)); });
-    return { cle: "encours", nom: (n - clos) + " projets en cours", ton: "attente",
+    var vifs = n - clos;
+    return { cle: "encours", nom: vifs + (vifs > 1 ? " projets en cours" : " projet en cours"), ton: "attente",
       quoi: bloquants.length
         ? bloquants.length + (bloquants.length > 1 ? " projets attendent" : " projet attend")
           + " un amont qui n'est pas livré."
-        : n - clos + " projets tournent, aucun n'en attend un autre." };
+        : vifs > 1 ? vifs + " projets tournent, aucun n'en attend un autre."
+        : "Un projet tourne, et il n'attend personne." };
   }
 
   /* ————————————————————— Composer ————————————————————— */
