@@ -413,22 +413,6 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 /* « Le nombre d'étages de validation détermine la structure, davantage que la
  * nature du produit. » Le bloc affiche les deux côte à côte : ce que la salle
  * appelle, et ce que le deck est. L'écart entre les deux est l'information. */
-.salle { display: grid; gap: .4rem; padding: .7rem .85rem; margin: .9rem 0;
-  background: var(--surface-3); border-left: 3px solid var(--trait-clair); justify-items: start; }
-.salle.accord { border-left-color: var(--succes); }
-.salle.ecart { border-left-color: var(--arbitrage); }
-.salle.sans { border-left-color: var(--bloquant); }
-
-.sal-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; width: 100%; }
-.sal-c { display: grid; gap: .1rem; }
-.sal-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; color: var(--clair-terne); }
-.sal-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
-.sal-n.sans { color: var(--bloquant-txt); font-family: var(--ecrit); font-style: italic; letter-spacing: 0; }
-.sal-x { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-doux); }
-.sal-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--clair-terne); margin: 0; max-width: var(--mesure); }
-.sal-i { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
-  color: var(--arbitrage); margin: 0; max-width: var(--mesure); }
 
 .salle-lue { display: grid; gap: .1rem; padding: .55rem .7rem; margin-bottom: .7rem; background: var(--surface-3); }
 
@@ -462,7 +446,7 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
 .autref-w { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--or); }
 .autref-q { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
 
-@media print { .salle button, .autref { display: none; } }
+@media print { .autref { display: none; } }
 
 /* ————————————————————— La doctrine ————————————————————— */
 
@@ -628,8 +612,8 @@ blockquote.verbatim { font-family: var(--lecture); font-size: var(--t-lire); let
  * de droite ni les grilles de recevabilité, qui sont du chrome d'application
  * et n'ont rien à faire sur le papier qu'on tend à quelqu'un. */
 @media print {
-  .panneau-lat, .pr-lat, .salle, .dc-modes, .pr-modes, .liv-filtres,
-  .prd-dette, .prd-manque, .prp-gestes, .pr-pages, .pr-deux,
+  .panneau-lat, .pr-lat, .dc-modes, .pr-modes, .liv-filtres,
+  .prd-dette, .prd-manque,
   .nav3, .fil, .chapeau { display: none !important; }
 
   /* Le dossier prend toute la feuille, et chaque document commence sa page. */

@@ -1401,3 +1401,58 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
   .plv-modes, .plvc.vide { display: none !important; }
   .plvc, .plv-f { break-inside: avoid; }
 }
+
+/* ═════════════════════ Passe 5d · Dossier : la présentation ═════════════════════ */
+
+.pr { display: grid; gap: 16px; }
+/* La salle : qui décide, et la structure de deck qu'elle appelle. */
+.salle { --ton: var(--trait-clair); display: grid; gap: 10px; padding: 16px 18px; margin: 0; background: var(--surface-1);
+  border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 10px; }
+.salle.accord { --ton: var(--succes); }
+.salle.ecart { --ton: var(--arbitrage); }
+.salle.sans { --ton: var(--bloquant); }
+.sal-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; width: 100%; }
+.sal-c { display: grid; gap: 2px; }
+.sal-t { font-size: 11px; color: var(--clair-terne); }
+.sal-n { font: 550 15px var(--affichage); color: var(--clair); }
+.sal-n.sans { color: var(--clair-terne); font-weight: 400; }
+.sal-x { font-size: 12px; color: var(--clair-terne); }
+.sal-q { font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
+.sal-i { font-size: 12px; line-height: 1.5; color: var(--clair); }
+.sal-i::before { content: "◐ "; color: var(--arbitrage); }
+.salle > .b.nu { justify-self: start; margin-left: -8px; }
+
+/* Le montage client n'est pas le dossier amputé : c'est un choix, et il doit se
+ * voir — à gauche ce qui part, à droite ce qu'on retire et pourquoi. */
+.pr-deux { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.prd-c { display: grid; gap: 10px; align-content: start; padding: 16px 18px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; min-width: 0; }
+.prd-t { display: flex; align-items: center; justify-content: space-between; gap: 10px; font: 550 15px var(--affichage); color: var(--clair); }
+.prd-t span { font: 500 12px var(--affichage); color: var(--clair-terne); background: var(--surface-3); border-radius: 5px; padding: 3px 7px; }
+.prd-c.retire { background: var(--surface-4); }
+.prd-x { font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
+.pr-pages { display: grid; gap: 6px; }
+.pr-p { display: grid; grid-template-columns: 2rem minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 12px;
+  background: var(--surface-4); border-radius: 6px; }
+.pr-p.dette { box-shadow: inset 3px 0 0 var(--bloquant); }
+.prp-rang { font: 550 15px var(--affichage); color: var(--clair-terne); text-align: center; font-variant-numeric: tabular-nums; }
+.prp-corps { min-width: 0; display: grid; gap: 4px; }
+.prp-tete { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.prp-type { font: 550 14px var(--affichage); color: var(--clair); }
+.prp-tire { font-size: 12px; color: var(--clair-terne); }
+.prp-l { font-size: 13px; line-height: 1.5; color: var(--clair); }
+.prp-vide { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--clair-terne); }
+.prp-grille { display: flex; gap: 6px; flex-wrap: wrap; }
+.prp-c { width: 84px; }
+.prp-c span { display: block; font-size: 11px; color: var(--clair-terne); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prp-c .vignette.v-case { height: 54px; }
+.prp-plus { display: grid; place-items: center; width: 44px; height: 54px; border: 1px dashed var(--trait-clair); border-radius: 4px;
+  background: none; cursor: pointer; color: var(--clair-terne); font: 550 16px var(--affichage); }
+.prp-gestes { display: flex; gap: 0; }
+.prp-gestes .b { min-width: 32px; justify-content: center; }
+.pr-ret { display: grid; }
+.prr { display: grid; gap: 2px; padding: 10px 0; border-top: 1px solid var(--trait); }
+.prr-q { font: 550 14px var(--affichage); color: var(--clair); }
+.prr-q::first-letter { text-transform: uppercase; }
+.prr-d { font-size: 12px; color: var(--clair-terne); }
+.prr-p { font-size: 12px; line-height: 1.5; color: var(--clair-terne); }
+@media print { .prp-gestes, .pr-pages, .pr-deux { display: none !important; } }

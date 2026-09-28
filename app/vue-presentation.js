@@ -44,7 +44,7 @@ window.VUE_PRESENTATION = (function () {
        * ne dit pas, et qu'on puisse le défendre si on le demande. */
       lecture === "dossier" ? dossier(p) : el("div.pr-deux", {},
         el("div.prd-c", {},
-          el("div.prd-t", {}, "CE QUI PART CHEZ LE CLIENT",
+          el("div.prd-t", {}, "Ce qui part chez le client",
             el("span", {}, d.pages.length + (d.pages.length > 1 ? " pages" : " page"))),
           pages(p, d, rafraichir)),
         registreRetire(p))
@@ -112,7 +112,7 @@ window.VUE_PRESENTATION = (function () {
       return b.type !== "infere-non-contresigne"; });
     if (blocs.length) {
       out.push({ quoi: blocs.length + (blocs.length > 1 ? " blocages ouverts" : " blocage ouvert"),
-        detail: blocs.map(function (b) { return b.quoi; }).slice(0, 2).join("  ·  "),
+        detail: blocs.map(function (b) { return b.quoi; }).slice(0, 2).join(" · "),
         pourquoi: "ce sont nos manques, pas les siens. Ils se règlent avant la "
           + "séance, ou ils se disent à l'oral — jamais sur une planche." });
     }
@@ -126,7 +126,7 @@ window.VUE_PRESENTATION = (function () {
     }
 
     return el("div.prd-c.retire", {},
-      el("div.prd-t", {}, "CE QUI EST RETIRÉ",
+      el("div.prd-t", {}, "Ce qui est retiré",
         el("span", {}, out.length + (out.length > 1 ? " registres" : " registre"))),
       out.length
         ? el("div.pr-ret", {}, out.map(function (x) {
@@ -158,7 +158,7 @@ window.VUE_PRESENTATION = (function () {
       controles, null,
       [
         { nom: "Présenter", fort: true, quand: function () { presenter(p, d, rafraichir); } },
-        { nom: lecture === "dossier" ? "Revenir au montage" : "Lire le dossier", fort: lecture !== "dossier",
+        { nom: lecture === "dossier" ? "Revenir au montage" : "Lire le dossier", fort: false,
           quand: function () { lecture = lecture === "dossier" ? "montage" : "dossier"; rafraichir(); } },
         { nom: "Choisir la structure", quand: function () { choisirStructure(p, d, rafraichir); } },
         { nom: "Ajouter une page", quand: function () { ajouterPage(p, d, rafraichir); } },
@@ -196,7 +196,7 @@ window.VUE_PRESENTATION = (function () {
         el("div.prd-s", {}, [p.ref,
           (p.sections.identite || {}).client,
           st ? st.nom : "montage libre",
-          O.joli(new Date().toISOString())].filter(Boolean).join("  ·  ")),
+          O.joli(new Date().toISOString())].filter(Boolean).join(" · ")),
         el("p.prd-q", {}, "Compilé à l'ouverture. Chaque document cite l'état du jour "
           + "des sections dont il descend — il ne fige rien.")),
 
@@ -214,7 +214,7 @@ window.VUE_PRESENTATION = (function () {
         if (!c) {
           return el("section.prd-manque", {},
             el("span.prdm-t", {}, t.nom),
-            el("span.prdm-q", {}, "la source est vide — cette page ne montrerait rien"));
+            el("span.prdm-q", {}, "La source est vide — cette page ne montrerait rien."));
         }
         return pageComposee(p, pg, c, t);
       })));
@@ -305,14 +305,14 @@ window.VUE_PRESENTATION = (function () {
     return el("div.salle" + (st ? (accord ? ".accord" : ".ecart") : ".sans"), {},
       el("div.sal-g", {},
         el("div.sal-c", {},
-          el("span.sal-t", {}, "QUI DÉCIDE DANS LA SALLE"),
-          el("span.sal-n", {}, l.salle ? l.salle.nom : "salle non lisible"),
+          el("span.sal-t", {}, "Qui décide dans la salle"),
+          el("span.sal-n", {}, l.salle ? l.salle.nom : "Salle non lisible"),
           l.salle && l.salle.quoi ? el("span.sal-x", {}, l.salle.quoi) : null),
         el("div.sal-c", {},
-          el("span.sal-t", {}, "STRUCTURE DU DECK"),
-          el("span.sal-n" + (st ? "" : ".sans"), {}, st ? st.nom : "non choisie"),
+          el("span.sal-t", {}, "Structure du deck"),
+          el("span.sal-n" + (st ? "" : ".sans"), {}, st ? st.nom : "Non choisie"),
           prop && !accord
-            ? el("span.sal-x", {}, "la salle appelle plutôt « " + prop.nom + " »")
+            ? el("span.sal-x", {}, "La salle appelle plutôt « " + prop.nom + " »")
             : st ? el("span.sal-x", {}, st.quoi) : null)),
       el("p.sal-q", {}, l.pourquoi
         + (l.sur ? "" : "  Cette lecture est une supposition : si elle est fausse, la structure l'est aussi.")),
@@ -338,14 +338,14 @@ window.VUE_PRESENTATION = (function () {
         { type: "button" },
         el("div.stc-t", {},
           el("span.stc-n", {}, st.nom),
-          propose ? el("span.stc-p", {}, "la salle l'appelle") : null),
+          propose ? el("span.stc-p", {}, "La salle l'appelle") : null),
         el("p.stc-q", {}, st.quoi),
         el("ol.stc-s", {}, st.squelette.map(function (t) {
           var def = PRESENTATION.TYPES[t];
           return el("li", {}, def ? def.nom : t);
         })),
-        el("p.stc-b", {}, el("span.stc-e", {}, "LE BRIEF QUI VA AVEC  "), st.brief),
-        el("p.stc-g", {}, el("span.stc-e", {}, "À SAVOIR  "), st.garde));
+        el("p.stc-b", {}, el("span.stc-e", {}, "Le brief qui va avec "), st.brief),
+        el("p.stc-g", {}, el("span.stc-e", {}, "À savoir "), st.garde));
       b.addEventListener("click", function () {
         choix = st.cle;
         [].forEach.call(b.parentNode.children, function (x) { x.classList.remove("ici"); });
@@ -359,8 +359,8 @@ window.VUE_PRESENTATION = (function () {
         + "choisir le concept : elle décide de l'ordre dans lequel le client rencontre "
         + "l'idée, donc de la façon dont il la juge. Une seule par deck — les hybrides diluent."),
       el("div.salle-lue", {},
-        el("span.sal-t", {}, "LA SALLE"),
-        el("span.sal-n", {}, l.salle ? l.salle.nom : "non lisible"),
+        el("span.sal-t", {}, "La salle"),
+        el("span.sal-n", {}, l.salle ? l.salle.nom : "Non lisible"),
         el("p.sal-q", {}, l.pourquoi)),
       el("div.stc-l", {}, cartes),
       autresFormes(),
@@ -401,9 +401,9 @@ window.VUE_PRESENTATION = (function () {
       UI.banniere("", "Passer en « " + def.nom + " » : " + def.quoi
         + ". Le client reçoit à minima l'idée et deux ou trois KV — au-delà, on montre du travail qu'on n'a pas encore vendu."),
       el("div.stats", {},
-        UI.stat("AUJOURD'HUI", String(d.pages.length), d.pages.length > 1 ? "pages" : "page", ""),
-        UI.stat("APRÈS", String(neuves.length), neuves.length > 1 ? "pages" : "page", ""),
-        UI.stat("ÉCART", (gain > 0 ? "+" : "") + gain,
+        UI.stat("Aujourd'hui", String(d.pages.length), d.pages.length > 1 ? "pages" : "page", ""),
+        UI.stat("Après", String(neuves.length), neuves.length > 1 ? "pages" : "page", ""),
+        UI.stat("Écart", (gain > 0 ? "+" : "") + gain,
           gain === 0 ? "rien ne change" : gain > 0 ? "pages gagnées" : "pages perdues",
           gain < 0 ? "alerte" : "")
       ),

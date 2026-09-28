@@ -60,8 +60,6 @@
 
 /* ————————————————————— La présentation ————————————————————— */
 
-.pr { display: grid; gap: 1rem; }
-
 .pr-apres { background: var(--nuit-carte); padding: .7rem .8rem; display: grid; gap: .5rem; }
 .pra-tete { display: flex; justify-content: space-between; align-items: flex-start; gap: .6rem; }
 .pra-q { display: block; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .1rem; }
@@ -71,30 +69,8 @@
   border-bottom: 1px solid var(--trait); padding: .25rem 0; }
 .prar-c { color: var(--clair-terne); font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); flex: 0 0 auto; }
 
-.pr-pages { display: grid; gap: .4rem; }
-.pr-p {
- display: grid; grid-template-columns: 2rem 1fr auto; gap: .6rem; align-items: start;
- background: var(--nuit-carte); padding: .55rem .6rem;
-}
-.pr-p.dette { border-left: 2px solid var(--alerte); }
 /* Le rang portait la couleur d'un filet : 1,57:1, illisible. Un ordre de
  * passage n'est pas une décoration — il se lit. */
-.prp-rang { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair-terne); text-align: center; }
-.prp-corps { min-width: 0; display: grid; gap: .35rem; }
-.prp-tete { display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
-.prp-type { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: .03em; }
-.prp-tire { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.prp-l { font-size: var(--t-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); line-height: 1.4; }
-.prp-vide { display: flex; gap: .5rem; align-items: center; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--bloquant-txt); flex-wrap: wrap; }
-.prp-vide .b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .12rem .3rem; }
-.prp-grille { display: flex; gap: .35rem; flex-wrap: wrap; }
-.prp-c { width: 84px; }
-.prp-c span { display: block; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); margin-top: .15rem; }
-.prp-c .vignette.v-case { height: 54px; }
-.prp-plus { display: grid; place-items: center; width: 44px; height: 54px;
-  border: 1px dashed var(--trait-clair); font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.prp-gestes { display: flex; gap: .15rem; }
-.prp-gestes .b { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: .1rem .32rem; }
 
 .pr-choix { display: grid; gap: .3rem; }
 .pr-ch {
@@ -174,14 +150,14 @@
   .pg-t { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre); }
   .pg-phrase { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre); }
   .pr-toile { padding: 1rem; }
-  .pr-p { grid-template-columns: 1.4rem 1fr auto; }
+  
 }
 
 /* ————————————————————— Papier ————————————————————— */
 
 @media print {
   
-  .prp-gestes, .pr-pied { display: none; }
+  .pr-pied { display: none; }
   .pr-scene { position: static; }
   .pg { page-break-after: always; }
 }
@@ -1940,32 +1916,6 @@
 .rf-as.bientot .rfa-e, .rfa-e.manque { color: var(--arbitrage); }
 .rf-as.perime .rfa-e { color: var(--bloquant-txt); }
 
-/* ————————————————————— La présentation : deux registres ————————————————————— */
-
-/* Le montage client n'est pas le dossier amputé : c'est un choix, et le choix
- * doit se voir. À gauche ce qui part, à droite ce qu'on retire et pourquoi. */
-.pr-deux { display: grid; grid-template-columns: minmax(0, 1fr) 22rem; gap: 2rem;
-  align-items: start; margin-top: 1.2rem; }
-.prd-c { display: grid; gap: .7rem; align-content: start; }
-.prd-t { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--clair); border-bottom: 1px solid var(--trait); padding-bottom: .4rem; }
-.prd-t span { letter-spacing: 0; color: var(--clair-terne); }
-.prd-c.retire .prd-t { color: var(--clair-terne); }
-
-.pr-ret { display: grid; }
-.prr { display: grid; gap: .12rem; padding: .8rem 0; border-bottom: 1px solid var(--trait); }
-.prr-q { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux); }
-.prr-d { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-.prr-p { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  font-style: italic; }
-.prd-x { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  max-width: var(--mesure); }
-
-@media (max-width: 1100px) {
-  .pr-deux { grid-template-columns: minmax(0, 1fr); }
-}
-
 /* ————————————————————— Le papier a sa propre encre ————————————————————— */
 
 /* Un document imprimable est un fond clair : le gris des fonds sombres y
@@ -2443,7 +2393,7 @@ button.vtp:hover { outline: 1px solid var(--accent); outline-offset: -1px; }
  */
 
 /* Ce qui porte une phrase de contexte ou de conséquence — se lit vraiment. */
-.dcm-q, .juj, .vide-ref, .eqpd, .prp-tire, .cobm-q, .cobe-c, .cobe-m, .slfi-q, .stc-q, .pir-q, .pirc-p, .mqs-q,
+.dcm-q, .juj, .vide-ref, .eqpd, .cobm-q, .cobe-c, .cobe-m, .slfi-q, .stc-q, .pir-q, .pirc-p, .mqs-q,
 .atdq-o, .auteurs, .codt-s, .sld-m, .e-charge, .slp-a, .atx-k, .bri-s,
 .rail-q, .fi-meta, .rd-ref, .poste, .pil-n, .eqp-q,
 .pirc-d, .egc-verdict, .pip-n, .atdq-p, .cobl-v, .l-v, .b-v, .critere,

@@ -322,3 +322,12 @@ famille se replie (ouverte si elle est la première ou assez courte pour se lire
 coup) et sa tête garde le compte des visuels posés ; en mode présentation — la planche
 qu'on imprime — tout reste déplié. La page tombe à 5 179 px. Le choix de mode devient
 un sélecteur Studio. Mesure à 1280 et 375 px : à zéro, hors données.
+
+**Passe 5d — Dossier : la présentation (28/09).** La salle (qui décide, quelle
+structure de deck elle appelle), le montage client et ce qui en est retiré passent en
+sections blanches ; les deux colonnes se partagent la largeur au lieu d'écraser la
+première sous une colonne fixe de 20rem. « Présenter » et « Lire le dossier » étaient
+deux boutons pleins côte à côte : le second devient un geste visible sans être une
+seconde action principale. Hors passe, et assumé : la vue de lecture compilée
+(`pr-dossier`, `prd-doc`), document destiné au papier avec ses propres règles
+d'impression. Mesure à 1280 et 375 px : à zéro, hors données.
