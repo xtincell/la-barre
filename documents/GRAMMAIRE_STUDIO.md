@@ -551,3 +551,19 @@ déjà expirés — perdent leur encre ambre ou rouge pour le filet et le signe 
 « masquer les supports » et les libellés de droits sont capitalisés. Les deux
 définitions de `.rf-plus` et la zone de clic ajoutée à part à `.rfm-h` sont réunies
 en une seule règle chacune. Mesure à 1280 et 375 px, supports dépliés : à zéro.
+
+**Passe 11c — Ressources : les registres (28/09).** People, Radar et la boîte
+d'entrée partagent leur charpente — le relevé daté, les comptes, la conséquence dite
+une fois, les lignes, le repli de ce qui n'appelle aucun geste. Chacun devient une
+section blanche titrée en casse de phrase (« MATANGA PEOPLE », « RADAR MATANGA »,
+« BOÎTE D'ENTRÉE » étaient des étiquettes en capitales dorées). Les comptes perdent
+leur chiffre en sérif ; l'étiquette « critique » ou « à lui » écrivait du texte
+sombre sur un aplat rouge (**1,55:1**) et devient une étiquette à filet ; l'état de
+chaque ligne se dit par le signe et le filet (◐ aucun dossier ici, ● malformé, ✓ suivi
+ici). Les états et les gestes relevés en minuscules (« suivi ici », « ouvrir un
+dossier », « écarter ») sont capitalisés à l'affichage. Mesure à 1280 et 375 px : à
+zéro, hors données (intitulés relevés dans People, en capitales à la source).
+
+**Passe 11d — Ressources : doctrine et paramètres (28/09).** Déjà à zéro sous le
+nouvel en-tête : rien à reprendre, mesure à 1280 et 375 px faite. Les sept modes des
+Ressources sont à zéro, hors données.

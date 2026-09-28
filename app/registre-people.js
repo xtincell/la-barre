@@ -136,23 +136,23 @@ window.REGISTRE = (function () {
 
     hote.appendChild(el("div.reg", {},
       el("div.reg-t", {},
-        el("span.regt-l", {}, "MATANGA PEOPLE"),
-        el("span.regt-d", {}, age === null ? "date de relevé inconnue"
-          : age <= 0 ? "relevé aujourd'hui"
-          : "relevé il y a " + age + (age > 1 ? " jours" : " jour")
+        el("h2.regt-l", {}, "Matanga People"),
+        el("span.regt-d", {}, age === null ? "Date de relevé inconnue"
+          : age <= 0 ? "Relevé aujourd'hui"
+          : "Relevé il y a " + age + (age > 1 ? " jours" : " jour")
             + (age > 14 ? " — un registre de cet âge se lit comme une photo, pas comme un état" : ""))),
 
       el("div.reg-c", {},
-        compte(String(b.suivis), "suivis ici", "leur exécution se voit", "vert"),
-        b.aveugles ? compte(String(b.aveugles), "sans dossier ici",
+        compte(String(b.suivis), "Suivis ici", "leur exécution se voit", "vert"),
+        b.aveugles ? compte(String(b.aveugles), "Sans dossier ici",
           "leur exécution ne se voit nulle part", b.critiques.length ? "alerte" : "attente") : null,
-        b.hors ? compte(String(b.hors), "clôturés ou en pause", "rien à suivre", "terne") : null),
+        b.hors ? compte(String(b.hors), "Clôturés ou en pause", "rien à suivre", "terne") : null),
 
       /* La conséquence, une fois. Elle vaut pour toutes les lignes marquées
        * « aucun dossier ici » — la répéter trente-quatre fois ne la rendait
        * pas plus vraie, seulement invisible. */
       b.aveugles
-        ? el("div.reg-n", {}, el("b", {}, "« aucun dossier ici » — ce que ça veut dire  :  "),
+        ? el("div.reg-n", {}, el("b", {}, "« Aucun dossier ici » — ce que ça veut dire : "),
             "l'exécution ne se voit nulle part dans LA BARRE, rien n'y est relançable, "
             + "et cette absence ne se signale pas d'elle-même.")
         : null,
@@ -160,6 +160,8 @@ window.REGISTRE = (function () {
       el("div.reg-l", {}, rs.map(function (r) { return ligne(r, par[r.ref], rafraichir); }))
     ));
   }
+
+function cap(t) { t = String(t || ""); return t.charAt(0).toUpperCase() + t.slice(1); }
 
   function compte(v, nom, quoi, ton) {
     return el("div.reg-cc" + (ton ? "." + ton : ""), {},
@@ -176,8 +178,8 @@ window.REGISTRE = (function () {
       el("span.regr-ref", {}, r.ref),
       el("span.regr-n", {}, r.nom),
       el("span.regr-s", {},
-        el("span.regrs-e." + e.ton, {}, e.nom),
-        r.priorite === "critique" ? el("span.regrs-p", {}, "critique") : null),
+        el("span.regrs-e." + e.ton, {}, cap(e.nom)),
+        r.priorite === "critique" ? el("span.regrs-p", {}, "Critique") : null),
       el("span.regr-q", {}, e.quoi),
       el("span.regr-g", {},
         p
@@ -213,7 +215,7 @@ window.REGISTRE = (function () {
         + "rien n'y est relançable, et son absence ne se signale pas d'elle-même."),
 
       el("div.axe-socle", {},
-        el("div.axsoc-l", {}, "CE QUE PEOPLE EN DIT"),
+        el("div.axsoc-l", {}, "Ce que People en dit"),
         detail("Statut", r.statut), detail("Priorité", r.priorite),
         detail("Début", r.debut ? O.joli(r.debut) : "non renseigné"),
         detail("Fin", r.fin ? O.joli(r.fin) : "non renseignée"),

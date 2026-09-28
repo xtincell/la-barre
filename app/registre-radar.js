@@ -142,22 +142,22 @@ window.REGISTRE_RADAR = (function () {
 
     hote.appendChild(el("div.reg", {},
       el("div.reg-t", {},
-        el("span.regt-l", {}, "RADAR MATANGA"),
-        el("span.regt-d", {}, age === null ? "date de relevé inconnue"
-          : age <= 0 ? "relevé aujourd'hui"
-          : "relevé il y a " + age + (age > 1 ? " jours" : " jour")
+        el("h2.regt-l", {}, "Radar Matanga"),
+        el("span.regt-d", {}, age === null ? "Date de relevé inconnue"
+          : age <= 0 ? "Relevé aujourd'hui"
+          : "Relevé il y a " + age + (age > 1 ? " jours" : " jour")
             + (age > 30 ? " — un registre de cet âge se lit comme une photo, pas comme un état" : ""))),
 
       el("div.reg-c", {},
-        compte(String(b.suivis), "suivis ici", "leur dossier existe", "vert"),
-        b.aveugles ? compte(String(b.aveugles), "vivants sans dossier",
+        compte(String(b.suivis), "Suivis ici", "leur dossier existe", "vert"),
+        b.aveugles ? compte(String(b.aveugles), "Vivants sans dossier",
           "rien ne les suit", b.siensAveugles ? "alerte" : "attente") : null,
-        compte(String(b.hors), "donnés pour finis", "rien à suivre", "terne"),
-        b.doublons ? compte(String(b.doublons), "doublons", "marqués par le Radar", "terne") : null,
-        b.malformes ? compte(String(b.malformes), "malformés", "à reprendre à la source", "alerte") : null),
+        compte(String(b.hors), "Donnés pour finis", "rien à suivre", "terne"),
+        b.doublons ? compte(String(b.doublons), "Doublons", "marqués par le Radar", "terne") : null,
+        b.malformes ? compte(String(b.malformes), "Malformés", "à reprendre à la source", "alerte") : null),
 
       el("div.reg-n", {},
-        el("b", {}, "Ce que ce registre dit, et lui seul  :  "),
+        el("b", {}, "Ce que ce registre dit, et lui seul : "),
         b.total + " briefs au Radar, " + b.maitres + " maîtres et " + b.taches + " tâches, "
         + "contre " + DEPOT.liste("projets").filter(function (p) {
             return (p.releve || {}).source; }).length + " campagnes documentées. "
@@ -193,6 +193,8 @@ window.REGISTRE_RADAR = (function () {
     return (enfants[r.ndeg] || []).some(function (f) { return appelleUnGeste(f, enfants); });
   }
 
+function cap(t) { t = String(t || ""); return t.charAt(0).toUpperCase() + t.slice(1); }
+
   function compte(v, nom, quoi, ton) {
     return el("div.reg-cc" + (ton ? "." + ton : ""), {},
       el("span.regc-v", {}, v),
@@ -219,8 +221,8 @@ window.REGISTRE_RADAR = (function () {
       el("span.regr-n", {}, r.projet || "(sans intitulé)",
         nFils ? el("span.rad-n", {}, nFils + (nFils > 1 ? " tâches" : " tâche")) : null),
       el("span.regr-s", {},
-        el("span.regrs-e." + e.ton, {}, e.nom),
-        r.sienne ? el("span.regrs-p", {}, "à lui") : null),
+        el("span.regrs-e." + e.ton, {}, cap(e.nom)),
+        r.sienne ? el("span.regrs-p", {}, "À lui") : null),
       el("span.regr-q", {}, e.quoi),
       el("span.regr-g", {}, p ? GESTE.bouton("projet", { p: p }, "Ouvrir " + p.ref, "b.nu") : null)
     );

@@ -2660,3 +2660,82 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .rfa-s, .rfa-z, .rfa-e { font-size: 12px; color: var(--clair-terne); }
 .rfa-e.manque { --ton: var(--arbitrage); }
 @media (max-width: 700px) { .rf-b { padding: 16px; } }
+
+/* ═════════════════════ Passe 11c · Ressources : les registres ═════════════════════ */
+/* People, Radar, boîte d'entrée : trois registres relevés, jamais saisis, qui
+ * disent pour chaque ligne de la source s'il y a de quoi la suivre ici. Même
+ * charpente : le relevé daté, les comptes, la conséquence dite une fois, les
+ * lignes ; ce qui n'appelle aucun geste se replie sous son compte. */
+.reg { display: grid; gap: 14px; padding: 20px 22px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; min-width: 0; }
+.reg-t { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; }
+.regt-l { font: 550 21px/1.3 var(--affichage); letter-spacing: -.02em; color: var(--clair); }
+.regt-d { font-size: 12px; color: var(--clair-terne); }
+.reg-c { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.reg-cc { --ton: var(--trait); display: grid; gap: 2px; padding-top: 6px; border-top: 3px solid var(--ton); }
+.reg-cc.vert { --ton: var(--succes); }
+.reg-cc.attente { --ton: var(--arbitrage); }
+.reg-cc.alerte { --ton: var(--bloquant); }
+.reg-cc.terne { --ton: var(--trait-clair); }
+.regc-v { font: 550 24px/1.1 var(--affichage); letter-spacing: -.03em; color: var(--clair); font-variant-numeric: tabular-nums; }
+.regc-n { font-size: 13px; color: var(--clair); }
+.regc-q { font-size: 12px; color: var(--clair-terne); }
+/* La conséquence, dite une fois au-dessus de la liste. */
+.reg-n { --ton: var(--arbitrage); padding-left: 12px; border-left: 3px solid var(--ton); font-size: 13px; line-height: 1.6; color: var(--clair); max-width: 75ch; }
+.reg-n b { font-weight: 550; }
+.reg-l { display: grid; }
+.reg-r { --ton: transparent; display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 11rem 12rem auto; gap: 4px 12px; align-items: baseline;
+  min-height: 44px; padding: 8px 0 8px 10px; border-top: 1px solid var(--trait); border-left: 3px solid var(--ton); }
+.reg-r.aveugle { --ton: var(--arbitrage); }
+.reg-r.malforme { --ton: var(--bloquant); }
+.regr-ref { font-size: 11px; color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+/* Les intitulés viennent d'un registre : parenthèses, barres obliques, sigles
+ * collés. Sans point de coupe, le mot déborde au lieu de passer à la ligne. */
+.regr-n { font: 550 14px/1.4 var(--affichage); color: var(--clair); overflow-wrap: anywhere; }
+.reg-r.hors .regr-n, .reg-r.doublon .regr-n { font-weight: 500; color: var(--clair-doux); }
+.regr-s { display: flex; flex-wrap: wrap; gap: 4px 8px; }
+.regrs-e { font-size: 12px; color: var(--clair); }
+.regrs-e::before { content: "● "; color: var(--ton, var(--clair-terne)); }
+.regrs-e.vert { --ton: var(--succes); }
+.regrs-e.vert::before { content: "✓ "; }
+.regrs-e.attente { --ton: var(--arbitrage); }
+.regrs-e.attente::before { content: "◐ "; }
+.regrs-e.alerte { --ton: var(--bloquant); }
+.regrs-e.terne::before { content: ""; }
+.regrs-p { padding: 0 6px; border: 1px solid var(--bloquant); border-radius: 4px; font: 550 11px var(--affichage); color: var(--clair); }
+.regr-q { font-size: 12px; color: var(--clair-terne); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.regr-q::first-letter, .regc-q::first-letter { text-transform: uppercase; }
+.regr-g { justify-self: end; }
+.rad-grappe { display: block; }
+/* Un maître porte ses tâches : le rang se lit à l'indentation et au filet,
+ * pas à une puce — à trois étages, les puces se confondent. */
+.rad-fils { margin-left: 18px; padding-left: 12px; border-left: 1px solid var(--trait); }
+.rad-n { margin-left: 8px; font: 400 11px var(--affichage); color: var(--clair-terne); white-space: nowrap; }
+.reg-plus { border-top: 1px solid var(--trait); }
+.reg-plus > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; min-height: 48px; cursor: pointer; list-style: none;
+  font: 550 13px var(--affichage); color: var(--studio-bleu); }
+.reg-plus > summary::-webkit-details-marker { display: none; }
+.reg-plus > summary::before { content: "›"; width: 12px; font-size: 16px; color: var(--clair-terne); transition: transform var(--tr-rapide); }
+.reg-plus[open] > summary::before { transform: rotate(90deg); }
+.reg-plus > summary b { font-weight: 550; }
+.reg-plus .dl-clos-q { font: 400 12px var(--affichage); color: var(--clair-terne); }
+/* La boîte d'entrée : le seul endroit où l'on a le droit d'être sale. */
+.ink-l { display: grid; }
+.ink-r { --ton: var(--arbitrage); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-height: 48px;
+  padding: 10px 0 10px 12px; border-top: 1px solid var(--trait); border-left: 3px solid var(--ton); }
+.ink-r.vieille { --ton: var(--bloquant); }
+.ink-r.range { --ton: var(--trait); }
+.ink-signe { color: var(--ton); }
+.inkr-t { flex: 1 1 18rem; min-width: 0; font-size: 14px; line-height: 1.5; color: var(--clair); overflow-wrap: anywhere; }
+.ink-r.range .inkr-t { color: var(--clair-doux); }
+.inkr-d, .inkr-q { flex: 0 1 auto; font-size: 12px; color: var(--clair-terne); overflow-wrap: anywhere; }
+.inkr-g { flex: 0 0 auto; margin-left: auto; display: flex; gap: 4px; }
+@media (max-width: 900px) {
+  .reg-r { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .regr-g { justify-self: start; }
+  .regr-q { white-space: normal; }
+}
+@media (max-width: 760px) { .rad-fils { margin-left: 6px; padding-left: 8px; } }
+@media (max-width: 700px) {
+  .reg { padding: 16px; }
+  .inkr-g { margin-left: 0; width: 100%; }
+}

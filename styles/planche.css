@@ -1290,65 +1290,6 @@ blockquote, .message, .verbatim {
 }
 
 
-/* ————————————————————— Le registre Matanga People ————————————————————— */
-/* Il ne duplique pas People : il dit, pour chaque dossier là-bas, s'il y a
- * ici de quoi suivre l'exécution. */
-
-.reg { display: grid; gap: .9rem; }
-.reg-t { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap; }
-.regt-l { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--or); }
-.regt-d { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-terne); }
-
-.reg-c { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .6rem; }
-.reg-cc { display: grid; gap: .1rem; border-top: 2px solid var(--trait); padding-top: .4rem; }
-.reg-cc.vert { border-top-color: var(--vert); }
-.reg-cc.attente { border-top-color: var(--attente); }
-.reg-cc.alerte { border-top-color: var(--bloquant); }
-.reg-cc.terne { border-top-color: var(--trait-clair); }
-.regc-v { font-family: var(--lecture); font-size: var(--t-h2); letter-spacing: var(--ls-h2);
-  line-height: 1.1; color: var(--clair); }
-.regc-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair); }
-.regc-q { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-
-/* La conséquence, dite une fois au-dessus de la liste. */
-.reg-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  color: var(--clair-doux); border-left: 2px solid var(--attente); padding-left: .7rem;
-  max-width: var(--mesure); }
-.reg-n b { color: var(--clair); font-weight: 400; }
-
-.reg-l { display: grid; gap: .1rem; }
-.reg-r { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 10rem 12rem auto;
-  gap: .7rem; align-items: baseline; padding: .42rem 0; border-top: 1px solid var(--trait); }
-.reg-r.hors { color: var(--clair-terne); }
-.regr-ref { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-terne); font-variant-numeric: tabular-nums; }
-/* Les intitulés viennent d'un registre : ils portent des parenthèses, des
-   barres obliques et des sigles collés — « Plannings mensuels (Group/LPORA) ».
-   Sans point de coupe, le mot déborde de sa colonne au lieu de passer à la
-   ligne. On coupe où il faut plutôt que de rogner la colonne de tout le monde. */
-.regr-n { font-size: var(--t-lire); line-height: var(--lh-lire); color: inherit;
-  overflow-wrap: anywhere; }
-.regr-q { overflow-wrap: anywhere; }
-.reg-r.hors .regr-n { color: var(--clair-terne); }
-.regr-s { display: flex; gap: .35rem; flex-wrap: wrap; }
-.regrs-e { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
-.regrs-e.vert { color: var(--vert); }
-.regrs-e.attente { color: var(--attente); }
-.regrs-e.alerte { color: var(--bloquant-txt); }
-.regrs-e.terne { color: var(--clair-terne); }
-.regrs-p { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--n900); background: var(--bloquant); padding: .04rem .3rem; }
-.regr-q { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-terne); font-variant-numeric: tabular-nums; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis; }
-.regr-g { justify-self: end; }
-
-@media (max-width: 900px) {
-  .reg-r { grid-template-columns: minmax(0, 1fr); gap: .2rem; }
-  .regr-g { justify-self: start; }
-}
 
 /* Une personne archivée garde sa place au rail — on n'efface pas une
  * paternité — mais elle ne se lit plus comme quelqu'un qu'on peut affecter. */
@@ -1437,24 +1378,7 @@ blockquote, .message, .verbatim {
  * Un brief maître porte ses tâches, et ses tâches portent les leurs. Le rang
  * se lit à l'indentation et au filet, pas à une puce : à trois étages, les
  * puces se confondent et l'arbre redevient une liste. */
-.rad-grappe { display: block; }
-.rad-fils { margin-left: 1.1rem; padding-left: .9rem; border-left: 1px solid var(--trait); }
-.rad-n { margin-left: .5rem; font-size: var(--t-micro); line-height: var(--lh-micro);
-  letter-spacing: var(--ls-micro); color: var(--clair-terne); white-space: nowrap; }
 
-/* Ce qui n'appelle aucun geste se replie. Même patron que les dossiers clos :
-   l'information reste entière, elle n'occupe pas la place de ce qui décide. */
-.reg-plus { margin-top: 1.2rem; border-top: 1px solid var(--trait); padding-top: .8rem; }
-.reg-plus > summary { cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline;
-  gap: .6rem; min-height: var(--cible); padding: .5rem 0;
-  font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux); }
-.reg-plus > summary b { color: var(--clair); }
-.reg-plus > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.reg-plus[open] > summary { margin-bottom: .5rem; }
-
-@media (max-width: 760px) {
-  .rad-fils { margin-left: .4rem; padding-left: .5rem; }
-}
 
 /* ————— Le panneau « relevé » : les mots d'un document, pas une saisie ————— */
 .rlv-eti { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
@@ -1513,19 +1437,3 @@ button.st.nu { appearance: none; background: none; border: 0; padding: 0;
 button.st.nu:hover { background: var(--surface-2); }
 button.st.nu:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* ————— La boîte d'entrée : le seul endroit où l'on a le droit d'être sale ————— */
-.ink-l { display: grid; margin-top: .6rem; }
-.ink-r { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .8rem;
-  padding: .6rem 0 .6rem .7rem; border-top: 1px solid var(--trait);
-  border-left: 2px solid var(--attente); min-height: var(--cible); }
-.ink-r.vieille { border-left-color: var(--bloquant); }
-.ink-r.range { border-left-color: var(--trait); }
-.inkr-t { flex: 1 1 18rem; min-width: 0; font-size: var(--t-lire);
-  line-height: var(--lh-lire); color: var(--clair); overflow-wrap: anywhere; }
-.ink-r.range .inkr-t { color: var(--clair-doux); }
-.inkr-d, .inkr-q { flex: 0 1 auto; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-terne); overflow-wrap: anywhere; }
-.ink-r.vieille .inkr-d { color: var(--bloquant-txt); }
-.inkr-g { flex: 0 0 auto; margin-left: auto; display: flex; gap: .3rem; }
-.inkr-g .b { min-height: var(--cible); display: inline-flex; align-items: center; }
-@media (max-width: 700px) { .inkr-g { margin-left: 0; width: 100%; } }

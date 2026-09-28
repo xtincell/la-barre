@@ -78,7 +78,7 @@ window.INTAKE = (function () {
 
     hote.appendChild(el("div.reg", {},
       el("div.reg-t", {},
-        el("span.regt-l", {}, "BOÎTE D'ENTRÉE"),
+        el("h2.regt-l", {}, "Boîte d'entrée"),
         el("span.regt-d", {}, "⌘K pour capturer, d'où qu'on soit")),
 
       el("div.reg-n", {},
@@ -100,23 +100,25 @@ window.INTAKE = (function () {
             el("div.ink-l", {}, r.slice(0, 40).map(function (c) {
               return el("div.ink-r.range", {},
                 el("span.inkr-t", {}, c.texte),
-                el("span.inkr-q", {}, (c.issue || "rangée")
-                  + (c.motif ? "  ·  " + c.motif : "")
-                  + (c.range_le ? "  ·  " + O.jourCourt(c.range_le) : "")));
+                el("span.inkr-q", {}, cap(c.issue || "rangée")
+                  + (c.motif ? " · " + c.motif : "")
+                  + (c.range_le ? " · " + O.jourCourt(c.range_le) : "")));
             })))
         : null
     ));
   }
 
+function cap(t) { t = String(t || ""); return t.charAt(0).toUpperCase() + t.slice(1); }
+
   function ligne(c, rafraichir) {
     var age = c.quand ? O.depuis(c.quand) : 0;
     return el("div.ink-r" + (age > 14 ? ".vieille" : ""), {},
       el("span.inkr-t", {}, c.texte),
-      el("span.inkr-d", {}, age === 0 ? "aujourd'hui"
-        : "depuis " + age + (age > 1 ? " jours" : " jour")),
+      el("span.inkr-d", {}, age > 14 ? el("span.ink-signe", { "aria-hidden": "true" }, "● ") : null, age === 0 ? "Aujourd'hui"
+        : "Depuis " + age + (age > 1 ? " jours" : " jour")),
       el("span.inkr-g", {},
         el("button.b.nu", { type: "button", onclick: function () {
-          ouvrirDossier(c, rafraichir); } }, "ouvrir un dossier"),
+          ouvrirDossier(c, rafraichir); } }, "Ouvrir un dossier"),
         el("button.b.nu", { type: "button", onclick: function () {
           PANNEAU.demander("Écarter cette note", {
             label: "Pourquoi",
@@ -124,7 +126,7 @@ window.INTAKE = (function () {
                 + "ouvert de dossier. On archive, on ne supprime pas.",
             lignes: 2, requis: "Une note écartée sans motif revient la semaine suivante.",
           }, function (m) { ecarter(c, m); rafraichir(); });
-        } }, "écarter")));
+        } }, "Écarter")));
   }
 
   /* Ouvrir un dossier depuis une note : trois champs, et le reste se complète
