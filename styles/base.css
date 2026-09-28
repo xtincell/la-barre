@@ -815,12 +815,12 @@ button, a, input, select, textarea, summary {
  * par une zone invisible — la cible grandit, la ligne non. */
 .b { min-height: var(--cible); }
 .b.nu, .b.petit, .pip-plus, .fil a, .pirc-n, .jul, .jucas-p, .rail-i,
-.smr-b, .pc-select, .cmd-b, .pld {
+.smr-b, .pc-select, .cmd-b {
   min-height: 0; position: relative;
 }
 .b.nu::after, .b.petit::after, .pip-plus::after, .fil a::after,
 .pirc-n::after, .jul::after, .jucas-p::after, .rail-i::after,
-.smr-b::after, .pc-select::after, .cmd-b::after, .pld::after {
+.smr-b::after, .pc-select::after, .cmd-b::after {
   content: ""; position: absolute;
   /* La zone s'étend en hauteur, jamais en largeur.
    *
@@ -836,7 +836,7 @@ button, a, input, select, textarea, summary {
 
 /* Les contrôles qui ont la place la prennent en vrai : c'est plus honnête
  * qu'une zone invisible, et ça sert la lisibilité autant que l'accessibilité. */
-.rg-l, .rc-v, .res-proteger, .mat-manque, .chip, .eng, .fmb, .pld, .dcm, .jul {
+.rg-l, .rc-v, .res-proteger, .mat-manque, .chip, .eng, .fmb, .dcm, .jul {
   min-height: var(--cible);
 }
 .res-proteger, .fmb, .chip { display: inline-flex; align-items: center; justify-content: center; }

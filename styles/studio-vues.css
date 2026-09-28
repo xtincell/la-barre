@@ -186,7 +186,7 @@
  * le pointillé dit la seule chose qu'une bordure a le droit de dire ici :
  * quelque chose se pose là. Un nom trop long se coupe par les points de
  * suspension, jamais par le bord ; le nom entier reste dans l'infobulle. */
-.vignette.vide.attente { display: grid; align-content: center; justify-items: start; gap: 3px; padding: 8px 10px;
+.vignette.vide.attente { display: grid; align-content: center; justify-content: stretch; justify-items: start; gap: 3px; padding: 8px 10px;
   text-align: left; background: var(--surface-4); border: 1px dashed var(--trait-clair); }
 .va-f { font-size: 12px; line-height: 1.4; color: var(--clair); overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
@@ -1145,3 +1145,67 @@ button.st-e:hover { background: var(--surface-4); }
   .cmpg-l { padding: 12px 16px 4px; border-bottom: 0; }
   .cmp-c, .cmp-h, .cmp-v { border-left: 0; }
 }
+
+/* ═════════════════════ Passe 5a · Dossier : la planche des KV ═════════════════════ */
+
+.pl { display: grid; gap: 16px; }
+.pl-vide { display: grid; justify-items: center; gap: 10px; padding: 48px 24px; text-align: center;
+  background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; }
+.pl-vide svg { color: var(--trait-clair); }
+.pl-vide .plv-t { font: 550 17px var(--affichage); color: var(--clair); }
+.plv-s { font-size: 14px; line-height: 1.6; color: var(--clair-terne); max-width: 55ch; }
+.pl-tete { display: flex; justify-content: flex-end; }
+.pl-densite .pld { text-transform: none; letter-spacing: 0; }
+/* Trois densités : la planche se lit de loin ou de près. Une section par ligne. */
+.pl-grille { display: grid; gap: 16px; }
+.pl-marque { display: grid; gap: 12px; padding: 18px 20px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; min-width: 0; }
+.plm-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.plm-nom { font: 550 17px var(--affichage); color: var(--clair); }
+.plm-n { font: 500 12px var(--affichage); color: var(--clair-terne); background: var(--surface-3); border-radius: 5px; padding: 3px 7px; }
+.pl-cases { display: grid; gap: 12px; }
+.pl-grille.dense .pl-cases { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.pl-grille.moyen .pl-cases { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.pl-grille.grand .pl-cases { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
+/* Une case : l'image, puis son bandeau opaque — l'accroche et ce qui la
+ * qualifie. Le dégradé noir venait du sombre, et tombait à 1,32:1 en clair. */
+.pl-c { --ton: var(--succes); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pl-c.ecart { --ton: var(--bloquant); }
+.plc-visuel { position: relative; display: flex; flex-direction: column; width: 100%; padding: 0; cursor: pointer; overflow: hidden;
+  background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px; box-shadow: inset 0 3px 0 var(--ton);
+  font: inherit; color: inherit; text-align: left; }
+.plc-visuel:hover { border-color: var(--trait-clair); box-shadow: inset 0 3px 0 var(--ton), var(--elev-1); }
+.plc-visuel > .vignette { width: 100%; height: auto; aspect-ratio: 4 / 3; border-radius: 0; }
+.plc-visuel > .vignette img { height: 100%; object-fit: cover; }
+.plc-visuel > .vignette.vide.attente { padding-top: 30px; align-content: start; }
+.plc-haut { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 6px 0; pointer-events: none; }
+.plc-marche { font: 550 11px var(--affichage); padding: 2px 6px; border-radius: 4px; background: var(--surface-1); color: var(--clair); }
+.plc-droite { display: flex; gap: 4px; }
+.plc-retours, .plc-pastille { min-width: 20px; height: 20px; display: grid; place-items: center; padding: 0 6px; border-radius: 10px; font: 550 11px var(--affichage); }
+.plc-retours { background: var(--arbitrage); color: var(--surface-1); }
+.plc-pastille.ok { background: var(--surface-1); color: var(--succes); }
+.plc-pastille.ecart { background: var(--surface-1); color: var(--bloquant); }
+.plc-bas { display: grid; gap: 2px; padding: 8px 10px 10px; border-top: 1px solid var(--trait); }
+/* L'accroche est ce qu'un humain a écrit : Asap 500. */
+.plc-copy { font: 500 15px/1.3 var(--affichage); color: var(--studio-encre); }
+.plc-copy.vide { font: 400 13px var(--affichage); color: var(--clair-terne); }
+.plc-sous { font-size: 11px; line-height: 1.45; color: var(--clair-terne); }
+.pl-grille.dense .plc-copy { font-size: 13px; }
+.pl-grille.grand .plc-copy { font-size: 17px; }
+.plc-a { font-size: 11px; padding: 2px 6px; border: 1px solid var(--trait); border-radius: 4px; color: var(--clair); }
+.plc-a.vide { color: var(--clair-terne); border-style: dashed; }
+/* Les manquements se nomment, et disent combien de formats en héritent — c'est
+ * ce nombre qui décide si on corrige maintenant ou jamais. */
+.plc-m { display: grid; gap: 4px; }
+.plcm-t { font: 550 12px var(--affichage); color: var(--bloquant); }
+.plcm-l { display: grid; gap: 2px; }
+.plcm { display: grid; gap: 1px; text-align: left; background: none; border: 0; border-left: 3px solid var(--bloquant);
+  padding: 6px 8px; border-radius: 0 5px 5px 0; cursor: pointer; font: inherit; color: inherit; min-height: 44px; }
+.plcm:hover { background: var(--surface-3); }
+.plcm-q { font: 550 13px var(--affichage); color: var(--clair); }
+.plcm-x { font-size: 12px; line-height: 1.45; color: var(--clair-terne); }
+.plc-m > .b.nu { justify-self: start; margin-left: -8px; }
+.plc-gestes { display: flex; gap: 0 4px; flex-wrap: wrap; align-items: center; margin-left: -8px; }
+.pl-grille.dense .plc-gestes { display: none; }
+.pl-grille.dense .pl-c:hover .plc-gestes, .pl-grille.dense .pl-c:focus-within .plc-gestes { display: flex; }
+@media (max-width: 900px) { .pl-cases { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; } }
+@media print { .pl-cases { grid-template-columns: repeat(4, 1fr) !important; } .plc-gestes { display: none !important; } }

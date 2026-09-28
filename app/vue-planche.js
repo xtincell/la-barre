@@ -94,7 +94,7 @@ window.VUE_PLANCHE = (function () {
   function pistes(p, g) {
     var pistes = p.sections.pistes || [];
     var out = pistes.map(function (pi) {
-      return { nom: pi.titre || "piste sans titre", statut: pi.statut === "retenue" ? "retenue" : null,
+      return { nom: pi.titre || "Piste sans titre", statut: pi.statut === "retenue" ? "retenue" : null,
         kvs: g.kvs.filter(function (l) { return l.pisteId === pi.id; }) };
     }).filter(function (r) { return r.kvs.length; });
 
@@ -102,7 +102,7 @@ window.VUE_PLANCHE = (function () {
       return !pistes.some(function (pi) { return pi.id === l.pisteId; });
     });
     if (orphelins.length) out.push({ nom: "Sans piste", statut: "rattachement manquant", kvs: orphelins });
-    return out.length ? out : [{ nom: g.marques[0] || "sans marque", kvs: g.kvs }];
+    return out.length ? out : [{ nom: g.marques[0] || "Sans marque", kvs: g.kvs }];
   }
 
   /* Une case de planche est d'abord une image. Le reste s'y pose : le code
@@ -123,20 +123,20 @@ window.VUE_PLANCHE = (function () {
         IMAGE.vignette(l, "planche"),
 
         el("span.plc-haut", {},
-          el("span.plc-marche", {}, KV.estMaitre(l) ? "MAÎTRE" : (m ? m.code : "?")),
+          el("span.plc-marche", {}, KV.estMaitre(l) ? "Maître" : (m ? m.code : "?")),
           el("span.plc-droite", {},
             retours ? el("span.plc-retours", {}, String(retours)) : null,
             ecarts.length ? null : el("span.plc-pastille.ok", {}, "✓"))
         ),
 
         el("span.plc-bas", {},
-          el("span.plc-copy" + (k.copy ? "" : ".vide"), {}, k.copy || "accroche non écrite"),
+          el("span.plc-copy" + (k.copy ? "" : ".vide"), {}, k.copy || "Accroche non écrite"),
           el("span.plc-sous", {}, [
             KV.NIVEAUX[KV.niveau(l)].nom.toLowerCase(),
             O.langue(k.langue) || "langue ?",
             decl ? decl + (decl > 1 ? " formats" : " format") : "aucun format",
             mks ? mks + " en situation" : null,
-          ].filter(Boolean).join("  ·  "))
+          ].filter(Boolean).join(" · "))
         )
       ),
 
@@ -147,8 +147,8 @@ window.VUE_PLANCHE = (function () {
         ? el("div.plc-m", {},
             el("div.plcm-t", {}, ecarts.length
               + (ecarts.length > 1 ? " manquements" : " manquement")
-              + (decl ? "  ·  " + decl + (decl > 1 ? " formats en héritent" : " format en hérite")
-                      : "  ·  aucun format n'en hérite encore")),
+              + (decl ? " · " + decl + (decl > 1 ? " formats en héritent" : " format en hérite")
+                      : " · aucun format n'en hérite encore")),
             el("div.plcm-l", {}, ecarts.slice(0, 4).map(function (c) {
               return el("button.plcm", { type: "button", title: c.cout,
                 onclick: function () { detail(p, l, rafraichir); } },
@@ -158,15 +158,15 @@ window.VUE_PLANCHE = (function () {
             ecarts.length > 4
               ? el("button.b.nu", { type: "button",
                   onclick: function () { detail(p, l, rafraichir); } },
-                  "et " + (ecarts.length - 4) + " autres →")
+                  "Et " + (ecarts.length - 4) + " autres →")
               : null)
         : null,
 
       el("div.plc-gestes", {},
-        el("button.b.nu", { type: "button", onclick: function () { detail(p, l, rafraichir); } }, "régler"),
+        el("button.b.nu", { type: "button", onclick: function () { detail(p, l, rafraichir); } }, "Régler"),
         el("button.b.nu", { type: "button", onclick: function () { ANNOT.ouvrir(p, l, rafraichir); } },
-          retours ? retours + (retours > 1 ? " retours" : " retour") : "annoter"),
-        el("button.b.nu", { type: "button", onclick: function () { VUE_LIVRABLE.ouvrir(p, l, rafraichir); } }, "le livrable"),
+          retours ? retours + (retours > 1 ? " retours" : " retour") : "Annoter"),
+        el("button.b.nu", { type: "button", onclick: function () { VUE_LIVRABLE.ouvrir(p, l, rafraichir); } }, "Le livrable"),
         IMAGE.bouton(l, rafraichir)
       )
     );
@@ -179,10 +179,12 @@ window.VUE_PLANCHE = (function () {
   /* Trois densités : la planche se lit de loin ou de près. */
   var DENSITE = "moyen";
   function reglette(rafraichir) {
-    return el("div.pl-densite", {}, ["dense", "moyen", "grand"].map(function (d) {
-      return el("button.pld" + (DENSITE === d ? ".actif" : ""), { type: "button",
-        onclick: function () { DENSITE = d; rafraichir(); } }, d);
-    }));
+    return el("div.pl-densite.studio-statuts", { role: "group", "aria-label": "Densité de la planche" },
+      ["dense", "moyen", "grand"].map(function (d) {
+        return el("button.pld" + (DENSITE === d ? ".active" : ""), { type: "button",
+          "aria-pressed": DENSITE === d ? "true" : "false",
+          onclick: function () { DENSITE = d; rafraichir(); } }, d.charAt(0).toUpperCase() + d.slice(1));
+      }));
   }
 
   /* ————————————————————— Régler un KV ————————————————————— */
@@ -209,7 +211,7 @@ window.VUE_PLANCHE = (function () {
       boite,
       m && (m.sku || []).length
         ? el("div.sousbloc", {},
-            el("h3", {}, "CE QUI EST DISTRIBUÉ ICI",
+            el("h3", {}, "Ce qui est distribué ici",
               el("span.droite", {}, m.sku.length + " SKU")),
             el("div.mq-sku", {}, m.sku.map(function (nom) {
               var v = MARQUE.visuelSku(nom);
@@ -222,7 +224,7 @@ window.VUE_PLANCHE = (function () {
                     montre ? "montré par ce KV" : "non montré")));
             })))
         : UI.banniere("", "Le référentiel ne dit pas quels SKU sont distribués sur ce marché. Sans cette liste, on ne peut pas vérifier ce que le KV montre."),
-      el("div.sousbloc", {}, el("h3", {}, "LA COMBINAISON DE CE MARCHÉ"), f.noeud),
+      el("div.sousbloc", {}, el("h3", {}, "La combinaison de ce marché"), f.noeud),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           l.kv = f.valeurs();

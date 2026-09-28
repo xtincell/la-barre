@@ -6,96 +6,7 @@
 
 /* ————————————————————— La planche ————————————————————— */
 
-.pl { display: grid; gap: 1.1rem; }
-
-.pl-vide {
-  display: grid; justify-items: center; gap: .5rem; text-align: center;
-  padding: 3rem 1.5rem; border: 1px dashed var(--trait-clair); color: var(--clair-terne);
-}
-.pl-vide svg { color: var(--trait-clair); }
 .plv-t { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: var(--clair); }
-.plv-s { font-size: var(--t-meta); letter-spacing: var(--ls-meta); max-width: 42ch; line-height: 1.5; }
-
-.pl-tete { display: flex; justify-content: flex-end; }
-.pl-densite { display: flex; gap: 2px; }
-.pld {
-  background: none; border: 1px solid var(--trait); color: var(--clair-terne);
-  font: inherit; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .12rem .45rem; cursor: pointer;
-}
-.pld.actif { color: var(--or); border-color: var(--or); }
-
-.pl-grille { display: grid; gap: 1.6rem; }
-.plm-tete {
-  display: flex; align-items: baseline; gap: .6rem; padding-bottom: .35rem;
-  border-bottom: 1px solid var(--trait); margin-bottom: .8rem;
-}
-.plm-nom { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: .04em; text-transform: uppercase; }
-.plm-n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-
-/* Trois densités. La case est une image ; le reste s'y pose. */
-.pl-cases { display: grid; gap: .7rem; }
-.pl-grille.dense .pl-cases { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); }
-.pl-grille.moyen .pl-cases { grid-template-columns: repeat(auto-fill, minmax(252px, 1fr)); }
-.pl-grille.grand .pl-cases { grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); }
-
-.pl-c { display: flex; flex-direction: column; gap: .3rem; }
-
-.plc-visuel {
-  position: relative; display: block; width: 100%; padding: 0; cursor: pointer;
-  background: var(--nuit-carte); border: 0; overflow: hidden;
-  border-top: 2px solid var(--trait-clair);
-  aspect-ratio: 16 / 10;
-}
-.pl-c.ok .plc-visuel { border-top-color: var(--vert); }
-.pl-c.ecart .plc-visuel { border-top-color: var(--bloquant-txt); }
-.plc-visuel:hover { outline: 1px solid var(--or); outline-offset: -1px; }
-.plc-visuel .vignette { height: 100%; }
-.plc-visuel .vignette img { height: 100%; object-fit: cover; }
-
-.plc-haut {
-  position: absolute; left: 0; right: 0; top: 0; display: flex;
-  justify-content: space-between; align-items: flex-start; pointer-events: none;
-}
-.plc-marche {
-  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .1em; padding: .12rem .4rem;
-  background: rgba(14,15,17,.86); color: var(--clair);
-}
-.plc-droite { display: flex; gap: 3px; padding: .25rem; }
-.plc-retours, .plc-pastille {
-  min-width: 19px; height: 19px; display: grid; place-items: center;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); border-radius: 10px; padding: 0 .28rem; color: var(--nuit);
-}
-.plc-retours { background: var(--or); }
-/* Sur un aplat vif, l'encre claire tombe à 2:1. C'est l'encre sombre qui
- * tient : même règle que les boutons pleins. */
-.plc-pastille.ecart { background: var(--alerte); color: var(--n900); }
-.plc-pastille.ok { background: var(--vert); color: #06180e; }
-
-/* Le bas de l'image : l'accroche, puis ce qui la qualifie. */
-.plc-bas {
-  position: absolute; left: 0; right: 0; bottom: 0; display: grid; gap: .1rem;
-  padding: 1.6rem .55rem .45rem; pointer-events: none;
-  background: linear-gradient(to top, rgba(14,15,17,.92) 42%, rgba(14,15,17,0));
-}
-.plc-copy { font-size: var(--t-lire); letter-spacing: var(--ls-lire); line-height: 1.25; color: var(--clair); }
-.plc-copy.vide { color: var(--clair-terne); font-style: italic; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.plc-sous { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); }
-.pl-grille.dense .plc-copy { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
-.pl-grille.dense .plc-sous { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); }
-.pl-grille.grand .plc-copy { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); }
-
-.plc-a { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .1rem .3rem; border: 1px solid var(--trait); color: var(--clair-doux); }
-.plc-a.vide { color: var(--clair-terne); border-style: dashed; font-style: italic; }
-
-.plc-ecart {
-  text-align: left; width: 100%; cursor: pointer; background: none; border: 0;
-  border-left: 2px solid var(--alerte); padding: .1rem .45rem;
-  font: inherit; font-size: var(--t-eti); letter-spacing: var(--ls-eti); line-height: 1.35; color: var(--bloquant-txt);
-}
-.plc-gestes { display: flex; gap: .3rem; flex-wrap: wrap; }
-.plc-gestes .b { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .16rem .32rem; }
-.pl-grille.dense .plc-gestes { display: none; }
-.pl-grille.dense .pl-c:hover .plc-gestes { display: flex; }
 
 /* ————————————————————— L'annotation ————————————————————— */
 
@@ -261,7 +172,7 @@
 /* ————————————————————— Étroit ————————————————————— */
 
 @media (max-width: 900px) {
-  .pl-cases { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  
   .pg-route, .pg-deux { grid-template-columns: minmax(0, 1fr); }
   .pg-gauche .vignette { height: 38vh; }
   .pg-t { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre); }
@@ -273,8 +184,8 @@
 /* ————————————————————— Papier ————————————————————— */
 
 @media print {
-  .pl-cases { grid-template-columns: repeat(4, 1fr); }
-  .plc-gestes, .prp-gestes, .pr-pied { display: none; }
+  
+  .prp-gestes, .pr-pied { display: none; }
   .pr-scene { position: static; }
   .pg { page-break-after: always; }
 }
@@ -1473,14 +1384,6 @@
   margin-bottom: 1.2rem; }
 .cmd-file span { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
 
-/* §14 — la barre encode une durée par sa longueur, pas par sa hauteur : elle
- * garde ses 28 px et prend sa cible par une zone invisible, qui tient dans
- * l'interligne de la ligne sans mordre sur la suivante. */
-.atx-b { position: relative; }
-.atx-b::after { content: ""; position: absolute; left: 0; right: 0; top: 50%;
-  transform: translateY(-50%); min-height: var(--cible); height: 100%; }
-.plc-ecart { min-height: var(--cible); display: inline-flex; align-items: center; }
-
 /* ————————————————————— Mon équipe : le tableau comparable ————————————————————— */
 
 /* Cinq cartes dépliables rendaient la comparaison impossible. Des colonnes
@@ -2088,20 +1991,6 @@
 @media (max-width: 1100px) {
   .pr-deux { grid-template-columns: minmax(0, 1fr); }
 }
-
-/* ————————————————————— La planche : les manquements, pas un score ————————————————————— */
-
-/* Un « 3 » en pastille ne dit pas ce qui ne va pas, et ne dit pas ce que ça
- * emporte. Les manquements se nomment, et disent leur descendance. */
-.plc-m { display: grid; gap: .3rem; padding: .6rem .7rem 0; }
-.plcm-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em;
-  color: var(--bloquant-txt); }
-.plcm-l { display: grid; gap: .2rem; }
-.plcm { display: grid; gap: .05rem; text-align: left; background: none; border: 0;
-  border-left: 2px solid var(--bloquant); padding: .2rem 0 .2rem .6rem; cursor: pointer; }
-.plcm:hover { background: var(--surface-3); }
-.plcm-q { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux); }
-.plcm-x { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
 
 /* ————————————————————— Le papier a sa propre encre ————————————————————— */
 
@@ -2827,8 +2716,7 @@ button.mrmq-t:focus-visible, button.mrg-tete:focus-visible {
  */
 
 /* Ce qui porte une phrase de contexte ou de conséquence — se lit vraiment. */
-.dcm-q, .juj, .vide-ref, .eqpd, .prp-tire, .cobm-q, .cobe-c, .cobe-m,
-.plc-sous, .slfi-q, .stc-q, .plc-ecart, .pir-q, .pirc-p, .mqs-q,
+.dcm-q, .juj, .vide-ref, .eqpd, .prp-tire, .cobm-q, .cobe-c, .cobe-m, .slfi-q, .stc-q, .pir-q, .pirc-p, .mqs-q,
 .atdq-o, .auteurs, .codt-s, .sld-m, .e-charge, .slp-a, .atx-k, .bri-s,
 .rail-q, .fi-meta, .rd-ref, .poste, .pil-n, .mrg-n, .eqp-q,
 .pirc-d, .egc-verdict, .pip-n, .atdq-p, .cobl-v, .l-v, .b-v, .critere,

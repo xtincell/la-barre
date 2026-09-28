@@ -294,3 +294,13 @@ s'appliquaient l'une à l'autre — le bloc devient `.axe-bloc`. Le bouton vert 
 « Bon de commande reçu » passe au bleu du geste principal. Treize commentaires
 orphelins retirés, dont celui qui imposait les capitales sous `--t-eti`, règle que le
 Studio abolit. Mesure à 1280 et 375 px sur quatre dossiers : à zéro, hors données.
+
+**Passe 5a — Dossier : la planche des KV (28/09).** La passe 5 est coupée en quatre
+(planche, livrables, livraison, présentation). Chaque case de la planche perd son
+dégradé noir (l'accroche et la méta y tombaient à **1,32:1**, 34 textes) pour un
+bandeau opaque sous l'image ; l'accroche — ce qu'un humain a écrit — passe en Asap
+500 ; le réglage de densité devient un sélecteur Studio ; chaque ligne de la planche
+une section blanche. Trouvé : la base `.vignette` centrait sa piste de grille
+(`justify-content: center`), si bien que le texte d'attente s'affichait centré malgré
+son alignement à gauche — corrigé pour toutes les vignettes vides. `.atx-b`, reste de
+l'ancien écran des attentes, retiré. Mesure à 1280 et 375 px : à zéro, hors données.
