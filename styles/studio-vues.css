@@ -2487,3 +2487,72 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
   .fm-barre, .st-modes, .dc-tete, .dc-modes { display: none !important; }
   .fm { gap: 0; }
 }
+
+/* ═════════════════════ Passe 10d · Bilan : les arbitrages ═════════════════════ */
+/* Ce qui demande à devenir un critère passe devant — le seul endroit du produit
+ * où le référentiel se complète tout seul ; le corpus vient après, en matière de
+ * consultation ; le fil, sur demande. */
+.ju { display: grid; gap: 16px; }
+.ju-e, .ju-c { display: grid; gap: 12px; padding: 20px 22px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; }
+.jue-t { font: 550 21px/1.3 var(--affichage); letter-spacing: -.02em; color: var(--clair); }
+.ju-liste { display: grid; gap: 8px; }
+.jum { font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 65ch; }
+/* Un groupe de motifs qui appelle un critère. */
+.ju-g { --ton: var(--arbitrage); display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 6px; }
+.jug-t { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; }
+.jug-m { font: 550 14px var(--affichage); color: var(--clair); }
+.jug-n { font-size: 12px; color: var(--clair-terne); }
+.jug-t button, .jug-d { margin-left: auto; }
+.jug-d { font-size: 12px; color: var(--clair-terne); }
+.jug-d::before { content: "✓ "; color: var(--succes); }
+.jug-e { font-size: 13px; line-height: 1.5; color: var(--clair-terne); max-width: 65ch; }
+.jug-cas { display: grid; gap: 4px; }
+.jug-c { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.jugc-d { font-size: 11px; color: var(--clair-terne); }
+.jugc-m { font-size: 13px; line-height: 1.5; color: var(--clair); max-width: 65ch; }
+.ju-rappel { display: grid; gap: 4px; margin: 10px 0; }
+/* Un critère : ce qu'il dit, combien de fois il a servi, et si la ligne tient. */
+.ju-cr { --ton: transparent; border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 6px; }
+.ju-cr.ici { background: var(--surface-4); }
+.ju-cr.eclate { --ton: var(--bloquant); }
+.jucr-t { display: grid; grid-template-columns: 7rem minmax(0, 1fr) auto auto; gap: 12px; align-items: baseline; width: 100%;
+  min-height: 44px; padding: 10px 14px 4px; text-align: left; cursor: pointer; font: inherit; color: var(--clair); background: none; border: 0; }
+.jucr-t:hover .jucr-n { color: var(--studio-bleu); }
+.jucr-f, .jucr-c, .jucr-e { font-size: 12px; color: var(--clair-terne); white-space: nowrap; }
+.jucr-n { font: 550 14px/1.4 var(--affichage); }
+.jucr-q { padding: 0 14px 10px calc(14px + 7rem + 12px); font-size: 12px; line-height: 1.5; color: var(--clair-terne); max-width: 90ch; }
+.ju-cr.eclate .jucr-q::before { content: "● "; color: var(--bloquant); }
+.jucr-cas { display: grid; gap: 8px; padding: 10px 14px 12px calc(14px + 7rem + 12px); border-top: 1px solid var(--trait); }
+.ju-cas { display: grid; gap: 2px; }
+.jucas-h { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; font-size: 11px; color: var(--clair-terne); }
+.jucas-p { display: inline-flex; align-items: center; min-height: 32px; color: var(--studio-bleu); text-decoration: none; }
+.jucas-v { color: var(--clair); }
+.jucas-v.v-approuve .v-signe { color: var(--succes); }
+.jucas-v.v-reserve .v-signe, .jucas-v.v-retour .v-signe { color: var(--arbitrage); }
+.jucas-v.v-hors .v-signe { color: var(--bloquant); }
+.jucas-o { font-size: 13px; color: var(--clair); }
+.jucas-m { font-size: 13px; line-height: 1.5; color: var(--clair-terne); max-width: 65ch; }
+/* Les critères jamais invoqués : un inventaire, pas une alerte. */
+.ju-jamais { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--trait); }
+.jub-t { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; font: 550 15px var(--affichage); color: var(--clair); }
+.jub-t span { font: 400 12px var(--affichage); color: var(--clair-terne); }
+.ju-jl { display: flex; flex-wrap: wrap; gap: 6px; }
+.juj { padding: 3px 8px; border: 1px solid var(--trait); border-radius: 5px; font-size: 12px; color: var(--clair); }
+/* Le fil. */
+.ju-fil { display: grid; gap: 12px; justify-items: start; }
+.ju-f { display: grid; gap: 12px; width: 100%; }
+.ju-rech { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.ju-rech input { flex: 1 1 16rem; max-width: 32rem; min-height: 44px; padding: 6px 12px; font: 14px var(--affichage); color: var(--clair);
+  background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px; }
+.ju-rech span { font-size: 12px; color: var(--clair-terne); white-space: nowrap; }
+.ju-fc { --ton: var(--trait-clair); display: grid; gap: 4px; padding: 10px 14px; background: var(--surface-1); border: 1px solid var(--trait);
+  border-left: 3px solid var(--ton); border-radius: 6px; }
+.ju-fc.sur { --ton: var(--succes); }
+.jufc-c { font-size: 12px; color: var(--clair-terne); }
+@media (max-width: 820px) {
+  .jucr-t { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; }
+  .jucr-f { grid-column: 1 / -1; }
+  .jucr-q, .jucr-cas { padding-left: 14px; }
+  .jug-c { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
+@media (max-width: 700px) { .ju-e, .ju-c { padding: 16px; } }

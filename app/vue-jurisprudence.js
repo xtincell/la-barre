@@ -30,7 +30,7 @@ window.VUE_JURISPRUDENCE = (function () {
       el("div.ju-fil", {},
         el("button.b.nu", { type: "button",
           onclick: function () { toutLeFil = !toutLeFil; rafraichir(); } },
-          toutLeFil ? "masquer le fil" : "le fil des " + e.total + " arbitrages"),
+          toutLeFil ? "Masquer le fil" : "Le fil des " + e.total + " arbitrages"),
         toutLeFil ? leFil(rafraichir) : null)
     );
   }
@@ -62,11 +62,11 @@ window.VUE_JURISPRUDENCE = (function () {
 
   function parCritere(rafraichir) {
     var lignes = JURISPRUDENCE.parCritere();
-    var titre = el("div.jue-t", {}, "LE CORPUS  ·  COMMENT J'AI TRANCHÉ");
+    var titre = el("h2.jue-t", {}, "Le corpus · comment j'ai tranché");
     var servis = lignes.filter(function (x) { return x.cas.length; });
     var jamais = lignes.filter(function (x) { return !x.cas.length; });
 
-    return el("div.ju-c", {}, titre,
+    return el("section.ju-c", {}, titre,
       servis.length
         ? el("div.ju-liste", {}, servis.map(function (x) { return critere(x, rafraichir); }))
         : el("p.rien", {}, "Aucun critère écrit n'a encore servi. Ils existent dans la maison ; "
@@ -74,7 +74,7 @@ window.VUE_JURISPRUDENCE = (function () {
 
       jamais.length
         ? el("div.ju-jamais", {},
-            el("div.jub-t", {}, "JAMAIS INVOQUÉS",
+            el("h3.jub-t", {}, "Jamais invoqués",
               el("span", {}, jamais.length + " sur " + lignes.length)),
             el("p.jum", {}, "Un critère qui ne sert jamais est soit inutile, soit oublié au "
               + "moment de refuser. Les deux se corrigent — l'un en le retirant, l'autre en "
@@ -95,7 +95,7 @@ window.VUE_JURISPRUDENCE = (function () {
         onclick: function () { ouvert = ici ? null : x.critere.cle; rafraichir(); } },
         el("span.jucr-f", {}, x.critere.famille),
         el("span.jucr-n", {}, x.critere.texte),
-        el("span.jucr-c", {}, x.cas.length + (x.cas.length > 1 ? " fois" : " fois")),
+        el("span.jucr-c", {}, x.cas.length + " fois"),
         el("span.jucr-e", {}, ici ? "−" : "+")),
 
       el("div.jucr-q", {}, x.etabli
@@ -119,7 +119,9 @@ window.VUE_JURISPRUDENCE = (function () {
         el("span.jucas-d", {}, O.joli(a.quand)),
         el("span.jucas-s", {}, a.def.nom),
         a.projet ? el("a.jucas-p", { href: "#/projets/" + a.projet.id }, a.projet.ref) : null,
-        v ? el("span.jucas-v", { style: { color: v.couleur } }, v.signe + " " + v.nom) : null),
+        /* La couleur du verdict tient dans le signe, par classe — la couleur
+         * écrite dans la maison tombait sous 4,5:1. */
+        v ? el("span.jucas-v.v-" + v.cle, {}, el("span.v-signe", { "aria-hidden": "true" }, v.signe + " "), v.nom) : null),
       el("div.jucas-o", {}, a.quoi),
       el("div.jucas-m", {}, a.motif));
   }
@@ -130,8 +132,8 @@ window.VUE_JURISPRUDENCE = (function () {
    * j'ai reproché plusieurs fois sans critère est un critère qui manque. */
   function aEcrire(e, rafraichir) {
     if (!e.aEcrire.length) {
-      return el("div.ju-e", {},
-        el("div.jue-t", {}, "CE QUI DEMANDE À DEVENIR UN CRITÈRE"),
+      return el("section.ju-e", {},
+        el("h2.jue-t", {}, "Ce qui demande à devenir un critère"),
         UI.banniere("vert", "Aucun motif récurrent hors critère. Tout ce que je refuse "
           + "plusieurs fois s'adosse déjà à une ligne écrite."),
         e.libres
@@ -140,8 +142,8 @@ window.VUE_JURISPRUDENCE = (function () {
           : null);
     }
 
-    return el("div.ju-e", {},
-      el("div.jue-t", {}, "CE QUI DEMANDE À DEVENIR UN CRITÈRE"),
+    return el("section.ju-e", {},
+      el("h2.jue-t", {}, "Ce qui demande à devenir un critère"),
       UI.banniere("", "Chacun de ces reproches a été formulé plusieurs fois à la main. "
         + "L'écrire comme critère, c'est le rendre opposable — et permettre à quelqu'un "
         + "d'autre de refuser sur le même fondement."),
@@ -152,10 +154,10 @@ window.VUE_JURISPRUDENCE = (function () {
             el("span.jug-m", {}, g.mots.join(" · ")),
             el("span.jug-n", {}, g.cas.length + " fois"),
             g.existe
-              ? el("span.jug-d", {}, "un critère dit déjà ça")
-              : el("button.b.or", { type: "button", onclick: function () {
+              ? el("span.jug-d", {}, "Un critère dit déjà ça")
+              : el("button.b", { type: "button", onclick: function () {
                   ecrire(g, rafraichir);
-                } }, "en faire un critère")),
+                } }, "En faire un critère")),
           g.existe
             ? el("div.jug-e", {}, "« " + g.existe.texte + " » — écrit sur "
                 + g.existe.famille + ". Le choisir au moment du refus plutôt que "
@@ -209,7 +211,7 @@ window.VUE_JURISPRUDENCE = (function () {
 
   function leFil(rafraichir) {
     var arbs = JURISPRUDENCE.chercher(q);
-    var champ = el("input", { type: "search", value: q,
+    var champ = el("input", { type: "search", value: q, "aria-label": "Chercher dans les motifs",
       placeholder: "Chercher dans les motifs — « lisible », « périmètre », « droits »…" });
     champ.oninput = function () { q = champ.value; rafraichir(); setTimeout(function () {
       var n = document.querySelector(".ju-rech input"); if (n) { n.focus();
@@ -223,8 +225,8 @@ window.VUE_JURISPRUDENCE = (function () {
             return el("div.ju-fc" + (a.critere ? ".sur" : ""), {},
               cas(a),
               el("div.jufc-c", {}, a.critere
-                ? "critère : " + a.critere.texte
-                : "au jugement seul — aucun critère écrit ne porte ce refus"));
+                ? "Critère : " + a.critere.texte
+                : "Au jugement seul — aucun critère écrit ne porte ce refus"));
           }))
         : el("p.rien", {}, q ? "Rien sur « " + q + " »."
             : "Le recueil est vide. Il se remplit tout seul : chaque verdict motivé y entre.")

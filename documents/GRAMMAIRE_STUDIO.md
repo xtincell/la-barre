@@ -514,3 +514,14 @@ et au champ Studio ; « Copier le texte » devient un geste texte. Trouvé en é
 une règle « le papier a sa propre encre » corrigeait après coup les couleurs du
 document ; elle n'a plus d'objet. Mesure à 1280 et 375 px, et brief de production
 ouvert : à zéro.
+
+**Passe 10d — Bilan : les arbitrages (28/09).** La jurisprudence garde son ordre — ce
+qui demande à devenir un critère, puis le corpus, puis le fil sur demande — en trois
+sections Studio. Ses titres (« CE QUI DEMANDE À DEVENIR UN CRITÈRE », « LE CORPUS ·
+COMMENT J'AI TRANCHÉ », « JAMAIS INVOQUÉS ») passent en casse de phrase. « En faire
+un critère » était un bouton plein répété sous chaque groupe : il devient secondaire.
+Le verdict d'un cas portait la couleur écrite dans la maison, sur tout son libellé :
+il la porte par classe, dans le signe seul, comme les verdicts de la fiche (passe 6).
+Le champ de recherche du fil gagne son libellé d'accessibilité. Mesure à 1280 et
+375 px, fil ouvert : à zéro. Les cinq modes du Bilan sont désormais à zéro, hors
+données.
