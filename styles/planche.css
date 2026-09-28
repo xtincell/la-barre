@@ -881,102 +881,6 @@
   .csl-b { grid-column: 1 / -1; }
 }
 
-/* ————————————————————— Mon équipe ————————————————————— */
-
-/* Une personne par ligne, dépliable. Fermée, elle ne montre que ce qui appelle
- * une action : sinon sept personnes font sept blocs qu'on ne lit plus. */
-.eq { display: grid; gap: 1.4rem; }
-.eq-l { display: grid; gap: .5rem; }
-
-.eq-p { border: 1px solid var(--trait); border-left: 2px solid var(--trait-clair);
-  background: var(--nuit-carte); }
-.eq-p.alerte { border-left-color: var(--attente); }
-.eq-p.ici { border-color: var(--trait-clair); }
-
-.eqp-tete { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto;
-  gap: .85rem; align-items: center; width: 100%; text-align: left; font: inherit;
-  color: var(--clair); background: none; border: 0; cursor: pointer; padding: .7rem .85rem; }
-.eqp-tete:hover { background: var(--nuit-relief); }
-.eqp-c { min-width: 0; display: grid; gap: .15rem; }
-.eqp-n { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap;
-  font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); }
-.eqp-q { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.eqp-f { color: var(--clair-terne); font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1; }
-
-.eqp-n3 { display: flex; gap: 1.1rem; }
-.eqp-nb { display: grid; gap: .05rem; text-align: right; }
-.eqp-nb b { font-size: var(--t-titre); letter-spacing: var(--ls-titre); font-weight: 500; line-height: 1; }
-.eqp-nb span { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); letter-spacing: .04em; }
-.eqp-nb.vert b { color: var(--vert); }
-.eqp-nb.alerte b { color: var(--bloquant-txt); }
-
-/* Ce qui appelle une action, fermé. */
-.eqp-dits { display: flex; flex-wrap: wrap; gap: .35rem;
-  padding: 0 .85rem .7rem calc(.85rem + 40px + .85rem); }
-.eqpd { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux);
-  border-left: 2px solid var(--trait-clair); padding: .1rem .5rem; }
-.eqpd.alerte { border-left-color: var(--bloquant-txt); }
-.eqpd.attente { border-left-color: var(--attente); }
-
-/* Ouvert. */
-.eqp-detail { border-top: 1px solid var(--trait); padding: .9rem .85rem 1.1rem;
-  display: grid; gap: 1.3rem; }
-.eqd-bloc { display: grid; gap: .5rem; }
-.eqdb-t { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .16em; color: var(--or);
-  border-bottom: 1px solid var(--trait); padding-bottom: .3rem; }
-.eqdb-t span { letter-spacing: 0; color: var(--clair-terne); text-transform: none; }
-.eqdb-t button { margin-left: auto; }
-
-.eqd-charge { display: grid; gap: .3rem; }
-.eqdc-b { height: 5px; background: var(--nuit); }
-.eqdc-b i { display: block; height: 100%; background: var(--trait-clair); }
-.eqdc-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-
-.eqd-cums, .eqd-engs, .eqd-prod, .eqd-crits { display: grid; gap: .3rem; }
-
-.eqd-cum { display: grid; grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
-  gap: .8rem; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); border-left: 2px solid var(--trait-clair);
-  padding: .2rem .6rem; }
-.eqd-cum.echue, .eqd-cum.sansPart { border-left-color: var(--bloquant-txt); }
-.eqd-cum.sansEcheance { border-left-color: var(--attente); }
-.eqdc-q { color: var(--clair-terne); font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
-.eqd-ctrl { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-
-.eqd-eng { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 13rem) auto;
-  gap: .8rem; align-items: baseline; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  border-left: 2px solid var(--vert); padding: .25rem .6rem; }
-.eqd-eng.retard { border-left-color: var(--bloquant-txt); }
-.eqd-eng.jamais { border-left-color: var(--attente); }
-.eqde-r { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); letter-spacing: .06em; }
-.eqde-t { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.eqd-eng.retard .eqde-t { color: var(--bloquant-txt); }
-
-.eqd-pr { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr) auto;
-  gap: .8rem; align-items: baseline; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  border-left: 2px solid var(--trait); padding: .2rem .6rem; }
-.eqd-pr.retenu { border-left-color: var(--vert); }
-.eqdp-t { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); letter-spacing: .06em; }
-.eqdp-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.eqdp-e { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
-.eqd-pr.retenu .eqdp-e { color: var(--vert); }
-
-.eqd-cr { border-left: 2px solid var(--trait-clair); padding: .35rem .6rem;
-  display: grid; gap: .15rem; }
-.eqd-cr.retenu { border-left-color: var(--vert); }
-.eqd-cr.ecarte { border-left-color: var(--accent); }
-.eqdc-h { display: flex; gap: .6rem; flex-wrap: wrap; font-size: var(--t-micro); line-height: var(--lh-micro);
-  color: var(--clair-terne); letter-spacing: .04em; }
-.eqdc-q { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.eqdc-m { font-size: var(--t-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); line-height: 1.45;
-  max-width: var(--mesure); }
-
-@media (max-width: 820px) {
-  .eqp-tete { grid-template-columns: auto minmax(0, 1fr) auto; row-gap: .6rem; }
-  .eqp-n3 { grid-column: 1 / -1; justify-content: space-between; }
-  .eqp-dits { padding-left: .85rem; }
-  .eqd-eng, .eqd-cum, .eqd-pr { grid-template-columns: minmax(0, 1fr); gap: .15rem; }
-}
 
 /* ————————————————————— Ma fin de mois ————————————————————— */
 
@@ -1188,44 +1092,6 @@
 
 /* ————————————————————— Mon équipe : le tableau comparable ————————————————————— */
 
-/* Cinq cartes dépliables rendaient la comparaison impossible. Des colonnes
- * alignées répondent d'un regard à la seule question qui compte : qui n'a
- * jamais eu sa chance. */
-.eqt { display: grid; gap: .2rem; }
-.eqt-h { display: grid; grid-template-columns: minmax(0, 1fr) repeat(5, 6.5rem);
-  gap: 1rem; padding: 0 .8rem .5rem; border-bottom: 1px solid var(--trait); }
-.eqth-p, .eqth-c { font-size: var(--t-micro); line-height: var(--lh-micro);
-  letter-spacing: .12em; color: var(--clair-terne); }
-.eqth-c { text-align: right; }
-
-.eqt-l { display: grid; }
-.eqt-r { border-bottom: 1px solid var(--trait); border-left: 2px solid transparent; }
-.eqt-r.manque { border-left-color: var(--arbitrage); }
-.eqt-r.ici { background: var(--surface-2); border-left-color: var(--or); }
-.eqtr-c { display: grid; grid-template-columns: minmax(0, 1fr) repeat(5, 6.5rem);
-  gap: 1rem; align-items: center; width: 100%; text-align: left; font: inherit;
-  background: none; border: 0; cursor: pointer; color: var(--clair);
-  padding: .75rem .8rem; min-height: var(--cible); }
-.eqtr-c:hover { background: var(--surface-2); }
-.eqtr-p { display: flex; gap: .7rem; align-items: center; min-width: 0; }
-.eqtr-n { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap;
-  font-size: var(--t-lire); line-height: var(--lh-lire); }
-.eqtr-q { display: block; font-size: var(--t-meta); line-height: var(--lh-meta);
-  color: var(--clair-terne); }
-.eqtr-v { text-align: right; font-size: var(--t-titre); line-height: 1;
-  font-variant-numeric: tabular-nums; color: var(--clair-doux); }
-.eqtr-v.vert { color: var(--succes); }
-.eqtr-v.alerte { color: var(--bloquant-txt); }
-.eqtr-v.attente { color: var(--arbitrage); }
-.eqtr-m { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--arbitrage);
-  padding: 0 .8rem .7rem calc(.8rem + 32px + .7rem); max-width: var(--mesure-large); }
-
-@media (max-width: 1000px) {
-  .eqt-h { display: none; }
-  .eqtr-c { grid-template-columns: minmax(0, 1fr); row-gap: .5rem; }
-  .eqtr-v { text-align: left; display: inline-block; margin-right: 1.2rem; }
-  .eqtr-m { padding-left: .8rem; }
-}
 
 /* Les initiales d'un avatar sont du texte : la couleur du poste reste au
  * filet, l'encre passe le minimum de contraste. */
@@ -1807,35 +1673,6 @@ blockquote, .message, .verbatim {
   font-size: var(--t-lire); line-height: 1.6;
 }
 
-/* ————————————————————— Ce qui est tracé, et ce qui ne l'est pas ————————————————————— */
-/* « 0 soumis » lu sans contexte accuse une personne d'un défaut d'outil.
- * Ce bloc donne le contexte avant le chiffre. */
-
-.trc-p { display: grid; gap: .25rem; margin-bottom: .7rem;
-  border-left: 2px solid var(--trait-clair); padding-left: .7rem; }
-.trc-p.vert { border-left-color: var(--vert); }
-.trc-p.attente { border-left-color: var(--attente); }
-.trc-p.alerte { border-left-color: var(--bloquant); }
-.trc-p b { font-size: var(--t-lire); line-height: var(--lh-lire); font-weight: 400; color: var(--clair); }
-.trc-p span { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  color: var(--clair-doux); max-width: var(--mesure); }
-
-.trc-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .6rem; }
-.trc-c { display: grid; gap: .1rem; border-top: 2px solid var(--trait); padding-top: .4rem; }
-.trc-c.vert { border-top-color: var(--vert); }
-.trc-c.attente { border-top-color: var(--attente); }
-.trc-c.alerte { border-top-color: var(--bloquant); }
-.trcc-v { font-family: var(--lecture); font-size: var(--t-h2); letter-spacing: var(--ls-h2);
-  line-height: 1.1; color: var(--clair); }
-.trcc-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  color: var(--clair); }
-.trcc-q { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  color: var(--clair-terne); }
-
-.trc { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
-  border: 1px solid var(--trait); padding: .06rem .35rem; color: var(--clair-terne); }
-.trc.attente { color: var(--attente); border-color: var(--attente); }
-.trc.alerte { color: var(--bloquant-txt); border-color: var(--bloquant); }
 
 /* ————————————————————— Le registre Matanga People ————————————————————— */
 /* Il ne duplique pas People : il dit, pour chaque dossier là-bas, s'il y a

@@ -2298,3 +2298,98 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
   .sd-gros, .cs-bloc, .gl-g { padding: 16px; }
   .gl-l { padding: 0 16px; }
 }
+
+/* ═════════════════════ Passe 10b · Bilan : l'évaluation ═════════════════════ */
+/* Un tableau à colonnes alignées répond d'un regard à la seule question qui
+ * compte : qui n'a jamais eu sa chance. Fermée, une ligne ne montre que ce qui
+ * appelle une action ; ouverte, la matière de l'entretien. */
+.eq { display: grid; gap: 16px; }
+.eq-signe { color: var(--ton, var(--clair-terne)); }
+.eqt { display: grid; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; padding: 8px 0; min-width: 0; }
+.eqt-h { display: grid; grid-template-columns: minmax(0, 1fr) repeat(5, 6.5rem); gap: 14px; padding: 6px 20px 8px; border-bottom: 1px solid var(--trait); }
+.eqth-p, .eqth-c { font-size: 11px; color: var(--clair-terne); }
+.eqth-c { text-align: right; }
+.eqt-l { display: grid; }
+.eqt-r { --ton: transparent; border-bottom: 1px solid var(--trait); border-left: 3px solid var(--ton); }
+.eqt-r:last-child { border-bottom: 0; }
+.eqt-r.manque { --ton: var(--arbitrage); }
+.eqt-r.ici { background: var(--surface-4); }
+.eqtr-c { display: grid; grid-template-columns: minmax(0, 1fr) repeat(5, 6.5rem); gap: 14px; align-items: center; width: 100%;
+  min-height: 56px; padding: 10px 20px 10px 17px; text-align: left; cursor: pointer; font: inherit; color: var(--clair); background: none; border: 0; }
+.eqtr-c:hover { background: var(--surface-4); }
+.eqtr-p { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.eqtr-n { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font: 550 14px var(--affichage); }
+.eqtr-q { display: block; font-size: 12px; color: var(--clair-terne); }
+.eqtr-v { text-align: right; font: 550 17px/1.1 var(--affichage); color: var(--clair); font-variant-numeric: tabular-nums; }
+.eqtr-v.t-vert { --ton: var(--succes); }
+.eqtr-v.t-alerte { --ton: var(--bloquant); }
+.eqtr-v.t-attente { --ton: var(--arbitrage); }
+.eqtr-m { padding: 0 20px 12px calc(17px + 32px + 10px); font-size: 13px; color: var(--clair); max-width: 80ch; }
+.eqt-r.manque .eqtr-m { --ton: var(--arbitrage); }
+@media (max-width: 1000px) {
+  .eqt-h { display: none; }
+  .eqtr-c { grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr)); row-gap: 8px; }
+  .eqtr-p { grid-column: 1 / -1; }
+  .eqtr-v { text-align: left; }
+  .eqtr-v::before { content: attr(data-col); display: block; margin-bottom: 2px; font: 400 11px var(--affichage); color: var(--clair-terne); }
+  .eqtr-m { padding-left: 17px; }
+}
+
+/* Ouvert. */
+.eqp-detail { display: grid; gap: 18px; padding: 6px 20px 18px 17px; }
+.eqd-bloc { display: grid; gap: 8px; }
+.eqdb-t { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; min-height: 36px; padding-bottom: 4px;
+  border-bottom: 1px solid var(--trait); font: 550 15px var(--affichage); color: var(--clair); }
+.eqdb-t span { font: 400 12px var(--affichage); color: var(--clair-terne); }
+.eqdb-t button { margin-left: auto; }
+.eqd-charge { display: grid; gap: 4px; }
+.eqdc-b { height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.eqdc-b i { display: block; height: 100%; background: var(--clair-terne); }
+.eqdc-t { font-size: 12px; color: var(--clair-terne); }
+.eqd-cums, .eqd-engs, .eqd-prod, .eqd-crits { display: grid; gap: 4px; }
+.eqd-cum, .eqd-eng, .eqd-pr, .eqd-cr { --ton: var(--trait-clair); padding: 6px 10px; border-left: 3px solid var(--ton); font-size: 13px; color: var(--clair); }
+.eqd-cum { display: grid; grid-template-columns: minmax(0, 12rem) minmax(0, 1fr); gap: 12px; }
+.eqd-cum.echue, .eqd-cum.sansPart { --ton: var(--bloquant); }
+.eqd-cum.sansEcheance { --ton: var(--arbitrage); }
+.eqdc-q { font-size: 12px; color: var(--clair-terne); }
+.eqd-ctrl { font-size: 12px; color: var(--clair-terne); }
+.eqd-eng { --ton: var(--succes); display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 13rem) auto; gap: 12px; align-items: center; }
+.eqd-eng.retard { --ton: var(--bloquant); }
+.eqd-eng.jamais { --ton: var(--arbitrage); }
+.eqde-r, .eqde-t { font-size: 12px; color: var(--clair-terne); }
+.eqd-pr { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr) auto; gap: 12px; align-items: baseline; }
+.eqd-pr.retenu { --ton: var(--succes); }
+.eqdp-t, .eqdp-e { font-size: 12px; color: var(--clair-terne); }
+.eqdp-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eqd-cr { display: grid; gap: 2px; }
+.eqd-cr.retenu { --ton: var(--succes); }
+.eqd-cr.ecarte { --ton: var(--info); }
+.eqdc-h { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11px; color: var(--clair-terne); }
+.eqdc-m { font-size: 13px; line-height: 1.5; color: var(--clair-terne); max-width: 65ch; }
+@media (max-width: 820px) {
+  .eqd-eng, .eqd-cum, .eqd-pr { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}
+
+/* Ce qui est tracé, et ce qui ne l'est pas : « 0 soumis » lu sans contexte
+ * accuse une personne d'un défaut d'outil. Le contexte vient avant le chiffre. */
+.trc-p { --ton: var(--trait-clair); display: grid; gap: 4px; padding-left: 10px; border-left: 3px solid var(--ton); }
+.trc-p.vert { --ton: var(--succes); }
+.trc-p.attente { --ton: var(--arbitrage); }
+.trc-p.alerte { --ton: var(--bloquant); }
+.trc-p b { font: 550 14px var(--affichage); color: var(--clair); }
+.trc-p span { font-size: 13px; line-height: 1.55; color: var(--clair-terne); max-width: 65ch; }
+.trc-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.trc-c { --ton: var(--trait); display: grid; gap: 2px; padding-top: 6px; border-top: 3px solid var(--ton); }
+.trc-c.vert { --ton: var(--succes); }
+.trc-c.attente { --ton: var(--arbitrage); }
+.trc-c.alerte { --ton: var(--bloquant); }
+.trcc-v { font: 550 21px/1.1 var(--affichage); color: var(--clair); font-variant-numeric: tabular-nums; }
+.trcc-n { font-size: 13px; color: var(--clair); }
+.trcc-q { font-size: 12px; color: var(--clair-terne); }
+/* L'étiquette de trace, partout où un livrable dit s'il est tracé. */
+.trc { --ton: var(--clair-terne); display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border: 1px solid var(--trait);
+  border-radius: 4px; font: 500 11px var(--affichage); color: var(--clair); }
+.trc::before { content: "●"; font-size: 8px; color: var(--ton); }
+.trc.attente { --ton: var(--arbitrage); }
+.trc.alerte { --ton: var(--bloquant); }
+.trc.vert { --ton: var(--succes); }

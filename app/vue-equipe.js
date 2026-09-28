@@ -76,18 +76,18 @@ window.VUE_EQUIPE = (function () {
    * n'est pas de lire cinq fiches : c'est de repérer qui n'a rien reçu. */
 
   var COLONNES = [
-    { cle: "propose", nom: "proposé" },
-    { cle: "retenu", nom: "retenu" },
-    { cle: "repris", nom: "repris" },
-    { cle: "critiques", nom: "critiques" },
-    { cle: "engagements", nom: "engagements" },
+    { cle: "propose", nom: "Proposé" },
+    { cle: "retenu", nom: "Retenu" },
+    { cle: "repris", nom: "Repris" },
+    { cle: "critiques", nom: "Critiques" },
+    { cle: "engagements", nom: "Engagements" },
   ];
 
   function tableau(bilans, rafraichir) {
-    return el("div.eqt", {},
+    return el("section.eqt", {},
       el("div.eqt-h", {},
-        el("span.eqth-p", {}, "PERSONNE"),
-        COLONNES.map(function (c) { return el("span.eqth-c", {}, c.nom.toUpperCase()); })),
+        el("span.eqth-p", {}, "Personne"),
+        COLONNES.map(function (c) { return el("span.eqth-c", {}, c.nom); })),
 
       el("div.eqt-l", {}, bilans.map(function (b) {
         return ligne(b, rafraichir);
@@ -118,18 +118,22 @@ window.VUE_EQUIPE = (function () {
               ETAT.pastille(ETAT.seniorite(pe)),
               ETAT.pastille(problemeDeCumul(pe))),
             el("span.eqtr-q", {}, O.poste(pe.poste).nom
-              + (cums.length ? "  ·  cumule " + cums.map(function (c) {
+              + (cums.length ? " · cumule " + cums.map(function (c) {
                   return c.poste.court + (c.part ? "\u00a0" + c.part + "\u00a0%" : ""); }).join(", ") : "")))),
         COLONNES.map(function (c) {
           var v = vals[c.cle];
-          var ton = c.cle === "retenu" && b.retenu.length ? ".vert"
-            : c.cle === "repris" && b.repris.length ? ".alerte"
-            : c.cle === "critiques" && !crits.length ? ".alerte"
-            : c.cle === "engagements" && duus.length ? ".attente" : "";
-          return el("span.eqtr-v" + ton, {}, String(v));
+          /* Le nombre à l'encre ; l'état dans le signe qui le précède. */
+          var ton = c.cle === "retenu" && b.retenu.length ? "vert"
+            : c.cle === "repris" && b.repris.length ? "alerte"
+            : c.cle === "critiques" && !crits.length ? "alerte"
+            : c.cle === "engagements" && duus.length ? "attente" : "";
+          var signe = { vert: "✓ ", alerte: "● ", attente: "◐ " }[ton];
+          return el("span.eqtr-v" + (ton ? ".t-" + ton : ""), { "data-col": c.nom },
+            signe ? el("span.eq-signe", { "aria-hidden": "true" }, signe) : null, String(v));
         })),
 
-      manque ? el("div.eqtr-m", {}, manque) : null,
+      manque ? el("div.eqtr-m", {}, el("span.eq-signe", { "aria-hidden": "true" }, "◐ "),
+        manque.charAt(0).toUpperCase() + manque.slice(1)) : null,
       ici ? detail(b, crits, engs, cums, null, rafraichir) : null
     );
   }
@@ -155,16 +159,16 @@ window.VUE_EQUIPE = (function () {
     var ph = TRACE.phrase(t, b.personne.nom.split(" ")[0]);
 
     return el("div.eqd-bloc", {},
-      el("div.eqdb-t", {}, "SUR QUOI JE PEUX LE RELANCER"),
+      el("h3.eqdb-t", {}, "Sur quoi je peux le relancer"),
       el("div.trc-p." + (ph.ton || ""), {}, el("b", {}, ph.t), el("span", {}, ph.q)),
       el("div.trc-g", {},
-        chiffre(t.relancables + " / " + t.total, "relançables",
+        chiffre(t.relancables + " / " + t.total, "Relançables",
           "responsable et date : la relance est un constat", t.relancables ? "vert" : "attente"),
-        t.vu ? chiffre(String(t.vu), "faits, non déposés",
+        t.vu ? chiffre(String(t.vu), "Faits, non déposés",
           "le visuel existe, la version manque — mon geste, pas le sien", "attente") : null,
-        t.muet ? chiffre(String(t.muet), "sans aucune trace",
+        t.muet ? chiffre(String(t.muet), "Sans aucune trace",
           "ni version, ni fichier, ni visuel — c'est là qu'une question se pose", "alerte") : null,
-        t.sansDate ? chiffre(String(t.sansDate), "sans date de remise",
+        t.sansDate ? chiffre(String(t.sansDate), "Sans date de remise",
           "rien n'est exigible, donc rien n'est en retard", "attente") : null));
   }
 
@@ -183,7 +187,7 @@ window.VUE_EQUIPE = (function () {
     return el("div.eqp-detail", {},
       /* La charge, et ce que les cumuls lui prennent. */
       el("div.eqd-bloc", {},
-        el("div.eqdb-t", {}, "SA SEMAINE"),
+        el("h3.eqdb-t", {}, "Sa semaine"),
         el("div.eqd-charge", {},
           el("div.eqdc-b", {}, el("i", {
             style: { width: Math.min(100, b.charge.part) + "%" } })),
@@ -199,7 +203,7 @@ window.VUE_EQUIPE = (function () {
                 el("span.eqdc-q", {}, c.cout));
             }))
           : null,
-        ctrl ? el("div.eqd-ctrl", {}, "contrôle : " + ctrl.nom) : null),
+        ctrl ? el("div.eqd-ctrl", {}, "Contrôle : " + ctrl.nom) : null),
 
       /* Ce qu'on a le droit de lui reprocher.
        *
@@ -211,7 +215,7 @@ window.VUE_EQUIPE = (function () {
 
       /* Ce que sa fiche lui impose, avec son échéance. */
       el("div.eqd-bloc", {},
-        el("div.eqdb-t", {}, "CE QUE SA FICHE LUI IMPOSE"),
+        el("h3.eqdb-t", {}, "Ce que sa fiche lui impose"),
         engs.length
           ? el("div.eqd-engs", {}, engs.map(function (x) {
               return el("div.eqd-eng." + x.etat, {},
@@ -220,38 +224,38 @@ window.VUE_EQUIPE = (function () {
                 el("span.eqde-t", {}, x.texte),
                 el("button.b.nu", { type: "button", onclick: function () {
                   EQUIPE.deposer(pe.id, x.e.quoi, rafraichir);
-                } }, "déposé"));
+                } }, "Déposé"));
             }))
           : el("p.rien", {}, "Sa fiche ne porte aucun engagement récurrent.")),
 
       /* Ce qu'il a porté. */
       b.propose.length
         ? el("div.eqd-bloc", {},
-            el("div.eqdb-t", {}, "SES PROPOSITIONS",
+            el("h3.eqdb-t", {}, "Ses propositions",
               el("span", {}, b.retenu.length
                 ? b.retenu.length + " sur " + b.propose.length + " ont été retenus"
-                : "aucun retenu sur " + b.propose.length)),
+                : "Aucun retenu sur " + b.propose.length)),
             el("div.eqd-prod", {}, b.propose.slice(0, 8).map(function (x) {
               var pris = b.retenu.some(function (r) { return r.objet === x.objet; });
               var ecarte = x.objet.statut === "ecartee";
               return el("div.eqd-pr" + (pris ? ".retenu" : ""), {},
-                el("span.eqdp-t", {}, x.type === "piste" ? "piste" : "idée"),
+                el("span.eqdp-t", {}, x.type === "piste" ? "Piste" : "Idée"),
                 el("span.eqdp-n", {}, String(x.nom).slice(0, 80)),
-                el("span.eqdp-e", {}, pris ? "retenue — elle fait autorité"
-                  : ecarte ? "écartée — le motif est écrit"
-                  : x.type === "piste" ? "en lice — rien ne se produit tant qu'aucune ne l'emporte"
-                  : "en lice — non arbitrée, elle ne compte dans aucun indicateur"));
+                el("span.eqdp-e", {}, pris ? [el("span.eq-signe", { "aria-hidden": "true" }, "✓ "), "Retenue — elle fait autorité"]
+                  : ecarte ? "Écartée — le motif est écrit"
+                  : x.type === "piste" ? "En lice — rien ne se produit tant qu'aucune ne l'emporte"
+                  : "En lice — non arbitrée, elle ne compte dans aucun indicateur"));
             })))
         : null,
 
       /* Ce que je lui ai dit — la seule chose qui rend l'entretien tenable. */
       el("div.eqd-bloc", {},
-        el("div.eqdb-t", {}, "CE QUE JE LUI AI DIT",
+        el("h3.eqdb-t", {}, "Ce que je lui ai dit",
           el("span", {}, crits.length
             ? crits.length + (crits.length > 1 ? " traces datées" : " trace datée")
-            : "aucune trace"),
+            : "Aucune trace"),
           el("button.b.nu", { type: "button", onclick: function () { noter(pe, rafraichir); } },
-            "+ noter")),
+            "+ Noter")),
         crits.length
           ? el("div.eqd-crits", {}, crits.slice(0, 10).map(function (c) {
               return el("div.eqd-cr." + c.ton, {},

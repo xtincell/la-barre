@@ -485,3 +485,16 @@ casse de phrase. Le grand livre des reprises garde ses barres colorées — elle
 la donnée — mais le nombre sort de la barre : écrit dessus, il tombait à **1,55:1**.
 Collision évitée : `.stc` est la fiche de structure de deck de la présentation, d'où
 le préfixe `sd-`. Mesure à 1280 et 375 px : à zéro, hors données (nom de compte).
+
+**Passe 10b — Bilan : l'évaluation (28/09).** Le tableau comparable garde ses colonnes
+alignées — c'est lui qui dit d'un regard qui n'a jamais eu sa chance — mais devient
+une section blanche ; ses en-têtes (« PERSONNE », « PROPOSÉ »…, les seconds mis en
+capitales par `toUpperCase()`) passent en casse de phrase. Les nombres restent à
+l'encre, l'état passe dans le signe qui les précède ; au téléphone, chaque nombre
+reprend le nom de sa colonne, qui disparaissait avec l'en-tête. La fiche ouverte
+(« Sa semaine », « Ce que sa fiche lui impose », « Ce que je lui ai dit »…) prend des
+titres de bloc Studio et des lignes à filet. Le bloc de trace — le contexte avant le
+chiffre, pour ne pas accuser quelqu'un d'un défaut d'outil — perd son chiffre en
+sérif ; l'étiquette `.trc`, partagée, est réécrite avec son signe. Les anciennes
+règles de la liste dépliable « Mon équipe », remplacée par le tableau, sont retirées.
+Mesure à 1280 et 375 px, ligne ouverte : à zéro.
