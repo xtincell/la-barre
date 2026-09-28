@@ -498,3 +498,19 @@ chiffre, pour ne pas accuser quelqu'un d'un défaut d'outil — perd son chiffre
 sérif ; l'étiquette `.trc`, partagée, est réécrite avec son signe. Les anciennes
 règles de la liste dépliable « Mon équipe », remplacée par le tableau, sont retirées.
 Mesure à 1280 et 375 px, ligne ouverte : à zéro.
+
+**Passe 10c — Bilan : la fin de mois (28/09).** Le mode affiche le document compilé,
+qui sert aussi le brief de production et les pages compilées de la présentation :
+il est tranché au §2 comme composant partagé et réécrit une fois. Il était en sérif
+(titre, chiffres, contenus), ses titres de bloc en capitales par la feuille de style
+(`text-transform`), et il pâlissait ses mentions par l'opacité — sous .6, le texte
+tombait sous 4,5:1. Il passe à l'Asap, en casse de phrase, pâlit par l'encre ; ses
+mesures gardent le chiffre à l'encre et disent leur état par le filet, leur évolution
+par un signe ▲ ▼. Les titres de bloc du brief de production et les cartes de la
+validation étaient écrits en capitales dans les données (`t: "CE QU'ON FABRIQUE"`) :
+ramenés en casse de phrase à la source — l'export en texte pour les mails les met
+déjà en capitales lui-même. La barre (période, « Sur », imprimer) passe au sélecteur
+et au champ Studio ; « Copier le texte » devient un geste texte. Trouvé en élaguant :
+une règle « le papier a sa propre encre » corrigeait après coup les couleurs du
+document ; elle n'a plus d'objet. Mesure à 1280 et 375 px, et brief de production
+ouvert : à zéro.

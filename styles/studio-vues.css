@@ -226,6 +226,84 @@ button.chip:hover { border-color: var(--trait-clair); }
 .chip[aria-pressed="true"] { background: var(--studio-bleu-pale); border-color: var(--studio-bleu); color: var(--studio-bleu); }
 .chip .n { color: var(--clair-terne); }
 
+/* Le document compilé — fin de mois, brief de production, pages compilées de la
+ * présentation : un seul moteur de mise en page, sinon deux documents de la
+ * même maison ne se ressemblent plus au bout de trois semaines. Il se lit à la
+ * mesure du papier. Il était en sérif, titres de bloc en capitales, et pâlissait
+ * ses mentions par l'opacité ; il passe à l'Asap, en casse de phrase, et pâlit
+ * par l'encre (sous .6 d'opacité, le texte tombait sous 4,5:1). */
+.co { display: grid; gap: 12px; }
+.co-doc { display: grid; gap: 16px; max-width: 72ch; padding: 24px 28px; background: var(--surface-1); color: var(--clair);
+  border: 1px solid var(--trait); border-radius: 10px; }
+.cod-tete { display: flex; align-items: center; gap: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--trait); }
+.cod-tete h3 { font: 600 24px/1.2 var(--affichage); letter-spacing: -.03em; color: var(--studio-encre); }
+.codt-s { margin-top: 4px; font-size: 12px; color: var(--clair-terne); }
+.cod-logo { flex: 0 0 56px; height: 56px; display: grid; place-items: center; overflow: hidden; }
+.cod-logo img { width: 100%; height: 100%; object-fit: contain; }
+.co-blocs { display: grid; gap: 16px; }
+.co-b { display: grid; gap: 4px; }
+.co-b.fort { padding-left: 12px; border-left: 3px solid var(--studio-bleu); }
+.cob-t { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; font: 550 13px var(--affichage); color: var(--clair); }
+.cob-t span { font: 400 12px var(--affichage); color: var(--clair-terne); }
+.cob-c { font-size: 14px; line-height: 1.6; color: var(--clair); max-width: 65ch; }
+.co-b.fort .cob-c { font: 500 17px/1.45 var(--affichage); color: var(--studio-encre); }
+.co-b.vide .cob-t, .co-b.vide .cob-c { color: var(--clair-terne); }
+.cob-v { font-size: 13px; color: var(--clair-terne); }
+.cob-v.bon { color: var(--clair); }
+.cob-cit { font-size: 11px; color: var(--clair-terne); }
+.cob-p { list-style: none; display: grid; gap: 3px; }
+.cob-p li { position: relative; padding-left: 14px; font-size: 13px; line-height: 1.5; max-width: 65ch; }
+.cob-p li::before { content: "—"; position: absolute; left: 0; color: var(--clair-terne); }
+.cob-l { display: grid; gap: 2px; }
+.cobl { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 10px; font-size: 13px; line-height: 1.5; }
+.cobl-q { color: var(--clair-terne); }
+.cobl-v.vide { color: var(--clair-terne); }
+.cob-a { display: grid; gap: 8px; }
+.coba { padding-left: 10px; border-left: 3px solid var(--trait-clair); }
+.coba-t { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; font: 550 14px var(--affichage); }
+.coba-c { padding: 0 5px; border: 1px solid var(--trait); border-radius: 4px; font: 500 11px var(--affichage); color: var(--clair-terne); }
+.coba-l, .coba-d { font-size: 12px; color: var(--clair-terne); }
+.coba-q { font-size: 13px; line-height: 1.5; color: var(--clair); }
+.co-elts { display: flex; flex-wrap: wrap; gap: 8px; }
+.co-e { width: 8rem; }
+.co-e .vignette { height: 5rem; border: 0; background: var(--surface-3); }
+.co-e span { display: block; margin-top: 3px; font-size: 11px; color: var(--clair-terne); }
+.co-gamme { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 8px; }
+.co-g .vignette { height: 5.5rem; border: 0; background: var(--surface-3); }
+.cog-n { display: block; margin-top: 3px; font-size: 13px; }
+.cog-q, .cog-m { display: block; font-size: 11px; color: var(--clair-terne); }
+.co-doc .rt-mur { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+/* Les mesures : le chiffre grand, le libellé petit, la conséquence dessous ;
+ * l'état dans le filet, jamais dans l'encre du chiffre. Une mesure sans
+ * assise n'a rien à dire de bon ni de mauvais : elle pâlit. */
+.cob-me { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 16px 24px; margin-top: 4px; }
+.cobm { --ton: transparent; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; align-items: baseline;
+  padding-left: 10px; border-left: 3px solid var(--ton); }
+.cobm.alerte { --ton: var(--bloquant); }
+.cobm.vert { --ton: var(--succes); }
+.cobm-v { grid-row: 1 / 3; font: 550 28px/1 var(--affichage); letter-spacing: -.03em; color: var(--clair); font-variant-numeric: tabular-nums; }
+.cobm.creux .cobm-v, .cobm.creux .cobm-n { color: var(--clair-terne); }
+.cobm-n { font-size: 13px; }
+.cobm-e { margin-left: 6px; font-size: 11px; color: var(--clair-terne); }
+.cobm-e.mieux::before { content: "▲ "; color: var(--succes); }
+.cobm-e.moins::before { content: "▼ "; color: var(--bloquant); }
+.cobm-q { grid-column: 2; font-size: 12px; line-height: 1.4; color: var(--clair-terne); }
+.cob-eq { display: grid; gap: 8px; margin-top: 4px; }
+.cobe { display: grid; gap: 2px; }
+.cobe-n { font: 550 14px var(--affichage); }
+.cobe-c { font-size: 12px; color: var(--clair-terne); }
+.cobe-m { font-size: 12px; color: var(--clair); }
+.cobe-m::before { content: "● "; color: var(--bloquant); }
+@media (max-width: 700px) {
+  .co-doc { padding: 18px 16px; }
+  .cob-me { grid-template-columns: minmax(0, 1fr); }
+  .cobl { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
+@media print {
+  .co-doc { max-width: none; padding: 0; border: 0; background: #fff; color: #111; }
+  .co-b { break-inside: avoid; }
+}
+
 /* Le sous-bloc d'une fiche ou d'un panneau : un titre 12 px, puis son contenu. */
 .sousbloc { margin-top: 16px; }
 .sousbloc h3 { font: 700 12px var(--affichage); color: var(--clair); letter-spacing: 0; text-transform: none; margin-bottom: 8px; }
@@ -2393,3 +2471,19 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .trc.attente { --ton: var(--arbitrage); }
 .trc.alerte { --ton: var(--bloquant); }
 .trc.vert { --ton: var(--succes); }
+
+/* ═════════════════════ Passe 10c · Bilan : la fin de mois ═════════════════════ */
+.fm { display: grid; gap: 16px; }
+.fm-barre { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; }
+.fmb-q { display: flex; align-items: center; gap: 8px; }
+.fmb-q label { font-size: 12px; color: var(--clair-terne); }
+.fmb-q select { min-height: 44px; padding: 6px 28px 6px 10px; font: 13px var(--affichage); color: var(--clair);
+  background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px; }
+.fmb-g { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+@media (max-width: 700px) { .fmb-g { margin-left: 0; width: 100%; } }
+/* Ce qui sert à décider quoi imprimer ne s'imprime pas : la bande de
+ * recevabilité, les modes, la barre de période. Reste la feuille. */
+@media print {
+  .fm-barre, .st-modes, .dc-tete, .dc-modes { display: none !important; }
+  .fm { gap: 0; }
+}

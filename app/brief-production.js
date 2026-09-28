@@ -83,7 +83,7 @@ window.BRIEF_PRODUCTION = (function () {
     var blocs = [];
 
     /* 1 — Ce qu'on fabrique. */
-    blocs.push({ t: "CE QU'ON FABRIQUE", fort: true,
+    blocs.push({ t: "Ce qu'on fabrique", fort: true,
       corps: b.concept || b.quoi || null,
       siVide: "ni concept ni description — l'exécutant inventera",
       lignes: [
@@ -97,7 +97,7 @@ window.BRIEF_PRODUCTION = (function () {
 
     /* 2 — L'idée qu'elle sert. Sans elle on exécute sans savoir pourquoi. */
     if (c.piste) {
-      blocs.push({ t: "L'IDÉE QU'ELLE SERT", source: c.piste.titre,
+      blocs.push({ t: "L'idée qu'elle sert", source: c.piste.titre,
         corps: c.piste.idee || null,
         siVide: "la piste est retenue mais son idée n'est pas écrite : rien ne "
           + "permet de dire si ce livrable la sert ou la trahit",
@@ -108,7 +108,7 @@ window.BRIEF_PRODUCTION = (function () {
     }
 
     /* 3 — Ce que le livrable doit dire, mot pour mot. */
-    blocs.push({ t: "CE QU'ELLE DOIT DIRE", fort: true,
+    blocs.push({ t: "Ce qu'elle doit dire", fort: true,
       siVide: "aucun texte arrêté — il s'écrira à la maquette",
       lignes: [
         { q: "Sur le visuel", v: b.texteVisuel || null },
@@ -122,7 +122,7 @@ window.BRIEF_PRODUCTION = (function () {
     /* 4 — Le déroulé, quand le livrable est un film. Une animatique sans son
      * découpage n'est pas un brief, c'est une intention. */
     if ((b.scenes || []).length) {
-      blocs.push({ t: "LE DÉROULÉ", source: b.scenes.length + " scènes",
+      blocs.push({ t: "Le déroulé", source: b.scenes.length + " scènes",
         activites: b.scenes.map(function (s) {
           return { canal: s.n, nom: s.texteEcran, lieu: "", quoi: s.visuel,
             marches: s.voixOff };
@@ -131,7 +131,7 @@ window.BRIEF_PRODUCTION = (function () {
 
     /* 5 — Ce qu'on ne dit jamais. Le seul bloc dont l'absence se paie en revue. */
     var interdits = [].concat(c.vault.jamais || []);
-    blocs.push({ t: "CE QU'ON NE DIT JAMAIS", source: c.mq ? "bibliothèque de marque " + c.mq.nom : null,
+    blocs.push({ t: "Ce qu'on ne dit jamais", source: c.mq ? "bibliothèque de marque " + c.mq.nom : null,
       puces: interdits,
       siVide: c.mq
         ? "rien d'écrit à la bibliothèque de marque de " + c.mq.nom + " : le contrôle de vocabulaire "
@@ -141,7 +141,7 @@ window.BRIEF_PRODUCTION = (function () {
     /* 6 — Les packs montrés, et où ils sont vendus. */
     if (c.packs.length || c.mq) {
       var hz = window.VAULT ? VAULT.packsHorsZone(l) : { hors: [], muets: [] };
-      blocs.push({ t: "LES PACKS À MONTRER", source: c.packs.length ? c.packs.length + " déclarés" : null,
+      blocs.push({ t: "Les packs à montrer", source: c.packs.length ? c.packs.length + " déclarés" : null,
         puces: c.packs.map(function (s) {
           var d = (s.marches || []).length ? "vendu sur " + s.marches.length + " marchés" : "marchés non renseignés";
           return s.nom + (s.contenu ? "  ·  " + s.contenu : "") + "  —  " + d;
@@ -156,7 +156,7 @@ window.BRIEF_PRODUCTION = (function () {
 
     /* 7 — Les contraintes techniques. C'est ce bloc qui évite le fichier
      * refusé la veille du départ. */
-    blocs.push({ t: "CONTRAINTES TECHNIQUES",
+    blocs.push({ t: "Contraintes techniques",
       source: c.s && c.m ? c.s.nom + " × " + c.m.code : null,
       lignes: c.gab ? [
         { q: "Dimensions", v: c.gab.dimensions || null },
@@ -173,7 +173,7 @@ window.BRIEF_PRODUCTION = (function () {
         : "support ou marché non renseigné" });
 
     /* 8 — Les mentions obligatoires. */
-    blocs.push({ t: "MENTIONS OBLIGATOIRES", source: c.m ? c.m.nom : null,
+    blocs.push({ t: "Mentions obligatoires", source: c.m ? c.m.nom : null,
       puces: c.m ? (c.m.mentions || []) : [],
       siVide: c.m
         ? "non renseignées sur " + c.m.nom + " : un livrable diffusé ici peut être "
@@ -182,12 +182,12 @@ window.BRIEF_PRODUCTION = (function () {
 
     /* 9 — Ce qui reste à vérifier avant de produire. */
     if ((b.aVerifier || []).length) {
-      blocs.push({ t: "À VÉRIFIER AVANT DE PRODUIRE", fort: true, puces: b.aVerifier });
+      blocs.push({ t: "À vérifier avant de produire", fort: true, puces: b.aVerifier });
     }
 
     /* 10 — Qui, pour quand, et sur combien d'allers-retours. */
     var t = window.VERSION ? VERSION.tours(l, l.toursVendus) : null;
-    blocs.push({ t: "QUI, POUR QUAND", lignes: [
+    blocs.push({ t: "Qui, pour quand", lignes: [
       { q: "En répond", v: c.resp ? c.resp.nom + "  ·  " + O.poste(c.resp.poste).nom : null },
       { q: "Charge estimée", v: l.estime !== null && l.estime !== undefined ? O.decimal(l.estime) + " j" : null },
       { q: "Remise du fichier", v: l.remise ? O.joli(l.remise) : (l.echeance ? O.joli(l.echeance) : null) },
@@ -198,7 +198,7 @@ window.BRIEF_PRODUCTION = (function () {
     /* 11 — Ce qui décide que c'est fini. */
     var axes = l.points || {};
     var restants = Object.keys(axes).filter(function (k) { return axes[k] !== "fait"; });
-    blocs.push({ t: "CE QUI DÉCIDE QUE C'EST FINI",
+    blocs.push({ t: "Ce qui décide que c'est fini",
       puces: restants.map(function (k) { return NOM_AXE[k] || k; }),
       siVide: "les dix points sont au vert : le livrable est finie au sens de la définition.",
       videBon: true });

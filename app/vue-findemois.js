@@ -72,7 +72,7 @@ window.VUE_FINDEMOIS = (function () {
   function barre(hote, rafraichir) {
     var gens = window.EQUIPE ? EQUIPE.encadres() : [];
 
-    var sel = el("select", { onchange: function () { qui = sel.value || null; rafraichir(); } });
+    var sel = el("select", { id: "fm-qui", onchange: function () { qui = sel.value || null; rafraichir(); } });
     sel.appendChild(el("option", { value: "" }, "Toute l'agence"));
     gens.forEach(function (pe) {
       var o = el("option", { value: pe.id }, pe.nom);
@@ -81,17 +81,18 @@ window.VUE_FINDEMOIS = (function () {
     });
 
     return el("div.fm-barre", {},
-      el("div.fmb-p", {}, Object.keys(BILAN.PERIODES).map(function (k) {
+      el("div.studio-statuts", { role: "group", "aria-label": "Période" }, Object.keys(BILAN.PERIODES).map(function (k) {
         var def = BILAN.PERIODES[k];
-        return el("button.fmb" + (periode === k ? ".ici" : ""), { type: "button",
-          onclick: function () { periode = k; rafraichir(); } }, def.nom);
+        return el("button" + (periode === k ? ".active" : ""), { type: "button",
+          "aria-pressed": periode === k ? "true" : "false",
+          onclick: function () { periode = k; rafraichir(); } }, def.nom.charAt(0).toUpperCase() + def.nom.slice(1));
       })),
 
-      el("div.fmb-q", {}, el("label", {}, "Sur"), sel),
+      el("div.fmb-q", {}, el("label", { "for": "fm-qui" }, "Sur"), sel),
 
       el("div.fmb-g", {},
         el("button.b.or", { type: "button", onclick: function () { window.print(); } }, "Imprimer"),
-        el("button.b.nu", { type: "button", onclick: copier }, "Copier le texte"))
+        el("button.studio-lien", { type: "button", onclick: copier }, "Copier le texte"))
     );
   }
 

@@ -682,7 +682,7 @@ body {
 /* Un rayon dit la nature de l'objet : petit pour ce qui se clique, moyen pour
  * ce qui se lit, grand pour ce qui flotte au-dessus du reste. */
 .b, .champ input, .champ select, .champ textarea,
-.chapeau-outils input, .ju-rech input, .fmb-q select,
+.chapeau-outils input, .ju-rech input,
 input[type="text"], input[type="search"], input[type="number"],
 input[type="date"], select, textarea { border-radius: var(--r-s); }
 

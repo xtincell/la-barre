@@ -637,44 +637,6 @@
   border-left: 2px solid var(--attente); padding-left: .45rem; margin-top: .15rem; }
 .ecx-pret { font-size: var(--t-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); line-height: 1.4; }
 
-/* ————————————————————— Les deux documents compilés ————————————————————— */
-
-.co { display: grid; gap: .8rem; }
-.co-doc { background: var(--papier); color: var(--papier-encre); padding: 1.2rem 1.4rem;
-  display: grid; gap: .9rem; }
-.cod-tete { border-bottom: 2px solid var(--papier-encre); padding-bottom: .5rem; }
-.cod-tete h3 { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre); font-family: var(--lecture); }
-.codt-s { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); opacity: .7; margin-top: .15rem; }
-
-.co-blocs { display: grid; gap: .8rem; }
-.co-b { display: grid; gap: .2rem; }
-.co-b.fort { border-left: 3px solid var(--accent); padding-left: .7rem; }
-.co-b.vide { opacity: .45; }
-.cob-t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em; text-transform: uppercase;
-  display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
-.cob-t span { letter-spacing: 0; text-transform: none; font-size: var(--t-eti); line-height: var(--lh-eti); font-style: italic; }
-.cob-c { font-size: var(--t-lire); letter-spacing: var(--ls-lire); line-height: 1.55; font-family: var(--lecture); }
-.co-b.fort .cob-c { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre); }
-.cob-v { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); font-style: italic; color: var(--clair-terne); }
-.cob-cit { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); opacity: .55; font-style: italic; }
-.cob-p { list-style: none; display: grid; gap: .15rem; }
-.cob-p li { font-size: var(--t-meta); letter-spacing: var(--ls-meta); padding-left: .9rem; position: relative; line-height: 1.45; }
-.cob-p li::before { content: "—"; position: absolute; left: 0; opacity: .5; }
-.cob-l { display: grid; gap: .12rem; }
-.cobl { display: grid; grid-template-columns: 11rem 1fr; gap: .5rem; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.cobl-q { color: var(--papier-terne); }
-.cobl-v.vide { font-style: italic; color: var(--clair-terne); }
-.cob-a { display: grid; gap: .4rem; }
-.coba { border-left: 2px solid rgba(0,0,0,.18); padding-left: .6rem; }
-.coba-t { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); display: flex; gap: .4rem; align-items: baseline; flex-wrap: wrap; }
-.coba-c { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .1em; border: 1px solid currentColor; padding: 0 .28rem; opacity: .7; }
-.coba-l { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); opacity: .6; }
-.coba-q { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; opacity: .85; }
-.coba-d { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); opacity: .6; }
-.co-doc .rt-mur { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
-.co-doc .rt-c { background: rgba(0,0,0,.06); }
-.co-doc .rtc-bas { background: linear-gradient(to top, rgba(0,0,0,.75) 40%, rgba(0,0,0,0)); }
-.co-doc .rtc-n, .co-doc .rtc-m { color: var(--clair); }
 
 /* ————————————————————— L'importeur de fil ————————————————————— */
 
@@ -696,10 +658,6 @@
 .ifm-e { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--vert); }
 .ifm-n { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .4rem; }
 
-@media print {
-  .co-doc { background: #fff; color: #111; }
-}
-
 /* ————————————————————— La mesure : plafonner la lecture ————————————————————— */
 
 /* Un titre, un coût, une phrase : rien de tout ça ne se lit sur deux mille
@@ -708,7 +666,7 @@
 .fix-c, .fix-q, .fix-k,
 .ecx-q, .ecx-k, .ecx-att, .ecx-pret,
 .pir-regle, .brc-p,
-.cob-c, .cob-p li, .bic-c, .bica .v,
+.bic-c, .bica .v,
 .rtb .v, .dia-q { max-width: var(--mesure); }
 
 .pifb-t, .ifm-t, .fb-texte, .vsv-m { max-width: var(--mesure-large); }
@@ -718,8 +676,6 @@
 .fi-x { max-width: calc(var(--mesure-large) + 12rem); }
 .fi-tete { max-width: var(--mesure-large); }
 
-/* Le document compilé se lit à la mesure du papier, pas de l'écran. */
-.co-doc { max-width: calc(var(--mesure) + 4rem); }
 
 
 /* Le rythme vertical : les séparations de section respirent sans creuser. */
@@ -791,18 +747,6 @@
 .mq-note { font-size: var(--t-meta); letter-spacing: var(--ls-meta); color: var(--clair-doux); line-height: 1.5;
   max-width: var(--mesure); margin: .5rem 0; }
 
-/* Dans le document compilé, sur fond papier */
-.cod-tete { display: flex; gap: .9rem; align-items: center; }
-.cod-logo { flex: 0 0 3.5rem; height: 3.5rem; display: grid; place-items: center; overflow: hidden; }
-.cod-logo img { width: 100%; height: 100%; object-fit: contain; }
-.co-elts { display: flex; gap: .5rem; flex-wrap: wrap; }
-.co-e { width: 8rem; }
-.co-e .vignette { height: 5rem; border: 0; background: rgba(0,0,0,.05); }
-.co-e span { display: block; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); opacity: .7; margin-top: .15rem; }
-.co-gamme { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: .5rem; }
-.co-g .vignette { height: 5.5rem; border: 0; background: rgba(0,0,0,.05); }
-.cog-n { display: block; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); margin-top: .2rem; }
-.cog-q, .cog-m { display: block; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); opacity: .65; }
 
 /* ————————————————————— Une intention, trois modes ————————————————————— */
 
@@ -884,75 +828,8 @@
 
 /* ————————————————————— Ma fin de mois ————————————————————— */
 
-.fm { display: grid; gap: 1.1rem; }
 
-.fm-barre { display: flex; flex-wrap: wrap; align-items: center; gap: 1.2rem; }
-.fmb-p { display: flex; gap: .1rem; }
-.fmb { font: inherit; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: .04em; cursor: pointer;
-  background: none; border: 0; border-bottom: 2px solid transparent;
-  color: var(--clair-terne); padding: .3rem .1rem; margin-right: 1rem; }
-.fmb:hover { color: var(--clair); }
-.fmb.ici { color: var(--or); border-bottom-color: var(--or); }
-.fmb-q { display: flex; align-items: center; gap: .5rem; }
-.fmb-q label { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .12em; color: var(--clair-terne); }
-.fmb-g { display: flex; gap: .5rem; margin-left: auto; }
 
-/* Les mesures, sur le papier du document.
- *
- * Aucune boîte : le chiffre est grand, le libellé petit, la conséquence en
- * dessous. Un filet ne sépare que là où deux mesures se toucheraient — et il
- * répond alors à une question, « où finit celle-ci ». */
-.cob-me { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: 1rem 1.6rem; margin-top: .3rem; }
-.cobm { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .1rem .6rem;
-  align-items: baseline; }
-.cobm-v { grid-row: 1 / 3; font-size: var(--t-nombre); letter-spacing: var(--ls-nombre); line-height: .95;
-  font-family: var(--lecture); }
-.cobm-n { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
-.cobm-e { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .04em; margin-left: .4rem; opacity: .7; }
-.cobm-e.mieux { color: #1f6b41; }
-.cobm-e.moins { color: #a3312a; }
-.cobm-q { grid-column: 2; font-size: var(--t-eti); letter-spacing: var(--ls-eti); line-height: 1.4; opacity: .68; }
-.cobm.alerte .cobm-v { color: #a3312a; }
-.cobm.vert .cobm-v { color: #1f6b41; }
-/* La mesure sans assise ne se colore pas : elle n'a rien à dire de bon ni de
- * mauvais. Elle dit ce qu'il faudrait enregistrer. */
-.cobm.creux .cobm-v { opacity: .3; }
-/* Une mesure sans assise s'atténue par l'encre, pas par l'opacité : sous .6
- * le texte passe sous 4,5:1 et la mention devient illisible — or c'est
- * justement celle qu'il faut lire. */
-.cobm.creux .cobm-n { color: var(--clair-terne); }
-.cobm.creux .cobm-q { font-style: italic; }
-
-/* La matière d'évaluation : une ligne par personne. */
-.cob-eq { display: grid; gap: .45rem; margin-top: .3rem; }
-.cobe { display: grid; gap: .1rem; }
-.cobe-n { font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); font-family: var(--lecture); }
-.cobe-c { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); opacity: .68; }
-.cobe-m { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: #a3312a; }
-
-@media (max-width: 700px) {
-  .fmb-g { margin-left: 0; width: 100%; }
-  .cob-me { grid-template-columns: minmax(0, 1fr); }
-}
-/* Un vide qui est une bonne nouvelle ne se grise pas comme un oubli. */
-.co-b.vide:has(.cob-v.bon) { opacity: 1; }
-.cob-v.bon { color: var(--papier-terne); font-style: normal; }
-
-/* Ma fin de mois, sur papier.
- *
- * Ce qui sert à décider quoi imprimer ne s'imprime pas : la bande de
- * recevabilité, les onglets d'intention, la barre de période. Reste la
- * feuille, qui est ce qu'on remet. */
-@media print {
-  .fm-barre, .dc-modes, .dc-tete { display: none !important; }
-  .fm { gap: 0; }
-  .fm .co-doc { max-width: none; padding: 0; }
-  .cobm-v { color: #111 !important; }
-  .cobm.alerte .cobm-v { color: #8a2620 !important; }
-  .cobe-m { color: #8a2620 !important; }
-  .co-b { break-inside: avoid; }
-}
 
 /* ————————————————————— La jurisprudence ————————————————————— */
 
@@ -1319,18 +1196,6 @@
 .rfa-e { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux); }
 .rf-as.bientot .rfa-e, .rfa-e.manque { color: var(--arbitrage); }
 .rf-as.perime .rfa-e { color: var(--bloquant-txt); }
-
-/* ————————————————————— Le papier a sa propre encre ————————————————————— */
-
-/* Un document imprimable est un fond clair : le gris des fonds sombres y
- * tombe à 2,3:1. Ce qui est atténué sur le papier l'est par une encre du
- * papier, jamais par une opacité — et jamais sous 4,5:1. */
-.co-doc .cobl-q, .co-doc .cob-t, .co-doc .cobm-n, .co-doc .cob-v,
-.co-doc .cobl-v.vide, .co-doc .cobm-s { color: var(--papier-terne); }
-/* Une mesure sans assise reste atténuée — mais sur le papier elle prend l'encre
- * du papier. La règle générale perdait en spécificité contre `.cobm.creux`. */
-.co-doc .cobm.creux .cobm-n, .co-doc .cobl-v.vide { color: var(--papier-terne); }
-.co-doc .cobl-v, .co-doc .cobm-c { color: var(--papier-encre); }
 
 /* ————————————————————— Écarté ne veut pas dire illisible ————————————————————— */
 

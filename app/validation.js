@@ -178,22 +178,22 @@ window.VALIDATION = (function () {
     var out = [];
     if (cle === "piste") {
       var n = (p.livrables || []).length;
-      out.push({ t: "EN AVAL", v: String(n), s: n > 1 ? "livrables attendent cette piste" : "livrable attend cette piste",
+      out.push({ t: "En aval", v: String(n), s: n > 1 ? "livrables attendent cette piste" : "livrable attend cette piste",
         ton: verdict.cle === "approuve" ? "" : "alerte" });
     }
     if (cle === "bigidea") {
       var pistes = (p.sections.pistes || []).length;
-      out.push({ t: "EN AVAL", v: String(pistes), s: pistes > 1 ? "pistes en dépendent" : "piste en dépend",
+      out.push({ t: "En aval", v: String(pistes), s: pistes > 1 ? "pistes en dépendent" : "piste en dépend",
         ton: verdict.cle === "approuve" ? "" : "alerte" });
     }
     if (cle === "brief" && verdict.cle !== "approuve") {
-      out.push({ t: "L'HORLOGE", v: "s'arrête", s: "et celle de la Clientèle démarre", ton: "" });
+      out.push({ t: "L'horloge", v: "s'arrête", s: "et celle de la Clientèle démarre", ton: "" });
     }
     if (cle === "socle") {
       var n2 = DEPOT.liste("projets").filter(function (x) {
         return (x.sections.identite || {}).marque === (p.sections.identite || {}).marque;
       }).length;
-      out.push({ t: "PORTÉE", v: String(n2), s: n2 > 1 ? "dossiers sur cette marque" : "dossier sur cette marque", ton: "" });
+      out.push({ t: "Portée", v: String(n2), s: n2 > 1 ? "dossiers sur cette marque" : "dossier sur cette marque", ton: "" });
     }
     return out;
   }
