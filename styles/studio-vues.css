@@ -2608,3 +2608,55 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
   .vn-c { padding-left: 10px; }
   .vn-kdt { padding-left: 28px; }
 }
+
+/* ═════════════════════ Passe 11b · Ressources : marchés et supports ═════════════════════ */
+/* Le référentiel est une hiérarchie : le marché gouverne sa langue, ses
+ * mentions, ses gabarits, son décideur ; le support n'existe que servi sur un
+ * marché. Les supports se replient par marché — cent dix-huit manques réels
+ * répétés à plat ne se traitent pas, ils se noient. */
+.rf-h { display: grid; gap: 6px; margin-bottom: 20px; }
+.rf-t { font: 550 24px/1.25 var(--affichage); letter-spacing: -.03em; color: var(--clair); max-width: 40ch; text-wrap: balance; }
+.rf-s, .rf-p { font-size: 14px; line-height: 1.6; color: var(--clair-terne); max-width: 65ch; }
+.rf-p { font-size: 13px; }
+.rf-signe { color: var(--ton, var(--clair-terne)); }
+.rf-b { display: grid; gap: 12px; margin-bottom: 16px; padding: 18px 22px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; min-width: 0; }
+.rfb-t { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; min-height: 44px; }
+.rfb-t h3 { font: 550 17px var(--affichage); color: var(--clair); }
+.rfb-t span { flex: 1 1 auto; font-size: 12px; color: var(--clair-terne); }
+.rf-l { display: grid; }
+.rf-m { display: grid; gap: 6px; padding: 14px 0; border-top: 1px solid var(--trait); }
+.rfm-h { position: relative; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; min-height: 44px; padding: 0;
+  text-align: left; cursor: pointer; background: none; border: 0; font: inherit; color: inherit; }
+.rfm-code { min-width: 2.4rem; font: 600 21px/1 var(--affichage); color: var(--clair); }
+.rfm-n { font: 550 17px var(--affichage); color: var(--clair); }
+.rfm-h:hover .rfm-n { color: var(--studio-bleu); }
+.rfm-l, .rfm-q { font-size: 12px; color: var(--clair-terne); }
+.rfm-x, .rfm-c { font-size: 13px; line-height: 1.5; color: var(--clair-terne); max-width: 70ch; }
+.rfm-x.manque { --ton: var(--arbitrage); }
+.rfm-c { --ton: var(--bloquant); }
+.rf-plus { justify-self: start; min-height: 44px; padding: 0 12px; cursor: pointer; font: 500 13px var(--affichage); color: var(--studio-bleu);
+  background: var(--surface-1); border: 1px solid var(--trait); border-radius: 6px; }
+.rf-plus:hover { border-color: var(--trait-clair); }
+.rf-plus.manque::before { content: "◐ "; color: var(--arbitrage); }
+.rf-plus.ici { border-color: var(--studio-bleu); }
+.rf-sup { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; margin-top: 4px; }
+.rf-s { --ton: var(--succes); display: grid; gap: 2px; padding: 8px 10px; text-align: left; cursor: pointer; font: inherit;
+  background: var(--surface-1); border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 6px; }
+.rf-s:hover { border-color: var(--trait-clair); border-left-color: var(--ton); }
+.rf-s.manque { --ton: var(--arbitrage); }
+.rfs-n { font: 550 13px var(--affichage); color: var(--clair); }
+.rfs-q, .rfs-g { font-size: 11px; color: var(--clair-terne); }
+.rf-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.rf-chip { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; cursor: pointer; font: 500 13px var(--affichage);
+  color: var(--clair); background: var(--surface-1); border: 1px dashed var(--trait-clair); border-radius: 6px; }
+.rf-chip:hover { border-color: var(--studio-bleu); }
+.rf-a { display: grid; gap: 6px; }
+.rf-as { --ton: var(--trait-clair); display: grid; gap: 2px; padding: 12px 14px; text-align: left; cursor: pointer; font: inherit;
+  background: var(--surface-1); border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 6px; }
+.rf-as:hover { border-color: var(--trait-clair); border-left-color: var(--ton); }
+.rf-as.bientot { --ton: var(--arbitrage); }
+.rf-as.perime { --ton: var(--bloquant); }
+.rfa-n { font: 550 14px var(--affichage); color: var(--clair); }
+.rfa-s, .rfa-z, .rfa-e { font-size: 12px; color: var(--clair-terne); }
+.rfa-e.manque { --ton: var(--arbitrage); }
+@media (max-width: 700px) { .rf-b { padding: 16px; } }

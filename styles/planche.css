@@ -1032,71 +1032,6 @@
   .dl-r.grand .dlr-d { flex-direction: row; align-items: center; }
 }
 
-/* ————————————————————— Le référentiel : une hiérarchie ————————————————————— */
-
-/* Trois piles de même poids disaient trois inventaires. Le marché gouverne :
- * il porte la langue, les mentions, les gabarits, le décideur. Le support
- * n'existe que servi sur un marché. */
-.rf-h { display: grid; gap: .3rem; margin-bottom: 1.6rem; }
-.rf-t { font-size: var(--t-ecran); line-height: var(--lh-ecran); letter-spacing: var(--ls-ecran);
-  color: var(--clair); max-width: 30ch; }
-.rf-s { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-terne);
-  max-width: var(--mesure); }
-
-.rf-b { display: grid; gap: .8rem; margin-bottom: 2.2rem; }
-.rfb-t { display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap;
-  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: .14em;
-  color: var(--clair); border-bottom: 1px solid var(--trait); padding-bottom: .4rem; }
-.rfb-t span { letter-spacing: 0; color: var(--clair-terne); flex: 1 1 auto; }
-.rf-p { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  max-width: var(--mesure); }
-
-.rf-l { display: grid; gap: 1.4rem; }
-.rf-m { display: grid; gap: .45rem; padding-left: .9rem;
-  border-left: 2px solid var(--trait-clair); }
-.rfm-h { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap;
-  background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
-/* L'accent tombe à 4,28 sur ce fond : il désigne bien, il ne se lit pas
- * tout à fait. Le code d'un marché est une donnée, pas une décoration. */
-.rfm-code { font-size: var(--t-h2); line-height: 1; letter-spacing: .04em; color: var(--clair); }
-.rfm-n { font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); }
-.rfm-l, .rfm-q { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-.rfm-h:hover .rfm-n { color: var(--accent); }
-.rfm-x { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne);
-  max-width: var(--mesure); }
-.rfm-x.manque { color: var(--arbitrage); }
-.rfm-c { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--bloquant-txt); }
-
-.rf-sup { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: .3rem; margin-top: .2rem; }
-.rf-s { display: grid; gap: .1rem; padding: .55rem .7rem; text-align: left;
-  background: var(--surface-2); border: 0; border-left: 2px solid var(--succes);
-  border-radius: var(--r-xs); cursor: pointer; }
-.rf-s:hover { background: var(--surface-3); }
-.rf-s.manque { border-left-color: var(--arbitrage); }
-.rfs-n { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair); }
-.rfs-q, .rfs-g { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
-.rf-s.manque .rfs-g { color: var(--arbitrage); }
-
-.rf-chips { display: flex; flex-wrap: wrap; gap: .3rem; }
-.rf-chip { display: inline-flex; align-items: center; min-height: var(--cible);
-  font-size: var(--t-meta); line-height: 1; padding: 0 .8rem;
-  background: none; border: 1px dashed var(--trait-clair); border-radius: var(--r-xs);
-  color: var(--clair-terne); cursor: pointer; }
-.rf-chip:hover { border-color: var(--accent); color: var(--clair); }
-
-.rf-a { display: grid; gap: .3rem; }
-.rf-as { display: grid; gap: .12rem; padding: .75rem .9rem; text-align: left;
-  background: var(--surface-2); border: 0; border-left: 2px solid var(--trait-clair);
-  border-radius: var(--r-xs); cursor: pointer; }
-.rf-as:hover { background: var(--surface-3); }
-.rf-as.bientot { border-left-color: var(--arbitrage); }
-.rf-as.perime { border-left-color: var(--bloquant); }
-.rfa-n { font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair); }
-.rfa-s, .rfa-z { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-terne); }
-.rfa-e { font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux); }
-.rf-as.bientot .rfa-e, .rfa-e.manque { color: var(--arbitrage); }
-.rf-as.perime .rfa-e { color: var(--bloquant-txt); }
 
 /* ————————————————————— Écarté ne veut pas dire illisible ————————————————————— */
 
@@ -1118,9 +1053,6 @@
 /* Les lignes de l'identité et les énoncés de la stratégie deviennent des
  * boutons : même geste, même retour visuel, aucune décoration en plus. */
 
-.rfm-h::after { content: ""; position: absolute; left: 0; right: 0;
-  top: 50%; transform: translateY(-50%); min-height: var(--cible); height: 100%; }
-.rfm-h { position: relative; }
 
 
 .vt-l { display: grid; gap: .5rem; }
@@ -1260,18 +1192,6 @@
   transform: translateY(-50%); min-height: var(--cible); height: 100%; }
 .pe-nom:hover h2 { color: var(--accent); }
 
-/* Montrer ce qui va bien, sur demande. */
-.rf-plus {
-  min-height: var(--cible); padding: .2rem .6rem; margin-top: .3rem;
-  background: none; border: 1px dashed var(--trait-clair); border-radius: var(--r-xs);
-  color: var(--clair-terne); font: inherit;
-  font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta);
-  cursor: pointer;
-}
-.rf-plus:hover { border-color: var(--accent); color: var(--clair); }
-.rf-plus:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.rf-plus.manque { border-color: var(--attente); color: var(--attente); }
-.rf-plus.ici { border-style: solid; border-color: var(--accent); color: var(--clair); }
 
 /* La santé du dossier ne commande jamais. */
 .psa-q {

@@ -540,3 +540,14 @@ dit déjà ; « Servi par » s'arrête à cinq références. Le titre de l'arbre
 celui de l'en-tête : seule reste sa règle de lecture, et `phrase()`, devenue sans
 appelant, est retirée (sa logique vit dans `pireMarques`). La page tombe à
 **5 815 px**. Mesure à 1280 et 375 px : à zéro, hors données (noms de marque).
+
+**Passe 11b — Ressources : marchés et supports (28/09).** Le référentiel garde sa
+hiérarchie (le marché gouverne, le support n'existe que servi sur un marché) et son
+repli par marché. Ses trois titres de bloc en capitales (« LES MARCHÉS », « LES
+ASSETS ET LEURS DROITS », « SUPPORTS JAMAIS SERVIS ») passent en casse de phrase, les
+blocs en sections blanches, les marchés en lignes séparées par un filet. Les manques
+— mentions non renseignées, gabarit manquant, cession sans date, droits bientôt ou
+déjà expirés — perdent leur encre ambre ou rouge pour le filet et le signe ; « + ajouter »,
+« masquer les supports » et les libellés de droits sont capitalisés. Les deux
+définitions de `.rf-plus` et la zone de clic ajoutée à part à `.rfm-h` sont réunies
+en une seule règle chacune. Mesure à 1280 et 375 px, supports dépliés : à zéro.

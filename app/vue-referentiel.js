@@ -31,11 +31,11 @@ window.VUE_REFERENTIEL = (function () {
       el("p.rf-s", {}, "Il se remplit par l'usage, jamais en préalable. "
         + "Le marché gouverne : sa langue, ses mentions, ses gabarits, son décideur.")));
 
-    hote.appendChild(el("div.rf-b", {},
-      el("div.rfb-t", {}, "LES MARCHÉS",
-        el("span", {}, marches.length + "  ·  ils gouvernent tout le reste"),
+    hote.appendChild(el("section.rf-b", {},
+      el("div.rfb-t", {}, el("h3", {}, "Les marchés"),
+        el("span", {}, marches.length + " · ils gouvernent tout le reste"),
         el("button.b.nu", { type: "button",
-          onclick: function () { editerMarche(null, hote); } }, "+ ajouter")),
+          onclick: function () { editerMarche(null, hote); } }, "+ Ajouter")),
       marches.length
         ? el("div.rf-l", {}, marches.map(function (m) {
             return blocMarche(m, supports, usage, hote); }))
@@ -50,11 +50,11 @@ window.VUE_REFERENTIEL = (function () {
       return !Object.keys(usage).some(function (k) { return k.split("|")[1] === s.id; });
     });
     if (orphelins.length) {
-      hote.appendChild(el("div.rf-b", {},
-        el("div.rfb-t", {}, "SUPPORTS JAMAIS SERVIS",
+      hote.appendChild(el("section.rf-b", {},
+        el("div.rfb-t", {}, el("h3", {}, "Supports jamais servis"),
           el("span", {}, orphelins.length + " sur " + supports.length),
           el("button.b.nu", { type: "button",
-            onclick: function () { editerSupport(null, hote); } }, "+ ajouter")),
+            onclick: function () { editerSupport(null, hote); } }, "+ Ajouter")),
         el("p.rf-p", {}, "Déclarés au référentiel, employés par aucun dossier. "
           + "Un support qui ne sert jamais ne porte aucun gabarit — et le jour où "
           + "on l'emploie, on part de rien."),
@@ -109,25 +109,26 @@ window.VUE_REFERENTIEL = (function () {
         el("span.rfm-code", {}, m.code),
         el("span.rfm-n", {}, m.nom),
         el("span.rfm-l", {}, (m.langues || []).map(O.langue).join(", ")
-          + (m.zone ? "  ·  " + m.zone : "")),
+          + (m.zone ? " · " + m.zone : "")),
         el("span.rfm-q", {}, pieces
           ? pieces + (pieces > 1 ? " livrables" : " livrable") + " sur " + siens.length
             + (siens.length > 1 ? " supports" : " support")
-          : "aucun livrable à ce jour")),
+          : "Aucun livrable à ce jour")),
 
       /* Les mentions obligatoires sont une responsabilité de marché : leur
        * absence ne se voit qu'à l'impression, et coûte un rappel. */
       (m.mentions && m.mentions.length)
         ? el("div.rfm-x", {}, m.mentions.length
             + (m.mentions.length > 1 ? " mentions obligatoires" : " mention obligatoire"))
-        : el("div.rfm-x.manque", {}, "mentions obligatoires non renseignées — "
-            + "un livrable diffusé ici peut être non conforme sans que rien ne le dise"),
-      m.note ? el("div.rfm-x.manque", {}, m.note) : null,
+        : el("div.rfm-x.manque", {}, el("span.rf-signe", { "aria-hidden": "true" }, "◐ "),
+            "Mentions obligatoires non renseignées — un livrable diffusé ici peut être non "
+            + "conforme sans que rien ne le dise"),
+      m.note ? el("div.rfm-x.manque", {}, el("span.rf-signe", { "aria-hidden": "true" }, "◐ "), m.note) : null,
 
       supports_(m, siens, hote),
 
       sansGabarit.length
-        ? el("div.rfm-c", {}, sansGabarit.length
+        ? el("div.rfm-c", {}, el("span.rf-signe", { "aria-hidden": "true" }, "● "), sansGabarit.length
             + (sansGabarit.length > 1 ? " gabarits manquent sur ce marché" : " gabarit manque sur ce marché")
             + " — le fichier partira sans qu'on ait vérifié sa taille")
         : null
@@ -157,7 +158,7 @@ window.VUE_REFERENTIEL = (function () {
     return el("div", {},
       el("button.rf-plus" + (ouvert ? ".ici" : "") + (manquent ? ".manque" : ""), { type: "button",
         onclick: function () { deplies[m.id] = !ouvert; rendre(hote); } },
-        ouvert ? "masquer les supports"
+        ouvert ? "Masquer les supports"
           : tries.length + (tries.length > 1 ? " supports" : " support")
             + (manquent
                 ? " · " + manquent + (manquent > 1 ? " sans gabarit" : " sans gabarit")
@@ -173,7 +174,8 @@ window.VUE_REFERENTIEL = (function () {
               title: Object.keys(c.projets).join(", ") },
               el("span.rfs-n", {}, s ? s.nom : c.support),
               el("span.rfs-q", {}, c.n + (c.n > 1 ? " livrables" : " livrable")),
-              el("span.rfs-g", {}, g ? (g.dimensions || "gabarit renseigné") : "gabarit manquant"));
+              el("span.rfs-g", {}, g ? (g.dimensions || "Gabarit renseigné")
+                : [el("span.rf-signe", { "aria-hidden": "true" }, "◐ "), "Gabarit manquant"]));
           }))
         : null
     );
@@ -189,11 +191,11 @@ window.VUE_REFERENTIEL = (function () {
       return x - y;
     });
 
-    return el("div.rf-b", {},
-      el("div.rfb-t", {}, "LES ASSETS ET LEURS DROITS",
-        el("span", {}, assets.length + "  ·  zone et durée, pas seulement un fichier"),
+    return el("section.rf-b", {},
+      el("div.rfb-t", {}, el("h3", {}, "Les assets et leurs droits"),
+        el("span", {}, assets.length + " · zone et durée, pas seulement un fichier"),
         el("button.b.nu", { type: "button",
-          onclick: function () { editerAsset(null, hote); } }, "+ ajouter")),
+          onclick: function () { editerAsset(null, hote); } }, "+ Ajouter")),
 
       classes.length
         ? el("div.rf-a", {}, classes.map(function (a) {
@@ -204,20 +206,20 @@ window.VUE_REFERENTIEL = (function () {
             return el("button.rf-as" + (perime ? ".perime" : bientot ? ".bientot" : ""),
               { type: "button", onclick: function () { editerAsset(a, hote); } },
               el("span.rfa-n", {}, a.nom),
-              el("span.rfa-s", {}, a.source || "source non renseignée — "
+              el("span.rfa-s", {}, a.source || "Source non renseignée — "
                 + "aucune preuve d'autorisation commerciale"),
               el("span.rfa-z", {}, a.zones && a.zones.length
-                ? "autorisé sur " + a.zones.join(", ")
-                : "zones non limitées — à vérifier avant toute diffusion hors zone"),
+                ? "Autorisé sur " + a.zones.join(", ")
+                : "Zones non limitées — à vérifier avant toute diffusion hors zone"),
               exp
-                ? el("span.rfa-e", {}, perime
-                    ? "droits expirés le " + O.joli(a.expire_le)
+                ? el("span.rfa-e", {}, perime || bientot ? el("span.rf-signe", { "aria-hidden": "true" }, perime ? "● " : "◐ ") : null, perime
+                    ? "Droits expirés le " + O.joli(a.expire_le)
                       + " — tout livrable qui s'en sert est en infraction"
                     : bientot
-                      ? "expire le " + O.joli(a.expire_le) + " — dans "
+                      ? "Expire le " + O.joli(a.expire_le) + " — dans "
                         + Math.round((exp - aujourdhui) / 86400000) + " jours"
-                      : "jusqu'au " + O.joli(a.expire_le))
-                : el("span.rfa-e.manque", {}, "aucune date de cession — "
+                      : "Jusqu'au " + O.joli(a.expire_le))
+                : el("span.rfa-e.manque", {}, el("span.rf-signe", { "aria-hidden": "true" }, "◐ "), "Aucune date de cession — "
                     + "on ne saura pas quand l'usage devient illégal"));
           }))
         : el("p.rien", {}, "Aucun asset. Un asset porte sa source, sa licence, "
