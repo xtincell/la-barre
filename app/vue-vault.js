@@ -272,6 +272,10 @@ window.VUE_VAULT = (function () {
       el("span.vtc-v", {}, vide ? (c.aide || "Non écrit")
         : Array.isArray(h.valeur) ? h.valeur.join("  ·  ") : String(h.valeur)),
       inf ? el("span.vtc-i", {}, "inféré — à contresigner") : null,
+      /* Une valeur reçue dit de quel document elle vient : c'est ce qui la
+       * rend opposable, et ce qu'on relit le jour où elle est contestée. */
+      !vide && !inf && h.source && VAULT.sourceDe(h.source.type, h.source.id, c.cle)
+        ? el("span.vtc-s", {}, "source : " + VAULT.sourceDe(h.source.type, h.source.id, c.cle)) : null,
       revs.length
         ? el("span.vtc-r", {}, revs.length + (revs.length > 1 ? " révisions" : " révision")
             + " — la dernière le " + O.jourCourt(revs[0].quand))

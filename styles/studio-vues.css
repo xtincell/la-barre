@@ -2825,3 +2825,4 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .prep-d.ko { border-left: 2px solid var(--bloquant); }
 .prep-dn { font: 500 13px var(--affichage); color: var(--clair); overflow-wrap: anywhere; }
 .prep-dq, .prep-dt { font: 400 12px/1.5 var(--affichage); color: var(--clair-terne); }
+.vtc-s { font-size: 11px; color: var(--clair-terne); font-style: italic; }

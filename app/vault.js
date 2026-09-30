@@ -311,6 +311,11 @@ window.VAULT = (function () {
     return true;
   }
 
+  function sourceDe(type, id, cle) {
+    var v = vaultDe(type, id);
+    return (v && v.sources && v.sources[cle]) || null;
+  }
+
   function inferencesDe(type, id) {
     var v = vaultDe(type, id);
     return v && v.inferences ? Object.keys(v.inferences) : [];
@@ -845,7 +850,7 @@ window.VAULT = (function () {
   }
 
   return { CHAMPS: CHAMPS, PILIERS: PILIERS, champsDuPilier: champsDuPilier, FICHE: FICHE, CATEGORIES: CATEGORIES,
-    revisions: revisions, inference: inference, contresigner: contresigner, inferencesDe: inferencesDe,
+    revisions: revisions, inference: inference, contresigner: contresigner, inferencesDe: inferencesDe, sourceDe: sourceDe,
     clientDe: clientDe, marchesDuClient: marchesDuClient, categoriesDuClient: categoriesDuClient,
     marchesPossibles: marchesPossibles, categoriesPossibles: categoriesPossibles,
     ajouterCategorie: ajouterCategorie,
