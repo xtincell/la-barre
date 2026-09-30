@@ -201,6 +201,24 @@ window.VAULT = (function () {
     return { valeur: h.valeur, propre: false, source: h.source };
   }
 
+  /* La plateforme qu'un dossier doit lire pour une marque.
+   *
+   * Une campagne ne sert pas toujours une marque entière : l'EOY 2026 sert la
+   * gamme EVAP de trois marques, et le client y a écrit une plateforme propre
+   * — « The We Culture » — qui ne vaut ni pour l'IMP ni pour le yaourt. Lire
+   * seulement le niveau marque faisait dire « sans idée directrice » à un
+   * dossier qui en avait une. Quand la campagne déclare sa gamme, on lit la
+   * gamme ; l'héritage remonte seul à la marque puis à l'ombrelle. */
+  function gammeDuDossier(p) {
+    var c = window.CAMPAGNE && p && p.campagneId ? CAMPAGNE.de(p.campagneId) : null;
+    return (c && c.gamme) || ((p && p.sections && p.sections.identite) || {}).gamme || null;
+  }
+
+  function pourDossier(p, marqueId, cle) {
+    var g = gammeDuDossier(p);
+    return g ? herite("gamme", marqueId + "|" + g, cle) : herite("marque", marqueId, cle);
+  }
+
   /* L'arbre complet : l'ombrelle, ses marques, et les gammes que le catalogue
    * emploie réellement. On n'invente pas une gamme vide. */
   function arbre() {
@@ -798,7 +816,7 @@ window.VAULT = (function () {
     clientDe: clientDe, marchesDuClient: marchesDuClient, categoriesDuClient: categoriesDuClient,
     marchesPossibles: marchesPossibles, categoriesPossibles: categoriesPossibles,
     ajouterCategorie: ajouterCategorie,
-    arbre: arbre, herite: herite, vaultDe: vaultDe, ecrireNiveau: ecrireNiveau,
+    arbre: arbre, herite: herite, pourDossier: pourDossier, gammeDuDossier: gammeDuDossier, vaultDe: vaultDe, ecrireNiveau: ecrireNiveau,
     etatNiveau: etatNiveau, nomDe: nomDe, parent: parent, campagnesDe: campagnesDe,
     decideurs: decideurs, promos: promos, ajouterPromo: ajouterPromo,
     fautesDe: fautesDe, fautesSur: fautesSur,

@@ -197,6 +197,7 @@ window.VUE_INSIGHT = (function () {
         el("h3.rin-p", {}, INSIGHT.texte(i) || "Insight vide"),
         c ? el("p.rin-cmd", {}, "Cette couche commande " + c.commande + ".") : null,
         el("p.rin-e", {}, e.quoi),
+        infere(i, rafraichir),
         el("div.rin-g", {},
           el("button.b.nu", { type: "button",
             onclick: function () { editerInsight(p, i, rafraichir); } }, "Écrire"),
@@ -231,6 +232,21 @@ window.VUE_INSIGHT = (function () {
     );
   }
 
+  /* Un insight ou un territoire proposé par la préparation, pas écrit par
+   * l'équipe : il se lit, il sert, mais il ne s'oppose pas tant qu'il n'est
+   * pas contresigné. Le motif reste à côté, daté, une fois signé. */
+  function infere(o, rafraichir) {
+    if (!o.infere) return o.contresigne
+      ? el("p.rin-inf.signe", {}, "Contresigné le " + O.joli(o.contresigne.quand)) : null;
+    return el("div.rin-inf", {},
+      el("span", {}, "Inféré — " + (o.infere.pourquoi || "motif non écrit")),
+      el("button.studio-lien", { type: "button", onclick: function () {
+        o.contresigne = { quand: new Date().toISOString(), par: MAISON.titulaire, motif: o.infere.pourquoi };
+        delete o.infere;
+        DEPOT.enregistrer(); rafraichir();
+      } }, "Contresigner"));
+  }
+
   /* ————————————————————— Un territoire, et ses axes ————————————————————— */
 
   function noeudTerritoire(p, t, rafraichir) {
@@ -246,6 +262,7 @@ window.VUE_INSIGHT = (function () {
         el("span.rte-c", {}, pis.length + (pis.length > 1 ? " concepts" : " concept"))),
       t.quoi ? el("p.rte-q", {}, t.quoi) : null,
       el("p.rte-e", {}, e.quoi),
+      infere(t, rafraichir),
 
       /* La preuve que l'école réclame à cet étage. */
       t.ecole === "disruption"

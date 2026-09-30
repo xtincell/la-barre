@@ -33,8 +33,10 @@ window.VUE_BIGIDEA = (function () {
     return el("div.bi", {},
       idee(p, b, socle),
       bandeOpposable(p, b, r, rafraichir),
-      atelier(p, rafraichir)
-    ,
+      /* Chercher l'idée école par école, avant de la trancher : c'est
+       * l'exercice « le même brief, trois écoles » rendu praticable. */
+      window.BI_ECOLES ? BI_ECOLES.bloc(p, rafraichir) : null,
+      atelier(p, rafraichir),
       champsEditables(p, rafraichir));
   }
 
@@ -152,7 +154,10 @@ window.VUE_BIGIDEA = (function () {
       b.signature ? el("div.bii-sign", {}, "« " + b.signature + " »") : null,
       el("div.bii-pied", {},
         auteur ? el("span.bii-a", {}, UI.avatar(auteur, 22), el("span", {}, auteur.nom)) : null,
-        b.mecanique ? el("span.bii-m", {}, b.mecanique) : null
+        b.mecanique ? el("span.bii-m", {}, b.mecanique) : null,
+        b.ecole && window.ECOLES && ECOLES.de(b.ecole)
+          ? el("span.bii-m", {}, "École : " + ECOLES.de(b.ecole).nom) : null,
+        b.source ? el("span.bii-m", {}, b.source) : null
       )
     );
   }

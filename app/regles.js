@@ -113,7 +113,7 @@ window.REGLES = (function () {
        * plateforme : c'est le rattachement explicite que le §6 bis exige. */
       if (aSection(p, "bigidea") && s.bigidea && s.bigidea.idee) {
         var mid = (s.identite || {}).marqueIds ? (s.identite.marqueIds || [])[0] : null;
-        var h = mid && window.VAULT ? VAULT.herite("marque", mid, "idee_directrice") : null;
+        var h = mid && window.VAULT ? VAULT.pourDossier(p, mid, "idee_directrice") : null;
         var auVault = !!(h && h.valeur);
         if (!(s.socle && s.socle.idee_directrice) && !auVault) {
           pousser(trouves, p, "socle-absent", "Big idea ouverte sans plateforme de marque active", "creation", "socle");

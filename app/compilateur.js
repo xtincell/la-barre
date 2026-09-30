@@ -69,7 +69,7 @@ window.COMPILATEUR = (function () {
     if (!window.VAULT || !mqs.length) return p.sections.socle || {};
     var out = {};
     (VAULT.CHAMPS || []).forEach(function (c) {
-      var vals = mqs.map(function (m) { return VAULT.herite("marque", m.id, c.cle).valeur; })
+      var vals = mqs.map(function (m) { return VAULT.pourDossier(p, m.id, c.cle).valeur; })
         .filter(function (v) {
           return v !== null && v !== undefined
             && (Array.isArray(v) ? v.length : String(v).trim()); });
@@ -131,8 +131,19 @@ window.COMPILATEUR = (function () {
         cout: "le bilan de campagne n'aura pas de dénominateur" },
       { quoi: "Rien ne tient sur une inférence", ok: infs.length === 0, poids: 3,
         cout: infs.length + " champs sont inférés : l'atelier travaillera sur du raisonné, pas sur du reçu" },
-      { quoi: "Le logo au dossier", ok: !!(MARQUE.de(p) && MARQUE.logo(MARQUE.de(p).id)), poids: 4,
-        cout: "aucun logo : chaque exécutant ira le chercher ailleurs, et le trouvera faux" },
+      /* Chaque marque servie : un logo manquant sur une des trois est un
+       * exécutant qui ira le chercher ailleurs pour celle-là. */
+      (function () {
+        var mqs = MARQUE.toutes(p);
+        var sans = mqs.filter(function (m) { return !MARQUE.logo(m.id); }).map(function (m) { return m.nom; });
+        return { quoi: mqs.length > 1 ? "Le logo de chaque marque au dossier" : "Le logo au dossier",
+          ok: mqs.length > 0 && !sans.length, poids: 4,
+          cout: sans.length && mqs.length > 1
+            ? "pas de logo pour " + sans.join(", ") + " : l'exécutant ira le chercher ailleurs, et le trouvera faux"
+            : "aucun logo : chaque exécutant ira le chercher ailleurs, et le trouvera faux" };
+      })(),
+      { quoi: "Des images de référence", ok: ((p.sections.socle || {}).moodboard || []).length > 0, poids: 2,
+        cout: "sans moodboard, chaque DA réinvente l'univers — et se trompe" },
       { quoi: "La gamme déclarée", ok: gammeDeLaCampagne(p, MARQUE.de(p)).length > 0, poids: 3,
         cout: "on ne sait pas ce qu'on vend — ni quel SKU un KV a le droit de montrer" },
       { quoi: "Brief contresigné", ok: !!(p.goFinal && p.goFinal.recu_le), poids: 4,
@@ -212,6 +223,10 @@ window.COMPILATEUR = (function () {
         (v.marches || []).forEach(function (id) { marches[id] = true; });
       });
     }
+    /* La gamme que la campagne déclare est un cadre à elle seule : l'EOY sert
+     * l'EVAP, et les laits en poudre des mêmes marques n'ont rien à y faire. */
+    var gDossier = window.VAULT && VAULT.gammeDuDossier ? VAULT.gammeDuDossier(p) : null;
+    if (gDossier && !Object.keys(cats).length) cats[gDossier] = true;
     var aucunCadre = !Object.keys(marches).length && !Object.keys(cats).length;
 
     /* Ce que les livrables déclarent : c'est un fait, il passe devant. */
@@ -228,6 +243,9 @@ window.COMPILATEUR = (function () {
         if (!retenu && !aucunCadre) {
           /* Une catégorie hors campagne n'a rien à faire au cadrage. */
           if (Object.keys(cats).length && s.categorie && !cats[s.categorie]) return;
+          /* Sous une gamme déclarée, un pack sans catégorie reste à qualifier :
+           * on ne le montre pas comme s'il en faisait partie. */
+          if (gDossier && !s.categorie) return;
           /* Un pack dont on sait qu'il n'est vendu sur aucun marché servi non plus. */
           var d = s.marches || [];
           if (d.length && !d.some(function (id) { return marches[id]; })) return;
@@ -244,13 +262,24 @@ window.COMPILATEUR = (function () {
 
   function cadrage(p) {
     var i = p.sections.identite || {}, b = p.sections.brief || {},
-        s = socleDe(p), st = p.sections.strategie || {};
+        s = socleDe(p), st = p.sections.strategie || {}, bi = p.sections.bigidea || {};
 
-    var mq = MARQUE.de(p);
-    var logo = mq ? MARQUE.logo(mq.id) : null;
+    var mqs = MARQUE.toutes(p);
+    var mq = mqs[0] || null;
+    var multi = mqs.length > 1;
+    /* Une campagne à plusieurs marques est signée par l'ombrelle : c'est son
+     * logo qui tient l'en-tête, et les logos des marques vont dans leur bloc. */
+    var logoClient = multi && i.clientId ? MARQUE.logo(i.clientId) : null;
+    var logo = logoClient || (mq ? MARQUE.logo(mq.id) : null);
+    var logos = mqs.map(function (m) { return MARQUE.logo(m.id); }).filter(Boolean);
+    var sansLogo = mqs.filter(function (m) { return !MARQUE.logo(m.id); }).map(function (m) { return m.nom; });
+    /* Elle lit déjà toutes les marques du dossier. */
     var gamme = gammeDeLaCampagne(p, mq);
-    var elts = (mq ? MARQUE.assets(mq.id) : []).filter(function (a) {
-      return MARQUE.role(a) !== "logo"; });
+    var elts = [];
+    mqs.forEach(function (m) {
+      elts = elts.concat(MARQUE.assets(m.id).filter(function (a) {
+        var r = MARQUE.role(a); return r !== "logo" && r !== "plateforme"; }));
+    });
 
     return {
       titre: "Cadrage — " + p.nom,
@@ -258,11 +287,24 @@ window.COMPILATEUR = (function () {
         + (i.marque ? "  ·  " + i.marque : ""),
       logo: logo,
       blocs: [
-        { t: "La marque", elements: logo ? [logo] : [], gamme: gamme,
-          source: mq ? mq.nom + (mq.secteur ? " · " + mq.secteur : "") : "marque non rattachée" },
+        campagneBloc(p),
+        { t: multi ? "Les marques" : "La marque", elements: logos, gamme: gamme,
+          source: mqs.length ? mqs.map(function (m) { return m.nom; }).join(" · ")
+            + (sansLogo.length ? "  —  sans logo au dossier : " + sansLogo.join(", ") : "")
+            : "marque non rattachée" },
         { t: "Ce qu'on nous demande", corps: b.verbatim, source: "les mots du client",
           citation: (p.briefCitations || {}).verbatim },
-        { t: "Le problème réel", corps: b.probleme, source: "Strategy Planner" },
+        { t: "Le marché, tel que le brief le décrit", corps: b.probleme,
+          elements: (p.piecesBrief || []).map(function (x) {
+            return { vignette: x.vignette, nom: x.nom + (x.source ? " — " + x.source : "") }; }),
+          source: "ce que le client constate — pas encore ce qu'on en fait" },
+        { t: "Les objectifs", lignes: [
+          { q: "Business", v: b.objectif_business },
+          { q: "Marketing", v: i.objectif },
+          { q: "Communication", v: b.objectif_com },
+        ].filter(function (x) { return !!(x.v || "").trim(); }) },
+        { t: "Le problème réel", corps: st.probleme_reel, fort: true,
+          source: "ce que la demande cache — c'est lui que l'atelier doit résoudre" },
         briefbackBloc(p),
         { t: "À qui on parle", corps: b.cible },
         /* L'insight n'est plus un paragraphe : il a une couche, et la couche
@@ -270,19 +312,28 @@ window.COMPILATEUR = (function () {
          * envoie l'atelier chercher au mauvais endroit. */
         insightBloc(p, b, st),
         territoireBloc(p, st),
+        { t: "L'opportunité", corps: st.opportunite,
+          puces: (st.pointsEntree || []).map(function (x) { return "point d'entrée : " + x; }) },
         { t: "La promesse", corps: b.promesse || s.promesse, fort: true },
-        { t: "L'idée directrice de la marque", corps: s.idee_directrice,
+        plateformeGammeBloc(p, mqs),
+        { t: "L'idée directrice de la marque", corps: multi ? null : s.idee_directrice,
           source: "plateforme de marque — pluriannuelle, elle ne se rediscute pas ici" },
-        { t: "Ce qu'on peut prouver", puces: (b.rtb || []).concat(s.preuves || []) },
+      ].filter(function (x) { return !(multi && x && x.t === "L'idée directrice de la marque"); })
+      .concat(mqs.map(function (m) { return plateformeMarqueBloc(p, m); }))
+      .concat([
+        { t: "Ce qu'on peut prouver", puces: (b.rtb || []).concat(multi ? [] : (s.preuves || [])) },
         { t: "Le ton, et ce qu'on ne dit jamais", corps: b.ton || s.ton,
           puces: s.jamais && s.jamais.length ? s.jamais.map(function (x) { return "jamais : " + x; }) : null },
         { t: "Les garde-fous", puces: st.gardefous },
+        moodboardBloc(p),
         { t: "Ce qu'il faut produire", puces: b.livrables_attendus },
         { t: "Les mandatories", puces: b.mandatories },
         { t: "Les contraintes", corps: b.contraintes },
-        { t: "Comment on mesurera", puces: b.kpis },
+        { t: "Comment on mesurera", puces: (i.mesure || []).length ? i.mesure : b.kpis },
         elts.length ? { t: "Les éléments de marque", elements: elts,
           source: "ce qu'un DA doit avoir sous les yeux avant de dessiner" } : null,
+        ideeSurLaTableBloc(p, bi),
+        propositionsBloc(p),
         ecolesBloc(p),
         { t: "Le cadre de décision", lignes: [
           { q: "Décideur final", v: i.decideur },
@@ -292,12 +343,124 @@ window.COMPILATEUR = (function () {
           { q: "Échéance", v: i.echeance ? O.joli(i.echeance) : null },
           { q: "Budget", v: i.budget ? String(i.budget) + " FCFA" : null },
         ] },
-      ].filter(Boolean),
+      ]).filter(Boolean),
       inferences: window.INFERENCE
         ? INFERENCE.liste(p).filter(function (x) {
             return DOCS.cadrage.sections.indexOf(x.section) !== -1; })
         : [],
     };
+  }
+
+  /* ————————————————————— Ce qu'un cadrage à plusieurs marques doit porter —————————————————————
+   *
+   * Le document ne lisait que la première marque, et la plateforme commune aux
+   * trois : sur l'EOY, où une seule marque n'avait pas de brand propeller, il
+   * ne montrait donc AUCUNE plateforme — ni celle de Bonnet Rouge, ni celle de
+   * Peak, ni « The We Culture » écrite pour la gamme. Chaque niveau a
+   * maintenant son bloc, et le vide d'une marque se dit sans effacer les autres. */
+
+  function campagneBloc(p) {
+    var c = window.CAMPAGNE && p.campagneId ? CAMPAGNE.de(p.campagneId) : null;
+    if (!c) return null;
+    var o = CAMPAGNE.occasion(c.occasion);
+    var f = c.fenetre || {};
+    var marches = (c.marches || []).map(function (id) {
+      var m = DEPOT.trouve("marches", id); return m ? m.nom : id; });
+    return { t: "La campagne", lignes: [
+      { q: "Campagne", v: c.nom },
+      { q: "Occasion", v: o ? o.nom : c.occasion },
+      { q: "Gamme", v: c.gamme || null },
+      { q: "Fenêtre", v: f.debut ? O.joli(f.debut) + " → " + (f.fin ? O.joli(f.fin) : "?") : null },
+      { q: "Marchés", v: marches.join(", ") || null },
+    ].filter(function (x) { return !!x.v; }),
+      source: c.infere ? "inférée — " + c.infere.pourquoi : (c.source || null) };
+  }
+
+  function plateformeGammeBloc(p, mqs) {
+    var g = window.VAULT ? VAULT.gammeDuDossier(p) : null;
+    if (!g || !mqs.length) return null;
+    var lignes = [];
+    ["idee_directrice", "positionnement", "occasions"].forEach(function (cle) {
+      var champ = (VAULT.CHAMPS || []).filter(function (c) { return c.cle === cle; })[0];
+      var vus = {};
+      mqs.forEach(function (m) {
+        var v = (VAULT.vaultDe("gamme", m.id + "|" + g) || {})[cle];
+        if (Array.isArray(v)) v = v.join(" · ");
+        if (v && String(v).trim()) (vus[v] = vus[v] || []).push(m.nom);
+      });
+      Object.keys(vus).forEach(function (v) {
+        lignes.push({ q: (champ ? champ.nom : cle)
+          + (Object.keys(vus).length > 1 ? " — " + vus[v].join(", ") : ""), v: v });
+      });
+    });
+    return { t: "La plateforme " + g, fort: true, lignes: lignes,
+      siVide: "aucune plateforme écrite pour la gamme " + g,
+      source: "commune aux marques " + g + " de la campagne — c'est à elle que la big idea se rattache" };
+  }
+
+  function plateformeMarqueBloc(p, m) {
+    var v = (window.VAULT ? VAULT.vaultDe("marque", m.id) : null) || {};
+    var lignes = (VAULT.CHAMPS || []).filter(function (c) {
+      var x = v[c.cle];
+      return c.cle !== "idee_directrice"
+        && (Array.isArray(x) ? x.length : x !== undefined && x !== null && String(x).trim());
+    }).map(function (c) {
+      var x = v[c.cle];
+      return { q: c.nom, v: Array.isArray(x) ? x.join(" · ") : String(x) };
+    });
+    var docs = MARQUE.assets(m.id, "plateforme");
+    return { t: "Plateforme — " + m.nom, lignes: lignes, elements: docs,
+      siVide: "aucune plateforme de marque à la bibliothèque : le brief n'en fournit pas pour " + m.nom
+        + ". À demander au client avant la séance.",
+      source: docs.length ? "brand propeller remis par le client, rangé à la bibliothèque"
+        : "bibliothèque de marque — le brief ne fournit pas de brand propeller pour " + m.nom
+          + (lignes.length ? " : seul ce qui suit est écrit" : "") };
+  }
+
+  function moodboardBloc(p) {
+    var ms = ((p.sections.socle || {}).moodboard || []);
+    if (!ms.length) return null;
+    var noms = { reference: "Référence", passe: "Campagne passée", interdit: "Ce qu'on ne refait pas" };
+    return { t: "Le moodboard", source: "chaque image dit pourquoi elle est là",
+      elements: ms.map(function (m) {
+        return { vignette: m.vignette, nom: (noms[m.role] || "Image") + " — " + (m.legende || "sans légende") }; }) };
+  }
+
+  /* La big idea n'appartient pas au cadrage — sauf quand elle arrive avec le
+   * brief. Le client en propose parfois une : l'équipe doit la connaître avant
+   * la séance, comme une proposition parmi d'autres, ni arbitrée ni attribuée. */
+  function ideeSurLaTableBloc(p, bi) {
+    if (!(bi.idee || "").trim()) return null;
+    var retenue = !!bi.propositionId;
+    return { t: retenue ? "La big idea retenue" : "L'idée déjà sur la table",
+      fort: true,
+      source: retenue ? "retenue parmi les propositions par école"
+        : (bi.source || "écrite avant la séance de concept — ni arbitrée, ni attribuée"),
+      corps: bi.idee,
+      lignes: [
+        { q: "Mécanique", v: bi.mecanique },
+        { q: "Rattachement", v: bi.rattachement },
+        { q: "Condition de validité", v: bi.validite },
+      ].filter(function (x) { return !!(x.v || "").trim(); }),
+      puces: (bi.criteres || []).map(function (x) { return "critère : " + x; })
+        .concat((bi.interdits || []).map(function (x) { return "interdit : " + x; })) };
+  }
+
+  function propositionsBloc(p) {
+    if (!window.BI_ECOLES) return null;
+    var cs = BI_ECOLES.vivantes(p);
+    if (!cs.length) return null;
+    var r = BI_ECOLES.racines(p);
+    return { t: "Les big ideas à mettre en séance, par école",
+      source: cs.length + (cs.length > 1 ? " propositions" : " proposition") + " · "
+        + r.n + (r.n > 1 ? " racines différentes — l'arbitrage choisira d'abord l'insight" : " racine commune"),
+      lignes: cs.map(function (c) {
+        var e = window.ECOLES && c.ecole ? ECOLES.de(c.ecole) : null;
+        var i = BI_ECOLES.racine(p, c);
+        return { q: e ? e.nom : "École non déclarée",
+          v: (c.titre ? c.titre + " — " : "") + (c.phrase || "phrase non écrite")
+            + (i && i.couche ? "  ·  racine : insight " + INSIGHT.couche(i.couche).nom.toLowerCase() : "  ·  sans racine") };
+      }) };
   }
 
   /* ————————————————————— La chaîne du raisonnement, dans le document —————————————————————

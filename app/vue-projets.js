@@ -976,7 +976,7 @@ window.VUE_PROJETS = (function () {
       var requis = sec.champs.filter(function (c) { return c.requis; }).map(function (c) { return c.cle; });
       var cles = sec.champs.map(function (c) { return c.cle; });
       function plein(m, k) {
-        var v = (VAULT.herite("marque", m.id, k) || {}).valeur;
+        var v = (VAULT.pourDossier(p, m.id, k) || {}).valeur;
         return Array.isArray(v) ? v.length > 0 : v !== null && v !== undefined && String(v).trim() !== "";
       }
       var ecrites = mqs.filter(function (m) { return cles.some(function (k) { return plein(m, k); }); });

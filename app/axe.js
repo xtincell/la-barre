@@ -173,7 +173,7 @@ window.AXE = (function () {
            .filter(Boolean)[0];
     if (!mid) return null;
     var lire = function (cle) {
-      var h = VAULT.herite("marque", mid, cle);
+      var h = VAULT.pourDossier(p, mid, cle);
       return h && h.valeur ? h : null;
     };
     var t = lire("ton"), j = lire("jamais"), d = lire("idee_directrice"), n = lire("ne_fera_pas");

@@ -2750,3 +2750,60 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
   .reg { padding: 16px; }
   .inkr-g { margin-left: 0; width: 100%; }
 }
+
+/* ————— Chercher la big idea par école (bigidea-ecoles.js) —————
+ * Une section blanche, les endroits d'abord, les propositions ensuite. Une
+ * proposition est un élément de liste, pas une carte à ombre : filet, rayon 6. */
+.be { display: grid; gap: 16px; padding: 20px 24px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; }
+.be-tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.be-t { display: flex; align-items: center; gap: 10px; font: 550 21px var(--affichage); letter-spacing: -.02em; color: var(--clair); }
+.be-chapo { margin: 6px 0 0; max-width: 65ch; font: 400 14px/1.6 var(--affichage); color: var(--clair-terne); }
+.be-endroits { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.be-en { display: grid; gap: 3px; padding: 10px 12px; border: 1px dashed var(--trait); border-radius: 6px; background: var(--surface-4); }
+.be-en.plein { border-style: solid; background: var(--surface-1); }
+.be-en-n { font: 550 13px var(--affichage); color: var(--clair); }
+.be-en-c { font: 400 12px var(--affichage); color: var(--clair-terne); }
+.be-en.plein .be-en-c { color: var(--studio-bleu); font-weight: 500; }
+.be-en-e { font: 400 11px/1.4 var(--affichage); color: var(--clair-terne); }
+.be-racines { display: grid; gap: 8px; }
+.be-rg { display: grid; gap: 6px; }
+.be-rgl { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding: 8px 12px; border-radius: 6px; background: var(--surface-4); font: 400 13px/1.5 var(--affichage); color: var(--clair); }
+.be-rgl-c, .be-rgl-n { font-size: 11px; color: var(--clair-terne); }
+.be-rgl.sans .be-rgl-c { color: var(--bloquant); }
+.be-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; align-items: start; }
+.be-c { display: grid; gap: 10px; padding: 16px 18px; border: 1px solid var(--trait); border-radius: 6px; background: var(--surface-1); min-width: 0; }
+.be-c.retenue { border-color: var(--studio-bleu); box-shadow: var(--elev-1); }
+.be-c.ecartee { opacity: .6; }
+.be-c-e { display: grid; gap: 2px; }
+.be-c-ecole { font: 700 12px var(--affichage); color: var(--studio-bleu); }
+.be-c-ou { font: 400 11px/1.4 var(--affichage); color: var(--clair-terne); }
+.be-c-titre { font: 550 17px var(--affichage); color: var(--clair); }
+.be-c-phrase { font: italic 400 16px/1.45 var(--lecture, Georgia, serif); color: var(--clair); }
+.be-c-phrase.vide { font-style: normal; font-size: 13px; color: var(--bloquant); }
+.be-c-l { display: grid; gap: 8px; }
+.be-cl { display: grid; gap: 2px; }
+.be-cl-q { font: 400 11px var(--affichage); color: var(--clair-terne); }
+.be-cl-v { font: 400 13px/1.5 var(--affichage); color: var(--clair); overflow-wrap: anywhere; }
+.be-cl-v.vide { color: var(--clair-terne); font-style: italic; }
+.be-c-test { padding: 8px 10px; border-left: 2px solid var(--trait); font: 400 12px/1.5 var(--affichage); color: var(--clair-terne); }
+.be-c-etat { font: 500 12px/1.4 var(--affichage); color: var(--clair); }
+.be-c-etat.attente { color: var(--arbitrage); }
+.be-c-etat.alerte { color: var(--bloquant); }
+.be-c-etat.vert { color: var(--succes); }
+.be-c-inf { font: 400 12px/1.5 var(--affichage); color: var(--clair-terne); }
+.be-c-pied { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--trait); }
+.be-c-a { display: inline-flex; align-items: center; gap: 6px; font: 400 12px var(--affichage); color: var(--clair); }
+.be-c-a.vide { color: var(--clair-terne); }
+.be-c-g { display: inline-flex; align-items: center; gap: 12px; }
+.be-f-ecole { display: grid; gap: 6px; padding: 12px 14px; margin-bottom: 12px; border-radius: 6px; background: var(--surface-4); }
+.be-f-q { font: 550 15px/1.4 var(--affichage); color: var(--clair); }
+.be-f-p { font: 400 13px/1.5 var(--affichage); color: var(--clair); }
+.be-f-lim { font: 400 12px/1.5 var(--affichage); color: var(--clair-terne); }
+@media (max-width: 600px) {
+  .be { padding: 16px; }
+  .be-grille { grid-template-columns: minmax(0, 1fr); }
+  .be-rgl { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}
+/* Ce que la préparation a proposé et que l'équipe n'a pas encore signé. */
+.rin-inf { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 6px 10px; border-left: 2px solid var(--arbitrage); font: 400 12px/1.5 var(--affichage); color: var(--clair-terne); }
+.rin-inf.signe { border-left-color: var(--succes); }
