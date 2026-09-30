@@ -2812,3 +2812,16 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .vtc-i { font-size: 11px; color: var(--arbitrage); }
 .svf-h.infere { color: var(--arbitrage); }
 .svm.gamme { border-color: var(--studio-bleu); }
+
+/* ————— Préparer la séance (preparation.js) ————— */
+.prep { display: grid; gap: 12px; padding: 18px 20px; background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px; }
+.prep-tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.prep-t { display: flex; align-items: center; gap: 10px; font: 550 17px var(--affichage); color: var(--clair); }
+.prep-q { margin: 6px 0 0; max-width: 65ch; font: 500 15px/1.5 var(--affichage); color: var(--clair); }
+.prep-q.vide { font-weight: 400; color: var(--clair-terne); }
+.prep-docs summary { display: flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; font: 550 13px var(--affichage); color: var(--clair); }
+.prep-dl { display: grid; gap: 6px; }
+.prep-d { display: grid; gap: 2px; padding: 8px 10px; border-radius: 6px; background: var(--surface-4); }
+.prep-d.ko { border-left: 2px solid var(--bloquant); }
+.prep-dn { font: 500 13px var(--affichage); color: var(--clair); overflow-wrap: anywhere; }
+.prep-dq, .prep-dt { font: 400 12px/1.5 var(--affichage); color: var(--clair-terne); }

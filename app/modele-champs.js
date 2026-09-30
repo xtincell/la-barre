@@ -110,6 +110,26 @@ window.CHAMPS = {
           aide: "Ce qu'elle fera et pensera après la campagne. L'écart entre les deux est ce que la campagne doit produire." },
         { cle: "message_cle", nom: "Message clé", type: "texte", poste: "planning",
           aide: "Ce que la cible doit retenir, en une phrase. Pas une accroche : c'est la création qui la trouvera." },
+        /* Ce qu'un dossier de campagne globale apporte et que le brief d'une
+         * agence locale n'avait nulle part où ranger : la campagne dont on part,
+         * sa hiérarchie de messages, ses appels à l'action, son calendrier, le
+         * rôle de ses canaux, son plan de crise et les droits de ses éléments.
+         * Tous facultatifs : ils ne servent qu'aux dossiers qui les portent. */
+        { cle: "campagne_source", nom: "Campagne d'origine", type: "long", poste: "clientele",
+          aide: "Quand on adapte une campagne d'un autre marché : ce qu'elle est, où elle a tourné, comment elle est construite." },
+        { cle: "hierarchie_messages", nom: "Hiérarchie des messages", type: "puces", poste: "planning",
+          aide: "Du plus court au plus long : l'accroche, la tension, la vérité de marque, le récit." },
+        { cle: "ctas", nom: "Appels à l'action", type: "puces", poste: "clientele" },
+        { cle: "calendrier", nom: "Calendrier et jalons", type: "puces", poste: "clientele",
+          aide: "Une ligne par jalon, datée : ce qui part, quand, et qui le porte." },
+        { cle: "canaux", nom: "Rôle des canaux et indicateurs", type: "puces", poste: "clientele",
+          aide: "Par canal : sa contribution, son audience, son rôle, ses indicateurs." },
+        { cle: "risques", nom: "Risques de réputation", type: "puces", poste: "clientele",
+          aide: "Ce qui peut faire déraper la campagne dans l'opinion, et le garde-fou qui le prévient." },
+        { cle: "messages_reactifs", nom: "Messages réactifs", type: "puces", poste: "clientele",
+          aide: "Les réponses préparées si la campagne est attaquée — une par scénario." },
+        { cle: "droits_usage", nom: "Droits d'usage des éléments reçus", type: "puces", poste: "clientele",
+          aide: "Pour chaque élément : organique seulement, payant, en attente — et sur quelle zone." },
         { cle: "cible", nom: "Cible et tension", type: "long", critique: true, poste: "planning" },
         { cle: "insight", nom: "Insight", type: "long", critique: true, poste: "planning" },
         { cle: "promesse", nom: "Promesse", type: "texte", critique: true, poste: "planning" },
@@ -204,6 +224,13 @@ window.CHAMPS = {
         { cle: "pointsEntree", nom: "Points d'entrée de catégorie", type: "puces",
           aide: "Les situations d'achat auxquelles la marque est associée. Le petit "
             + "déjeuner, la fin du mois, la rentrée, le déplacement." },
+        /* Adapter une campagne venue d'ailleurs, c'est trois décisions et pas
+         * une : ce qu'on garde, ce qu'on change, ce qu'on laisse. Les écrire
+         * évite de traduire ce qui ne voyage pas. */
+        { cle: "a_garder", nom: "Ce qu'on garde de la campagne d'origine", type: "puces" },
+        { cle: "a_adapter", nom: "Ce qu'on adapte au marché", type: "puces" },
+        { cle: "a_ecarter", nom: "Ce qu'on ne reprend pas", type: "puces",
+          aide: "Avec la raison : c'est elle qu'on opposera à qui demandera pourquoi." },
       ],
     },
     {

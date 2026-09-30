@@ -307,7 +307,7 @@ window.COMPILATEUR = (function () {
           { q: "Marketing", v: i.objectif },
           { q: "Communication", v: b.objectif_com },
         ].filter(function (x) { return !!(x.v || "").trim(); }) },
-        { t: "La stratégie de marque du client", corps: b.strategie_client,
+        { t: "La stratégie de marque du client", facultatif: true, corps: b.strategie_client,
           source: "elle cadre la campagne, elle ne se rediscute pas ici" },
         { t: "Le job to be done", corps: b.jtbd, fort: true,
           source: "le progrès que la cible cherche à faire — et ce que la marque doit lui permettre" },
@@ -317,6 +317,13 @@ window.COMPILATEUR = (function () {
         ], source: "l'écart entre les deux est ce que la campagne doit produire" } : null,
         { t: "Le message clé", corps: b.message_cle, fort: true,
           source: "ce que la cible doit retenir — pas une accroche" },
+        { t: "La campagne d'origine", facultatif: true, corps: b.campagne_source,
+          source: "ce dont on part — la campagne d'un autre marché, telle qu'elle a été conçue" },
+        (st.a_garder || st.a_adapter || st.a_ecarter) ? { t: "L'adaptation", fort: true, lignes: [
+          { q: "Ce qu'on garde", v: (st.a_garder || []).join("  ·  ") },
+          { q: "Ce qu'on adapte", v: (st.a_adapter || []).join("  ·  ") },
+          { q: "Ce qu'on ne reprend pas", v: (st.a_ecarter || []).join("  ·  ") },
+        ].filter(function (x) { return !!x.v; }), source: "trois décisions, pas une traduction" } : null,
         { t: "Le problème réel", corps: st.probleme_reel, fort: true,
           source: "ce que la demande cache — c'est lui que l'atelier doit résoudre" },
         briefbackBloc(p),
@@ -341,14 +348,23 @@ window.COMPILATEUR = (function () {
         { t: "Les garde-fous", puces: st.gardefous },
         moodboardBloc(p),
         { t: "Ce qu'il faut produire", puces: b.livrables_attendus },
+        { t: "La hiérarchie des messages", facultatif: true, puces: b.hierarchie_messages },
+        { t: "Les appels à l'action", facultatif: true, puces: b.ctas },
         { t: "Les mandatories", puces: b.mandatories },
         { t: "Les contraintes", corps: b.contraintes },
         { t: "Comment on mesurera", puces: (i.mesure || []).length ? i.mesure : b.kpis },
+        { t: "Le rôle des canaux", facultatif: true, puces: b.canaux },
+        { t: "Le calendrier et les jalons", facultatif: true, puces: b.calendrier },
+        { t: "Les risques de réputation", facultatif: true, puces: b.risques, fort: !!(b.risques || []).length },
+        { t: "Les messages réactifs", facultatif: true, puces: b.messages_reactifs },
+        { t: "Les droits d'usage des éléments reçus", facultatif: true, puces: b.droits_usage },
         elts.length ? { t: "Les éléments de marque", elements: elts,
           source: "ce qu'un DA doit avoir sous les yeux avant de dessiner" } : null,
+        window.PREPARATION ? PREPARATION.blocCadrage(p) : null,
         ideeSurLaTableBloc(p, bi),
         propositionsBloc(p),
         ecolesBloc(p),
+        window.PREPARATION ? PREPARATION.blocDocuments(p) : null,
         { t: "Le cadre de décision", lignes: [
           { q: "Décideur final", v: i.decideur },
           { q: "Qui peut annuler", v: i.tueur },
@@ -357,7 +373,12 @@ window.COMPILATEUR = (function () {
           { q: "Échéance", v: i.echeance ? O.joli(i.echeance) : null },
           { q: "Budget", v: i.budget ? String(i.budget) + " FCFA" : null },
         ] },
-      ]).filter(Boolean),
+      ]).filter(Boolean).filter(function (bl) {
+        /* Un bloc facultatif ne sert qu'aux dossiers qui le portent : vide, il
+         * n'est pas un manque, il n'a rien à faire dans le document. */
+        if (!bl.facultatif) return true;
+        return !!(bl.corps || (bl.puces || []).length || (bl.lignes || []).length);
+      }),
       inferences: window.INFERENCE
         ? INFERENCE.liste(p).filter(function (x) {
             return DOCS.cadrage.sections.indexOf(x.section) !== -1; })

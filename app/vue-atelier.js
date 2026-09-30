@@ -22,6 +22,7 @@ window.VUE_ATELIER = (function () {
     return el("div.at", {},
       compteurJuniors(p),
       briefing(p, rafraichir),
+      window.PREPARATION ? PREPARATION.bloc(p, rafraichir) : null,
       bande(p, rafraichir),
       el("div.at-corps", {},
         colonneIdees(p, rafraichir),
