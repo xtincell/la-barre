@@ -965,6 +965,30 @@ window.VUE_PROJETS = (function () {
       return retenue ? { classe: "plein", texte: "une piste retenue" }
         : { classe: "partiel", texte: pistes.length + " en lice, aucune retenue" };
     }
+    /* La plateforme d'un dossier qui porte des marques se lit à la bibliothèque,
+     * comme son écran la lit. Compter les champs du dossier disait « vide » sur
+     * une campagne dont les marques ont leur plateforme — et le navigateur
+     * contredisait la page qu'il ouvre. Une marque est tenue quand ses trois
+     * champs requis sont écrits, chez elle ou hérités de plus haut. */
+    if (cle === "socle" && window.MARQUE && window.VAULT && MARQUE.toutes(p).length) {
+      var mqs = MARQUE.toutes(p);
+      var sec = CHAMPS.sections.filter(function (s) { return s.cle === "socle"; })[0];
+      var requis = sec.champs.filter(function (c) { return c.requis; }).map(function (c) { return c.cle; });
+      var cles = sec.champs.map(function (c) { return c.cle; });
+      function plein(m, k) {
+        var v = (VAULT.herite("marque", m.id, k) || {}).valeur;
+        return Array.isArray(v) ? v.length > 0 : v !== null && v !== undefined && String(v).trim() !== "";
+      }
+      var ecrites = mqs.filter(function (m) { return cles.some(function (k) { return plein(m, k); }); });
+      var tenues = mqs.filter(function (m) { return requis.every(function (k) { return plein(m, k); }); });
+      if (!ecrites.length) return { classe: "vide", texte: "vide à la bibliothèque" };
+      if (tenues.length === mqs.length) return { classe: "plein", texte: mqs.length + (mqs.length > 1 ? " marques tenues" : " marque tenue") };
+      var manque = sec.champs.filter(function (c) {
+        return c.requis && mqs.some(function (m) { return !plein(m, c.cle); }); })
+        .map(function (c) { return c.nom.toLowerCase(); });
+      return { classe: "partiel", texte: ecrites.length + " sur " + mqs.length
+        + (mqs.length > 1 ? " marques écrites" : " marque écrite") + " · manque : " + manque.join(", ") };
+    }
     var e = CHAMPS.etat(cle, p.sections[cle]);
     if (e.fait === 0) return { classe: "vide", texte: "vide" };
     if (e.manquants.length) return { classe: "partiel", texte: e.fait + "/" + e.total + " · " + e.manquants.length + (e.manquants.length > 1 ? " manquants" : " manquant") };

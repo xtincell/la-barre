@@ -112,7 +112,10 @@ window.COMPILATEUR = (function () {
         cout: "on cherchera une idée sans savoir à qui elle parle" },
       { quoi: "L'insight", ok: !!(b.insight || st.insight), poids: 4,
         cout: "rien pour accrocher : l'atelier tournera sur des jeux de mots" },
-      { quoi: "Le territoire", ok: !!st.territoire, poids: 4,
+      /* Le territoire est un objet depuis la chaîne du raisonnement ; l'ancien
+       * paragraphe reste lu pour les dossiers migrés. Le document savait déjà
+       * afficher les objets, le contrôle ne les voyait pas. */
+      { quoi: "Le territoire", ok: !!st.territoire || (p.territoires || []).length > 0, poids: 4,
         cout: "aucun cadre : toutes les idées se vaudront, et aucune ne sera arbitrable" },
       { quoi: "L'idée directrice de la plateforme de marque", ok: !!s.idee_directrice, poids: 4,
         cout: "la campagne pourra être refusée en revue sans recours" },
