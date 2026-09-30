@@ -478,7 +478,11 @@ window.VUE_PROJETS = (function () {
             + " à aucune campagne")),
         el("p.mqp-q", {}, "Ce n'est pas une faute : personne n'a encore dit à quel moment "
           + "de la vie de la marque ils appartiennent."),
-        el("div.mpl-liste", {}, sansCampagne.map(ligneProjetCourte))));
+        el("div.mpl-liste", {}, sansCampagne.map(function (x) {
+          return el("div.cg-pr", {}, ligneProjetCourte(x),
+            el("div.cg-ch", {}, el("button.studio-lien", { type: "button", onclick: function () {
+              CAMPAGNE.choisir(x, function () { marcheDeMarque(hote, marqueId); }); } }, "Ranger dans une campagne")));
+        }))));
     }
 
     /* Le dossier de marque au complet : les quatre piliers, le brief de
@@ -561,9 +565,18 @@ window.VUE_PROJETS = (function () {
 
     hote.appendChild(blocComposition(c, rafraichir));
 
+    if (!ps.length) {
+      hote.appendChild(el("section.cg-bloc", {},
+        el("div.section-titre", {}, "Les projets", el("span.taille", {}, "· aucun")),
+        el("p.cg-q", {}, "Aucun projet n'est rangé ici. ",
+          el("button.studio-lien", { type: "button", onclick: function () {
+            CAMPAGNE.accueillir(c, rafraichir); } }, "Ranger des projets existants"))));
+    }
     if (ps.length) {
       hote.appendChild(el("section.cg-bloc", {},
-        el("div.section-titre", {}, "Les projets", el("span.taille", {}, "· " + ps.length)),
+        el("div.section-titre", {}, "Les projets", el("span.taille", {}, "· " + ps.length),
+          el("button.studio-lien", { type: "button", onclick: function () {
+            CAMPAGNE.accueillir(c, rafraichir); } }, "Ranger des projets existants")),
         el("p.cg-q", {}, "Un projet peut en attendre un autre. Le dire fait apparaître "
           + "les jours de production qui courent à vide."),
         el("div.mpl-liste", {}, ps.map(function (x) {
@@ -701,6 +714,8 @@ window.VUE_PROJETS = (function () {
 
     return el("div.cg-pr" + (amonts.length ? ".f-attente" : ""), {}, ligne,
       el("div.cg-ch", {}, sel,
+        el("button.studio-lien", { type: "button", onclick: function () {
+          CAMPAGNE.choisir(p, rafraichir); } }, "Déplacer"),
         amonts.length ? el("span.cg-cha", {}, el("span.cg-signe", { "aria-hidden": "true" }, "◐ "),
           "En attente de " + amonts.join(", ")) : null));
   }
@@ -1078,6 +1093,7 @@ window.VUE_PROJETS = (function () {
             el("p.studio-date", {}, p.ref + " · " + g.nom),
             el("h1", {}, p.nom),
             el("p.studio-intro", {}, ident.client || "Client non renseigné"),
+            ligneCampagne(p, rafraichir),
             etatDuDossier(p, blocs, durs, infs)))),
 
       el("dl.pj-meta", {},
@@ -1322,6 +1338,21 @@ window.VUE_PROJETS = (function () {
   function premierUtile(x) {
     var b = x.etats.filter(function (y) { return y.e.classe !== "plein"; })[0];
     return b ? b.cle : x.cles[0];
+  }
+
+  /* La campagne du projet, et ses frères : un projet n'est presque jamais
+   * seul dans un temps fort. Le geste pour l'y ranger est ici, là où l'on
+   * travaille — pas seulement depuis la campagne. */
+  function ligneCampagne(p, rafraichir) {
+    if (!window.CAMPAGNE) return null;
+    var c = CAMPAGNE.de(p.campagneId);
+    var n = c ? CAMPAGNE.projets(c.id).length - 1 : 0;
+    return el("p.pj-cmp", {},
+      c ? [el("span.pj-cmp-e", {}, "Campagne"), " ", el("a", { href: "#/projets/" + c.id }, c.nom),
+          n ? " · avec " + n + (n > 1 ? " autres projets" : " autre projet") : " · seul projet à ce jour"]
+        : [el("span.pj-cmp-e", {}, "Campagne"), " ", el("span.pj-cmp-v", {}, "aucune — à quel temps fort appartient-il ?")],
+      el("button.studio-lien", { type: "button", onclick: function () { CAMPAGNE.choisir(p, rafraichir); } },
+        c ? "Changer" : "Ranger dans une campagne"));
   }
 
   function meta(t, v) {

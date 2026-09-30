@@ -2829,3 +2829,14 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .prep-dn { font: 500 13px var(--affichage); color: var(--clair); overflow-wrap: anywhere; }
 .prep-dq, .prep-dt { font: 400 12px/1.5 var(--affichage); color: var(--clair-terne); }
 .vtc-s { font-size: 11px; color: var(--clair-terne); font-style: italic; }
+
+/* La campagne du projet, sous le client : un projet n'est presque jamais seul. */
+.pj-cmp { margin: var(--e2) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--e1) var(--e2); font-size: var(--t-meta); color: var(--clair-doux); }
+.pj-cmp-e { font-size: var(--t-micro); letter-spacing: var(--ls-micro); text-transform: uppercase; color: var(--clair-terne); }
+.pj-cmp a { color: var(--clair); }
+.pj-cmp-v { color: var(--arbitrage); }
+/* Ranger des projets existants dans une campagne. */
+.cmp-accs { display: grid; gap: var(--e1); max-height: 52vh; overflow-y: auto; margin: var(--e3) 0; }
+.cmp-acc { display: flex; gap: var(--e3); align-items: flex-start; padding: var(--e2) var(--e1); min-height: 44px; border-bottom: 1px solid var(--trait); cursor: pointer; }
+.cmp-acc input { margin-top: 4px; flex: 0 0 auto; }
+.cmp-acc-q { display: block; font-size: var(--t-eti); color: var(--clair-terne); }

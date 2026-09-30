@@ -834,6 +834,9 @@ window.COMPILATEUR = (function () {
   /* ————————————————————— L'écran ————————————————————— */
 
   function ouvrir(p, cle, rafraichir) {
+    /* Le cadrage se lit en plein écran, rangé pour préparer la séance : dans
+     * un panneau latéral il faisait dix-sept mille pixels de rubriques. */
+    if (cle === "cadrage" && window.CADRAGE_SEANCE) return CADRAGE_SEANCE.ouvrir(p);
     var def = DOCS[cle];
     var d = compiler(p, cle);
     var cs = controles(p, cle);
