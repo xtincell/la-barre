@@ -56,6 +56,10 @@ window.DEPOT = (function () {
       /* L'étage entre la marque et le projet. Une marque est toujours en
        * campagne : un cycle qui tourne, et des temps forts. */
       campagnes: [],
+      /* Ce qui n'a pas encore de place : une ligne d'index sans marque au
+       * dépôt, un fichier trouvé hors de tout dossier. On ne le jette pas —
+       * on le range ici, avec sa source, jusqu'à ce qu'il trouve sa place. */
+      inclassables: [],
       critiques: [],
       engagementsTenus: [],
       criteresAjoutes: {},

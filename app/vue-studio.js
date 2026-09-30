@@ -111,7 +111,11 @@ window.VUE_STUDIO = (function () {
     var visuel = livrables.filter(function (l) { return l.vignette; })[0];
     var blocs = REGLES.blocages(p.id).filter(function (b) { return b.type !== "infere-non-contresigne"; });
     return el("a.studio-dossier", { href: "#/projets/" + p.id },
-      el("div.studio-couverture", {}, visuel ? IMAGE.vignette(visuel, "planche") : el("span", {}, ident.marque || ident.client || p.ref || "Projet")),
+      el("div.studio-couverture", {}, (function () {
+        var cov = window.COUVERTURE ? COUVERTURE.projet(p) : null;
+        if (cov) return COUVERTURE.rendre(cov, "planche", p.nom);
+        return visuel ? IMAGE.vignette(visuel, "planche") : el("span", {}, ident.marque || ident.client || p.ref || "Projet");
+      })()),
       el("div.studio-dossier-texte", {}, el("span.studio-piece-ref", {}, p.ref), el("h3", {}, p.nom),
         el("p", {}, livrables.length + " livrables", el("span", {}, blocs.length ? blocs.length + " points à résoudre" : "Aucun blocage")))) ;
   }

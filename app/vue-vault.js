@@ -45,6 +45,8 @@ window.VUE_VAULT = (function () {
 
       orphelins.length ? blocOrphelins(orphelins, DEPOT.liste("marques"), hote) : null,
 
+      window.COUVERTURE ? COUVERTURE.inclassables() : null,
+
       el("div.vt-arbre", {}, arbre.map(function (n) { return noeud(n, 0, hote); }))
     ));
   }

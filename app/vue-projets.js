@@ -485,6 +485,11 @@ window.VUE_PROJETS = (function () {
         }))));
     }
 
+    if (window.COUVERTURE) {
+      var fds = COUVERTURE.fonds(m);
+      if (fds) hote.appendChild(fds);
+    }
+
     /* Le dossier de marque au complet : les quatre piliers, le brief de
      * plateforme, les décideurs, le catalogue, la vie. Il était dans
      * « La maison » ; il est ici, sous le rythme, parce que c'est ici qu'on
@@ -535,7 +540,10 @@ window.VUE_PROJETS = (function () {
     var vifs = ps.filter(function (p) { return !(window.CLOTURE && CLOTURE.est(p)); });
 
     hote.className = "zone studio";
-    hote.appendChild(el("header.studio-entete.pj-entete", {},
+    var couv = window.COUVERTURE ? COUVERTURE.campagne(c) : null;
+    hote.appendChild(el("header.studio-entete.pj-entete" + (couv ? ".cg-avec-couv" : ""), {},
+      couv ? el("figure.cg-couv", {}, COUVERTURE.rendre(couv, "planche", c.nom),
+        el("figcaption", {}, couv.motif || "")) : null,
       el("div.pj-id", {},
         mq && window.MARQUE ? MARQUE.pastille({ sections: { identite: { marqueIds: [mq] } } }, 44) : null,
         el("div.pj-id-t", {},
@@ -564,6 +572,7 @@ window.VUE_PROJETS = (function () {
     }
 
     hote.appendChild(blocComposition(c, rafraichir));
+    if (window.COUVERTURE && COUVERTURE.pieces(c)) hote.appendChild(COUVERTURE.pieces(c));
 
     if (!ps.length) {
       hote.appendChild(el("section.cg-bloc", {},
@@ -678,7 +687,10 @@ window.VUE_PROJETS = (function () {
   function blocCampagne(c) {
     var ps = window.CAMPAGNE ? CAMPAGNE.projets(c.id) : [];
     var e = window.CAMPAGNE ? CAMPAGNE.etat(c) : null;
-    return el("section.mqp-cmp", {},
+    var couv = window.COUVERTURE ? COUVERTURE.campagne(c) : null;
+    return el("section.mqp-cmp" + (couv ? ".avec-couv" : ""), {},
+      couv ? el("a.mqp-couv", { href: "#/projets/" + c.id, "aria-hidden": "true", tabindex: "-1" },
+        COUVERTURE.rendre(couv, "carte", c.nom)) : null,
       el("div.mqp-t", {},
         el("h2", {}, el("a", { href: "#/projets/" + c.id }, c.nom)),
         el("span.mqp-r", {}, c.regime === "always-on" ? "Le cycle qui tourne" : "Temps fort"),
@@ -826,9 +838,15 @@ window.VUE_PROJETS = (function () {
     }));
   }
 
+  /* La couverture du projet : la sienne, sinon celle de sa campagne, sinon
+   * le logo et les packs de sa marque — COUVERTURE dit d'où elle vient. */
   function visuelDe(p) {
-    return (p.livrables || []).filter(function (l) { return l.vignette; })[0]
-      || (p.sections.pistes || []).filter(function (x) { return x.vignette; })[0];
+    return window.COUVERTURE ? COUVERTURE.projet(p)
+      : (p.livrables || []).filter(function (l) { return l.vignette; })[0];
+  }
+  function rendreVisuel(p, taille) {
+    var v = visuelDe(p);
+    return window.COUVERTURE ? COUVERTURE.rendre(v, taille, p.nom) : IMAGE.vignette(v, taille);
   }
 
   /* Le dossier en défaut : celui-là occupe la place, et dit son prix. */
@@ -849,7 +867,7 @@ window.VUE_PROJETS = (function () {
     return el("a.dl-r.grand." + (vis ? "" : "sansvisuel.")
         + (e.tenable === false ? "intenable" : "flou"),
       { href: "#/projets/" + p.id },
-      vis ? el("span.dlr-v", {}, IMAGE.vignette(vis, "carte")) : null,
+      vis ? el("span.dlr-v", {}, rendreVisuel(p, "carte")) : null,
       el("span.dlr-c", {},
         el("span.dlr-n", {}, p.nom),
         el("span.dlr-m", {}, identification(p)),
@@ -877,7 +895,7 @@ window.VUE_PROJETS = (function () {
     var ton = x.rang === 0 ? "intenable" : x.rang === 1 ? "flou" : "tenable";
     return el("a.dl-r." + ton, { href: "#/projets/" + p.id },
       el("span.dlr-v" + (visuelDe(p) ? "" : ".vide"), {},
-        visuelDe(p) ? IMAGE.vignette(visuelDe(p), "carte") : null),
+        visuelDe(p) ? rendreVisuel(p, "carte") : null),
       el("span.dlr-c", {},
         el("span.dlr-n", {}, p.nom),
         el("span.dlr-m", {}, identification(p)),

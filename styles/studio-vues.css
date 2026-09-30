@@ -2840,3 +2840,33 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .cmp-acc { display: flex; gap: var(--e3); align-items: flex-start; padding: var(--e2) var(--e1); min-height: 44px; border-bottom: 1px solid var(--trait); cursor: pointer; }
 .cmp-acc input { margin-top: 4px; flex: 0 0 auto; }
 .cmp-acc-q { display: block; font-size: var(--t-eti); color: var(--clair-terne); }
+
+/* ————— Les couvertures : KV, logo et packs, ou mosaïque ————— */
+.vignette.couv { position: relative; overflow: hidden; }
+.vignette.couv > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.couv-mos { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; background: var(--surface-3); }
+.couv-mos.n2 { grid-template-rows: 1fr; }
+.couv-mos.n3 > img:first-child { grid-row: span 2; }
+.couv-mos > img { width: 100% !important; height: 100% !important; min-height: 0; object-fit: cover; display: block; }
+.couv-mq { display: flex; align-items: center; justify-content: center; gap: 6%; padding: 6%; background: var(--papier); }
+.couv-mq .couv-logo { max-width: 46%; max-height: 72%; width: auto !important; height: auto !important; object-fit: contain; }
+.couv-packs { display: flex; gap: 4%; align-items: flex-end; justify-content: center; max-width: 48%; height: 84%; }
+.couv-packs > img { height: 100% !important; width: auto !important; max-width: 32%; object-fit: contain; }
+/* La campagne a un visage : son KV en tête d'écran, d'où il vient en légende. */
+.cg-couv { margin: 0 0 var(--e5); display: grid; gap: var(--e2); }
+.cg-couv .vignette { width: 100%; height: clamp(160px, 28vw, 320px); border-radius: var(--r-m); }
+.cg-couv figcaption { font-size: var(--t-eti); color: var(--clair-terne); }
+.mqp-couv { display: block; margin-bottom: var(--e3); }
+.mqp-couv .vignette { width: 100%; height: 140px; border-radius: var(--r-s); }
+/* Le fonds visuel, les pièces relevées, les inclassables : repliés, lisibles. */
+.fonds { margin: var(--e4) 0; border-top: 1px solid var(--trait); }
+.fonds > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: var(--e2); flex-wrap: wrap; font-size: var(--t-meta); color: var(--clair); }
+.fonds-q { font-size: var(--t-eti); color: var(--clair-terne); }
+.fonds-g { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--e3); padding: var(--e3) 0; }
+.fonds-c { margin: 0; display: grid; gap: var(--e1); min-width: 0; }
+.fonds-c img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-s); background: var(--surface-3); }
+.fonds-c figcaption { font-size: var(--t-micro); color: var(--clair-terne); overflow-wrap: anywhere; }
+.fonds-v { display: grid; place-items: center; aspect-ratio: 4 / 3; background: var(--surface-3); font-size: var(--t-micro); color: var(--clair-terne); border-radius: var(--r-s); }
+.fonds-l { margin: 0; padding: var(--e2) 0; list-style: none; display: grid; gap: var(--e2); }
+.fonds-l li { font-size: var(--t-eti); line-height: var(--lh-eti); overflow-wrap: anywhere; }
+.fonds-l li span { display: block; color: var(--clair-terne); }
