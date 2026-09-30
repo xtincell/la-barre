@@ -108,6 +108,7 @@ window.VUE_SOCLE = (function () {
           + "le dossier."),
         GESTE.bouton("marques", {}, null, "b.or")),
 
+      blocGammeSocle(p, mqs),
       el("div.sv-l", {}, mqs.map(function (m) { return blocMarqueSocle(p, m); })),
 
       /* Le moodboard reste au dossier : il montre où va CETTE campagne. */
@@ -126,6 +127,38 @@ window.VUE_SOCLE = (function () {
   }
 
   var TETE = ["idee_directrice", "jamais"];
+
+  /* La plateforme de la gamme que la campagne sert.
+   *
+   * L'EOY ne sert pas trois marques entières : il sert leur lait concentré,
+   * et le client a écrit pour cette gamme une plateforme propre — « The We ».
+   * C'est elle que la campagne décline ; les marques y apportent leurs actifs.
+   * Elle passe donc devant, en entier, avant les trois marques. */
+  function blocGammeSocle(p, mqs) {
+    var g = window.VAULT && VAULT.gammeDuDossier ? VAULT.gammeDuDossier(p) : null;
+    if (!g || !mqs.length) return null;
+    var m0 = mqs[0];
+    var noeud = { type: "gamme", id: m0.id + "|" + g };
+    var ecrits = VAULT.CHAMPS.filter(function (c) {
+      var x = (VAULT.vaultDe("gamme", noeud.id) || {})[c.cle];
+      return Array.isArray(x) ? x.length : x !== undefined && x !== null && String(x).trim(); }).length;
+    var infs = VAULT.inferencesDe("gamme", noeud.id).length;
+    return el("div.svm.gamme", {},
+      el("div.svm-h", {},
+        el("div.svm-i", {},
+          el("span.svm-n", {}, "La plateforme " + g),
+          el("span.svm-q", {}, "commune à " + mqs.map(function (m) { return m.nom; }).join(", ")
+            + " · " + ecrits + " champs sur " + VAULT.CHAMPS.length
+            + (infs ? " · " + infs + " inférés à contresigner" : ""))),
+        el("a.svm-v", { href: "#/referentiel/marques" }, "À la bibliothèque de marque →")),
+      el("div.svm-f", {}, TETE.map(function (cle) {
+        var c = VAULT.CHAMPS.filter(function (x) { return x.cle === cle; })[0];
+        return champSocle(m0, c, true, noeud);
+      })),
+      el("div.svm-r", {},
+        el("div.svm-rc", {}, VAULT.CHAMPS.filter(function (c) { return TETE.indexOf(c.cle) === -1; })
+          .map(function (c) { return champSocle(m0, c, false, noeud); }))));
+  }
 
   function blocMarqueSocle(p, m) {
     var e = VAULT.etatNiveau("marque", m.id);
@@ -182,8 +215,10 @@ window.VUE_SOCLE = (function () {
 
   /* Un champ du socle, lu au vault. Il dit s'il est propre ou hérité — et il
    * s'édite là où il appartient, pas ici. */
-  function champSocle(m, c, grand) {
-    var h = VAULT.herite("marque", m.id, c.cle);
+  function champSocle(m, c, grand, noeud) {
+    noeud = noeud || { type: "marque", id: m.id };
+    var h = VAULT.herite(noeud.type, noeud.id, c.cle);
+    var inf = h.source ? VAULT.inference(h.source.type, h.source.id, c.cle) : null;
     var vide = h.valeur === null || h.valeur === undefined
       || (Array.isArray(h.valeur) ? !h.valeur.length : !String(h.valeur).trim());
 
@@ -191,7 +226,8 @@ window.VUE_SOCLE = (function () {
         + (!h.propre && !vide ? ".herite" : ""),
       { href: "#/referentiel/marques", title: "modifier à la bibliothèque de marque — " + c.nom },
       el("span.svf-n", {}, c.nom,
-        !h.propre && !vide && h.source ? el("span.svf-h", {}, "de " + h.source.nom) : null),
+        !h.propre && !vide && h.source ? el("span.svf-h", {}, "de " + h.source.nom) : null,
+        !vide && inf ? el("span.svf-h.infere", {}, "inféré") : null),
       el("span.svf-v", {}, vide
         ? (grand
             ? (c.cle === "idee_directrice"

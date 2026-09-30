@@ -108,6 +108,10 @@ window.COMPILATEUR = (function () {
     return [
       { quoi: "Le problème réel", ok: !!b.probleme, poids: 5,
         cout: "l'atelier travaillera sur la demande exprimée, pas sur le problème — et produira une réponse à côté" },
+      { quoi: "Le job to be done", ok: !!(b.jtbd || "").trim(), poids: 3,
+        cout: "on saura à qui l'on parle, pas quel progrès on doit lui permettre" },
+      { quoi: "Le message clé", ok: !!(b.message_cle || "").trim(), poids: 3,
+        cout: "chaque pièce dira autre chose : rien ne dit ce qu'on doit retenir" },
       { quoi: "La cible et sa tension", ok: !!b.cible, poids: 5,
         cout: "on cherchera une idée sans savoir à qui elle parle" },
       { quoi: "L'insight", ok: !!(b.insight || st.insight), poids: 4,
@@ -303,6 +307,16 @@ window.COMPILATEUR = (function () {
           { q: "Marketing", v: i.objectif },
           { q: "Communication", v: b.objectif_com },
         ].filter(function (x) { return !!(x.v || "").trim(); }) },
+        { t: "La stratégie de marque du client", corps: b.strategie_client,
+          source: "elle cadre la campagne, elle ne se rediscute pas ici" },
+        { t: "Le job to be done", corps: b.jtbd, fort: true,
+          source: "le progrès que la cible cherche à faire — et ce que la marque doit lui permettre" },
+        (b.comportement_actuel || b.comportement_vise) ? { t: "Le changement de comportement", lignes: [
+          { q: "Aujourd'hui", v: b.comportement_actuel },
+          { q: "Après la campagne", v: b.comportement_vise },
+        ], source: "l'écart entre les deux est ce que la campagne doit produire" } : null,
+        { t: "Le message clé", corps: b.message_cle, fort: true,
+          source: "ce que la cible doit retenir — pas une accroche" },
         { t: "Le problème réel", corps: st.probleme_reel, fort: true,
           source: "ce que la demande cache — c'est lui que l'atelier doit résoudre" },
         briefbackBloc(p),
@@ -380,8 +394,9 @@ window.COMPILATEUR = (function () {
     var g = window.VAULT ? VAULT.gammeDuDossier(p) : null;
     if (!g || !mqs.length) return null;
     var lignes = [];
-    ["idee_directrice", "positionnement", "occasions"].forEach(function (cle) {
+    (VAULT.CHAMPS || []).map(function (c) { return c.cle; }).forEach(function (cle) {
       var champ = (VAULT.CHAMPS || []).filter(function (c) { return c.cle === cle; })[0];
+      var inf = VAULT.inference("gamme", mqs[0].id + "|" + g, cle);
       var vus = {};
       mqs.forEach(function (m) {
         var v = (VAULT.vaultDe("gamme", m.id + "|" + g) || {})[cle];
@@ -390,7 +405,8 @@ window.COMPILATEUR = (function () {
       });
       Object.keys(vus).forEach(function (v) {
         lignes.push({ q: (champ ? champ.nom : cle)
-          + (Object.keys(vus).length > 1 ? " — " + vus[v].join(", ") : ""), v: v });
+          + (Object.keys(vus).length > 1 ? " — " + vus[v].join(", ") : "")
+          + (inf ? " · inféré" : ""), v: v });
       });
     });
     return { t: "La plateforme " + g, fort: true, lignes: lignes,
@@ -402,11 +418,11 @@ window.COMPILATEUR = (function () {
     var v = (window.VAULT ? VAULT.vaultDe("marque", m.id) : null) || {};
     var lignes = (VAULT.CHAMPS || []).filter(function (c) {
       var x = v[c.cle];
-      return c.cle !== "idee_directrice"
-        && (Array.isArray(x) ? x.length : x !== undefined && x !== null && String(x).trim());
+      return (Array.isArray(x) ? x.length : x !== undefined && x !== null && String(x).trim());
     }).map(function (c) {
       var x = v[c.cle];
-      return { q: c.nom, v: Array.isArray(x) ? x.join(" · ") : String(x) };
+      return { q: c.nom + (VAULT.inference("marque", m.id, c.cle) ? " · inféré" : ""),
+        v: Array.isArray(x) ? x.join(" · ") : String(x) };
     });
     var docs = MARQUE.assets(m.id, "plateforme");
     return { t: "Plateforme — " + m.nom, lignes: lignes, elements: docs,

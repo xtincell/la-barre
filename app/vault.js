@@ -268,6 +268,14 @@ window.VAULT = (function () {
       return true;
     }
     v[cle] = val;
+    /* Écrire un champ inféré le fait passer au reçu. Le motif de l'inférence
+     * ne disparaît pas : il rejoint la trace de ce que le champ a été. */
+    if (v.inferences && v.inferences[cle]) {
+      v.inferencesLevees = v.inferencesLevees || [];
+      v.inferencesLevees.push({ champ: cle, quand: new Date().toISOString(), qui: MAISON.titulaire,
+        comment: "réécrit", inference: v.inferences[cle] });
+      delete v.inferences[cle];
+    }
     var estVide = avant === undefined || avant === null || avant === ""
       || (Array.isArray(avant) && !avant.length);
     if (!estVide) {
@@ -281,6 +289,31 @@ window.VAULT = (function () {
     DEPOT.tracer(estVide ? "socle écrit" : "socle révisé", "marques", id,
       nomDe(type, id) + " · " + cle, type === "marque" ? [id] : null);
     return true;
+  }
+
+  /* Un champ de plateforme peut être inféré : proposé par la préparation à
+   * partir d'un document, avec son motif, utilisable et pas opposable. C'est
+   * le même contrat que les champs d'un dossier, porté au niveau de la marque. */
+  function inference(type, id, cle) {
+    var v = vaultDe(type, id);
+    return (v && v.inferences && v.inferences[cle]) || null;
+  }
+
+  function contresigner(type, id, cle) {
+    var v = vaultDe(type, id);
+    if (!v || !v.inferences || !v.inferences[cle]) return false;
+    v.inferencesLevees = v.inferencesLevees || [];
+    v.inferencesLevees.push({ champ: cle, quand: new Date().toISOString(), qui: MAISON.titulaire,
+      comment: "contresigné", inference: v.inferences[cle] });
+    delete v.inferences[cle];
+    DEPOT.tracer("socle contresigné", "marques", id, nomDe(type, id) + " · " + cle,
+      type === "marque" ? [id] : null);
+    return true;
+  }
+
+  function inferencesDe(type, id) {
+    var v = vaultDe(type, id);
+    return v && v.inferences ? Object.keys(v.inferences) : [];
   }
 
   /* Ce qu'un champ a été avant, du plus récent au plus ancien. */
@@ -812,7 +845,7 @@ window.VAULT = (function () {
   }
 
   return { CHAMPS: CHAMPS, PILIERS: PILIERS, champsDuPilier: champsDuPilier, FICHE: FICHE, CATEGORIES: CATEGORIES,
-    revisions: revisions,
+    revisions: revisions, inference: inference, contresigner: contresigner, inferencesDe: inferencesDe,
     clientDe: clientDe, marchesDuClient: marchesDuClient, categoriesDuClient: categoriesDuClient,
     marchesPossibles: marchesPossibles, categoriesPossibles: categoriesPossibles,
     ajouterCategorie: ajouterCategorie,

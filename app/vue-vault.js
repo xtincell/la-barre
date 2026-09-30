@@ -261,7 +261,9 @@ window.VUE_VAULT = (function () {
      * se révise : le dire est la moitié de la cohérence de marque. */
     var revs = VAULT.revisions ? VAULT.revisions(n.type, n.id, c.cle) : [];
 
-    return el("button.vtc" + (vide ? ".vide" : h.propre ? "" : ".herite"), {
+    var inf = !vide && h.source ? VAULT.inference(h.source.type, h.source.id, c.cle) : null;
+
+    return el("button.vtc" + (vide ? ".vide" : h.propre ? "" : ".herite") + (inf ? ".infere" : ""), {
       type: "button", title: "modifier — " + c.nom,
       onclick: function () { editer(n, c, hote); } },
       el("span.vtc-n", {}, c.nom,
@@ -269,6 +271,7 @@ window.VUE_VAULT = (function () {
           ? el("span.vtc-h", {}, "hérité de " + h.source.nom) : null),
       el("span.vtc-v", {}, vide ? (c.aide || "Non écrit")
         : Array.isArray(h.valeur) ? h.valeur.join("  ·  ") : String(h.valeur)),
+      inf ? el("span.vtc-i", {}, "inféré — à contresigner") : null,
       revs.length
         ? el("span.vtc-r", {}, revs.length + (revs.length > 1 ? " révisions" : " révision")
             + " — la dernière le " + O.jourCourt(revs[0].quand))
@@ -830,8 +833,19 @@ window.VUE_VAULT = (function () {
               + (Array.isArray(h.valeur) ? h.valeur.join(", ") : String(h.valeur)).slice(0, 90)
               + " ». L'écrire ici le spécialise pour " + VAULT.nomDe(n.type, n.id) + ".")
           : null,
+        VAULT.inference(n.type, n.id, c.cle)
+          ? el("div.prix", {}, el("span.signe", {}, "◐"),
+              "Inféré — " + (VAULT.inference(n.type, n.id, c.cle).pourquoi || "motif non écrit")
+              + " Enregistrer une autre valeur le fait passer au reçu ; contresigner le garde tel quel.")
+          : null,
         f.noeud,
         el("div.form-actions", {},
+          VAULT.inference(n.type, n.id, c.cle)
+            ? el("button.b", { type: "button", onclick: function () {
+                VAULT.contresigner(n.type, n.id, c.cle);
+                DEPOT.enregistrer(); PANNEAU.fermer(); rendre(hote);
+              } }, "Contresigner")
+            : null,
           el("button.b.or", { type: "button", onclick: function () {
             VAULT.ecrireNiveau(n.type, n.id, c.cle, f.valeurs()[c.cle]);
             DEPOT.enregistrer(); PANNEAU.fermer(); rendre(hote);

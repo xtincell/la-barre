@@ -94,6 +94,22 @@ window.CHAMPS = {
         { cle: "probleme", nom: "Problème réel", type: "long", critique: true, poste: "planning", aide: "Distinct de la demande exprimée." },
         { cle: "objectif_business", nom: "Objectif business", type: "long", critique: true, poste: "clientele" },
         { cle: "objectif_com", nom: "Objectif de communication", type: "long", critique: true, poste: "clientele" },
+        /* Ce que les briefs FMCG portent toujours et que le modèle n'avait pas :
+         * faute de case, la stratégie du client, le job to be done, le
+         * changement de comportement et le message clé finissaient dilués dans
+         * l'objectif de communication ou la cible — donc introuvables. Ils ne
+         * sont pas critiques : un brief de demande simple ne les porte pas, et
+         * ils ne doivent pas lever de blocage sur les dossiers qui s'en passent. */
+        { cle: "strategie_client", nom: "Stratégie de marque du client", type: "long", poste: "clientele",
+          aide: "Ce que le client veut faire de sa marque au-delà de cette campagne. Elle cadre le travail ; elle ne se rediscute pas ici." },
+        { cle: "jtbd", nom: "Job to be done", type: "long", poste: "planning",
+          aide: "Le progrès que la cible cherche à faire, et ce que la marque doit lui permettre. Amener qui, à faire quoi, grâce à quoi." },
+        { cle: "comportement_actuel", nom: "Comportement actuel", type: "long", poste: "planning",
+          aide: "Ce que la cible fait et pense aujourd'hui, à la première personne." },
+        { cle: "comportement_vise", nom: "Comportement visé", type: "long", poste: "planning",
+          aide: "Ce qu'elle fera et pensera après la campagne. L'écart entre les deux est ce que la campagne doit produire." },
+        { cle: "message_cle", nom: "Message clé", type: "texte", poste: "planning",
+          aide: "Ce que la cible doit retenir, en une phrase. Pas une accroche : c'est la création qui la trouvera." },
         { cle: "cible", nom: "Cible et tension", type: "long", critique: true, poste: "planning" },
         { cle: "insight", nom: "Insight", type: "long", critique: true, poste: "planning" },
         { cle: "promesse", nom: "Promesse", type: "texte", critique: true, poste: "planning" },

@@ -2807,3 +2807,8 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 /* Ce que la préparation a proposé et que l'équipe n'a pas encore signé. */
 .rin-inf { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 6px 10px; border-left: 2px solid var(--arbitrage); font: 400 12px/1.5 var(--affichage); color: var(--clair-terne); }
 .rin-inf.signe { border-left-color: var(--succes); }
+/* Un champ de plateforme proposé par la préparation, pas encore signé. */
+.vtc.infere { border-left-color: var(--arbitrage); }
+.vtc-i { font-size: 11px; color: var(--arbitrage); }
+.svf-h.infere { color: var(--arbitrage); }
+.svm.gamme { border-color: var(--studio-bleu); }
