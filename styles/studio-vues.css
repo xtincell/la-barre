@@ -2604,6 +2604,9 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .vn.n1 .vn-n, .vn.n2 .vn-n { font-size: 14px; }
 .vn-r { padding: 1px 6px; border: 1px solid var(--trait); border-radius: 4px; font-size: 11px; color: var(--clair-terne); }
 .vn-q { flex: 1 1 auto; font-size: 12px; color: var(--clair-terne); }
+/* Le statut de la marque — fermée, proposition, référence — avant son résumé. */
+.vn-st { flex: 0 0 auto; font-size: 12px; color: var(--clair-terne); border: 1px solid var(--trait); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+.vn-st.eteinte { border-style: dashed; }
 .vn-c { padding-left: 32px; font-size: 13px; line-height: 1.5; color: var(--clair-terne); max-width: 80ch; }
 .vn-c.manque { --ton: var(--arbitrage); }
 .vn-signe { color: var(--ton); }

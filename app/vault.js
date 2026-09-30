@@ -219,6 +219,26 @@ window.VAULT = (function () {
     return g ? herite("gamme", marqueId + "|" + g, cle) : herite("marque", marqueId, cle);
   }
 
+  var META = ["inferences", "inferencesLevees", "sources", "revisions", "propositionsNonRetenues"];
+  function vide(v) { return v == null || v === "" || (Array.isArray(v) && !v.length); }
+
+  /* Où en est la marque elle-même : une marque fermée, une proposition jamais
+   * produite ou une référence d'emballage ne se lisent pas comme une marque
+   * vivante — sans ce mot, leur plateforme vide passe pour un oubli. */
+  function statutMarque(m) {
+    if (!m) return null;
+    var mere = m.mere ? DEPOT.trouve("marques", m.mere) : null;
+    var bouts = [];
+    if (m.archive) bouts.push("archivée");
+    else if (m.cloture) bouts.push("clôturée");
+    else if (m.statut) bouts.push(m.statut);
+    if (m.nature) bouts.push(m.nature);
+    if (mere) bouts.push("sous-marque de " + mere.nom);
+    return bouts.length ? { texte: bouts.join(" · "),
+      motif: (m.archive || m.cloture || {}).motif || m.note || null,
+      eteinte: !!(m.archive || m.cloture) } : null;
+  }
+
   /* L'arbre complet : l'ombrelle, ses marques, et les gammes que le catalogue
    * emploie réellement. On n'invente pas une gamme vide. */
   function arbre() {
@@ -235,7 +255,13 @@ window.VAULT = (function () {
             (p.livrables || []).forEach(function (l) {
               if (l.marqueId === m.id && l.categorie) cats[l.categorie] = true; });
           });
-          return { type: "marque", id: m.id, nom: m.nom,
+          /* Une gamme qui porte déjà sa plateforme existe, même sans pièce au
+           * catalogue : Bonnet Rouge Gold a sa stratégie avant d'avoir son pack. */
+          Object.keys(m.gammes || {}).forEach(function (k) {
+            var gv = (m.gammes[k] || {}).vault || {};
+            if (Object.keys(gv).some(function (c) { return META.indexOf(c) === -1 && !vide(gv[c]); })) cats[k] = true;
+          });
+          return { type: "marque", id: m.id, nom: m.nom, statut: statutMarque(m),
             enfants: Object.keys(cats).sort().map(function (k) {
               return { type: "gamme", id: m.id + "|" + k, nom: m.nom + " " + k, enfants: [] };
             }) };
@@ -854,7 +880,7 @@ window.VAULT = (function () {
     clientDe: clientDe, marchesDuClient: marchesDuClient, categoriesDuClient: categoriesDuClient,
     marchesPossibles: marchesPossibles, categoriesPossibles: categoriesPossibles,
     ajouterCategorie: ajouterCategorie,
-    arbre: arbre, herite: herite, pourDossier: pourDossier, gammeDuDossier: gammeDuDossier, vaultDe: vaultDe, ecrireNiveau: ecrireNiveau,
+    arbre: arbre, statutMarque: statutMarque, herite: herite, pourDossier: pourDossier, gammeDuDossier: gammeDuDossier, vaultDe: vaultDe, ecrireNiveau: ecrireNiveau,
     etatNiveau: etatNiveau, nomDe: nomDe, parent: parent, campagnesDe: campagnesDe,
     decideurs: decideurs, promos: promos, ajouterPromo: ajouterPromo,
     fautesDe: fautesDe, fautesSur: fautesSur,

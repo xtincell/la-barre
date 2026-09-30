@@ -77,6 +77,8 @@ window.VUE_VAULT = (function () {
           : el("span.vn-p", couleur ? { style: { background: couleur } } : {}),
         el("span.vn-n", {}, n.nom),
         el("span.vn-r", {}, RANGS[n.type]),
+        n.statut ? el("span.vn-st" + (n.statut.eteinte ? ".eteinte" : ""),
+          n.statut.motif ? { title: n.statut.motif } : {}, n.statut.texte) : null,
         el("span.vn-q", {}, resume(n, e))),
 
       /* La conséquence, avant d'ouvrir. */
