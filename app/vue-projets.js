@@ -42,7 +42,7 @@ window.VUE_PROJETS = (function () {
     if (projetId && /^CMP-/.test(projetId)) return ecranCampagne(hote, projetId);
     if (projetId) return projet(hote, projetId, section);
 
-    var projets = DEPOT.liste("projets");
+    var projets = DEPOT.liste("projets").filter(function (p) { return !p.fusionne; });
     hote.className = "zone dossiers";
     O.vider(hote);
 
@@ -400,7 +400,7 @@ window.VUE_PROJETS = (function () {
   }
 
   function marquesEnLignes() {
-    var ps = DEPOT.liste("projets");
+    var ps = DEPOT.liste("projets").filter(function (p) { return !p.fusionne; });
     var par = {};
     ps.forEach(function (p) {
       ((p.sections.identite || {}).marqueIds || []).forEach(function (id) {
@@ -438,6 +438,7 @@ window.VUE_PROJETS = (function () {
     DEPOT.lu("marques", marqueId);
 
     var ps = DEPOT.liste("projets").filter(function (p) {
+      if (p.fusionne) return false;
       return ((p.sections.identite || {}).marqueIds || []).indexOf(marqueId) !== -1; });
     var cs = window.CAMPAGNE ? CAMPAGNE.deMarque(marqueId) : [];
     var sansCampagne = ps.filter(function (p) { return !p.campagneId; });
@@ -1363,6 +1364,13 @@ window.VUE_PROJETS = (function () {
    * seul dans un temps fort. Le geste pour l'y ranger est ici, là où l'on
    * travaille — pas seulement depuis la campagne. */
   function ligneCampagne(p, rafraichir) {
+    /* Un doublon fusionné garde sa fiche — un lien ancien y mène — et dit où
+     * vit désormais le dossier. */
+    if (p.fusionne) {
+      var g = DEPOT.trouve("projets", p.fusionne.dans);
+      return el("p.pj-cmp", {}, el("span.pj-cmp-e", {}, "Doublon"), " fusionné dans ",
+        g ? el("a", { href: "#/projets/" + g.id }, g.nom) : p.fusionne.dans, " — " + p.fusionne.motif);
+    }
     if (!window.CAMPAGNE) return null;
     var c = CAMPAGNE.de(p.campagneId);
     var n = c ? CAMPAGNE.projets(c.id).length - 1 : 0;

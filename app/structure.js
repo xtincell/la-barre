@@ -37,7 +37,7 @@ window.STRUCTURE = (function () {
   function estAgence(p) { return !p.structure || p.structure === "matanga"; }
 
   /* Les dossiers qui font les indicateurs de l'agence. */
-  function agence() { return DEPOT.liste("projets").filter(estAgence); }
+  function agence() { return DEPOT.liste("projets").filter(function (p) { return estAgence(p) && !p.fusionne; }); }
 
   /* Les structures d'une marque, lues sur ses dossiers. */
   function deMarque(marqueId) {

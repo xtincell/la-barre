@@ -47,7 +47,7 @@ window.CAMPAGNE = (function () {
 
   function projets(campagneId) {
     return DEPOT.liste("projets").filter(function (p) {
-      return p.campagneId === campagneId; });
+      return p.campagneId === campagneId && !p.fusionne; });
   }
 
   function occasion(cle) {
@@ -256,7 +256,7 @@ window.CAMPAGNE = (function () {
   /* Depuis la campagne : ranger d'un coup les projets existants qui en sont. */
   function accueillir(c, rafraichir) {
     var mqs = c.marqueIds || [];
-    var ps = DEPOT.liste("projets").filter(function (p) { return p.campagneId !== c.id; });
+    var ps = DEPOT.liste("projets").filter(function (p) { return p.campagneId !== c.id && !p.fusionne; });
     var siens = ps.filter(function (p) {
       return ((((p.sections || {}).identite || {}).marqueIds) || []).some(function (m) { return mqs.indexOf(m) !== -1; }); });
     var vivant = function (p) { return !(window.CLOTURE && CLOTURE.est(p)); };

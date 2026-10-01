@@ -8,7 +8,7 @@ window.VUE_STUDIO = (function () {
   function rendre(hote) {
     hote.className = "zone studio";
     O.vider(hote);
-    var projets = DEPOT.liste("projets").filter(function (p) { return !CLOTURE.est(p); });
+    var projets = DEPOT.liste("projets").filter(function (p) { return !CLOTURE.est(p) && !p.fusionne; });
     if (projet && !projets.some(function (p) { return p.id === projet; })) projet = "";
     var toutes = VUE_REVUE.pieces();
     var pieces = toutes.filter(function (p) { return !projet || p.projet.id === projet; });
@@ -126,7 +126,7 @@ window.VUE_STUDIO = (function () {
   function projets(hote) {
     hote.className = "zone studio studio-index";
     O.vider(hote);
-    var tous = DEPOT.liste("projets");
+    var tous = DEPOT.liste("projets").filter(function (p) { return !p.fusionne; });
     var champ = el("input", { type: "search", placeholder: "Nom, client, référence…", "aria-label": "Rechercher un projet" });
     champ.value = recherche;
     var liste = el("div.studio-projets");

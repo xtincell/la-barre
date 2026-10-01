@@ -61,16 +61,17 @@ window.COUVERTURE = (function () {
 
   function projet(p) {
     if (!p) return null;
-    if (p.couverture && (p.couverture.vignette || (p.couverture.images || []).length)) return p.couverture;
+    if (p.couverture && (p.couverture.type === "aucune" || p.couverture.vignette || (p.couverture.images || []).length)) return p.couverture;
     var kv = kvMaitre(p);
     if (kv) return { type: "kv", vignette: kv.vignette, motif: "KV maître du projet." };
-    /* Le KV de la campagne passe avant l'illustration du corpus : l'une est la
-     * pièce, l'autre un montage qui la raconte. */
+    /* L'illustration propre du projet passe avant le KV de sa campagne : posé
+     * sur la plateforme, les cahiers ou le storyboard, le KV du temps fort
+     * faisait huit cartes identiques qui ne disaient plus ce que chacune est. */
+    if (p.vignette) return { type: "illustration", vignette: p.vignette, motif: "Illustration du projet au corpus." };
     var c0 = window.CAMPAGNE ? CAMPAGNE.de(p.campagneId) : null;
     if (c0 && c0.couverture && c0.couverture.type === "kv" && c0.couverture.vignette) {
       return { type: "kv", vignette: c0.couverture.vignette, motif: "KV de sa campagne « " + c0.nom + " » — " + (c0.couverture.motif || "") };
     }
-    if (p.vignette) return { type: "illustration", vignette: p.vignette, motif: "Illustration de campagne du corpus." };
     var ls = vivants(p);
     /* Un cycle, un planning mensuel : plusieurs visuels disent mieux ce qu'il
      * est qu'un seul. */
@@ -91,7 +92,7 @@ window.COUVERTURE = (function () {
   /* Le rendu : le même gabarit que les vignettes, pour ne rien déplacer. */
   function rendre(cov, taille, nom) {
     var classe = "div.vignette.v-" + (taille || "carte") + ".couv";
-    if (!cov) return IMAGE.vignette(null, taille || "carte", null);
+    if (!cov || cov.type === "aucune") return IMAGE.vignette(null, taille || "carte", null);
     var titre = cov.motif || "";
     if (cov.type === "mosaique" && (cov.images || []).length > 1) {
       var ims = cov.images.slice(0, 4);
