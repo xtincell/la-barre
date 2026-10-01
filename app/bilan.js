@@ -75,7 +75,7 @@ window.BILAN = (function () {
    * avec. Deux calculs séparés donneraient deux vérités sur le même fait, et
    * c'est exactement l'erreur que ce produit passe son temps à traquer. */
   function chiffres(f) {
-    var projets = DEPOT.liste("projets");
+    var projets = (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets"));
 
     /* Les briefs traités : contresignés, et dans la fenêtre. */
     var briefs = projets.filter(function (p) {
@@ -244,7 +244,7 @@ window.BILAN = (function () {
   function mesLivrables(f) {
     var cadrages = [], revues = [], veilles = [], critiques = [];
 
-    DEPOT.liste("projets").forEach(function (p) {
+    (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
       var b = p.sections.bigidea || {};
       if (b.idee && dedans(f, b.pose_le || p.cree_le)) {
         cadrages.push(p.ref + " — « " + String(b.idee).slice(0, 70) + " »");

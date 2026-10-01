@@ -2870,3 +2870,17 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .fonds-l { margin: 0; padding: var(--e2) 0; list-style: none; display: grid; gap: var(--e2); }
 .fonds-l li { font-size: var(--t-eti); line-height: var(--lh-eti); overflow-wrap: anywhere; }
 .fonds-l li span { display: block; color: var(--clair-terne); }
+/* La structure : Matanga, UPgraders, Friends Studio, nom propre. Une étiquette, pas un état. */
+.st-badge { display: inline-flex; align-items: center; font-size: var(--t-micro); letter-spacing: var(--ls-micro); padding: 1px 8px; border-radius: var(--r-pilule); border: 1px solid var(--trait); color: var(--clair-doux); margin-left: var(--e2); white-space: nowrap; }
+.st-badge.st-upgraders { border-color: var(--violet); color: var(--violet); }
+.st-badge.st-friends { border-color: var(--info); color: var(--info); }
+.st-badge.st-nom-propre { border-style: dashed; }
+.pj-cmp .st-badge { margin-left: 0; }
+.pj-struct-q { font-size: var(--t-eti); color: var(--clair-terne); }
+.pj-struct-q.absent { color: var(--arbitrage); }
+.pj-struct-n { margin: var(--e1) 0 0; font-size: var(--t-eti); color: var(--clair-terne); max-width: 72ch; }
+.st-filtre { display: flex; flex-wrap: wrap; gap: var(--e2); margin: var(--e3) 0; }
+.st-f { min-height: 44px; display: inline-flex; align-items: center; gap: var(--e2); padding: 0 var(--e4); border-radius: var(--r-pilule); border: 1px solid var(--trait); background: transparent; color: var(--clair); font: inherit; font-size: var(--t-meta); cursor: pointer; }
+.st-f span { font-size: var(--t-eti); color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+.st-f.ici { background: var(--clair); color: var(--surface-1); border-color: var(--clair); }
+.st-f.ici span { color: var(--surface-1); }

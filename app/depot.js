@@ -60,6 +60,11 @@ window.DEPOT = (function () {
        * dépôt, un fichier trouvé hors de tout dossier. On ne le jette pas —
        * on le range ici, avec sa source, jusqu'à ce qu'il trouve sa place. */
       inclassables: [],
+      /* Matanga, UPgraders, Friends Studio, le nom propre : sous quelle structure
+       * chaque opération a été faite. Et les pièces de facturation retrouvées —
+       * référence, date, client, objet ; jamais de montant ni de coordonnée. */
+      structures: [],
+      factures: [],
       critiques: [],
       engagementsTenus: [],
       criteresAjoutes: {},

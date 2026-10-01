@@ -41,7 +41,7 @@ window.EQUIPE = (function () {
 
     var propose = [], retenu = [], repris = [], pieces = [];
 
-    DEPOT.liste("projets").forEach(function (p) {
+    (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
       /* Les pistes qu'il a portées. */
       (p.sections.pistes || []).forEach(function (pi) {
         if (pi.auteurDA !== id && pi.auteurCR !== id) return;
@@ -95,7 +95,7 @@ window.EQUIPE = (function () {
       return null;
     }
 
-    DEPOT.liste("projets").forEach(function (p) {
+    (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
       (p.sections.pistes || []).forEach(function (pi) {
         if (pi.auteurDA !== id && pi.auteurCR !== id) return;
         if (!pi.motif) return;

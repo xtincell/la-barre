@@ -44,7 +44,7 @@ window.PLATEAU = (function () {
 
   function pieces() {
     var out = [];
-    DEPOT.liste("projets").forEach(function (p) {
+    (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
       (p.livrables || []).forEach(function (l) {
         if (l.annule) return;
         var d = echeanceDe(p, l);

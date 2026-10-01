@@ -1112,6 +1112,7 @@ window.VUE_PROJETS = (function () {
             el("h1", {}, p.nom),
             el("p.studio-intro", {}, ident.client || "Client non renseigné"),
             ligneCampagne(p, rafraichir),
+            window.STRUCTURE ? STRUCTURE.ligne(p) : null,
             etatDuDossier(p, blocs, durs, infs)))),
 
       el("dl.pj-meta", {},

@@ -112,7 +112,7 @@ window.PRIORITE = (function () {
   function conflits() {
     var fermes = [], speculatifs = {};
 
-    DEPOT.liste("projets").forEach(function (p) {
+    (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
       (p.sections.pistes || []).forEach(function (pi) {
         var r = rang(pi);
         var ls = (p.livrables || []).filter(function (l) { return !l.annule && l.pisteId === pi.id; });
@@ -233,7 +233,7 @@ window.PRIORITE = (function () {
   function valider(p, pi, apres) {
     var ls = (p.livrables || []).filter(function (l) { return !l.annule && l.pisteId === pi.id; });
     var speculatifsAilleurs = [];
-    DEPOT.liste("projets").forEach(function (x) {
+    (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (x) {
       (x.sections.pistes || []).forEach(function (y) {
         if (y.id === pi.id) return;
         if (rang(y) >= 2) {

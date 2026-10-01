@@ -18,7 +18,7 @@ window.OBJECTIFS = (function () {
       source: "fiche 03 · indicateur",
       calcul: function () {
         var n = 0;
-        DEPOT.liste("projets").forEach(function (p) {
+        (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
           (p.seances || []).forEach(function (s) {
             (s.idees || []).forEach(function (i) {
               var pers = DEPOT.trouve("personnes", i.auteur);
@@ -40,7 +40,7 @@ window.OBJECTIFS = (function () {
       source: "fiche 04 · indicateur du DA, que je pilote",
       calcul: function () {
         var pistes = [], retenues = 0;
-        DEPOT.liste("projets").forEach(function (p) {
+        (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
           (p.sections.pistes || []).forEach(function (pi) {
             if (pi.statut === "proposee") return;
             pistes.push(pi);
@@ -56,7 +56,7 @@ window.OBJECTIFS = (function () {
       source: "fiche 03 · indicateur",
       calcul: function () {
         var juges = 0, propres = 0;
-        DEPOT.liste("projets").forEach(function (p) {
+        (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
           (p.livrables || []).forEach(function (l) {
             var vs = (l.versions || []).filter(function (v) { return v.verdict; });
             if (!vs.length) return;
@@ -74,7 +74,7 @@ window.OBJECTIFS = (function () {
       source: "fiche 03 · indicateur",
       calcul: function () {
         var total = 0, tenus = 0;
-        DEPOT.liste("projets").forEach(function (p) {
+        (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
           (p.livrables || []).forEach(function (l) {
             var d = PLATEAU.echeanceDe(p, l);
             if (!d) return;
@@ -91,7 +91,7 @@ window.OBJECTIFS = (function () {
       source: "la dérive nommée dans ma fiche",
       calcul: function () {
         var d = [];
-        DEPOT.liste("projets").forEach(function (p) {
+        (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
           (p.livrables || []).forEach(function (l) {
             (l.versions || []).forEach(function (v) {
               if (v.verdict && v.soumis_le && v.juge_le) {
@@ -142,7 +142,7 @@ window.OBJECTIFS = (function () {
 
   function engagements() {
     var out = [];
-    DEPOT.liste("projets").forEach(function (p) {
+    (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
       var ident = p.sections.identite || {};
       var brief = p.sections.brief || {};
       var livrables = (p.livrables || []).filter(function (l) { return !l.annule; });

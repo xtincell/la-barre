@@ -85,7 +85,7 @@ window.BOUCLES = (function () {
 
   function observations() {
     var par = {};
-    DEPOT.liste("projets").forEach(function (p) {
+    (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
       var nat = (window.NATURE ? (NATURE.de(p) || {}).cle : p.nature) || "campagne";
       (p.livrables || []).forEach(function (l) {
         if (l.annule) return;
@@ -170,7 +170,7 @@ window.BOUCLES = (function () {
    * se pose en chiffrant, et que personne ne sait dire de mémoire. */
   function tours() {
     var par = {};
-    DEPOT.liste("projets").forEach(function (p) {
+    (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
       var nat = (window.NATURE ? (NATURE.de(p) || {}).cle : p.nature) || "campagne";
       (p.livrables || []).forEach(function (l) {
         if (l.annule || !l.toursVendus) return;

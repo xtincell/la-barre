@@ -294,7 +294,7 @@ window.VUE_EQUIPE = (function () {
     });
     var selP = el("select", {});
     selP.appendChild(el("option", { value: "" }, "— hors dossier —"));
-    DEPOT.liste("projets").forEach(function (p) {
+    (window.STRUCTURE ? STRUCTURE.agence() : DEPOT.liste("projets")).forEach(function (p) {
       selP.appendChild(el("option", { value: p.id }, p.ref + " · " + p.nom));
     });
 

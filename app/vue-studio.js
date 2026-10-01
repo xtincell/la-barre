@@ -116,7 +116,9 @@ window.VUE_STUDIO = (function () {
         if (cov) return COUVERTURE.rendre(cov, "planche", p.nom);
         return visuel ? IMAGE.vignette(visuel, "planche") : el("span", {}, ident.marque || ident.client || p.ref || "Projet");
       })()),
-      el("div.studio-dossier-texte", {}, el("span.studio-piece-ref", {}, p.ref), el("h3", {}, p.nom),
+      el("div.studio-dossier-texte", {}, el("span.studio-piece-ref", {}, p.ref,
+          window.STRUCTURE && !STRUCTURE.estAgence(p) ? el("span.st-badge.st-" + STRUCTURE.de(p).id, {}, STRUCTURE.de(p).court) : null),
+        el("h3", {}, p.nom),
         el("p", {}, livrables.length + " livrables", el("span", {}, blocs.length ? blocs.length + " points à résoudre" : "Aucun blocage")))) ;
   }
   var recherche = "";
@@ -133,7 +135,8 @@ window.VUE_STUDIO = (function () {
       O.vider(liste);
       var visibles = tous.filter(function (p) {
         var ident = p.sections.identite || {};
-        return CLOTURE.est(p) === archives && (!recherche || O.contient([p.nom, p.ref, ident.client, ident.marque].join(" "), recherche));
+        return CLOTURE.est(p) === archives && (!window.STRUCTURE || STRUCTURE.garde(p))
+          && (!recherche || O.contient([p.nom, p.ref, ident.client, ident.marque].join(" "), recherche));
       }).sort(function (a, b) {
         return String((a.sections.identite || {}).echeance || "9999").localeCompare(String((b.sections.identite || {}).echeance || "9999"));
       });
@@ -151,6 +154,9 @@ window.VUE_STUDIO = (function () {
       [false, true].map(function (etat) { return el("button" + (archives === etat ? ".active" : ""), {
         type: "button", "aria-pressed": archives === etat ? "true" : "false", onclick: function () { archives = etat; projets(hote); }
       }, etat ? "Archives" : "En cours"); })), champ, el("a", { href: "#/projets/marques" }, "Vue par marque")));
+    /* Matanga, UPgraders, Friends Studio : trois structures, une seule liste — filtrable. */
+    if (window.STRUCTURE) hote.appendChild(STRUCTURE.puces(tous.filter(function (p) { return CLOTURE.est(p) === archives; }),
+      function () { projets(hote); }));
     hote.appendChild(compte);
     hote.appendChild(liste);
     filtrer();
