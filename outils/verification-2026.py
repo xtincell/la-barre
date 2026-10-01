@@ -50,13 +50,12 @@ def renommer(pid, nom, motif, **champs):
 renommer("PRJ-XC-131", "Doual'art — shooting photo (26-30 janvier 2026)",
          "Le dossier du disque est une seule salve : 26-30 janvier 2026 (EXIF), ~500 exports et 64 RAW.", fenetre="26-30 janvier 2026", echeance="2026-01-30")
 renommer("PRJ-XC-139", "Doual'art — shooting photo (2025)",
-         "Activité distincte du shooting de janvier 2026 ; datée 2025 au document de campagnes. Fichiers non retrouvés au disque.")
-renommer("PRJ-XC-138", "PEN&GRACE — shooting prénuptial (2025)",
-         "Daté 2025 au document de campagnes (section Friends Studio).")
+         "Activité distincte du shooting de janvier 2026 ; datée 2025 au document de campagnes. Ses fichiers sont ailleurs (Alex).")
+renommer("PRJ-XC-138", "PEN&GRACE — shooting prénuptial (14 juin 2026)",
+         "Le dossier du 14 juin 2026 (fichiers « 14062026 ») est le prénuptial (Alex, 01/10/2026) ; le corpus le datait 2025.",
+         fenetre="14 juin 2026", echeance="2026-06-14")
 renommer("PRJ-XC-133", "PEN&GRACE — séance photo (activité distincte du prénuptial)",
-         "Activité distincte (Alex) ; seul dossier au disque : 8 fichiers nommés 14062026 (14 juin 2026) — à rattacher à l'une des deux.")
-note("a_trancher", "PEN&GRACE", "Le seul dossier au disque (8 fichiers « 14062026 », séance du 14 juin 2026) : est-ce le prénuptial (XC-138, daté 2025 au corpus) ou l'autre activité (XC-133) ?")
-note("a_trancher", "Doual'art 2025", "XC-139 (2025) n'a aucun fichier au disque : le dossier présent est la salve de janvier 2026 (XC-131).")
+         "Activité distincte du prénuptial (Alex, 01/10/2026).")
 for pid in ("PRJ-XC-133",):
     P[pid]["couverture"] = {"type": "aucune", "motif": "Commande privée : aucune photo de personne au dépôt.", "pose_le": QUAND, "par": PAR}
 

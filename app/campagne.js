@@ -41,8 +41,12 @@ window.CAMPAGNE = (function () {
    * d'un temps fort. Deux cycles sur la même marque, c'est une erreur de
    * saisie, pas un choix. */
   function cycleDe(marqueId) {
-    return deMarque(marqueId).filter(function (c) {
-      return c.regime === "always-on"; })[0] || null;
+    /* Le fil de l'année d'une marque : un par année depuis le regroupement ;
+     * le cycle courant est celui de l'année en cours, sinon le plus récent. */
+    var an = String(new Date().getFullYear());
+    var cs = deMarque(marqueId).filter(function (c) { return c.regime === "always-on"; })
+      .sort(function (a, b) { return String(b.nom).localeCompare(String(a.nom)); });
+    return cs.filter(function (c) { return c.nom.indexOf(an) !== -1; })[0] || cs[0] || null;
   }
 
   function projets(campagneId) {

@@ -54,6 +54,16 @@ window.COUVERTURE = (function () {
       var kv = kvMaitre(ps[i]);
       if (kv) return { type: "kv", vignette: kv.vignette, motif: "KV maître de « " + ps[i].nom + " »." };
     }
+    /* Une campagne sans KV — le fil de l'année surtout — se montre par ce que
+     * ses projets montrent : une image si elle n'en a qu'un, une mosaïque sinon. */
+    var vus = {}, ims = [];
+    ps.forEach(function (p) {
+      var cv = projet(p);
+      var src = cv && cv.type !== "aucune" && cv.type !== "marque" && cv.type !== "logo" ? (cv.vignette || (cv.images || [])[0]) : null;
+      if (src && !vus[src]) { vus[src] = true; ims.push(src); }
+    });
+    if (ims.length > 1) return { type: "mosaique", images: ims.slice(0, 4), motif: "Ce que montrent ses projets." };
+    if (ims.length === 1) return { type: "kv", vignette: ims[0], motif: "L'image de son projet." };
     var mqs = c.marqueIds || [];
     for (var j = 0; j < mqs.length; j++) { var d = deMarque(mqs[j]); if (d) return d; }
     return null;

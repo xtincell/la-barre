@@ -131,6 +131,38 @@ const serveur = createServer(async (requete, reponse) => {
           return;
         }
         contenu = Buffer.from(texte, "utf8");
+
+        // Ne jamais écraser une base plus récente. Le 01/10/2026, un onglet ouvert
+        // depuis le matin a réenregistré sa vieille copie en recalculant ses
+        // blocages, et effacé une journée de travail. Deux verrous :
+        //  — une base plus ancienne que le fichier en place est refusée (protège
+        //    aussi les onglets restés sur l'ancien code) ;
+        //  — si l'application annonce la version qu'elle a lue (X-Base) et que le
+        //    fichier a changé depuis, l'écriture est refusée : elle rechargera.
+        const enPlace = join(RACINE, normalize(chemin).replace(/^(\.\.[/\\])+/, ""));
+        try {
+          const actuel = JSON.parse(await readFile(enPlace, "utf8"));
+          const neuf = JSON.parse(texte);
+          const vA = actuel && actuel.enregistre_le, vN = neuf && neuf.enregistre_le;
+          const base = requete.headers["x-base"];
+          if (vA && !base) {
+            // Une page qui n'annonce pas ce qu'elle a lu est une page d'avant ce
+            // verrou : elle doit se recharger avant d'écrire.
+            reponse.writeHead(428, { "Content-Type": "application/json" })
+              .end(JSON.stringify({ ok: false, conflit: true, actuel: vA,
+                quoi: "recharge la page : cette version de l'application n'annonce pas la base qu'elle a lue — rien n'a été écrit" }));
+            return;
+          }
+          const plusVieux = vA && vN && new Date(vN) < new Date(vA);
+          const depasse = base && vA && base !== vA;
+          if (plusVieux || depasse) {
+            reponse.writeHead(409, { "Content-Type": "application/json" })
+              .end(JSON.stringify({ ok: false, conflit: true, actuel: vA,
+                quoi: plusVieux ? "cette copie est plus ancienne que la base en place — rien n'a été écrit"
+                  : "la base a été enregistrée ailleurs depuis ta lecture — rien n'a été écrit" }));
+            return;
+          }
+        } catch { /* pas encore de fichier, ou illisible : l'écriture suit son cours */ }
       }
 
       const cible = join(RACINE, normalize(chemin).replace(/^(\.\.[/\\])+/, ""));

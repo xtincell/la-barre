@@ -201,6 +201,24 @@ window.DEPOT = (function () {
     return null;
   }
 
+  /* La version de la base telle que ce navigateur l'a lue ou écrite en
+   * dernier. Elle part avec chaque écriture : le serveur refuse si le fichier a
+   * changé depuis. */
+  var baseServeur = null;
+
+  function recharger() {
+    fetch("depots/" + fichier, { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (t) {
+        if (!t) return;
+        try { baseServeur = JSON.parse(t).enregistre_le || null; } catch (e2) {}
+        importer(t);
+        if (window.AVIS) AVIS.grave("La base a été enregistrée depuis une autre fenêtre : elle vient d'être "
+          + "rechargée ici. Ton dernier geste n'a pas été écrit — refais-le.");
+        ecouteurs.forEach(function (f) { f(); });
+      }).catch(function () {});
+  }
+
   function ecrireSurDisque(quand) {
     var refus = peutEcrire();
     if (refus) {
@@ -209,11 +227,19 @@ window.DEPOT = (function () {
       return;
     }
     var texte = JSON.stringify(etat, null, 1);
+    var entetes = { "Content-Type": "application/json" };
+    if (baseServeur) entetes["X-Base"] = baseServeur;
     fetch("depots/" + fichier, {
-      method: "PUT", headers: { "Content-Type": "application/json" }, body: texte,
-    }).then(function (r) { return r.ok ? r.json() : null; })
+      method: "PUT", headers: entetes, body: texte,
+    }).then(function (r) {
+        /* La base a été enregistrée ailleurs depuis notre lecture : on ne
+         * l'écrase pas, on la recharge, et on le dit. Le dernier geste de cet
+         * onglet est perdu — c'est le prix, et il vaut mieux qu'une journée. */
+        if (r.status === 409 || r.status === 428) { recharger(); throw new Error("conflit"); }
+        return r.ok ? r.json() : null; })
       .then(function (j) {
         if (!j || !j.ok) throw new Error("refus");
+        baseServeur = etat.enregistre_le;
         surDisque = true;
         if (disqueKO) {
           disqueKO = false;
@@ -221,7 +247,8 @@ window.DEPOT = (function () {
         }
         if (quand) quand(true);
       })
-      .catch(function () {
+      .catch(function (e) {
+        if (e && e.message === "conflit") { if (quand) quand(false, "conflit"); return; }
         surDisque = false;
         if (!disqueKO) {
           disqueKO = true;
@@ -378,6 +405,7 @@ window.DEPOT = (function () {
         surDisque = true;
         try {
           var lu = JSON.parse(t);
+          baseServeur = lu.enregistre_le || null;
           var ici = (etat.projets || []).length;
           var la = (lu.projets || []).length;
 
@@ -442,6 +470,7 @@ window.DEPOT = (function () {
       .then(function (t) {
         if (!t) { verdict(false, "le fichier n'a pas répondu"); return; }
         try {
+          try { baseServeur = JSON.parse(t).enregistre_le || null; } catch (e2) { baseServeur = null; }
           importer(t); etat.reference = m.reference; fichier = m.reference;
           referenceLue = true;            /* à partir d'ici, écrire est légitime */
           ecrire();                       /* le filet seulement : on vient de le lire du disque */
