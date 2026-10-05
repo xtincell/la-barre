@@ -135,12 +135,18 @@ window.VUE_STUDIO = (function () {
       O.vider(liste);
       var visibles = tous.filter(function (p) {
         var ident = p.sections.identite || {};
-        return CLOTURE.est(p) === archives && (!window.STRUCTURE || STRUCTURE.garde(p))
+        /* Les dossiers UPgraders et Friends Studio sont presque tous clos : filtrer
+         * sur leur structure montre tout, en cours et archivés ensemble. */
+        var f = window.STRUCTURE ? STRUCTURE.filtre() : "toutes";
+        var etatOk = (f === "toutes" || f === "matanga") ? CLOTURE.est(p) === archives : true;
+        return etatOk && (!window.STRUCTURE || STRUCTURE.garde(p))
           && (!recherche || O.contient([p.nom, p.ref, ident.client, ident.marque].join(" "), recherche));
       }).sort(function (a, b) {
         return String((a.sections.identite || {}).echeance || "9999").localeCompare(String((b.sections.identite || {}).echeance || "9999"));
       });
-      compte.textContent = visibles.length + (visibles.length > 1 ? " projets" : " projet") + (archives ? " archivés" : " en cours");
+      var fs = window.STRUCTURE ? STRUCTURE.filtre() : "toutes";
+      compte.textContent = visibles.length + (visibles.length > 1 ? " projets" : " projet")
+        + (fs !== "toutes" && fs !== "matanga" ? ", en cours et archivés" : archives ? " archivés" : " en cours");
       visibles.forEach(function (p) { liste.appendChild(dossier(p)); });
       if (!visibles.length) liste.appendChild(el("div.studio-vide", {}, el("h3", {}, recherche ? "Aucun projet ne correspond." : archives ? "Aucun projet archivé." : "Votre prochain projet commence ici."),
         el("p", {}, recherche ? "Essayez un autre nom, un client ou une référence." : "Les dossiers restent accessibles, de leur premier brief à leur bilan."),
@@ -153,10 +159,9 @@ window.VUE_STUDIO = (function () {
     hote.appendChild(el("div.studio-index-outils", {}, el("div.studio-statuts", { "aria-label": "État des projets" },
       [false, true].map(function (etat) { return el("button" + (archives === etat ? ".active" : ""), {
         type: "button", "aria-pressed": archives === etat ? "true" : "false", onclick: function () { archives = etat; projets(hote); }
-      }, etat ? "Archives" : "En cours"); })), champ, el("a", { href: "#/projets/marques" }, "Vue par marque")));
+      }, etat ? "Archives" : "En cours"); })), champ, el("a", { href: "#/projets/marques" }, "Vue par marque"), el("a", { href: "#/galerie" }, "La galerie")));
     /* Matanga, UPgraders, Friends Studio : trois structures, une seule liste — filtrable. */
-    if (window.STRUCTURE) hote.appendChild(STRUCTURE.puces(tous.filter(function (p) { return CLOTURE.est(p) === archives; }),
-      function () { projets(hote); }));
+    if (window.STRUCTURE) hote.appendChild(STRUCTURE.puces(tous, function () { projets(hote); }));
     hote.appendChild(compte);
     hote.appendChild(liste);
     filtrer();

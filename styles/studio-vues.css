@@ -2884,3 +2884,32 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .st-f span { font-size: var(--t-eti); color: var(--clair-terne); font-variant-numeric: tabular-nums; }
 .st-f.ici { background: var(--clair); color: var(--surface-1); border-color: var(--clair); }
 .st-f.ici span { color: var(--surface-1); }
+
+/* ————— La galerie : les campagnes, en images ————— */
+.galerie .gal-filtres { display: grid; gap: var(--e3); margin: var(--e5) 0 var(--e3); }
+.gal-f { display: flex; flex-wrap: wrap; gap: var(--e2); }
+.gal-filtres input[type="search"] { min-height: 44px; max-width: 420px; width: 100%; padding: 0 var(--e4); border: 1px solid var(--trait); border-radius: var(--r-pilule); font: inherit; font-size: var(--t-meta); background: var(--surface-1); color: var(--clair); }
+.gal-annee { margin-top: var(--e8); }
+.gal-an { display: flex; align-items: baseline; gap: var(--e3); margin: 0 0 var(--e4); font-family: var(--affichage); font-size: var(--t-h2); line-height: var(--lh-h2); color: var(--clair); border-bottom: 1px solid var(--trait); padding-bottom: var(--e2); }
+.gal-an span { font-size: var(--t-eti); color: var(--clair-terne); font-family: var(--affichage); }
+.gal-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--e6) var(--e5); }
+.gal-carte { display: grid; gap: var(--e3); align-content: start; text-decoration: none; color: inherit; border-radius: var(--r-m); min-width: 0; }
+.gal-carte:focus-visible { outline: 2px solid var(--info); outline-offset: 4px; }
+.gal-visuel { aspect-ratio: 4 / 3; border-radius: var(--r-m); overflow: hidden; background: var(--surface-3); }
+.gal-visuel .vignette { width: 100%; height: 100%; border: 0; border-radius: 0; }
+.gal-carte:hover .gal-visuel { box-shadow: var(--elev-2); }
+@media (prefers-reduced-motion: no-preference) {
+  .gal-visuel { transition: box-shadow var(--tr-standard) var(--easing, ease); }
+  .gal-visuel img { transition: transform 400ms var(--easing, ease); }
+  .gal-carte:hover .gal-visuel img { transform: scale(1.03); }
+}
+.gal-typo { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; gap: var(--e1); padding: var(--e5); background: var(--surface-2); color: var(--clair); }
+.gal-typo.teinte { background: var(--gal-fond); color: #fff; }
+.gal-typo-p { font-family: var(--affichage); font-size: var(--t-h2); line-height: 1.1; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.gal-typo-t { font-size: var(--t-eti); opacity: .85; }
+.gal-texte { display: grid; gap: var(--e1); min-width: 0; }
+.gal-porteur { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: var(--e1); font-size: var(--t-micro); letter-spacing: var(--ls-micro); text-transform: uppercase; color: var(--clair-terne); }
+.gal-porteur .st-badge { text-transform: none; letter-spacing: 0; }
+.gal-titre { margin: 0; font-family: var(--affichage); font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); overflow-wrap: anywhere; }
+.gal-meta { margin: 0; font-size: var(--t-eti); line-height: var(--lh-eti); color: var(--clair-terne); }
+@media (max-width: 560px) { .gal-grille { grid-template-columns: 1fr 1fr; gap: var(--e4) var(--e3); } .gal-typo-p { font-size: var(--t-titre); } }

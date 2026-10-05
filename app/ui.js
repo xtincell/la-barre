@@ -20,6 +20,7 @@ window.UI = (function () {
   /* ————————————————————— 1 · Icônes ————————————————————— */
 
   var TRACES = {
+    galerie: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
     revue: "M3 12h4l3-7 4 14 3-7h4",
     projets: "M3 4h7l2 3h9v13H3z",
     attentes: "M7 17L17 7M17 7H9M17 7v8",
