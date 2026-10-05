@@ -252,7 +252,9 @@ window.COMPILATEUR = (function () {
           if (gDossier && !s.categorie) return;
           /* Un pack dont on sait qu'il n'est vendu sur aucun marché servi non plus. */
           var d = s.marches || [];
-          if (d.length && !d.some(function (id) { return marches[id]; })) return;
+          /* Les packs portent le code du marché (« CM »), les livrables son
+           * identifiant (« M-CM ») : les deux désignent le même pays. */
+          if (d.length && !d.some(function (id) { return marches[id] || marches["M-" + id]; })) return;
         }
         vus[s.id] = true;
         s.__retenu = retenu;

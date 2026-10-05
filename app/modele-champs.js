@@ -130,6 +130,12 @@ window.CHAMPS = {
           aide: "Les réponses préparées si la campagne est attaquée — une par scénario." },
         { cle: "droits_usage", nom: "Droits d'usage des éléments reçus", type: "puces", poste: "clientele",
           aide: "Pour chaque élément : organique seulement, payant, en attente — et sur quelle zone." },
+        /* Un film se cadre aussi par ceux qui y jouent et par ce qui le fabrique :
+         * sans ces deux listes, le casting et le plateau vivaient dans des PDF à côté. */
+        { cle: "casting", nom: "Talents et casting", type: "puces", poste: "clientele",
+          aide: "Rôle, talent proposé ou retenu, ce que couvre son engagement (rôle, contenus, affichage, durée)." },
+        { cle: "production", nom: "Fabrication", type: "puces", poste: "clientele",
+          aide: "Lieu, équipe technique, matériel, décor, stylisme, post-production — ce que le plateau mobilise." },
         { cle: "cible", nom: "Cible et tension", type: "long", critique: true, poste: "planning" },
         { cle: "insight", nom: "Insight", type: "long", critique: true, poste: "planning" },
         { cle: "promesse", nom: "Promesse", type: "texte", critique: true, poste: "planning" },
