@@ -12,24 +12,41 @@ quand le client tire, quand le délai serre, quand deux concepts s'affrontent.
 
 Double-cliquer `index.html`. Aucun serveur, aucune installation, aucun compte.
 
-Avec une URL, depuis la racine du dossier parent :
+Avec une URL, depuis la racine du dépôt :
 
 ```bash
-node servir.mjs 5173
+HOST=127.0.0.1 node servir.mjs 5173
 ```
 
-puis `http://localhost:5173/la-barre/`.
+puis `http://localhost:5173/`. L'accès réseau doit être protégé par l'installation :
+ce serveur seul ne fournit pas d'authentification.
 
 ## Sauvegarder — à lire une fois
 
-**Le dépôt de référence est un fichier JSON sur ton Drive.** Le navigateur n'en garde
-qu'un cache de travail : vider les données du site l'effacerait.
+Si `depots/manifeste.json` désigne une `reference`, le fichier servi fait foi.
+Les modifications sont sauvegardées automatiquement. **Ressources → Paramètres**
+indique leur réception, les divergences à arbitrer et les brouillons à reprendre.
+Deux modifications sur des champs différents se réunissent ; deux valeurs du même
+champ demandent un choix. Une coupure conserve un brouillon IndexedDB par onglet,
+récupérable après rechargement ou depuis un autre onglet du même navigateur.
 
-- **Réglages → Exporter** à la fin de chaque séance. Le fichier porte la date et la machine.
-- **Réglages → Importer** à l'ouverture, si tu changes de poste.
-- Le compteur en haut des réglages passe en rouge au-delà de deux jours sans export.
+Le serveur exige la révision lue (`ETag` → `If-Match`), vérifie et remplace le fichier
+dans une seule section critique. `X-Base` reste accepté pour les anciens clients ;
+les nouveaux importeurs doivent utiliser `If-Match`. Une création utilise
+`If-None-Match: *`. Une réponse perdue peut être redemandée avec le même corps.
+Cette garantie porte sur **un processus serveur** : écrire directement le JSON sur
+disque ou lancer plusieurs processus sur le même fichier contourne ce protocole.
 
-C'est aussi le pont vers Matanga People : le même JSON, lu par autre chose.
+En ouverture par double-clic ou sur un hébergement statique, le navigateur reste le
+seul stockage : exporter en fin de séance et importer au changement de poste.
+L'export reste disponible dans tous les modes. Effacer les données du navigateur
+efface ses brouillons non reçus ; cela ne remplace pas une sauvegarde du serveur.
+
+La première mise à jour conserve tout cache ancien différent dans une copie de
+reprise séparée, sans le pousser automatiquement sur le fichier partagé.
+
+`npm run test:persistance` exerce concurrence, idempotence, fichiers illisibles,
+rapprochement, coupures et reprise. Les parcours visuels vivent dans `tests/parcours.mjs`.
 
 ## Le système visuel
 

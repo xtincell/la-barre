@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node servir.mjs",
-    "test": "node tests/parcours.mjs"
+    "test": "node tests/parcours.mjs",
+    "test:persistance": "node --test tests/persistance.test.mjs tests/reconciliation.test.mjs tests/depot-reprise.test.mjs"
   },
   "engines": {
     "node": ">=18"
