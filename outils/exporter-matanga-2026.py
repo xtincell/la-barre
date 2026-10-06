@@ -342,6 +342,11 @@ def md_campagne(c, fichiers):
          f"fenêtre : {f.get('debut') or '?'} → {f.get('fin') or '?'}\n"]
     if c.get("infere"): L.append(f"> Pourquoi elle existe : {c['infere'].get('pourquoi')}\n")
     L.append(f"## Projets ({len(ps)})\n\n" + "\n".join(f"- [{p['ref']} — {p['nom']}](PROJET-{p['ref']}.md) · {len([l for l in p.get('livrables') or [] if not l.get('annule')])} livrables" for p in ps) + "\n")
+    if c.get("skus"):   # les SKU que les visuels de la campagne montrent, lus sur les fichiers (rattacher-sku-2026.py)
+        SK = {s["id"]: s for s in d.get("sku", [])}
+        L.append(f"## SKU montrés ({len(c['skus'])})\n\n" + "\n".join(
+            f"- {SK.get(s['sku'], {}).get('nom', s['sku'])} ({M.get(SK.get(s['sku'], {}).get('marque'), {}).get('nom', '')}) — vu sur {len(s.get('preuves', []))} fichier{'s' if len(s.get('preuves', [])) > 1 else ''}"
+            for s in sorted(c["skus"], key=lambda s: -len(s.get("preuves", [])))) + "\n")
     if c.get("couverture", {}).get("vignette"): L.append("![Couverture](_couverture" + os.path.splitext(c["couverture"]["vignette"])[1] + ")\n")
     L.append(md_fichiers(fichiers))
     L.append(md_icloud(a_rapatrier(os.path.join(RACINE, chemin_campagne(c)))))
