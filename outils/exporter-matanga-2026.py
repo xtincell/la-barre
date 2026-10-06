@@ -403,7 +403,7 @@ elif MODE == "complement":
             "DELIFOOD": "Delifood", "PRUDENTIAL": "_Autres comptes/Prudential", "LMT": "_Autres comptes/LMT Group",
             "SUNHOUSE": "_Autres comptes/SunHouse", "HC": "_Autres comptes/H&C Executive Education",
             "WAFACASH": "_Autres comptes/Wafacash, Maritimo, Petvisidame, GUCE", "LOME": "_Autres comptes/Grand Marché de Lomé et Togo Marché",
-            "MATANGA": "_Matanga — sans marque"}
+            "FLORIDA": "Cap Esterias/Florida", "MATANGA": "_Matanga — sans marque"}
     NOMS = {"noel": "Noël & fin d'année", "ramadan": "Ramadan & Aïd", "paques": "Pâques & Carême", "rentree": "Back to School",
             "fete": "Fête des mères, des pères, journée mondiale", "promo": "Promotion & déstockage", "jeu": "Jeu-concours & activation",
             "evenement": "Séminaire, salon, événement", "lancement": "Lancement de produit ou de marque", "institutionnel": "Institutionnel & prise de parole"}
@@ -471,9 +471,10 @@ elif MODE == "complement":
     lignes, icloud, copies, oublies = [], [], [], []
     for x in tout:
         p = x["p"]
-        if x["cat"] == "hors-matanga" or EXCLU.search(p) or not os.path.exists(p): continue
+        # « marque » : une attribution faite à l'œil (troisième passe, les fichiers sans marque lisible) prime sur le chemin.
+        if (x["cat"] == "hors-matanga" and not x.get("marque")) or EXCLU.search(p) or not os.path.exists(p): continue
         src_racine0 = next((r for r, l in SOURCES if p.startswith(r + os.sep)), os.path.dirname(p))
-        cat = marque_de(p, src_racine0)
+        cat = x.get("marque") or marque_de(p, src_racine0)
         if not cat: continue
         if datetime.datetime.fromtimestamp(x["m"]).year < 2021: x["m"] = max(x["m"], an_dossier[os.path.dirname(p)])
         if cat in M: mid, base = cat, chemin_marque(cat)
@@ -495,7 +496,7 @@ elif MODE == "complement":
             camp = choisir(cands, "continu", an)
             dest = os.path.join(chemin_campagne(camp) if camp else os.path.join(base, "Le long de l'année", an), lib, rel)
         ligne = {"source": p, "destination": os.path.join(RACINE, dest), "campagne": camp["id"] if camp else "",
-                 "motif": f"{cat} · {occ} · {an}", "taille": x["s"], "op": "copier" if p.startswith("/Volumes/") else "deplacer"}
+                 "motif": f"{cat} · {occ} · {an}", "taille": x["s"], "op": x.get("op") or ("copier" if p.startswith("/Volumes/") else "deplacer")}
         (icloud if p.startswith(ICLOUD) else lignes).append(ligne)
     vus = set()
     for l in lignes + icloud:
@@ -675,8 +676,21 @@ elif MODE == "chemins":
     rows = list(csv.DictReader(open(MANIF, encoding="utf-8")))
     carte = {}
     for r in rows:
-        a, b = os.path.join(DL, r["source"]), os.path.join(DL, r["destination"])
-        carte[a] = b; carte[a.replace(HOME, "~", 1)] = b.replace(HOME, "~", 1)
+        carte[os.path.normpath(os.path.join(DL, r["source"]))] = os.path.normpath(os.path.join(DL, r["destination"]))
+    # Le hors-Matanga (troisième passe) : 02 VENTURES et les fichiers reconnus à l'œil, partis sous UPGRADERS — EXPORT DU TRAVAIL.
+    # Le coffre n'est pas lu : un chemin vers les papiers d'Alexandre n'a rien à faire dans un dépôt en ligne.
+    MANIF_U = os.path.join(DL, "UPGRADERS — EXPORT DU TRAVAIL", "_MANIFESTE-DEPLACEMENTS.csv")
+    if os.path.exists(MANIF_U):
+        for r in csv.DictReader(open(MANIF_U, encoding="utf-8")):
+            if r.get("op") != "copier": carte[r["source"]] = r["destination"]
+    def resoudre(o):
+        """Le dépôt écrit un chemin en absolu, en ~/ ou relatif à Work 2026 : on le ramène à l'absolu, et on rend la même forme."""
+        if o.startswith("/"): return o, lambda b: b
+        if o.startswith("~/"): return os.path.join(HOME, o[2:]), lambda b: b.replace(HOME, "~", 1)
+        for base in (WORK, DL):
+            q = os.path.normpath(os.path.join(base, o))
+            if q in carte: return q, lambda b: b.replace(HOME, "~", 1)
+        return None, None
     prefixes = []
     for r in rows:
         if r["source"].startswith("LVQR Campagne Not Laughing cow/"):
@@ -687,7 +701,9 @@ elif MODE == "chemins":
     def reecrire(o):
         if isinstance(o, dict): return {k: reecrire(v) for k, v in o.items()}
         if isinstance(o, list): return [reecrire(v) for v in o]
-        if isinstance(o, str) and o in carte: n[0] += 1; return carte[o]
+        if isinstance(o, str) and len(o) < 600:
+            q, forme = resoudre(o)
+            if q in carte: n[0] += 1; return forme(carte[q])
         # Les dossiers reçus déplacés entiers : un chemin descriptif (« DOC 2 · … ») garde son dossier.
         if isinstance(o, str):
             for a, b in prefixes:
@@ -696,6 +712,6 @@ elif MODE == "chemins":
     d2 = reecrire(d)
     d2["enregistre_le"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
     d2.setdefault("journal", []).append({"quand": d2["enregistre_le"], "qui": "creation", "action": "export Matanga",
-        "type": "fichiers", "id": None, "detail": f"{n[0]} chemins de fichiers suivis vers « MATANGA — EXPORT DU TRAVAIL »"})
+        "type": "fichiers", "id": None, "detail": f"{n[0]} chemins de fichiers suivis vers « MATANGA — EXPORT DU TRAVAIL » et « UPGRADERS — EXPORT DU TRAVAIL »"})
     json.dump(d2, open(sys.argv[3], "w"), ensure_ascii=False, indent=1)
     print("chemins réécrits :", n[0])
