@@ -324,6 +324,17 @@ def md_projet(p):
         L.append(bloc("Préparation de la séance", [(k, v) for k, v in prep.items() if k != "infere"]))
     return "\n".join(x for x in L if x)
 
+ICL = []   # l'index iCloud, chargé par « executer »
+def a_rapatrier(dos):
+    pre = dos.rstrip(os.sep) + os.sep
+    return [l for l in ICL if l["destination"].startswith(pre)]
+def md_icloud(xs):
+    if not xs: return ""
+    return (f"## À rapatrier depuis iCloud ({len(xs)}, {sum(int(l['taille']) for l in xs) / 1e6:.0f} Mo)\n\n"
+            "Indexés, pas encore copiés ici : `_RAPATRIER-DEPUIS-ICLOUD.command` les télécharge et les copie quand la bande passante le permet.\n\n"
+            + "\n".join(f"- `{os.path.relpath(l['source'], os.path.join(HOME, 'Library/Mobile Documents/com~apple~CloudDocs'))}`" for l in xs[:40])
+            + (f"\n- … et {len(xs) - 40} autres (voir `_A-RAPATRIER-DEPUIS-ICLOUD.csv`)" if len(xs) > 40 else "") + "\n")
+
 def md_campagne(c, fichiers):
     ps = sorted(PAR_CAMP.get(c["id"], []), key=lambda p: p["ref"])
     f = c.get("fenetre") or {}
@@ -333,6 +344,7 @@ def md_campagne(c, fichiers):
     L.append(f"## Projets ({len(ps)})\n\n" + "\n".join(f"- [{p['ref']} — {p['nom']}](PROJET-{p['ref']}.md) · {len([l for l in p.get('livrables') or [] if not l.get('annule')])} livrables" for p in ps) + "\n")
     if c.get("couverture", {}).get("vignette"): L.append("![Couverture](_couverture" + os.path.splitext(c["couverture"]["vignette"])[1] + ")\n")
     L.append(md_fichiers(fichiers))
+    L.append(md_icloud(a_rapatrier(os.path.join(RACINE, chemin_campagne(c)))))
     return "\n".join(L)
 
 def md_fichiers(fichiers):
@@ -376,6 +388,136 @@ if MODE == "plan":
     print(len(lignes), "fichiers", f"{tot / 1e9:.1f} Go", "· campagnes touchées :", len([k for k in parc if k in CM]),
           "· hors dépôt :", sum(v for k, v in parc.items() if k not in CM))
 
+elif MODE == "complement":
+    # Deuxième passe (06/10/2026) : « quid de TOUTES les campagnes et de TOUTES les vidéos, images, livrables… disponibles
+    # dans ma machine ? » — le reste de la machine, inventorié par marque (classe.json). Le local est déplacé ; la clé
+    # USB est copiée, jamais vidée ; iCloud est indexé et se rapatrie plus tard, par copie, quand la bande passante le permet.
+    import hashlib
+    _, _, _, CLASSE, PLAN, IDX_ICLOUD, RAPPORT = sys.argv
+    ICLOUD = os.path.join(HOME, "Library/Mobile Documents/com~apple~CloudDocs")
+    EXCLU = re.compile(r"Space — ancienne agence|References agences|/00 Matanga Agency|/\.(claude|vscode|codex|cache|bmad)/|Documents/Codex|"
+                       r"/HOSTINGER/|/claude design system/|/03 OUTILS & DEV/|/06 LOGICIELS|/Downloads/Smash/|^" + re.escape(HOME) + r"/(FUKU|MATANGA BONNET ROUGE)/|"
+                       r"/MATANGA — EXPORT DU TRAVAIL/|avenant_matanga|/Adobe/Premiere Pro|Auto-Save")
+    VIRT = {"ROBUSTE": "Cadyst Group/Robuste", "MILKBAR": "FrieslandCampina/Milk Bar", "BAMS": "_Autres comptes/BAMS & BTP",
+            "CIMENCAM": "_Autres comptes/Cimencam, Port de Kribi, LTA", "LTA": "_Autres comptes/Cimencam, Port de Kribi, LTA",
+            "DELIFOOD": "Delifood", "PRUDENTIAL": "_Autres comptes/Prudential", "LMT": "_Autres comptes/LMT Group",
+            "SUNHOUSE": "_Autres comptes/SunHouse", "HC": "_Autres comptes/H&C Executive Education",
+            "WAFACASH": "_Autres comptes/Wafacash, Maritimo, Petvisidame, GUCE", "LOME": "_Autres comptes/Grand Marché de Lomé et Togo Marché",
+            "MATANGA": "_Matanga — sans marque"}
+    NOMS = {"noel": "Noël & fin d'année", "ramadan": "Ramadan & Aïd", "paques": "Pâques & Carême", "rentree": "Back to School",
+            "fete": "Fête des mères, des pères, journée mondiale", "promo": "Promotion & déstockage", "jeu": "Jeu-concours & activation",
+            "evenement": "Séminaire, salon, événement", "lancement": "Lancement de produit ou de marque", "institutionnel": "Institutionnel & prise de parole"}
+    MOTS2 = OCC_MOTS + [("evenement", r"cowlab|seminaire|salon|festival"), ("lancement", r"lancement|rebrand|nouveau look"),
+                        ("institutionnel", r"communique|institutionnel")]
+    SOURCES = [(os.path.join(WORK, "08 A TRIER"), "Depuis 08 A TRIER"), (os.path.join(WORK, "_TOUS LES KV"), "Depuis _TOUS LES KV"),
+               (os.path.join(WORK, "_PREUVES DIRECTION CRÉATIVE"), "Depuis _PREUVES DIRECTION CRÉATIVE"),
+               (os.path.join(WORK, "_MASTERS DE CAMPAGNE"), "Depuis _MASTERS DE CAMPAGNE"), (os.path.join(WORK, "04 RESSOURCES"), "Depuis 04 RESSOURCES"),
+               (os.path.join(WORK, "05 ADMIN & GESTION"), "Depuis 05 ADMIN & GESTION"), ("/Volumes/NO NAME", "Depuis la clé NO NAME"),
+               (os.path.join(ICLOUD, "Desktop/09 ARCHIVES PRE-2025/Matanga avant 2025"), "Depuis iCloud — Matanga avant 2025"),
+               (os.path.join(ICLOUD, "Desktop/01 MARQUES CLIENTS"), "Depuis iCloud — 01 MARQUES CLIENTS"),
+               (ICLOUD, "Depuis iCloud"), (DL, "Depuis Téléchargements"), (HOME, "Depuis le dossier personnel")]
+    # Les copies : même taille, même extension, même contenu qu'un fichier déjà dans l'export.
+    par_taille = collections.defaultdict(list)
+    for dp, dn, fn in os.walk(RACINE):
+        for f in fn:
+            q = os.path.join(dp, f)
+            try: par_taille[(os.path.getsize(q), os.path.splitext(f)[1].lower())].append(q)
+            except OSError: pass
+    def md5(q, cache={}):
+        if q not in cache:
+            h = hashlib.md5()
+            with open(q, "rb") as fh:
+                for b in iter(lambda: fh.read(1 << 20), b""): h.update(b)
+            cache[q] = h.hexdigest()
+        return cache[q]
+    def copie(x):
+        cands = par_taille.get((x["s"], os.path.splitext(x["p"])[1].lower()))
+        if not cands: return None
+        if x.get("dl"): return cands[0]   # pas téléchargé : la taille et l'extension suffisent à le signaler, sans le rapatrier
+        h = md5(x["p"])
+        return next((c for c in cands if md5(c) == h), None)
+    # La marque se lit dans le chemin RELATIF à la source : « Matanga avant 2025/… » ne doit pas tout ranger chez Matanga.
+    MARQUES_RE = [(k, re.compile(v)) for k, v in [
+     ("MQ-pz-gold", r"pasta gold|lapasta gold|gold premium"), ("MQ-pz-pasta-first", r"pasta first"),
+     ("MQ-lapasta", r"\bla ?pasta\b|lapasta|pasta food|pasta cook"), ("MQ-pz-delys", r"\bdelys\b"), ("MQ-pz-barka", r"\bbarka\b"),
+     ("MQ-pz-salaka", r"\bsala[kc]a\b"), ("MQ-panzani", r"panzani|fratelli|vilva|\bolympic\b|leader (bleu|vert)|hermina|\bketty\b|\bsalma\b"),
+     ("MQ-amigo", r"\bamigo\b"), ("MQ-cgrain", r"cadyst grain|farine"), ("MQ-cfarming", r"farming"), ("MQ-fuku", r"\bfuku\b"),
+     ("MQ-softbaker", r"soft ?baker"), ("MQ-maci", r"\bmaci\b"), ("ROBUSTE", r"\brobuste\b"), ("MQ-cgroup", r"cadyst|cadsyt|cadysst"),
+     ("MQ-peak", r"\bpeak\b"), ("MQ-rainbow", r"\brainbow\b"), ("MQ-omela", r"\bomela\b"),
+     ("MQ-bh", r"belle hol+[ae]n+daise|belle hoalndaise|bella holandesa|\bbh\b"), ("MQ-dl", r"dutch lady"), ("MILKBAR", r"milk ?bar"),
+     ("MQ-nunu", r"\bnunu\b"), ("MQ-br", r"bonnet ?rouge|\bbr\b|cowlab|bdsc|bien dans son corps"),
+     ("MQ-fc", r"fr[ie]{2}sland|frieslandcampina|\bfcwa\b"), ("MQ-nsia-tontines", r"nsia ?tontine|tontines?\b"),
+     ("MQ-nsia-voyages", r"nsia ?voyage"), ("MQ-nsia-auto", r"nsia ?auto"), ("MQ-nsia", r"\bnsia\b"), ("MQ-eco", r"ecobank"),
+     ("MQ-tradex", r"tradex"), ("MQ-phosphatine", r"phosphatine"), ("MQ-apericube", r"apericube"),
+     ("MQ-lvqr", r"vache qui rit|\blvqr\b|laughing cow"), ("MQ-pak", r"port autonome de kribi|\bpak\b|kribi"),
+     ("MQ-presynat", r"presynat"), ("MQ-frutas", r"\bfrutas\b"), ("MQ-capesterias", r"cap ?esterias|sofavin"), ("MQ-mm", r"mamy makala|makala"),
+     ("MQ-btomate", r"belles? tomates?"), ("MQ-bfromagerie", r"belle fromagerie"), ("MQ-bgraines", r"belles? graines?"), ("DELIFOOD", r"delifood"),
+     ("BAMS", r"\bbams\b"), ("CIMENCAM", r"cimencam"), ("LTA", r"\blta\b"), ("PRUDENTIAL", r"prudential"), ("LMT", r"\blmt\b"),
+     ("SUNHOUSE", r"sun ?house"), ("HC", r"h ?& ?c executive"), ("WAFACASH", r"wafacash|maritimo|petvisidame|\bguce\b"),
+     ("LOME", r"marche de lome|togo marche"), ("MQ-kitoko", r"kitoko"), ("MATANGA", r"matanga")]]
+    HORS_RE = re.compile(r"upgraders|friends ?(photo|studio)|beignet paradise|\bspawt\b|\bkof\b|otaku|musina|motion ?19|universal music|"
+                         r"doual ?art|pen ?& ?grace|banahealth|villa corso|goodlocs|akwa palace|dot ?bites|xtincell|porfolio|portfolio|kinara")
+    ARCHIVE = os.path.join(ICLOUD, "Desktop/09 ARCHIVES PRE-2025/Matanga avant 2025")
+    def marque_de(p, src_racine):
+        rel = norme(os.path.relpath(p, src_racine))
+        if HORS_RE.search(rel): return None
+        for k, rx in MARQUES_RE:
+            if rx.search(rel): return k
+        return "MATANGA" if p.startswith(ARCHIVE + os.sep) else None
+    # Les ressources d'archive datent de leur téléchargement (un modèle de 2019) : l'année d'un dossier est celle de son fichier le plus récent.
+    an_dossier = collections.defaultdict(int)
+    tout = json.load(open(CLASSE))
+    for x in tout: an_dossier[os.path.dirname(x["p"])] = max(an_dossier[os.path.dirname(x["p"])], x["m"])
+    lignes, icloud, copies, oublies = [], [], [], []
+    for x in tout:
+        p = x["p"]
+        if x["cat"] == "hors-matanga" or EXCLU.search(p) or not os.path.exists(p): continue
+        src_racine0 = next((r for r, l in SOURCES if p.startswith(r + os.sep)), os.path.dirname(p))
+        cat = marque_de(p, src_racine0)
+        if not cat: continue
+        if datetime.datetime.fromtimestamp(x["m"]).year < 2021: x["m"] = max(x["m"], an_dossier[os.path.dirname(p)])
+        if cat in M: mid, base = cat, chemin_marque(cat)
+        elif cat in VIRT: mid, base = None, VIRT[cat]
+        else: oublies.append(p); continue
+        if copie(x): copies.append(p); continue
+        src_racine, lib = next(((r, l) for r, l in SOURCES if p.startswith(r + os.sep)), (os.path.dirname(p), "Depuis " + os.path.basename(os.path.dirname(p))))
+        rel = os.path.relpath(p, src_racine)
+        n = norme(rel); occ = "continu"
+        for k, pat in MOTS2:
+            if re.search(pat, n): occ = k; break
+        an = annee_fichier(x["m"], occ, rel)
+        cands = campagnes_de_marque(mid, base) if mid or base.startswith("_Autres") else []
+        camp = choisir(cands, occ, an) if occ != "continu" else None
+        if occ == "continu" and re.search(r"\blogos?\b|charte|brand ?book|identite", n): dest = os.path.join(base, "_Identité de marque", lib, rel)
+        elif camp: dest = os.path.join(chemin_campagne(camp), lib, rel)
+        elif occ != "continu": dest = os.path.join(base, "Campagnes ponctuelles", propre(an + " — " + NOMS.get(occ, occ)), lib, rel)
+        else:
+            camp = choisir(cands, "continu", an)
+            dest = os.path.join(chemin_campagne(camp) if camp else os.path.join(base, "Le long de l'année", an), lib, rel)
+        ligne = {"source": p, "destination": os.path.join(RACINE, dest), "campagne": camp["id"] if camp else "",
+                 "motif": f"{cat} · {occ} · {an}", "taille": x["s"], "op": "copier" if p.startswith("/Volumes/") else "deplacer"}
+        (icloud if p.startswith(ICLOUD) else lignes).append(ligne)
+    vus = set()
+    for l in lignes + icloud:
+        dst = l["destination"]; b, e = os.path.splitext(dst); k = 2
+        while dst in vus or os.path.exists(dst):
+            dst = f"{b} ({k}){e}"; k += 1
+        vus.add(dst); l["destination"] = dst
+    champs = ["source", "destination", "campagne", "motif", "taille", "op"]
+    for fichier, xs in ((PLAN, lignes), (IDX_ICLOUD, icloud)):
+        with open(fichier, "w", newline="", encoding="utf-8") as fh:
+            w = csv.DictWriter(fh, fieldnames=champs); w.writeheader(); w.writerows(xs)
+    def resume(xs):
+        c = collections.Counter(os.path.relpath(l["destination"], RACINE).split(os.sep)[0] for l in xs)
+        return [f"- {k} — {v}" for k, v in c.most_common()]
+    R = [f"# Deuxième passe — le reste de la machine ({datetime.date.today()})\n",
+         f"À déplacer ou copier (local) : {len(lignes)} fichiers, {sum(l['taille'] for l in lignes) / 1e9:.1f} Go.",
+         f"À rapatrier d'iCloud (indexé, rien ne bouge) : {len(icloud)} fichiers, {sum(l['taille'] for l in icloud) / 1e9:.1f} Go.",
+         f"Copies d'un fichier déjà dans l'export (laissées en place) : {len(copies)}.\n", "## Local, par groupe\n"] + resume(lignes) + \
+        ["\n## iCloud, par groupe\n"] + resume(icloud)
+    open(RAPPORT, "w").write("\n".join(R))
+    print(len(lignes), "locaux ·", len(icloud), "iCloud ·", len(copies), "copies ·", len(oublies), "sans destination")
+
 elif MODE == "executer":
     lignes = list(csv.DictReader(open(sys.argv[3], encoding="utf-8")))
     os.makedirs(RACINE, exist_ok=True)
@@ -388,7 +530,8 @@ elif MODE == "executer":
             s, t = l["source"], l["destination"]
             if not os.path.exists(s) or os.path.exists(t): continue
             os.makedirs(os.path.dirname(t), exist_ok=True)
-            shutil.move(s, t)
+            if l.get("op") == "copier": shutil.copy2(s, t)   # une clé USB se copie, elle ne se vide pas
+            else: shutil.move(s, t)
             w.writerow([os.path.relpath(s, DL), os.path.relpath(t, DL)]); fh.flush(); fait.append(l)
     ecrire(os.path.join(RACINE, "_ANNULER-LES-DEPLACEMENTS.command"), """#!/bin/bash
 # Remet chaque fichier à sa place d'origine (chemins relatifs à ~/Downloads). Les .md générés restent.
@@ -413,6 +556,8 @@ PY
                 if f.startswith(".") or f.endswith(".md") or f.startswith("_couverture"): continue
                 q = os.path.join(dp, f); out.append({"rel": os.path.relpath(q, dossier), "taille": os.path.getsize(q)})
         return out
+    IDX = os.path.join(RACINE, "_A-RAPATRIER-DEPUIS-ICLOUD.csv")
+    if os.path.exists(IDX): ICL[:] = list(csv.DictReader(open(IDX, encoding="utf-8")))
     marques_camps = collections.defaultdict(list)
     for cid, c in CM.items():
         dos = os.path.join(RACINE, chemin_campagne(c)); os.makedirs(dos, exist_ok=True)
@@ -450,10 +595,43 @@ PY
     if hors:
         I.append("\n## Rangé sans campagne au dépôt\n")
         I += [f"- `{k}` — {len(v)} fichiers" for k, v in sorted(hors.items())]
+    if ICL:
+        gi = collections.Counter(); ti = collections.Counter()
+        for l in ICL:
+            k = re.sub(r"/(Depuis [^/]+)/.*$", "", os.path.relpath(l["destination"], RACINE)); gi[k] += 1; ti[k] += int(l["taille"])
+        I.append(f"\n## À rapatrier depuis iCloud — {len(ICL)} fichiers, {sum(ti.values()) / 1e9:.1f} Go\n")
+        I.append("Lancer `_RAPATRIER-DEPUIS-ICLOUD.command` quand la bande passante le permet : il télécharge chaque fichier et le copie "
+                 "à sa place ci-dessous. L'original reste dans iCloud. On peut l'interrompre et le relancer.\n")
+        I += [f"- `{k}` — {v} fichiers, {ti[k] / 1e6:.0f} Mo" for k, v in sorted(gi.items())]
+        ecrire(os.path.join(RACINE, "_RAPATRIER-DEPUIS-ICLOUD.command"), """#!/bin/bash
+# Télécharge depuis iCloud les fichiers Matanga indexés et les COPIE à leur place dans l'export.
+# Rien n'est retiré d'iCloud. Reprend où il s'est arrêté : un fichier déjà copié est sauté.
+cd "$(dirname "$0")" || exit 1
+python3 - <<'PY'
+import csv, os, shutil, subprocess, time
+ok = attente = 0
+rows = list(csv.DictReader(open("_A-RAPATRIER-DEPUIS-ICLOUD.csv", encoding="utf-8")))
+for i, r in enumerate(rows, 1):
+    s, t = r["source"], r["destination"]
+    if os.path.exists(t) or not os.path.exists(s): continue
+    if os.stat(s).st_flags & 0x40000000:           # pas encore sur le disque : on le demande à iCloud
+        subprocess.run(["brctl", "download", s], capture_output=True)
+        for _ in range(600):
+            if not os.stat(s).st_flags & 0x40000000: break
+            time.sleep(1)
+        else:
+            attente += 1; print("toujours en téléchargement, à relancer :", s); continue
+    os.makedirs(os.path.dirname(t), exist_ok=True)
+    shutil.copy2(s, t); ok += 1
+    if ok % 50 == 0: print(f"{i}/{len(rows)} — {ok} copiés")
+print("copiés :", ok, "· en attente :", attente, "· total indexé :", len(rows))
+PY
+""")
+        os.chmod(os.path.join(RACINE, "_RAPATRIER-DEPUIS-ICLOUD.command"), 0o755)
     ecrire(os.path.join(RACINE, "INDEX.md"), "\n".join(I) + "\n")
     ecrire(os.path.join(RACINE, "LISEZ-MOI.md"), f"""# Matanga — export du travail
 
-Ce dossier rassemble le travail fait pour Matanga Agency entre 2023 et 2026, rangé comme LA BARRE le tient :
+Ce dossier rassemble le travail fait pour Matanga Agency, des archives d'avant 2025 jusqu'à 2026, rangé comme LA BARRE le tient :
 **groupe → marque → campagne**. Chaque campagne est soit **ponctuelle** (un temps fort : Ramadan, Back to School,
 un lancement…), soit **le long de l'année** (les actions hors temps fort, par année).
 
@@ -472,6 +650,17 @@ un lancement…), soit **le long de l'année** (les actions hors temps fort, par
 - Les opérations sous UPgraders, Friends Photography Studio ou en nom propre, et Beignet Paradise.
 - `Work 2026/00 Matanga Agency` (l'agence elle-même) et les copies (`_TOUS LES KV`, `_MASTERS DE CAMPAGNE`, le corpus).
 - Les montants : ils restent dans les factures et les devis.
+
+## Ce qui reste à rapatrier d'iCloud
+
+Une partie du travail vit dans iCloud Drive (le bureau rangé, les archives d'avant 2025). Ces fichiers sont **indexés**,
+avec leur place prévue ici : `_A-RAPATRIER-DEPUIS-ICLOUD.csv`, et dans chaque `CAMPAGNE.md`. Le double-clic sur
+`_RAPATRIER-DEPUIS-ICLOUD.command` les télécharge et les copie à leur place ; l'original reste dans iCloud.
+
+## D'où viennent les fichiers
+
+Les sous-dossiers `Depuis …` disent d'où vient un fichier rangé à la deuxième passe (08 A TRIER, _MASTERS DE CAMPAGNE,
+la clé NO NAME…). Les fichiers de la clé USB ont été copiés, pas déplacés.
 
 ## Revenir en arrière
 
