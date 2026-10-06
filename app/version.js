@@ -30,17 +30,25 @@ window.VERSION = (function () {
 
   /* Ouvrir une version : le numéro monte, l'ancienne est archivée avec ce qui
    * l'a tuée. Rien ne s'écrase. */
-  function ouvrir(o, origine, motif, par) {
+  function ouvrir(o, origine, motif, par, options) {
     if (!o.versions) o.versions = [];
     var n = num(o);
     o.versions.push({
       n: n, close_le: new Date().toISOString(),
       origine: origine, motif: motif, par: par || MAISON.titulaire,
-      etat: instantane(o),
+      etat: options && options.complet ? copieComplete(o) : instantane(o),
     });
     o.version = n + 1;
     o.derniereOrigine = origine;
     return o.version;
+  }
+
+  function copieComplete(o) {
+    var g = {};
+    Object.keys(o).filter(function (k) { return k !== "versions"; }).forEach(function (k) {
+      Object.defineProperty(g, k, { value: o[k], enumerable: true });
+    });
+    return JSON.parse(JSON.stringify(g));
   }
 
   /* Ce qu'on garde d'une version : de quoi comparer, pas de quoi restaurer. */

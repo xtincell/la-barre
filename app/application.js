@@ -129,7 +129,7 @@ window.APP = (function () {
           el("div.portrait", {}, initiales(moi())),
           el("div", {},
             el("div.nom", {}, moi()),
-            el("div.poste", {}, O.poste(MAISON.titulaire).nom)
+            el("div.poste", {}, ACTEUR.postes().map(function (p) { return O.poste(p).court; }).join(" · "))
           )
         ),
         el("a.rail-suite", { href: MAISON.suite.url, target: "_blank", rel: "noopener noreferrer" }, "Dans la suite Shinkiro ↗"),
@@ -239,7 +239,7 @@ window.APP = (function () {
                   .map(function (b) { return b.quoi + " — " + REGLES.prix(b.type); }).join("\n"),
               }, durs + (durs > 1 ? " blocages" : " blocage"))
             : el("span.rde.vert", {}, "Rien ne bloque"),
-          infs ? el("span.rde.attente", {}, infs + (infs > 1 ? " inférés" : " inféré")) : null),
+          infs ? el("span.rde.attente", {}, infs + " à confirmer") : null),
         jours !== null
           ? el("span.rd-ech" + (jours < 0 ? ".alerte" : jours < 15 ? ".attente" : ""), {},
               jours < 0 ? "Échéance dépassée de " + (-jours) + " j"
@@ -270,8 +270,7 @@ window.APP = (function () {
   }
 
   function moi() {
-    var p = DEPOT.liste("personnes").filter(function (x) { return x.poste === MAISON.titulaire; })[0];
-    return p ? p.nom : O.poste(MAISON.titulaire).nom;
+    return ACTEUR.nom();
   }
 
   function initiales(nom) {

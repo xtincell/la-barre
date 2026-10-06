@@ -59,7 +59,7 @@ window.VUE_MAISON = (function () {
       el("header.studio-entete.dc-tete", {},
         el("div", {},
           titre, texte)),
-      UI.modes(MODES, mode, function (cle) { mode = cle; rendre(hote); }, {
+      UI.modes(MODES, mode, function (cle) { location.hash = "#/referentiel/" + cle; }, {
         titre: "Modes des Ressources",
         compte: function (m) {
           if (m.cle === "doctrine") return 0;
@@ -162,6 +162,8 @@ window.VUE_MAISON = (function () {
 
   /* Le référentiel se remplit par l'usage ; ce qui manque se découvre tard. */
   function pireReferentiel(e) {
+    if (!DEPOT.liste("marches").length) return { t: "Aucun marché renseigné",
+      q: "Ajoutez le premier marché lorsque le périmètre d’un dossier le précise. Les contraintes restent à renseigner." };
     if (e.trous) {
       return { t: e.trous + (e.trous > 1 ? " entrées du référentiel manquent" : " entrée du référentiel manque"),
         q: "Le référentiel se remplit par l'usage — mais ce qui manque se découvre à "

@@ -714,7 +714,7 @@ window.REGLES = (function () {
     if (!rempli) { pousser(liste, p, type, quoi, poste, section); return; }
     if (window.INFERENCE && INFERENCE.est(p, section, champ)) {
       var b = pousser(liste, p, "infere-non-contresigne",
-        quoi.replace(/ non nommé$| : non nommé$| non fixées$/, "") + " — inféré, non contresigné",
+        quoi.replace(/ non nommé$| : non nommé$| non fixées$/, "") + " — " + INFERENCE.libelle(p, section, champ) + ", confirmation non consignée",
         poste, section, section + "." + champ);
       b.infere = { section: section, champ: champ, valeur: v };
     }

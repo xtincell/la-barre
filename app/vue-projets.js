@@ -1241,10 +1241,10 @@ window.VUE_PROJETS = (function () {
             + (vieux.jours > 0 ? ", depuis " + pl(vieux.jours, "jour", "jours") : "")
             + " : " + vieux.quoi + ". " + (vieux.prix || "")
           : "rien ne se livre tant qu'ils tiennent.")
-        + (infs ? " " + pl(infs, "champ tient", "champs tiennent") + " en plus sur une hypothèse." : ""));
+        + (infs ? " " + pl(infs, "champ reste", "champs restent") + " à confirmer." : ""));
     }
     if (infs) {
-      return ligne("attente", "◐", pl(infs, "champ inféré", "champs inférés"),
+      return ligne("attente", "◐", pl(infs, "champ à confirmer", "champs à confirmer"),
         "utilisables pour travailler, pas opposables au client : le jour où il conteste, rien ne tient.");
     }
     return ligne("vert", "✓", pl(n, "livrable", "livrables"), n
@@ -1487,10 +1487,10 @@ window.VUE_PROJETS = (function () {
 
   function corpsSection(p, cle, rafraichir) {
     var corps = corpsPropre(p, cle, rafraichir);
-    if (!VALIDATION.OBJETS[cle]) return corps;
     return el("div", {},
-      el("div", { style: { "margin-bottom": ".9rem" } },
-        VALIDATION.bande(p, cle, objetValidable(p, cle), rafraichir)),
+      INFERENCE.bande(p, rafraichir, cle),
+      VALIDATION.OBJETS[cle] ? el("div", { style: { "margin-bottom": ".9rem" } },
+        VALIDATION.bande(p, cle, objetValidable(p, cle), rafraichir)) : null,
       corps);
   }
 
@@ -1557,17 +1557,15 @@ window.VUE_PROJETS = (function () {
 
     return el("div.id", {},
       el("h3.id-t", {}, inferes.length
-        ? inferes.length + (inferes.length > 1 ? " champs tiennent sur une hypothèse" : " champ tient sur une hypothèse")
-          + ", " + recus.length + " sont reçus"
-        : recus.length + (recus.length > 1 ? " champs reçus" : " champ reçu")
-          + ", rien ne tient sur une hypothèse"),
-      el("p.id-s", {}, "Ce qui est reçu s'oppose au client. Ce qui est inféré fait "
-        + "travailler l'équipe et ne prouve rien — c'est le contreseing qui fait passer "
-        + "de la colonne de droite à celle de gauche."),
+        ? inferes.length + (inferes.length > 1 ? " champs restent à confirmer" : " champ reste à confirmer")
+          + ", " + recus.length + " sont renseignés"
+        : recus.length + (recus.length > 1 ? " champs renseignés" : " champ renseigné")
+          + ", aucune proposition en attente"),
+      el("p.id-s", {}, "Un champ renseigné permet de travailler. Seule une confirmation avec sa personne et sa référence permet de retrouver un accord. Les données anciennes sans cette trace restent à qualifier."),
 
       el("div.id-g", {},
         el("div.id-col", {},
-          el("div.idc-t", {}, "Reçu et opposable",
+          el("div.idc-t", {}, "Renseigné",
             el("span.studio-compte", {}, String(recus.length))),
           recus.length
             ? recus.map(function (x) {
@@ -1576,10 +1574,10 @@ window.VUE_PROJETS = (function () {
                   el("span.idl-n", {}, x.c.nom),
                   el("span.idl-v", {}, valeurLisible(x.c, x.v)));
               })
-            : el("p.rien", {}, "Rien n'est reçu. Tout ce dossier tient sur ce qu'on a supposé.")),
+            : el("p.rien", {}, "Aucune valeur renseignée hors des propositions à confirmer.")),
 
         el("div.id-col.infere", {},
-          el("div.idc-t", {}, "Inféré, non contresigné",
+          el("div.idc-t", {}, "À confirmer",
             el("span.studio-compte", {}, String(inferes.length))),
           inferes.length
             ? inferes.map(function (x) {
@@ -1591,19 +1589,18 @@ window.VUE_PROJETS = (function () {
                   el("span.idl-p", {}, INFERENCE.pourquoi(p, "identite", x.c.cle)),
                   el("div.idl-g", {},
                     el("button.studio-lien", { type: "button", onclick: function () {
-                      INFERENCE.contresigner(p, "identite", x.c.cle, pe ? pe.nom : null);
-                      DEPOT.enregistrer(); rafraichir();
-                    } }, "Contresigné →"),
+                      INFERENCE.confirmer(p, "identite", x.c.cle, rafraichir);
+                    } }, "Consigner une confirmation →"),
                     el("button.studio-lien.idl-faux", { type: "button", onclick: function () {
                       INFERENCE.rejeter(p, "identite", x.c.cle);
                       DEPOT.enregistrer(); rafraichir();
                     } }, "Faux, à ressaisir")));
               })
-            : el("p.rien", {}, "Aucune hypothèse. Tout ce qui est écrit ici a été reçu."))),
+            : el("p.rien", {}, "Aucune proposition en attente. Les confirmations consignées restent attachées à leurs valeurs."))),
 
       vides.length
         ? el("div.id-vides", {},
-            el("div.idc-t", {}, "Ni reçu ni supposé", el("span.studio-compte", {}, String(vides.length))),
+            el("div.idc-t", {}, "À renseigner", el("span.studio-compte", {}, String(vides.length))),
             vides.map(function (c) {
               return el("button.id-v", { type: "button", title: "renseigner — " + c.nom,
                 onclick: function () { editerChamp(p, "identite", c.cle, rafraichir); } },
@@ -1618,14 +1615,13 @@ window.VUE_PROJETS = (function () {
 
       /* La bande de contreseing : elle nomme qui doit signer, pas « le client ». */
       el("div.id-sign" + (inferes.length ? ".due" : ".ok"), {},
-        el("div.ids-t", {}, inferes.length ? "Contreseing dû" : "Rien n'attend de signature"),
+        el("div.ids-t", {}, inferes.length ? "Confirmations en attente" : "Aucune proposition en attente"),
         el("div.ids-c", {}, inferes.length
           ? el("p", {}, "Ces " + inferes.length + " champs doivent être confirmés par "
               + (pe ? pe.nom : "la " + clientele.nom)
               + ". Tant qu'ils ne le sont pas, aucune validation obtenue sur ce dossier "
               + "ne tiendra le jour où le client conteste.")
-          : el("p", {}, "Tout ce qui est écrit ici est reçu. Les validations obtenues "
-              + "sur ce dossier sont opposables.")),
+          : el("p", {}, "La présence d’une valeur ne prouve pas un accord. Les confirmations consignées sont consultables en ouvrant les champs concernés.")),
         el("div.ids-g", {},
           inferes.length
             ? el("button.b.or", { type: "button", onclick: function () {
@@ -1635,7 +1631,7 @@ window.VUE_PROJETS = (function () {
             : null,
           el("button.b", { type: "button", onclick: function () {
             editer(p, "identite", def, rafraichir); } },
-            def.poste === MAISON.titulaire ? "Compléter la section" : "Mettre en forme la section")))
+            "Compléter la section")))
     );
   }
 
@@ -1671,7 +1667,7 @@ window.VUE_PROJETS = (function () {
             type: "button", title: "modifier — " + c.nom,
             onclick: function () { editerChamp(p, "strategie", c.cle, rafraichir); } },
           el("div.ste-n", {}, c.nom,
-            infere ? el("span.ste-i", {}, "inféré") : null),
+            infere ? el("span.ste-i", {}, INFERENCE.libelle(p, "strategie", c.cle)) : null),
           rempli
             ? (Array.isArray(v)
                 ? el("ul.ste-l", {}, v.map(function (x) { return el("li", {}, x); }))
@@ -1685,7 +1681,7 @@ window.VUE_PROJETS = (function () {
       el("div.form-actions", {},
         el("button.b.or", { type: "button",
           onclick: function () { editer(p, "strategie", def, rafraichir); } },
-          def.poste === MAISON.titulaire ? "Compléter" : "Mettre en forme"))
+          "Compléter"))
     );
   }
 
@@ -1706,7 +1702,7 @@ window.VUE_PROJETS = (function () {
     if (!def) return el("p.rien", {}, "Section inconnue.");
     var donnees = p.sections[cle] || {};
     var e = CHAMPS.etat(cle, donnees);
-    var monPoste = def.poste === MAISON.titulaire;
+    var monPoste = ACTEUR.exerce(def.poste);
 
     return el("div.se-propre", {},
       el("div.section-titre.se-titre", {}, def.nom,
@@ -1717,8 +1713,6 @@ window.VUE_PROJETS = (function () {
         e.manquants.length + (e.manquants.length > 1 ? " champs manquants : " : " champ manquant : ")
         + e.manquants.map(function (c) { return c.nom; }).join(" · ")) : null,
 
-      INFERENCE.compte(p, cle) ? el("div.se-inference", {}, INFERENCE.bande(p, rafraichir, cle)) : null,
-
       /* Les champs dans une section blanche, comme partout ailleurs. */
       el("div.se-champs.se-champs-seul", {},
         FORM.lire(def.champs, donnees, { projet: p, section: cle,
@@ -1726,7 +1720,7 @@ window.VUE_PROJETS = (function () {
 
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () { editer(p, cle, def, rafraichir); } },
-          monPoste ? "Compléter" : "Mettre en forme"),
+          "Compléter"),
         !monPoste ? el("button.b", { type: "button", onclick: function () {
           RENVOI.ouvrir({ quoi: def.nom + " — " + p.ref, projet: p.ref, projetId: p.id, objet: cle });
         } }, "Renvoyer à " + O.poste(def.poste).court) : null
@@ -1752,56 +1746,58 @@ window.VUE_PROJETS = (function () {
     var c = def.champs.filter(function (x) { return x.cle === champCle; })[0];
     if (!c) return;
 
-    var monPoste = def.poste === MAISON.titulaire;
-    var f = FORM.rendre([c], p.sections[cle] || {}, { frontiere: !monPoste });
+    var monPoste = window.ACTEUR ? ACTEUR.exerce(c.poste || def.poste) : def.poste === MAISON.titulaire;
+    var f = FORM.rendre([c], p.sections[cle] || {}, { frontiere: true, poste: def.poste });
     var infere = INFERENCE.est(p, cle, champCle);
+    var confirme = INFERENCE.confirmation(p, cle, champCle);
 
     PANNEAU.ouvrir(c.nom, p.ref + "  ·  " + def.nom, el("div", {},
       !monPoste
         ? el("div.prix", {}, el("span.signe", {}, "⚠"),
             "Ce champ appartient à " + O.poste(def.poste).nom
-            + ". Vous rangez ce qui vous a été transmis ; le contreseing lui sera demandé.")
+            + ". Vous pouvez préparer une proposition. Sa confirmation reste un geste distinct.")
         : null,
       infere
         ? el("div.prix", {}, el("span.signe", {}, "◐"),
-            "Ce champ tient sur une inférence : « " + INFERENCE.pourquoi(p, cle, champCle)
-            + " » L'écrire à la main la remplace par une valeur reçue.")
+            "Confirmation en attente : « " + INFERENCE.pourquoi(p, cle, champCle)
+            + " » Votre correction sera conservée sans devenir un accord implicite.")
         : null,
       c.aide ? el("p.ch-aide", {}, c.aide) : null,
+      confirme ? el("p.indice", {}, "Confirmation consignée : " + confirme.qui + " · " + confirme.reference) : null,
       f.noeud,
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          var vals = f.valeurs();
-          if (!p.sections[cle]) p.sections[cle] = {};
-          p.sections[cle][champCle] = vals[champCle];
-          /* Écrire à la main sur un champ inféré, c'est le reprendre : il cesse
-           * d'être une hypothèse et redevient une valeur qu'on assume. */
-          if (infere) INFERENCE.rejeter(p, cle, champCle);
-          DEPOT.tracer("saisie", "projets", p.id, def.nom + " · " + c.nom);
-          DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
+          FORM.appliquer(f, function () { return p.sections[cle] || {}; }, function (changements) {
+            if (INFERENCE.corriger(p, cle, changements)) DEPOT.tracer("saisie", "projets", p.id, def.nom + " · " + c.nom);
+            DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
+          });
         } }, "Enregistrer"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
     ));
   }
 
   function editer(p, cle, def, rafraichir) {
-    var monPoste = def.poste === MAISON.titulaire;
-    var f = FORM.rendre(def.champs, p.sections[cle] || {}, { frontiere: !monPoste });
+    var monPoste = window.ACTEUR ? ACTEUR.exerce(def.poste) : def.poste === MAISON.titulaire;
+    var f = FORM.rendre(def.champs, p.sections[cle] || {}, { frontiere: true, poste: def.poste });
 
-    PANNEAU.ouvrir((monPoste ? "Compléter — " : "Mettre en forme — ") + def.nom, p.ref, el("div", {},
+    PANNEAU.ouvrir("Compléter — " + def.nom, p.ref, el("div", {},
       !monPoste ? el("div.prix", {}, el("span.signe", {}, "⚠"),
         "Cette section appartient à " + O.poste(def.poste).nom
-        + ". Vous rangez ce qui vous a été transmis ; vous n'écrivez pas à sa place. Le contreseing lui sera demandé.") : null,
+        + ". Vous pouvez préparer les champs ; leurs confirmations restent à consigner.") : null,
       f.noeud,
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          p.sections[cle] = f.valeurs();
-          DEPOT.tracer("saisie", "projets", p.id, def.nom);
-          DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
+          FORM.appliquer(f, function () { return p.sections[cle] || {}; }, function (changements) {
+            if (INFERENCE.corriger(p, cle, changements)) DEPOT.tracer("saisie", "projets", p.id, def.nom);
+            DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
+          });
         } }, "Enregistrer"),
         !monPoste ? el("button.b", { type: "button", onclick: function () {
-          p.sections[cle] = f.valeurs(); DEPOT.enregistrer(); PANNEAU.fermer();
-          RENVOI.ouvrir({ quoi: def.nom + " mis en forme — demande de go final", projet: p.ref, projetId: p.id, objet: cle });
+          FORM.appliquer(f, function () { return p.sections[cle] || {}; }, function (changements) {
+            if (INFERENCE.corriger(p, cle, changements)) DEPOT.tracer("saisie", "projets", p.id, def.nom);
+            DEPOT.enregistrer(); PANNEAU.fermer();
+            RENVOI.ouvrir({ quoi: def.nom + " — demande de confirmation", projet: p.ref, projetId: p.id, objet: cle });
+          });
         } }, "Enregistrer et demander le go final") : null,
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler")
       )

@@ -128,6 +128,7 @@ window.VUE_REGLAGES = (function () {
     hote.appendChild(el("div.groupe", {},
       el("div.section-titre", {}, "Le poste de travail"),
       el("div.reglages", {},
+        choixActeur(),
         el("div.reglage", {},
           el("h4", {}, "Le jeu d'exemple"),
           el("p", {}, AMORCE.present()
@@ -166,6 +167,20 @@ window.VUE_REGLAGES = (function () {
             + (l.detail || l.id || "")));
       }))
     ));
+  }
+
+  function choixActeur() {
+    var p = ACTEUR.personne();
+    var choix = el("select", { "aria-label": "Personne qui travaille ici", onchange: function () {
+      if (!ACTEUR.choisir(choix.value)) { AVIS.refus("Le choix n’a pas pu être conservé dans cet onglet."); return; }
+      if (window.APP) APP.rendre();
+    } }, el("option", { value: "" }, "Poste " + O.poste(MAISON.titulaire).court + " — personne non précisée"));
+    DEPOT.liste("personnes").filter(function (x) { return !x.archive; }).forEach(function (x) {
+      choix.appendChild(el("option", { value: x.id, selected: p && p.id === x.id ? true : null }, x.nom));
+    });
+    return el("div.reglage", {}, el("h4", {}, "Qui travaille ici"),
+      el("p", {}, "Les gestes sont attribués à cette personne dans cet onglet. Ses postes cumulés sont pris en compte."),
+      choix, el("p.indice", {}, "Postes : " + ACTEUR.postes().map(function (x) { return O.poste(x).court; }).join(" · ")));
   }
 
   function importer(hote) {
@@ -208,7 +223,8 @@ window.VUE_REGLAGES = (function () {
   }
 
   function equipe(hote) {
-    var corps = el("div", {}, DEPOT.liste("personnes").map(function (p) {
+    var corps = el("div", {}, el("button.b.or", { type: "button", onclick: function () { editerPersonne(null, hote); } }, "Ajouter une personne"),
+      DEPOT.liste("personnes").map(function (p) {
       var charge = 100 + (p.casquettes || []).reduce(function (s, c) { return s + (c.part || 0); }, 0);
       return el("div.attente-l", { style: { "--dir": O.poste(p.poste).couleur } },
         el("div.tete", {},
@@ -222,10 +238,35 @@ window.VUE_REGLAGES = (function () {
             }).join(" · ") + " → contrôle chez " + O.poste(controleur(p)).nom)
           : null,
         ETAT.ligne(ETAT.cumul(p), "critere-etat"),
-        el("div.critere", {}, "séniorité : " + (p.seniorite || "non renseignée"))
+        el("div.critere", {}, "séniorité : " + (p.seniorite || "non renseignée")),
+        el("button.b", { type: "button", onclick: function () { editerPersonne(p, hote); } }, "Modifier les postes de " + p.nom)
       );
     }));
     PANNEAU.ouvrir("L'équipe", DEPOT.liste("personnes").length + " personnes", corps);
+  }
+
+  function editerPersonne(p, hote) {
+    var postes = MAISON.postes.map(function (x) { return { cle: x.cle, nom: x.nom }; });
+    var f = FORM.rendre([
+      { cle: "nom", nom: "Nom", type: "texte", requis: true },
+      { cle: "poste", nom: "Poste principal", type: "choix", options: postes, requis: true },
+      { cle: "cumuls", nom: "Autres postes exercés", type: "objets",
+        source: function () { return MAISON.postes.map(function (x) { return { id: x.cle, nom: x.nom }; }); } },
+    ], { nom: p ? p.nom : "", poste: p ? p.poste : "", cumuls: p ? (p.casquettes || []).map(function (c) { return c.poste; }) : [] });
+    PANNEAU.sur(p ? "Modifier les postes" : "Ajouter une personne", "Équipe", el("div", {},
+      f.noeud, el("p.indice", {}, "Le cumul décrit le travail exercé. Il ne consigne aucun accord client et ne modifie pas les accès serveur."),
+      el("div.form-actions", {}, el("button.b.or", { type: "button", onclick: function () {
+        var v = f.valeurs();
+        if (!String(v.nom || "").trim() || !v.poste) { AVIS.refus("Le nom et le poste principal sont nécessaires."); return; }
+        var avant = p ? (p.casquettes || []) : [];
+        var valeurs = { nom: v.nom.trim(), poste: v.poste, casquettes: (v.cumuls || []).filter(function (c) {
+          return c !== v.poste;
+        }).map(function (c) { return avant.filter(function (x) { return x.poste === c; })[0] || { poste: c, part: null, revue_le: null }; }) };
+        if (p) Object.assign(p, valeurs); else p = DEPOT.ajoute("personnes", valeurs);
+        DEPOT.tracer("postes renseignés", "personnes", p.id, valeurs.nom);
+        DEPOT.enregistrer(); PANNEAU.fermerSur(); equipe(hote);
+      } }, "Enregistrer les postes"),
+      el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Annuler"))));
   }
 
   /* Règle 2 : le contrôle remonte d'un cran. */
