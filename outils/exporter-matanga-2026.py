@@ -1,0 +1,512 @@
+# exporter-matanga-2026.py — le travail fait pour Matanga, rangé par marque puis par campagne, prêt à exporter.
+#
+# Demande d'Alex (06/10/2026) : « fais du neuf, je veux faciliter l'exportation du travail de Matanga » —
+# les fichiers DÉPLACÉS (pas copiés) dans une arborescence neuve :
+#
+#   MATANGA — EXPORT DU TRAVAIL/
+#     LISEZ-MOI.md · INDEX.md · _MANIFESTE-DEPLACEMENTS.csv · _ANNULER-LES-DEPLACEMENTS.command
+#     <Groupe>/                           FrieslandCampina, Cadyst Group, NSIA, Ecobank…
+#       GROUPE.md
+#       <Marque>/[<Sous-marque>/]         La Pasta/Gold — l'architecture de marque de LA BARRE
+#         MARQUE.md                       la plateforme de marque, telle que LA BARRE la tient
+#         Campagnes ponctuelles/<AAAA> — <campagne>/   CAMPAGNE.md, un PROJET-<réf>.md par projet, les fichiers
+#         Le long de l'année/<AAAA>/                   le fil de l'année : même contenu
+#         _Identité de marque/  _Packaging & étiquettes/   ce qui n'appartient à aucune année
+#     _Autres comptes/<porteur>/…         les comptes sans marque au dépôt
+#
+# Sources déplacées : « Work 2026/01 MARQUES CLIENTS » (les comptes gérés par Matanga) et, dans Téléchargements,
+# les dossiers reçus des projets Matanga que LA BARRE cite. Ne bougent pas : 00 Matanga Agency (l'agence elle-même),
+# les ventures et clients UPgraders / Friends Studio, Beignet Paradise, les copies (_TOUS LES KV, _MASTERS DE CAMPAGNE,
+# le corpus « DOSSIER PROJETS — XTINCELL »).
+#
+# Rangement d'un fichier : sa marque (le dossier marque du disque), son occasion (le dossier d'opération, ou un mot
+# du chemin : ramadan, noël, back to school…) et sa date (mtime) donnent la campagne LA BARRE de cette marque, cette
+# occasion, cette année. Sans campagne au dépôt, le fichier va au fil de l'année de sa date, et le .md le dit :
+# « pas au dépôt » ne veut pas dire « pas fait ».
+#
+# Usage :
+#   python3 outils/exporter-matanga-2026.py plan     <depot.json> <plan.csv> <rapport.md>   # rien ne bouge
+#   python3 outils/exporter-matanga-2026.py executer <depot.json> <plan.csv>                # déplace, écrit les .md
+#   python3 outils/exporter-matanga-2026.py chemins  <depot.json> <depot-sortie.json>       # réécrit les chemins du dépôt
+
+import json, sys, os, re, csv, datetime, unicodedata, shutil, collections
+
+HOME = os.path.expanduser("~")
+DL = os.path.join(HOME, "Downloads")
+WORK = os.path.join(DL, "Work 2026")
+SRC_MARQUES = os.path.join(WORK, "01 MARQUES CLIENTS")
+RACINE = os.path.join(DL, "MATANGA — EXPORT DU TRAVAIL")
+APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MANIF = os.path.join(RACINE, "_MANIFESTE-DEPLACEMENTS.csv")
+
+MODE = sys.argv[1]
+d = json.load(open(sys.argv[2]))
+M = {m["id"]: m for m in d["marques"]}
+C = {c["id"]: c for c in d["clients"]}
+CAMP = {c["id"]: c for c in d["campagnes"]}
+P = [p for p in d["projets"] if not p.get("fusionne")]
+
+def norme(t): return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9&]+", " ", unicodedata.normalize("NFD", t or "").encode("ascii", "ignore").decode().lower())).strip()
+def propre(t): return re.sub(r'[/:\\]+', "-", t).strip().rstrip(".")
+
+# ————————————————— Le périmètre : les projets Matanga —————————————————
+EXCLUS_MARQUES = {"MQ-bp"}   # Beignet Paradise : une marque propre d'Alex, pas un compte de l'agence
+def de_matanga(p):
+    i = (p.get("sections") or {}).get("identite") or {}
+    return (p.get("structure") or "matanga") == "matanga" and not (set(i.get("marqueIds") or []) & EXCLUS_MARQUES)
+PM = [p for p in P if de_matanga(p)]
+PAR_CAMP = collections.defaultdict(list)
+for p in PM:
+    if p.get("campagneId") in CAMP: PAR_CAMP[p["campagneId"]].append(p)
+CM = {cid: CAMP[cid] for cid in PAR_CAMP}
+
+def an_de(c):
+    a = re.findall(r"20[12]\d", c["nom"])
+    if a: return a[-1]
+    f = c.get("fenetre") or {}
+    return (f.get("debut") or f.get("fin") or c.get("cree_le") or "2026")[:4]
+
+# ————————————————— L'architecture : groupe / marque / sous-marque —————————————————
+GROUPES = {"FrieslandCampina WAMEA": "FrieslandCampina", "Panzani Cameroun": "Cadyst Group", "NSIA Assurances": "NSIA",
+           "TRADEX SA": "Tradex", "Danone / IDA X Brands": "Phosphatine", "Sofavin / Cap Esterias": "Cap Esterias",
+           "AFISA Food Industry SA": "Mamy Makala", "Delifood Agro Industry": "Delifood", "Bel": "Bel"}
+def groupe_de(mid):
+    m = M[mid]
+    cn = (C.get(m.get("clientId")) or {}).get("nom") or m["nom"]
+    return GROUPES.get(cn, cn)
+def chemin_marque(mid):
+    m = M[mid]; g = groupe_de(mid)
+    chaine = []; x = m
+    while x and x["id"] not in [c["id"] for c in chaine]:
+        chaine.insert(0, x); x = M.get(x.get("mere"))
+    noms = [propre(y["nom"]) for y in chaine]
+    if noms and noms[0] == propre(g): noms = noms[1:]
+    return os.path.join(propre(g), *noms) if noms else propre(g)
+
+def porteur(c):
+    b = c["nom"].split(" — ")
+    return b[0] if len(b) > 1 else c["nom"]
+def chemin_campagne(c):
+    mq = (c.get("marqueIds") or [None])[0]
+    base = chemin_marque(mq) if mq in M else os.path.join("_Autres comptes", propre(porteur(c)))
+    an = an_de(c)
+    if c.get("regime") == "always-on":
+        return os.path.join(base, "Le long de l'année", an)
+    titre = c["nom"].split(" — ", 1)[1] if " — " in c["nom"] else c["nom"]
+    titre = re.sub(r"\s*20[12]\d\s*$", "", re.sub(r" · (UPgraders|Friends Studio)$", "", titre)).strip() or c["nom"]
+    return os.path.join(base, "Campagnes ponctuelles", propre(an + " — " + titre))
+
+# ————————————————— Les dossiers marque du disque —————————————————
+DISQUE = {  # dossier relatif à 01 MARQUES CLIENTS → (marque LA BARRE, ou chemin d'export si la marque n'est pas au dépôt)
+  "BAMS & BTP": (None, "_Autres comptes/BAMS & BTP"), "Cap Esterias": ("MQ-capesterias", None),
+  "Cimencam": (None, "_Autres comptes/Cimencam, Port de Kribi, LTA"), "LTA": (None, "_Autres comptes/Cimencam, Port de Kribi, LTA"),
+  "Ecobank": ("MQ-eco", None), "Frutas": ("MQ-frutas", None), "La Vache qui rit (Bel)": ("MQ-lvqr", None),
+  "PRESYNAT": ("MQ-presynat", None), "Phosphatine": ("MQ-phosphatine", None), "Port Autonome de Kribi": ("MQ-pak", None),
+  "Tradex": ("MQ-tradex", None),
+  "Cadyst Group/Amigo": ("MQ-amigo", None), "Cadyst Group/Cadyst Farming": ("MQ-cfarming", None),
+  "Cadyst Group/Cadyst Grain": ("MQ-cgrain", None), "Cadyst Group/Delys & Barka": ("MQ-pz-delys", None),
+  "Cadyst Group/La Pasta": ("MQ-lapasta", None), "Cadyst Group/Panzani": ("MQ-panzani", None),
+  "Cadyst Group/Robuste": (None, "Cadyst Group/Robuste"), "Cadyst Group/_Groupe (multi-marques)": ("MQ-cgroup", None),
+  "FrieslandCampina/Belle Hollandaise": ("MQ-bh", None), "FrieslandCampina/Bonnet Rouge": ("MQ-br", None),
+  "FrieslandCampina/Milk Bar": (None, "FrieslandCampina/Milk Bar"), "FrieslandCampina/Omela": ("MQ-omela", None),
+  "FrieslandCampina/Peak": ("MQ-peak", None), "FrieslandCampina/Rainbow": ("MQ-rainbow", None),
+  "FrieslandCampina/_Groupe (multi-marques)": ("MQ-fc", None),
+  "NSIA/NSIA Auto": ("MQ-nsia-auto", None), "NSIA/NSIA Tontines": ("MQ-nsia-tontines", None),
+  "NSIA/NSIA Voyages": ("MQ-nsia-voyages", None), "NSIA/NSIA-BGFI": (None, "NSIA/NSIA-BGFI"),
+  "NSIA/_Groupe (multi-marques)": ("MQ-nsia", None),
+}
+OCC_DOSSIER = {"hors temps fort": "continu", "ramadan": "ramadan", "lancement & nouveau look": "lancement",
+  "back to school": "rentree", "noel & fin d annee": "noel", "seminaire cadyst 2025": "evenement",
+  "cowlab evenement marketing": "evenement", "institutionnel & communiques": "institutionnel", "jeux & activations": "jeu",
+  "atelier de cuisine jeu concours": "jeu", "promotions": "promo", "paques & careme": "paques",
+  "fete des meres & des peres": "fete", "journee mondiale du lait": "fete", "can & football": "evenement",
+  "saison des pluies": "continu", "casting & shooting talents aout 2025": "continu", "poster congo & rdc": "continu",
+  "tontines ooh 4x3": "continu", "campagne bat fr & en": "continu", "bien dans son corps bien dans sa tete": None}
+OCC_MOTS = [("noel", r"\bnoel\b|fin d annee|\beoy\b|end of year|christmas"), ("ramadan", r"ramadan|\baid\b|iftar"),
+            ("paques", r"paques|careme|easter"), ("rentree", r"back to school|\bbts\b|rentree|cahier"),
+            ("fete", r"fete des meres|fete des peres|journee mondiale|mother s day|father s day"),
+            ("promo", r"\bpromo|destockage|black friday"), ("jeu", r"jeu concours|activation|tombola")]
+TYPES = {"02 BRANDING & IDENTITÉ": "_Identité de marque", "05 PACKAGING & ÉTIQUETTES": "_Packaging & étiquettes"}
+TYPES_ANNEE = {"03 DIGITAL & SOCIAL": "Digital & social", "04 VIDÉO & SPOTS": "Vidéo & spots",
+               "06 BRIEFS & STRATÉGIE": "Briefs & stratégie", "07 MASTERS & DÉCLINAISONS": "Masters & déclinaisons"}
+
+def campagnes_de_marque(mid, chemin_virtuel):
+    if mid: return [c for c in CM.values() if mid in (c.get("marqueIds") or [])]
+    cle = os.path.basename(chemin_virtuel)
+    return [c for c in CM.values() if not c.get("marqueIds") and propre(porteur(c)) == cle]
+
+FIN_OCC = {"ramadan": {2024: "04-09", 2025: "03-30", 2026: "03-19", 2027: "03-09"},
+           "paques": {2024: "03-31", 2025: "04-21", 2026: "04-06", 2027: "03-29"}, "rentree": "10-15"}
+def annee_fichier(ts, occ, chemin=""):
+    """L'année de la campagne qu'un fichier sert : celle que son nom écrit, sinon sa date — et un fichier préparé
+    après le temps fort d'une année sert celui de l'année suivante (Ramadan 2026 se prépare en décembre 2025)."""
+    ans = re.findall(r"(?<!\d)(20[12]\d)(?!\d)", chemin)
+    if ans: return ans[-1]
+    t = datetime.datetime.fromtimestamp(ts)
+    if occ == "noel": return str(t.year - 1) if t.month <= 2 else str(t.year)
+    fin = FIN_OCC.get(occ)
+    if fin:
+        md = fin if isinstance(fin, str) else fin.get(t.year)
+        # Un mois de grâce : les reprises et l'Aïd suivent la fin du temps fort.
+        if md and t > datetime.datetime.strptime(f"{t.year}-{md}", "%Y-%m-%d") + datetime.timedelta(days=30): return str(t.year + 1)
+    return str(t.year)
+
+def choisir(cands, occ, an):
+    xs = [c for c in cands if (c.get("occasion") or "continu") == occ and an_de(c) == an]
+    return xs[0] if xs else None
+
+def projet_par_nom(mid, nom):
+    """Un dossier d'opération nommé (« Bien dans son corps… », « COWLAB ») qui nomme un projet de la marque."""
+    generiques = set(norme(" ".join([M[mid]["nom"], groupe_de(mid)] if mid else [])).split()) | {"campagne", "evenement", "marketing", "group", "groupe"}
+    mots = [w for w in norme(nom).split() if len(w) >= 5 and w not in generiques and not w.isdigit()]
+    if not mots: return None
+    for p in PM:
+        i = (p.get("sections") or {}).get("identite") or {}
+        if mid and mid not in (i.get("marqueIds") or []) and not (mid == "MQ-cgroup" and i.get("clientId") == "C-cadyst"): continue
+        n = norme(p["nom"])
+        if sum(w in n for w in mots) >= max(1, (len(mots) + 1) // 2): return p
+    return None
+
+def dest_base_marque(mid, virt): return chemin_marque(mid) if mid else virt
+
+def planifier():
+    lignes = []
+    for rel_marque, (mid, virt) in sorted(DISQUE.items()):
+        src_m = os.path.join(SRC_MARQUES, rel_marque)
+        if not os.path.isdir(src_m): continue
+        autres = [k for k in DISQUE if k.startswith(rel_marque + "/")]
+        cands = campagnes_de_marque(mid, virt)
+        base = dest_base_marque(mid, virt)
+        for dp, dn, fn in os.walk(src_m):
+            relp = os.path.relpath(dp, src_m)
+            if any(dp == os.path.join(SRC_MARQUES, a) or dp.startswith(os.path.join(SRC_MARQUES, a) + os.sep) for a in autres):
+                continue
+            parts = [] if relp == "." else relp.split(os.sep)
+            for f in fn:
+                if f.startswith(".") or f == "Icon\r": continue
+                src = os.path.join(dp, f); st = os.stat(src)
+                typ = re.sub(r" \(\d+\)$", "", parts[0]) if parts else ""
+                reste = parts[1:] if parts else []
+                camp, motif, sous = None, "", []
+                if typ in TYPES:
+                    dest = os.path.join(base, TYPES[typ], *reste, f); motif = "hors année : " + TYPES[typ]
+                    lignes.append({"source": src, "destination": os.path.join(RACINE, dest), "campagne": "", "motif": motif, "taille": st.st_size}); continue
+                if typ == "01 CAMPAGNES" and reste:
+                    op = reste[0]; nop = norme(op); occ = OCC_DOSSIER.get(nop, "inconnu")
+                    pr = projet_par_nom(mid, op) if occ in (None, "inconnu", "evenement") else None
+                    if pr and pr.get("campagneId") in CM:
+                        camp = CM[pr["campagneId"]]; motif = "le dossier « " + op + " » nomme " + pr["ref"]; sous = reste
+                    else:
+                        occ = occ if occ not in (None, "inconnu") else "continu"
+                        an = annee_fichier(st.st_mtime, occ, " ".join(reste + [f]))
+                        camp = choisir(cands, occ, an)
+                        sous = (reste if occ == "continu" and nop != "hors temps fort" else reste[1:])
+                        motif = ("occasion « " + op + " », " + an) if camp else ("« " + op + " » " + an + " : pas de campagne au dépôt")
+                        if not camp and occ != "continu":
+                            dest = os.path.join(base, "Campagnes ponctuelles", propre(an + " — " + op), *reste[1:], f)
+                            lignes.append({"source": src, "destination": os.path.join(RACINE, dest), "campagne": "", "motif": motif + " → campagne pas au dépôt", "taille": st.st_size}); continue
+                else:
+                    chem = norme(" ".join(parts + [f])); occ = "continu"
+                    for k, pat in OCC_MOTS:
+                        if re.search(pat, chem): occ = k; break
+                    an = annee_fichier(st.st_mtime, occ, " ".join(parts + [f]))
+                    camp = choisir(cands, occ, an) if occ != "continu" else None
+                    lib = TYPES_ANNEE.get(typ, typ) if typ else ""
+                    sous = ([lib] if lib else []) + reste
+                    if occ != "continu" and camp: motif = "le chemin dit « " + occ + " », " + an
+                    else:
+                        camp = choisir(cands, "continu", an); motif = (lib or "racine de la marque") + ", " + an
+                if camp:
+                    dest = os.path.join(chemin_campagne(camp), *sous, f)
+                    lignes.append({"source": src, "destination": os.path.join(RACINE, dest), "campagne": camp["id"], "motif": motif, "taille": st.st_size})
+                else:
+                    an = annee_fichier(st.st_mtime, "continu")
+                    dest = os.path.join(base, "Le long de l'année", an, *sous, f)
+                    lignes.append({"source": src, "destination": os.path.join(RACINE, dest), "campagne": "", "motif": motif + " → fil de l'année pas au dépôt", "taille": st.st_size})
+    # Les dossiers reçus des projets Matanga, cités par LA BARRE, restés à la racine de Téléchargements.
+    RECUS = [("PRJ-PAK-2026", ["DIGITAL PAK 2026 by MATANGA.pdf", "RETROPLANNING PAK.pdf", "RSE STRAT.pdf"]),
+             ("PRJ-LPG-SPOT", ["CHRONOGRAMME LA PASTA GOLD( DEFNITIF.xlsx", "FACURE PROFORMA SPOT LA PASTA.pdf",
+                               "La Pasta Gold Proposition Celebrites OK.pdf", "LA PASTA GOLD STORYBOARD OK.pdf",
+                               "MOTION BRIEF LA PASTA GOLD.pdf", "TENUES SPOT LA PASTA.PDF"]),
+             ("PRJ-STL-CM", ["LVQR Campagne Not Laughing cow"])]
+    PI = {p["id"]: p for p in PM}
+    for pid, noms in RECUS:
+        p = PI.get(pid)
+        if not p or p.get("campagneId") not in CM: continue
+        for n in noms:
+            src = os.path.join(DL, n)
+            if not os.path.exists(src): continue
+            base = os.path.join(RACINE, chemin_campagne(CM[p["campagneId"]]), "_Documents reçus")
+            if os.path.isdir(src):
+                for dp, dn, fn in os.walk(src):
+                    for f in fn:
+                        if f.startswith("."): continue
+                        s = os.path.join(dp, f)
+                        lignes.append({"source": s, "destination": os.path.join(base, n, os.path.relpath(s, src)), "campagne": p["campagneId"],
+                                       "motif": "dossier reçu de " + p["ref"], "taille": os.path.getsize(s)})
+            else:
+                lignes.append({"source": src, "destination": os.path.join(base, n), "campagne": p["campagneId"],
+                               "motif": "document reçu de " + p["ref"], "taille": os.path.getsize(src)})
+    # Deux sources ne peuvent pas viser la même destination.
+    vus = set()
+    for l in lignes:
+        dst = l["destination"]; b, e = os.path.splitext(dst); k = 2
+        while dst in vus or (os.path.exists(dst) and dst != l["source"]):
+            dst = f"{b} ({k}){e}"; k += 1
+        vus.add(dst); l["destination"] = dst
+    return lignes
+
+# ————————————————— Les .md —————————————————
+def libelles(fichier):
+    t = open(os.path.join(APP, "app", fichier)).read()
+    return dict(re.findall(r'cle: "([a-z_A-Z]+)", (?:pilier: "[ADVE]", code: "[^"]*", )?nom: "([^"]+)",\s*type:', t))
+LAB = libelles("modele-champs.js"); LABV = libelles("vault.js")
+LAB.update({"client": "Client", "marque": "Marque", "marches": "Marchés", "budgetNote": "Budget", "decideur": "Décideur final",
+            "fenetre": "Fenêtre", "statut": "Statut"})
+MARCHES = {m["id"]: m["nom"] for m in d.get("marches", [])}
+SECTIONS = [("identite", "Identité"), ("brief", "Brief"), ("briefback", "Brief-back"), ("socle", "Socle de marque"),
+            ("strategie", "Stratégie"), ("bigidea", "Big idea")]
+CACHES = {"clientId", "marqueIds", "decideurId", "moodboard", "porteur", "source", "budget"}
+
+def val(v):
+    if isinstance(v, str) and v in MARCHES: return MARCHES[v]
+    if v is None or v == "" or v == [] or v == {}: return None
+    if isinstance(v, list):
+        xs = [val(x) for x in v]; xs = [x for x in xs if x]
+        if len(xs) == 1: return xs[0]
+        return "\n".join("- " + x.replace("\n", " ") for x in xs) if xs else None
+    if isinstance(v, dict): return "; ".join(f"{k} : {val(x)}" for k, x in v.items() if val(x))
+    return str(v)
+
+def bloc(titre, items, infs=None, prefixe=""):
+    out = []
+    for k, v in items:
+        t = val(v)
+        if not t: continue
+        lab = LAB.get(k) or LABV.get(k) or k.replace("_", " ").capitalize()
+        inf = " *(inféré)*" if infs and (prefixe + k) in infs else ""
+        out.append(f"**{lab}**{inf}\n{t}\n" if "\n" in t else f"**{lab}**{inf} — {t}\n")
+    return (f"## {titre}\n\n" + "\n".join(out)) if out else ""
+
+def md_projet(p):
+    i = p["sections"].get("identite") or {}
+    infs = p.get("inferences") or {}
+    L = [f"# {p['ref']} — {p['nom']}\n", f"Structure : **{(p.get('structure') or 'matanga').capitalize()}** · statut : {p.get('statut') or '—'} · "
+         f"nature : {p.get('nature') or p.get('gabarit') or '—'} · ouvert le {str(p.get('cree_le') or '')[:10]}\n",
+         "> Fiche tirée de LA BARRE le " + datetime.date.today().isoformat() + ". *(inféré)* : raisonné à partir des documents, "
+         "pas encore contresigné — utilisable, pas opposable.\n"]
+    for cle, titre in SECTIONS:
+        s = p["sections"].get(cle) or {}
+        if isinstance(s, dict):
+            L.append(bloc(titre, [(k, v) for k, v in s.items() if k not in CACHES], infs, cle + "."))
+    pis = p["sections"].get("pistes") or []
+    if pis:
+        L.append("## Pistes\n")
+        for pi in pis:
+            L.append(f"### {pi.get('titre') or 'Sans titre'} — {pi.get('statut') or ''}\n")
+            L.append(bloc("", [(k, pi.get(k)) for k in ("concept", "mecanique", "accroches", "visuel", "executionCle", "argument", "sacrifice", "privilegie")]).replace("## \n\n", ""))
+    if p.get("insights"):
+        L.append("## Insights\n\n" + "\n".join(f"- *{x.get('couche') or '?'}* — {((x.get('passes') or {}).get('phrase')) or ''}" for x in p["insights"]) + "\n")
+    if p.get("territoires"):
+        L.append("## Territoires\n\n" + "\n".join(f"- **{t.get('nom')}** — {t.get('quoi') or ''}" for t in p["territoires"]) + "\n")
+    ls = [l for l in p.get("livrables") or [] if not l.get("annule")]
+    if ls:
+        sup = {s["id"]: s["nom"] for s in d.get("supports", [])}
+        L.append(f"## Livrables ({len(ls)})\n\n| Livrable | Support | Échéance | Niveau |\n|---|---|---|---|\n" +
+                 "\n".join(f"| {l['nom'].replace('|', '/')} | {sup.get(l.get('support'), l.get('support') or '')} | {l.get('echeance') or ''} | {l.get('niveau') or ''} |" for l in ls) + "\n")
+    if p.get("documentsRecus"):
+        L.append("## Documents reçus\n\n" + "\n".join(f"- **{x.get('nom')}** ({x.get('type') or ''}{', ' + x['date'] if x.get('date') else ''}) — {x.get('tire') or ''}" for x in p["documentsRecus"]) + "\n")
+    fs = [f for f in d.get("factures", []) if f["id"] in (p.get("factures") or [])]
+    if fs:
+        L.append("## Pièces de facturation\n\n" + "\n".join(f"- {f.get('type')} {f.get('numero') or ''} du {f.get('date') or '?'} — {f.get('objet') or f.get('client') or ''}" for f in fs) + "\n\n*Les montants restent dans les fichiers.*\n")
+    prep = p.get("preparation") or {}
+    if prep:
+        L.append(bloc("Préparation de la séance", [(k, v) for k, v in prep.items() if k != "infere"]))
+    return "\n".join(x for x in L if x)
+
+def md_campagne(c, fichiers):
+    ps = sorted(PAR_CAMP.get(c["id"], []), key=lambda p: p["ref"])
+    f = c.get("fenetre") or {}
+    L = [f"# {c['nom']}\n", f"{'Le fil de l’année' if c.get('regime') == 'always-on' else 'Campagne ponctuelle'} · occasion : {c.get('occasion') or '—'} · "
+         f"fenêtre : {f.get('debut') or '?'} → {f.get('fin') or '?'}\n"]
+    if c.get("infere"): L.append(f"> Pourquoi elle existe : {c['infere'].get('pourquoi')}\n")
+    L.append(f"## Projets ({len(ps)})\n\n" + "\n".join(f"- [{p['ref']} — {p['nom']}](PROJET-{p['ref']}.md) · {len([l for l in p.get('livrables') or [] if not l.get('annule')])} livrables" for p in ps) + "\n")
+    if c.get("couverture", {}).get("vignette"): L.append("![Couverture](_couverture" + os.path.splitext(c["couverture"]["vignette"])[1] + ")\n")
+    L.append(md_fichiers(fichiers))
+    return "\n".join(L)
+
+def md_fichiers(fichiers):
+    if not fichiers: return "## Fichiers\n\nAucun fichier de travail retrouvé sur le disque pour ce dossier.\n"
+    tot = sum(f["taille"] for f in fichiers)
+    par = collections.Counter(os.path.dirname(f["rel"]) or "." for f in fichiers)
+    return (f"## Fichiers ({len(fichiers)}, {tot / 1e6:.0f} Mo)\n\n" + "\n".join(f"- `{k}` — {v}" for k, v in sorted(par.items())) + "\n")
+
+def md_marque(mid, campagnes):
+    m = M[mid]; v = m.get("vault") or {}; infs = v.get("inferences") or {}
+    L = [f"# {m['nom']}\n", f"Groupe : {groupe_de(mid)}" + (f" · marque mère : {M[m['mere']]['nom']}" if m.get("mere") in M else "") + "\n"]
+    if m.get("couleurs"): L.append("Couleurs : " + ", ".join(f"`{c['hex']}` {c.get('nom', '')}" for c in m["couleurs"] if isinstance(c, dict)) + "\n")
+    L.append("## Plateforme de marque\n\n> Telle que LA BARRE la tient. *(inféré)* : à contresigner avec le client.\n")
+    for k, lab in LABV.items():
+        t = val(v.get(k))
+        if t: L.append(f"**{lab}**{' *(inféré)*' if k in infs else ''}\n{t}\n" if "\n" in t else f"**{lab}**{' *(inféré)*' if k in infs else ''} — {t}\n")
+    L.append("## Campagnes\n\n" + "\n".join(f"- {c}" for c in campagnes) + "\n")
+    return "\n".join(L)
+
+def ecrire(chemin, texte):
+    os.makedirs(os.path.dirname(chemin), exist_ok=True)
+    open(chemin, "w", encoding="utf-8").write(texte)
+
+# ————————————————— Les modes —————————————————
+if MODE == "plan":
+    lignes = planifier()
+    with open(sys.argv[3], "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=["source", "destination", "campagne", "motif", "taille"]); w.writeheader(); w.writerows(lignes)
+    parc = collections.Counter(l["campagne"] or "(pas au dépôt) " + os.path.relpath(os.path.dirname(l["destination"]), RACINE).split("/Le long")[0].split("/Campagnes")[0] for l in lignes)
+    motifs = collections.Counter(re.sub(r"\d{4}", "AAAA", l["motif"]) for l in lignes)
+    tot = sum(l["taille"] for l in lignes)
+    R = [f"# Plan de rangement — passe à blanc ({datetime.date.today()})\n", f"{len(lignes)} fichiers, {tot / 1e9:.1f} Go, vers `{RACINE}`.\n",
+         f"Campagnes Matanga au dépôt : {len(CM)} ; projets : {len(PM)}.\n", "## Par campagne\n"]
+    R += [f"- {CM[k]['nom'] if k in CM else k} — {v}" for k, v in parc.most_common()]
+    R += ["\n## Par règle\n"] + [f"- {k} — {v}" for k, v in motifs.most_common(60)]
+    pris = {l["source"] for l in lignes}
+    oublies = [os.path.relpath(os.path.join(dp, f), SRC_MARQUES) for dp, dn, fn in os.walk(SRC_MARQUES) for f in fn
+               if not f.startswith(".") and f != "Icon\r" and os.path.join(dp, f) not in pris]
+    R += ["\n## Restés hors du plan (" + str(len(oublies)) + ")\n"] + ["- " + x for x in oublies[:200]]
+    open(sys.argv[4], "w").write("\n".join(R))
+    print(len(lignes), "fichiers", f"{tot / 1e9:.1f} Go", "· campagnes touchées :", len([k for k in parc if k in CM]),
+          "· hors dépôt :", sum(v for k, v in parc.items() if k not in CM))
+
+elif MODE == "executer":
+    lignes = list(csv.DictReader(open(sys.argv[3], encoding="utf-8")))
+    os.makedirs(RACINE, exist_ok=True)
+    fait = []
+    neuf = not os.path.exists(MANIF)
+    with open(MANIF, "a", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        if neuf: w.writerow(["source", "destination"])
+        for l in lignes:
+            s, t = l["source"], l["destination"]
+            if not os.path.exists(s) or os.path.exists(t): continue
+            os.makedirs(os.path.dirname(t), exist_ok=True)
+            shutil.move(s, t)
+            w.writerow([os.path.relpath(s, DL), os.path.relpath(t, DL)]); fh.flush(); fait.append(l)
+    ecrire(os.path.join(RACINE, "_ANNULER-LES-DEPLACEMENTS.command"), """#!/bin/bash
+# Remet chaque fichier à sa place d'origine (chemins relatifs à ~/Downloads). Les .md générés restent.
+cd "$(dirname "$0")/.." || exit 1
+python3 - <<'PY'
+import csv, os, shutil
+n = 0
+with open("MATANGA — EXPORT DU TRAVAIL/_MANIFESTE-DEPLACEMENTS.csv", encoding="utf-8") as f:
+    for row in csv.DictReader(f):
+        if os.path.exists(row["destination"]) and not os.path.exists(row["source"]):
+            os.makedirs(os.path.dirname(row["source"]) or ".", exist_ok=True)
+            shutil.move(row["destination"], row["source"]); n += 1
+print("restaurés :", n)
+PY
+""")
+    os.chmod(os.path.join(RACINE, "_ANNULER-LES-DEPLACEMENTS.command"), 0o755)
+    # Les fichiers présents, par dossier de campagne (relus sur le disque : un second passage ne perd rien).
+    def presents(dossier):
+        out = []
+        for dp, dn, fn in os.walk(dossier):
+            for f in fn:
+                if f.startswith(".") or f.endswith(".md") or f.startswith("_couverture"): continue
+                q = os.path.join(dp, f); out.append({"rel": os.path.relpath(q, dossier), "taille": os.path.getsize(q)})
+        return out
+    marques_camps = collections.defaultdict(list)
+    for cid, c in CM.items():
+        dos = os.path.join(RACINE, chemin_campagne(c)); os.makedirs(dos, exist_ok=True)
+        cov = (c.get("couverture") or {}).get("vignette")
+        if cov and os.path.exists(os.path.join(APP, cov)):
+            shutil.copyfile(os.path.join(APP, cov), os.path.join(dos, "_couverture" + os.path.splitext(cov)[1]))
+        ecrire(os.path.join(dos, "CAMPAGNE.md"), md_campagne(c, presents(dos)))
+        for p in PAR_CAMP[cid]: ecrire(os.path.join(dos, f"PROJET-{p['ref']}.md"), md_projet(p))
+        mq = (c.get("marqueIds") or [None])[0]
+        if mq in M: marques_camps[mq].append(os.path.relpath(dos, os.path.join(RACINE, chemin_marque(mq))))
+    for mid, cs in marques_camps.items():
+        ecrire(os.path.join(RACINE, chemin_marque(mid), "MARQUE.md"), md_marque(mid, sorted(cs)))
+    # Les dossiers créés pour des fichiers sans campagne au dépôt.
+    hors = collections.defaultdict(list)
+    dossiers_camp = [chemin_campagne(c) + os.sep for c in CM.values()]
+    for row in csv.DictReader(open(MANIF, encoding="utf-8")):
+        r = os.path.relpath(os.path.join(DL, row["destination"]), RACINE)
+        if not any(r.startswith(x) for x in dossiers_camp):
+            l = row; m = re.match(r"(.+?/(?:Le long de l'année/\d{4}|Campagnes ponctuelles/[^/]+|_Identité de marque|_Packaging & étiquettes))/", r)
+            if m: hors[m.group(1)].append(l)
+    for dos in hors:
+        chemin = os.path.join(RACINE, dos, "DOSSIER.md")
+        if os.path.isdir(os.path.join(RACINE, dos)) and not os.path.exists(os.path.join(RACINE, dos, "CAMPAGNE.md")):
+            ecrire(chemin, f"# {dos}\n\n> Aucun dossier de ce nom au dépôt LA BARRE : les fichiers y sont rangés d'après leur dossier d'origine et leur date. "
+                           "Pas tracé ne veut pas dire pas fait.\n\n" + md_fichiers(presents(os.path.join(RACINE, dos))))
+    # L'index et le lisez-moi.
+    idx = collections.defaultdict(list)
+    for cid, c in CM.items():
+        idx[chemin_campagne(c).split(os.sep)[0]].append((chemin_campagne(c), c, len(PAR_CAMP[cid])))
+    I = [f"# Index — le travail fait pour Matanga\n", f"Généré le {datetime.date.today()} depuis LA BARRE : {len(CM)} campagnes, {len(PM)} projets.\n"]
+    for g in sorted(idx):
+        I.append(f"\n## {g}\n")
+        for ch, c, n in sorted(idx[g], key=lambda x: x[0]):
+            I.append(f"- [{c['nom']}]({ch.replace(' ', '%20')}/CAMPAGNE.md) — {n} projet{'s' if n > 1 else ''}")
+    if hors:
+        I.append("\n## Rangé sans campagne au dépôt\n")
+        I += [f"- `{k}` — {len(v)} fichiers" for k, v in sorted(hors.items())]
+    ecrire(os.path.join(RACINE, "INDEX.md"), "\n".join(I) + "\n")
+    ecrire(os.path.join(RACINE, "LISEZ-MOI.md"), f"""# Matanga — export du travail
+
+Ce dossier rassemble le travail fait pour Matanga Agency entre 2023 et 2026, rangé comme LA BARRE le tient :
+**groupe → marque → campagne**. Chaque campagne est soit **ponctuelle** (un temps fort : Ramadan, Back to School,
+un lancement…), soit **le long de l'année** (les actions hors temps fort, par année).
+
+## Ce que contient chaque dossier
+
+- `MARQUE.md` — la plateforme de marque (vision, positionnement, promesse, ton, symboles…).
+- `CAMPAGNE.md` — la campagne, ses projets, et l'inventaire des fichiers.
+- `PROJET-<réf>.md` — le dossier complet d'un projet : identité, brief, stratégie, big idea, pistes, livrables,
+  documents reçus. Ce qui est marqué *(inféré)* est raisonné à partir des documents, pas encore validé.
+- Les fichiers de travail, dans leurs sous-dossiers d'origine.
+- `_Identité de marque/` et `_Packaging & étiquettes/` — ce qui n'appartient à aucune année.
+- `DOSSIER.md` — un dossier rangé d'après le disque, sans campagne au dépôt : pas tracé ne veut pas dire pas fait.
+
+## Ce qui n'y est pas
+
+- Les opérations sous UPgraders, Friends Photography Studio ou en nom propre, et Beignet Paradise.
+- `Work 2026/00 Matanga Agency` (l'agence elle-même) et les copies (`_TOUS LES KV`, `_MASTERS DE CAMPAGNE`, le corpus).
+- Les montants : ils restent dans les factures et les devis.
+
+## Revenir en arrière
+
+Chaque déplacement est noté dans `_MANIFESTE-DEPLACEMENTS.csv` (chemins relatifs à Téléchargements).
+`_ANNULER-LES-DEPLACEMENTS.command` remet chaque fichier à sa place d'origine.
+
+Mis à jour le {datetime.date.today()} — {sum(1 for _ in open(MANIF)) - 1} fichiers déplacés au total.
+""")
+    print("déplacés :", len(fait), "· campagnes documentées :", len(CM), "· marques :", len(marques_camps), "· dossiers hors dépôt :", len(hors))
+
+elif MODE == "chemins":
+    rows = list(csv.DictReader(open(MANIF, encoding="utf-8")))
+    carte = {}
+    for r in rows:
+        a, b = os.path.join(DL, r["source"]), os.path.join(DL, r["destination"])
+        carte[a] = b; carte[a.replace(HOME, "~", 1)] = b.replace(HOME, "~", 1)
+    prefixes = []
+    for r in rows:
+        if r["source"].startswith("LVQR Campagne Not Laughing cow/"):
+            dst = os.path.join(DL, r["destination"]); racine = dst[:dst.index("LVQR Campagne Not Laughing cow/") + len("LVQR Campagne Not Laughing cow/")]
+            prefixes = [(os.path.join(DL, "LVQR Campagne Not Laughing cow/"), racine), ("~/Downloads/LVQR Campagne Not Laughing cow/", racine.replace(HOME, "~", 1))]
+            break
+    n = [0]
+    def reecrire(o):
+        if isinstance(o, dict): return {k: reecrire(v) for k, v in o.items()}
+        if isinstance(o, list): return [reecrire(v) for v in o]
+        if isinstance(o, str) and o in carte: n[0] += 1; return carte[o]
+        # Les dossiers reçus déplacés entiers : un chemin descriptif (« DOC 2 · … ») garde son dossier.
+        if isinstance(o, str):
+            for a, b in prefixes:
+                if o.startswith(a): n[0] += 1; return b + o[len(a):]
+        return o
+    d2 = reecrire(d)
+    d2["enregistre_le"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+    d2.setdefault("journal", []).append({"quand": d2["enregistre_le"], "qui": "creation", "action": "export Matanga",
+        "type": "fichiers", "id": None, "detail": f"{n[0]} chemins de fichiers suivis vers « MATANGA — EXPORT DU TRAVAIL »"})
+    json.dump(d2, open(sys.argv[3], "w"), ensure_ascii=False, indent=1)
+    print("chemins réécrits :", n[0])
