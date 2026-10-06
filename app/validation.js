@@ -34,8 +34,8 @@ window.VALIDATION = (function () {
     var d = objet && objet.validation;
     if (!d) return { cle: "aucun", nom: "non validé", ton: "attente" };
     var v = MAISON.verdicts.filter(function (x) { return x.cle === d.verdict; })[0];
-    return { cle: d.verdict, nom: v ? v.nom : d.verdict,
-      ton: d.verdict === "approuve" ? "vert" : d.verdict === "reserve" ? "attente" : "alerte",
+    return { cle: d.verdict, nom: (v ? v.nom : d.verdict) + (d.portee === "travail" ? " pour travail" : ""),
+      ton: d.verdict === "approuve" && d.portee !== "travail" ? "vert" : d.verdict === "reserve" || d.portee === "travail" ? "attente" : "alerte",
       quand: d.quand, motif: d.motif, par: d.par, version: d.version };
   }
 
@@ -43,12 +43,12 @@ window.VALIDATION = (function () {
   function perime(objet) {
     var d = objet && objet.validation;
     if (!d) return false;
-    return (d.version || 1) < VERSION.num(objet);
+    return !!d.perime || (d.version || 1) < VERSION.num(objet);
   }
 
   function valide(objet) {
     var d = objet && objet.validation;
-    return !!d && d.verdict === "approuve" && !perime(objet);
+    return !!d && d.verdict === "approuve" && d.portee !== "travail" && !perime(objet);
   }
 
   /* ————————————————————— L'étiquette ————————————————————— */
@@ -84,8 +84,8 @@ window.VALIDATION = (function () {
     }
 
     if (infs) {
-      lignes.push(UI.banniere("", infs + (infs > 1 ? " champs de cette section tiennent" : " champ de cette section tient")
-        + " sur une inférence : un verdict rendu dessus ne s'oppose à personne."));
+      lignes.push(UI.banniere("", infs + (infs > 1 ? " champs de cette section restent" : " champ de cette section reste")
+        + " à confirmer : une approbation permet de travailler, elle ne consigne pas ces confirmations."));
     }
 
     return el("div.vd", {},
@@ -105,7 +105,7 @@ window.VALIDATION = (function () {
         VERSION.historique(objet).length
           ? el("button.b.nu", { type: "button", onclick: function () {
               PANNEAU.ouvrir("Versions — " + def.nom, p.ref, VERSION.fil(objet));
-            } }, VERSION.historique(objet).length + " versions")
+            } }, VERSION.historique(objet).length + (VERSION.historique(objet).length > 1 ? " versions" : " version"))
           : null
       ));
   }
@@ -113,6 +113,7 @@ window.VALIDATION = (function () {
   /* ————————————————————— Rendre le verdict ————————————————————— */
 
   function rendre(p, cle, objet, verdict, rafraichir) {
+    var contenuLu = JSON.stringify(objet);
     var def = OBJETS[cle];
     var criteres = def.criteres ? MAISON.criteresDe(def.criteres) : [];
     var choisi = null;
@@ -129,6 +130,7 @@ window.VALIDATION = (function () {
     });
 
     var suite = aval(p, cle, verdict);
+    var enAttente = window.INFERENCE ? INFERENCE.liste(p, cle) : [];
 
     PANNEAU.sur(verdict.nom + " — " + def.nom, "V" + VERSION.num(objet), el("div", {},
       suite.length
@@ -144,10 +146,15 @@ window.VALIDATION = (function () {
               : UI.banniere("", "Aucun critère écrit pour ce document : le refus ne pourra s'appuyer que sur du texte libre. C'est exactement la dérive que le §8 nomme."),
             el("div.form", {}, el("div.champ", {},
               el("label", {}, criteres.length ? "Ou en toutes lettres" : "Le motif"), libre)))
-        : UI.banniere("vert", def.apres),
+        : UI.banniere(enAttente.length ? "" : "vert", enAttente.length
+          ? "L’approbation sera consignée pour travail. " + enAttente.length + " champs restent à confirmer ; ce verdict ne leur attribue aucun accord."
+          : def.apres),
 
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
+          if (JSON.stringify(objet) !== contenuLu) {
+            AVIS.refus("Le document a changé depuis l’ouverture. Relisez sa version actuelle avant de rendre le verdict."); return;
+          }
           var motif = choisi || libre.value.trim();
           if (verdict.motifRequis && !motif) {
             AVIS.refus("Ce verdict exige un motif. Refuser sans critère, c'est refuser par goût.");
@@ -155,10 +162,14 @@ window.VALIDATION = (function () {
           }
           objet.validation = { verdict: verdict.cle, motif: motif || null,
             quand: new Date().toISOString(), par: MAISON.titulaire,
+            acteur: window.ACTEUR ? ACTEUR.trace() : null,
+            portee: INFERENCE.compte(p, cle) ? "travail" : "document",
+            confirmationsEnAttente: INFERENCE.liste(p, cle).map(function (x) { return x.cle; }),
             version: VERSION.num(objet) };
           DEPOT.ajoute("decisions", { objet: cle, type: cle, projet: p.id,
             verdict: verdict.cle, motif: motif || null, quand: objet.validation.quand,
-            qui: MAISON.titulaire, titre: def.nom });
+            qui: MAISON.titulaire, acteur: objet.validation.acteur, version: objet.validation.version,
+            portee: objet.validation.portee, titre: def.nom });
           DEPOT.tracer("verdict", cle, p.id, verdict.nom + (motif ? " — " + motif : ""));
           DEPOT.enregistrer(); PANNEAU.fermerSur(); if (rafraichir) rafraichir();
         } }, verdict.nom),

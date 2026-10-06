@@ -133,8 +133,8 @@ window.COMPILATEUR = (function () {
         cout: "aucun rétroplanning n'est calculable" },
       { quoi: "Critères de succès", ok: (b.kpis || []).length > 0, poids: 3,
         cout: "le bilan de campagne n'aura pas de dénominateur" },
-      { quoi: "Rien ne tient sur une inférence", ok: infs.length === 0, poids: 3,
-        cout: infs.length + " champs sont inférés : l'atelier travaillera sur du raisonné, pas sur du reçu" },
+      { quoi: "Propositions confirmées", ok: infs.length === 0, poids: 3,
+        cout: infs.length + " champs restent à confirmer : utilisables pour préparer le travail, sans accord consigné" },
       /* Chaque marque servie : un logo manquant sur une des trois est un
        * exécutant qui ira le chercher ailleurs pour celle-là. */
       (function () {
@@ -867,8 +867,8 @@ window.COMPILATEUR = (function () {
 
       d.inferences.length
         ? UI.banniere("", d.inferences.length
-            + (d.inferences.length > 1 ? " champs de ce document tiennent" : " champ de ce document tient")
-            + " sur une inférence : utilisables pour travailler, pas opposables au client.")
+            + (d.inferences.length > 1 ? " champs de ce document restent" : " champ de ce document reste")
+            + " à confirmer : utilisables pour travailler, sans accord consigné.")
         : null,
 
       document(d)

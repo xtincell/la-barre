@@ -133,6 +133,7 @@ window.DEPOT = (function () {
     etat.journal.push({
       quand: new Date().toISOString(),
       qui: MAISON.titulaire,
+      acteur: window.ACTEUR ? ACTEUR.trace() : undefined,
       action: action,
       type: type,
       id: id,

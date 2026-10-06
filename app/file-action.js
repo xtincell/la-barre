@@ -27,7 +27,7 @@ window.FILE = (function () {
     traiter: { nom: "Traiter un brief", ton: "or", ou: "briefs",
       quoi: "la chaîne d'entrée s'est arrêtée quelque part" },
     contresigner: { nom: "Faire contresigner", ton: "attente", ou: "projets",
-      quoi: "des champs tiennent sur une inférence : utilisables, pas opposables" },
+      quoi: "des champs restent à confirmer : utilisables pour travailler" },
   };
 
   /* ————————————————————— Le relevé ————————————————————— */
@@ -158,7 +158,7 @@ window.FILE = (function () {
     projets.forEach(function (p) {
       var n = window.INFERENCE ? INFERENCE.compte(p) : 0;
       if (!n) return;
-      out.push(item("contresigner", n + " champs inférés sur « " + p.nom + " »",
+      out.push(item("contresigner", n + " champs à confirmer sur « " + p.nom + " »",
         "Utilisables pour travailler, pas opposables au client : le jour où il conteste, rien ne tient.",
         35, "#/projets/" + p.id + "/identite"));
     });

@@ -13,12 +13,14 @@ window.FORM = (function () {
 
   function rendre(champs, valeurs, options) {
     options = options || {};
-    var v = Object.assign({}, valeurs || {});
+    var initial = JSON.parse(JSON.stringify(valeurs || {}));
+    var v = JSON.parse(JSON.stringify(initial));
     var avertissements = el("div");
 
     var noeud = el("div.form", {},
       champs.map(function (c) {
-        var monPoste = !c.poste || c.poste === MAISON.titulaire || !options.frontiere;
+        var monPoste = !options.frontiere || (window.ACTEUR ? ACTEUR.exerce(c.poste || options.poste)
+          : !c.poste || c.poste === MAISON.titulaire);
         var classe = "champ" + (c.critique ? ".critique" : "") + (monPoste ? "" : ".verrouille");
 
         var saisie;
@@ -26,7 +28,6 @@ window.FORM = (function () {
           saisie = el("textarea", {
             rows: c.type === "puces" ? 4 : 3,
             placeholder: c.type === "puces" ? "Une ligne par élément" : "",
-            readonly: !monPoste && options.frontiere ? true : null,
           });
           saisie.value = Array.isArray(v[c.cle]) ? v[c.cle].join("\n") : (v[c.cle] || "");
         } else if (c.type === "choix") {
@@ -34,7 +35,7 @@ window.FORM = (function () {
            * à la main sont trois catégories différentes pour la machine et une
            * seule pour l'œil : plus rien n'est comparable. On choisit dans une
            * liste, ou on n'écrit pas. */
-          saisie = el("select", { disabled: !monPoste && options.frontiere ? true : null });
+          saisie = el("select", {});
           saisie.appendChild(el("option", { value: "" }, c.vide || "— Non renseigné —"));
           var choix = typeof c.options === "function" ? c.options(v) : (c.options || []);
           choix.forEach(function (x) {
@@ -48,7 +49,7 @@ window.FORM = (function () {
           /* Une référence au dépôt, pas un nom recopié. « Bonnet Rouge & Peak »
            * tapé à la main ne se lie à rien : ni au vault, ni aux packs, ni aux
            * décideurs. On convoque ce qui existe. */
-          saisie = el("select", { disabled: !monPoste && options.frontiere ? true : null });
+          saisie = el("select", {});
           saisie.appendChild(el("option", { value: "" }, c.vide || "— Non renseigné —"));
           (typeof c.source === "function" ? c.source(v) : DEPOT.liste(c.source)).forEach(function (x) {
             var o = el("option", { value: x.id }, c.libelle ? c.libelle(x) : x.nom);
@@ -83,7 +84,6 @@ window.FORM = (function () {
         } else {
           saisie = el("input", {
             type: c.type === "date" ? "date" : c.type === "nombre" ? "number" : "text",
-            readonly: !monPoste && options.frontiere ? true : null,
           });
           saisie.value = v[c.cle] === null || v[c.cle] === undefined ? "" : v[c.cle];
         }
@@ -93,7 +93,7 @@ window.FORM = (function () {
         saisie.setAttribute("aria-label", c.nom);
         if (c.requis) saisie.setAttribute("aria-required", "true");
         saisie.addEventListener("input", function () {
-          if (c.type === "objets") { valeurs[c.cle] = v[c.cle]; return; }
+          if (c.type === "objets") return;
           var val = saisie.value;
           if (c.type === "puces") {
             v[c.cle] = val.split("\n").map(function (x) { return x.trim(); }).filter(Boolean);
@@ -110,7 +110,8 @@ window.FORM = (function () {
           el("label", { for: champId }, c.nom),
           c.aide ? el("div.indice", {}, c.aide) : null,
           !monPoste && options.frontiere
-            ? el("div.indice", {}, "Ce champ appartient à " + O.poste(c.poste).nom + ". Vous pouvez le mettre en forme, pas l'écrire.")
+            ? el("div.indice", {}, "Responsable : " + O.poste(c.poste || options.poste).nom
+                + ". Une modification restera à confirmer ; la saisie est possible.")
             : null,
           saisie
         );
@@ -134,7 +135,15 @@ window.FORM = (function () {
     }
 
     verifierVocabulaire();
-    return { noeud: noeud, valeurs: function () { return v; } };
+    return { noeud: noeud, champs: champs, valeurs: function () { return v; },
+      base: function () { return JSON.parse(JSON.stringify(initial)); },
+      changements: function () {
+        var changes = {};
+        champs.forEach(function (c) {
+          if (JSON.stringify(v[c.cle]) !== JSON.stringify(initial[c.cle])) changes[c.cle] = v[c.cle];
+        });
+        return changes;
+      } };
   }
 
   /* Rendu en lecture, depuis les mêmes champs.
@@ -215,13 +224,13 @@ window.FORM = (function () {
           type: "button", title: "modifier — " + c.nom,
           onclick: function () { o.editer(c.cle); } },
           el("span.che-n", {}, c.nom,
-            infereE ? el("span.che-i", {}, "inféré") : null),
+            infereE ? el("span.che-i", {}, INFERENCE.libelle(o.projet, o.section, c.cle)) : null),
           el("span.che-v", {}, vide ? (c.aide || "Non renseigné") : texte(c, brut)));
       }
 
       var infere = o.projet && o.section && INFERENCE.est(o.projet, o.section, c.cle);
       var nom = infere
-        ? el("span", {}, c.nom, INFERENCE.marque(INFERENCE.pourquoi(o.projet, o.section, c.cle)))
+        ? el("span", {}, c.nom, INFERENCE.marque(INFERENCE.pourquoi(o.projet, o.section, c.cle), INFERENCE.libelle(o.projet, o.section, c.cle)))
         : c.nom;
 
       if (c.type === "objets" && Array.isArray(brut) && brut.length) {
@@ -233,5 +242,45 @@ window.FORM = (function () {
     }));
   }
 
-  return { rendre: rendre, lire: lire, texte: texte };
+  /* Le même rapprochement sert au réseau et aux formulaires encore ouverts.
+   * Seuls les champs effectivement modifiés peuvent être écrits. */
+  function appliquer(form, courant, apres) {
+    var base = form.base();
+    var propose = Object.assign({}, base, form.changements());
+    function tentative(choix) {
+      var actuel = courant();
+      var r = RECONCILIATION.reconcilier(base, propose, actuel, choix);
+      if (!r.conflits.length) {
+        var patch = {};
+        form.champs.forEach(function (c) {
+          if (JSON.stringify(actuel[c.cle]) !== JSON.stringify(r.valeur[c.cle])) patch[c.cle] = r.valeur[c.cle];
+        });
+        apres(patch); return;
+      }
+      var vu = JSON.stringify(actuel), decisions = {};
+      var bouton = el("button.b.or", { type: "button", disabled: true, onclick: function () {
+        PANNEAU.fermerSur();
+        if (JSON.stringify(courant()) !== vu) { tentative(); return; }
+        tentative(decisions);
+      } }, "Conserver ces choix");
+      function valeur(v, present) { return !present ? "Non renseigné" : typeof v === "string" ? v : JSON.stringify(v); }
+      PANNEAU.sur("Le dossier a changé pendant la saisie", "Vos deux versions sont conservées", el("div", {},
+        r.conflits.map(function (c) {
+          var champ = form.champs.filter(function (x) { return x.cle === c.chemin[0]; })[0];
+          var nom = champ ? champ.nom : c.chemin.join(" · ");
+          var select = el("select", { "aria-label": "Version pour " + nom, onchange: function () {
+            if (select.value) decisions[c.cle] = select.value; else delete decisions[c.cle];
+            bouton.disabled = Object.keys(decisions).length !== r.conflits.length;
+          } }, el("option", { value: "" }, "Choisir"), el("option", { value: "ici" }, "Ma saisie"),
+            el("option", { value: "distant" }, "Valeur reçue pendant la saisie"));
+          return el("div.champ", {}, el("h3", {}, nom),
+            el("p", {}, "Ma saisie : ", valeur(c.ici, c.iciPresent)),
+            el("p", {}, "Valeur reçue : ", valeur(c.distant, c.distantPresent)), select);
+        }), el("div.form-actions", {}, bouton,
+          el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Revenir à ma saisie"))));
+    }
+    tentative();
+  }
+
+  return { rendre: rendre, lire: lire, texte: texte, appliquer: appliquer };
 })();

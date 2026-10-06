@@ -75,6 +75,7 @@ window.VUE_REFERENTIEL = (function () {
       return manquants + (manquants > 1 ? " gabarits manquent" : " gabarit manque")
         + " — autant de fichiers qui partiront sans qu'on ait vérifié leur taille";
     }
+    if (!marches.length) return "Aucun marché servi pour l’instant";
     return marches.length + (marches.length > 1 ? " marchés servis" : " marché servi")
       + ", tous leurs gabarits renseignés";
   }
