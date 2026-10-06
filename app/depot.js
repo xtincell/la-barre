@@ -1,8 +1,8 @@
 /* depot.js — la persistance, et rien d'autre.
  *
- * Le dépôt de référence est un fichier JSON que tu gardes sur ton Drive :
- * import à l'ouverture, export à la fermeture. Le navigateur ne tient qu'un
- * cache de travail, pour ne rien perdre entre deux enregistrements.
+ * Le fichier servi fait foi. Le navigateur conserve le travail non reçu et
+ * rapproche les modifications concurrentes. Sans serveur, l'import/export
+ * reste le mode de sauvegarde manuel.
  *
  * C'est aussi le pont vers Matanga People le jour de l'intégration : le même
  * JSON, lu par autre chose.
@@ -20,6 +20,7 @@ window.DEPOT = (function () {
   var VERSION_SCHEMA = 5;
 
   var etat = vide();
+  var ancienCache = null;
   var ecouteurs = [];
 
   function vide() {
@@ -204,60 +205,159 @@ window.DEPOT = (function () {
   /* La version de la base telle que ce navigateur l'a lue ou écrite en
    * dernier. Elle part avec chaque écriture : le serveur refuse si le fichier a
    * changé depuis. */
-  var baseServeur = null;
+  var baseServeur = null, revisionServeur = null, baseContenu = null;
+  var conflitEnCours = null, sauvegardeEnCours = false, suiteDemandee = false;
+  var rappels = [], reprisesAutres = [], reprisesAdoptees = [], repriseKO = false;
 
-  function recharger() {
-    fetch("depots/" + fichier, { cache: "no-store" })
-      .then(function (r) { return r.ok ? r.text() : null; })
-      .then(function (t) {
-        if (!t) return;
-        try { baseServeur = JSON.parse(t).enregistre_le || null; } catch (e2) {}
-        importer(t);
-        if (window.AVIS) AVIS.grave("La base a été enregistrée depuis une autre fenêtre : elle vient d'être "
-          + "rechargée ici. Ton dernier geste n'a pas été écrit — refais-le.");
-        ecouteurs.forEach(function (f) { f(); });
-      }).catch(function () {});
+  function avertirReprise(e) {
+    if (!repriseKO && window.AVIS) AVIS.grave("La copie de reprise n’a pas pu être conservée dans ce navigateur. Gardez cet onglet ouvert jusqu’à réception de la sauvegarde.");
+    repriseKO = true;
+  }
+  function garderReprise() {
+    if (!fichier || !baseContenu) return Promise.resolve();
+    return REPRISES.garder(fichier, { base: baseContenu, etat: etat, revision: revisionServeur, adoptees: reprisesAdoptees })
+      .catch(avertirReprise);
+  }
+  function poserBase(lu, version) {
+    baseContenu = RECONCILIATION.copie(lu);
+    baseServeur = lu.enregistre_le || null;
+    revisionServeur = version || null;
+  }
+  function poserEtat(lu) {
+    if (!lu || typeof lu !== "object" || Array.isArray(lu) || lu.schema > VERSION_SCHEMA) throw new Error("Version de base incompatible");
+    var nouveau = vide();
+    Object.keys(lu).forEach(function (k) {
+      Object.defineProperty(nouveau, k, { value: RECONCILIATION.copie(lu[k]), writable: true, configurable: true, enumerable: true });
+    });
+    migrer(nouveau); if (fichier) nouveau.reference = fichier;
+    etat = RECONCILIATION.actualiser(etat, nouveau);
+    ecrire();
+  }
+  function notifier() { ecouteurs.forEach(function (f) { f(); }); }
+  function conflits() {
+    return conflitEnCours ? RECONCILIATION.reconcilier(conflitEnCours.base, etat, conflitEnCours.distant).conflits : [];
+  }
+  function rapprocher(lu, version) {
+    var resultat = RECONCILIATION.reconcilier(baseContenu, etat, lu);
+    if (resultat.conflits.length) {
+      conflitEnCours = { base: RECONCILIATION.copie(baseContenu), distant: lu, revision: version };
+      surDisque = false;
+      garderReprise();
+      if (window.AVIS) AVIS.grave("Deux valeurs différentes ont été proposées pour " + resultat.conflits.length
+        + " champ(s). Vos gestes sont conservés. Ouvrez Réglages → Rapprocher les modifications.");
+      notifier(); return false;
+    }
+    poserBase(lu, version); poserEtat(resultat.valeur);
+    conflitEnCours = null; surDisque = false;
+    garderReprise(); suiteDemandee = true; notifier(); return true;
+  }
+  function resoudre(choix) {
+    if (!conflitEnCours) return false;
+    var r = RECONCILIATION.reconcilier(conflitEnCours.base, etat, conflitEnCours.distant, choix);
+    if (r.conflits.length) return false;
+    poserBase(conflitEnCours.distant, conflitEnCours.revision);
+    poserEtat(r.valeur); conflitEnCours = null;
+    tracer("rapprochement", "depot", fichier, "Choix explicites des versions à conserver");
+    enregistrer(); return true;
+  }
+  function lireServeur() {
+    return fetch("depots/" + fichier, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("La base ne peut pas être relue");
+      return r.json().then(function (data) { return { valeur: data, revision: r.headers.get("ETag") }; });
+    });
+  }
+  function finirRappels(ok, pourquoi) {
+    var a = rappels; rappels = [];
+    a.forEach(function (f) { f(ok, pourquoi); });
+  }
+  function ecrireSurDisque(quand) {
+    if (quand) rappels.push(quand);
+    var refus = peutEcrire();
+    if (refus || conflitEnCours) {
+      surDisque = false; finirRappels(false, refus || "conflit à rapprocher"); return;
+    }
+    if (sauvegardeEnCours) { suiteDemandee = true; return; }
+    sauvegardeEnCours = true; suiteDemandee = false;
+    var envoye = RECONCILIATION.copie(etat);
+    var texte = JSON.stringify(envoye, null, 1);
+    var entetes = { "Content-Type": "application/json" };
+    if (revisionServeur) entetes["If-Match"] = revisionServeur;
+    if (baseServeur) entetes["X-Base"] = baseServeur;
+    garderReprise().then(function () {
+      return fetch("depots/" + fichier, { method: "PUT", headers: entetes, body: texte });
+    }).then(function (r) {
+      if (r.status === 409 || r.status === 428) {
+        return r.json().then(function (erreur) {
+          if (erreur.code === "BASE_ILLISIBLE") throw new Error(erreur.quoi);
+          return lireServeur().then(function (lu) {
+            rapprocher(lu.valeur, lu.revision); return null;
+          });
+        });
+      }
+      if (!r.ok) throw new Error("La sauvegarde n’a pas été reçue (" + r.status + ")");
+      return r.json();
+    }).then(function (j) {
+      if (!j) { if (conflitEnCours) finirRappels(false, "conflit à rapprocher"); return; }
+      if (!j.ok) throw new Error("La sauvegarde n’a pas été reçue");
+      // Le reçu porte le document envoyé, jamais celui qui a pu changer
+      // pendant le réseau. Le geste suivant utilise cette nouvelle base.
+      poserBase(envoye, j.revision);
+      baseServeur = j.enregistre_le || envoye.enregistre_le || null;
+      surDisque = JSON.stringify(etat) === JSON.stringify(envoye);
+      if (surDisque) {
+        var recues = reprisesAdoptees; reprisesAdoptees = [];
+        Promise.all(recues.map(function (r) { return REPRISES.accuser(r); }))
+          .then(function () { return REPRISES.lister(fichier); })
+          .then(function (rows) { reprisesAutres = rows; notifier(); }).catch(avertirReprise);
+        REPRISES.retirer(fichier).catch(avertirReprise);
+        finirRappels(true);
+      } else { suiteDemandee = true; garderReprise(); }
+      if (disqueKO && window.AVIS) AVIS.fait("La sauvegarde fonctionne à nouveau.");
+      disqueKO = false; notifier();
+    }).catch(function (e) {
+      surDisque = false; suiteDemandee = false;
+      if (!disqueKO && window.AVIS) AVIS.grave((e && e.message ? e.message + ". " : "")
+        + "Vos gestes restent dans ce navigateur. Réessayez depuis les réglages.");
+      disqueKO = true; garderReprise(); finirRappels(false, e && e.message); notifier();
+    }).finally(function () {
+      sauvegardeEnCours = false;
+      if (suiteDemandee && !conflitEnCours) planifierDisque();
+    });
   }
 
-  function ecrireSurDisque(quand) {
-    var refus = peutEcrire();
-    if (refus) {
-      surDisque = false;
-      if (quand) quand(false, refus);
+  function chargerDepuisServeur(lu, version) {
+    // Une ancienne version ne connaissait pas le reçu associé à son cache.
+    // On le conserve séparément avant de le remplacer, sans le pousser d'office.
+    var protection = ancienCache && JSON.stringify(ancienCache) !== JSON.stringify(lu)
+      ? REPRISES.archiverAncien(fichier, ancienCache) : Promise.resolve();
+    return protection.catch(function (e) { avertirReprise(e); throw e; }).then(function () {
+      ancienCache = null;
+      return REPRISES.lire(fichier).catch(function () { return null; });
+    }).then(function (reprise) {
+      if (reprise && reprise.base && reprise.etat) {
+        reprisesAdoptees = reprise.adoptees || [];
+        poserBase(reprise.base, reprise.revision); poserEtat(reprise.etat);
+        rapprocher(lu, version);
+        if (!conflitEnCours) planifierDisque();
+      } else {
+        poserBase(lu, version); poserEtat(lu); surDisque = true;
+      }
+      referenceLue = true;
+      return REPRISES.lister(fichier).then(function (rows) { reprisesAutres = rows; }).catch(function () {});
+    });
+  }
+  function reprendre(cle) {
+    if (surDisque !== true || conflitEnCours) {
+      if (window.AVIS) AVIS.refus("Recevez d’abord la sauvegarde du travail ouvert avant de reprendre un autre brouillon.");
       return;
     }
-    var texte = JSON.stringify(etat, null, 1);
-    var entetes = { "Content-Type": "application/json" };
-    if (baseServeur) entetes["X-Base"] = baseServeur;
-    fetch("depots/" + fichier, {
-      method: "PUT", headers: entetes, body: texte,
-    }).then(function (r) {
-        /* La base a été enregistrée ailleurs depuis notre lecture : on ne
-         * l'écrase pas, on la recharge, et on le dit. Le dernier geste de cet
-         * onglet est perdu — c'est le prix, et il vaut mieux qu'une journée. */
-        if (r.status === 409 || r.status === 428) { recharger(); throw new Error("conflit"); }
-        return r.ok ? r.json() : null; })
-      .then(function (j) {
-        if (!j || !j.ok) throw new Error("refus");
-        baseServeur = etat.enregistre_le;
-        surDisque = true;
-        if (disqueKO) {
-          disqueKO = false;
-          if (window.AVIS) AVIS.fait("L'écriture sur le fichier refonctionne.");
-        }
-        if (quand) quand(true);
-      })
-      .catch(function (e) {
-        if (e && e.message === "conflit") { if (quand) quand(false, "conflit"); return; }
-        surDisque = false;
-        if (!disqueKO) {
-          disqueKO = true;
-          if (window.AVIS) AVIS.grave("La base ne s'écrit plus dans son fichier — "
-            + "seul ce navigateur garde la suite. Vérifie que le serveur tourne "
-            + "(node servir.mjs), sinon exporte à la main.");
-        }
-        if (quand) quand(false);
-      });
+    var r = reprisesAutres.find(function (x) { return x.cle === cle; });
+    if (!r) return;
+    lireServeur().then(function (lu) {
+      reprisesAdoptees.push({ cle: r.cle, quand: r.quand });
+      poserBase(r.base, r.revision); poserEtat(r.etat);
+      rapprocher(lu.valeur, lu.revision); if (!conflitEnCours) planifierDisque();
+    }).catch(function (e) { if (window.AVIS) AVIS.grave(e.message); });
   }
 
   /* On n'écrit pas à chaque frappe : le dépôt fait plusieurs mégaoctets. */
@@ -272,8 +372,10 @@ window.DEPOT = (function () {
   var ecritureKO = false;
 
   function ecrire() {
+    if (ancienCache && fichier) return false; // Le filet ancien attend sa copie de reprise.
     try {
       window.localStorage.setItem(CLE, JSON.stringify(etat));
+      if (baseContenu) window.localStorage.setItem("la-barre-reprise-version", "1");
       if (ecritureKO) {
         ecritureKO = false;
         if (window.AVIS) AVIS.fait("L'enregistrement local refonctionne.");
@@ -304,6 +406,7 @@ window.DEPOT = (function () {
 
   function enregistrer() {
     etat.enregistre_le = new Date().toISOString();
+    surDisque = false; garderReprise();
     planifierDisque();   /* la source de vérité */
     ecrire();            /* le filet, pour le double-clic et la coupure */
     ecouteurs.forEach(function (f) { f(); });
@@ -350,6 +453,7 @@ window.DEPOT = (function () {
         /* Un schéma antérieur se migre, il ne se jette pas : le cache peut
          * porter une séance de travail que le fichier n'a pas encore. */
         if (lu && lu.schema <= VERSION_SCHEMA) {
+          if (lu.exemple !== true && window.localStorage.getItem("la-barre-reprise-version") !== "1") ancienCache = RECONCILIATION.copie(lu);
           etat = Object.assign(vide(), lu); migrer(etat); return true;
         }
       }
@@ -397,56 +501,16 @@ window.DEPOT = (function () {
   /* Lire le fichier sans rien écraser : c'est ce qui arme l'écriture, et c'est
    * aussi ce qui permet de dire au titulaire que le fichier a bougé ailleurs. */
   function relire(nom, apres) {
-    fetch("depots/" + nom, { cache: "no-store" })
-      .then(function (r) { return r.ok ? r.text() : null; })
-      .then(function (t) {
-        if (!t) { if (apres) { var f = apres; apres = null; f(false); } return; }
-        referenceLue = true;
-        surDisque = true;
-        try {
-          var lu = JSON.parse(t);
-          baseServeur = lu.enregistre_le || null;
-          var ici = (etat.projets || []).length;
-          var la = (lu.projets || []).length;
-
-          /* Trois raisons de reprendre le fichier, et une seule règle : le
-           * fichier est la base, le navigateur n'en est qu'un cache.
-           *
-           * Le volume ne suffisait pas. Une collection ajoutée au fichier — un
-           * relevé, un référentiel — n'ajoute aucun dossier : elle restait sur
-           * le disque, invisible à l'écran, sans que rien ne le dise. Et un
-           * dépôt migré ailleurs revenait dans son ancienne forme. */
-          /* Une collection que le fichier porte et que ce navigateur n'a pas.
-           * C'est le cas d'un relevé ajouté au fichier : ni dossier de plus,
-           * ni schéma neuf, ni horodatage touché — et pourtant le navigateur
-           * est en retard. Sans ça, la donnée dort sur le disque. */
-          var absente = null;
-          Object.keys(lu).forEach(function (k) {
-            if (!Array.isArray(lu[k]) || !lu[k].length) return;
-            if ((etat[k] || []).length === 0) absente = k;
-          });
-
-          var pourquoi = la > ici
-              ? "il contenait " + la + " dossiers, ce navigateur " + ici
-            : absente
-              ? "il porte « " + absente + " » (" + lu[absente].length
-                + " entrées) que ce navigateur n'a pas"
-            : (lu.schema || 0) > (etat.schema || 0)
-              ? "il a été migré au schéma " + lu.schema + ", ce navigateur en est au "
-                + (etat.schema || 0)
-            : lu.enregistre_le && etat.enregistre_le
-              && new Date(lu.enregistre_le) > new Date(etat.enregistre_le)
-              ? "il a été écrit après la copie de ce navigateur"
-            : null;
-
-          if (pourquoi && (lu.schema || 0) <= VERSION_SCHEMA) {
-            importer(t); etat.reference = nom;
-            if (window.AVIS) AVIS.fait("La base fait foi et vient d'être rechargée : " + pourquoi + ".");
-          }
-        } catch (e) { /* illisible : on ne touche à rien, et on n'écrit pas non plus */ referenceLue = false; }
-        if (apres) { var g = apres; apres = null; g(true); }
-      })
-      .catch(function () { if (apres) { var h = apres; apres = null; h(false); } });
+    fichier = nom;
+    lireServeur().then(function (lu) {
+      // Une relecture dans une session ouverte ne remplace pas les gestes en attente.
+      if (baseContenu && surDisque !== true) {
+        rapprocher(lu.valeur, lu.revision); if (!conflitEnCours) planifierDisque();
+        return;
+      }
+      return chargerDepuisServeur(lu.valeur, lu.revision);
+    }).then(function () { if (apres) apres(true); })
+      .catch(function () { if (apres) apres(false); });
   }
 
   /* `.then(f).catch(g)` attrape aussi ce que jette `f` — donc ce que jette le
@@ -465,23 +529,9 @@ window.DEPOT = (function () {
       if (apres) apres(ok);
     }
 
-    fetch("depots/" + m.reference, { cache: "no-store" })
-      .then(function (r) { return r.ok ? r.text() : null; })
-      .then(function (t) {
-        if (!t) { verdict(false, "le fichier n'a pas répondu"); return; }
-        try {
-          try { baseServeur = JSON.parse(t).enregistre_le || null; } catch (e2) { baseServeur = null; }
-          importer(t); etat.reference = m.reference; fichier = m.reference;
-          referenceLue = true;            /* à partir d'ici, écrire est légitime */
-          ecrire();                       /* le filet seulement : on vient de le lire du disque */
-          surDisque = true;
-        } catch (e) {
-          verdict(false, e.message); return;
-        }
-        /* La lecture a réussi. Ce qui se passe ensuite — le rendu — peut
-         * échouer sans que le dépôt soit en cause : on ne le confond pas. */
-        verdict(true);
-      })
+    fichier = m.reference;
+    lireServeur().then(function (lu) { return chargerDepuisServeur(lu.valeur, lu.revision); })
+      .then(function () { verdict(true); })
       .catch(function (e) { verdict(false, e && e.message); });
   }
 
@@ -759,6 +809,8 @@ window.DEPOT = (function () {
     referenceDisponible: referenceDisponible, chargerReference: chargerReference,
     relire: relire, peutEcrire: peutEcrire,
     provenance: provenance, stockage: stockage, rattacherAuFichier: rattacherAuFichier,
-    ecrireSurDisque: ecrireSurDisque,
+    ecrireSurDisque: ecrireSurDisque, conflits: conflits, resoudre: resoudre,
+    reprisesDisponibles: function () { return reprisesAutres.map(function (r) { return { cle: r.cle, quand: r.quand, ancien: !!r.ancien }; }); },
+    reprendre: reprendre,
   };
 })();

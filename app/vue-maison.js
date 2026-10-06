@@ -11,6 +11,12 @@
 window.VUE_MAISON = (function () {
   var el = O.el;
   var mode = "marches";
+  var enteteActive = null;
+  DEPOT.surChangement(function () {
+    if (!enteteActive || !enteteActive.titre.isConnected || mode !== "parametres") return;
+    var p = pireReglages({ w: DEPOT.poids(), age: DEPOT.ageSauvegarde() });
+    enteteActive.titre.textContent = p.t; enteteActive.texte.textContent = p.q;
+  });
 
   var MODES = [
     /* Le vault vit ici, hors des campagnes : ce qui définit une marque ne
@@ -44,14 +50,15 @@ window.VUE_MAISON = (function () {
     var age = DEPOT.ageSauvegarde();
     var vides = vaultsVides();
     var p = pire(mode, { trous: trous, w: w, age: age, vides: vides });
+    var titre = el("h1", {}, p.t), texte = el("p.studio-intro", {}, p.q);
+    enteteActive = { titre: titre, texte: texte };
 
     /* Le même en-tête que les autres intentions : le titre dit l'état de ce
      * qu'on regarde, le sélecteur vient dessous. */
     hote.appendChild(el("div.dc", {},
       el("header.studio-entete.dc-tete", {},
         el("div", {},
-          el("h1", {}, p.t),
-          el("p.studio-intro", {}, p.q))),
+          titre, texte)),
       UI.modes(MODES, mode, function (cle) { mode = cle; rendre(hote); }, {
         titre: "Modes des Ressources",
         compte: function (m) {
@@ -103,6 +110,9 @@ window.VUE_MAISON = (function () {
 
   /* Le dépôt d'abord : c'est la seule perte irréversible du produit. */
   function pireReglages(e) {
+    if (e.w.fichier) return { t: e.w.surDisque ? "Sauvegarde reçue" : "Sauvegarde en attente",
+      q: e.w.surDisque ? "Le fichier partagé a reçu votre travail. L’export permet d’en emporter une copie."
+        : "Vos modifications attendent leur réception. Leur reprise et les éventuels choix à faire sont indiqués ci-dessous." };
     if (e.w.grave) {
       return { t: "Le cache est plein",
         q: "Plus rien ne s'enregistre localement. Exporte maintenant, sinon la séance est perdue." };

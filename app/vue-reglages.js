@@ -8,15 +8,72 @@
 
 window.VUE_REGLAGES = (function () {
   var el = O.el;
+  var vueActive = null;
+  DEPOT.surChangement(function () {
+    if (vueActive && vueActive.repere.isConnected) rendre(vueActive.hote);
+  });
+
+  function cheminLisible(chemin) {
+    var noms = { projets: "Projets", marques: "Marques", campagnes: "Campagnes",
+      brief: "Brief", nom: "Nom", titre: "Titre", budget: "Budget", cible: "Cible",
+      deadline: "Échéance", responsable: "Responsable", livrables: "Livrables",
+      statut: "Statut", journal: "Journal", lectures: "Lectures", sections: "Cadrage",
+      briefback: "Brief-back", compris: "Ce que nous avons compris",
+      propose: "Ce que nous proposons de produire", ecart: "Écart avec la demande", "$ordre": "Ordre des éléments" };
+    var courant = DEPOT.tout();
+    return chemin.map(function (part) {
+      if (Array.isArray(courant)) {
+        courant = courant.find(function (x) { return x.id === part; });
+        return courant && (courant.nom || courant.titre || courant.quoi) || part;
+      }
+      courant = courant && courant[part];
+      return noms[part] || part.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/_/g, " ");
+    }).join(" · ");
+  }
+  function valeurLisible(v, present) {
+    if (!present) return "Élément retiré";
+    if (v === null || v === "") return "Non renseigné";
+    return typeof v === "string" ? v : JSON.stringify(v, null, 2);
+  }
+  function rapprochement(hote) {
+    var conflits = DEPOT.conflits();
+    if (!conflits.length) return;
+    var choix = {}, bouton = el("button.b.or", { type: "button", disabled: true,
+      onclick: function () {
+        if (!DEPOT.resoudre(choix)) { AVIS.refus("Choisissez une version pour chaque champ."); return; }
+        AVIS.fait("Choix conservés. Sauvegarde en cours.");
+        rendre(hote);
+      } }, "Conserver ces choix et sauvegarder");
+    hote.appendChild(el("section.groupe", { "aria-label": "Rapprocher les modifications" },
+      el("h2", {}, "Rapprocher les modifications"),
+      el("p", {}, "Les deux versions sont conservées. Les changements sur des champs différents seront réunis ; choisissez uniquement pour ces divergences."),
+      conflits.map(function (c) {
+        var nom = cheminLisible(c.chemin);
+        var select = el("select", { "aria-label": "Version pour " + nom, onchange: function () {
+          if (select.value) choix[c.cle] = select.value; else delete choix[c.cle];
+          bouton.disabled = Object.keys(choix).length !== conflits.length;
+        } },
+          el("option", { value: "" }, "Choisir la version à conserver"),
+          el("option", { value: "ici" }, "Ma modification"),
+          el("option", { value: "distant" }, "Version reçue ailleurs"));
+        return el("div.reglage", {},
+          el("h3", {}, nom),
+          el("p", {}, el("strong", {}, "Ma modification : "), valeurLisible(c.ici, c.iciPresent)),
+          el("p", {}, el("strong", {}, "Version reçue ailleurs : "), valeurLisible(c.distant, c.distantPresent)),
+          select);
+      }), bouton));
+  }
 
   function rendre(hote) {
     var age = DEPOT.ageSauvegarde();
 
         O.vider(hote);
+    var repere = el("span", { hidden: true });
+    hote.appendChild(repere); vueActive = { hote: hote, repere: repere };
 
     /* L'avertissement d'abord, et en grand tant qu'il est vrai. */
     var pds = DEPOT.poids();
-    var risque = age === null || age > 2;
+    var risque = pds.fichier ? !pds.surDisque : age === null || age > 2;
     var n = DEPOT.liste("projets").length;
     var pcs = DEPOT.liste("projets").reduce(function (t, p) {
       return t + (p.livrables || []).filter(function (l) { return !l.annule; }).length; }, 0);
@@ -27,24 +84,46 @@ window.VUE_REGLAGES = (function () {
       el("div.rgt-c", {},
         el("div.rgt-h", {}, risque ? "⚠" : "✓"),
         el("div", {},
-          el("h2", {}, age === null ? "La base n'a jamais été exportée"
+          el("h2", {}, pds.fichier ? (pds.surDisque ? "Sauvegarde reçue" : "Sauvegarde en attente")
+            : age === null ? "La base n'a jamais été exportée"
             : risque ? "Dernier export il y a " + age + (age > 1 ? " jours" : " jour")
             : "La base est à jour"),
-          el("p.rgt-q", {}, risque
+          el("p.rgt-q", {}, pds.fichier
+            ? (pds.surDisque ? "Le fichier partagé a reçu votre travail." : "Les gestes non reçus sont conservés dans ce navigateur. Une divergence se règle ci-dessous.")
+            : risque
             ? "Vider les données du navigateur détruirait tout : " + n
               + (n > 1 ? " dossiers, " : " dossier, ") + pcs + " livrables, " + infs + " inférences."
             : "Exporté il y a " + age + (age > 1 ? " jours" : " jour") + ". Le fichier sur le Drive fait foi."),
-          el("p.rgt-s", {}, "Le navigateur n'en garde qu'un cache. Import à l'ouverture, "
-            + "export à la fermeture — c'est ce qui règle le cas des deux machines."))),
+          el("p.rgt-s", {}, pds.fichier
+            ? "Les sauvegardes sont automatiques. L’export reste une copie que vous pouvez emporter."
+            : "Le navigateur n'en garde qu'un cache. Import à l'ouverture, export à la fermeture."))),
       el("div.rgt-g", {},
         el("button.b.or", { type: "button", onclick: function () {
           DEPOT.exporter(); DEPOT.noterExport(); rendre(hote); } }, "Exporter la base →"),
         el("button.b.nu", { type: "button", onclick: function () { importer(hote); } },
-          "Importer un fichier")),
+          "Importer un fichier"),
+        pds.fichier && !pds.surDisque && !DEPOT.conflits().length
+          ? el("button.b", { type: "button", onclick: function () {
+              DEPOT.relire(pds.fichier, function (ok) {
+                if (ok) DEPOT.ecrireSurDisque(function (recu) {
+                  if (recu) AVIS.fait("Sauvegarde reçue.");
+                  rendre(hote);
+                }); else AVIS.refus("La base reste indisponible. Votre brouillon est conservé ici.");
+              });
+            } }, "Réessayer la sauvegarde") : null),
       el("div.rgt-j", {},
         el("i", { style: { width: Math.min(100, pds.part) + "%" } }),
         el("span", {}, pds.mo + " Mo sur 5 Mo · plafond du navigateur"))
     ));
+    rapprochement(hote);
+    var reprises = DEPOT.reprisesDisponibles();
+    if (reprises.length) hote.appendChild(el("section.groupe", { "aria-label": "Autres brouillons conservés" },
+      el("h2", {}, "Autres brouillons conservés"),
+      el("p", {}, "Ces gestes proviennent d’un autre onglet. Ils restent disponibles après sa fermeture. Reprenez-les lorsque le travail ouvert est sauvegardé."),
+      reprises.map(function (r) {
+        return el("button.b", { type: "button", disabled: !pds.surDisque,
+          onclick: function () { DEPOT.reprendre(r.cle); } }, (r.ancien ? "Rapprocher l’ancien cache conservé le " : "Reprendre le brouillon du ") + new Date(r.quand).toLocaleString("fr-FR"));
+      })));
 
     hote.appendChild(el("div.groupe", {},
       el("div.section-titre", {}, "Le poste de travail"),

@@ -189,7 +189,9 @@ window.APP = (function () {
     /* Le dépôt d'abord : c'est la seule perte irréversible du produit, et il
      * vit derrière cette place depuis que les réglages y ont déménagé. */
     if (cle === "referentiel") {
-      if (age === null || age > 2) {
+      var pds = DEPOT.poids();
+      if (pds.fichier && !pds.surDisque) return { n: "!", ton: "alerte", quoi: "sauvegarde en attente — voir les paramètres" };
+      if (!pds.fichier && (age === null || age > 2)) {
         return { n: "!", ton: "alerte",
           quoi: age === null ? "la base n'a jamais été exportée"
             : "la base a été exportée il y a " + age + " jours" };

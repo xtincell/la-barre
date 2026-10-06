@@ -4,7 +4,8 @@
 // Usage : node servir.mjs [port]
 
 import { createServer } from "node:http";
-import { readFile, writeFile, rename, mkdir, stat } from "node:fs/promises";
+import { readFile, writeFile, rename, mkdir, stat, unlink } from "node:fs/promises";
+import { createHash, randomUUID } from "node:crypto";
 import { join, normalize, extname, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -52,6 +53,30 @@ const TYPES = {
 // aucune authentification et n'a rien à faire sur un réseau ouvert.
 
 const PLAFOND = 24 * 1024 * 1024; // 24 Mo
+
+// Contrôle et remplacement forment une section critique. L'installation
+// utilise un seul processus serveur ; les importeurs doivent utiliser PUT.
+const ecritures = new Map();
+async function exclusivement(cible, travail) {
+  const precedente = ecritures.get(cible) || Promise.resolve();
+  const operation = precedente.catch(() => {}).then(travail);
+  ecritures.set(cible, operation);
+  try { return await operation; }
+  finally { if (ecritures.get(cible) === operation) ecritures.delete(cible); }
+}
+const revision = (contenu) => '"' + createHash("sha256").update(contenu).digest("hex") + '"';
+async function remplacer(cible, contenu) {
+  await mkdir(dirname(cible), { recursive: true });
+  const provisoire = cible + ".ecriture-" + randomUUID();
+  try { await writeFile(provisoire, contenu, { flag: "wx" }); await rename(provisoire, cible); }
+  finally { await unlink(provisoire).catch((e) => { if (e.code !== "ENOENT") throw e; }); }
+}
+function json(reponse, statut, valeur, version) {
+  reponse.writeHead(statut, {
+    "Content-Type": "application/json", "Cache-Control": "no-store",
+    ...(version ? { ETag: version } : {}),
+  }).end(JSON.stringify(valeur));
+}
 
 function depotAutorise(chemin) {
   // L'application peut être servie depuis un sous-dossier (/la-barre/…) :
@@ -106,7 +131,7 @@ const serveur = createServer(async (requete, reponse) => {
       catch { reponse.writeHead(413).end("Corps trop volumineux"); return; }
 
       // Ce qu'on écrit : des octets d'image, ou un dépôt qui se relit.
-      let contenu;
+      let contenu, neuf;
       if (estVignette) {
         // Le navigateur envoie une donnée « data:image/… ;base64,… » : elle se
         // range en fichier binaire, pas en texte.
@@ -124,7 +149,10 @@ const serveur = createServer(async (requete, reponse) => {
         }
       } else {
         // Un dépôt illisible ne doit jamais écraser un dépôt lisible.
-        try { JSON.parse(texte); }
+        try {
+          neuf = JSON.parse(texte);
+          if (!neuf || typeof neuf !== "object" || Array.isArray(neuf)) throw new Error("objet attendu");
+        }
         catch {
           reponse.writeHead(400, { "Content-Type": "application/json" })
             .end(JSON.stringify({ ok: false, quoi: "JSON illisible — rien n'a été écrit" }));
@@ -132,52 +160,53 @@ const serveur = createServer(async (requete, reponse) => {
         }
         contenu = Buffer.from(texte, "utf8");
 
-        // Ne jamais écraser une base plus récente. Le 01/10/2026, un onglet ouvert
-        // depuis le matin a réenregistré sa vieille copie en recalculant ses
-        // blocages, et effacé une journée de travail. Deux verrous :
-        //  — une base plus ancienne que le fichier en place est refusée (protège
-        //    aussi les onglets restés sur l'ancien code) ;
-        //  — si l'application annonce la version qu'elle a lue (X-Base) et que le
-        //    fichier a changé depuis, l'écriture est refusée : elle rechargera.
-        const enPlace = join(RACINE, normalize(chemin).replace(/^(\.\.[/\\])+/, ""));
-        try {
-          const actuel = JSON.parse(await readFile(enPlace, "utf8"));
-          const neuf = JSON.parse(texte);
-          const vA = actuel && actuel.enregistre_le, vN = neuf && neuf.enregistre_le;
-          const base = requete.headers["x-base"];
-          if (vA && !base) {
-            // Une page qui n'annonce pas ce qu'elle a lu est une page d'avant ce
-            // verrou : elle doit se recharger avant d'écrire.
-            reponse.writeHead(428, { "Content-Type": "application/json" })
-              .end(JSON.stringify({ ok: false, conflit: true, actuel: vA,
-                quoi: "recharge la page : cette version de l'application n'annonce pas la base qu'elle a lue — rien n'a été écrit" }));
-            return;
-          }
-          const plusVieux = vA && vN && new Date(vN) < new Date(vA);
-          const depasse = base && vA && base !== vA;
-          if (plusVieux || depasse) {
-            reponse.writeHead(409, { "Content-Type": "application/json" })
-              .end(JSON.stringify({ ok: false, conflit: true, actuel: vA,
-                quoi: plusVieux ? "cette copie est plus ancienne que la base en place — rien n'a été écrit"
-                  : "la base a été enregistrée ailleurs depuis ta lecture — rien n'a été écrit" }));
-            return;
-          }
-        } catch { /* pas encore de fichier, ou illisible : l'écriture suit son cours */ }
+
       }
 
       const cible = join(RACINE, normalize(chemin).replace(/^(\.\.[/\\])+/, ""));
       if (!cible.startsWith(RACINE)) { reponse.writeHead(403).end("Interdit"); return; }
 
-      // Écriture atomique : on écrit à côté, puis on renomme. Une coupure au
-      // milieu laisse l'ancien fichier intact plutôt qu'un fichier tronqué.
-      await mkdir(dirname(cible), { recursive: true });
-      const provisoire = cible + ".ecriture";
-      await writeFile(provisoire, contenu);
-      await rename(provisoire, cible);
-
-      reponse.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" })
-        .end(JSON.stringify({ ok: true, octets: contenu.length,
-          quand: new Date().toISOString() }));
+      await exclusivement(cible, async () => {
+        const version = revision(contenu);
+        if (!estVignette) {
+          let avant = null, actuel = null;
+          try { avant = await readFile(cible); }
+          catch (e) { if (e.code !== "ENOENT") throw e; }
+          if (avant) {
+            try { actuel = JSON.parse(avant.toString("utf8")); }
+            catch {
+              json(reponse, 409, { ok: false, conflit: true, code: "BASE_ILLISIBLE", quoi: "La base ne peut pas être relue ; elle a été conservée sans remplacement." });
+              return;
+            }
+          }
+          const attendue = requete.headers["if-match"];
+          const creation = requete.headers["if-none-match"] === "*";
+          const base = requete.headers["x-base"];
+          const courante = avant ? revision(avant) : null;
+          const vA = actuel && actuel.enregistre_le;
+          if (avant ? (!attendue && !base && !creation) : !creation) {
+            json(reponse, 428, { ok: false, conflit: true, code: "REVISION_REQUISE", quoi: "La version lue est requise avant la sauvegarde." }, courante);
+            return;
+          }
+          // Une réponse perdue ne transforme pas un geste déjà reçu en échec.
+          if (avant && courante === version && !creation) {
+            json(reponse, 200, { ok: true, dejaRecu: true, revision: courante,
+              enregistre_le: vA || null, octets: avant.length }, courante);
+            return;
+          }
+          const depasse = avant && (creation || (attendue ? attendue !== courante
+            : !vA || base !== vA || (neuf.enregistre_le && new Date(neuf.enregistre_le) < new Date(vA))));
+          if (depasse) {
+            json(reponse, 409, { ok: false, conflit: true, code: "REVISION_DEPASSEE",
+              actuel: vA || null, revision: courante, quoi: "Une autre version a été enregistrée. Vos modifications doivent être rapprochées de cette version." }, courante);
+            return;
+          }
+        }
+        await remplacer(cible, contenu);
+        json(reponse, 200, { ok: true, octets: contenu.length,
+          revision: version, enregistre_le: neuf?.enregistre_le || null,
+          quand: new Date().toISOString() }, version);
+      });
       return;
     }
 
@@ -198,6 +227,7 @@ const serveur = createServer(async (requete, reponse) => {
     reponse.writeHead(200, {
       "Content-Type": TYPES[extname(absolu).toLowerCase()] || "application/octet-stream",
       "Cache-Control": "no-store",
+      ...(depotAutorise(chemin) ? { ETag: revision(corps) } : {}),
     });
     reponse.end(corps);
   } catch (erreur) {
@@ -209,6 +239,6 @@ const serveur = createServer(async (requete, reponse) => {
   }
 });
 
-serveur.listen(PORT, () => {
+serveur.listen(PORT, process.env.HOST || "0.0.0.0", () => {
   console.log(`Processus Matanga — http://localhost:${PORT}`);
 });
