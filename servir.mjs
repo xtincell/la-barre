@@ -6,8 +6,11 @@
 import { createServer } from "node:http";
 import { readFile, writeFile, rename, mkdir, stat, unlink } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
-import { join, normalize, extname, dirname } from "node:path";
+import { join, normalize, extname, dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createReadStream } from "node:fs";
+import { homedir } from "node:os";
+import { execFile } from "node:child_process";
 
 const RACINE = fileURLToPath(new URL(".", import.meta.url));
 const PORT = Number(process.argv[2] || process.env.PORT || 5173);
@@ -39,7 +42,67 @@ const TYPES = {
   ".webm": "video/webm",
   ".mov": "video/quicktime",
   ".m4v": "video/x-m4v",
+  ".pdf": "application/pdf",
+  ".gif": "image/gif",
+  ".tif": "image/tiff",
+  ".tiff": "image/tiff",
+  ".psd": "image/vnd.adobe.photoshop",
+  ".psb": "image/vnd.adobe.photoshop",
+  ".ai": "application/postscript",
+  ".eps": "application/postscript",
 };
+
+// ————— Le disque de l'agence, en local seulement —————
+//
+// Les masters, les vidéos et les EXE vivent dans les deux exports de
+// Téléchargements, pas dans ce dossier. En local, LA BARRE les lit ici, en
+// lecture seule : /disque/matanga/… et /disque/upgraders/…. Le site en ligne ne
+// les a pas et n'a pas à les avoir — il montre les copies compressées du proxy.
+// Deux gardes : la requête vient de cette machine, et le chemin ne sort jamais
+// de l'export.
+const DISQUES = {
+  matanga: join(homedir(), "Downloads", "MATANGA — EXPORT DU TRAVAIL"),
+  upgraders: join(homedir(), "Downloads", "UPGRADERS — EXPORT DU TRAVAIL"),
+};
+
+function deCetteMachine(requete) {
+  const a = requete.socket.remoteAddress || "";
+  const hote = String(requete.headers.host || "").replace(/:\d+$/, "");
+  return ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(a)
+    && ["localhost", "127.0.0.1", "[::1]"].includes(hote);
+}
+
+function cheminDisque(rel) {
+  const m = String(rel || "").match(/^(matanga|upgraders)\/(.+)$/);
+  if (!m || m[2].split("/").includes("..")) return null;
+  const racine = DISQUES[m[1]];
+  const absolu = normalize(join(racine, m[2]));
+  return absolu.startsWith(racine + sep) ? absolu : null;
+}
+
+/* Une vidéo se lit par morceaux : sans les plages, le lecteur ne sait pas
+ * avancer, et un film de deux gigaoctets se chargerait en entier. */
+async function servirDisque(requete, reponse, absolu) {
+  const infos = await stat(absolu);
+  if (!infos.isFile()) { reponse.writeHead(404).end("Introuvable"); return; }
+  const type = TYPES[extname(absolu).toLowerCase()] || "application/octet-stream";
+  const plage = String(requete.headers.range || "").match(/^bytes=(\d*)-(\d*)$/);
+  if (plage) {
+    const debut = plage[1] ? Number(plage[1]) : Math.max(0, infos.size - Number(plage[2]));
+    const fin = plage[1] && plage[2] ? Math.min(Number(plage[2]), infos.size - 1) : infos.size - 1;
+    if (debut > fin || debut >= infos.size) {
+      reponse.writeHead(416, { "Content-Range": `bytes */${infos.size}` }).end(); return;
+    }
+    reponse.writeHead(206, { "Content-Type": type, "Accept-Ranges": "bytes",
+      "Content-Range": `bytes ${debut}-${fin}/${infos.size}`, "Content-Length": fin - debut + 1,
+      "Cache-Control": "no-store" });
+    createReadStream(absolu, { start: debut, end: fin }).pipe(reponse);
+    return;
+  }
+  reponse.writeHead(200, { "Content-Type": type, "Accept-Ranges": "bytes",
+    "Content-Length": infos.size, "Cache-Control": "no-store" });
+  createReadStream(absolu).pipe(reponse);
+}
 
 // ————— Le dépôt vit sur disque, pas dans le navigateur —————
 //
@@ -116,6 +179,37 @@ const serveur = createServer(async (requete, reponse) => {
     const url = new URL(requete.url, "http://localhost");
     let chemin = decodeURIComponent(url.pathname);
     if (chemin === "/") chemin = "/index.html";
+
+    // Le disque de l'agence : lire un fichier, ou l'ouvrir dans son logiciel.
+    if (chemin.startsWith("/disque/") || chemin === "/disque-ouvrir") {
+      if (!deCetteMachine(requete)) { reponse.writeHead(403).end("Réservé à cette machine"); return; }
+      if (chemin === "/disque-ouvrir") {
+        // Un en-tête maison : une page d'un autre site ne peut pas l'envoyer sans
+        // une autorisation que ce serveur ne donne jamais.
+        if (requete.method !== "POST" || requete.headers["x-la-barre"] !== "1") {
+          reponse.writeHead(403).end("Interdit"); return;
+        }
+        let corps;
+        try { corps = JSON.parse(await lireCorps(requete)); } catch { reponse.writeHead(400).end("Illisible"); return; }
+        const absolu = cheminDisque(corps.chemin);
+        if (!absolu) { reponse.writeHead(403).end("Hors des exports"); return; }
+        await stat(absolu);
+        execFile("open", corps.reveler ? ["-R", absolu] : [absolu], (err) => {
+          reponse.writeHead(err ? 500 : 200, { "Content-Type": "application/json" })
+            .end(JSON.stringify({ ok: !err }));
+        });
+        return;
+      }
+      if (requete.method !== "GET" && requete.method !== "HEAD") { reponse.writeHead(405).end(); return; }
+      if (chemin === "/disque/") {
+        reponse.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" })
+          .end(JSON.stringify({ ok: true })); return;
+      }
+      const absolu = cheminDisque(chemin.slice("/disque/".length));
+      if (!absolu) { reponse.writeHead(403).end("Hors des exports"); return; }
+      await servirDisque(requete, reponse, absolu);
+      return;
+    }
 
     // L'écriture du dépôt, et celle des vignettes.
     if (requete.method === "PUT" || requete.method === "POST") {
