@@ -2927,3 +2927,14 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .disque-t b { font-weight: 500; overflow-wrap: anywhere; }
 .disque-t span { font-size: var(--t-micro); color: var(--clair-terne); }
 @media (max-width: 480px) { .disque-e { grid-template-columns: 48px 1fr; } .disque-e .disque-g { grid-column: 2; } }
+.disque-a audio { width: 100%; max-width: 420px; height: 36px; margin-top: var(--e1); }
+
+/* La réserve de concepts. */
+.co-l { display: grid; gap: var(--e3); padding: var(--e3) 0; }
+.co-c { display: grid; gap: var(--e2); padding: var(--e3); border: 1px solid var(--trait); border-radius: var(--r-s); min-width: 0; }
+.co-t { display: flex; gap: var(--e2); align-items: baseline; flex-wrap: wrap; }
+.co-t h3 { margin: 0; font-family: var(--ecrit, var(--lecture)); font-style: italic; font-weight: 500; }
+.co-p { margin: 0; max-width: 65ch; }
+.co-x, .co-m { margin: 0; font-size: var(--t-meta); color: var(--clair-terne); max-width: 65ch; }
+.co-v { display: flex; gap: var(--e2); flex-wrap: wrap; }
+.co-v img { width: 120px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-s); }

@@ -490,6 +490,9 @@ window.VUE_PROJETS = (function () {
       var fds = COUVERTURE.fonds(m);
       if (fds) hote.appendChild(fds);
     }
+    /* Les concepts qu'aucune campagne n'a encore pris : ils attendent leur brief ici. */
+    if (window.CONCEPTS && m) hote.appendChild(CONCEPTS.bloc(m, function () {
+      var y = window.scrollY; marcheDeMarque(hote, marqueId); window.scrollTo(0, y); }));
     if (window.DISQUE && m && DISQUE.bloc(m.disque)) hote.appendChild(DISQUE.bloc(m.disque));
 
     /* Le dossier de marque au complet : les quatre piliers, le brief de

@@ -23,6 +23,7 @@ H = os.path.expanduser("~")
 EXPORTS = {"matanga": H + "/Downloads/MATANGA — EXPORT DU TRAVAIL", "upgraders": H + "/Downloads/UPGRADERS — EXPORT DU TRAVAIL"}
 CODE = ("/Spawt/08 PRODUIT & APPLICATION/", "/SPAWT Design System", "/_UPgraders — la structure/upgraders os v1")
 VIDEOS = (".mp4", ".mov", ".m4v", ".webm", ".avi", ".mkv", ".mts")
+AUDIOS = (".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg")
 d = json.load(open(SRC))
 CAMP = {c["nom"]: c for c in d["campagnes"]}
 MARQ = {m["nom"]: m for m in d["marques"]}
@@ -109,13 +110,14 @@ for k, racine in EXPORTS.items():
         for f in fn:
             if f.startswith("._"): continue
             ext = os.path.splitext(f)[1].lower()
-            genre = "video" if ext in VIDEOS else ("exe" if dans_exe else None)
+            genre = "video" if ext in VIDEOS else "audio" if ext in AUDIOS else ("exe" if dans_exe else None)
             if not genre: continue
             p = os.path.join(dp, f); rel = k + "/" + os.path.relpath(p, racine)
             x = {"id": "D-" + cle(rel)[:10], "genre": genre, "nom": f, "chemin": rel, "ext": ext,
                  "octets": os.path.getsize(p)}
-            if genre == "video": x["duree"] = duree(p)
-            a = apercu(p, ext, os.path.join(apercus, cle(rel)[:16] + ".jpg"))
+            if genre in ("video", "audio"): x["duree"] = duree(p)
+            st = os.stat(p); x["date"] = datetime.datetime.fromtimestamp(getattr(st, "st_birthtime", st.st_mtime)).strftime("%Y-%m-%d")
+            a = apercu(p, ext, os.path.join(apercus, cle(rel)[:16] + ".jpg")) if genre != "audio" else None
             if a: x["apercu"] = os.path.relpath(a, APP); n_apercus += 1
             o = cible(p, racine)
             if o is None: x["dossier"] = "/".join(rel.split("/")[1:3]); sans_place.append(x); continue
@@ -125,7 +127,7 @@ n_c = n_m = 0
 for o in d["campagnes"] + d["marques"]:
     o.pop("disque", None)
     if o["id"] in par_objet:
-        o["disque"] = sorted(par_objet[o["id"]], key=lambda x: (x["genre"] != "video", x["nom"]))
+        o["disque"] = sorted(par_objet[o["id"]], key=lambda x: ({"video": 0, "audio": 1}.get(x["genre"], 2), x["date"] if x["genre"] == "audio" else "", x["nom"]))
         if o in d["campagnes"]: n_c += 1
         else: n_m += 1
 d["disque_sans_place"] = sorted(sans_place, key=lambda x: x["chemin"])

@@ -94,13 +94,28 @@ window.DISQUE = (function () {
       gestes(x));
   }
 
+  /* Un son : il s'écoute en local, il reste au disque en ligne. Daté, parce que
+   * les sons s'empilent par séances (une version, une retouche, des stems) et que
+   * l'historique est la seule façon de retrouver la bonne. */
+  function son(x) {
+    return el("li.disque-e.disque-a", {},
+      el("span.disque-ext", {}, "♪"),
+      el("span.disque-t", {}, el("b", {}, titre(x)),
+        el("span", {}, [x.date ? O.joli(x.date) : null, duree(x.duree), x.ext.replace(".", "").toUpperCase(), poids(x.octets)].filter(Boolean).join(" · ")),
+        local ? el("audio", { src: url(x.chemin), controls: "controls", preload: "none" }) : null),
+      gestes(x));
+  }
+
   /* Le bloc : les vidéos se regardent, les EXE s'ouvrent. Replié par défaut. */
   function bloc(liste) {
     var xs = liste || [];
     if (!xs.length) return null;
     var vs = xs.filter(function (x) { return x.genre === "video"; });
     var es = xs.filter(function (x) { return x.genre === "exe"; });
+    var as = xs.filter(function (x) { return x.genre === "audio"; })
+      .sort(function (a, b) { return (a.date || "") < (b.date || "") ? -1 : 1; });
     var compte = [vs.length ? vs.length + " vidéo" + (vs.length > 1 ? "s" : "") : null,
+      as.length ? as.length + " son" + (as.length > 1 ? "s" : "") : null,
       es.length ? es.length + " EXE" : null].filter(Boolean).join(" · ");
     return el("details.fonds.disque", {},
       el("summary", {}, "Au disque", el("span.studio-compte", {}, String(xs.length)),
@@ -108,6 +123,7 @@ window.DISQUE = (function () {
           ? " — lus depuis l'export, sur cette machine"
           : " — ils restent au disque de l'agence : en ligne, seuls leurs aperçus se voient"))),
       vs.length ? el("div.fonds-g.disque-vg", {}, vs.map(video)) : null,
+      as.length ? el("ul.fonds-l.disque-al", {}, as.map(son)) : null,
       es.length ? el("ul.fonds-l.disque-el", {}, es.map(exe)) : null);
   }
 
@@ -139,7 +155,7 @@ window.DISQUE = (function () {
     var n = (DEPOT.tout().disque_sans_place || []).length;
     var tot = porteurs().reduce(function (s, r) { return s + r.xs.length; }, 0) + n;
     if (!tot) return { t: "Rien n'est relevé au disque", q: "Lance outils/disque-2026.py pour relever les vidéos et les EXE des exports." };
-    return { t: tot + " vidéos et EXE au disque",
+    return { t: tot + " vidéos, sons et EXE au disque",
       q: (local ? "Ils se regardent et s'ouvrent depuis cette machine. " : "En ligne, seuls leurs aperçus se voient : les fichiers restent au disque. ")
         + (n ? n + " n'ont pas de campagne ni de marque au dépôt : ils restent lisibles ici." : "Tous sont rattachés à une campagne ou à une marque.") };
   }
