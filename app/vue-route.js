@@ -63,6 +63,8 @@ window.VUE_ROUTE = (function () {
        * lire une plaidoirie avant de savoir sur quoi elle porte. */
       AXE.bloc(p, pi, apres),
       argumentaire(pi),
+      /* La fabrique : maquettes, storyboard, conducteur, musique — ce qui montre la piste avant l'arbitrage. */
+      window.FABRIQUE ? FABRIQUE.bloc(pi) : null,
       DISPOSITIF.bloc(p, pi, apres),
       RETRO.bloc(p, pi, apres),
       mes.length ? blocKV(p, pi, mes, apres) : null,
