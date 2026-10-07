@@ -56,19 +56,21 @@ if MODE == "appliquer":
     for g in gestes:
         a, b = g["actuel"], g["nouveau"]
         ka, kb = racine_de(a), racine_de(b)
-        if not ka or not kb or ka == "coffre": echecs.append(f"hors des exports : {a}"); continue
+        # Un fichier resté dans les sources (Work 2026, Téléchargements) entre dans un export : sa ligne naît au manifeste.
+        if not kb or kb == "coffre" or ka == "coffre" or (not ka and not a.startswith(DL + os.sep)):
+            echecs.append(f"hors des exports : {a}"); continue
         if not os.path.exists(a): echecs.append(f"introuvable : {a}"); continue
         if a == b: continue
         base, ext = os.path.splitext(b); k = 2
         while os.path.exists(b): b = f"{base} ({k}){ext}"; k += 1
         os.makedirs(os.path.dirname(b), exist_ok=True)
         shutil.move(a, b); n += 1
-        orig = M[ka].retirer(a) or {"source": a, "op": "deplacer"}
+        orig = (M[ka].retirer(a) if ka else None) or {"source": a, "op": "deplacer"}
         M[kb].ajouter(orig["source"], b, orig["op"])
         journaux[kb].append([a, b, g.get("motif", ""), quand])
         # Le dossier quitté, s'il est vide, disparaît (il ne contenait plus rien).
         d = os.path.dirname(a)
-        while d not in RACINES.values() and os.path.isdir(d) and not [f for f in os.listdir(d) if f != ".DS_Store"]:
+        while ka and d not in RACINES.values() and os.path.isdir(d) and not [f for f in os.listdir(d) if f != ".DS_Store"]:
             shutil.rmtree(d); d = os.path.dirname(d)
     for k, m in M.items():
         m.sauver()
