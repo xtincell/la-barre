@@ -296,7 +296,7 @@ window.VUE_PLANCHE = (function () {
               responsable: maitre.responsable, origine: "prevu", pisteId: maitre.pisteId,
               maitre: maitre.id, versionMaitre: maitre.version || 1, version: 1, versions: [],
               estime: null, reel: null, toursVendus: maitre.toursVendus,
-              assets: [], entrees: [], annotations: [], mockups: [], volets: volets,
+              assets: [], entrees: [], annotations: [], mockups: [], points: points,
             });
             faits++;
           });

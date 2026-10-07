@@ -20,3 +20,4 @@ jobs:
           for fichier in app/*.js; do node --check "$fichier" || exit; done
       - run: npm run test:persistance
       - run: npm run test:manuel
+      - run: npm run test:marches

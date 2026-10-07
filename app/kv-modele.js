@@ -206,9 +206,10 @@ window.KV = (function () {
       cout: "sans marque déclarée, impossible de vérifier le SKU ni la charte" });
 
     var langueMarche = m ? (m.langues || []) : [];
-    var langueOk = !k.langue || !langueMarche.length || langueMarche.indexOf(k.langue) !== -1;
+    var langueOk = langueMarche.length > 0 && langueMarche.indexOf(k.langue) !== -1;
     out.push({ quoi: "Langue du marché", ok: langueOk && !!k.langue, poids: 5,
-      cout: !k.langue ? "langue non déclarée"
+      cout: !langueMarche.length ? "langues du marché non renseignées — conformité impossible à vérifier"
+        : !k.langue ? "langue non déclarée"
         : "le marché parle " + langueMarche.map(O.langue).join(" ou ")
           + ", le KV est en " + O.langue(k.langue) });
 
@@ -217,8 +218,10 @@ window.KV = (function () {
       cout: !k.copy ? "aucune accroche" : "« " + k.copy + " » fait " + mots + " mots — refusable au §8" });
 
     var skuHorsMarche = skuNonDistribues(m, k);
-    out.push({ quoi: "SKU distribués ici", ok: skuHorsMarche.length === 0, poids: 5,
-      cout: skuHorsMarche.length
+    var distributionConnue = !!(m && (m.sku || []).length);
+    out.push({ quoi: "SKU distribués ici", ok: distributionConnue && skuHorsMarche.length === 0, poids: 5,
+      cout: !distributionConnue ? "SKU distribués sur le marché non renseignés — conformité impossible à vérifier"
+        : skuHorsMarche.length
         ? "« " + skuHorsMarche[0] + " » n'est pas distribué sur ce marché"
         : "" });
 
@@ -241,10 +244,10 @@ window.KV = (function () {
     var mentionsMarche = m ? (m.mentions || []) : [];
     var portees = k.mentions || [];
     var manquantes = mentionsMarche.filter(function (x) { return portees.indexOf(x) === -1; });
-    out.push({ quoi: "Mentions obligatoires", ok: manquantes.length === 0, poids: 4,
+    out.push({ quoi: "Mentions obligatoires", ok: mentionsMarche.length > 0 && manquantes.length === 0, poids: 4,
       cout: mentionsMarche.length
         ? manquantes.length + " mentions du marché absentes du KV"
-        : "le marché n'a pas de mentions renseignées" });
+        : "mentions du marché non renseignées — conformité impossible à vérifier" });
 
     return out;
   }
