@@ -1,4 +1,4 @@
-# completer-plateformes-2026.py — les plateformes de marque, complétées depuis tout ce que la machine porte.
+# completer-plateformes-2026.py — compléter les plateformes avec la provenance de chaque champ.
 #
 # Sources fouillées le 30/09/2026 : Downloads/Work 2026 (marques clients, ventures, preuves de
 # direction, zone à trier), le Bureau iCloud (chartes clients, archives avant 2025), les fiches du
@@ -11,6 +11,9 @@
 #   — une valeur reçue remplace une inférence (ou, si la marque le demande, une valeur existante) ;
 #     l'ancienne valeur entre dans les révisions du niveau, l'inférence levée dans inferencesLevees ;
 #   — une valeur inférée ne s'écrit que dans un champ vide ;
+#     son motif vient de `inferences[champ].pourquoi` ou d'un `motif` explicite
+#     commun à la marque. Sans motif, sa provenance reste à qualifier ; les
+#     documents du lot ou d'un autre champ ne lui sont jamais attribués ;
 #   — un déplacement de client garde l'ancien client dans la fiche de la marque.
 #
 # Usage : python3 outils/completer-plateformes-2026.py <depot-source.json> <depot-sortie.json>
@@ -72,13 +75,18 @@ for f in sorted(glob.glob(os.path.join(ICI, "plateformes-2026", "[!_]*.json"))):
             srcs[cle] = sources.get(sk, sk)
             bilan["recus"] += 1; touche = True
 
-        cites = sorted({sources.get(sk, sk) for (_, sk) in prop.get("recu", {}).values()}) or list(sources.values())
-        motif = ("Déduit des documents de la machine : " + " ; ".join(cites[:4])
-                 + (" …" if len(cites) > 4 else "") + ". À contresigner ou corriger.")
+        cites = sorted({sources.get(sk, sk) for (_, sk) in prop.get("recu", {}).values()})
         for cle, val in prop.get("infere", {}).items():
             val = norme(cle, val)
             if not vide(v.get(cle)) or vide(val):
                 continue
+            metadata = prop.get("inferences", {})
+            metadata = metadata.get(cle, {}) if isinstance(metadata, dict) else {}
+            motif = metadata.get("pourquoi") if isinstance(metadata, dict) else None
+            if not isinstance(motif, str) or not motif.strip():
+                motif = prop.get("motif")
+            if not isinstance(motif, str) or not motif.strip():
+                motif = "Inférence sans motif documenté : provenance à qualifier. À contresigner ou corriger."
             v[cle] = val
             infs[cle] = {"pourquoi": motif, "quand": QUAND, "par": PAR}
             bilan["inferes"] += 1; touche = True
@@ -108,7 +116,8 @@ for f in sorted(glob.glob(os.path.join(ICI, "plateformes-2026", "[!_]*.json"))):
             bilan["marques"] += 1
             journal.append({"quand": QUAND, "qui": PAR, "action": "plateforme complétée", "type": "marques",
                             "id": mid, "marques": [mid],
-                            "detail": m["nom"] + " — depuis " + "; ".join(cites[:3])})
+                            "detail": m["nom"] + " — provenance détaillée par champ."
+                            + (" Sources des valeurs reçues : " + "; ".join(cites) if cites else "")})
 
 d["enregistre_le"] = QUAND
 json.dump(d, open(DST, "w"), ensure_ascii=False, indent=1)
