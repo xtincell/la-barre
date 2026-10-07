@@ -3016,14 +3016,14 @@ ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; wid
 .pp-fil { display: flex; gap: var(--e3); overflow-x: auto; padding-bottom: var(--e2); scroll-snap-type: x proximity; }
 /* Une bande = une hauteur commune ; chaque image garde ses proportions, la légende suit sa largeur. */
 .pp-t { margin: 0; flex: 0 0 auto; width: min-content; display: grid; gap: var(--e1); scroll-snap-align: start; }
-.pp-t img { display: block; height: 120px; width: auto; max-width: none; background: #fff; border-radius: var(--r-s); border: 1px solid var(--trait); }
+.pp-t img { display: block; height: 120px; width: auto; min-width: 90px; max-width: none; background: #fff; border-radius: var(--r-s); border: 1px solid var(--trait); }
 .pp-tv { width: 160px; height: 120px; border-radius: var(--r-s); border: 1px solid var(--trait); }
 .pp-tv { display: grid; place-items: center; padding: var(--e2); text-align: center; font-size: var(--t-micro); color: var(--clair-terne); background: var(--surface-2); border-style: dashed; }
 .pp-t figcaption { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
 .pp-kvv img { height: 160px; }
-.pp-sb .pp-t img { height: 180px; }
+.pp-sb .pp-t img { height: 180px; min-width: 101px; }  /* la largeur 9:16, tant que l'image charge */
 .pp-sb .pp-tv { width: 101px; height: 180px; }
-.pp-sb.h .pp-t img { height: 110px; }
+.pp-sb.h .pp-t img { height: 110px; min-width: 196px; }
 .pp-sb.h .pp-tv { width: 196px; height: 110px; }
 .pp-n { margin: 0; font-size: var(--t-eti); color: var(--clair-terne); }
 .pp-cmp-t { margin-top: var(--e4); }
@@ -3042,3 +3042,4 @@ ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; wid
 .fb-par { margin: 0; font-family: var(--ecrit); font-style: italic; font-size: var(--t-meta); color: var(--clair); }
 .fb-st { margin: 0; font-size: var(--t-micro); color: var(--clair-terne); }
 .fb-st.a-faire { color: var(--arbitrage); font-weight: 600; }
+.fb-perso { display: block; width: 100%; max-width: 760px; height: auto; margin: var(--e2) 0; background: #fff; border-radius: var(--r-s); }

@@ -103,7 +103,8 @@ window.FABRIQUE = (function () {
         return "v" + v.version + " archivée le " + O.joli(String(v.archive_le).slice(0, 10)) + (v.motif ? " — " + v.motif : ""); }).join(" · ")) : null,
       (s.personnages || []).length ? el("div.fb-f", {}, el("h4", {}, "Les personnages"),
         table(["Nom", "Qui", "Signe distinctif"], s.personnages.map(function (x) { return [x.nom, x.qui, x.signe]; })),
-        s.tenue ? el("p.fb-n", {}, s.tenue) : null) : null,
+        s.tenue ? el("p.fb-n", {}, s.tenue) : null,
+        s.planchePersonnages ? el("img.fb-perso", { src: s.planchePersonnages, alt: "Planche personnages", loading: "lazy" }) : null) : null,
       prompt("Préfixe de style, à coller en tête de chaque prompt", s.style, "Le préfixe de style"),
       el("div.fb-sb" + (s.ratio === "16:9" ? ".h" : ""), {}, s.cases.map(function (c) {
         return el("article.fb-case", {},
@@ -111,6 +112,7 @@ window.FABRIQUE = (function () {
             : el("div.fb-vide", {}, "case " + c.n),
           el("div.fb-ct", {}, el("b", {}, "Case " + c.n), " · " + [c.temps, c.cadrage].filter(Boolean).join(" · ")),
           c.paroles ? el("p.fb-par", {}, "« " + c.paroles + " »") : null,
+          c.reemploi ? el("p.fb-st", {}, "Réemploi du " + c.reemploi) : null,
           c.statut ? el("p.fb-st" + (/^à générer/.test(c.statut) ? ".a-faire" : ""), {}, c.statut) : null,
           c.action ? el("p.fb-a", {}, c.action) : null,
           c.son ? el("p.fb-m", {}, "Son : " + c.son) : null,
