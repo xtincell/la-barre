@@ -136,13 +136,32 @@ window.FABRIQUE = (function () {
         })));
   }
 
+  /* La portée du spot : exclusif à une marque et un marché, ou pensé pour être décliné.
+   *   pi.fabrique.spot = { exclusif, marqueIds, marches, axes: [], source: { qui, quand } } */
+  function noms(coll, ids) {
+    return (ids || []).map(function (id) { var x = DEPOT.trouve(coll, id); return x ? x.nom : id; });
+  }
+  function portee(pi) {
+    var s = (pi.fabrique || {}).spot;
+    if (!s) return null;
+    var marques = noms("marques", s.marqueIds), marches = noms("marches", s.marches);
+    if (s.exclusif) return el("p.fb-portee.exclusif", {},
+      el("b", {}, "Spot exclusif : "), [marques.join(", "), marches.join(", ")].filter(Boolean).join(", en ")
+        + " seulement. Il ne se décline pas.");
+    return el("div.fb-portee.decline", {},
+      el("p", {}, el("b", {}, "Pensé pour être décliné"),
+        marques.length ? " : " + marques.join(", ") : "",
+        " · " + (marches.length ? marches.join(", ") : "marchés clés à lister avec le client")),
+      (s.axes || []).length ? el("ul", {}, s.axes.map(function (x) { return el("li", {}, x); })) : null);
+  }
+
   function bloc(pi) {
     var f = pi.fabrique || {};
-    var parts = [brouillons(pi), storyboard(f.storyboard), conducteur(f.conducteur), musique(f.musique), kv(f.kv), references(pi)]
+    var parts = [brouillons(pi), portee(pi), storyboard(f.storyboard), conducteur(f.conducteur), musique(f.musique), kv(f.kv), references(pi)]
       .filter(Boolean);
     if (!parts.length) return null;
     return el("section.fb-bloc", {}, el("div.section-titre", {}, "La fabrique", el("span.taille", {}, "· ce qu'il faut pour la montrer")), parts);
   }
 
-  return { bloc: bloc };
+  return { bloc: bloc, portee: portee };
 })();

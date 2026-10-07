@@ -3028,3 +3028,9 @@ ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; wid
 .pp-n { margin: 0; font-size: var(--t-eti); color: var(--clair-terne); }
 .pp-cmp-t { margin-top: var(--e4); }
 @media (max-width: 860px) { .pp-tete { grid-template-columns: 1fr; } }
+
+/* La portée du spot */
+.fb-portee { margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta, 1.5); color: var(--clair); max-width: 75ch; }
+.fb-portee p { margin: 0; }
+.fb-portee ul { margin: var(--e1) 0 0; padding-left: 1.2em; display: grid; gap: 2px; color: var(--clair-terne); }
+.fb-bloc > .fb-portee { margin: var(--e3) 0; }

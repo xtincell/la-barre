@@ -151,6 +151,7 @@ window.VUE_PISTES = (function () {
           el("h4", {}, "Le spot", el("span", {}, [sb ? sb.cases.length + " cases" : null,
             cond && cond.formats ? cond.formats.map(function (x) { return x.nom.replace(/\s*[—(].*$/, ""); }).join(", ") : null,
             mus && mus.titre ? "son « " + mus.titre + " »" : null].filter(Boolean).join(" · "))),
+          window.FABRIQUE ? FABRIQUE.portee(pi) : null,
           sb ? el("div.pp-fil.pp-sb" + (sb.ratio === "16:9" ? ".h" : ""), {}, (casesAvecImage.length ? casesAvecImage : sb.cases.slice(0, 8)).map(function (c) {
             return tuile(c.vignette, "Case " + c.n + (c.temps ? " · " + c.temps : ""), { vide: c.action ? String(c.action).slice(0, 70) : "Case " + c.n });
           })) : null,
