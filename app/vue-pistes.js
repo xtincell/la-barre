@@ -48,6 +48,9 @@ window.VUE_PISTES = (function () {
           + "lisibles : c'est leur sacrifice écrit qui rend la décision défendable."
         : "Ici on décide. La big idea, elle, se juge sur son opposabilité, pas sur ses pistes."),
 
+      el("div.pp-liste", {}, vives.map(function (pi) { return planche(p, pi, rafraichir); })),
+
+      el("div.section-titre.pp-cmp-t", {}, "Comparer les arguments côte à côte"),
       comparateur(p, vives, rafraichir),
 
       el("p.cmp-pied", {}, "Plusieurs pistes recommandées à égalité est un motif de "
@@ -89,6 +92,71 @@ window.VUE_PISTES = (function () {
     { cle: "pieces",     nom: "Livrables" },
   ];
   var LETTRES = "ABCDEF";
+
+  /* ————————————————————— La planche d'une piste —————————————————————
+   *
+   * Refonte du 07/10/2026 : « on doit voir la piste et ses déclinaisons, ses
+   * variations, en incluant le spot ». Le comparateur mettait les pistes en
+   * tableau d'arguments ; la planche les montre. Le KV en grand, ce que la piste
+   * dit, puis le fil de ce qu'elle a déjà produit : les maquettes successives,
+   * ses KV et déclinaisons par marché, le spot (storyboard, conducteur, son). */
+  function planche(p, pi, rafraichir) {
+    var da = pi.auteurDA ? DEPOT.trouve("personnes", pi.auteurDA) : null;
+    var idee = pi.ideeId ? (p.idees || []).filter(function (x) { return x.id === pi.ideeId; })[0] : null;
+    var auteurIdee = idee && idee.auteur && idee.auteur !== pi.auteurDA ? DEPOT.trouve("personnes", idee.auteur) : null;
+    var f = pi.fabrique || {};
+    var vs = (pi.kvBrouillons || []).slice().sort(function (a, b) { return (a.version || 0) - (b.version || 0); });
+    var visuel = pi.vignette || (vs.length ? vs[vs.length - 1].vignette : null);
+    var kvs = window.VUE_ROUTE ? VUE_ROUTE.kvs(p, pi) : [];
+    var decl = window.VUE_ROUTE ? VUE_ROUTE.declinaisons(p, pi) : [];
+    var sb = f.storyboard || null, cond = f.conducteur || null, mus = f.musique || null;
+    function ouvrir() { ouverte = pi.id; rafraichir(); window.scrollTo(0, 0); }
+    function tuile(src, legende, o) {
+      o = o || {};
+      return el("figure.pp-t" + (o.cls ? "." + o.cls : ""), { title: legende },
+        src ? el("img", { src: src, alt: legende, loading: "lazy" }) : el("span.pp-tv", {}, o.vide || legende),
+        el("figcaption", {}, legende));
+    }
+    function groupe(titre, compte, enfants) {
+      enfants = (enfants || []).filter(Boolean);
+      if (!enfants.length) return null;
+      return el("div.pp-g", {}, el("h4", {}, titre, compte ? el("span", {}, compte) : null), el("div.pp-fil", {}, enfants));
+    }
+    var marche = function (l) { var m = DEPOT.trouve("marches", l.marche); return m ? m.code : ""; };
+    var etat = pi.statut === "retenue" ? ["Retenue", "vert"] : pi.statut === "ecartee" ? ["Écartée", "terne"] : ["En lice", "attente"];
+    var casesAvecImage = sb ? sb.cases.filter(function (c) { return c.vignette; }) : [];
+
+    return el("article.pp", {},
+      el("div.pp-tete", {},
+        el("button.pp-kv", { type: "button", onclick: ouvrir, "aria-label": "Ouvrir la piste « " + (pi.titre || "") + " »" },
+          visuel ? el("img", { src: visuel, alt: "KV de la piste " + (pi.titre || "") }) : el("span.pp-kv-v", {}, "Pas encore de maquette")),
+        el("div.pp-id", {},
+          el("div.pp-titre", {}, el("h3", {}, pi.titre || "Piste sans titre"), UI.eti(etat[0], etat[1])),
+          el("p.pp-qui", {}, [da ? "DA " + da.nom : "DA non nommé",
+            auteurIdee ? "idée de " + auteurIdee.nom : null,
+            (DEPOT.trouve("personnes", pi.auteurCR) || {}).nom ? "rédaction " + DEPOT.trouve("personnes", pi.auteurCR).nom : null].filter(Boolean).join(" · ")),
+          pi.idee || pi.concept ? el("p.pp-idee", {}, pi.idee || String(pi.concept).slice(0, 260)) : null,
+          (pi.accroches || []).length ? el("div.pp-acc", {}, pi.accroches.map(function (a) { return el("span", {}, a); })) : null,
+          el("div.pp-gestes", {},
+            el("button.b.or", { type: "button", onclick: ouvrir }, "Ouvrir la piste")))),
+
+      el("div.pp-var", {},
+        groupe("Les maquettes du KV", vs.length > 1 ? vs.length + " versions" : null, vs.map(function (v) {
+          var r = (v.retours || []).filter(function (x) { return x.statut !== "traite"; }).length;
+          return tuile(v.vignette, "v" + v.version + (r ? " · " + r + " retour" + (r > 1 ? "s" : "") : ""), { cls: "pp-kvv" });
+        })),
+        groupe("KV et déclinaisons", (kvs.length + decl.length) ? (kvs.length + decl.length) + " pièces" : null,
+          kvs.concat(decl).slice(0, 14).map(function (l) { return tuile(l.vignette, [marche(l), l.nom].filter(Boolean).join(" · ")); })),
+        (sb || cond || mus) ? el("div.pp-g.pp-spot", {},
+          el("h4", {}, "Le spot", el("span", {}, [sb ? sb.cases.length + " cases" : null,
+            cond && cond.formats ? cond.formats.map(function (x) { return x.nom.replace(/\s*[—(].*$/, ""); }).join(", ") : null,
+            mus && mus.titre ? "son « " + mus.titre + " »" : null].filter(Boolean).join(" · "))),
+          sb ? el("div.pp-fil.pp-sb" + (sb.ratio === "16:9" ? ".h" : ""), {}, (casesAvecImage.length ? casesAvecImage : sb.cases.slice(0, 8)).map(function (c) {
+            return tuile(c.vignette, "Case " + c.n + (c.temps ? " · " + c.temps : ""), { vide: c.action ? String(c.action).slice(0, 70) : "Case " + c.n });
+          })) : null,
+          sb && !casesAvecImage.length ? el("p.pp-n", {}, "Storyboard écrit, images en attente.") : null) : null),
+      null);
+  }
 
   function comparateur(p, vives, rafraichir) {
     var n = vives.length;

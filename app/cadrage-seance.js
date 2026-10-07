@@ -41,32 +41,64 @@ window.CADRAGE_SEANCE = (function () {
     return t.length > n ? t.slice(0, n - 1).replace(/\s+\S*$/, "") + "…" : t;
   }
 
-  /* ————————————————————— Les pièces du document ————————————————————— */
+  /* ————————————————————— Les pièces du document —————————————————————
+   *
+   * Refonte du 07/10/2026 (« trop archaïque, difficile à lire, décourageant ») :
+   * plus de grille de cartes égales coiffées d'étiquettes en capitales. Une
+   * rubrique est une ligne — son nom à gauche, son contenu à droite — et son
+   * contenu s'ouvre sur sa première phrase, en grand : on lit l'essentiel en
+   * descendant la colonne, on déplie le reste quand on en a besoin. */
 
-  /* Une rubrique de la page de séance : un titre qui dit à quoi elle sert, et
-   * rien si elle est vide — sauf quand son absence coûte en séance. */
-  function carte(titre, corps, o) {
-    o = o || {};
-    if (!corps || (Array.isArray(corps) && !corps.length)) {
-      return o.manque ? el("div.cds-carte.cds-manque", {},
-        el("p.cds-e", {}, titre), el("p.cds-vide", {}, o.manque)) : null;
-    }
-    return el("div.cds-carte" + (o.large ? ".cds-large" : "") + (o.fort ? ".cds-fort" : ""), {},
-      el("p.cds-e", {}, titre, o.infere ? el("span.cds-inf", {}, "inféré") : null),
-      corps);
+  /* La première phrase porte l'idée ; le reste se déplie. */
+  function decouper(t) {
+    t = String(t || "").trim();
+    var m = t.match(/^([\s\S]{20,260}?[.!?…][»)]?)(\s+(?=[A-ZÀ-ÖØ-Þ«"(0-9])[\s\S]+)$/);
+    if (m) return [m[1].trim(), m[2].trim()];
+    if (t.length > 300) { var c = t.slice(0, 240).replace(/\s+\S*$/, ""); return [c + "…", t.slice(c.length).trim()]; }
+    return [t, ""];
   }
-  function prose(t, ecrit) { return plein(t) ? el("p.cds-p" + (ecrit ? ".cds-ecrit" : ""), {}, String(t)) : null; }
+  function lede(t, o) {
+    if (!plein(t)) return null;
+    o = o || {};
+    var d = o.ouvert && String(t).length <= 360 ? [String(t).trim(), ""] : decouper(t);
+    return el("div.cds-lede" + (o.ecrit ? ".cds-ecrit" : ""), {},
+      el("p.cds-lead", {}, d[0]),
+      d[1] ? (o.ouvert || d[1].length < 160
+        ? el("p.cds-p", {}, d[1])
+        : el("details.cds-suite", {}, el("summary", {}, "Lire la suite"), el("p.cds-p", {}, d[1]))) : null);
+  }
+  function prose(t, ecrit) { return lede(t, { ecrit: ecrit }); }
   function puces(v, cls) {
     var l = liste(v);
     return l.length ? el("ul.cds-l" + (cls ? "." + cls : ""), {}, l.map(function (x) { return el("li", {}, x); })) : null;
   }
+  function etiquetteInferee(o) { return o && o.infere ? el("span.cds-inf", {}, "inféré") : null; }
+
+  /* Une rubrique : son nom à gauche, son contenu à droite. Vide, elle ne
+   * s'affiche que si son absence coûte en séance — et elle dit ce coût. */
+  function rubrique(titre, corps, o) {
+    o = o || {};
+    var vide = !corps || (Array.isArray(corps) && !corps.filter(Boolean).length);
+    if (vide && !o.manque) return null;
+    return el("section.cds-r" + (vide ? ".cds-r-manque" : "") + (o.fort ? ".cds-r-fort" : ""), {},
+      el("h3.cds-rt", {}, titre, etiquetteInferee(o), o.sous ? el("span.cds-rs", {}, o.sous) : null),
+      el("div.cds-rc", {}, vide ? el("p.cds-vide", {}, o.manque) : corps));
+  }
+  /* Deux listes qui se répondent, côte à côte. */
+  function paire(a, b) {
+    var x = [a, b].filter(Boolean);
+    return x.length ? el("div.cds-paire", {}, x) : null;
+  }
+  function colonne(titre, corps, cls) {
+    return corps ? el("div.cds-col" + (cls ? "." + cls : ""), {}, el("h3.cds-ct", {}, titre), corps) : null;
+  }
+  /* Rétrocompatibilité : quelques appels gardent l'ancienne forme. */
+  function carte(titre, corps, o) { return rubrique(titre, corps, o); }
   function partie(n, id, titre, quoi, enfants) {
     enfants = enfants.filter(Boolean);
     if (!enfants.length) return null;
     return el("section.cds-partie", { id: id },
-      el("header.cds-ph", {},
-        el("span.cds-pn", {}, String(n)),
-        el("div", {}, el("h2", {}, titre), el("p.cds-pq", {}, quoi))),
+      el("header.cds-ph", {}, el("h2", {}, titre), el("p.cds-pq", {}, quoi)),
       enfants);
   }
 
@@ -80,41 +112,37 @@ window.CADRAGE_SEANCE = (function () {
     var insightTxt = retenu ? INSIGHT.texte(retenu) : (b.insight || st.insight);
     var couche = retenu && retenu.couche ? INSIGHT.couche(retenu.couche) : null;
     var question = pr.question || null;
-
     var interdits = liste(pr.interdits).concat(liste(st.gardefous));
 
     return [
-      /* La phrase au mur. Sans elle, la séance commence par la chercher. */
+      /* La phrase au mur, la seule chose soulevée de la page. */
       el("div.cds-mur" + (question ? "" : ".cds-manque"), {},
-        el("p.cds-e", {}, "La question de la séance"),
         question ? el("p.cds-q", {}, question)
-          : el("p.cds-vide", {}, "Pas écrite. La séance dépensera sa première demi-heure à la chercher — "
+          : el("p.cds-vide", {}, "La question n'est pas écrite. La séance dépensera sa première demi-heure à la chercher — "
               + "écrivez-la dans « Préparer la séance », une seule, commençant par « comment »."),
-        pr.infere ? el("p.cds-src", {}, "Préparation inférée — à relire avant d'entrer.") : null),
+        el("p.cds-mur-l", {}, "La question de la séance, à écrire au mur"
+          + (pr.infere ? " · préparation inférée, à relire avant d'entrer" : ""))),
 
-      el("div.cds-grille", {},
-        carte("Ce que la séance doit produire", prose(pr.objectif), { fort: true,
-          manque: "Le livrable de la séance n'est pas dit : trois angles ? une idée retenue ? On saura quand s'arrêter." }),
-        carte("Le problème réel", prose(st.probleme_reel), { manque: "Pas écrit : l'atelier résoudra la demande, pas ce qu'elle cache." }),
-        carte("L'insight" + (couche ? " · couche " + couche.nom.toLowerCase() : ""),
-          insightTxt ? el("div", {}, prose(insightTxt, true),
-            couche ? el("p.cds-src", {}, "Il commande " + couche.commande + ".") : null) : null,
+      plein(pr.objectif) ? el("p.cds-but", {}, el("b", {}, "La séance doit produire : "), pr.objectif)
+        : el("p.cds-but.cds-manque", {}, "Ce que la séance doit produire n'est pas dit : trois angles ? une idée retenue ? On saura quand s'arrêter."),
+
+      el("div.cds-rubriques", {},
+        rubrique("L'insight", insightTxt ? el("div", {}, lede(insightTxt, { ecrit: true, ouvert: true }),
+            couche ? el("p.cds-src", {}, "Couche " + couche.nom.toLowerCase() + " — elle commande " + couche.commande + ".") : null) : null,
           { fort: true, manque: "Aucun insight : les idées n'auront pas de racine commune." }),
-        carte("Le message clé", prose(b.message_cle, true)),
-        carte("Le job to be done", prose(b.jtbd)),
-        carte("À qui on parle", prose(court(b.cible, 420)))),
+        rubrique("Le message clé", lede(b.message_cle, { ecrit: true, ouvert: true })),
+        rubrique("Le problème réel", lede(st.probleme_reel), { manque: "Pas écrit : l'atelier résoudra la demande, pas ce qu'elle cache." }),
+        rubrique("À qui on parle", lede(b.cible)),
+        rubrique("Le job to be done", lede(b.jtbd))),
 
-      el("div.cds-grille.cds-2", {},
-        carte("Déjà tranché — ne se rediscute pas", puces(pr.a_trancher, "cds-ok")),
-        carte("On ne proposera pas", puces(interdits, "cds-non"))),
+      paire(colonne("Déjà tranché", puces(pr.a_trancher, "cds-ok"), "cds-oui"),
+            colonne("On ne proposera pas", puces(interdits, "cds-non"), "cds-non")),
 
-      el("div.cds-grille.cds-2", {},
-        carte("Ce qu'il faut produire", puces(b.livrables_attendus)),
-        carte("Les mandatories", puces(b.mandatories))),
+      paire(colonne("Ce qu'il faut produire", puces(b.livrables_attendus)),
+            colonne("Les mandatories", puces(b.mandatories))),
 
-      (plein(pr.deroule) || plein(pr.materiel)) ? el("div.cds-grille.cds-2", {},
-        carte("Le déroulé", puces(pr.deroule, "cds-tl")),
-        carte("À apporter en séance", puces(pr.materiel))) : null,
+      (plein(pr.deroule) || plein(pr.materiel)) ? paire(colonne("Le déroulé", puces(pr.deroule, "cds-tl")),
+            colonne("À apporter en séance", puces(pr.materiel))) : null,
 
       cadreBande(p, i),
     ];
@@ -125,7 +153,7 @@ window.CADRAGE_SEANCE = (function () {
     var d = [
       i.decideur ? ["Décideur", i.decideur] : null,
       i.echeance ? ["Échéance", O.joli(i.echeance)] : null,
-      i.fenetre ? ["Diffusion", court(i.fenetre, 90)] : null,
+      i.fenetre ? ["Diffusion", court(i.fenetre, 110)] : null,
     ].filter(Boolean);
     if (!d.length) return null;
     return el("dl.cds-bande", {}, d.map(function (x) {
@@ -141,20 +169,14 @@ window.CADRAGE_SEANCE = (function () {
     var ref = CAMPAGNE.pisteDeReference(c.id);
     var f = c.fenetre || {};
     return el("div.cds-cmp", {},
-      el("div.cds-cmp-t", {},
-        el("p.cds-e", {}, "La campagne"),
-        el("p.cds-cmp-n", {}, el("a", { href: "#/projets/" + c.id }, c.nom)),
-        f.debut ? el("p.cds-src", {}, O.joli(f.debut) + (f.fin ? " → " + O.joli(f.fin) : "")) : null),
-      ref ? el("p.cds-cmp-piste", {}, "La piste qui gouverne : ", el("b", {}, ref.piste.titre || "piste retenue"),
+      el("p.cds-cmp-n", {}, "Campagne ", el("a", { href: "#/projets/" + c.id, onclick: fermer }, c.nom),
+        f.debut ? el("span.cds-src", {}, "  ·  " + O.joli(f.debut) + (f.fin ? " → " + O.joli(f.fin) : "")) : null),
+      ref ? el("p.cds-src", {}, "La piste qui gouverne : ", el("b", {}, ref.piste.titre || "piste retenue"),
         " — arbitrée sur « " + ref.projet.nom + " ».") : null,
-      freres.length ? el("div.cds-freres", {},
-        el("p.cds-e", {}, freres.length + (freres.length > 1 ? " autres projets dans cette campagne" : " autre projet dans cette campagne")),
-        el("ul", {}, freres.map(function (x) {
-          var clos = window.CLOTURE && CLOTURE.est(x);
-          return el("li" + (clos ? ".cds-clos" : ""), {},
-            el("a", { href: "#/projets/" + x.id, onclick: fermer }, x.ref || x.id),
-            " ", x.nom, clos ? el("span.cds-src", {}, " · clos") : null);
-        }))) : el("p.cds-src", {}, "Seul projet de la campagne à ce jour."));
+      freres.length ? el("p.cds-src", {}, (freres.length > 1 ? freres.length + " autres projets : " : "Autre projet : "),
+        freres.map(function (x, k) {
+          return [k ? ", " : "", el("a", { href: "#/projets/" + x.id, onclick: fermer }, x.ref || x.id), " " + x.nom];
+        })) : el("p.cds-src", {}, "Seul projet de la campagne à ce jour."));
   }
 
   /* ————————————————————— 2 · La matière ————————————————————— */
@@ -168,65 +190,53 @@ window.CADRAGE_SEANCE = (function () {
     var mood = (p.sections.socle || {}).moodboard || [];
 
     return [
-      is.length ? bloc("Les insights", is.length + (is.length > 1 ? " racines possibles — une idée remonte à une seule" : " racine"),
-        el("div.cds-cartes", {}, is.map(function (x) {
+      plein(bi.idee) ? el("div.cds-idee", {},
+        el("p.cds-q.cds-q-m", {}, bi.idee),
+        el("p.cds-mur-l", {}, bi.propositionId ? "La big idea retenue" : "L'idée déjà sur la table — ni arbitrée, ni attribuée : une proposition parmi d'autres"),
+        plein(bi.mecanique) ? lede(bi.mecanique) : null) : null,
+
+      is.length ? rubrique("Les insights", el("div.cds-items", {}, is.map(function (x) {
           INSIGHT.normaliser(x);
           var c = x.couche ? INSIGHT.couche(x.couche) : null;
           var t = x.passes.temps || {};
           var v = INSIGHT.verdict(x);
-          return el("article.cds-obj", {},
-            el("p.cds-e", {}, c ? c.nom : "Couche non nommée", x.infere ? el("span.cds-inf", {}, "inféré") : null),
-            el("p.cds-p.cds-ecrit", {}, INSIGHT.texte(x)),
+          return el("article.cds-item", {},
+            el("p.cds-lead.cds-ecrit-l", {}, INSIGHT.texte(x)),
             (t.situation || t.tension || t.empeche) ? el("dl.cds-temps", {},
               t.situation ? [el("dt", {}, "Situation"), el("dd", {}, t.situation)] : null,
               t.tension ? [el("dt", {}, "Tension"), el("dd", {}, t.tension)] : null,
               t.empeche ? [el("dt", {}, "Ce que ça empêche"), el("dd", {}, t.empeche)] : null) : null,
-            el("p.cds-src", {}, v.nom + (x.sources && x.sources.length ? " · " + x.sources.length + " sources" : "")));
-        }))) : null,
+            el("p.cds-src", {}, [c ? "Couche " + c.nom.toLowerCase() : "Couche non nommée", v.nom,
+              x.sources && x.sources.length ? x.sources.length + " sources" : null, x.infere ? "inféré" : null].filter(Boolean).join(" · ")));
+        })), { sous: is.length > 1 ? is.length + " racines possibles — une idée remonte à une seule" : null }) : null,
 
-      ts.length ? bloc("Les territoires", "l'espace où plusieurs concepts vivent",
-        el("div.cds-cartes", {}, ts.map(function (t) {
+      ts.length ? rubrique("Les territoires", el("div.cds-items", {}, ts.map(function (t) {
           var n = TERRITOIRE.pistes(p, t).length;
-          var r = t.insightId ? INSIGHT.de(p, t.insightId) : null;
-          return el("article.cds-obj", {},
-            el("p.cds-e", {}, t.nom || "Territoire sans nom", t.infere ? el("span.cds-inf", {}, "inféré") : null),
-            prose(t.quoi),
-            r ? el("p.cds-src", {}, "Racine : « " + court(INSIGHT.texte(r), 90) + " »") : null,
-            el("p.cds-src", {}, n + (n > 1 ? " concepts posés" : " concept posé")));
-        }))) : (st.territoire ? bloc("Le territoire", null, prose(st.territoire)) : null),
+          return el("article.cds-item", {},
+            el("p.cds-item-t", {}, t.nom || "Territoire sans nom"),
+            lede(t.quoi),
+            el("p.cds-src", {}, n + (n > 1 ? " concepts posés" : " concept posé") + (t.infere ? " · inféré" : "")));
+        }))) : (st.territoire ? rubrique("Le territoire", lede(st.territoire)) : null),
 
-      (plein(pr.amorces) || plein(pr.directions)) ? el("div.cds-grille.cds-2", {},
-        carte("Les amorces — elles se jettent, elles ne se défendent pas", puces(pr.amorces)),
-        carte("Les directions à explorer", puces(pr.directions))) : null,
+      (plein(pr.amorces) || plein(pr.directions)) ? paire(
+        colonne("Les amorces — elles se jettent, elles ne se défendent pas", puces(pr.amorces)),
+        colonne("Les directions à explorer", puces(pr.directions))) : null,
 
-      plein(bi.idee) ? bloc(bi.propositionId ? "La big idea retenue" : "L'idée déjà sur la table",
-        bi.propositionId ? null : "ni arbitrée, ni attribuée — une proposition parmi d'autres",
-        el("div.cds-carte.cds-fort", {}, prose(bi.idee, true),
-          plein(bi.mecanique) ? el("p.cds-src", {}, "Mécanique : " + bi.mecanique) : null)) : null,
-
-      bis.length ? bloc("Les big ideas par école", (function () {
-          var r = BI_ECOLES.racines(p);
-          return bis.length + " propositions · " + r.n + (r.n > 1 ? " racines : l'arbitrage choisit d'abord l'insight" : " racine commune");
-        })(),
-        el("div.cds-cartes", {}, bis.map(function (c) {
+      bis.length ? rubrique("Les big ideas par école", el("div.cds-items", {}, bis.map(function (c) {
           var e = window.ECOLES && c.ecole ? ECOLES.de(c.ecole) : null;
-          var r = BI_ECOLES.racine(p, c);
-          return el("article.cds-obj" + (c.statut === "retenue" ? ".cds-ret" : ""), {},
-            el("p.cds-e", {}, e ? e.nom : "École non déclarée", c.statut === "retenue" ? el("span.cds-inf.cds-ok", {}, "retenue") : null),
-            c.titre ? el("p.cds-obj-t", {}, c.titre) : null,
-            prose(c.phrase, true),
-            c.mecanique ? el("p.cds-src", {}, court(c.mecanique, 200)) : null,
-            el("p.cds-src", {}, r ? "Racine : insight " + (r.couche ? INSIGHT.couche(r.couche).nom.toLowerCase() : "") : "Sans racine"));
-        }))) : null,
+          return el("article.cds-item" + (c.statut === "retenue" ? ".cds-ret" : ""), {},
+            el("p.cds-item-t", {}, (c.titre || "Sans titre") + (c.statut === "retenue" ? " — retenue" : "")),
+            lede(c.phrase, { ecrit: true }),
+            el("p.cds-src", {}, (e ? e.nom : "École non déclarée") + (c.mecanique ? " · " + court(c.mecanique, 160) : "")));
+        })), { sous: (function () { var r = BI_ECOLES.racines(p);
+          return bis.length + " propositions · " + r.n + (r.n > 1 ? " racines" : " racine commune"); })() }) : null,
 
-      (st.a_garder || st.a_adapter || st.a_ecarter) ? bloc("L'adaptation", "trois décisions, pas une traduction",
-        el("div.cds-grille.cds-3", {},
-          carte("On garde", puces(st.a_garder, "cds-ok")),
-          carte("On adapte", puces(st.a_adapter)),
-          carte("On ne reprend pas", puces(st.a_ecarter, "cds-non")))) : null,
+      (st.a_garder || st.a_adapter || st.a_ecarter) ? rubrique("L'adaptation", el("div.cds-paire.cds-trois", {},
+          colonne("On garde", puces(st.a_garder, "cds-ok"), "cds-oui"),
+          colonne("On adapte", puces(st.a_adapter)),
+          colonne("On ne reprend pas", puces(st.a_ecarter, "cds-non"), "cds-non"))) : null,
 
-      mood.length ? bloc("Le moodboard", "chaque image dit pourquoi elle est là",
-        el("div.cds-mood", {}, mood.map(function (m) {
+      mood.length ? rubrique("Le moodboard", el("div.cds-mood", {}, mood.map(function (m) {
           var noms = { reference: "Référence", passe: "Campagne passée", interdit: "À ne pas refaire" };
           return el("figure.cds-img" + (m.role === "interdit" ? ".cds-non" : ""), {},
             m.vignette ? el("img", { src: m.vignette, alt: m.legende || "", loading: "lazy" }) : null,
@@ -235,16 +245,12 @@ window.CADRAGE_SEANCE = (function () {
     ];
   }
 
-  function bloc(titre, sous, corps) {
-    return el("div.cds-bloc", {},
-      el("div.cds-bt", {}, el("h3", {}, titre), sous ? el("span", {}, sous) : null),
-      corps);
-  }
+  function bloc(titre, sous, corps) { return rubrique(titre, corps, { sous: sous }); }
 
   /* ————————————————————— 3 · La marque, l'essentiel ————————————————————— */
 
-  /* Ce qu'une piste doit respecter pour être de la marque. Le reste de la
-   * plateforme est au dossier, intégral. */
+  /* Ce qu'une piste doit respecter pour être de la marque : les marques côte à
+   * côte, leur idée directrice en tête — c'est elle qu'on confronte à la piste. */
   var ESSENTIEL = ["idee_directrice", "promesse", "positionnement", "valeurs", "ton", "symboles", "jamais"];
 
   function marques(p) {
@@ -254,27 +260,23 @@ window.CADRAGE_SEANCE = (function () {
     return [el("div.cds-marques", {}, mqs.map(function (m) {
       var a = MARQUE.logo(m.id);
       var src = a ? a.vignette || null : null;
-      var champs = ESSENTIEL.map(function (cle) {
+      var val = function (cle) { var h = VAULT.pourDossier(p, m.id, cle); return h && plein(h.valeur) ? h.valeur : null; };
+      var tete = val("idee_directrice") || val("promesse");
+      var champs = ESSENTIEL.filter(function (cle) { return cle !== (val("idee_directrice") ? "idee_directrice" : "promesse"); }).map(function (cle) {
         var c = (VAULT.CHAMPS || []).filter(function (x) { return x.cle === cle; })[0];
-        var h = VAULT.pourDossier(p, m.id, cle);
-        if (!h || !plein(h.valeur)) return null;
-        var inf = VAULT.inference(g ? "gamme" : "marque", g ? m.id + "|" + g : m.id, cle)
-          || VAULT.inference("marque", m.id, cle);
-        var v = h.valeur;
+        var v = val(cle);
+        if (!v) return null;
         return el("div.cds-mc", {},
-          el("dt", {}, c ? c.nom : cle, inf ? el("span.cds-inf", {}, "inféré") : null),
+          el("dt", {}, c ? c.nom : cle),
           el("dd", {}, Array.isArray(v)
             ? (cle === "valeurs" ? el("span.cds-chips", {}, v.map(function (x) { return el("span", {}, x); }))
               : el("ul.cds-l", {}, v.slice(0, 5).map(function (x) { return el("li", {}, x); })))
-            : el("span" + (cle === "idee_directrice" || cle === "promesse" ? ".cds-ecrit" : ""), {},
-                cle === "positionnement" ? court(v, 320) : String(v))));
+            : (cle === "positionnement" ? lede(v) : String(v))));
       }).filter(Boolean);
       return el("article.cds-marque", {},
-        el("header", {},
-          src ? el("img.cds-logo", { src: src, alt: m.nom }) : null,
-          el("div", {}, el("h3", {}, m.nom + (g ? " · " + g : "")),
-            el("p.cds-src", {}, champs.length + " repères sur " + ESSENTIEL.length
-              + (g ? " — plateforme de la gamme " + g + " quand elle existe" : "")))),
+        el("header", {}, src ? el("img.cds-logo", { src: src, alt: m.nom }) : null,
+          el("h3", {}, m.nom + (g ? " · " + g : ""))),
+        tete ? el("p.cds-marque-i", {}, tete) : null,
         champs.length ? el("dl", {}, champs)
           : el("p.cds-vide", {}, "Aucune plateforme écrite pour " + m.nom + " : une piste ne pourra être jugée "
               + "« de la marque », seulement jolie ou pas."));
@@ -322,7 +324,7 @@ window.CADRAGE_SEANCE = (function () {
 
     var ecran = el("div.cds", { role: "dialog", "aria-modal": "true", "aria-label": "Cadrage — " + p.nom },
       el("div.cds-barre", {},
-        el("span.cds-barre-t", {}, "Cadrage · séance de conception"),
+        el("span.cds-barre-t", {}, "Cadrage de la séance"),
         el("nav.cds-som", { "aria-label": "Parties" }, parts.map(function (s) {
           var h = s.querySelector("h2");
           return el("a", { href: "#" + s.id, onclick: function (e) {
@@ -330,7 +332,7 @@ window.CADRAGE_SEANCE = (function () {
         })),
         el("span.cds-barre-g", {},
           el("button.b.nu", { type: "button", onclick: function () {
-            ecran.querySelectorAll("details.cds-d").forEach(function (x) { x.open = true; });
+            ecran.querySelectorAll("details.cds-d, details.cds-suite").forEach(function (x) { x.open = true; });
             window.print(); } }, "Imprimer"),
           el("button.b.nu", { type: "button", onclick: function () {
             COMPILATEUR.copier(COMPILATEUR.compiler(p, "cadrage"), COMPILATEUR.DOCS.cadrage); } }, "Copier le texte"),

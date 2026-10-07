@@ -1530,11 +1530,13 @@ window.VUE_PROJETS = (function () {
 
   function corpsSection(p, cle, rafraichir) {
     var corps = corpsPropre(p, cle, rafraichir);
-    return el("div", {},
-      INFERENCE.bande(p, rafraichir, cle),
+    var bandes = [INFERENCE.bande(p, rafraichir, cle),
       VALIDATION.OBJETS[cle] ? el("div", { style: { "margin-bottom": ".9rem" } },
-        VALIDATION.bande(p, cle, objetValidable(p, cle), rafraichir)) : null,
-      corps);
+        VALIDATION.bande(p, cle, objetValidable(p, cle), rafraichir)) : null];
+    /* La big idea et les pistes se lisent d'abord : leur contenu passe devant
+     * les bandes de procédure (refonte du 07/10/2026). */
+    if (cle === "bigidea" || cle === "pistes") return el("div", {}, corps, el("div.se-proc", {}, bandes));
+    return el("div", {}, bandes, corps);
   }
 
 

@@ -145,21 +145,36 @@ window.VUE_BIGIDEA = (function () {
 
   /* ————————————————————— L'idée ————————————————————— */
 
+  /* L'affiche de l'idée (refonte du 07/10/2026). L'idée d'abord, en grand ; puis
+   * ce qui la fait tenir — sa mécanique, son rattachement, son ton — et ce
+   * qu'elle doit tenir ou s'interdire. La procédure (opposabilité, validation)
+   * vient après : on juge une idée avant de juger son dossier. */
   function idee(p, b, socle) {
     if (!b.idee) return null;
     var auteur = b.auteur ? DEPOT.trouve("personnes", b.auteur) : null;
-    return el("div.bi-idee", {},
-      el("div.bii-nom", {}, b.campagne || "Sans nom de campagne"),
-      el("div.bii-phrase", {}, b.idee),
-      b.signature ? el("div.bii-sign", {}, "« " + b.signature + " »") : null,
-      el("div.bii-pied", {},
-        auteur ? el("span.bii-a", {}, UI.avatar(auteur, 22), el("span", {}, auteur.nom)) : null,
-        b.mecanique ? el("span.bii-m", {}, b.mecanique) : null,
-        b.ecole && window.ECOLES && ECOLES.de(b.ecole)
-          ? el("span.bii-m", {}, "École : " + ECOLES.de(b.ecole).nom) : null,
-        b.source ? el("span.bii-m", {}, b.source) : null
-      )
-    );
+    function liste(v) {
+      if (!v) return [];
+      return (Array.isArray(v) ? v : String(v).split(/\n+/)).map(function (x) { return String(x).replace(/^[-•·]\s*/, "").trim(); }).filter(Boolean);
+    }
+    function col(titre, corps, cls) {
+      if (!corps || (Array.isArray(corps) && !corps.length)) return null;
+      return el("div.bia-col" + (cls ? "." + cls : ""), {}, el("h3", {}, titre),
+        Array.isArray(corps) ? el("ul.bia-l", {}, corps.map(function (x) { return el("li", {}, x); })) : el("p", {}, corps));
+    }
+    var ecole = b.ecole && window.ECOLES && ECOLES.de(b.ecole) ? ECOLES.de(b.ecole).nom : null;
+    var lien = [b.campagne ? "« " + b.campagne + " »" : null,
+      auteur ? "idée de " + auteur.nom : "auteur non nommé", ecole ? "école " + ecole : null, b.source || null].filter(Boolean);
+    var trois = [col("La mécanique", b.mecanique), col("Le rattachement à la plateforme", b.rattachement), col("Le ton", b.ton_campagne)].filter(Boolean);
+    var deux = [col("Ce qu'elle doit tenir", liste(b.criteres), "bia-oui"), col("Ce qu'elle s'interdit", liste(b.interdits), "bia-non")].filter(Boolean);
+    return el("section.bia", {},
+      el("div.bia-mur", {},
+        el("p.bia-phrase", {}, b.idee),
+        b.signature ? el("p.bia-sign", {}, "« " + b.signature + " »") : null,
+        el("p.bia-qui", {}, auteur ? UI.avatar(auteur, 22) : null, el("span", {}, lien.join(" · ")))),
+      trois.length ? el("div.bia-grille", {}, trois) : null,
+      deux.length ? el("div.bia-grille.bia-2", {}, deux) : null,
+      liste(b.phares).length ? col("Les éléments phares", liste(b.phares)) : null,
+      b.validite ? el("p.bia-v", {}, el("b", {}, "Elle ne vaut que si "), String(b.validite).replace(/^L'idée ne vaut que si /i, "")) : null);
   }
 
   /* ————————————————————— Les pistes, avec leur coût d'arbitrage ————————————————————— */

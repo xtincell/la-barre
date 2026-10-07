@@ -2968,3 +2968,61 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .fb-cp > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: var(--t-micro); }
 .fb-sb.h { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 .fb-sb.h .fb-case img, .fb-sb.h .fb-vide { aspect-ratio: 16 / 9; max-height: none; object-fit: contain; background: #fff; }
+
+/* La big idea en affiche (refonte du 07/10/2026). */
+.bia { display: grid; gap: var(--e6); margin-bottom: var(--e7); }
+.bia-mur { padding: var(--e8) var(--e8) var(--e6); background: var(--papier); color: var(--papier-encre); border-radius: var(--r-m); display: grid; gap: var(--e4); }
+.bia-phrase { margin: 0; font-family: var(--ecrit); font-style: italic; font-weight: 500; font-size: clamp(1.7rem, 1.1rem + 2vw, 2.8rem); line-height: 1.15; letter-spacing: -0.01em; max-width: 30ch; text-wrap: balance; color: var(--papier-encre); }
+.bia-sign { margin: 0; font-family: var(--ecrit); font-style: italic; font-size: var(--t-titre); color: var(--papier-encre); }
+.bia-qui { margin: 0; display: flex; gap: var(--e2); align-items: center; flex-wrap: wrap; font-size: var(--t-meta); color: var(--papier-terne); }
+.bia-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--e5) var(--e7); }
+.bia-grille.bia-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.bia-col { display: grid; gap: var(--e2); align-content: start; padding-top: var(--e3); border-top: 2px solid var(--trait); min-width: 0; }
+.bia-col.bia-oui { border-top-color: var(--succes); }
+.bia-col.bia-non { border-top-color: var(--bloquant-txt); }
+.bia-col h3 { margin: 0; font-family: var(--affichage); font-size: var(--t-meta); font-weight: 600; color: var(--clair); }
+.bia-col p { margin: 0; font-family: var(--lecture); font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux); max-width: 62ch; }
+ul.bia-l { margin: 0; padding: 0; display: grid; gap: var(--e2); }
+ul.bia-l li { position: relative; padding-left: var(--e5); font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair-doux); }
+ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; width: 6px; height: 6px; border-radius: 50%; background: var(--clair-terne); }
+.bia-oui ul.bia-l li::before { background: var(--succes); }
+.bia-non ul.bia-l li::before { width: 8px; height: 2px; border-radius: 0; top: .8em; background: var(--bloquant-txt); }
+.bia-v { margin: 0; font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair); max-width: 72ch; padding-top: var(--e3); border-top: 1px solid var(--trait); }
+.se-proc { margin-top: var(--e6); }
+@media (max-width: 720px) { .bia-mur { padding: var(--e6) var(--e5) var(--e5); } }
+
+/* La planche des pistes (refonte du 07/10/2026). */
+.pp-liste { display: grid; gap: var(--e8); margin: var(--e5) 0 var(--e9); }
+.pp { display: grid; gap: var(--e5); padding-bottom: var(--e8); border-bottom: 1px solid var(--trait); }
+.pp:last-child { border-bottom: 0; }
+.pp-tete { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--e6); align-items: start; }
+.pp-kv { padding: 0; border: 0; background: #fff; border-radius: var(--r-m); overflow: hidden; cursor: pointer; display: block; width: 100%; box-shadow: 0 1px 2px rgba(36,28,24,.08), 0 8px 24px -12px rgba(36,28,24,.25); }
+.pp-kv img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: contain; }
+.pp-kv:focus-visible { outline: 3px solid var(--info); outline-offset: 3px; }
+.pp-kv-v { display: grid; place-items: center; aspect-ratio: 4 / 3; background: var(--surface-3); color: var(--clair-terne); font-size: var(--t-meta); }
+.pp-id { display: grid; gap: var(--e4); align-content: start; min-width: 0; }
+.pp-titre { display: flex; gap: var(--e3); align-items: baseline; flex-wrap: wrap; }
+.pp-titre h3 { margin: 0; font-family: var(--ecrit); font-style: italic; font-weight: 500; font-size: clamp(1.6rem, 1.1rem + 1.6vw, 2.4rem); line-height: 1.1; color: var(--clair); text-wrap: balance; }
+.pp-qui { margin: 0; font-size: var(--t-meta); color: var(--clair-terne); }
+.pp-idee { margin: 0; font-family: var(--lecture); font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); max-width: 52ch; }
+.pp-acc { display: flex; gap: var(--e2); flex-wrap: wrap; }
+.pp-acc span { font-family: var(--ecrit); font-style: italic; font-size: var(--t-lire); padding: var(--e1) var(--e3); border-radius: var(--r-pilule); background: var(--papier); color: var(--papier-encre); }
+.pp-gestes { display: flex; gap: var(--e2); flex-wrap: wrap; }
+.pp-var { display: grid; gap: var(--e5); }
+.pp-g { display: grid; gap: var(--e2); min-width: 0; }
+.pp-g h4 { margin: 0; font-family: var(--affichage); font-size: var(--t-meta); font-weight: 600; color: var(--clair); display: flex; gap: var(--e3); align-items: baseline; flex-wrap: wrap; }
+.pp-g h4 span { font-weight: 400; font-size: var(--t-eti); color: var(--clair-terne); }
+.pp-fil { display: flex; gap: var(--e3); overflow-x: auto; padding-bottom: var(--e2); scroll-snap-type: x proximity; }
+.pp-t { margin: 0; flex: 0 0 160px; display: grid; gap: var(--e1); scroll-snap-align: start; }
+.pp-t img, .pp-tv { width: 160px; aspect-ratio: 4 / 3; object-fit: contain; background: #fff; border-radius: var(--r-s); border: 1px solid var(--trait); }
+.pp-tv { display: grid; place-items: center; padding: var(--e2); text-align: center; font-size: var(--t-micro); color: var(--clair-terne); background: var(--surface-2); border-style: dashed; }
+.pp-t figcaption { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
+.pp-kvv { flex-basis: 200px; }
+.pp-kvv img { width: 200px; }
+.pp-sb .pp-t { flex-basis: 96px; }
+.pp-sb .pp-t img, .pp-sb .pp-tv { width: 96px; aspect-ratio: 9 / 16; object-fit: cover; }
+.pp-sb.h .pp-t { flex-basis: 176px; }
+.pp-sb.h .pp-t img, .pp-sb.h .pp-tv { width: 176px; aspect-ratio: 16 / 9; object-fit: contain; }
+.pp-n { margin: 0; font-size: var(--t-eti); color: var(--clair-terne); }
+.pp-cmp-t { margin-top: var(--e4); }
+@media (max-width: 860px) { .pp-tete { grid-template-columns: 1fr; } }
