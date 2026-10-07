@@ -323,6 +323,12 @@ const serveur = createServer(async (requete, reponse) => {
       return;
     }
 
+    // Une vidéo ou un son se sert par morceaux : Safari ne lit pas un film servi d'un bloc.
+    if (/^(video|audio)\//.test(TYPES[extname(absolu).toLowerCase()] || "")) {
+      await servirDisque(requete, reponse, absolu);
+      return;
+    }
+
     const corps = await readFile(absolu);
     reponse.writeHead(200, {
       "Content-Type": TYPES[extname(absolu).toLowerCase()] || "application/octet-stream",

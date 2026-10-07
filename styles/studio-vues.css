@@ -3034,3 +3034,8 @@ ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; wid
 .fb-portee p { margin: 0; }
 .fb-portee ul { margin: var(--e1) 0 0; padding-left: 1.2em; display: grid; gap: 2px; color: var(--clair-terne); }
 .fb-bloc > .fb-portee { margin: var(--e3) 0; }
+
+/* L'animatique */
+.fb-film { display: block; width: 100%; max-width: 960px; aspect-ratio: 16 / 9; background: #000; border-radius: var(--r-s); margin: var(--e3) 0; }
+.pp-anim { display: grid; gap: var(--e1); max-width: 640px; }
+.fb-film.petit { margin: 0; max-width: 640px; }

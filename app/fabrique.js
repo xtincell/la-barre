@@ -12,7 +12,8 @@
  *     conducteur: { formats: [{ nom, plans: [{ temps, image, son, texte }] }], notes: [] },
  *     storyboard: { format, personnages: [{ nom, qui, signe }], tenue, style,
  *                   cases: [{ n, temps, cadrage, action, son, texte, prompt, vignette }],
- *                   variantes: [], notes: [] } }
+ *                   variantes: [], notes: [] },
+ *     animatiques: [{ version, video, poster, duree, son, montage, par, demandePar, quand }] }
  */
 
 window.FABRIQUE = (function () {
@@ -155,13 +156,33 @@ window.FABRIQUE = (function () {
       (s.axes || []).length ? el("ul", {}, s.axes.map(function (x) { return el("li", {}, x); })) : null);
   }
 
+  /* L'animatique : le storyboard monté sur le son, la dernière version d'abord. */
+  function film(a, petit) {
+    return el("video.fb-film" + (petit ? ".petit" : ""), { src: a.video, poster: a.poster, controls: true,
+      preload: "metadata", playsinline: true });
+  }
+  function animatiques(pi) {
+    var as = (pi.fabrique || {}).animatiques || [];
+    if (!as.length) return null;
+    var d = as[as.length - 1];
+    return el("details.fonds.fb", { open: true },
+      el("summary", {}, "L'animatique", el("span.fonds-q", {}, "v" + d.version + " · " + d.duree + " s · le storyboard monté sur le son")),
+      film(d),
+      d.montage ? el("p.fb-n", {}, d.montage) : null,
+      d.son ? el("p.fb-n", {}, "Son : " + d.son) : null,
+      as.length > 1 ? el("ul.fb-notes", {}, as.slice(0, -1).reverse().map(function (x) {
+        return el("li", {}, el("a", { href: DISQUE ? DISQUE.src(x.video) : x.video, target: "_blank", rel: "noopener" }, "v" + x.version),
+          " · " + O.joli(String(x.quand).slice(0, 10)));
+      })) : null);
+  }
+
   function bloc(pi) {
     var f = pi.fabrique || {};
-    var parts = [brouillons(pi), portee(pi), storyboard(f.storyboard), conducteur(f.conducteur), musique(f.musique), kv(f.kv), references(pi)]
+    var parts = [brouillons(pi), animatiques(pi), portee(pi), storyboard(f.storyboard), conducteur(f.conducteur), musique(f.musique), kv(f.kv), references(pi)]
       .filter(Boolean);
     if (!parts.length) return null;
     return el("section.fb-bloc", {}, el("div.section-titre", {}, "La fabrique", el("span.taille", {}, "· ce qu'il faut pour la montrer")), parts);
   }
 
-  return { bloc: bloc, portee: portee };
+  return { bloc: bloc, portee: portee, film: film };
 })();

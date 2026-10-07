@@ -110,6 +110,7 @@ window.VUE_PISTES = (function () {
     var kvs = window.VUE_ROUTE ? VUE_ROUTE.kvs(p, pi) : [];
     var decl = window.VUE_ROUTE ? VUE_ROUTE.declinaisons(p, pi) : [];
     var sb = f.storyboard || null, cond = f.conducteur || null, mus = f.musique || null;
+    var anim = (f.animatiques || []).slice(-1)[0] || null;
     function ouvrir() { ouverte = pi.id; rafraichir(); window.scrollTo(0, 0); }
     function tuile(src, legende, o) {
       o = o || {};
@@ -147,11 +148,13 @@ window.VUE_PISTES = (function () {
         })),
         groupe("KV et déclinaisons", (kvs.length + decl.length) ? (kvs.length + decl.length) + " pièces" : null,
           kvs.concat(decl).slice(0, 14).map(function (l) { return tuile(l.vignette, [marche(l), l.nom].filter(Boolean).join(" · ")); })),
-        (sb || cond || mus) ? el("div.pp-g.pp-spot", {},
+        (sb || cond || mus || anim) ? el("div.pp-g.pp-spot", {},
           el("h4", {}, "Le spot", el("span", {}, [sb ? sb.cases.length + " cases" : null,
             cond && cond.formats ? cond.formats.map(function (x) { return x.nom.replace(/\s*[—(].*$/, ""); }).join(", ") : null,
             mus && mus.titre ? "son « " + mus.titre + " »" : null].filter(Boolean).join(" · "))),
           window.FABRIQUE ? FABRIQUE.portee(pi) : null,
+          anim && window.FABRIQUE ? el("div.pp-anim", {}, FABRIQUE.film(anim, true),
+            el("p.pp-n", {}, "Animatique v" + anim.version + " · " + anim.duree + " s, montée sur le son")) : null,
           sb ? el("div.pp-fil.pp-sb" + (sb.ratio === "16:9" ? ".h" : ""), {}, (casesAvecImage.length ? casesAvecImage : sb.cases.slice(0, 8)).map(function (c) {
             return tuile(c.vignette, "Case " + c.n + (c.temps ? " · " + c.temps : ""), { vide: c.action ? String(c.action).slice(0, 70) : "Case " + c.n });
           })) : null,
