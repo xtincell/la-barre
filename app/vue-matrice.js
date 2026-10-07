@@ -799,7 +799,7 @@ window.VUE_MATRICE = (function () {
     var ann = ANNOT.ouvertes(l).length;
 
     var corps = el("div", {},
-      perime ? el("div.avertissement", {}, "Le master est passé en version " + versionMaitre(p, l) + ". Cette adaptation est à regénérer.") : null,
+      perime ? el("div.avertissement", {}, "Une référence directe ou commune a changé ou manque. Le travail est conservé ; sa reprise reste à recevoir.") : null,
       droits ? el("div.avertissement", {}, droits) : null,
 
       /* Le livrable elle-même, avant tout le reste : on ne juge pas un livrable

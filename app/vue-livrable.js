@@ -113,8 +113,7 @@ window.VUE_LIVRABLE = (function () {
         )
       ),
 
-      perime ? UI.banniere("rouge", "Le master est passé en version " + versionMaitre(p, l)
-        + ". Cette adaptation est à regénérer.") : null,
+      perime ? UI.banniere("rouge", "Une référence directe ou commune a changé ou manque. Le travail est conservé ; sa reprise reste à recevoir.") : null,
       droits ? UI.banniere("rouge", droits) : null,
       t.vendus && t.faits > t.vendus ? UI.banniere("",
         "Plus d'allers-retours que prévu. Chaque aller-retour supplémentaire est comptabilisé en reprise.") : null
@@ -260,18 +259,13 @@ window.VUE_LIVRABLE = (function () {
     return PRODUCTION.etape(p, l).i;
   }
 
-  function versionMaitre(p, l) {
-    var m = (p.livrables || []).filter(function (x) { return x.id === l.maitre; })[0];
-    return m ? m.version : "?";
-  }
-
   /* ————————————————————— Les onglets ————————————————————— */
 
   function contenu(p, l, courant, apres) {
     if (courant === "criteres") return criteres(p, l, apres);
     if (courant === "retours") return retours(p, l, apres);
     if (courant === "production") return PRODUCTION.bloc(p, l, apres);
-    if (courant === "dependances") return dependances(p, l);
+    if (courant === "dependances") return dependances(p, l, apres);
     if (courant === "historique") return el("div", {},
       el("div.form-actions", { style: { "margin-bottom": ".8rem" } },
         el("button.b.or", { type: "button", onclick: function () {
@@ -441,7 +435,7 @@ window.VUE_LIVRABLE = (function () {
     if (apres) apres();
   }
 
-  function dependances(p, l) {
+  function dependances(p, l, apres) {
     var liens = [];
     if (l.maitre) {
       var m = (p.livrables || []).filter(function (x) { return x.id === l.maitre; })[0];
@@ -459,11 +453,12 @@ window.VUE_LIVRABLE = (function () {
     });
 
     if (!liens.length) {
-      return el("div", {}, UI.banniere("vert", "Ce livrable ne dépend de rien et rien n'en dépend."));
+      return l.maitre ? reference(p, l, apres) : el("div", {}, UI.banniere("", "Aucune dépendance renseignée pour ce livrable."));
     }
 
     var manquants = liens.filter(function (x) { return !x.ok; }).length;
     return el("div", {},
+      reference(p, l, apres),
       manquants ? UI.banniere("rouge", manquants + (manquants > 1 ? " dépendances non satisfaites" : " dépendance non satisfaite")
         + " — c'est ce qui se découvre à l'impression quand on ne le regarde pas.") : null,
       el("div.graphe-boite", {}, UI.graphe({ nom: l.nom, ok: !manquants }, liens)),
@@ -471,6 +466,38 @@ window.VUE_LIVRABLE = (function () {
         return UI.fileItem(null, x.nom, null, UI.eti(x.ok ? "ok" : "manque", x.ok ? "vert" : "alerte"));
       }))
     );
+  }
+
+  function reference(p, l, apres) {
+    if (!l.maitre) return null;
+    var m = (p.livrables || []).filter(function (x) { return x.id === l.maitre; })[0];
+    if (!m || m.annule) return UI.banniere("rouge", "La référence manque. Les fichiers et le travail restent au dossier ; leur rattachement est à vérifier.");
+    return el("div.sousbloc", {}, el("h3", {}, "Référence du travail"),
+      el("p", {}, m.nom + " · V" + (l.versionMaitre || "?") + " utilisée · V" + (m.version || 1) + " courante"),
+      REGLES.maitrePerime(p, m) ? UI.banniere("", "La référence doit elle-même être reprise sur son parent. La préparation reste possible.") : null,
+      REGLES.maitrePerime(p, l) ? el("button.b", { type: "button", onclick: function () { reprendre(p, l, m, apres); } }, "Recevoir la reprise sur cette référence") : null);
+  }
+
+  function reprendre(p, l, m, apres) {
+    var attendu = { version: l.version || 1, maitreId: m.id, versionMaitre: m.version || 1, contenuMaitre: JSON.stringify(m.kv || {}), contenuLivrable: JSON.stringify(l) };
+    var motif = el("textarea", { rows: 3, "aria-label": "Ajustements de la reprise" });
+    var confirme = el("input", { type: "checkbox", "aria-label": "Travail ajusté sur cette référence" });
+    PANNEAU.sur("Recevoir une reprise", m.nom + " · V" + attendu.versionMaitre, el("div", {},
+      UI.banniere("", "Vérifiez le contenu et ajustez le travail avant de recevoir cette reprise. Une nouvelle version conserve l'ancien état ; les fichiers et accords antérieurs ne deviennent pas ceux de cette version."),
+      el("div", {}, KV.axes(p).map(function (c) {
+        return el("div.champ", {}, el("label", {}, c.nom),
+          el("p", {}, "Référence : " + (FORM.texte(c, (m.kv || {})[c.cle]) || "Non renseigné")),
+          l.kv ? el("p", {}, "Ce KV : " + (FORM.texte(c, l.kv[c.cle]) || "Non renseigné")) : null);
+      })),
+      el("div.champ", {}, el("label", {}, "Ce qui a été ajusté, ou pourquoi aucun ajustement n'était nécessaire"), motif),
+      el("label", {}, confirme, " J'ai vérifié et ajusté ce travail sur cette référence."),
+      el("div.form-actions", {}, el("button.b.or", { type: "button", onclick: function () {
+        if (!confirme.checked) { AVIS.refus("Vérifier et ajuster le travail avant de recevoir sa reprise."); return; }
+        try { KV.reprendreReference(p, l, attendu, motif.value); }
+        catch (e) { AVIS.refus(e.message); return; }
+        DEPOT.tracer("reprise reçue", "livrables", p.id, l.nom + " sur " + m.nom + " V" + attendu.versionMaitre);
+        DEPOT.enregistrer(); PANNEAU.fermerSur(); if (apres) apres();
+      } }, "Recevoir la reprise"), el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Annuler"))));
   }
 
   function historique(l) {

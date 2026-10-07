@@ -292,11 +292,8 @@ window.VUE_PIPELINE = (function () {
     if (!l.responsable) { r.pts += 25; r.causes.push("sans responsable"); }
     if (!l.estime) { r.pts += 20; r.causes.push("sans estimation"); }
     if (!l.remise) { r.pts += 18; r.causes.push("sans date de remise"); }
-    if (window.KV && KV.niveau(l) !== "maitre" && l.maitre) {
-      var m = (p.livrables || []).filter(function (x) { return x.id === l.maitre; })[0];
-      if (m && l.versionMaitre && m.version && l.versionMaitre !== m.version) {
-        r.pts += 35; r.causes.push("maître périmé");
-      }
+    if (REGLES.maitrePerime(p, l)) {
+      r.pts += 35; r.causes.push("référence à reprendre");
     }
     r.pts += manque.length * 6;
     if (manque.length) r.causes.push(manque.length + (manque.length > 1 ? " manques" : " manque"));

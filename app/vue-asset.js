@@ -38,7 +38,7 @@ window.VUE_ASSET = (function () {
           : onglet === "juger" ? el("div", {}, retoursClient(p, l, apres) || vide("Aucun retour sur ce livrable."),
               VUE_LIVRABLE.criteres(p, l, apres))
           : el("div", {}, precedente(p, l) || vide("Une seule version : rien n'a encore été repris."),
-              VUE_LIVRABLE.dependances(p, l))),
+              VUE_LIVRABLE.dependances(p, l, apres))),
       gestes(p, l, apres)
     );
   }
