@@ -102,7 +102,7 @@ window.VUE_PRESENTATION = (function () {
 
     var infs = window.INFERENCE ? INFERENCE.compte(p) : 0;
     if (infs) {
-      out.push({ quoi: infs + (infs > 1 ? " champs inférés" : " champ inféré"),
+      out.push({ quoi: infs + (infs > 1 ? " champs à confirmer" : " champ à confirmer"),
         detail: null,
         pourquoi: "utilisables pour travailler, pas opposables. Les présenter "
           + "comme reçus, c'est faire valider une hypothèse pour un fait." });

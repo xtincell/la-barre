@@ -714,7 +714,7 @@ window.REGLES = (function () {
     if (!rempli) { pousser(liste, p, type, quoi, poste, section); return; }
     if (window.INFERENCE && INFERENCE.est(p, section, champ)) {
       var b = pousser(liste, p, "infere-non-contresigne",
-        quoi.replace(/ non nommé$| : non nommé$| non fixées$/, "") + " — inféré, non contresigné",
+        quoi.replace(/ non nommé$| : non nommé$| non fixées$/, "") + " — " + INFERENCE.libelle(p, section, champ) + ", confirmation non consignée",
         poste, section, section + "." + champ);
       b.infere = { section: section, champ: champ, valeur: v };
     }
@@ -834,10 +834,15 @@ window.REGLES = (function () {
   /* ————— Maître et adaptations ————— */
 
   function maitrePerime(projet, livrable) {
-    if (!livrable.maitre) return false;
-    var m = (projet.livrables || []).filter(function (x) { return x.id === livrable.maitre; })[0];
-    if (!m) return false;
-    return (m.version || 1) > (livrable.versionMaitre || 0);
+    var courant = livrable, vus = Object.create(null);
+    while (courant.maitre) {
+      if (vus[courant.id]) return true;
+      vus[courant.id] = true;
+      var m = (projet.livrables || []).filter(function (x) { return x.id === courant.maitre; })[0];
+      if (!m || m.annule || (m.version || 1) !== (courant.versionMaitre || 0)) return true;
+      courant = m;
+    }
+    return false;
   }
 
   function adaptations(projet, maitreId) {

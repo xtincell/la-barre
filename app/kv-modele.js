@@ -49,8 +49,8 @@ window.KV = (function () {
    * reçoivent la même chose. */
   var NIVEAUX = {
     maitre: { nom: "KV master", rang: 0 },
-    adaptation: { nom: "Déclinaison", rang: 1 },
-    declinaison: { nom: "Exé", rang: 2 },
+    adaptation: { nom: "Adaptation marché", rang: 1 },
+    declinaison: { nom: "Format", rang: 2 },
   };
 
   function niveau(l) {
@@ -86,12 +86,15 @@ window.KV = (function () {
   }
 
   /* Tout ce qui descend d'un livrable, à tous les étages. */
-  function descendance(p, id) {
+  function descendance(p, id, vus) {
+    vus = vus || Object.create(null);
+    vus[id] = true;
     var out = [];
     (p.livrables || []).forEach(function (l) {
-      if (l.annule || l.maitre !== id) return;
+      if (l.annule || l.maitre !== id || vus[l.id]) return;
+      vus[l.id] = true;
       out.push(l);
-      out = out.concat(descendance(p, l.id));
+      out = out.concat(descendance(p, l.id, vus));
     });
     return out;
   }
@@ -114,33 +117,41 @@ window.KV = (function () {
   }
 
   function creer(p, marcheId, base, niveauVoulu) {
+    var cible = niveauVoulu || (marcheId ? "adaptation" : "maitre");
+    if (cible !== "maitre" && cible !== "adaptation") throw new Error("Niveau de KV inconnu.");
     var m = DEPOT.trouve("marches", marcheId);
+    if (cible === "adaptation") {
+      if (!base || !estMaitre(base) || base.annule || (p.livrables || []).indexOf(base) === -1) {
+        throw new Error("Une adaptation doit référencer un KV master du dossier.");
+      }
+      if (!m) throw new Error("Choisir un marché renseigné avant de créer son adaptation.");
+    } else { marcheId = null; m = null; }
     var support = DEPOT.liste("supports").filter(function (s) { return s.code === "kv"; })[0];
     if (!support) support = DEPOT.ajoute("supports", { code: "kv", nom: "Key visual", type: "kv" });
 
     var axes = {};
     MAISON.points.forEach(function (a) { axes[a.cle] = "attente"; });
-    if (m && m.langues.length === 1) axes.langue = "pret";
+    if (m && (m.langues || []).length === 1) axes.langue = "pret";
 
     var l = {
-      id: O.id("KV"), niveau: niveauVoulu || (marcheId ? "adaptation" : "maitre"),
+      id: O.id("KV"), niveau: cible,
       voletId: base && base.voletId ? base.voletId : null,
       support: support.id, marche: marcheId || null,
-      nom: "KV · " + (m ? m.code : "?"),
+      nom: m ? "KV · " + m.code : "KV master commun",
       responsable: null,   /* posé juste après, selon le niveau */
       origine: "prevu", pisteId: base ? base.pisteId : pisteRetenue(p),
-      maitre: (niveauVoulu === "adaptation" || (!niveauVoulu && marcheId)) && base ? base.id : null,
-      versionMaitre: base ? (base.version || 1) : null,
+      maitre: cible === "adaptation" ? base.id : null,
+      versionMaitre: cible === "adaptation" ? (base.version || 1) : null,
       version: 1, versions: [], estime: base ? base.estime : null,
       reel: null, toursVendus: base ? base.toursVendus : null,
-      assets: [], entrees: [], annotations: [], mockups: [], axes: axes,
+      assets: [], entrees: [], annotations: [], mockups: [], points: axes,
       kv: {
         marque: base && base.kv ? base.kv.marque : "",
         copy: base && base.kv ? base.kv.copy : "",
-        langue: m ? (m.langues || [])[0] : "",
+        langue: m && (m.langues || []).length === 1 ? m.langues[0] : "",
         sku: base && base.kv ? (base.kv.sku || []).slice() : [],
         mentions: m ? (m.mentions || []).slice() : [],
-        restrictions: [],
+        restrictions: base && base.kv ? (base.kv.restrictions || []).slice() : [],
       },
     };
     /* Une adaptation est le travail du directeur artistique qui a porté la
@@ -192,6 +203,22 @@ window.KV = (function () {
     return r ? r.id : null;
   }
 
+  /* Le geste ne copie rien : l'exécutant atteste une reprise sur une référence
+   * précise. L'ancien contenu et ses accords restent dans l'historique. */
+  function reprendreReference(p, l, attendu, motif) {
+    var m = (p.livrables || []).filter(function (x) { return x.id === l.maitre; })[0];
+    if (!m || m.annule || l.annule || (p.livrables || []).indexOf(l) === -1) throw new Error("La référence n'est plus disponible.");
+    if (!attendu || JSON.stringify(l) !== attendu.contenuLivrable || l.maitre !== attendu.maitreId || (l.version || 1) !== attendu.version
+      || (m.version || 1) !== attendu.versionMaitre || JSON.stringify(m.kv || {}) !== attendu.contenuMaitre) {
+      throw new Error("Le livrable ou sa référence a changé pendant la lecture. Rouvrir la reprise.");
+    }
+    if (REGLES.maitrePerime(p, m)) throw new Error("Reprendre d'abord la référence sur son propre parent. La préparation du livrable reste possible.");
+    if (!String(motif || "").trim()) throw new Error("Décrire ce qui a été repris ou pourquoi aucun ajustement n'était nécessaire.");
+    VERSION.ouvrir(l, "interne", "Reprise sur « " + m.nom + " » V" + (m.version || 1) + " : " + motif.trim(), null, { complet: true });
+    l.versionMaitre = m.version || 1;
+    return l.version;
+  }
+
   /* ————————————————————— La conformité d'un KV à son marché ————————————————————— */
 
   /* C'est le contrôle que la planche imprimée ne fait pas : on regarde
@@ -199,6 +226,7 @@ window.KV = (function () {
    * distribué au Ghana. */
   function conformite(p, l) {
     var m = DEPOT.trouve("marches", l.marche);
+    var commun = estMaitre(l) && !l.marche;
     var k = l.kv || {};
     var out = [];
 
@@ -206,9 +234,10 @@ window.KV = (function () {
       cout: "sans marque déclarée, impossible de vérifier le SKU ni la charte" });
 
     var langueMarche = m ? (m.langues || []) : [];
-    var langueOk = !k.langue || !langueMarche.length || langueMarche.indexOf(k.langue) !== -1;
-    out.push({ quoi: "Langue du marché", ok: langueOk && !!k.langue, poids: 5,
-      cout: !k.langue ? "langue non déclarée"
+    var langueOk = langueMarche.length > 0 && langueMarche.indexOf(k.langue) !== -1;
+    if (!commun) out.push({ quoi: "Langue du marché", ok: langueOk && !!k.langue, poids: 5,
+      cout: !langueMarche.length ? "langues du marché non renseignées — conformité impossible à vérifier"
+        : !k.langue ? "langue non déclarée"
         : "le marché parle " + langueMarche.map(O.langue).join(" ou ")
           + ", le KV est en " + O.langue(k.langue) });
 
@@ -217,8 +246,10 @@ window.KV = (function () {
       cout: !k.copy ? "aucune accroche" : "« " + k.copy + " » fait " + mots + " mots — refusable au §8" });
 
     var skuHorsMarche = skuNonDistribues(m, k);
-    out.push({ quoi: "SKU distribués ici", ok: skuHorsMarche.length === 0, poids: 5,
-      cout: skuHorsMarche.length
+    var distributionConnue = !!(m && (m.sku || []).length);
+    if (!commun) out.push({ quoi: "SKU distribués ici", ok: distributionConnue && skuHorsMarche.length === 0, poids: 5,
+      cout: !distributionConnue ? "SKU distribués sur le marché non renseignés — conformité impossible à vérifier"
+        : skuHorsMarche.length
         ? "« " + skuHorsMarche[0] + " » n'est pas distribué sur ce marché"
         : "" });
 
@@ -241,10 +272,10 @@ window.KV = (function () {
     var mentionsMarche = m ? (m.mentions || []) : [];
     var portees = k.mentions || [];
     var manquantes = mentionsMarche.filter(function (x) { return portees.indexOf(x) === -1; });
-    out.push({ quoi: "Mentions obligatoires", ok: manquantes.length === 0, poids: 4,
+    if (!commun) out.push({ quoi: "Mentions obligatoires", ok: mentionsMarche.length > 0 && manquantes.length === 0, poids: 4,
       cout: mentionsMarche.length
         ? manquantes.length + " mentions du marché absentes du KV"
-        : "le marché n'a pas de mentions renseignées" });
+        : "mentions du marché non renseignées — conformité impossible à vérifier" });
 
     return out;
   }
@@ -298,7 +329,7 @@ window.KV = (function () {
     niveau: niveau, estKV: estKV, estMaitre: estMaitre, estAdaptation: estAdaptation,
     tous: tous, maitres: maitres, adaptations: adaptations, declinaisons: declinaisons,
     descendance: descendance, parMarche: parMarche,
-    creer: creer, daDePiste: daDePiste, adaptationsMalPortees: adaptationsMalPortees,
+    creer: creer, reprendreReference: reprendreReference, daDePiste: daDePiste, adaptationsMalPortees: adaptationsMalPortees,
     conformite: conformite, conforme: conforme, pireEcart: pireEcart, grille: grille,
     skuNonDistribues: skuNonDistribues };
 })();
