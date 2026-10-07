@@ -28,9 +28,11 @@ window.VUE_PLANCHE = (function () {
   function bande(p, g, nonConformes, sansVisuel, retours, rafraichir) {
     var pire = KV.pireEcart(p);
     var controles = [
-      { quoi: "Un KV par marché", ok: g.kvs.length > 0, poids: 5,
-        cout: "aucun visuel maître : les formats n'ont rien à décliner" },
-      { quoi: "Conformes au marché", ok: nonConformes.length === 0, poids: 5,
+      { quoi: "Une référence commune", ok: KV.maitres(p).length > 0, poids: 5,
+        cout: "aucun master commun : les adaptations n'ont pas de référence partagée" },
+      { quoi: "Références à jour", ok: !g.kvs.some(function (l) { return REGLES.maitrePerime(p, l); }), poids: 5,
+        cout: "Une référence a changé, manque ou forme une boucle. Le travail reste conservé, sa réception est à reprendre." },
+      { quoi: "Contrôles renseignés", ok: nonConformes.length === 0, poids: 5,
         cout: pire ? pire.l.nom + " — " + pire.cout
           + (nonConformes.length > 2 ? "  ·  et " + (nonConformes.length - 1) + " autres en écart"
             : nonConformes.length === 2 ? "  ·  et un autre en écart" : "")
@@ -43,13 +45,13 @@ window.VUE_PLANCHE = (function () {
 
     return UI.recevabilite(
       g.kvs.length
-        ? (nonConformes.length ? "Ces KV sont-ils conformes à leurs marchés ?" : "Les KV tiennent")
+        ? (nonConformes.length ? "Quels choix restent à vérifier ?" : "Contrôles renseignés — réception distincte")
         : "Aucun KV master",
       controles, null,
       [
         { nom: "Ajouter un KV", fort: !g.kvs.length,
           quand: function () { ajouter(p, rafraichir); } },
-        g.kvs.length ? { nom: "Décliner un marché", quand: function () { decliner(p, g, rafraichir); } } : null,
+        g.kvs.length ? { nom: "Créer des formats", quand: function () { decliner(p, g, rafraichir); } } : null,
         { nom: "Imprimer la planche", doux: true, quand: function () { window.print(); } },
       ].filter(Boolean));
   }
@@ -62,7 +64,7 @@ window.VUE_PLANCHE = (function () {
     return el("div.pl-vide", {},
       UI.icone("projets", 28),
       el("div.plv-t", {}, "La planche est vide."),
-      el("div.plv-s", {}, "Un KV master par marché, avant les formats. Chacun porte sa marque, son accroche, sa langue, ses SKU et les choix de direction artistique."),
+      el("div.plv-s", {}, "Le master porte les choix communs de la piste. Une adaptation ne porte que les différences d'un marché ; les formats peuvent venir directement du master."),
       el("button.b.or", { type: "button", onclick: function () { ajouter(p, rafraichir); } }, "Poser le premier KV")
     );
   }
@@ -83,7 +85,7 @@ window.VUE_PLANCHE = (function () {
       return el("div.pl-marque", {},
         el("div.plm-tete", {},
           el("span.plm-nom", {}, r.nom),
-          el("span.plm-n", {}, r.kvs.length + (r.kvs.length > 1 ? " marchés" : " marché")
+          el("span.plm-n", {}, r.kvs.length + " KV"
             + (r.statut ? " · " + r.statut : ""))
         ),
         el("div.pl-cases", {}, r.kvs.map(function (l) { return caseKV(p, l, rafraichir); }))
@@ -113,6 +115,8 @@ window.VUE_PLANCHE = (function () {
     var k = l.kv || {};
     var ecarts = KV.conformite(p, l).filter(function (c) { return !c.ok; })
       .sort(function (a, b) { return (b.poids || 0) - (a.poids || 0); });
+    if (REGLES.maitrePerime(p, l)) ecarts.unshift({ quoi: "Référence à reprendre", cout: "Le parent ou un ancêtre a changé ou n'est plus disponible." });
+    if (KV.estAdaptation(l) && !l.maitre) ecarts.unshift({ quoi: "Master non renseigné", cout: "Cet ancien KV reste conservé ; sa référence commune n'est pas établie." });
     var retours = ANNOT.ouvertes(l).length;
     var decl = KV.declinaisons(p, l.id).length;
     var mks = (l.mockups || []).length;
@@ -198,18 +202,18 @@ window.VUE_PLANCHE = (function () {
       O.vider(boite);
       var ecarts = KV.conformite(p, Object.assign({}, l, { kv: k }));
       boite.appendChild(UI.recevabilite(
-        "Ce KV est-il conforme à " + (m ? m.nom : "son marché") + " ?",
+        KV.estMaitre(l) && !l.marche ? "Les choix communs sont-ils renseignés ?" : "Ce KV est-il conforme à " + (m ? m.nom : "son marché") + " ?",
         ecarts, null, []));
     }
     dessiner();
 
-    var f = FORM.rendre(KV.champs(p).map(function (a) {
+    var f = FORM.rendre(KV.axes(p).map(function (a) {
       return { cle: a.cle, nom: a.nom, type: a.type === "choix" ? "texte" : a.type, aide: a.aide };
     }), k);
 
     PANNEAU.ouvrir(l.nom, m ? m.nom + " · " + (m.langues || []).map(O.langue).join(", ") : "", el("div", {},
       boite,
-      m && (m.sku || []).length
+      KV.estMaitre(l) && !l.marche ? UI.banniere("", "Cette référence commune ne confirme aucun marché. Les contrôles de langue, distribution et mentions s'appliquent à chaque destination.") : m && (m.sku || []).length
         ? el("div.sousbloc", {},
             el("h3", {}, "Ce qui est distribué ici",
               el("span.droite", {}, m.sku.length + " SKU")),
@@ -224,13 +228,19 @@ window.VUE_PLANCHE = (function () {
                     montre ? "montré par ce KV" : "non montré")));
             })))
         : UI.banniere("", "Le référentiel ne dit pas quels SKU sont distribués sur ce marché. Sans cette liste, on ne peut pas vérifier ce que le KV montre."),
-      el("div.sousbloc", {}, el("h3", {}, "La combinaison de ce marché"), f.noeud),
+      el("div.sousbloc", {}, el("h3", {}, KV.estMaitre(l) && !l.marche ? "Les choix communs" : "La combinaison de ce marché"), f.noeud),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          l.kv = f.valeurs();
-          l.nom = "KV · " + (m ? m.code : "?") + (l.kv.marque ? " · " + l.kv.marque : "");
-          DEPOT.tracer("modification", "kv", p.id, l.nom);
-          DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
+          FORM.appliquer(f, function () { return l.kv || {}; }, function (changements) {
+            if (Object.keys(changements).length) {
+              VERSION.ouvrir(l, "interne", "Correction du KV : " + Object.keys(changements).join(", "), null, { complet: true });
+              l.kv = Object.assign({}, l.kv || {}, changements);
+              l.nom = (KV.estMaitre(l) && !l.marche ? "KV master commun" : "KV · " + (m ? m.code : "?")) + (l.kv.marque ? " · " + l.kv.marque : "");
+              DEPOT.tracer("modification", "kv", p.id, l.nom);
+              DEPOT.enregistrer();
+            }
+            PANNEAU.fermer(); rafraichir();
+          });
         } }, "Enregistrer"),
         el("button.b", { type: "button", onclick: function () {
           PANNEAU.fermer(); ANNOT.ouvrir(p, l, rafraichir);
@@ -241,58 +251,94 @@ window.VUE_PLANCHE = (function () {
 
   /* ————————————————————— Ajouter, décliner ————————————————————— */
 
-  function ajouter(p, rafraichir) {
-    var selM = el("select", {});
+  function ajouter(p, rafraichir, piste, sur) {
+    var maitres = KV.maitres(p).filter(function (l) { return !piste || l.pisteId === piste.id; });
+    var selType = el("select", { "aria-label": "Niveau du KV" });
+    selType.appendChild(el("option", { value: "maitre" }, "Master commun"));
+    selType.appendChild(el("option", { value: "adaptation" }, "Adaptation marché"));
+    selType.value = maitres.length ? "adaptation" : "maitre";
+    var selBase = el("select", { "aria-label": "Master de référence" });
+    maitres.forEach(function (l) { selBase.appendChild(el("option", { value: l.id }, l.nom + " · V" + (l.version || 1))); });
+    var selM = el("select", { "aria-label": "Marché de destination" });
+    selM.appendChild(el("option", { value: "" }, "Choisir un marché"));
     DEPOT.liste("marches").forEach(function (m) {
       selM.appendChild(el("option", { value: m.id }, m.nom + " · " + (m.langues || []).map(O.langue).join(", ")));
     });
     var champMarque = el("input", { type: "text", placeholder: "Bonnet Rouge, Peak, Belle Hollandaise…" });
-    var base = KV.tous(p)[0] || null;
-
-    PANNEAU.ouvrir("Nouveau KV master", "un par marché", el("div", {},
-      UI.banniere("", "Le KV vient avant les formats. Une fois posé, il se décline — et toute reprise du KV périme ses déclinaisons."),
+    var commun = el("div", {},
+      UI.banniere("", "Le master porte les choix communs. Il ne confirme ni marché ni réception client."),
+      el("div.champ", {}, el("label", {}, "Marque"), champMarque));
+    var selPiste = el("select", { "aria-label": "Piste du master" });
+    selPiste.appendChild(el("option", { value: "" }, "Piste à renseigner"));
+    (p.sections.pistes || []).forEach(function (pi) { selPiste.appendChild(el("option", { value: pi.id }, pi.titre || "Piste sans titre")); });
+    var retenues = (p.sections.pistes || []).filter(function (pi) { return pi.statut === "retenue"; });
+    selPiste.value = piste ? piste.id : retenues.length === 1 ? retenues[0].id : "";
+    if (!piste) commun.appendChild(el("div.champ", {}, el("label", {}, "Piste du master"), selPiste));
+    var adaptation = el("div", {},
+      el("div.champ", {}, el("label", {}, "Master de référence"), selBase),
+      el("div.champ", {}, el("label", {}, "Marché de destination"), selM),
+      UI.banniere("", "Le contenu de cette version du master est repris comme point de départ. Les écarts se règlent ensuite, sans modifier le commun."));
+    function afficher() { commun.hidden = selType.value !== "maitre"; adaptation.hidden = selType.value !== "adaptation"; }
+    selType.addEventListener("change", afficher); afficher();
+    var fermer = sur ? PANNEAU.fermerSur : PANNEAU.fermer;
+    (sur ? PANNEAU.sur : PANNEAU.ouvrir)("Nouveau KV", piste ? piste.titre : "Commun, puis différences", el("div", {},
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Marché"), selM),
-        el("div.champ", {}, el("label", {}, "Marque"),
-          el("div.indice", {}, "Une planche peut porter plusieurs marques — c'est ce qui fait ses lignes."), champMarque)),
-      base ? UI.banniere("vert", "La combinaison du premier KV sera reprise comme point de départ : accroche, SKU, enfant, métier. À ajuster ensuite.") : null,
+        el("div.champ", {}, el("label", {}, "Niveau du KV"), selType), commun, adaptation),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          var l = KV.creer(p, selM.value, base);
-          l.kv.marque = champMarque.value.trim() || (base && base.kv ? base.kv.marque : "");
-          l.nom = "KV · " + (DEPOT.trouve("marches", selM.value) || {}).code + (l.kv.marque ? " · " + l.kv.marque : "");
-          DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
+          var base = selType.value === "adaptation" ? maitres.filter(function (l) { return l.id === selBase.value; })[0] : null;
+          if (selType.value === "adaptation" && (!base || base.annule || !DEPOT.trouve("marches", selM.value))) {
+            AVIS.refus("Choisir un master commun et un marché renseigné. Les anciens KV restent conservés."); return;
+          }
+          var l = KV.creer(p, selType.value === "adaptation" ? selM.value : null, base, selType.value);
+          if (piste) { l.pisteId = piste.id; if (l.niveau === "maitre") l.responsable = piste.auteurDA || null; }
+          else if (l.niveau === "maitre") l.pisteId = selPiste.value || null;
+          if (l.niveau === "maitre") l.kv.marque = champMarque.value.trim();
+          l.nom += l.kv.marque ? " · " + l.kv.marque : "";
+          DEPOT.enregistrer(); fermer(); rafraichir();
         } }, "Créer"),
-        el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
+        el("button.b.nu", { type: "button", onclick: fermer }, "Annuler"))
     ));
   }
 
   /* Décliner : les formats naissent du KV, et le savent. */
   function decliner(p, g, rafraichir) {
-    var selKV = el("select", {});
+    var selKV = el("select", { "aria-label": "KV de référence" });
     g.kvs.forEach(function (l) {
       var m = DEPOT.trouve("marches", l.marche);
       selKV.appendChild(el("option", { value: l.id }, l.nom + (m ? " · " + m.nom : "")));
     });
+    var selM = el("select", { "aria-label": "Marché des formats" });
+    selM.appendChild(el("option", { value: "" }, "Choisir un marché"));
+    DEPOT.liste("marches").forEach(function (m) { selM.appendChild(el("option", { value: m.id }, m.nom)); });
+    function destination() {
+      var ref = g.kvs.filter(function (l) { return l.id === selKV.value; })[0];
+      selM.disabled = !!(ref && ref.marche); selM.value = ref && ref.marche ? ref.marche : "";
+    }
+    selKV.addEventListener("change", destination); destination();
     var choix = coches(DEPOT.liste("supports").filter(function (s) { return s.type !== "kv"; }));
 
     PANNEAU.ouvrir("Décliner un KV", "les formats viennent après", el("div", {},
       UI.banniere("", "Chaque format créé porte ce KV comme maître. Si le KV repart en V2, ils basculent tous en « à regénérer » — et le nombre est écrit."),
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Le KV master"), selKV),
+        el("div.champ", {}, el("label", {}, "Le KV de référence"), selKV),
+        el("div.champ", {}, el("label", {}, "Marché des formats"), selM),
         el("div.champ", {}, el("label", {}, "Les formats"), choix.noeud)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           var maitre = (p.livrables || []).filter(function (x) { return x.id === selKV.value; })[0];
-          if (!maitre) return;
+          if (!maitre || maitre.annule) { AVIS.refus("La référence n'est plus disponible."); return; }
+          var marcheId = maitre.marche || selM.value;
+          if (!DEPOT.trouve("marches", marcheId)) { AVIS.refus("Choisir le marché de destination ; le master reste commun."); return; }
+          if (!choix.valeurs().length) { AVIS.refus("Choisir au moins un format."); return; }
           var faits = 0;
           choix.valeurs().forEach(function (sid) {
             var s = DEPOT.trouve("supports", sid);
             var points = {};
             MAISON.points.forEach(function (a) { points[a.cle] = "attente"; });
             p.livrables.push({
-              id: O.id("L"), voletId: maitre.voletId, support: sid, marche: maitre.marche,
-              nom: (s ? s.nom : "format") + " · " + (DEPOT.trouve("marches", maitre.marche) || {}).code,
+              id: O.id("L"), niveau: "declinaison", voletId: maitre.voletId, support: sid, marche: marcheId,
+              nom: (s ? s.nom : "format") + " · " + (DEPOT.trouve("marches", marcheId) || {}).code,
               responsable: maitre.responsable, origine: "prevu", pisteId: maitre.pisteId,
               maitre: maitre.id, versionMaitre: maitre.version || 1, version: 1, versions: [],
               estime: null, reel: null, toursVendus: maitre.toursVendus,
@@ -324,5 +370,5 @@ window.VUE_PLANCHE = (function () {
     return { noeud: boite, valeurs: function () { return sel; } };
   }
 
-  return { rendre: rendre, caseKV: caseKV };
+  return { rendre: rendre, caseKV: caseKV, ajouter: ajouter };
 })();

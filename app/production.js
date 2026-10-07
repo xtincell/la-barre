@@ -216,7 +216,9 @@ window.PRODUCTION = (function () {
           + " vers aucun fichier : ils montrent une image d'écran, pas ce qui part à l'impression" });
     }
 
-    out.push({ quoi: "Rien de périmé", ok: perimes(l).length === 0, poids: 4,
+    if (l.maitre) out.push({ quoi: "Référence reçue à jour", ok: !REGLES.maitrePerime(p, l), poids: 5,
+      cout: "Le parent ou un ancêtre a changé ou manque ; sa reprise reste à recevoir. La préparation reste possible." });
+    out.push({ quoi: "Fichiers de cette version", ok: perimes(l).length === 0, poids: 4,
       cout: perimes(l).length + " fichiers posés sur une version antérieure" });
 
     return out;

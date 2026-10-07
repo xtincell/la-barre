@@ -420,28 +420,7 @@ window.VUE_ROUTE = (function () {
   }
 
   function ajouterKV(p, pi, apres) {
-    var mes = kvs(p, pi);
-    var selM = el("select", {});
-    DEPOT.liste("marches").forEach(function (m) {
-      var deja = mes.some(function (l) { return l.marche === m.id; });
-      selM.appendChild(el("option", { value: m.id },
-        m.nom + " · " + (m.langues || []).map(O.langue).join(", ") + (deja ? "  (déjà un KV)" : "")));
-    });
-
-    PANNEAU.sur("Nouveau KV master", pi.titre, el("div", {},
-      UI.banniere("", "Le KV naît sur cette piste et en hérite : concept, accroche, choix de DA. Sa langue vient du marché."),
-      el("div.form", {}, el("div.champ", {}, el("label", {}, "Marché"), selM)),
-      el("div.form-actions", {},
-        el("button.b.or", { type: "button", onclick: function () {
-          var l = KV.creer(p, selM.value, mes[0] || null);
-          l.pisteId = pi.id;
-          if (!l.vignette && pi.vignette) l.vignette = pi.vignette;
-          var m = DEPOT.trouve("marches", selM.value);
-          l.nom = "KV · " + (m ? m.code : "?") + " · " + (pi.titre || "");
-          DEPOT.enregistrer(); PANNEAU.fermerSur(); apres();
-        } }, "Créer"),
-        el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Annuler"))
-    ));
+    VUE_PLANCHE.ajouter(p, apres, pi, true);
   }
 
   return { ouvrir: ouvrir, rendre: rendre, kvs: kvs, declinaisons: declinaisons, mockups: mockups };
