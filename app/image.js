@@ -147,7 +147,7 @@ window.IMAGE = (function () {
     if (src && estVideo(src)) {
       var v = O.el("video", { src: src, controls: "controls", preload: "metadata",
         playsinline: "playsinline" });
-      if (objet.vignette && !estVideo(objet.vignette)) v.poster = objet.vignette;
+      if (objet.vignette && !estVideo(objet.vignette)) v.poster = window.DISQUE ? DISQUE.src(objet.vignette) : objet.vignette;
       var boite = O.el("div." + classe.replace(/ /g, ".") + ".v-film", {}, v);
       boite.video = v;
       return boite;

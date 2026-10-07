@@ -66,8 +66,21 @@ window.VUE_ASSET = (function () {
         el("div.ast-r", {},
           resp ? UI.avatar(resp, 22) : UI.avatar(null, 22),
           el("span", {}, resp ? resp.nom : "Sans responsable"),
-          piste ? el("span", {}, "piste « " + piste.titre + " »") : el("span.alerte", {}, "Hors piste"))
+          piste ? el("span", {}, "piste « " + piste.titre + " »") : el("span.alerte", {}, "Hors piste")),
+        original(l)
       ));
+  }
+
+  /* Le fichier original, dans l'export : il s'ouvre sur cette machine, il ne part
+   * jamais en ligne (en ligne, l'image vient du proxy compressé). */
+  function original(l) {
+    var d = window.DISQUE ? DISQUE.depuisOrigine((l.releve || {}).origine_disque) : null;
+    if (!d) return null;
+    return el("div.ast-r.ast-o", {}, el("span", {}, "Original"),
+      DISQUE.local
+        ? [el("button.studio-lien", { type: "button", onclick: function () { DISQUE.ouvrir(d, false); } }, "Ouvrir"),
+           el("button.studio-lien", { type: "button", onclick: function () { DISQUE.ouvrir(d, true); } }, "Dans le Finder")]
+        : el("span", {}, "au disque de l'agence"));
   }
 
   /* ————————————————————— La question ————————————————————— */

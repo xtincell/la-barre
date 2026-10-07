@@ -490,6 +490,7 @@ window.VUE_PROJETS = (function () {
       var fds = COUVERTURE.fonds(m);
       if (fds) hote.appendChild(fds);
     }
+    if (window.DISQUE && m && DISQUE.bloc(m.disque)) hote.appendChild(DISQUE.bloc(m.disque));
 
     /* Le dossier de marque au complet : les quatre piliers, le brief de
      * plateforme, les décideurs, le catalogue, la vie. Il était dans
@@ -574,6 +575,10 @@ window.VUE_PROJETS = (function () {
 
     hote.appendChild(blocComposition(c, rafraichir));
     if (window.COUVERTURE && COUVERTURE.pieces(c)) hote.appendChild(COUVERTURE.pieces(c));
+    /* Les vidéos et les EXE de la campagne : lus depuis l'export en local. */
+    if (window.DISQUE && DISQUE.bloc(c.disque)) hote.appendChild(DISQUE.bloc(c.disque));
+    var sku = blocSku(c, ps);
+    if (sku) hote.appendChild(sku);
 
     if (!ps.length) {
       hote.appendChild(el("section.cg-bloc", {},
@@ -592,6 +597,41 @@ window.VUE_PROJETS = (function () {
         el("div.mpl-liste", {}, ps.map(function (x) {
           return ligneProjetChainee(x, ps, rafraichir); }))));
     }
+  }
+
+  /* Les SKU que la campagne montre : relevés sur ses visuels (c.skus, avec le fichier
+   * en preuve) et déclarés par ses livrables (kv.sku). C'est ce lien qui fait remonter
+   * une campagne depuis un pack — et qui dit, avant l'impression, quel pack part où.
+   * Un lien relevé sur un visuel est une lecture, pas une saisie : il se contresigne. */
+  function blocSku(c, ps) {
+    var vus = {};
+    function fiche(id) { return vus[id] || (vus[id] = { preuves: [], livrables: [] }); }
+    (c.skus || []).forEach(function (x) { fiche(x.sku).preuves = (x.preuves || []).slice(); });
+    ps.forEach(function (p) {
+      (p.livrables || []).forEach(function (l) {
+        ((l.kv || {}).sku || []).forEach(function (id) { fiche(id).livrables.push({ p: p, l: l }); });
+      });
+    });
+    var ids = Object.keys(vus).filter(function (id) { return DEPOT.trouve("sku", id); });
+    if (!ids.length) return null;
+    var aQualifier = ids.filter(function (id) { return DEPOT.trouve("sku", id).aQualifier; }).length;
+    return el("details.fonds.cg-sku", {},
+      el("summary", {}, "Les SKU montrés", el("span.studio-compte", {}, String(ids.length)),
+        el("span.fonds-q", {}, "relevés sur les visuels de la campagne et déclarés par ses livrables"
+          + (aQualifier ? " · " + aQualifier + " fiche" + (aQualifier > 1 ? "s" : "") + " à qualifier" : ""))),
+      el("div.fonds-g", {}, ids.map(function (id) {
+        var s = DEPOT.trouve("sku", id), x = vus[id];
+        var preuve = x.preuves.length && window.DISQUE ? DISQUE.depuisOrigine(x.preuves[0]) : null;
+        return el("figure.fonds-c", { title: s.nom },
+          s.vignette ? el("img", { src: s.vignette, alt: s.nom, loading: "lazy" }) : el("span.fonds-v", {}, "pas de packshot"),
+          el("figcaption", {}, el("b", {}, s.nom),
+            el("span.disque-m", {}, [
+              x.livrables.length ? x.livrables.length + " livrable" + (x.livrables.length > 1 ? "s" : "") : null,
+              x.preuves.length ? "vu sur " + x.preuves.length + " fichier" + (x.preuves.length > 1 ? "s" : "") : null,
+              s.aQualifier ? "à qualifier" : null].filter(Boolean).join(" · "))),
+          preuve && DISQUE.local ? el("span.disque-g", {},
+            el("button.studio-lien", { type: "button", onclick: function () { DISQUE.ouvrir(preuve, false); } }, "Voir la preuve")) : null);
+      })));
   }
 
   /* La composition : ce que l'occasion appelle, et ce qui est déjà ouvert. */

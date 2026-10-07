@@ -20,6 +20,8 @@ window.O = (function () {
         } else if (cle.slice(0, 2) === "on" && typeof v === "function") {
           noeud.addEventListener(cle.slice(2), v);
         } else {
+          /* Une image en ligne vient du proxy compressé ; en local, de l'original. */
+          if ((cle === "src" || cle === "poster") && window.DISQUE) v = DISQUE.src(v);
           noeud.setAttribute(cle, v === true ? "" : v);
         }
       });

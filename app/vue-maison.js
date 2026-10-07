@@ -29,6 +29,8 @@ window.VUE_MAISON = (function () {
     { cle: "people", nom: "Matanga People", quoi: "ce qui existe là-bas, et n'existe pas ici" },
     { cle: "radar", nom: "Radar Matanga", quoi: "les 366 briefs du registre, et lesquels ont un dossier ici" },
     { cle: "intake", nom: "Boîte d'entrée", quoi: "ce qui est tombé au vol, et qu'il reste à ranger" },
+    /* Les vidéos et les EXE des exports : lus depuis le disque, en local. */
+    { cle: "disque", nom: "Le disque", quoi: "les vidéos et les EXE des exports, rattachés ou non" },
     /* La doctrine : d'où viennent les règles que le produit applique. Elle vit
      * ici parce que ce n'est pas du travail — c'est ce qui le rend jugeable. */
     { cle: "doctrine", nom: "Doctrine", quoi: "les couches, les écoles, les structures — et ce que la maison en a réglé" },
@@ -68,6 +70,7 @@ window.VUE_MAISON = (function () {
             : m.cle === "people" ? REGISTRE.bilan().aveugles
             : m.cle === "radar" ? REGISTRE_RADAR.bilan().siensAveugles
             : m.cle === "intake" ? INTAKE.pile().length
+            : m.cle === "disque" ? (DEPOT.tout().disque_sans_place || []).length
             : (w.grave || (!w.surDisque && (age === null || age > 2))) ? "!" : 0; },
         alerte: function (m) { return m.cle === mode; } }),
 
@@ -82,6 +85,7 @@ window.VUE_MAISON = (function () {
     else if (mode === "people") REGISTRE.rendre(z, function () { rendre(hote); });
     else if (mode === "radar") REGISTRE_RADAR.rendre(z, function () { rendre(hote); });
     else if (mode === "intake") INTAKE.rendre(z, function () { rendre(hote); });
+    else if (mode === "disque") DISQUE.ecran(z);
     else if (mode === "doctrine") z.appendChild(VUE_DOCTRINE.rendre(z));
     else VUE_REGLAGES.rendre(z);
     return z;
@@ -105,6 +109,7 @@ window.VUE_MAISON = (function () {
     if (mode === "people") return REGISTRE.pire();
     if (mode === "radar") return REGISTRE_RADAR.pire();
     if (mode === "intake") return INTAKE.pire();
+    if (mode === "disque") return DISQUE.pire();
     return pireReferentiel(e);
   }
 

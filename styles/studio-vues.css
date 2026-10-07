@@ -2913,3 +2913,17 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .gal-titre { margin: 0; font-family: var(--affichage); font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); overflow-wrap: anywhere; }
 .gal-meta { margin: 0; font-size: var(--t-eti); line-height: var(--lh-eti); color: var(--clair-terne); }
 @media (max-width: 560px) { .gal-grille { grid-template-columns: 1fr 1fr; gap: var(--e4) var(--e3); } .gal-typo-p { font-size: var(--t-titre); } }
+
+/* Au disque : les vidéos se regardent, les EXE s'ouvrent (en local). */
+.disque-vg { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.disque-v video, .disque-v img { width: 100%; aspect-ratio: 16 / 9; object-fit: contain; border-radius: var(--r-s); background: var(--surface-3); }
+.disque-m { display: block; color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+.disque-g { display: flex; gap: var(--e2); flex-wrap: wrap; }
+.disque-g .studio-lien { min-height: 44px; }
+.disque-e { display: grid; grid-template-columns: 56px 1fr auto; gap: var(--e2); align-items: center; min-width: 0; }
+.disque-e img, .disque-ext { width: 56px; height: 56px; object-fit: cover; border-radius: var(--r-s); background: var(--surface-3); }
+.disque-ext { display: grid; place-items: center; font-size: var(--t-micro); color: var(--clair-terne); letter-spacing: .04em; }
+.disque-t { display: grid; min-width: 0; font-size: var(--t-meta); }
+.disque-t b { font-weight: 500; overflow-wrap: anywhere; }
+.disque-t span { font-size: var(--t-micro); color: var(--clair-terne); }
+@media (max-width: 480px) { .disque-e { grid-template-columns: 48px 1fr; } .disque-e .disque-g { grid-column: 2; } }
