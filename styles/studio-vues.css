@@ -2966,3 +2966,5 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .fb-a { margin: 0; font-size: var(--t-meta); }
 .fb-m { margin: 0; font-size: var(--t-micro); color: var(--clair-terne); }
 .fb-cp > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: var(--t-micro); }
+.fb-sb.h { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.fb-sb.h .fb-case img, .fb-sb.h .fb-vide { aspect-ratio: 16 / 9; max-height: none; object-fit: contain; background: #fff; }

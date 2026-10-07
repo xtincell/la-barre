@@ -97,11 +97,12 @@ window.FABRIQUE = (function () {
     return el("details.fonds.fb", { open: true },
       el("summary", {}, "Le storyboard", el("span.studio-compte", {}, String(s.cases.length)),
         el("span.fonds-q", {}, (s.format || "") + " — un prompt par case, même style, mêmes personnages")),
+      s.source ? el("p.fb-n", {}, s.source) : null,
       (s.personnages || []).length ? el("div.fb-f", {}, el("h4", {}, "Les personnages"),
         table(["Nom", "Qui", "Signe distinctif"], s.personnages.map(function (x) { return [x.nom, x.qui, x.signe]; })),
         s.tenue ? el("p.fb-n", {}, s.tenue) : null) : null,
       prompt("Préfixe de style, à coller en tête de chaque prompt", s.style, "Le préfixe de style"),
-      el("div.fb-sb", {}, s.cases.map(function (c) {
+      el("div.fb-sb" + (s.ratio === "16:9" ? ".h" : ""), {}, s.cases.map(function (c) {
         return el("article.fb-case", {},
           c.vignette ? el("img", { src: c.vignette, alt: "Case " + c.n, loading: "lazy" })
             : el("div.fb-vide", {}, "case " + c.n),
