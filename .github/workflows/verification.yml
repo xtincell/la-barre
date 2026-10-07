@@ -21,3 +21,4 @@ jobs:
       - run: npm run test:persistance
       - run: npm run test:manuel
       - run: npm run test:marches
+      - run: npm run test:provenances
