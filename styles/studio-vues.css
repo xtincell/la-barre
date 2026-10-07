@@ -3039,3 +3039,6 @@ ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; wid
 .fb-film { display: block; width: 100%; max-width: 960px; aspect-ratio: 16 / 9; background: #000; border-radius: var(--r-s); margin: var(--e3) 0; }
 .pp-anim { display: grid; gap: var(--e1); max-width: 640px; }
 .fb-film.petit { margin: 0; max-width: 640px; }
+.fb-par { margin: 0; font-family: var(--ecrit); font-style: italic; font-size: var(--t-meta); color: var(--clair); }
+.fb-st { margin: 0; font-size: var(--t-micro); color: var(--clair-terne); }
+.fb-st.a-faire { color: var(--arbitrage); font-weight: 600; }

@@ -9,6 +9,7 @@
 // Jusqu'au drop, le son passe par un filtre « vieille radio ».
 // Tempo relevé : ~141,7 BPM, une mesure = 1,694 s.
 //
+// DEBIT=1500000 pour une version web plus légère.
 // Usage : swift outils/montage-son-du-moment.swift <son.mp3> <dossier des planches> <logo.png> <vague-signature.png> <sortie.mp4>
 
 import AVFoundation
@@ -273,7 +274,7 @@ extension Int { func clamped(_ a: Int, _ b: Int) -> Int { Swift.min(Swift.max(se
 let ecrivain = try AVAssetWriter(outputURL: videoSeule, fileType: .mp4)
 let entreeVideo = AVAssetWriterInput(mediaType: .video, outputSettings: [AVVideoCodecKey: AVVideoCodecType.h264,
   AVVideoWidthKey: W, AVVideoHeightKey: H,
-  AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 3_000_000, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel]])
+  AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: Int(ProcessInfo.processInfo.environment["DEBIT"] ?? "") ?? 3_000_000, AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel]])
 entreeVideo.expectsMediaDataInRealTime = false
 let adaptateur = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: entreeVideo, sourcePixelBufferAttributes: [
   kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32ARGB, kCVPixelBufferWidthKey as String: W, kCVPixelBufferHeightKey as String: H])

@@ -93,12 +93,14 @@ window.FABRIQUE = (function () {
       (c.notes || []).length ? el("ul.fb-notes", {}, c.notes.map(function (n) { return el("li", {}, n); })) : null);
   }
 
-  function storyboard(s) {
+  function storyboard(s, precedents) {
     if (!s || !(s.cases || []).length) return null;
     return el("details.fonds.fb", { open: true },
       el("summary", {}, "Le storyboard", el("span.studio-compte", {}, String(s.cases.length)),
-        el("span.fonds-q", {}, (s.format || "") + " — un prompt par case, même style, mêmes personnages")),
+        el("span.fonds-q", {}, (s.version ? "v" + s.version + " · " : "") + (s.format || "") + " — un prompt par case, même style, mêmes personnages")),
       s.source ? el("p.fb-n", {}, s.source) : null,
+      (precedents || []).length ? el("p.fb-n", {}, precedents.map(function (v) {
+        return "v" + v.version + " archivée le " + O.joli(String(v.archive_le).slice(0, 10)) + (v.motif ? " — " + v.motif : ""); }).join(" · ")) : null,
       (s.personnages || []).length ? el("div.fb-f", {}, el("h4", {}, "Les personnages"),
         table(["Nom", "Qui", "Signe distinctif"], s.personnages.map(function (x) { return [x.nom, x.qui, x.signe]; })),
         s.tenue ? el("p.fb-n", {}, s.tenue) : null) : null,
@@ -108,6 +110,8 @@ window.FABRIQUE = (function () {
           c.vignette ? el("img", { src: c.vignette, alt: "Case " + c.n, loading: "lazy" })
             : el("div.fb-vide", {}, "case " + c.n),
           el("div.fb-ct", {}, el("b", {}, "Case " + c.n), " · " + [c.temps, c.cadrage].filter(Boolean).join(" · ")),
+          c.paroles ? el("p.fb-par", {}, "« " + c.paroles + " »") : null,
+          c.statut ? el("p.fb-st" + (/^à générer/.test(c.statut) ? ".a-faire" : ""), {}, c.statut) : null,
           c.action ? el("p.fb-a", {}, c.action) : null,
           c.son ? el("p.fb-m", {}, "Son : " + c.son) : null,
           c.texte ? el("p.fb-m", {}, "Texte : " + c.texte) : null,
@@ -178,7 +182,7 @@ window.FABRIQUE = (function () {
 
   function bloc(pi) {
     var f = pi.fabrique || {};
-    var parts = [brouillons(pi), animatiques(pi), portee(pi), storyboard(f.storyboard), conducteur(f.conducteur), musique(f.musique), kv(f.kv), references(pi)]
+    var parts = [brouillons(pi), animatiques(pi), portee(pi), storyboard(f.storyboard, f.storyboardsPrecedents), conducteur(f.conducteur), musique(f.musique), kv(f.kv), references(pi)]
       .filter(Boolean);
     if (!parts.length) return null;
     return el("section.fb-bloc", {}, el("div.section-titre", {}, "La fabrique", el("span.taille", {}, "· ce qu'il faut pour la montrer")), parts);
