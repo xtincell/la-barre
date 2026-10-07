@@ -248,6 +248,25 @@ styles/
 documents/           les fiches et amendements à remettre
 ```
 
+## Provenance des plateformes
+
+L’importeur existant `outils/completer-plateformes-2026.py` (Python 3) sépare les
+valeurs reçues (`recu`) des hypothèses (`infere`). Chaque hypothèse peut porter
+son motif dans `inferences[champ].pourquoi`, le même format que le dépôt. Un
+`motif` commun explicite à la marque est aussi accepté. Sans motif précis,
+la provenance reste « à qualifier » : la liste `_sources` du lot ne prouve
+jamais une inférence ni l’usage d’un document par un autre champ.
+
+L’importeur conserve les valeurs déjà présentes et les révisions des inférences
+remplacées par une valeur reçue. Il ne répare pas rétroactivement une provenance
+historique ni ne confirme une hypothèse. Un rapprochement des anciens motifs
+génériques exige les sources exactes et une révision explicite. Le résultat est
+un fichier de travail : sa réception dans le dépôt partagé doit passer par son
+protocole de révision (`If-Match`), jamais écraser directement le fichier servi.
+
+Vérification : `npm run test:provenances` ; cas synthétiques isolés, aucun corpus
+client ni appel externe. Le parcours complet du navigateur reste distinct.
+
 ## Ce qui vient ensuite
 
 **1b — encadrer.** Mon équipe, Mon standard, la fiche d'évaluation pré-remplie de faits,
