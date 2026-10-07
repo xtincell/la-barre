@@ -11,7 +11,7 @@
 #
 # Usage : python3 outils/proxy-2026.py <depot.json> <sortie.json> [--envoyer]
 
-import json, os, re, sys, io, base64, urllib.request, datetime
+import json, os, re, sys, io, base64, urllib.request, datetime, unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
 
@@ -26,10 +26,14 @@ d = json.load(open(SRC))
 
 cites = set()
 def relever(o):
-    if isinstance(o, dict): [relever(v) for k, v in o.items() if k != "proxys"]
+    if isinstance(o, dict): [relever(v) for k, v in o.items() if k not in ("proxys", "nomsOrigine")]
     elif isinstance(o, list): [relever(v) for v in o]
     elif isinstance(o, str) and IMG.match(o): cites.add(o)
 relever(d)
+
+def sur(t):
+    t = unicodedata.normalize("NFD", t).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-zA-Z0-9._-]+", "-", t).strip("-") or "x"
 
 def transparent(im):
     if im.mode not in ("RGBA", "LA", "P"): return False
@@ -65,7 +69,8 @@ proxys, manquants, poids = {}, [], 0
 for c in sorted(cites):
     src = os.path.join(APP, c)
     if not os.path.exists(src): manquants.append(c); continue
-    base = os.path.join(APP, "assets/review/proxy", os.path.splitext(c[len("assets/review/"):])[0])
+    # Le serveur en ligne n'accepte que [a-zA-Z0-9._/-] : la copie prend un nom sûr, l'original garde le sien.
+    base = os.path.join(APP, "assets/review/proxy", "/".join(sur(x) for x in os.path.splitext(c[len("assets/review/"):])[0].split("/")))
     os.makedirs(os.path.dirname(base), exist_ok=True)
     fait = next((base + e for e in (".jpg", ".png") if os.path.exists(base + e)
                  and os.path.getmtime(base + e) >= os.path.getmtime(src)), None)
