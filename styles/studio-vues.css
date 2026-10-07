@@ -2937,7 +2937,7 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .co-p { margin: 0; max-width: 65ch; }
 .co-x, .co-m { margin: 0; font-size: var(--t-meta); color: var(--clair-terne); max-width: 65ch; }
 .co-v { display: flex; gap: var(--e2); flex-wrap: wrap; }
-.co-v img { width: 120px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-s); }
+.co-v img { height: 90px; width: auto; max-width: none; border-radius: var(--r-s); }
 
 /* La fabrique d'une piste. */
 .fb-bloc { margin: var(--e4) 0; }
@@ -2954,20 +2954,21 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .fb-f h4 { margin: var(--e3) 0 var(--e1); }
 .fb-kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--e3); padding: var(--e3) 0; }
 .fb-kvc { margin: 0; display: grid; gap: var(--e1); }
-.fb-kvc img { width: 100%; aspect-ratio: 4 / 3; object-fit: contain; background: #fff; border-radius: var(--r-s); }
+.fb-kvc img { display: block; width: 100%; height: auto; max-height: 60vh; object-fit: contain; background: #fff; border-radius: var(--r-s); }
 .fb-kvc figcaption { font-size: var(--t-micro); color: var(--clair-terne); }
 .fb-r { margin: 0; padding-left: 1.1em; font-size: var(--t-micro); display: grid; gap: 2px; }
 .fb-r li.fait { text-decoration: line-through; color: var(--clair-terne); }
 .fb-sb { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--e3); padding: var(--e3) 0; }
 .fb-case { display: grid; gap: var(--e1); align-content: start; min-width: 0; }
-.fb-case img, .fb-vide { width: 100%; aspect-ratio: 9 / 16; max-height: 200px; object-fit: cover; border-radius: var(--r-s); background: var(--surface-3); }
+.fb-case img { display: block; width: 100%; height: auto; max-height: 420px; object-fit: contain; border-radius: var(--r-s); background: #fff; }
+.fb-vide { width: 100%; aspect-ratio: 9 / 16; max-height: 200px; border-radius: var(--r-s); background: var(--surface-3); }
 .fb-vide { display: grid; place-items: center; font-size: var(--t-micro); color: var(--clair-terne); border: 1px dashed var(--trait); }
 .fb-ct { font-size: var(--t-micro); color: var(--clair-terne); }
 .fb-a { margin: 0; font-size: var(--t-meta); }
 .fb-m { margin: 0; font-size: var(--t-micro); color: var(--clair-terne); }
 .fb-cp > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: var(--t-micro); }
 .fb-sb.h { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-.fb-sb.h .fb-case img, .fb-sb.h .fb-vide { aspect-ratio: 16 / 9; max-height: none; object-fit: contain; background: #fff; }
+.fb-sb.h .fb-vide { aspect-ratio: 16 / 9; max-height: none; }
 
 /* La big idea en affiche (refonte du 07/10/2026). */
 .bia { display: grid; gap: var(--e6); margin-bottom: var(--e7); }
@@ -2997,7 +2998,7 @@ ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; wid
 .pp:last-child { border-bottom: 0; }
 .pp-tete { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--e6); align-items: start; }
 .pp-kv { padding: 0; border: 0; background: #fff; border-radius: var(--r-m); overflow: hidden; cursor: pointer; display: block; width: 100%; box-shadow: 0 1px 2px rgba(36,28,24,.08), 0 8px 24px -12px rgba(36,28,24,.25); }
-.pp-kv img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: contain; }
+.pp-kv img { display: block; width: 100%; height: auto; max-height: 72vh; object-fit: contain; }
 .pp-kv:focus-visible { outline: 3px solid var(--info); outline-offset: 3px; }
 .pp-kv-v { display: grid; place-items: center; aspect-ratio: 4 / 3; background: var(--surface-3); color: var(--clair-terne); font-size: var(--t-meta); }
 .pp-id { display: grid; gap: var(--e4); align-content: start; min-width: 0; }
@@ -3013,16 +3014,17 @@ ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; wid
 .pp-g h4 { margin: 0; font-family: var(--affichage); font-size: var(--t-meta); font-weight: 600; color: var(--clair); display: flex; gap: var(--e3); align-items: baseline; flex-wrap: wrap; }
 .pp-g h4 span { font-weight: 400; font-size: var(--t-eti); color: var(--clair-terne); }
 .pp-fil { display: flex; gap: var(--e3); overflow-x: auto; padding-bottom: var(--e2); scroll-snap-type: x proximity; }
-.pp-t { margin: 0; flex: 0 0 160px; display: grid; gap: var(--e1); scroll-snap-align: start; }
-.pp-t img, .pp-tv { width: 160px; aspect-ratio: 4 / 3; object-fit: contain; background: #fff; border-radius: var(--r-s); border: 1px solid var(--trait); }
+/* Une bande = une hauteur commune ; chaque image garde ses proportions, la légende suit sa largeur. */
+.pp-t { margin: 0; flex: 0 0 auto; width: min-content; display: grid; gap: var(--e1); scroll-snap-align: start; }
+.pp-t img { display: block; height: 120px; width: auto; max-width: none; background: #fff; border-radius: var(--r-s); border: 1px solid var(--trait); }
+.pp-tv { width: 160px; height: 120px; border-radius: var(--r-s); border: 1px solid var(--trait); }
 .pp-tv { display: grid; place-items: center; padding: var(--e2); text-align: center; font-size: var(--t-micro); color: var(--clair-terne); background: var(--surface-2); border-style: dashed; }
 .pp-t figcaption { font-size: var(--t-micro); line-height: var(--lh-micro); color: var(--clair-terne); }
-.pp-kvv { flex-basis: 200px; }
-.pp-kvv img { width: 200px; }
-.pp-sb .pp-t { flex-basis: 96px; }
-.pp-sb .pp-t img, .pp-sb .pp-tv { width: 96px; aspect-ratio: 9 / 16; object-fit: cover; }
-.pp-sb.h .pp-t { flex-basis: 176px; }
-.pp-sb.h .pp-t img, .pp-sb.h .pp-tv { width: 176px; aspect-ratio: 16 / 9; object-fit: contain; }
+.pp-kvv img { height: 160px; }
+.pp-sb .pp-t img { height: 180px; }
+.pp-sb .pp-tv { width: 101px; height: 180px; }
+.pp-sb.h .pp-t img { height: 110px; }
+.pp-sb.h .pp-tv { width: 196px; height: 110px; }
 .pp-n { margin: 0; font-size: var(--t-eti); color: var(--clair-terne); }
 .pp-cmp-t { margin-top: var(--e4); }
 @media (max-width: 860px) { .pp-tete { grid-template-columns: 1fr; } }
