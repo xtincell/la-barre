@@ -541,7 +541,7 @@ window.VUE_PROJETS = (function () {
     var e = CAMPAGNE.etat(c);
     var mq = (c.marqueIds || [])[0];
     var m = mq ? DEPOT.trouve("marques", mq) : null;
-    var ref = CAMPAGNE.pisteDeReference(c.id);
+    var reference = CAMPAGNE.reference(c.id);
     var vifs = ps.filter(function (p) { return !(window.CLOTURE && CLOTURE.est(p)); });
 
     hote.className = "zone studio";
@@ -561,20 +561,7 @@ window.VUE_PROJETS = (function () {
     /* La piste qui gouverne les frères. Sans elle, le film et l'activation
      * de la même campagne ignorent le concept qu'on vient d'arbitrer. Son
      * titre est ce qu'un humain a écrit : il prend l'aplat d'intention. */
-    if (ref) {
-      hote.appendChild(el("section.cg-piste", {},
-        el("p.cg-l", {}, "La piste qui gouverne"),
-        el("p.cg-titre", {}, ref.piste.titre || "Piste retenue"),
-        el("p.cg-q", {}, "Arbitrée sur « " + ref.projet.nom + " ». Les autres projets de cette "
-          + "campagne en héritent — celui qui s'en écarte doit le dire.")));
-    } else if (vifs.length > 1) {
-      /* Seuls les projets ouverts se fabriquent : deux projets clos sans piste
-       * commune ne produiront plus rien. */
-      hote.appendChild(el("section.cg-piste.f-attente", {},
-        el("p.cg-l", {}, el("span.cg-signe", { "aria-hidden": "true" }, "◐ "), "Aucune piste retenue"),
-        el("p.cg-q", {}, vifs.length + " projets se fabriquent sans savoir quel concept fait "
-          + "autorité. Deux signatures peuvent sortir du même temps fort.")));
-    }
+    if (reference.etat !== "absente" || vifs.length > 1) hote.appendChild(CAMPAGNE.blocReference(c.id, rafraichir));
 
     hote.appendChild(blocComposition(c, rafraichir));
     if (window.COUVERTURE && COUVERTURE.pieces(c)) hote.appendChild(COUVERTURE.pieces(c));

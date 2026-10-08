@@ -48,6 +48,21 @@ reprise séparée, sans le pousser automatiquement sur le fichier partagé.
 `npm run test:persistance` exerce concurrence, idempotence, fichiers illisibles,
 rapprochement, coupures et reprise. Les parcours visuels vivent dans `tests/parcours.mjs`.
 
+## La référence créative d'une campagne
+
+Plusieurs projets peuvent retenir chacun une piste. Leur ordre dans la liste ne
+désigne pas le concept commun : l'écran campagne affiche la concurrence et permet
+de **Choisir la référence commune**, avec un motif. Ce choix conserve les pistes,
+leurs livrables et les décisions précédentes. Le cadrage et les contrôles lisent
+le même résolveur. Une modification du concept ou de son arbitrage rend le choix
+à relire ; ajouter un fichier de production ne le réarbitre pas.
+
+Le reçu conserve la paire projet/piste, le contenu créatif, sa version, le motif,
+la date et l'acteur local. Il s'agit d'un choix interne, distinct de l'accord
+client et de la diffusion. Une seule piste retenue sans choix explicite reste une
+référence déduite, annoncée comme telle. `npm run test:decisions` exerce concurrence,
+réponse perdue, reprise, péremption et conservation des décisions.
+
 ## Le système visuel
 
 Tous les composants vivent dans **`app/ui.js` + `styles/systeme.css`**, et nulle part

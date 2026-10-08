@@ -10,7 +10,8 @@
     "test:persistance": "node --test tests/persistance.test.mjs tests/reconciliation.test.mjs tests/depot-reprise.test.mjs",
     "test:manuel": "node --test tests/saisie-manuelle.test.mjs tests/acteur.test.mjs tests/formulaire.test.mjs",
     "test:marches": "node --test tests/marches.test.mjs",
-    "test:provenances": "node --test tests/provenances-plateformes.test.mjs"
+    "test:provenances": "node --test tests/provenances-plateformes.test.mjs",
+    "test:decisions": "node --test tests/reference-campagne.test.mjs"
   },
   "engines": {
     "node": ">=18"

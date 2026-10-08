@@ -166,13 +166,16 @@ window.CADRAGE_SEANCE = (function () {
     var c = window.CAMPAGNE && p.campagneId ? CAMPAGNE.de(p.campagneId) : null;
     if (!c) return null;
     var freres = CAMPAGNE.projets(c.id).filter(function (x) { return x.id !== p.id; });
-    var ref = CAMPAGNE.pisteDeReference(c.id);
+    var reference = CAMPAGNE.reference(c.id), ref = reference.reference;
     var f = c.fenetre || {};
     return el("div.cds-cmp", {},
       el("p.cds-cmp-n", {}, "Campagne ", el("a", { href: "#/projets/" + c.id, onclick: fermer }, c.nom),
         f.debut ? el("span.cds-src", {}, "  ·  " + O.joli(f.debut) + (f.fin ? " → " + O.joli(f.fin) : "")) : null),
       ref ? el("p.cds-src", {}, "La piste qui gouverne : ", el("b", {}, ref.piste.titre || "piste retenue"),
-        " — arbitrée sur « " + ref.projet.nom + " ».") : null,
+        " — arbitrée sur « " + ref.projet.nom + " ».")
+        : reference.etat === "conflit" || reference.etat === "perimee"
+          ? el("p.cds-src", {}, reference.etat === "conflit" ? "Références concurrentes : " : "Référence à relire : ",
+              el("a", { href: "#/projets/" + c.id, onclick: fermer }, "choisir le concept commun dans la campagne")) : null,
       freres.length ? el("p.cds-src", {}, (freres.length > 1 ? freres.length + " autres projets : " : "Autre projet : "),
         freres.map(function (x, k) {
           return [k ? ", " : "", el("a", { href: "#/projets/" + x.id, onclick: fermer }, x.ref || x.id), " " + x.nom];
