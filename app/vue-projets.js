@@ -129,11 +129,14 @@ window.VUE_PROJETS = (function () {
       rs.length
         ? el("div", { style: { "margin-top": ".6rem" } }, rs.map(function (r) {
             var n = window.EFFICACITE ? EFFICACITE.niveau(r.niveau) : null;
+            var q = BOUCLES.qualifierResultat(r);
             return el("div.res-l", {},
-              el("b", {}, r.quoi, r.valeur ? el("span.res-v", {}, r.valeur) : null),
+              el("b", {}, r.quoi, r.valeur !== undefined && r.valeur !== null && String(r.valeur).trim()
+                ? el("span.res-v", {}, r.valeur) : null),
               el("span.res-s", {}, r.source
                 ? r.source + (n ? "  ·  " + n.nom.toLowerCase() : "")
-                : "sans source — il se retournera en réunion"));
+                : "sans source — il se retournera en réunion"),
+              !q.complet ? el("span.res-s", {}, "Note à qualifier : " + q.manques.join(", ") + ".") : null);
           }))
         : null,
       el("div", { style: { "margin-top": ".7rem" } },
@@ -164,10 +167,11 @@ window.VUE_PROJETS = (function () {
       el("div.form-actions", {},
         el("button.bouton", { type: "button", onclick: function () {
           if (!quoi.value.trim()) { AVIS.refus("Il faut dire ce qui a été mesuré."); return; }
-          BOUCLES.poser(p, { quoi: quoi.value, valeur: valeur.value,
+          var q = BOUCLES.poser(p, { quoi: quoi.value, valeur: valeur.value,
             source: source.value, niveau: sel.value || null });
           PANNEAU.fermer();
-          AVIS.fait("Résultat noté. Il entre dans la vie de la marque.");
+          AVIS.fait(q.complet ? "Résultat renseigné. Sa source reste à vérifier."
+            : "Note conservée, à qualifier : " + q.manques.join(", ") + ".");
           if (rafraichir) rafraichir();
         } }, "Noter"),
         el("button.bouton.creux", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))

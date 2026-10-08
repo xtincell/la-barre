@@ -40,16 +40,42 @@ window.BOUCLES = (function () {
    * applique déjà, et c'est le même mécanisme. */
   function resultats(p) { return (p && p.resultat) || []; }
 
+  function texte(v) {
+    return typeof v === "string" ? v.trim() : typeof v === "number" && Number.isFinite(v) ? String(v) : "";
+  }
+
+  /* Renseigner la preuve ne vérifie pas sa vérité. Une note partielle reste
+   * conservée, mais ne devient pas un résultat mesuré par sa seule présence. */
+  function qualifierResultat(r) {
+    r = r || {};
+    var manques = [];
+    if (!texte(r.quoi)) manques.push("mesure");
+    if (!texte(r.valeur)) manques.push("valeur");
+    if (!texte(r.source)) manques.push("source");
+    var n = window.EFFICACITE ? EFFICACITE.niveau(r.niveau) : null;
+    if (!n) manques.push("niveau de preuve");
+    var date = texte(r.date), d = new Date(date), jour = new Date(date.slice(0, 10) + "T00:00:00Z");
+    if (!/^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(date) || !Number.isFinite(d.getTime())
+        || !Number.isFinite(jour.getTime()) || jour.toISOString().slice(0, 10) !== date.slice(0, 10)) manques.push("date valide");
+    return { complet: !manques.length, manques: manques, niveau: n };
+  }
+
+  function resultatsQualifies(p) {
+    return resultats(p).filter(function (r) { return qualifierResultat(r).complet; });
+  }
+
   function poser(p, r) {
     p.resultat = p.resultat || [];
-    p.resultat.push({
-      quoi: (r.quoi || "").trim(), valeur: (r.valeur || "").trim(),
-      source: (r.source || "").trim(), niveau: r.niveau || null,
+    var note = {
+      quoi: texte(r.quoi), valeur: texte(r.valeur),
+      source: texte(r.source), niveau: r.niveau || null,
       date: r.date || new Date().toISOString().slice(0, 10),
-    });
+    };
+    p.resultat.push(note);
     DEPOT.tracer("résultat", "projets", p.id, r.quoi,
       ((p.sections || {}).identite || {}).marqueIds);
     DEPOT.enregistrer();
+    return qualifierResultat(note);
   }
 
   function etatResultat(p) {
@@ -62,17 +88,17 @@ window.BOUCLES = (function () {
             + "au suivant, et les trois autres boucles tournent à vide."
           : "Rien de mesuré pour l'instant — c'est normal tant que ça tourne." };
     }
-    var sansSource = rs.filter(function (r) { return !r.source; }).length;
-    var meilleur = rs.reduce(function (n, r) {
+    var qualifies = resultatsQualifies(p), partiels = rs.length - qualifies.length;
+    var meilleur = qualifies.reduce(function (n, r) {
       var d = window.EFFICACITE ? EFFICACITE.niveau(r.niveau) : null;
       return d && (!n || d.rang < n.rang) ? d : n; }, null);
-    return { cle: "mesure", nom: rs.length + (rs.length > 1 ? " résultats" : " résultat"),
-      ton: sansSource ? "attente" : "vert",
+    return { cle: qualifies.length ? "mesure" : "partiel",
+      nom: qualifies.length + (qualifies.length > 1 ? " résultats renseignés" : " résultat renseigné")
+        + (partiels ? " · " + partiels + " à qualifier" : ""),
+      ton: partiels ? "attente" : "vert",
       quoi: (meilleur ? "Meilleure preuve : " + meilleur.nom.toLowerCase() + ". " : "")
-        + (sansSource
-            ? sansSource + (sansSource > 1 ? " sans source : ils se retourneront en réunion."
-                                           : " sans source : il se retournera en réunion.")
-            : "Chacun porte sa source.") };
+        + (partiels ? partiels + " notes à qualifier : mesure, valeur, source, niveau et date sont nécessaires. " : "")
+        + "Une preuve renseignée reste à vérifier dans sa source." };
   }
 
   /* ————————————————————— 2 · La dérive ————————————————————— */
@@ -207,7 +233,8 @@ window.BOUCLES = (function () {
   }
 
   return { RESERVE: RESERVE, MINIMUM: MINIMUM,
-    resultats: resultats, poser: poser, etatResultat: etatResultat,
+    resultats: resultats, resultatsQualifies: resultatsQualifies, qualifierResultat: qualifierResultat,
+    poser: poser, etatResultat: etatResultat,
     observations: observations, derive: derive, estimationProposee: estimationProposee,
     parMarque: parMarque, parForme: parForme, tours: tours, etatBenchmark: etatBenchmark };
 })();

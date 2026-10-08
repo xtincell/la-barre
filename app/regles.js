@@ -697,7 +697,7 @@ window.REGLES = (function () {
        * réclame pas le résultat d'une campagne dont personne n'a encore dit
        * qu'elle était finie. */
       if (estClos(p) && !p.cloture.infere
-          && window.BOUCLES && !BOUCLES.resultats(p).length) {
+          && window.BOUCLES && !BOUCLES.resultatsQualifies(p).length) {
         pousser(trouves, p, "clos-sans-resultat",
           "Dossier clos sans résultat mesuré", "planning", "identite");
       }

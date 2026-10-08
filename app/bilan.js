@@ -45,6 +45,24 @@ window.BILAN = (function () {
     return d >= f.debut && d <= f.fin;
   }
 
+  function historiqueLisible(l) {
+    var vs = l.versions || [];
+    return vs.length > 0 && vs.every(function (v) {
+      return v && Object.prototype.hasOwnProperty.call(VERSION.ORIGINES, v.origine);
+    });
+  }
+
+  function cohorte(f, l) {
+    return !l.annule && (!f || dedans(f, l.remise || l.echeance));
+  }
+
+  function assiseCompte(x) {
+    return x.r + (x.r > 1 ? " reprises" : " reprise") + " client / périmètre sur "
+      + x.n + (x.n > 1 ? " historiques enregistrés" : " historique enregistré")
+      + (x.sansHistorique ? " ; " + x.sansHistorique
+        + (x.sansHistorique > 1 ? " livrables" : " livrable") + " sans historique lisible" : "");
+  }
+
   /* ————————————————————— Une mesure ————————————————————— */
 
   function mesure(o) {
@@ -143,31 +161,41 @@ window.BILAN = (function () {
         if (l.annule) return;
         /* Un livrable compte dans le mois où elle est remise, pas dans celui où
          * elle est née : sinon la fin de mois compte du travail à venir. */
-        if (f && !dedans(f, l.remise || l.echeance)) { horsFenetre++; return; }
+        if (!cohorte(f, l)) { horsFenetre++; return; }
         pieces++;
-        if ((l.versions || []).length) avecVersions++;
+        var lisible = historiqueLisible(l);
+        if (lisible) avecVersions++;
         var t = VERSION.tours(l, l.toursVendus);
-        var aRepris = t.faits > 0;
+        var aRepris = lisible && t.faits > 0;
         if (aRepris) reprises++;
 
-        if (!parCompte[compte]) parCompte[compte] = { n: 0, r: 0 };
-        parCompte[compte].n++; if (aRepris) parCompte[compte].r++;
+        if (!parCompte[compte]) parCompte[compte] = { n: 0, r: 0, sansHistorique: 0 };
+        if (lisible) parCompte[compte].n++; else parCompte[compte].sansHistorique++;
+        if (aRepris) parCompte[compte].r++;
 
         var m = l.marche ? DEPOT.trouve("marches", l.marche) : null;
         var cle = m ? m.code : "sans marché";
-        if (!parMarche[cle]) parMarche[cle] = { n: 0, r: 0 };
-        parMarche[cle].n++; if (aRepris) parMarche[cle].r++;
+        if (!parMarche[cle]) parMarche[cle] = { n: 0, r: 0, sansHistorique: 0 };
+        if (lisible) parMarche[cle].n++; else parMarche[cle].sansHistorique++;
+        if (aRepris) parMarche[cle].r++;
       });
     });
-    var reprise = avecVersions ? Math.round((reprises / pieces) * 100) : null;
+    var reprise = avecVersions ? Math.round((reprises / avecVersions) * 100) : null;
 
     /* Les allers-retours au-delà du vendu : le chiffre qui se porte en négociation. */
-    var depassements = 0, joursDepasses = 0;
+    var depassements = 0, joursDepasses = 0, depassementsSansEstime = 0, avecToursVendus = 0;
     projets.forEach(function (p) {
       (p.livrables || []).forEach(function (l) {
-        if (l.annule) return;
+        if (!cohorte(f, l) || !historiqueLisible(l)
+            || !Number.isFinite(+l.toursVendus) || !(+l.toursVendus > 0)) return;
+        avecToursVendus++;
         var t = VERSION.tours(l, l.toursVendus);
-        if (t.depasse) { depassements++; joursDepasses += t.depasse * (l.estime || 1) * 0.5; }
+        if (t.depasse) {
+          depassements++;
+          var estime = +l.estime;
+          if (Number.isFinite(estime) && estime > 0) joursDepasses += t.depasse * estime * 0.5;
+          else depassementsSansEstime++;
+        }
       });
     });
 
@@ -181,6 +209,7 @@ window.BILAN = (function () {
       horsFenetre: horsFenetre,
       parCompte: parCompte, parMarche: parMarche,
       depassements: depassements,
+      avecToursVendus: avecToursVendus, depassementsSansEstime: depassementsSansEstime,
       joursDepasses: Math.round(joursDepasses * 10) / 10,
     };
   }
@@ -228,11 +257,11 @@ window.BILAN = (function () {
         valeur: s.reprise === null ? "?" : s.reprise + " %", brut: s.reprise,
         assise: s.avecVersions,
         ton: s.reprise === null ? "" : s.reprise > 20 ? "alerte" : "vert",
-        quoi: s.reprises + " sur " + s.pieces + " livrables",
+        quoi: assiseCompte({ r: s.reprises, n: s.avecVersions, sansHistorique: s.pieces - s.avecVersions }),
         sansQuoi: !s.pieces
           ? "aucun livrable à remettre sur la période"
             + (s.horsFenetre ? " — " + s.horsFenetre + " sont attendues plus tard" : "")
-          : "aucune des " + s.pieces + " livrables ne porte de version : le taux de reprise "
+          : "aucun des " + s.pieces + " livrables ne porte d'historique lisible : le taux de reprise "
             + "n'a pas de dénominateur, et il en aura un à la première soumission" }),
     ];
   }
@@ -331,7 +360,7 @@ window.BILAN = (function () {
         { t: "Mon exigence, par compte",
           lignes: Object.keys(s.parCompte).map(function (k) {
             var x = s.parCompte[k];
-            return { q: k, v: x.r + " reprises sur " + x.n + " livrables" };
+            return { q: k, v: assiseCompte(x) };
           }),
           corps: Object.keys(s.parCompte).length ? null
             : "Aucun livrable remis sur la période"
@@ -342,18 +371,25 @@ window.BILAN = (function () {
           ? { t: "Mon exigence, par marché",
               lignes: Object.keys(s.parMarche).map(function (k) {
                 var x = s.parMarche[k];
-                return { q: k, v: x.r + " reprises sur " + x.n + " livrables" };
+                return { q: k, v: assiseCompte(x) };
               }) }
           : null,
 
         s.depassements
           ? { t: "Ce que le périmètre a coûté", lignes: [
               { q: "Livrables au-delà du vendu", v: String(s.depassements) },
-              { q: "Jours absorbés", v: s.joursDepasses + " j" },
-            ], source: "le chiffre qui rend la clause de reprise crédible en négociation" }
-          : { t: "Ce que le périmètre a coûté", videBon: true,
-              siVide: "Rien : aucun livrable n'a dépassé les allers-retours vendus.",
-              source: "le chiffre qui rend la clause de reprise crédible en négociation" },
+              { q: "Charge de reprise estimée", v: s.depassements === s.depassementsSansEstime ? "non estimable"
+                  : s.joursDepasses + " j" },
+              s.depassementsSansEstime ? { q: "Dépassements sans estimé", v: s.depassementsSansEstime + " sans estimé : charge inconnue" } : null,
+            ].filter(Boolean), source: "Estimation : tours au-delà du vendu × estimé du livrable × 0,5 ; ce n'est pas un temps mesuré. "
+              + s.avecToursVendus + (s.avecToursVendus > 1 ? " historiques comparables" : " historique comparable")
+              + " sur " + s.pieces + " livrables de la période." }
+          : { t: "Ce que le périmètre a coûté", videBon: s.avecToursVendus > 0 && s.avecToursVendus === s.pieces,
+              siVide: s.avecToursVendus
+                ? "Aucun dépassement enregistré sur " + s.avecToursVendus + " historiques comparables."
+                  + (s.pieces > s.avecToursVendus ? " " + (s.pieces - s.avecToursVendus) + " livrables restent non observés." : "")
+                : "Dépassement non observé : sans historique lisible et tours vendus, on ne peut pas conclure.",
+              source: "Même cohorte de livrables que le taux de reprise ; la date de remise prime, sinon l'échéance." },
 
         { t: "Ce que j'attends des autres",
           puces: att.ouvertes.length ? att.ouvertes : null,
@@ -519,7 +555,9 @@ window.BILAN = (function () {
           + " retenu, " + x.repris + " repris, " + x.critiques + " critiques, engagements "
           + x.engagements + (x.manque ? "\n      " + x.manque : ""));
       });
-      if (!corps.length) corps.push("  (rien d'enregistré sur la période)");
+      if (bl.corps) corps.push("  " + bl.corps);
+      if (!corps.length) corps.push("  " + (bl.siVide || "(rien d'enregistré sur la période)"));
+      if (bl.source) corps.push("  Assise : " + bl.source);
       out.push(bl.t.toUpperCase());
       out.push(corps.join("\n"));
       out.push("");
