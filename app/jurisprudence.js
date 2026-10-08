@@ -21,6 +21,7 @@ window.JURISPRUDENCE = (function () {
    * nouveau critère irait se ranger — pas d'où vient l'arbitrage. */
   var SOURCES = {
     piste: { nom: "piste arbitrée", famille: "proposition", poids: 5 },
+    "reference-campagne": { nom: "référence commune désignée", famille: "proposition", poids: 5 },
     idee: { nom: "idée arbitrée", famille: "bigidea", poids: 3 },
     livrable: { nom: "verdict sur un livrable", famille: "livrable", poids: 4 },
     version: { nom: "version close", famille: "livrable", poids: 3 },

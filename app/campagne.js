@@ -297,20 +297,138 @@ window.CAMPAGNE = (function () {
    * ses frères. Sans ça, le film et l'activation de la même campagne ignorent
    * le concept qu'on vient d'arbitrer, et deux signatures sortent du même
    * temps fort — c'est le test d'une minute, un cran plus haut. */
-  function pisteDeReference(campagneId) {
-    var trouvee = null;
-    projets(campagneId).forEach(function (p) {
-      if (trouvee) return;
+  /* Cette empreinte décrit la décision, pas les fichiers qu'elle produit.
+   * Une nouvelle maquette ne réarbitre pas le concept. En revanche une
+   * modification de son argument ou de sa version appelle une relecture. */
+  function contenuPiste(pi) {
+    return JSON.stringify([pi.id, pi.version || 1, pi.arbitre_le || null,
+      pi.titre || null, pi.concept || null, pi.axe || null, pi.ton || null,
+      pi.univers || null, pi.sacrifice || null, pi.argument || null,
+      pi.motif || null, pi.ideeId || null]);
+  }
+
+  function reference(campagneId) {
+    var c = de(campagneId), candidates = [];
+    (c ? projets(campagneId) : []).forEach(function (p) {
       ((p.sections || {}).pistes || []).forEach(function (pi) {
-        if (pi.statut === "retenue" && !trouvee) trouvee = { projet: p, piste: pi };
+        if (pi.statut === "retenue") candidates.push({ projet: p, piste: pi });
       });
     });
-    return trouvee;
+    candidates.sort(function (a, b) {
+      var x = a.projet.id + "\u0000" + a.piste.id, y = b.projet.id + "\u0000" + b.piste.id;
+      return x < y ? -1 : x > y ? 1 : 0;
+    });
+    var choix = c && c.referencePiste || null;
+    var revision = JSON.stringify([choix, candidates.map(function (x) {
+      return [x.projet.id, x.piste.id, contenuPiste(x.piste)];
+    })]);
+    var ref = null, etat = !candidates.length ? "absente" : candidates.length === 1 ? "unique" : "conflit";
+    if (choix) {
+      var candidate = candidates.filter(function (x) {
+        return x.projet.id === choix.projetId && x.piste.id === choix.pisteId;
+      })[0];
+      var decision = DEPOT.trouve("decisions", choix.decisionId);
+      if (candidate && contenuPiste(candidate.piste) === choix.contenu && decision
+          && decision.type === "reference-campagne" && decision.campagne === campagneId
+          && decision.verdict === "approuve" && decision.portee === "campagne"
+          && decision.projet === choix.projetId && decision.objet === choix.pisteId
+          && decision.contenuPiste === choix.contenu) {
+        ref = candidate; etat = "choisie";
+      } else etat = "perimee";
+    } else if (c && candidates.length === 1) ref = candidates[0];
+    return { etat: etat, reference: ref, candidates: candidates, revision: revision };
+  }
+
+  function pisteDeReference(campagneId) { return reference(campagneId).reference; }
+
+  function designerReference(campagneId, projetId, pisteId, motif, attendu) {
+    var c = de(campagneId), lu = reference(campagneId);
+    if (!c) return { ok: false, erreur: "Campagne introuvable." };
+    motif = typeof motif === "string" ? motif.trim() : "";
+    if (!motif) return { ok: false, erreur: "Écrivez pourquoi cette piste porte le socle commun." };
+    var candidate = lu.candidates.filter(function (x) {
+      return x.projet.id === projetId && x.piste.id === pisteId;
+    })[0];
+    if (!candidate) return { ok: false, erreur: "Cette piste n'est plus retenue dans cette campagne." };
+    var precedente = c.referencePiste && DEPOT.trouve("decisions", c.referencePiste.decisionId);
+    if (lu.etat === "choisie" && lu.reference.projet.id === projetId
+        && lu.reference.piste.id === pisteId && precedente.motif === motif
+        && (attendu === lu.revision || attendu === precedente.revisionSource)) {
+      return { ok: true, dejaRecu: true, decision: precedente };
+    }
+    if (attendu !== lu.revision) return { ok: false,
+      erreur: "Les pistes ou la référence ont changé. Relisez la campagne avant de choisir." };
+    var decision = { id: O.id("DEC"), type: "reference-campagne", objet: pisteId,
+      projet: projetId, campagne: campagneId, verdict: "approuve", portee: "campagne",
+      motif: motif, quand: new Date().toISOString(), qui: MAISON.titulaire,
+      acteur: window.ACTEUR ? ACTEUR.trace() : null, version: candidate.piste.version || 1,
+      titre: candidate.piste.titre || "Piste retenue", contenuPiste: contenuPiste(candidate.piste),
+      revisionSource: lu.revision, remplace: precedente ? precedente.id : null };
+    c.referencePiste = { projetId: projetId, pisteId: pisteId,
+      decisionId: decision.id, contenu: decision.contenuPiste };
+    /* ajoute() publie et sauvegarde immédiatement. Poser la référence avant
+     * cet appel empêche de publier un reçu sans son choix commun. */
+    DEPOT.ajoute("decisions", decision);
+    DEPOT.tracer("référence de campagne", "campagnes", c.id, decision.titre + " — " + motif);
+    DEPOT.enregistrer();
+    return { ok: true, dejaRecu: false, decision: decision };
+  }
+
+  function choisirReference(campagneId, apres) {
+    var c = de(campagneId), lu = reference(campagneId);
+    if (!c) return;
+    var sel = el("select", { id: "reference-campagne" },
+      el("option", { value: "" }, "— choisir une piste retenue"));
+    lu.candidates.forEach(function (x, i) {
+      sel.appendChild(el("option", { value: String(i) },
+        (x.piste.titre || "Piste sans titre") + " — " + (x.projet.ref || x.projet.nom)));
+      if (lu.reference && x.projet.id === lu.reference.projet.id && x.piste.id === lu.reference.piste.id) sel.value = String(i);
+    });
+    var motif = el("textarea", { id: "reference-motif", rows: 3 });
+    PANNEAU.sur("La référence commune", c.nom, el("div", {},
+      UI.banniere("", "Ce choix interne désigne le concept commun aux projets. Les pistes locales "
+        + "et leur production sont conservées. L'accord client et le droit de diffusion restent à établir séparément."),
+      el("div.form", {},
+        el("div.champ", {}, el("label", { "for": "reference-campagne" }, "Piste retenue"), sel),
+        el("div.champ", {}, el("label", { "for": "reference-motif" }, "Pourquoi elle porte le socle commun"), motif)),
+      el("div.form-actions", {},
+        el("button.b.or", { type: "button", onclick: function () {
+          var x = sel.value === "" ? null : lu.candidates[Number(sel.value)];
+          if (!x) { AVIS.refus("Choisissez une piste retenue."); return; }
+          var r = designerReference(campagneId, x.projet.id, x.piste.id, motif.value, lu.revision);
+          if (!r.ok) { AVIS.refus(r.erreur); return; }
+          PANNEAU.fermerSur(); if (apres) apres();
+        } }, "Consigner la référence commune"),
+        el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Annuler"))));
+  }
+
+  function blocReference(campagneId, apres) {
+    var lu = reference(campagneId), ref = lu.reference;
+    var conflit = lu.etat === "conflit" || lu.etat === "perimee";
+    return el("section.cg-piste" + (conflit ? ".f-alerte" : ref ? "" : ".f-attente"), {},
+      el("p.cg-l", {}, lu.etat === "conflit" ? "Références concurrentes"
+        : lu.etat === "perimee" ? "Référence à relire" : ref ? "La référence commune" : "Aucune piste retenue"),
+      ref ? el("p.cg-titre", {}, ref.piste.titre || "Piste retenue") : null,
+      el("p.cg-q", {}, ref
+        ? lu.etat === "unique"
+          ? "Seule piste retenue, sur « " + ref.projet.nom + " ». Son rôle commun est déduit ; vous pouvez le consigner explicitement."
+          : "Désignée pour la campagne, depuis « " + ref.projet.nom + " ». Les pistes locales et leurs décisions sont conservées."
+        : lu.etat === "conflit" ? "Plusieurs pistes sont retenues. Aucune ne gouverne la campagne par sa place dans la liste."
+        : lu.etat === "perimee" ? "La piste choisie a changé, a été retirée ou son reçu manque. Son ancienne décision reste conservée."
+        : "Le travail peut continuer ; aucun concept commun n'est encore désigné."),
+      conflit ? el("ul", {}, lu.candidates.map(function (x) {
+        return el("li", {}, el("a", { href: "#/projets/" + x.projet.id },
+          (x.piste.titre || "Piste sans titre") + " — " + x.projet.nom));
+      })) : null,
+      lu.candidates.length ? el("button.b.nu", { type: "button", onclick: function () {
+        choisirReference(campagneId, apres);
+      } }, lu.etat === "choisie" ? "Revoir la référence commune" : "Choisir la référence commune") : null);
   }
 
   return { liste: liste, de: de, deMarque: deMarque, cycleDe: cycleDe,
     projets: projets, occasion: occasion, etat: etat,
     composition: composition, ecarter: ecarter, reprendre: reprendre,
-    creer: creer, pisteDeReference: pisteDeReference,
+    creer: creer, pisteDeReference: pisteDeReference, reference: reference,
+    designerReference: designerReference, choisirReference: choisirReference, blocReference: blocReference,
     rattacher: rattacher, candidates: candidates, choisir: choisir, accueillir: accueillir };
 })();

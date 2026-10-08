@@ -654,8 +654,13 @@ window.REGLES = (function () {
        * recompose. Un projet qui s'écarte le DÉCLARE ; le contrôle ne se lève
        * pas sur celui qui a écrit son écart. */
       if (window.CAMPAGNE && p.campagneId && aSection(p, "pistes")) {
-        var ref = CAMPAGNE.pisteDeReference(p.campagneId);
-        if (ref && ref.projet.id !== p.id && !(p.ecartDeCampagne || "").trim()) {
+        var reference = CAMPAGNE.reference(p.campagneId), ref = reference.reference;
+        if (reference.etat === "conflit" || reference.etat === "perimee") {
+          pousser(trouves, p, "hors-piste-de-campagne",
+            reference.etat === "conflit" ? "Références concurrentes — le concept commun reste à choisir"
+              : "Référence commune modifiée ou retirée — à relire",
+            "creation", "pistes");
+        } else if (ref && ref.projet.id !== p.id && !(p.ecartDeCampagne || "").trim()) {
           var sienne = (s.pistes || []).filter(function (x) { return x.statut === "retenue"; })[0];
           if (sienne) {
             pousser(trouves, p, "hors-piste-de-campagne",
