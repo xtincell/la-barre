@@ -171,7 +171,7 @@ window.CADRAGE_SEANCE = (function () {
     return el("div.cds-cmp", {},
       el("p.cds-cmp-n", {}, "Campagne ", el("a", { href: "#/projets/" + c.id, onclick: fermer }, c.nom),
         f.debut ? el("span.cds-src", {}, "  ·  " + O.joli(f.debut) + (f.fin ? " → " + O.joli(f.fin) : "")) : null),
-      ref ? el("p.cds-src", {}, "La piste qui gouverne : ", el("b", {}, ref.piste.titre || "piste retenue"),
+      ref ? el("p.cds-src", {}, reference.etat === "unique" ? "Seule piste retenue — référence déduite : " : "La piste qui gouverne : ", el("b", {}, ref.piste.titre || "piste retenue"),
         " — arbitrée sur « " + ref.projet.nom + " ».")
         : reference.etat === "conflit" || reference.etat === "perimee"
           ? el("p.cds-src", {}, reference.etat === "conflit" ? "Références concurrentes : " : "Référence à relire : ",
