@@ -277,6 +277,7 @@ window.VUE_CONSTATER = (function () {
    * avec sa cause et le geste qui le remonte. Les cinq autres se réduisent à
    * une ligne — ils restent lisibles, ils ne réclament rien. */
   function indicateurs(s) {
+    var reprise = BILAN.indicateurs(s).filter(function (m) { return m.nom === "livrables repris"; })[0];
     return [
       { cle: "briefs", v: s.traites + " / " + s.projets, nom: "briefs traités",
         ko: s.projets > 0 && s.traites < s.projets,
@@ -323,8 +324,7 @@ window.VUE_CONSTATER = (function () {
         ko: s.reprise !== null && s.reprise > 20,
         creux: s.reprise === null,
         quoi: s.reprise === null
-          ? "aucun livrable ne porte de version : le taux n'a pas de dénominateur"
-          : s.reprises + " sur " + s.pieces + " livrables",
+          ? reprise.sansQuoi : reprise.quoi,
         pourquoi: "L'exigence se mesure au taux de reprise, y compris sur les petits projets.",
         geste: null },
     ];

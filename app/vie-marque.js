@@ -72,8 +72,9 @@ window.VIE_MARQUE = (function () {
           p.nom + ((p.cloture.bilan || "").trim() ? "" : "  ·  sans bilan"));
       }
       (p.resultat || []).forEach(function (r) {
-        pousser(r.date, "resultat", "Résultat mesuré",
-          (r.quoi || "") + (r.valeur ? " : " + r.valeur : "")
+        var complet = window.BOUCLES && BOUCLES.qualifierResultat(r).complet;
+        pousser(r.date, complet ? "resultat" : "resultat-note", complet ? "Résultat renseigné" : "Note de résultat à qualifier",
+          (r.quoi || "") + (r.valeur !== undefined && r.valeur !== null && String(r.valeur).trim() ? " : " + r.valeur : "")
           + (r.source ? "  ·  " + r.source : ""));
       });
     });
@@ -122,7 +123,7 @@ window.VIE_MARQUE = (function () {
 
   var TONS = {
     campagne: "vert", bilan: "vert", projet: "", cloture: "terne",
-    resultat: "vert", revision: "attente", tiers: "attente", trace: "terne",
+    resultat: "vert", "resultat-note": "attente", revision: "attente", tiers: "attente", trace: "terne",
   };
 
   function rendre(marqueId, limite) {

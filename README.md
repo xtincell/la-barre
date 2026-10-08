@@ -282,6 +282,24 @@ protocole de révision (`If-Match`), jamais écraser directement le fichier serv
 Vérification : `npm run test:provenances` ; cas synthétiques isolés, aucun corpus
 client ni appel externe. Le parcours complet du navigateur reste distinct.
 
+## Assise du bilan
+
+Le taux de reprise client / périmètre porte sur les historiques enregistrés
+dont les causes sont reconnues. Les livrables sans historique lisible restent
+comptés à part ; ils ne constituent pas des zéros. Le dépassement relit la
+même cohorte de remise, avec les tours vendus renseignés. La charge calculée
+reste une estimation explicite (`tours dépassés × estimé × 0,5`), et aucun jour
+n'est inventé si l'estimé manque. Ces réserves suivent aussi l'export texte.
+
+Les notes de résultat restent enregistrables et visibles quand elles sont
+partielles. Mesure, valeur (y compris zéro), source, niveau reconnu et date
+valide sont nécessaires pour les qualifier. La chronologie de marque et le
+contrôle des dossiers clos relisent cette même qualification. Une preuve
+renseignée ne signifie pas que sa source a été vérifiée. Le bilan de campagne
+et le transfert dans La Fusée restent des réceptions distinctes.
+
+Vérification : `npm run test:bilan`, sur fixtures synthétiques.
+
 ## Ce qui vient ensuite
 
 **1b — encadrer.** Mon équipe, Mon standard, la fiche d'évaluation pré-remplie de faits,

@@ -23,3 +23,4 @@ jobs:
       - run: npm run test:marches
       - run: npm run test:provenances
       - run: npm run test:decisions
+      - run: npm run test:bilan
