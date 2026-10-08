@@ -145,10 +145,10 @@ window.VUE_PROJETS = (function () {
   }
 
   function saisirResultat(p, rafraichir) {
-    var quoi = el("input", { type: "text", placeholder: "Portée, engagement, ventes, notoriété…" });
-    var valeur = el("input", { type: "text", placeholder: "+121 % · 206 030 · 3 points" });
-    var source = el("input", { type: "text", placeholder: "Rapport de régie, comptage terrain, Meta Insights…" });
-    var sel = el("select", {});
+    var quoi = el("input", { id: "resultat-mesure", type: "text", placeholder: "Portée, engagement, ventes, notoriété…" });
+    var valeur = el("input", { id: "resultat-valeur", type: "text", placeholder: "+121 % · 206 030 · 3 points" });
+    var source = el("input", { id: "resultat-source", type: "text", placeholder: "Rapport de régie, comptage terrain, Meta Insights…" });
+    var sel = el("select", { id: "resultat-niveau" });
     sel.appendChild(el("option", { value: "" }, "— niveau de preuve —"));
     ((window.EFFICACITE && EFFICACITE.NIVEAUX) || []).forEach(function (n) {
       sel.appendChild(el("option", { value: n.cle, title: n.quoi }, n.rang + " · " + n.nom));
@@ -159,11 +159,11 @@ window.VUE_PROJETS = (function () {
         + "dit ce qu'il vaut : données maison, catégorie voisine, marché comparable, "
         + "déclaratif daté — dans cet ordre."),
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Ce qui a été mesuré"), quoi),
-        el("div.champ", {}, el("label", {}, "La valeur"), valeur),
-        el("div.champ", {}, el("label", {}, "D'où elle vient"),
+        el("div.champ", {}, el("label", { "for": "resultat-mesure" }, "Ce qui a été mesuré"), quoi),
+        el("div.champ", {}, el("label", { "for": "resultat-valeur" }, "La valeur"), valeur),
+        el("div.champ", {}, el("label", { "for": "resultat-source" }, "D'où elle vient"),
           el("div.indice", {}, "Sans source, le résultat ne compte pas."), source),
-        el("div.champ", {}, el("label", {}, "Niveau de preuve"), sel)),
+        el("div.champ", {}, el("label", { "for": "resultat-niveau" }, "Niveau de preuve"), sel)),
       el("div.form-actions", {},
         el("button.bouton", { type: "button", onclick: function () {
           if (!quoi.value.trim()) { AVIS.refus("Il faut dire ce qui a été mesuré."); return; }
