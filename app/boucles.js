@@ -97,7 +97,8 @@ window.BOUCLES = (function () {
         + (partiels ? " · " + partiels + " à qualifier" : ""),
       ton: partiels ? "attente" : "vert",
       quoi: (meilleur ? "Meilleure preuve : " + meilleur.nom.toLowerCase() + ". " : "")
-        + (partiels ? partiels + " notes à qualifier : mesure, valeur, source, niveau et date sont nécessaires. " : "")
+        + (partiels ? partiels + (partiels > 1 ? " notes à qualifier" : " note à qualifier")
+          + " : mesure, valeur, source, niveau et date sont nécessaires. " : "")
         + "Une preuve renseignée reste à vérifier dans sa source." };
   }
 
