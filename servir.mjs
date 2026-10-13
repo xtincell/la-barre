@@ -215,6 +215,10 @@ async function imprimerPdf(url, sortie) {
     ws.onmessage = (e) => { const m = JSON.parse(e.data); if (m.id && attente.has(m.id)) { attente.get(m.id)(m); attente.delete(m.id); } };
     const cmd = (method, params = {}) => new Promise((ok) => { const id = ++n; attente.set(id, ok); ws.send(JSON.stringify({ id, method, params })); });
     await cmd("Page.enable");
+    // Le profil de Chrome est gardé d'une fois sur l'autre : sans cela, il
+    // ressert le code de la veille depuis son cache et le PDF montre l'ancien deck.
+    await cmd("Network.enable");
+    await cmd("Network.setCacheDisabled", { cacheDisabled: true });
     // La mise en page se fait à la taille d'une diapositive : sans cela, Chrome
     // compose à 800 px et chaque piste passe en mise en page étroite.
     await cmd("Emulation.setDeviceMetricsOverride", { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });

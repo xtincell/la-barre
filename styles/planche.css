@@ -1648,6 +1648,7 @@ body[data-impression="1"] { background: #fff; }
 .pg.t-kv { grid-template-columns: minmax(0, .32fr) minmax(0, 1fr); align-items: stretch; gap: 1.2rem; padding-right: 0; padding-top: 0; padding-bottom: 0; }
 .pg.t-kv .pg-kv-l { align-content: start; padding-top: clamp(1.2rem, 3vw, 2.4rem); }
 .pg.t-kv .pg-eti { font-family: var(--affichage); font-size: var(--t-meta); text-transform: uppercase; letter-spacing: .08em; }
+.pg-kv-var { font-family: var(--lecture); font-style: italic; font-size: var(--t-meta); line-height: 1.35; color: var(--m-rouge); }
 .pg-kv-n { font-family: var(--m-condense); font-weight: 800; text-transform: uppercase; font-size: var(--t-titre); line-height: 1.1; }
 .pg.t-kv .pg-kv-v { display: grid; align-items: center; background: #fff; }
 .pg.t-kv .pg-kv-v .vignette img { max-height: none; height: 100%; width: 100%; object-fit: contain; }

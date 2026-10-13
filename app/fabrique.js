@@ -46,7 +46,8 @@ window.FABRIQUE = (function () {
         var ouverts = (v.retours || []).filter(function (r) { return r.statut !== "traite"; }).length;
         return el("figure.fb-kvc", {},
           el("img", { src: v.vignette, alt: "Maquette v" + v.version, loading: "lazy" }),
-          el("figcaption", {}, el("b", {}, "v" + v.version), " · " + personne(v.auteur) + " · " + O.joli(String(v.quand).slice(0, 10))
+          el("figcaption", {}, el("b", {}, "v" + v.version + (v.variation ? " · variation " + v.variation : "")),
+            (v.legende ? " « " + v.legende + " »" : "") + " · " + personne(v.auteur) + " · " + O.joli(String(v.quand).slice(0, 10))
             + (ouverts ? " · " + ouverts + " retour" + (ouverts > 1 ? "s" : "") + " à traiter" : "")),
           (v.retours || []).length ? el("ul.fb-r", {}, v.retours.map(function (r) {
             return el("li" + (r.statut === "traite" ? ".fait" : ""), {}, r.texte); })) : null);

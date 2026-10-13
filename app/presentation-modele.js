@@ -120,7 +120,7 @@ window.PRESENTATION = (function () {
     pistes.forEach(function (pi) {
       pages.push({ type: "piste", pisteId: pi.id });
       /* La page de la piste porte l'idée ; le KV a sa propre page, en grand. */
-      if (kvDe(pi)) pages.push({ type: "kv", pisteId: pi.id });
+      pagesKV(pi).forEach(function (x) { pages.push(x); });
       if (spotDe(pi)) pages.push({ type: "spot", pisteId: pi.id });
       /* Les KV produits en livrables : c'est le minimum montrable. */
       var kvs = (p.livrables || []).filter(function (l) {
@@ -170,7 +170,7 @@ window.PRESENTATION = (function () {
       if (t === "piste") {
         pistes.forEach(function (pi) {
           pages.push({ type: "piste", pisteId: pi.id });
-          if (kvDe(pi)) pages.push({ type: "kv", pisteId: pi.id });
+          pagesKV(pi).forEach(function (x) { pages.push(x); });
           if (spotDe(pi)) pages.push({ type: "spot", pisteId: pi.id });
           var kvs = (p.livrables || []).filter(function (l) {
             return !l.annule && l.pisteId === pi.id && KV.estKV(l); });
@@ -206,7 +206,7 @@ window.PRESENTATION = (function () {
    * déplacé, pendant que le reste se recompose depuis le dossier. */
   function cle(pg) {
     return pg.type + (pg.pisteId ? ":" + pg.pisteId : "") + (pg.etape ? ":" + pg.etape : "")
-      + (pg.voletId ? ":" + pg.voletId : "");
+      + (pg.voletId ? ":" + pg.voletId : "") + (pg.variation ? ":" + pg.variation : "");
   }
 
   /* La plateforme que la campagne sert : la gamme quand la campagne en déclare
@@ -235,11 +235,28 @@ window.PRESENTATION = (function () {
   }
 
   /* Le KV qu'on montre d'une piste : sa dernière maquette, sinon son visuel. */
-  function kvDe(pi) {
+  /* La dernière version du KV, et ses variations : une même version peut en
+   * porter plusieurs (« Le lait du moment » v3 en deux, le toast v2 en trois,
+   * 13/10/2026). Chacune a sa page, en grand ; `variation` choisit laquelle. */
+  function kvDe(pi, variation) {
     var vs = (pi.kvBrouillons || []).filter(function (v) { return v.vignette; })
       .sort(function (a, b) { return (b.version || 0) - (a.version || 0); });
-    if (vs.length) return { vignette: vs[0].vignette, nom: pi.titre, version: vs[0].version, versions: vs.length };
-    return pi.vignette ? { vignette: pi.vignette, nom: pi.titre } : null;
+    if (vs.length) {
+      var der = vs.filter(function (v) { return String(v.version) === String(vs[0].version); })
+        .sort(function (a, b) { return String(a.variation || "").localeCompare(String(b.variation || "")); });
+      var k = (variation && der.filter(function (v) { return v.variation === variation; })[0]) || der[0];
+      return { vignette: k.vignette, master: k.chemin || null, nom: pi.titre, version: k.version, versions: vs.length,
+        variation: der.length > 1 ? k.variation || null : null, legende: k.legende || null,
+        variations: der.length > 1 ? der.map(function (v) { return v.variation; }) : [] };
+    }
+    return pi.vignette ? { vignette: pi.vignette, master: pi.master || null, nom: pi.titre, variations: [] } : null;
+  }
+
+  function pagesKV(pi) {
+    var k = kvDe(pi);
+    if (!k) return [];
+    if (!k.variations.length) return [{ type: "kv", pisteId: pi.id }];
+    return k.variations.map(function (v) { return { type: "kv", pisteId: pi.id, variation: v }; });
   }
 
   /* Une diapositive ne recopie pas un paragraphe de travail : elle en garde les
@@ -401,10 +418,12 @@ window.PRESENTATION = (function () {
     }
     if (page.type === "kv") {
       var pk = (p.sections.pistes || []).filter(function (x) { return x.id === page.pisteId; })[0];
-      var k = pk ? kvDe(pk) : null;
+      var k = pk ? kvDe(pk, page.variation) : null;
       if (!k) return null;
       return { titre: nommer(p, pk), visuel: k, accroches: pk.accroches || [],
-        note: k.version ? "Maquette v" + k.version + " — brouillon, avant shooting" : null };
+        variation: k.variation ? "Variation " + k.variation + (k.legende ? " — " + k.legende : "") : null,
+        note: k.version ? "Maquette v" + k.version + (k.variations.length ? ", " + k.variations.length + " variations" : "")
+          + " — brouillon, avant shooting" : null };
     }
     if (page.type === "spot") {
       var ps = (p.sections.pistes || []).filter(function (x) { return x.id === page.pisteId; })[0];

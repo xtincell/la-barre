@@ -636,6 +636,7 @@ window.VUE_PRESENTATION = (function () {
         el("div.pg-kv-l", {},
           el("div.pg-eti", {}, "Key visual"),
           el("div.pg-kv-n", {}, c.titre),
+          c.variation ? el("div.pg-kv-var", {}, c.variation) : null,
           (c.accroches || []).length ? el("div.pg-acc", {}, c.accroches.slice(0, 3).map(function (x) {
             return el("div", {}, "« " + x + " »"); })) : null,
           c.note ? el("div.pg-note", {}, c.note) : null),
