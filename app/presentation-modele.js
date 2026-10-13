@@ -281,6 +281,20 @@ window.PRESENTATION = (function () {
     });
   }
 
+  /* Le numéro d'une piste : son rang parmi les pistes vivantes du dossier. Il
+   * suit la piste sur toutes ses pages — sa page, son KV, son spot, son
+   * dispositif, le comparatif — pour qu'aucune lecture ne la confonde avec une
+   * autre. */
+  function numero(p, pi) {
+    var vs = (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
+    var i = vs.indexOf(pi);
+    return i === -1 ? null : i + 1;
+  }
+  function nommer(p, pi) {
+    var n = numero(p, pi);
+    return (n ? "Piste " + n + " · " : "") + (pi.titre || "sans titre");
+  }
+
   /* Ce qui distingue une piste des autres, en quatre lignes comparables. */
   function lecture(pi) {
     var l = pi.lecture || {};
@@ -363,7 +377,7 @@ window.PRESENTATION = (function () {
         conception: { titre: "Ce que nous proposons", phrase: b.campagne ? "« " + b.campagne + " »" : b.idee },
         pistes: { titre: "Les pistes", phrase: (function () {
           var vs = (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
-          return vs.length + (vs.length > 1 ? " pistes : " : " piste : ") + vs.map(function (x) { return x.titre; }).join(" · ");
+          return vs.length + (vs.length > 1 ? " pistes : " : " piste : ") + vs.map(function (x, i) { return (i + 1) + ". " + x.titre; }).join("  ·  ");
         })() },
         suite: { titre: "Et maintenant", phrase: "Ce que nous recommandons, ce qui se décide aujourd'hui, et ce qui vient après." },
       };
@@ -389,7 +403,7 @@ window.PRESENTATION = (function () {
       var pk = (p.sections.pistes || []).filter(function (x) { return x.id === page.pisteId; })[0];
       var k = pk ? kvDe(pk) : null;
       if (!k) return null;
-      return { titre: pk.titre, visuel: k, accroches: pk.accroches || [],
+      return { titre: nommer(p, pk), visuel: k, accroches: pk.accroches || [],
         note: k.version ? "Maquette v" + k.version + " — brouillon, avant shooting" : null };
     }
     if (page.type === "spot") {
@@ -401,7 +415,7 @@ window.PRESENTATION = (function () {
         ? "Spot exclusif : " + (sp.portee.marqueIds || []).map(function (id) { var m = DEPOT.trouve("marques", id); return m ? m.nom : id; }).join(", ")
           + ", " + (sp.portee.marches || []).map(function (id) { var m = DEPOT.trouve("marches", id); return m ? m.nom : id; }).join(", ")
         : "Pensé pour être décliné") : null;
-      return { titre: ps.titre + " — le spot",
+      return { titre: nommer(p, ps) + " — le spot",
         cases: cases, illustre: cases.filter(function (c) { return c.vignette; }).length,
         ratio: sp.sb ? sp.sb.ratio : null, film: sp.film,
         son: sp.musique && sp.musique.titre ? "« " + sp.musique.titre + " »" : null,
@@ -514,7 +528,7 @@ window.PRESENTATION = (function () {
       var vivs = (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
       if (vivs.length < 2) return null;
       var compte = function (pi, c) { return (pi.dispositif || []).filter(function (a) { return a.canal === c; }).length; };
-      return { titre: "Les pistes, côte à côte", pistes: vivs.map(function (x) { return x.titre; }),
+      return { titre: "Les pistes, côte à côte", pistes: vivs.map(function (x) { return nommer(p, x); }),
         lignes: [
           { t: "L'idée", v: vivs.map(function (x) { return court(x.idee, 150); }) },
           { t: "Pour qui", v: vivs.map(function (x) { return lecture(x).marques || "—"; }) },
@@ -531,7 +545,7 @@ window.PRESENTATION = (function () {
       var vv = (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
       var dem = actionsDemandees(p);
       if (!dem.length) return null;
-      return { titre: "Ce que le brief demande, piste par piste", pistes: vv.map(function (x) { return x.titre; }),
+      return { titre: "Ce que le brief demande, piste par piste", pistes: vv.map(function (x) { return nommer(p, x); }),
         lignes: dem.map(function (d) {
           return { t: d.ligne.replace(/\s*—\s*(fichiers? ouverts?|acteurs réels)$/i, ""),
             v: vv.map(function (x) { var r = repondA(x, d); return r.length ? r.map(function (a) { return a.nom; }).join(" · ") : "—"; }) };
@@ -546,7 +560,7 @@ window.PRESENTATION = (function () {
       var ar = RECO.arbitrage(p);
       if (!ar.due) return null;
       return { titre: "Notre recommandation",
-        phrase: ar.piste ? "Nous recommandons la piste « " + (ar.piste.titre || "sans titre") + " »."
+        phrase: ar.piste ? "Nous recommandons la " + nommer(p, ar.piste).replace("Piste", "piste").replace(" · ", " : « ") + " »."
           : null,
         blocs: [
           { t: "Les trois raisons", v: ar.raisons.length ? ar.raisons.join("  ·  ") : null },
@@ -630,7 +644,7 @@ window.PRESENTATION = (function () {
       var lec = lecture(pi);
       var vivantes = (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
       return { titre: pi.titre, corps: null, visuel: kvDe(pi) || pi,
-        numero: vivantes.indexOf(pi) + 1, message: (pi.accroches || [])[0] || null,
+        numero: numero(p, pi), message: (pi.accroches || [])[0] || null,
         moment: lec.moment, moteur: lec.moteur, marques: lec.marques,
         pour: [lec.marques, lec.moment].filter(Boolean).join(" · "), distingue: lec.distingue,
         phrase: pi.idee || null, accroches: pi.accroches || [],
@@ -651,7 +665,7 @@ window.PRESENTATION = (function () {
         return page.pisteId ? l.pisteId === page.pisteId : l.voletId === page.voletId;
       });
       if (!ls.length) return null;
-      return { titre: pr ? pr.titre + " — les déclinaisons" : "Déclinaisons", cases: ls.map(function (l) {
+      return { titre: pr ? nommer(p, pr) + " — les déclinaisons" : "Déclinaisons", cases: ls.map(function (l) {
         var m = DEPOT.trouve("marches", l.marche);
         var s = DEPOT.trouve("supports", l.support);
         /* Sur une planche de KV, ce qui distingue une case est sa marque et sa
@@ -668,14 +682,14 @@ window.PRESENTATION = (function () {
       var mk = mockups(p).filter(function (x) {
         return !page.pisteId || x.livrable.pisteId === page.pisteId; });
       if (!mk.length) return null;
-      return { titre: (pr2 ? pr2.titre + " — " : "") + "en situation", mockups: mk };
+      return { titre: (pr2 ? nommer(p, pr2) + " — " : "") + "en situation", mockups: mk };
     }
 
     if (page.type === "dispositif") {
       var pr3 = (p.sections.pistes || []).filter(function (x) { return x.id === page.pisteId; })[0];
       if (!pr3 || !(pr3.dispositif || []).length) return null;
       var mois = function (d) { return d ? O.joli(String(d).slice(0, 10)) : null; };
-      return { titre: pr3.titre + " — le dispositif",
+      return { titre: nommer(p, pr3) + " — le dispositif",
         activites: (pr3.dispositif || []).map(function (a) {
           return { nom: a.nom, quoi: court(a.quoi, 200), canalCle: a.canal,
             quand: a.debut ? (a.fin && a.fin !== a.debut ? mois(a.debut) + " → " + mois(a.fin) : mois(a.debut)) : null,
@@ -710,7 +724,7 @@ window.PRESENTATION = (function () {
       var retenue = (p.sections.pistes || []).filter(function (x) { return x.statut === "retenue"; })[0];
       return { titre: "Ce que nous validons aujourd'hui",
         valide: [
-          retenue ? "La piste « " + retenue.titre + " »" : "La piste créative",
+          retenue ? nommer(p, retenue) : "La piste créative",
           b.idee ? "L'idée : " + (b.campagne || "") : null,
           b.signature ? "La signature : « " + b.signature + " »" : null,
           "Le périmètre de livrables",
@@ -813,7 +827,7 @@ window.PRESENTATION = (function () {
 
   return {
     TYPES: TYPES, NIVEAUX: NIVEAUX, creer: creer, creerDepuis: creerDepuis, credits: credits, cle: cle,
-    plateforme: plateforme, kvDe: kvDe, spotDe: spotDe, lecture: lecture, actionsDemandees: actionsDemandees,
+    plateforme: plateforme, kvDe: kvDe, spotDe: spotDe, lecture: lecture, numero: numero, nommer: nommer, actionsDemandees: actionsDemandees,
     contenu: contenu, controles: controles,
     mockups: mockups, pagesPossibles: pagesPossibles,
     enregistrerSeance: enregistrerSeance, poserRetour: poserRetour,

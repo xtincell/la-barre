@@ -91,7 +91,6 @@ window.VUE_PISTES = (function () {
     { cle: "delai",      nom: "Délai" },
     { cle: "pieces",     nom: "Livrables" },
   ];
-  var LETTRES = "ABCDEF";
 
   /* ————————————————————— La planche d'une piste —————————————————————
    *
@@ -132,7 +131,7 @@ window.VUE_PISTES = (function () {
         el("button.pp-kv", { type: "button", onclick: ouvrir, "aria-label": "Ouvrir la piste « " + (pi.titre || "") + " »" },
           visuel ? el("img", { src: visuel, alt: "KV de la piste " + (pi.titre || "") }) : el("span.pp-kv-v", {}, "Pas encore de maquette")),
         el("div.pp-id", {},
-          el("div.pp-titre", {}, el("h3", {}, pi.titre || "Piste sans titre"), UI.eti(etat[0], etat[1])),
+          el("div.pp-titre", {}, el("h3", {}, window.PRESENTATION ? PRESENTATION.nommer(p, pi) : (pi.titre || "Piste sans titre")), UI.eti(etat[0], etat[1])),
           el("p.pp-qui", {}, [da ? "DA " + da.nom : "DA non nommé",
             auteurIdee ? "idée de " + auteurIdee.nom : null,
             (DEPOT.trouve("personnes", pi.auteurCR) || {}).nom ? "rédaction " + DEPOT.trouve("personnes", pi.auteurCR).nom : null].filter(Boolean).join(" · ")),
@@ -172,7 +171,8 @@ window.VUE_PISTES = (function () {
       vives.map(function (pi, i) {
         var etat = pi.statut === "retenue" ? "retenue" : "";
         return el("div.cmp-h" + (etat ? "." + etat : ""), {},
-          el("span.cmph-n", {}, LETTRES[i] + " — " + (pi.titre || "Sans titre")),
+          /* Le même numéro que dans le deck : une piste ne change pas de nom d'un écran à l'autre. */
+          el("span.cmph-n", {}, window.PRESENTATION ? PRESENTATION.nommer(p, pi) : (pi.titre || "Sans titre")),
           pi.statut === "retenue" ? el("span.cmph-e", {}, "Retenue") : null);
       }),
 
