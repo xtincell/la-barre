@@ -20,7 +20,8 @@ from PIL import Image
 SRC, DST, TRAME = sys.argv[1], sys.argv[2], sys.argv[3]
 APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 H = os.path.expanduser("~")
-EXPORTS = {"matanga": H + "/Downloads/MATANGA — EXPORT DU TRAVAIL", "upgraders": H + "/Downloads/UPGRADERS — EXPORT DU TRAVAIL"}
+EXPORTS = {"matanga": os.environ.get("LA_BARRE_EXPORT_MATANGA") or H + "/Downloads/MATANGA — EXPORT DU TRAVAIL",
+           "upgraders": os.environ.get("LA_BARRE_EXPORT_UPGRADERS") or H + "/Downloads/UPGRADERS — EXPORT DU TRAVAIL"}
 CODE = ("/Spawt/08 PRODUIT & APPLICATION/", "/SPAWT Design System", "/_UPgraders — la structure/upgraders os v1")
 VIDEOS = (".mp4", ".mov", ".m4v", ".webm", ".avi", ".mkv", ".mts")
 AUDIOS = (".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg")

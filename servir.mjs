@@ -66,9 +66,11 @@ const TYPES = {
 // les a pas et n'a pas à les avoir — il montre les copies compressées du proxy.
 // Deux gardes : la requête vient de cette machine, et le chemin ne sort jamais
 // de l'export.
+// Où sont les exports sur cette machine : ~/Downloads par défaut, ou là où l'indiquent
+// LA_BARRE_EXPORT_MATANGA et LA_BARRE_EXPORT_UPGRADERS (l'ordi dédié les range ailleurs).
 const DISQUES = {
-  matanga: join(homedir(), "Downloads", "MATANGA — EXPORT DU TRAVAIL"),
-  upgraders: join(homedir(), "Downloads", "UPGRADERS — EXPORT DU TRAVAIL"),
+  matanga: process.env.LA_BARRE_EXPORT_MATANGA || join(homedir(), "Downloads", "MATANGA — EXPORT DU TRAVAIL"),
+  upgraders: process.env.LA_BARRE_EXPORT_UPGRADERS || join(homedir(), "Downloads", "UPGRADERS — EXPORT DU TRAVAIL"),
 };
 
 function deCetteMachine(requete) {
