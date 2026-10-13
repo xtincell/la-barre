@@ -217,13 +217,13 @@ async function imprimerPdf(url, sortie) {
     await cmd("Page.enable");
     // La mise en page se fait à la taille d'une diapositive : sans cela, Chrome
     // compose à 800 px et chaque piste passe en mise en page étroite.
-    await cmd("Emulation.setDeviceMetricsOverride", { width: 1280, height: 720, deviceScaleFactor: 2, mobile: false });
+    await cmd("Emulation.setDeviceMetricsOverride", { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
     await cmd("Page.navigate", { url });
     let pret = false, etat = "";
     for (let i = 0; i < 120 && !pret; i++) {
       await attendre(500);
       const r = await cmd("Runtime.evaluate", { expression:
-        "(document.querySelectorAll('img[loading=lazy]').forEach(i => i.loading = 'eager'), JSON.stringify({ n: document.querySelectorAll('.pt-impression .pr-diapo').length, img: [...document.images].every(i => i.complete), a: (window.__amorcage || []).join(' / ') }))", returnByValue: true });
+        "(document.querySelectorAll('img[loading=lazy]').forEach(i => i.loading = 'eager'), JSON.stringify({ n: document.querySelectorAll('.pt-impression .pr-diapo').length, img: [...document.images].every(i => i.complete) && window.__pdfPret === true, a: (window.__amorcage || []).join(' / ') }))", returnByValue: true });
       const v = JSON.parse((r.result && r.result.result && r.result.result.value) || "{}");
       etat = (v.a || "") + " ; " + (v.n || 0) + " diapositives, images " + (v.img ? "chargées" : "en attente"); pret = v.n > 0 && v.img;
     }

@@ -127,6 +127,37 @@ window.PARTAGE = (function () {
     }, 1500);
   }
 
+  /* Chrome embarque chaque image du PDF à sa taille d'origine, même affichée en
+   * vignette : le PDF de l'EOY 2026 pesait 7 Mo et ne passait plus en ligne.
+   * Avant l'impression, chaque image est ramenée au double de sa taille affichée,
+   * en JPEG. Le serveur attend `__pdfPret` avant d'imprimer. */
+  function reduireImages(racine) {
+    window.__pdfPret = false;
+    setTimeout(function () {
+      var imgs = Array.prototype.slice.call(racine.querySelectorAll("img"));
+      var reste = imgs.length;
+      function fini() { if (--reste <= 0) window.__pdfPret = true; }
+      if (!reste) { window.__pdfPret = true; return; }
+      imgs.forEach(function (im) {
+        im.loading = "eager";
+        function reduire() {
+          try {
+            var r = im.getBoundingClientRect();
+            var cible = Math.max(r.width, r.height) * 2, plus = Math.max(im.naturalWidth, im.naturalHeight);
+            if (!plus || !cible || plus <= cible * 1.2 || /\.png$/i.test(im.src) && /logo|montagne|vague/i.test(im.src)) return fini();
+            var k = cible / plus, c = document.createElement("canvas");
+            c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
+            var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
+            x.drawImage(im, 0, 0, c.width, c.height);
+            im.onload = fini; im.onerror = fini;
+            im.src = c.toDataURL("image/jpeg", 0.8);
+          } catch (e) { fini(); }
+        }
+        if (im.complete && im.naturalWidth) reduire(); else { im.onload = reduire; im.onerror = fini; }
+      });
+    }, 300);
+  }
+
   /* ————————————————————— La page partagée ————————————————————— */
 
   function page(conteneur, j, sous) {
@@ -150,6 +181,7 @@ window.PARTAGE = (function () {
       conteneur.appendChild(el("div.pt-impression", {}, d.pages.map(function (pg) {
         return el("div.pr-diapo", {}, VUE_PRESENTATION.page(p, pg));
       })));
+      reduireImages(conteneur);
       return;
     }
 
