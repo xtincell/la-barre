@@ -144,6 +144,9 @@ window.PARTAGE = (function () {
     /* La route d'impression : les diapositives seules, pour Chrome. */
     if (sous === "impression") {
       document.body.dataset.impression = "1";
+      /* À l'impression, toutes les images se chargent : le chargement différé
+       * attendrait un défilement qui n'aura jamais lieu. */
+      setTimeout(function () { document.querySelectorAll("img[loading=lazy]").forEach(function (x) { x.loading = "eager"; }); }, 0);
       conteneur.appendChild(el("div.pt-impression", {}, d.pages.map(function (pg) {
         return el("div.pr-diapo", {}, VUE_PRESENTATION.page(p, pg));
       })));

@@ -190,6 +190,53 @@ function lancer(cmd, args) {
   return new Promise((ok, ko) => execFile(cmd, args, { timeout: 120000 }, (e, so, se) => e ? ko(new Error(se || e.message)) : ok(so)));
 }
 
+/* Chrome, piloté par son protocole de débogage : on ouvre la page, on attend
+ * que les diapositives soient là — l'application charge sa base après coup —,
+ * puis on demande le PDF au format des pages déclaré par la feuille de style. */
+async function imprimerPdf(url, sortie) {
+  const { spawn } = await import("node:child_process");
+  const profil = join(homedir(), ".la-barre-chrome-pdf");
+  await mkdir(profil, { recursive: true });
+  try { await unlink(join(profil, "DevToolsActivePort")); } catch {}
+  const chrome = spawn(CHROME, ["--headless=new", "--disable-gpu", "--no-first-run", "--hide-scrollbars",
+    "--remote-debugging-port=0", "--user-data-dir=" + profil, "about:blank"], { stdio: "ignore" });
+  const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
+  try {
+    let port = null;
+    for (let i = 0; i < 60 && !port; i++) {
+      try { port = (await readFile(join(profil, "DevToolsActivePort"), "utf8")).split("\n")[0].trim(); } catch { await attendre(250); }
+    }
+    if (!port) throw new Error("Chrome n'a pas démarré");
+    const cibles = await (await fetch("http://127.0.0.1:" + port + "/json/list")).json();
+    const page = cibles.find((c) => c.type === "page");
+    const ws = new WebSocket(page.webSocketDebuggerUrl);
+    await new Promise((ok, ko) => { ws.onopen = ok; ws.onerror = () => ko(new Error("connexion à Chrome impossible")); });
+    let n = 0; const attente = new Map();
+    ws.onmessage = (e) => { const m = JSON.parse(e.data); if (m.id && attente.has(m.id)) { attente.get(m.id)(m); attente.delete(m.id); } };
+    const cmd = (method, params = {}) => new Promise((ok) => { const id = ++n; attente.set(id, ok); ws.send(JSON.stringify({ id, method, params })); });
+    await cmd("Page.enable");
+    // La mise en page se fait à la taille d'une diapositive : sans cela, Chrome
+    // compose à 800 px et chaque piste passe en mise en page étroite.
+    await cmd("Emulation.setDeviceMetricsOverride", { width: 1280, height: 720, deviceScaleFactor: 2, mobile: false });
+    await cmd("Page.navigate", { url });
+    let pret = false, etat = "";
+    for (let i = 0; i < 120 && !pret; i++) {
+      await attendre(500);
+      const r = await cmd("Runtime.evaluate", { expression:
+        "(document.querySelectorAll('img[loading=lazy]').forEach(i => i.loading = 'eager'), JSON.stringify({ n: document.querySelectorAll('.pt-impression .pr-diapo').length, img: [...document.images].every(i => i.complete), a: (window.__amorcage || []).join(' / ') }))", returnByValue: true });
+      const v = JSON.parse((r.result && r.result.result && r.result.result.value) || "{}");
+      etat = (v.a || "") + " ; " + (v.n || 0) + " diapositives, images " + (v.img ? "chargées" : "en attente"); pret = v.n > 0 && v.img;
+    }
+    if (!pret) throw new Error("la présentation n'a pas chargé (" + etat + ")");
+    await attendre(800);
+    const pdf = await cmd("Page.printToPDF", { printBackground: true, preferCSSPageSize: true,
+      marginTop: 0, marginBottom: 0, marginLeft: 0, marginRight: 0 });
+    if (!pdf.result) throw new Error("Chrome a refusé l'impression");
+    await writeFile(sortie, Buffer.from(pdf.result.data, "base64"));
+    ws.close();
+  } finally { chrome.kill(); }
+}
+
 async function partagePdf(projetId) {
   // La page vient d'écrire ses jetons : on relit la base jusqu'à les y trouver.
   let p = null;
@@ -203,11 +250,7 @@ async function partagePdf(projetId) {
   const rel = "assets/review/partage/" + jeton + ".pdf";
   const sortie = join(RACINE, rel);
   await mkdir(dirname(sortie), { recursive: true });
-  const profil = join(homedir(), ".la-barre-chrome-pdf");
-  await lancer(CHROME, ["--headless=new", "--disable-gpu", "--no-first-run", "--hide-scrollbars",
-    "--user-data-dir=" + profil, "--no-pdf-header-footer", "--run-all-compositor-stages-before-draw",
-    "--virtual-time-budget=25000", "--print-to-pdf=" + sortie,
-    "http://localhost:" + PORT + "/#/partage/" + jeton + "/impression"]);
+  await imprimerPdf("http://localhost:" + PORT + "/#/partage/" + jeton + "/impression", sortie);
   const octets = await readFile(sortie);
   const pages = (octets.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
   if (pages < 2) throw new Error("Chrome a rendu " + pages + " page(s) : la présentation n'a pas chargé");
