@@ -27,9 +27,37 @@ window.VUE_PRESENTATION = (function () {
    * recomposition — ce qu'on lit doit être ce qui part. */
   var compose = null;
 
+  /* La présentation se recompose depuis le dossier à chaque ouverture.
+   *
+   * Elle était figée à sa création : une liste de pages enregistrée une fois,
+   * qui ne voyait jamais arriver les pistes, les KV ni les storyboards produits
+   * ensuite — l'EOY 2026 sortait trois pages pour quatre pistes. Désormais le
+   * dossier fait le montage, et le titulaire ne garde que ses choix : ce qu'il
+   * retire, l'ordre qu'il impose, les pages qu'il ajoute. Une présentation déjà
+   * présentée, elle, ne bouge plus : elle est la trace de la séance. */
   function pres(p) {
     if (!p.presentation) p.presentation = PRESENTATION.creer(p);
-    return p.presentation;
+    var d = p.presentation;
+    if (d.statut !== "presentee") d.pages = vivantes(p, d);
+    return d;
+  }
+
+  function vivantes(p, d) {
+    var retirees = d.retirees || [], ordre = d.ordre || [];
+    var pages = PRESENTATION.creer(p, d.structure, d.niveau).pages.concat(d.ajoutees || [])
+      .filter(function (pg) { return retirees.indexOf(PRESENTATION.cle(pg)) === -1; });
+    if (!ordre.length) return pages;
+    /* L'ordre imposé vaut pour les pages qu'il connaît ; une page neuve garde la
+     * place que le parcours lui donne, juste après sa voisine. */
+    var rang = {};
+    ordre.forEach(function (k, i) { rang[k] = i; });
+    var dernier = -1;
+    pages.forEach(function (pg, i) {
+      var k = PRESENTATION.cle(pg);
+      pg._r = rang[k] !== undefined ? rang[k] : dernier + 0.001 * (i + 1);
+      dernier = pg._r;
+    });
+    return pages.sort(function (a, b) { return a._r - b._r; }).map(function (pg) { delete pg._r; return pg; });
   }
 
   function rendre(p, rafraichir) {
@@ -45,7 +73,13 @@ window.VUE_PRESENTATION = (function () {
       lecture === "dossier" ? dossier(p) : el("div.pr-deux", {},
         el("div.prd-c", {},
           el("div.prd-t", {}, "Ce qui part chez le client",
-            el("span", {}, d.pages.length + (d.pages.length > 1 ? " pages" : " page"))),
+            el("span", {}, d.pages.length + (d.pages.length > 1 ? " pages" : " page")
+              + (d.statut === "presentee" ? " · telle que présentée" : " · suit le dossier"))),
+          (d.retirees || []).length && d.statut !== "presentee"
+            ? el("p.prd-retirees", {}, (d.retirees.length > 1 ? d.retirees.length + " pages retirées par vous. " : "Une page retirée par vous. "),
+                el("button.studio-lien", { type: "button", onclick: function () {
+                  d.retirees = []; d.ordre = []; DEPOT.enregistrer(); rafraichir(); } }, "Revenir au parcours complet"))
+            : null,
           pages(p, d, rafraichir)),
         registreRetire(p))
     );
@@ -195,29 +229,21 @@ window.VUE_PRESENTATION = (function () {
         el("h2", {}, p.nom),
         el("div.prd-s", {}, [p.ref,
           (p.sections.identite || {}).client,
-          st ? st.nom : "montage libre",
+          st ? st.nom : "le parcours du dossier",
+          d.pages.length + " pages",
           O.joli(new Date().toISOString())].filter(Boolean).join(" · ")),
-        el("p.prd-q", {}, "Compilé à l'ouverture. Chaque document cite l'état du jour "
-          + "des sections dont il descend — il ne fige rien.")),
-
-      /* Les trois documents de la maison viennent toujours, quelle que soit la
-       * structure du montage. C'est ce qui distingue le dossier du deck : le
-       * deck choisit ce qu'il montre, le dossier porte tout. Ceux que le
-       * montage déclarait déjà ne sont pas rendus deux fois. */
-      el("div.prd-corps", {},
-        ["cadrage", "conception", "production"].map(function (cle) {
-          return docCompile(p, cle);
-        }),
-        d.pages.filter(function (pg) { return !docs[pg.type] && pg.type !== "titre"; }).map(function (pg) {
-        var c = PRESENTATION.contenu(p, pg);
-        var t = PRESENTATION.TYPES[pg.type] || { nom: pg.type };
-        if (!c) {
-          return el("section.prd-manque", {},
-            el("span.prdm-t", {}, t.nom),
-            el("span.prdm-q", {}, "La source est vide — cette page ne montrerait rien."));
-        }
-        return pageComposee(p, pg, c, t);
-      })));
+        el("p.prd-q", {}, "Ce que reçoit le client, page à page, recomposé depuis le dossier. "
+          + "Les documents internes sont en annexe : ils ne partent pas.")),
+      el("div.prd-diapos", {}, d.pages.map(function (pg) {
+        return el("div.pr-diapo", {}, page(p, pg));
+      })),
+      /* Les trois documents de la maison restent à portée — c'est la matière
+       * du dossier, pas ce qu'on remet au client. */
+      el("details.prd-annexes", {},
+        el("summary", {}, "Annexes internes — documents de cadrage, de conception et de production"),
+        el("div.prd-corps", {}, ["cadrage", "conception", "production"].map(function (k) {
+          return docCompile(p, k);
+        }))));
 
     compose = noeud;
     return noeud;
@@ -409,7 +435,7 @@ window.VUE_PRESENTATION = (function () {
       ),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          d.pages = neuves; d.niveau = niveau;
+          d.niveau = niveau;
           DEPOT.tracer("régénération", "presentation", p.id,
             def.nom + " — " + neuves.length + " pages");
           DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
@@ -442,7 +468,9 @@ window.VUE_PRESENTATION = (function () {
           el("button.b.nu", { type: "button", title: "descendre", disabled: i === d.pages.length - 1 ? true : null,
             onclick: function () { bouger(p, d, i, 1, rafraichir); } }, "↓"),
           el("button.b.nu", { type: "button", title: "retirer", onclick: function () {
-            d.pages.splice(i, 1); DEPOT.enregistrer(); rafraichir();
+            d.retirees = (d.retirees || []).concat([PRESENTATION.cle(pg)]);
+            d.ajoutees = (d.ajoutees || []).filter(function (x) { return PRESENTATION.cle(x) !== PRESENTATION.cle(pg); });
+            DEPOT.enregistrer(); rafraichir();
           } }, "✕")
         )
       );
@@ -453,6 +481,7 @@ window.VUE_PRESENTATION = (function () {
     var j = i + sens;
     if (j < 0 || j >= d.pages.length) return;
     var x = d.pages[i]; d.pages[i] = d.pages[j]; d.pages[j] = x;
+    d.ordre = d.pages.map(PRESENTATION.cle);
     DEPOT.enregistrer(); rafraichir();
   }
 
@@ -496,7 +525,8 @@ window.VUE_PRESENTATION = (function () {
         var pg = { type: t };
         if (t === "planche" && (p.volets || []).length) pg.voletId = p.volets[0].id;
         if (t === "piste" && (p.sections.pistes || []).length) pg.pisteId = p.sections.pistes[0].id;
-        d.pages.push(pg);
+        d.ajoutees = (d.ajoutees || []).concat([pg]);
+        d.retirees = (d.retirees || []).filter(function (k) { return k !== PRESENTATION.cle(pg); });
         DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
       } }, el("b", {}, def.nom), el("span", {}, def.tire)));
     });
@@ -556,9 +586,58 @@ window.VUE_PRESENTATION = (function () {
 
     if (pg.type === "titre") {
       return el("div.pg.pg-titre", {},
-        c.visuel ? el("div.pg-fond", {}, IMAGE.vignette(c.visuel, "toile")) : null,
         el("div.pg-t", {}, c.titre),
-        c.sous ? el("div.pg-s", {}, c.sous + (c.note ? " · " + c.note : "")) : null);
+        c.sous ? el("div.pg-s", {}, c.sous + (c.note ? " · " + c.note : "")) : null,
+        el("div.pg-date", {}, O.joli(new Date().toISOString())));
+    }
+
+    /* L'intercalaire : un étage commence. Une phrase, et rien d'autre. */
+    if (pg.type === "etape") {
+      return el("div.pg.pg-etape.e-" + c.etape, {},
+        el("div.pg-t", {}, c.titre),
+        c.phrase ? el("div.pg-etape-p", {}, c.phrase) : null);
+    }
+
+    if (pg.type === "plateforme") {
+      return el("div.pg.pg-plateforme", {},
+        el("div.pg-eti", {}, c.titre),
+        el("div.pg-phrase" + (String(c.phrase).length > 140 ? ".long" : ""), {}, c.phrase),
+        el("div.pg-cols", {}, (c.blocs || []).map(function (b) {
+          return el("div.pg-col", {}, el("div.t", {}, b.t), el("div.v", {}, b.v)); })),
+        c.note ? el("div.pg-note", {}, c.note) : null);
+    }
+
+    /* Le KV, en grand : c'est lui que le client garde en tête. */
+    if (pg.type === "kv") {
+      return el("div.pg.pg-kv", {},
+        el("div.pg-kv-v", {}, IMAGE.vignette(c.visuel, "toile", null)),
+        el("div.pg-kv-l", {},
+          el("div.pg-eti", {}, "Le KV"),
+          el("div.pg-t", {}, c.titre),
+          (c.accroches || []).length ? el("div.pg-acc", {}, c.accroches.map(function (x) {
+            return el("div", {}, "« " + x + " »"); })) : null,
+          c.note ? el("div.pg-note", {}, c.note) : null));
+    }
+
+    /* Le spot : l'animatique quand elle existe, puis le storyboard — illustré
+     * s'il l'est, sinon écrit, ligne par ligne. */
+    if (pg.type === "spot") {
+      var illustrees = c.cases.filter(function (x) { return x.vignette; });
+      var montrees = (illustrees.length ? illustrees : c.cases).slice(0, illustrees.length ? 12 : 8);
+      return el("div.pg.pg-spot", {},
+        el("div.pg-eti", {}, c.titre),
+        el("div.pg-spot-l", {}, [c.son ? "Le son : " + c.son : null,
+          c.formats.length ? "Formats : " + c.formats.join(", ") : null, c.portee].filter(Boolean).join("  ·  ")),
+        c.film ? el("video.pg-film", { src: c.film.video, poster: c.film.poster, controls: true,
+          preload: "metadata", playsinline: true }) : null,
+        montrees.length ? el("div.pg-sb" + (c.ratio === "16:9" ? ".h" : ""), {}, montrees.map(function (x) {
+          return el("figure.pg-sbc", {},
+            x.vignette ? el("img", { src: x.vignette, alt: "Case " + x.n, loading: "lazy" })
+              : el("div.pg-sbv", {}, x.action || ""),
+            el("figcaption", {}, x.paroles ? "« " + x.paroles + " »" : (x.temps || "Case " + x.n)));
+        })) : null,
+        !illustrees.length && c.cases.length ? el("div.pg-note", {}, "Storyboard écrit, " + c.cases.length
+          + " cases — les images sont en cours.") : null);
     }
 
     if (pg.type === "idee") {
@@ -572,10 +651,11 @@ window.VUE_PRESENTATION = (function () {
 
     if (pg.type === "piste") {
       return el("div.pg.pg-piste", {},
-        el("div.pg-gauche", {}, IMAGE.vignette(c.visuel, "toile")),
+        el("div.pg-gauche", {}, IMAGE.vignette(c.visuel, "toile", null)),
         el("div.pg-droite", {},
-          el("div.pg-eti", {}, "Route" + (c.statut === "retenue" ? " · retenue" : "")),
+          el("div.pg-eti", {}, "Piste" + (c.statut === "retenue" ? " · retenue" : "")),
           el("div.pg-t", {}, c.titre),
+          c.phrase ? el("div.pg-lede", {}, c.phrase) : null,
           c.corps ? el("div.pg-corps", {}, c.corps) : null,
           el("div.pg-blocs", {}, (c.blocs || []).map(function (b) {
             return el("div.pg-b", {}, el("div.t", {}, b.t), el("div.v", {}, b.v));
@@ -698,7 +778,7 @@ window.VUE_PRESENTATION = (function () {
      * dans sa phrase sortait vide de son propos. Il les rend maintenant. */
     return el("div.pg.pg-texte", {},
       el("div.pg-eti", {}, c.titre),
-      c.phrase ? el("div.pg-phrase", {}, c.phrase) : null,
+      c.phrase ? el("div.pg-phrase" + (String(c.phrase).length > 140 ? ".long" : ""), {}, c.phrase) : null,
       c.corps ? el("div.pg-corps", {}, c.corps) : null,
       (c.puces || []).length
         ? el("ul.pg-puces", {}, c.puces.map(function (x) { return el("li", {}, x); }))

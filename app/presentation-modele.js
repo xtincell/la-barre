@@ -14,6 +14,10 @@ window.PRESENTATION = (function () {
   /* Les types de page, et ce que chacun tire du projet. */
   var TYPES = {
     titre: { nom: "Ouverture", tire: "le nom de campagne et le client" },
+    etape: { nom: "Intercalaire", tire: "l'étage qui commence : cadrage, conception, pistes, suite" },
+    plateforme: { nom: "La plateforme de marque", tire: "l'idée directrice, la promesse et le rituel de la marque, ou de la gamme que sert la campagne" },
+    kv: { nom: "Le KV d'une piste", tire: "la dernière maquette du KV, et ses accroches" },
+    spot: { nom: "Le spot d'une piste", tire: "le storyboard, l'animatique, le son et la portée du spot" },
     probleme: { nom: "Le problème", tire: "le brief — problème, cible, tension" },
     strategie: { nom: "La stratégie", tire: "le territoire et l'insight" },
     idee: { nom: "L'idée", tire: "la big idea, sa mécanique, sa signature" },
@@ -92,21 +96,32 @@ window.PRESENTATION = (function () {
     var st = (window.RECO && structure) ? RECO.structure(structure) : null;
     if (st) return creerDepuis(p, st, niveau);
 
+    /* Le parcours par défaut suit les étages du dossier : ce qu'on nous a
+     * demandé, ce qu'on en a compris, ce qu'on propose, les pistes une à une
+     * avec leur KV et leur spot, puis la recommandation et la suite. Chaque
+     * étage s'ouvre sur un intercalaire : le client sait toujours où il est. */
     var pages = [{ type: "titre" }];
-    if (brief.probleme) pages.push({ type: "probleme" });
-    if (INSIGHT.liste(p).length || strat.territoire) pages.push({ type: "strategie" });
-    if (b.idee) pages.push({ type: "idee" });
+    var pistesVives = (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
+    var retenue = pistesVives.filter(function (x) { return x.statut === "retenue"; })[0];
+    var pistes = retenue ? [retenue] : pistesVives;
 
-    /* Chaque piste porte ses propres pages : son visuel, son dispositif, sa
-     * planche, ses mises en situation. Une planche globale mélangerait deux
-     * concepts sur la même page. */
-    var retenue = (p.sections.pistes || []).filter(function (x) { return x.statut === "retenue"; })[0];
-    var pistes = retenue ? [retenue]
-      : (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
+    var cadrage = [];
+    if (brief.probleme || brief.objectif_business) cadrage.push({ type: "probleme" });
+    if (INSIGHT.liste(p).length || strat.territoire) cadrage.push({ type: "strategie" });
+    if (plateforme(p)) cadrage.push({ type: "plateforme" });
+    if (cadrage.length) pages.push({ type: "etape", etape: "cadrage" });
+    pages = pages.concat(cadrage);
 
+    if (b.idee) pages.push({ type: "etape", etape: "conception" }, { type: "idee" });
+
+    if (pistes.length) pages.push({ type: "etape", etape: "pistes" });
     pistes.forEach(function (pi) {
       pages.push({ type: "piste", pisteId: pi.id });
-      /* Le KV master et ses adaptations : c'est le minimum montrable. */
+      /* Le KV en grand seulement quand la piste a ses maquettes : sinon la page
+       * de la piste le montre déjà, et la redite se voit. */
+      if (aDesMaquettes(pi)) pages.push({ type: "kv", pisteId: pi.id });
+      if (spotDe(pi)) pages.push({ type: "spot", pisteId: pi.id });
+      /* Les KV produits en livrables : c'est le minimum montrable. */
       var kvs = (p.livrables || []).filter(function (l) {
         return !l.annule && l.pisteId === pi.id && KV.estKV(l); });
       if (kvs.length) pages.push({ type: "planche", pisteId: pi.id, seulementKV: !ambitieux });
@@ -117,10 +132,16 @@ window.PRESENTATION = (function () {
       if (mk) pages.push({ type: "mockup", pisteId: pi.id });
     });
 
+    pages.push({ type: "etape", etape: "suite" });
+    if (!retenue && pistesVives.length > 1) {
+      pages.push({ type: "comparatif" });
+      if (window.RECO && RECO.arbitrage(p).piste) pages.push({ type: "arbitrage" });
+    }
     if (ambitieux && (p.livrables || []).length) pages.push({ type: "livrables" });
     if (ambitieux && (p.livrables || []).some(function (l) { return l.publication || l.remise; }))
       pages.push({ type: "calendrier" });
     pages.push({ type: "suite" });
+    if (credits(p).length) pages.push({ type: "credits" });
 
     return {
       id: O.id("PRES"), cree_le: new Date().toISOString(), statut: "brouillon",
@@ -144,6 +165,8 @@ window.PRESENTATION = (function () {
       if (t === "piste") {
         pistes.forEach(function (pi) {
           pages.push({ type: "piste", pisteId: pi.id });
+          if (aDesMaquettes(pi)) pages.push({ type: "kv", pisteId: pi.id });
+          if (spotDe(pi)) pages.push({ type: "spot", pisteId: pi.id });
           var kvs = (p.livrables || []).filter(function (l) {
             return !l.annule && l.pisteId === pi.id && KV.estKV(l); });
           if (kvs.length) pages.push({ type: "planche", pisteId: pi.id, seulementKV: !ambitieux });
@@ -175,6 +198,78 @@ window.PRESENTATION = (function () {
       id: O.id("PRES"), cree_le: new Date().toISOString(), statut: "brouillon",
       structure: st.cle, niveau: niveau, pages: pages, seance: null, retours: [],
     };
+  }
+
+  /* Ce qui identifie une page d'un montage à l'autre : son type, et ce qu'elle
+   * vise. C'est par cette clé qu'on retient ce que le titulaire a retiré ou
+   * déplacé, pendant que le reste se recompose depuis le dossier. */
+  function cle(pg) {
+    return pg.type + (pg.pisteId ? ":" + pg.pisteId : "") + (pg.etape ? ":" + pg.etape : "")
+      + (pg.voletId ? ":" + pg.voletId : "");
+  }
+
+  /* La plateforme que la campagne sert : la gamme quand la campagne en déclare
+   * une (EVAP pour l'EOY 2026), sinon la marque — l'héritage remonte seul. Les
+   * marques qui partagent une plateforme ne la répètent pas. */
+  function plateforme(p) {
+    var ids = ((p.sections.identite || {}).marqueIds || []).slice(0, 4);
+    if (!ids.length || !window.VAULT || !VAULT.pourDossier) return null;
+    var vues = {}, out = null, noms = [];
+    ids.forEach(function (id) {
+      var idee = VAULT.pourDossier(p, id, "idee_directrice").valeur;
+      var m = DEPOT.trouve("marques", id);
+      if (m) noms.push(m.nom);
+      if (!idee || vues[idee]) return;
+      vues[idee] = 1;
+      if (out) return;
+      function v(k) { return VAULT.pourDossier(p, id, k).valeur; }
+      var premier = function (x) { return Array.isArray(x) ? x[0] : x; };
+      out = { idee: idee, promesse: v("promesse"), rituel: premier(v("rituels")),
+        symbole: premier(v("symboles")), ton: v("ton"), valeurs: v("valeurs") || [] };
+    });
+    if (!out) return null;
+    var g = VAULT.gammeDuDossier ? VAULT.gammeDuDossier(p) : null;
+    out.source = (g ? "Plateforme " + g + " · " : "Plateforme de marque · ") + noms.join(", ");
+    return out;
+  }
+
+  /* Le KV qu'on montre d'une piste : sa dernière maquette, sinon son visuel. */
+  function kvDe(pi) {
+    var vs = (pi.kvBrouillons || []).filter(function (v) { return v.vignette; })
+      .sort(function (a, b) { return (b.version || 0) - (a.version || 0); });
+    if (vs.length) return { vignette: vs[0].vignette, nom: pi.titre, version: vs[0].version, versions: vs.length };
+    return pi.vignette ? { vignette: pi.vignette, nom: pi.titre } : null;
+  }
+
+  /* Une diapositive ne recopie pas un paragraphe de travail : elle en garde les
+   * premières phrases, sans jamais couper une phrase en deux. Le texte entier
+   * reste au dossier. */
+  function court(t, max) {
+    t = String(t || "").trim();
+    max = max || 220;
+    if (t.length <= max) return t;
+    var phrases = t.match(/[^.!?…]+[.!?…]+[»")]?\s*/g) || [t];
+    var out = "";
+    for (var i = 0; i < phrases.length; i++) {
+      if (out && (out + phrases[i]).length > max) break;
+      out += phrases[i];
+    }
+    return out.trim();
+  }
+
+  function aDesMaquettes(pi) {
+    return (pi.kvBrouillons || []).some(function (v) { return v.vignette; });
+  }
+
+  /* Le spot d'une piste, tel que la fabrique le tient : le storyboard (illustré
+   * ou seulement écrit), l'animatique, le son, la portée. */
+  function spotDe(pi) {
+    var f = pi.fabrique || {};
+    var sb = f.storyboard && (f.storyboard.cases || []).length ? f.storyboard : null;
+    var anims = f.animatiques || [];
+    var film = anims.length ? anims[anims.length - 1] : null;
+    if (!sb && !film && !(f.musique || {}).titre) return null;
+    return { sb: sb, film: film, musique: f.musique || null, conducteur: f.conducteur || null, portee: f.spot || null };
   }
 
   /* Régénérer : on garde le choix des pages, on rafraîchit ce qu'elles tirent. */
@@ -229,12 +324,63 @@ window.PRESENTATION = (function () {
       return { titre: b.campagne || p.nom, sous: ident.client || "",
         note: ident.marque || "", visuel: premierVisuel(p) };
     }
-    if (page.type === "probleme") {
-      return { titre: "Le problème", corps: brief.probleme,
+    if (page.type === "etape") {
+      var ETAPES = {
+        cadrage: { titre: "Ce que vous nous avez demandé", phrase: ident.objectif || brief.objectif_com || brief.probleme },
+        conception: { titre: "Ce que nous proposons", phrase: b.campagne ? "« " + b.campagne + " »" : b.idee },
+        pistes: { titre: "Les pistes", phrase: (function () {
+          var vs = (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
+          return vs.length + (vs.length > 1 ? " pistes : " : " piste : ") + vs.map(function (x) { return x.titre; }).join(" · ");
+        })() },
+        suite: { titre: "Et maintenant", phrase: "Ce que nous recommandons, ce qui se décide aujourd'hui, et ce qui vient après." },
+      };
+      var e = ETAPES[page.etape];
+      return e ? { titre: e.titre, phrase: e.phrase, etape: page.etape } : null;
+    }
+    if (page.type === "plateforme") {
+      var pf = plateforme(p);
+      if (!pf) return null;
+      return { titre: "La plateforme", phrase: pf.idee,
         blocs: [
+          { t: "La promesse", v: pf.promesse },
+          { t: "Le rituel", v: pf.rituel },
+          { t: "Le signe", v: pf.symbole },
+          { t: "Les valeurs", v: (pf.valeurs || []).join("  ·  ") },
+        ].filter(function (x) { return x.v; }),
+        note: pf.source };
+    }
+    if (page.type === "kv") {
+      var pk = (p.sections.pistes || []).filter(function (x) { return x.id === page.pisteId; })[0];
+      var k = pk ? kvDe(pk) : null;
+      if (!k) return null;
+      return { titre: pk.titre, visuel: k, accroches: pk.accroches || [],
+        note: k.version ? "Maquette v" + k.version + " — brouillon, avant shooting" : null };
+    }
+    if (page.type === "spot") {
+      var ps = (p.sections.pistes || []).filter(function (x) { return x.id === page.pisteId; })[0];
+      var sp = ps ? spotDe(ps) : null;
+      if (!sp) return null;
+      var cases = sp.sb ? sp.sb.cases : [];
+      var portee = sp.portee ? (sp.portee.exclusif
+        ? "Spot exclusif : " + (sp.portee.marqueIds || []).map(function (id) { var m = DEPOT.trouve("marques", id); return m ? m.nom : id; }).join(", ")
+          + ", " + (sp.portee.marches || []).map(function (id) { var m = DEPOT.trouve("marches", id); return m ? m.nom : id; }).join(", ")
+        : "Pensé pour être décliné") : null;
+      return { titre: ps.titre + " — le spot",
+        cases: cases, illustre: cases.filter(function (c) { return c.vignette; }).length,
+        ratio: sp.sb ? sp.sb.ratio : null, film: sp.film,
+        son: sp.musique && sp.musique.titre ? "« " + sp.musique.titre + " »" : null,
+        formats: sp.conducteur && sp.conducteur.formats ? sp.conducteur.formats.map(function (f) { return f.nom.replace(/\s*[—(].*$/, ""); }) : [],
+        portee: portee };
+    }
+    if (page.type === "probleme") {
+      if (!brief.probleme && !brief.objectif_business) return null;
+      return { titre: "Ce que vous nous avez demandé", corps: brief.probleme || brief.objectif_business,
+        blocs: [
+          { t: "L'objectif", v: ident.objectif || brief.objectif_com },
           { t: "La cible", v: brief.cible },
-          { t: "L'insight", v: brief.insight || strat.insight },
-        ] };
+          { t: "Aujourd'hui", v: brief.comportement_actuel },
+          { t: "Demain", v: brief.comportement_vise },
+        ].filter(function (x) { return x.v; }) };
     }
     if (page.type === "strategie") {
       /* L'insight n'est plus un paragraphe : la page tire de l'objet, et du
@@ -432,12 +578,15 @@ window.PRESENTATION = (function () {
       var pi = (p.sections.pistes || []).filter(function (x) { return x.id === page.pisteId; })[0];
       if (!pi) return null;
       var da = pi.auteurDA ? DEPOT.trouve("personnes", pi.auteurDA) : null;
-      return { titre: pi.titre, corps: pi.concept, visuel: pi,
+      return { titre: pi.titre, corps: null, visuel: kvDe(pi) || pi,
         note: da ? "Direction artistique : " + da.nom : null,
+        phrase: pi.idee || null, accroches: pi.accroches || [],
+        /* Le sacrifice et le motif restent à l'interne : le client reçoit
+         * l'idée, la mécanique et ce qui la rend juste. */
         blocs: [
-          { t: "La mécanique", v: pi.mecanique },
-          { t: "Ce qu'elle sacrifie", v: pi.sacrifice },
-          { t: "L'argument", v: pi.argument },
+          { t: "La mécanique", v: court(pi.mecanique) },
+          { t: "L'exécution clé", v: court(pi.executionCle) },
+          { t: "Pourquoi elle marche", v: court(pi.argument) },
         ].filter(function (x) { return x.v; }),
         statut: pi.statut };
     }
@@ -607,7 +756,8 @@ window.PRESENTATION = (function () {
   }
 
   return {
-    TYPES: TYPES, NIVEAUX: NIVEAUX, creer: creer, creerDepuis: creerDepuis, credits: credits,
+    TYPES: TYPES, NIVEAUX: NIVEAUX, creer: creer, creerDepuis: creerDepuis, credits: credits, cle: cle,
+    plateforme: plateforme, kvDe: kvDe, spotDe: spotDe,
     contenu: contenu, controles: controles,
     mockups: mockups, pagesPossibles: pagesPossibles,
     enregistrerSeance: enregistrerSeance, poserRetour: poserRetour,
