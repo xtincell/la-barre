@@ -1664,3 +1664,5 @@ body[data-impression="1"] { background: #fff; }
   .pg.t-piste, .pg.t-kv { grid-template-columns: minmax(0, 1fr); }
   .pg-titre-b { max-width: 100%; }
 }
+/* Une animatique verticale garde ses proportions dans la diapositive. */
+.pg-film.vertical { aspect-ratio: 9 / 16; width: auto; height: 46vh; max-height: 46vh; justify-self: start; }

@@ -106,6 +106,7 @@ window.FABRIQUE = (function () {
       el("summary", {}, "Le storyboard", el("span.studio-compte", {}, String(s.cases.length)),
         el("span.fonds-q", {}, (s.version ? "v" + s.version + " · " : "") + (s.format || "") + " — un prompt par case, même style, mêmes personnages")),
       s.source ? el("p.fb-n", {}, s.source) : null,
+      s.guide ? el("img.fb-perso", { src: s.guide, alt: "Le guide du geste", loading: "lazy" }) : null,
       (precedents || []).length ? el("p.fb-n", {}, precedents.map(function (v) {
         return "v" + v.version + " archivée le " + O.joli(String(v.archive_le).slice(0, 10)) + (v.motif ? " — " + v.motif : ""); }).join(" · ")) : null,
       (s.personnages || []).length ? el("div.fb-f", {}, el("h4", {}, "Les personnages"),
@@ -171,7 +172,7 @@ window.FABRIQUE = (function () {
 
   /* L'animatique : le storyboard monté sur le son, la dernière version d'abord. */
   function film(a, petit) {
-    return el("video.fb-film" + (petit ? ".petit" : ""), { src: a.video, poster: a.poster, controls: true,
+    return el("video.fb-film" + (petit ? ".petit" : "") + (a.ratio === "9:16" ? ".vertical" : ""), { src: a.video, poster: a.poster, controls: true,
       preload: "metadata", playsinline: true });
   }
   function animatiques(pi) {

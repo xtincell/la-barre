@@ -646,12 +646,12 @@ window.VUE_PRESENTATION = (function () {
      * s'il l'est, sinon écrit, ligne par ligne. */
     if (pg.type === "spot") {
       var illustrees = c.cases.filter(function (x) { return x.vignette; });
-      var montrees = (illustrees.length ? illustrees : c.cases).slice(0, illustrees.length ? 12 : 8);
+      var montrees = (illustrees.length ? illustrees : c.cases).slice(0, illustrees.length ? 24 : 8);
       return el("div.pg.pg-spot", {},
         el("div.pg-eti", {}, c.titre),
         el("div.pg-spot-l", {}, [c.son ? "Le son : " + c.son : null,
           c.formats.length ? "Formats : " + c.formats.join(", ") : null, c.portee].filter(Boolean).join("  ·  ")),
-        c.film ? el("video.pg-film", { src: c.film.video, poster: c.film.poster, controls: true,
+        c.film ? el("video.pg-film" + (c.film.ratio === "9:16" ? ".vertical" : ""), { src: c.film.video, poster: c.film.poster, controls: true,
           preload: "metadata", playsinline: true }) : null,
         montrees.length ? el("div.pg-sb" + (c.ratio === "16:9" ? ".h" : ""), {}, montrees.map(function (x) {
           return el("figure.pg-sbc", {},

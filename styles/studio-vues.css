@@ -3046,3 +3046,4 @@ ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; wid
 .fb-sons { display: grid; gap: var(--e2); margin: var(--e2) 0; }
 .fb-son { display: grid; gap: var(--e1); font-size: var(--t-meta); }
 .fb-son audio { width: 100%; max-width: 520px; }
+.fb-film.vertical { aspect-ratio: 9 / 16; width: auto; height: min(70vh, 640px); max-width: 100%; }
