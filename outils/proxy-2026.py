@@ -77,6 +77,8 @@ for c in sorted(cites):
     dst = fait or comprimer(src, base)
     proxys[c] = os.path.relpath(dst, APP); poids += os.path.getsize(dst)
 
+# Les proxys qui ne sont pas des images (la version web d'une vidéo) ne se recalculent pas ici : on les garde.
+proxys.update({k: v for k, v in (d.get("proxys") or {}).items() if not IMG.match(k)})
 d["proxys"] = proxys
 d["enregistre_le"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 d.setdefault("journal", []).append({"quand": d["enregistre_le"], "qui": "creation", "action": "proxy en ligne",
