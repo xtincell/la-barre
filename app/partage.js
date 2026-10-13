@@ -87,11 +87,13 @@ window.PARTAGE = (function () {
             + (pdf.pages ? " · " + pdf.pages + " pages" : "") : "pas encore généré")),
         el("div.pt-g", {},
           pdf ? el("a.b.nu", { href: pdf.chemin, download: nomPdf(p) }, "Télécharger") : null,
+          window.EXPORT_PPTX ? EXPORT_PPTX.bouton(p) : null,
           local ? el("button.b" + (pdf ? "" : ".or"), { type: "button", onclick: function (e) { generer(p, e.target, rafraichir); } },
             pdf ? "Regénérer et publier" : "Générer et publier")
             : el("span.pt-q", {}, "Le PDF se génère depuis LA BARRE sur l'iMac."))),
       el("p.pt-q", {}, "Les liens s'ouvrent sans LA BARRE autour et proposent le PDF. Ils sont impossibles à deviner et révocables, "
-        + "mais ce ne sont pas des secrets : la base du site en ligne est lisible. Le PDF suit la présentation du jour où il est généré."));
+        + "mais ce ne sont pas des secrets : la base du site en ligne est lisible. Le PDF suit la présentation du jour où il est généré. "
+        + "Le PowerPoint sort les mêmes diapositives en objets éditables ; sur l'iMac, avec les images originales du disque, en ligne avec leurs aperçus."));
   }
 
   function nomPdf(p) {
