@@ -29,3 +29,4 @@ documents/BEIGNET_PARADISE_deduction.md
 # comme le dépôt. Le script qui les applique, lui, est versionné.
 outils/plateformes-2026/
 outils/__pycache__/
+__pycache__/
