@@ -17,6 +17,7 @@ window.PRESENTATION = (function () {
     etape: { nom: "Intercalaire", tire: "l'étage qui commence : cadrage, conception, pistes, suite" },
     plateforme: { nom: "La plateforme de marque", tire: "l'idée directrice, la promesse et le rituel de la marque, ou de la gamme que sert la campagne" },
     kv: { nom: "Le KV d'une piste", tire: "la dernière maquette du KV, et ses accroches" },
+    couverture: { nom: "Le brief, piste par piste", tire: "chaque action demandée au brief, et comment chaque piste y répond" },
     spot: { nom: "Le spot d'une piste", tire: "le storyboard, l'animatique, le son et la portée du spot" },
     probleme: { nom: "Le problème", tire: "le brief — problème, cible, tension" },
     strategie: { nom: "La stratégie", tire: "le territoire et l'insight" },
@@ -125,23 +126,27 @@ window.PRESENTATION = (function () {
       var kvs = (p.livrables || []).filter(function (l) {
         return !l.annule && l.pisteId === pi.id && KV.estKV(l); });
       if (kvs.length) pages.push({ type: "planche", pisteId: pi.id, seulementKV: !ambitieux });
-      if (!ambitieux) return;
+      /* Le dispositif se montre dès le minimum : le brief demande un plan
+       * d'exécution, et une piste sans ses actions n'est qu'une image. */
       if ((pi.dispositif || []).length) pages.push({ type: "dispositif", pisteId: pi.id });
+      if (!ambitieux) return;
       var mk = (p.livrables || []).filter(function (l) { return l.pisteId === pi.id && !l.annule; })
         .reduce(function (n, l) { return n + (l.mockups || []).length; }, 0);
       if (mk) pages.push({ type: "mockup", pisteId: pi.id });
     });
 
     pages.push({ type: "etape", etape: "suite" });
-    if (!retenue && pistesVives.length > 1) {
-      pages.push({ type: "comparatif" });
-      if (window.RECO && RECO.arbitrage(p).piste) pages.push({ type: "arbitrage" });
-    }
+    if (!retenue && pistesVives.length > 1) pages.push({ type: "comparatif" });
+    if (actionsDemandees(p).length && pistes.some(function (x) { return (x.dispositif || []).length; }))
+      pages.push({ type: "couverture" });
+    if (!retenue && pistesVives.length > 1 && window.RECO && RECO.arbitrage(p).piste) pages.push({ type: "arbitrage" });
     if (ambitieux && (p.livrables || []).length) pages.push({ type: "livrables" });
     if (ambitieux && (p.livrables || []).some(function (l) { return l.publication || l.remise; }))
       pages.push({ type: "calendrier" });
+    /* Pas de crédits ni de noms dans ce qui part chez le client : le document
+     * est émis par l'agence, en équipe. Les crédits restent aux documents
+     * internes et se posent avant toute diffusion publique. */
     pages.push({ type: "suite" });
-    if (credits(p).length) pages.push({ type: "credits" });
 
     return {
       id: O.id("PRES"), cree_le: new Date().toISOString(), statut: "brouillon",
@@ -188,10 +193,6 @@ window.PRESENTATION = (function () {
 
     if (ambitieux && st.squelette.indexOf("livrables") === -1 && (p.livrables || []).length) {
       pages.push({ type: "livrables" });
-    }
-    /* Les crédits se posent avant la diffusion, quelle que soit la structure. */
-    if (pages[pages.length - 1] && pages[pages.length - 1].type !== "credits") {
-      pages.push({ type: "credits" });
     }
 
     return {
@@ -255,6 +256,38 @@ window.PRESENTATION = (function () {
       out += phrases[i];
     }
     return out.trim();
+  }
+
+  /* Les actions que le brief demande, avec les supports qui y répondent. La
+   * stratégie et le plan d'exécution ne sont pas une action : ce document
+   * entier y répond. */
+  var REPONSES = [
+    { re: /4\s*[×x]\s*3|outdoor|affichage/i, supports: ["S-billboard"], canal: "ATL" },
+    { re: /goodies|banni[eè]re|guirlande|banderole/i, supports: ["S-banderole", "S-tshirt", "S-casquette", "S-goodies"], canal: "BTL" },
+    { re: /poster/i, supports: ["S-p6040"] },
+    { re: /wobbler|woobler/i, supports: ["S-woobler"] },
+    { re: /gondole/i, supports: ["S-tg"] },
+    { re: /digital|vid[ée]o|influen/i, supports: ["S-digital", "S-film916"], canal: "TTL" },
+  ];
+  function actionsDemandees(p) {
+    return ((p.sections.brief || {}).livrables_attendus || []).map(function (ligne) {
+      var r = REPONSES.filter(function (x) { return x.re.test(ligne); })[0];
+      return r ? { ligne: ligne, supports: r.supports } : null;
+    }).filter(Boolean);
+  }
+  function repondA(pi, demande) {
+    return (pi.dispositif || []).filter(function (a) {
+      return (a.supports || []).some(function (sid) { return demande.supports.indexOf(sid) !== -1; });
+    });
+  }
+
+  /* Ce qui distingue une piste des autres, en quatre lignes comparables. */
+  function lecture(pi) {
+    var l = pi.lecture || {};
+    var portee = (pi.fabrique || {}).spot;
+    var marques = l.marques || (portee && portee.marqueIds ? portee.marqueIds.map(function (id) {
+      var m = DEPOT.trouve("marques", id); return m ? m.nom : id; }).join(", ") : null);
+    return { marques: marques, moment: l.moment || null, moteur: l.moteur || null, distingue: l.distingue || null };
   }
 
   function aDesMaquettes(pi) {
@@ -322,7 +355,7 @@ window.PRESENTATION = (function () {
 
     if (page.type === "titre") {
       return { titre: b.campagne || p.nom, sous: ident.client || "",
-        note: ident.marque || "", visuel: premierVisuel(p) };
+        note: ident.marque || "" };
     }
     if (page.type === "etape") {
       var ETAPES = {
@@ -475,16 +508,30 @@ window.PRESENTATION = (function () {
     }
 
     if (page.type === "comparatif") {
-      if (!window.RECO) return null;
-      var a = RECO.arbitrage(p);
-      if (a.pistes.length < 2) return null;
-      return { titre: "Les pistes, côte à côte",
-        blocs: a.pistes.map(function (pi) {
-          var r = pi.role ? RECO.role(pi.role) : null;
-          return { t: (pi.titre || "sans titre") + (r ? "  ·  " + r.nom : ""),
-            v: [(pi.prix || {}).privilegie || pi.privilegie,
-                "sacrifie : " + ((pi.prix || {}).sacrifie || pi.sacrifice || "—")]
-              .filter(Boolean).join("  —  ") };
+      var vivs = (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
+      if (vivs.length < 2) return null;
+      var compte = function (pi, c) { return (pi.dispositif || []).filter(function (a) { return a.canal === c; }).length; };
+      return { titre: "Les pistes, côte à côte", pistes: vivs.map(function (x) { return x.titre; }),
+        lignes: [
+          { t: "L'idée", v: vivs.map(function (x) { return court(x.idee, 150); }) },
+          { t: "Pour qui", v: vivs.map(function (x) { return lecture(x).marques || "—"; }) },
+          { t: "Le moment", v: vivs.map(function (x) { return lecture(x).moment || "—"; }) },
+          { t: "Le moteur", v: vivs.map(function (x) { return lecture(x).moteur || "—"; }) },
+          { t: "Ce qui la distingue", v: vivs.map(function (x) { return lecture(x).distingue || "—"; }) },
+          { t: "Le dispositif", v: vivs.map(function (x) {
+            return ["ATL", "BTL", "TTL"].map(function (c) { var n = compte(x, c); return n ? c + " " + n : null; })
+              .filter(Boolean).join(" · ") || "—"; }) },
+        ] };
+    }
+
+    if (page.type === "couverture") {
+      var vv = (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
+      var dem = actionsDemandees(p);
+      if (!dem.length) return null;
+      return { titre: "Ce que le brief demande, piste par piste", pistes: vv.map(function (x) { return x.titre; }),
+        lignes: dem.map(function (d) {
+          return { t: d.ligne.replace(/\s*—\s*(fichiers? ouverts?|acteurs réels)$/i, ""),
+            v: vv.map(function (x) { var r = repondA(x, d); return r.length ? r.map(function (a) { return a.nom; }).join(" · ") : "—"; }) };
         }) };
     }
 
@@ -572,14 +619,14 @@ window.PRESENTATION = (function () {
     if (page.type === "idee") {
       var auteur = b.auteur ? DEPOT.trouve("personnes", b.auteur) : null;
       return { titre: b.campagne || "L'idée", phrase: b.idee, signature: b.signature,
-        corps: b.mecanique, note: auteur ? "Idée : " + auteur.nom : null };
+        corps: b.mecanique };
     }
     if (page.type === "piste") {
       var pi = (p.sections.pistes || []).filter(function (x) { return x.id === page.pisteId; })[0];
       if (!pi) return null;
-      var da = pi.auteurDA ? DEPOT.trouve("personnes", pi.auteurDA) : null;
+      var lec = lecture(pi);
       return { titre: pi.titre, corps: null, visuel: kvDe(pi) || pi,
-        note: da ? "Direction artistique : " + da.nom : null,
+        pour: [lec.marques, lec.moment].filter(Boolean).join(" · "), distingue: lec.distingue,
         phrase: pi.idee || null, accroches: pi.accroches || [],
         /* Le sacrifice et le motif restent à l'interne : le client reçoit
          * l'idée, la mécanique et ce qui la rend juste. */
@@ -621,9 +668,12 @@ window.PRESENTATION = (function () {
     if (page.type === "dispositif") {
       var pr3 = (p.sections.pistes || []).filter(function (x) { return x.id === page.pisteId; })[0];
       if (!pr3 || !(pr3.dispositif || []).length) return null;
+      var mois = function (d) { return d ? O.joli(String(d).slice(0, 10)) : null; };
       return { titre: pr3.titre + " — le dispositif",
         activites: (pr3.dispositif || []).map(function (a) {
-          return { nom: a.nom, quoi: a.quoi,
+          return { nom: a.nom, quoi: court(a.quoi, 200), canalCle: a.canal,
+            quand: a.debut ? (a.fin && a.fin !== a.debut ? mois(a.debut) + " → " + mois(a.fin) : mois(a.debut)) : null,
+            supportsNoms: (a.supports || []).map(function (id) { var x = DEPOT.trouve("supports", id); return x ? x.nom : null; }).filter(Boolean).join(", "),
             canal: DISPOSITIF.CANAUX[a.canal].nom, lieu: DISPOSITIF.LIEUX[a.lieu].nom,
             debut: a.debut, fin: a.fin,
             marches: (a.marches || []).map(function (id) {
@@ -757,7 +807,7 @@ window.PRESENTATION = (function () {
 
   return {
     TYPES: TYPES, NIVEAUX: NIVEAUX, creer: creer, creerDepuis: creerDepuis, credits: credits, cle: cle,
-    plateforme: plateforme, kvDe: kvDe, spotDe: spotDe,
+    plateforme: plateforme, kvDe: kvDe, spotDe: spotDe, lecture: lecture, actionsDemandees: actionsDemandees,
     contenu: contenu, controles: controles,
     mockups: mockups, pagesPossibles: pagesPossibles,
     enregistrerSeance: enregistrerSeance, poserRetour: poserRetour,

@@ -1487,7 +1487,7 @@ button.st.nu:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
 .pg-acc { display: grid; gap: .3rem; font-family: var(--ecrit); font-style: italic; font-size: var(--t-titre); line-height: 1.35; }
 
 /* Le spot : l'animatique, puis le storyboard en bande. */
-.pg-spot { align-content: start; gap: .7rem; overflow-y: auto; }
+.pg-spot { align-content: start; gap: .7rem; }
 .pg-spot-l { font-size: var(--t-meta); line-height: 1.5; color: var(--papier-terne); }
 .pg-film { width: 100%; max-height: 46vh; aspect-ratio: 16 / 9; background: #000; }
 .pg-sb { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: .6rem; }
@@ -1513,11 +1513,71 @@ button.st.nu:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
   .pg-piste, .pg-kv { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* Imprimée, une diapositive est une page au format écran large (13,33 × 7,5 pouces,
+ * celui d'un deck) : une page nommée, pour ne pas imposer ce format au reste. */
+@page diapo { size: 13.333in 7.5in; margin: 0; }
 @media print {
-  @page { size: A4 landscape; margin: 0; }
-  .prd-annexes, .prd-tete .prd-q { display: none; }
-  .prd-diapos { gap: 0; }
-  .pr-diapo { break-after: page; }
-  .pg { width: 100%; box-shadow: none; aspect-ratio: auto; height: 100vh; }
+  .prd-annexes, .prd-tete, .pr .bande, .pt-bloc { display: none; }
+  .prd-diapos, .pt-impression { gap: 0; }
+  .pr-diapo { page: diapo; break-after: page; display: block; }
+  .pr-diapo .pg { width: 13.333in; height: 7.5in; max-width: none; aspect-ratio: auto; box-shadow: none; overflow: hidden; }
   .pg-film { display: none; }
 }
+
+/* ————————————————————— Le partage ————————————————————— */
+
+.pt-bloc { display: grid; gap: .6rem; }
+.pt-liste { display: grid; gap: 0; border-top: 1px solid var(--trait); }
+.pt-l, .pt-pdf { display: flex; justify-content: space-between; align-items: center; gap: .8rem; flex-wrap: wrap;
+  padding: .55rem 0; border-bottom: 1px solid var(--trait); }
+.pt-n { display: grid; gap: .1rem; }
+.pt-n span { font-size: var(--t-meta); color: var(--clair-terne); }
+.pt-g { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+.pt-q { font-size: var(--t-meta); color: var(--clair-terne); max-width: 75ch; margin: 0; }
+
+/* La page partagée : un document, sur papier, sans l'application autour. */
+body[data-vue="partage"] { background: var(--papier); color: var(--papier-encre); }
+body[data-vue="partage"] .rail { display: none; }
+.pt-page { max-width: 1240px; margin: 0 auto; padding: clamp(1rem, 4vw, 2.4rem) 16px 3rem; display: grid; gap: 1.6rem;
+  --clair: var(--papier-encre); --clair-doux: #39413C; --clair-terne: var(--papier-terne); --trait: #D9D4C9; }
+.pt-tete { display: flex; justify-content: space-between; align-items: end; gap: 1rem; flex-wrap: wrap;
+  padding-bottom: 1rem; border-bottom: 2px solid var(--papier-encre); }
+.pt-tete h1 { margin: .15rem 0; font-family: var(--affichage); font-size: clamp(1.6rem, 3.6vw, 2.6rem); line-height: 1.08; letter-spacing: -.02em; }
+.pt-doc { font-family: var(--affichage); font-weight: 600; color: #8A5D10; }
+.pt-meta { font-size: var(--t-meta); color: var(--papier-terne); }
+.pt-tete-d { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.pt-pied { font-size: var(--t-eti); color: var(--papier-terne); border-top: 1px solid #D9D4C9; padding-top: .8rem; }
+.pt-vide { padding: 4rem 0; display: grid; gap: .6rem; }
+body[data-impression="1"] { background: #fff; }
+.pt-impression { display: grid; gap: 0; }
+.pt-impression .pr-diapo { break-after: page; }
+.pt-impression .pg { width: 100%; box-shadow: none; }
+@media print {
+  .pt-tete-d { display: none; }
+  .pt-page { padding: 0; }
+}
+
+/* La piste : pour qui, et ce qui la distingue des autres. */
+.pg-pour { font-family: var(--affichage); font-weight: 600; font-size: var(--t-meta); color: #8E1B17; }
+.pg-dist { font-size: var(--t-meta); line-height: 1.5; color: #39413C; max-width: 60ch; padding-left: .7rem; border-left: 2px solid #8E1B17; }
+.pg-dist b { font-family: var(--affichage); font-weight: 600; color: var(--papier-encre); }
+
+/* Le comparatif et la couverture du brief : un tableau, une colonne par piste. */
+.pg-comp { align-content: start; }
+.pg-tw { overflow: visible; }  /* un conteneur défilant empêcherait la diapositive de s'allonger */
+.pg-cmp { width: 100%; border-collapse: collapse; font-size: var(--t-meta); line-height: 1.4; table-layout: fixed; }
+.pg-cmp th, .pg-cmp td { text-align: left; vertical-align: top; padding: .45rem .55rem; border-bottom: 1px solid #D9D4C9; }
+.pg-cmp thead th { font-family: var(--ecrit); font-style: italic; font-weight: 500; font-size: var(--t-lire); border-bottom: 2px solid var(--papier-encre); }
+.pg-cmp tbody th { font-family: var(--affichage); font-weight: 600; width: 16%; color: var(--papier-encre); }
+.pg-cmp td { color: #39413C; }
+.pg-cmp td.vide { color: #B3AC9F; }
+
+/* Le dispositif : trois colonnes, ATL, BTL, TTL. */
+.pg-disp { align-content: start; gap: 1rem; }
+.pg-disp-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.2rem; }
+.pg-disp-c { display: grid; gap: .6rem; align-content: start; }
+.pg-disp-k { font-family: var(--affichage); font-weight: 700; font-size: var(--t-titre); color: #8E1B17; border-bottom: 2px solid var(--papier-encre); padding-bottom: .25rem; display: grid; }
+.pg-disp-k span { font-weight: 400; font-size: var(--t-eti); color: var(--papier-terne); }
+.pg-disp-a { display: grid; gap: .15rem; font-size: var(--t-meta); line-height: 1.4; color: #39413C; }
+.pg-disp-a b { font-family: var(--affichage); color: var(--papier-encre); }
+.pg-disp-m { font-size: var(--t-eti); color: var(--papier-terne); }

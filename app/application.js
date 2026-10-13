@@ -355,6 +355,17 @@ window.APP = (function () {
   /* ————————————————————— Rendu ————————————————————— */
 
   function rendre() {
+    /* Un lien de partage s'ouvre sans LA BARRE autour : ni rail, ni chapeau. */
+    var brut = location.hash.replace(/^#\/?/, "").split("/");
+    if (brut[0] === "partage" && window.PARTAGE) {
+      if (railNoeud && railNoeud.parentNode) railNoeud.parentNode.removeChild(railNoeud);
+      railNoeud = null;
+      O.vider(corps);
+      PARTAGE.page(corps, brut[1] || "", brut[2] || null);
+      window.scrollTo(0, 0);
+      return;
+    }
+    delete document.body.dataset.impression;
     var r = piste();
 
     document.body.dataset.vue = r.vue.cle;

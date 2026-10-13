@@ -64,6 +64,7 @@ window.VUE_PRESENTATION = (function () {
     var d = pres(p);
     return el("div.pr", {},
       bande(p, d, rafraichir),
+      window.PARTAGE ? PARTAGE.bloc(p, rafraichir) : null,
       laSalle(p, d, rafraichir),
       d.statut === "presentee" ? apresSeance(p, d, rafraichir) : null,
       /* Le montage client n'est pas le dossier moins quelques pages : c'est un
@@ -655,7 +656,9 @@ window.VUE_PRESENTATION = (function () {
         el("div.pg-droite", {},
           el("div.pg-eti", {}, "Piste" + (c.statut === "retenue" ? " · retenue" : "")),
           el("div.pg-t", {}, c.titre),
+          c.pour ? el("div.pg-pour", {}, c.pour) : null,
           c.phrase ? el("div.pg-lede", {}, c.phrase) : null,
+          c.distingue ? el("div.pg-dist", {}, el("b", {}, "Ce qui la distingue — "), c.distingue) : null,
           c.corps ? el("div.pg-corps", {}, c.corps) : null,
           el("div.pg-blocs", {}, (c.blocs || []).map(function (b) {
             return el("div.pg-b", {}, el("div.t", {}, b.t), el("div.v", {}, b.v));
@@ -728,13 +731,31 @@ window.VUE_PRESENTATION = (function () {
 
     /* Les pistes côte à côte : c'est la mise en regard qui informe, pas la
      * liste. Une colonne par route, au même niveau de finition. */
-    if (pg.type === "comparatif") {
+    if (pg.type === "comparatif" || pg.type === "couverture") {
       return el("div.pg.pg-comp", {},
         el("div.pg-eti", {}, c.titre),
-        el("div.pg-cols", {}, (c.blocs || []).map(function (b) {
-          return el("div.pg-col", {},
-            el("div.t", {}, b.t),
-            el("div.v", {}, b.v));
+        el("div.pg-tw", {}, el("table.pg-cmp", {},
+          el("thead", {}, el("tr", {}, el("th", {}, ""), c.pistes.map(function (n) { return el("th", {}, n); }))),
+          el("tbody", {}, c.lignes.map(function (l) {
+            return el("tr", {}, el("th", { scope: "row" }, l.t), l.v.map(function (v) {
+              return el("td" + (v === "—" ? ".vide" : ""), {}, v); }));
+          })))));
+    }
+
+    /* Le dispositif : ce qu'on fait, rangé comme une agence le dit — ATL, BTL, TTL. */
+    if (pg.type === "dispositif") {
+      var par = { ATL: [], BTL: [], TTL: [] };
+      (c.activites || []).forEach(function (a) { (par[a.canalCle] || par.BTL).push(a); });
+      return el("div.pg.pg-disp", {},
+        el("div.pg-eti", {}, c.titre),
+        el("div.pg-disp-cols", {}, ["ATL", "BTL", "TTL"].filter(function (k) { return par[k].length; }).map(function (k) {
+          return el("div.pg-disp-c", {},
+            el("div.pg-disp-k", {}, k, el("span", {}, DISPOSITIF.CANAUX[k].quoi)),
+            par[k].map(function (a) {
+              return el("div.pg-disp-a", {}, el("b", {}, a.nom),
+                a.quoi ? el("div", {}, a.quoi) : null,
+                el("div.pg-disp-m", {}, [a.quand, a.supportsNoms].filter(Boolean).join(" · ")));
+            }));
         })));
     }
 

@@ -165,7 +165,7 @@ function depotAutorise(chemin) {
 // range comme un fichier, et le dépôt n'en garde que le chemin.
 function vignetteAutorisee(chemin) {
   if (chemin.includes("..")) return false;
-  return /(?:^|\/)assets\/review\/[a-zA-Z0-9._/-]+\.(jpg|jpeg|png|webp|mp4|webm)$/i.test(chemin);
+  return /(?:^|\/)assets\/review\/[a-zA-Z0-9._/-]+\.(jpg|jpeg|png|webp|mp4|webm|pdf)$/i.test(chemin);
 }
 
 function lireCorps(requete) {
@@ -182,6 +182,58 @@ function lireCorps(requete) {
   });
 }
 
+const CHROME = process.env.LA_BARRE_CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const EN_LIGNE = process.env.LA_BARRE_EN_LIGNE || "https://labarre.powerupgraders.com/";
+const BASE = "depots/beignet-paradise.json";
+
+function lancer(cmd, args) {
+  return new Promise((ok, ko) => execFile(cmd, args, { timeout: 120000 }, (e, so, se) => e ? ko(new Error(se || e.message)) : ok(so)));
+}
+
+async function partagePdf(projetId) {
+  // La page vient d'écrire ses jetons : on relit la base jusqu'à les y trouver.
+  let p = null;
+  for (let i = 0; i < 10 && !(p && p.partages && p.partages.presentation); i++) {
+    const d = JSON.parse(await readFile(join(RACINE, BASE), "utf8"));
+    p = (d.projets || []).find((x) => x.id === projetId);
+    if (!(p && p.partages && p.partages.presentation)) await new Promise((r) => setTimeout(r, 500));
+  }
+  if (!p || !p.partages || !p.partages.presentation) throw new Error("le dossier n'a pas encore de lien de présentation");
+  const jeton = p.partages.presentation.jeton;
+  const rel = "assets/review/partage/" + jeton + ".pdf";
+  const sortie = join(RACINE, rel);
+  await mkdir(dirname(sortie), { recursive: true });
+  const profil = join(homedir(), ".la-barre-chrome-pdf");
+  await lancer(CHROME, ["--headless=new", "--disable-gpu", "--no-first-run", "--hide-scrollbars",
+    "--user-data-dir=" + profil, "--no-pdf-header-footer", "--run-all-compositor-stages-before-draw",
+    "--virtual-time-budget=25000", "--print-to-pdf=" + sortie,
+    "http://localhost:" + PORT + "/#/partage/" + jeton + "/impression"]);
+  const octets = await readFile(sortie);
+  const pages = (octets.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
+  if (pages < 2) throw new Error("Chrome a rendu " + pages + " page(s) : la présentation n'a pas chargé");
+  const pdf = { chemin: rel, quand: new Date().toISOString(), pages };
+
+  // En ligne : le PDF, puis les liens et le PDF dans la base, par un PUT gardé.
+  let enLigne = false, erreurEnLigne = null;
+  try {
+    const r1 = await fetch(EN_LIGNE + rel, { method: "PUT", headers: { "Content-Type": "text/plain" },
+      body: "data:application/pdf;base64," + octets.toString("base64") });
+    if (!r1.ok) throw new Error("PDF refusé en ligne (" + r1.status + ")");
+    const r2 = await fetch(EN_LIGNE + BASE, { cache: "no-store" });
+    const etag = r2.headers.get("etag");
+    const d2 = await r2.json();
+    const p2 = (d2.projets || []).find((x) => x.id === projetId);
+    if (!p2) throw new Error("le dossier n'existe pas dans la base en ligne");
+    p2.partages = p.partages; p2.partagesRevoques = p.partagesRevoques || []; p2.partagePdf = pdf;
+    d2.enregistre_le = new Date().toISOString();
+    const r3 = await fetch(EN_LIGNE + BASE, { method: "PUT", headers: { "Content-Type": "application/json", "If-Match": etag },
+      body: JSON.stringify(d2) });
+    if (!r3.ok) throw new Error("base en ligne refusée (" + r3.status + ")");
+    enLigne = true;
+  } catch (e) { erreurEnLigne = String(e.message || e); }
+  return { ok: true, pdf, enLigne, erreurEnLigne };
+}
+
 const serveur = createServer(async (requete, reponse) => {
   try {
     const url = new URL(requete.url, "http://localhost");
@@ -189,6 +241,20 @@ const serveur = createServer(async (requete, reponse) => {
     if (chemin === "/") chemin = "/index.html";
 
     // Le disque de l'agence : lire un fichier, ou l'ouvrir dans son logiciel.
+    // Le PDF de la présentation : Chrome, sur cette machine, imprime les
+    // diapositives de la route de partage, puis le PDF et les liens partent en
+    // ligne. Réservé à cette machine, et à l'application (en-tête maison).
+    if (chemin === "/partage-pdf") {
+      if (!deCetteMachine(requete) || requete.method !== "POST" || requete.headers["x-la-barre"] !== "1") {
+        reponse.writeHead(403).end("Réservé à cette machine"); return;
+      }
+      let corps;
+      try { corps = JSON.parse(await lireCorps(requete)); } catch { reponse.writeHead(400).end("Illisible"); return; }
+      try { json(reponse, 200, await partagePdf(corps.projetId)); }
+      catch (e) { json(reponse, 200, { ok: false, quoi: String(e.message || e) }); }
+      return;
+    }
+
     if (chemin.startsWith("/disque/") || chemin === "/disque-ouvrir") {
       if (!deCetteMachine(requete)) { reponse.writeHead(403).end("Réservé à cette machine"); return; }
       if (chemin === "/disque-ouvrir") {
@@ -237,7 +303,7 @@ const serveur = createServer(async (requete, reponse) => {
       if (estVignette) {
         // Le navigateur envoie une donnée « data:image/… ;base64,… » : elle se
         // range en fichier binaire, pas en texte.
-        const m = texte.match(/^data:(?:image|video)\/[a-z0-9+.-]+;base64,([A-Za-z0-9+/=\s]+)$/i);
+        const m = texte.match(/^data:(?:image\/[a-z0-9+.-]+|video\/[a-z0-9+.-]+|application\/pdf);base64,([A-Za-z0-9+/=\s]+)$/i);
         if (!m) {
           reponse.writeHead(400, { "Content-Type": "application/json" })
             .end(JSON.stringify({ ok: false, quoi: "ce n'est pas une image ni une vidéo en base64" }));
