@@ -58,6 +58,13 @@ window.FABRIQUE = (function () {
     return el("details.fonds.fb", {},
       el("summary", {}, "La musique", el("span.fonds-q", {}, m.titre ? "« " + m.titre + " »" : "")),
       m.methode ? el("p.fb-n", {}, m.methode) : null,
+      /* Les prises de son : la plus récente d'abord. Elles vivent au disque :
+       * elles s'écoutent sur la machine, pas sur le site en ligne. */
+      (m.audios || []).length ? el("div.fb-sons", {}, m.audios.slice().reverse().map(function (a) {
+        return el("div.fb-son", {}, el("b", {}, a.titre), " · " + (a.duree ? a.duree + " s · " : "") + O.joli(String(a.quand).slice(0, 10)),
+          window.DISQUE && DISQUE.local ? el("audio", { controls: true, preload: "none", src: DISQUE.url(a.disque) })
+            : el("span.fb-m", {}, " — à écouter sur l'iMac"));
+      })) : null,
       prompt("Style", m.style, "Le style"),
       prompt("Exclure", m.exclure, "Les exclusions"),
       prompt("Paroles", m.paroles, "Les paroles"),

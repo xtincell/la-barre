@@ -3043,3 +3043,6 @@ ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; wid
 .fb-st { margin: 0; font-size: var(--t-micro); color: var(--clair-terne); }
 .fb-st.a-faire { color: var(--arbitrage); font-weight: 600; }
 .fb-perso { display: block; width: 100%; max-width: 760px; height: auto; margin: var(--e2) 0; background: #fff; border-radius: var(--r-s); }
+.fb-sons { display: grid; gap: var(--e2); margin: var(--e2) 0; }
+.fb-son { display: grid; gap: var(--e1); font-size: var(--t-meta); }
+.fb-son audio { width: 100%; max-width: 520px; }

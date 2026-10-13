@@ -17,6 +17,7 @@ window.PRESENTATION = (function () {
     etape: { nom: "Intercalaire", tire: "l'étage qui commence : cadrage, conception, pistes, suite" },
     plateforme: { nom: "La plateforme de marque", tire: "l'idée directrice, la promesse et le rituel de la marque, ou de la gamme que sert la campagne" },
     kv: { nom: "Le KV d'une piste", tire: "la dernière maquette du KV, et ses accroches" },
+    merci: { nom: "Merci", tire: "la page de fin, au nom de l'agence" },
     couverture: { nom: "Le brief, piste par piste", tire: "chaque action demandée au brief, et comment chaque piste y répond" },
     spot: { nom: "Le spot d'une piste", tire: "le storyboard, l'animatique, le son et la portée du spot" },
     probleme: { nom: "Le problème", tire: "le brief — problème, cible, tension" },
@@ -118,9 +119,8 @@ window.PRESENTATION = (function () {
     if (pistes.length) pages.push({ type: "etape", etape: "pistes" });
     pistes.forEach(function (pi) {
       pages.push({ type: "piste", pisteId: pi.id });
-      /* Le KV en grand seulement quand la piste a ses maquettes : sinon la page
-       * de la piste le montre déjà, et la redite se voit. */
-      if (aDesMaquettes(pi)) pages.push({ type: "kv", pisteId: pi.id });
+      /* La page de la piste porte l'idée ; le KV a sa propre page, en grand. */
+      if (kvDe(pi)) pages.push({ type: "kv", pisteId: pi.id });
       if (spotDe(pi)) pages.push({ type: "spot", pisteId: pi.id });
       /* Les KV produits en livrables : c'est le minimum montrable. */
       var kvs = (p.livrables || []).filter(function (l) {
@@ -146,7 +146,7 @@ window.PRESENTATION = (function () {
     /* Pas de crédits ni de noms dans ce qui part chez le client : le document
      * est émis par l'agence, en équipe. Les crédits restent aux documents
      * internes et se posent avant toute diffusion publique. */
-    pages.push({ type: "suite" });
+    pages.push({ type: "suite" }, { type: "merci" });
 
     return {
       id: O.id("PRES"), cree_le: new Date().toISOString(), statut: "brouillon",
@@ -170,7 +170,7 @@ window.PRESENTATION = (function () {
       if (t === "piste") {
         pistes.forEach(function (pi) {
           pages.push({ type: "piste", pisteId: pi.id });
-          if (aDesMaquettes(pi)) pages.push({ type: "kv", pisteId: pi.id });
+          if (kvDe(pi)) pages.push({ type: "kv", pisteId: pi.id });
           if (spotDe(pi)) pages.push({ type: "spot", pisteId: pi.id });
           var kvs = (p.livrables || []).filter(function (l) {
             return !l.annule && l.pisteId === pi.id && KV.estKV(l); });
@@ -381,6 +381,9 @@ window.PRESENTATION = (function () {
           { t: "Les valeurs", v: (pf.valeurs || []).join("  ·  ") },
         ].filter(function (x) { return x.v; }),
         note: pf.source };
+    }
+    if (page.type === "merci") {
+      return { titre: "Merci.", campagne: (b.campagne || p.nom || "") };
     }
     if (page.type === "kv") {
       var pk = (p.sections.pistes || []).filter(function (x) { return x.id === page.pisteId; })[0];
@@ -625,7 +628,10 @@ window.PRESENTATION = (function () {
       var pi = (p.sections.pistes || []).filter(function (x) { return x.id === page.pisteId; })[0];
       if (!pi) return null;
       var lec = lecture(pi);
+      var vivantes = (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; });
       return { titre: pi.titre, corps: null, visuel: kvDe(pi) || pi,
+        numero: vivantes.indexOf(pi) + 1, message: (pi.accroches || [])[0] || null,
+        moment: lec.moment, moteur: lec.moteur, marques: lec.marques,
         pour: [lec.marques, lec.moment].filter(Boolean).join(" · "), distingue: lec.distingue,
         phrase: pi.idee || null, accroches: pi.accroches || [],
         /* Le sacrifice et le motif restent à l'interne : le client reçoit

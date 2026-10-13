@@ -580,16 +580,38 @@ window.VUE_PRESENTATION = (function () {
 
   /* ————————————————————— Une page, en grand ————————————————————— */
 
+  /* Chaque diapositive porte son type en classe : la feuille de style habille
+   * la couverture, l'insight ou la page de piste dans le style de la maison. */
   function page(p, pg) {
+    var n = pageBrute(p, pg);
+    n.classList.add("t-" + pg.type);
+    return n;
+  }
+
+  var LOGO = "assets/review/agence/matanga-logo-blanc.png";
+  var MONTAGNE = "assets/review/agence/matanga-montagne.png";
+
+  function pageBrute(p, pg) {
     var c = PRESENTATION.contenu(p, pg);
     if (!c) return el("div.pg.pg-vide", {}, el("div.pg-t", {}, "Page sans source"),
       el("div.pg-s", {}, "Rien à montrer ici. Elle ne devrait pas être dans le dossier."));
 
     if (pg.type === "titre") {
       return el("div.pg.pg-titre", {},
+        el("img.pg-logo", { src: LOGO, alt: "Matanga Agency" }),
+        el("img.pg-montagne", { src: MONTAGNE, alt: "" }),
+        el("div.pg-titre-b", {},
+          el("div.pg-t", {}, c.titre),
+          el("div.pg-trait", {}),
+          c.sous ? el("div.pg-s", {}, c.sous + (c.note ? " · " + c.note : "")) : null,
+          el("div.pg-date", {}, O.joli(new Date().toISOString()))));
+    }
+
+    if (pg.type === "merci") {
+      return el("div.pg.pg-merci", {},
+        el("img.pg-logo", { src: LOGO, alt: "Matanga Agency" }),
         el("div.pg-t", {}, c.titre),
-        c.sous ? el("div.pg-s", {}, c.sous + (c.note ? " · " + c.note : "")) : null,
-        el("div.pg-date", {}, O.joli(new Date().toISOString())));
+        c.campagne ? el("div.pg-merci-c", {}, c.campagne) : null);
     }
 
     /* L'intercalaire : un étage commence. Une phrase, et rien d'autre. */
@@ -608,16 +630,16 @@ window.VUE_PRESENTATION = (function () {
         c.note ? el("div.pg-note", {}, c.note) : null);
     }
 
-    /* Le KV, en grand : c'est lui que le client garde en tête. */
+    /* Le KV, en grand : la page KEY VISUAL de la maison. */
     if (pg.type === "kv") {
       return el("div.pg.pg-kv", {},
-        el("div.pg-kv-v", {}, IMAGE.vignette(c.visuel, "toile", null)),
         el("div.pg-kv-l", {},
-          el("div.pg-eti", {}, "Le KV"),
-          el("div.pg-t", {}, c.titre),
-          (c.accroches || []).length ? el("div.pg-acc", {}, c.accroches.map(function (x) {
+          el("div.pg-eti", {}, "Key visual"),
+          el("div.pg-kv-n", {}, c.titre),
+          (c.accroches || []).length ? el("div.pg-acc", {}, c.accroches.slice(0, 3).map(function (x) {
             return el("div", {}, "« " + x + " »"); })) : null,
-          c.note ? el("div.pg-note", {}, c.note) : null));
+          c.note ? el("div.pg-note", {}, c.note) : null),
+        el("div.pg-kv-v", {}, IMAGE.vignette(c.visuel, "toile", null)));
     }
 
     /* Le spot : l'animatique quand elle existe, puis le storyboard — illustré
@@ -650,20 +672,22 @@ window.VUE_PRESENTATION = (function () {
         c.note ? el("div.pg-note", {}, c.note) : null);
     }
 
+    /* La piste, comme une page concept de la maison : le récit à gauche, le
+     * message et la mécanique à droite. Le KV a sa propre page. */
     if (pg.type === "piste") {
+      var pills = [["Pour qui", c.marques], ["Le moment", c.moment], ["Le moteur", c.moteur]].filter(function (x) { return x[1]; });
       return el("div.pg.pg-piste", {},
-        el("div.pg-gauche", {}, IMAGE.vignette(c.visuel, "toile", null)),
-        el("div.pg-droite", {},
-          el("div.pg-eti", {}, "Piste" + (c.statut === "retenue" ? " · retenue" : "")),
+        el("div.pg-concept-g", {},
+          el("div.pg-eti", {}, "Piste " + (c.numero || "")),
           el("div.pg-t", {}, c.titre),
-          c.pour ? el("div.pg-pour", {}, c.pour) : null,
           c.phrase ? el("div.pg-lede", {}, c.phrase) : null,
-          c.distingue ? el("div.pg-dist", {}, el("b", {}, "Ce qui la distingue — "), c.distingue) : null,
-          c.corps ? el("div.pg-corps", {}, c.corps) : null,
-          el("div.pg-blocs", {}, (c.blocs || []).map(function (b) {
-            return el("div.pg-b", {}, el("div.t", {}, b.t), el("div.v", {}, b.v));
-          })),
-          c.note ? el("div.pg-note", {}, c.note) : null));
+          pills.length ? el("div.pg-pills", {}, pills.map(function (x) {
+            return el("div.pg-pill", {}, el("span", {}, x[0]), el("div", {}, x[1])); })) : null),
+        el("div.pg-concept-d", {},
+          c.message ? el("div.pg-message", {}, el("span", {}, "Message"), el("div", {}, c.message)) : null,
+          el("div.pg-carte", {}, (c.blocs || []).map(function (b) {
+            return el("div.pg-b", {}, el("div.t", {}, b.t), el("div.v", {}, b.v)); })),
+          c.distingue ? el("div.pg-noir", {}, el("span", {}, "Ce qui la distingue"), el("div", {}, c.distingue)) : null));
     }
 
     if (pg.type === "planche") {

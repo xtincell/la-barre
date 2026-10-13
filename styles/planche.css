@@ -127,7 +127,9 @@
 
 /* ————————————————————— Étroit ————————————————————— */
 
-@media (max-width: 900px) {
+/* Écran seulement : à l'impression, la largeur se mesure sur la page par défaut
+ * (816 px) et non sur la diapositive — les pistes s'empilaient dans le PDF. */
+@media screen and (max-width: 900px) {
   
   .pg-route, .pg-deux { grid-template-columns: minmax(0, 1fr); }
   .pg-gauche .vignette { height: 38vh; }
@@ -541,7 +543,9 @@
   flex-wrap: wrap; border-top: 1px solid var(--trait); padding-top: .6rem; }
 .ingp-c { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
 
-@media (max-width: 900px) {
+/* Écran seulement : à l'impression, la largeur se mesure sur la page par défaut
+ * (816 px) et non sur la diapositive — les pistes s'empilaient dans le PDF. */
+@media screen and (max-width: 900px) {
   .ing-corps { grid-template-columns: minmax(0, 1fr); }
   .ing-droite { max-height: none; }
 }
@@ -1508,7 +1512,9 @@ button.st.nu:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
 .prd-annexes > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--clair-terne); }
 .prd-retirees { margin: 0 0 .6rem; font-size: var(--t-meta); color: var(--clair-terne); }
 
-@media (max-width: 900px) {
+/* Écran seulement : à l'impression, la largeur se mesure sur la page par défaut
+ * (816 px) et non sur la diapositive — les pistes s'empilaient dans le PDF. */
+@media screen and (max-width: 900px) {
   .pg { aspect-ratio: auto; min-height: 56vw; }
   .pg-piste, .pg-kv { grid-template-columns: minmax(0, 1fr); }
 }
@@ -1581,3 +1587,80 @@ body[data-impression="1"] { background: #fff; }
 .pg-disp-a { display: grid; gap: .15rem; font-size: var(--t-meta); line-height: 1.4; color: #39413C; }
 .pg-disp-a b { font-family: var(--affichage); color: var(--papier-encre); }
 .pg-disp-m { font-size: var(--t-eti); color: var(--papier-terne); }
+
+/* ————————————————————— Le style de la maison Matanga ————————————————————— */
+
+/* Repris des decks de l'agence (End of Year Campaign, octobre 2026) : papier
+ * chaud, titres en serif rouge, couverture et insight sur l'encre, pages concept
+ * avec la boîte MESSAGE, pages KEY VISUAL, « Merci. » pour finir. Le contenu
+ * reste celui de LA BARRE ; seul l'habillage vient du deck. */
+.pg {
+  --m-papier: #FBF4EF; --m-rouge: #C8372D; --m-encre: #1F1A19; --m-or: #E7B96B; --m-orange: #E8762B;
+  --m-condense: "Futura Condensed ExtraBold", "Avenir Next Condensed", "Arial Narrow", Impact, sans-serif;
+  background: var(--m-papier); color: var(--m-encre);
+}
+.pg .pg-eti { font-family: var(--lecture); font-weight: 700; font-size: clamp(1.3rem, 2.4vw, 2rem); line-height: 1.15; color: var(--m-rouge); letter-spacing: -.01em; }
+.pg .pg-b, .pg .pg-col { background: #fff; border: 0; border-radius: 4px; padding: .7rem .8rem; }
+.pg .pg-b .t, .pg .pg-col .t { font-family: var(--affichage); font-weight: 700; font-size: var(--t-meta); color: var(--m-rouge); }
+.pg .pg-blocs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .6rem; }
+
+/* La couverture : l'encre, le logo, le titre en capitales, la montagne. */
+.pg.t-titre { background: #0E0D0D; color: #fff; position: relative; overflow: hidden; align-content: center; justify-items: start; }
+.pg-titre .pg-logo { position: absolute; top: 7%; left: 5%; width: 18%; height: auto; }
+.pg-titre .pg-montagne { position: absolute; right: 0; bottom: 0; width: 42%; height: auto; }
+.pg-titre-b { position: relative; display: grid; gap: .8rem; max-width: 60%; }
+.pg-titre .pg-t { font-family: var(--affichage); font-weight: 800; text-transform: uppercase; color: #fff; font-size: clamp(2rem, 5.4vw, 4.6rem); line-height: 1.02; letter-spacing: -.01em; }
+.pg-trait { width: 2.4rem; height: .4rem; background: var(--m-rouge); }
+.pg-titre .pg-s, .pg-titre .pg-date { color: #BDB6B0; }
+
+/* Les intercalaires et l'insight : l'encre. */
+.pg.t-etape { background: var(--m-encre); }
+.pg.t-etape.e-pistes { background: var(--m-encre); }
+.pg-etape .pg-t { font-family: var(--affichage); font-weight: 800; text-transform: uppercase; color: #fff; }
+.pg-etape .pg-t::after { content: ""; display: block; width: 2.4rem; height: .35rem; background: var(--m-rouge); margin-top: .9rem; }
+.pg.t-strategie { background: var(--m-encre); color: #F3EDE7; }
+.pg.t-strategie .pg-eti { color: var(--m-or); }
+.pg.t-strategie .pg-phrase { font-family: var(--lecture); font-style: italic; color: #fff; }
+.pg.t-strategie .pg-corps { color: #CFC7C0; }
+.pg.t-strategie .pg-b { background: transparent; padding: 0; }
+.pg.t-strategie .pg-b .t { color: var(--m-or); }
+.pg.t-strategie .pg-b .v { color: #E4DDD6; }
+
+/* La piste : la page concept. */
+.pg.t-piste { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); align-items: start; gap: clamp(1rem, 3vw, 2.4rem); }
+.pg-concept-g, .pg-concept-d { display: grid; gap: .8rem; align-content: start; }
+.pg.t-piste .pg-eti { font-family: var(--affichage); font-size: var(--t-eti); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.pg.t-piste .pg-t { font-family: var(--m-condense); font-style: normal; font-weight: 800; text-transform: uppercase; font-size: clamp(1.6rem, 3.4vw, 2.8rem); line-height: 1.02; color: var(--m-encre); }
+.pg.t-piste .pg-lede { font-family: var(--lecture); font-style: italic; font-weight: 700; font-size: var(--t-titre); line-height: 1.35; color: var(--m-encre); }
+.pg-pills { display: grid; gap: .45rem; }
+.pg-pill { display: grid; grid-template-columns: 8.5rem 1fr; gap: .7rem; align-items: center; font-size: var(--t-meta); line-height: 1.35; }
+.pg-pill span { background: var(--m-rouge); color: #fff; border-radius: 999px; padding: .2rem .7rem; font-family: var(--m-condense); font-weight: 800; text-transform: uppercase; font-size: var(--t-eti); text-align: center; letter-spacing: .03em; }
+.pg-message { background: var(--m-rouge); color: #fff; border-radius: 4px; padding: .8rem 1rem; display: grid; gap: .25rem; }
+.pg-message span { font-size: var(--t-eti); text-transform: uppercase; letter-spacing: .08em; opacity: .85; font-family: var(--affichage); font-weight: 700; }
+.pg-message div { font-family: var(--m-condense); font-weight: 800; font-size: clamp(1.1rem, 2vw, 1.6rem); line-height: 1.1; }
+.pg-carte { background: #fff; border-radius: 4px; padding: .8rem 1rem; display: grid; gap: .6rem; }
+.pg-carte .pg-b { padding: 0; background: transparent; }
+.pg-noir { background: var(--m-encre); color: #fff; border-radius: 4px; padding: .8rem 1rem; display: grid; gap: .25rem; }
+.pg-noir span { font-size: var(--t-eti); color: var(--m-or); text-transform: uppercase; letter-spacing: .08em; font-family: var(--affichage); font-weight: 700; }
+.pg-noir div { font-family: var(--lecture); font-style: italic; font-weight: 700; line-height: 1.35; }
+
+/* KEY VISUAL : le KV en grand, l'étiquette en haut à gauche. */
+.pg.t-kv { grid-template-columns: minmax(0, .32fr) minmax(0, 1fr); align-items: stretch; gap: 1.2rem; padding-right: 0; padding-top: 0; padding-bottom: 0; }
+.pg.t-kv .pg-kv-l { align-content: start; padding-top: clamp(1.2rem, 3vw, 2.4rem); }
+.pg.t-kv .pg-eti { font-family: var(--affichage); font-size: var(--t-meta); text-transform: uppercase; letter-spacing: .08em; }
+.pg-kv-n { font-family: var(--m-condense); font-weight: 800; text-transform: uppercase; font-size: var(--t-titre); line-height: 1.1; }
+.pg.t-kv .pg-kv-v { display: grid; align-items: center; background: #fff; }
+.pg.t-kv .pg-kv-v .vignette img { max-height: none; height: 100%; width: 100%; object-fit: contain; }
+
+/* Merci. */
+.pg.t-merci { background: #0E0D0D; color: #fff; justify-items: center; align-content: center; text-align: center; gap: .6rem; }
+.pg-merci .pg-logo { width: 14%; height: auto; }
+.pg-merci .pg-t { font-family: var(--affichage); font-weight: 500; font-size: clamp(3rem, 9vw, 7.5rem); line-height: 1; color: #fff; letter-spacing: -.03em; }
+.pg-merci-c { font-family: var(--m-condense); font-weight: 800; text-transform: uppercase; font-size: clamp(1.2rem, 2.6vw, 2.1rem); color: var(--m-orange); }
+
+/* Écran seulement : à l'impression, la largeur se mesure sur la page par défaut
+ * (816 px) et non sur la diapositive — les pistes s'empilaient dans le PDF. */
+@media screen and (max-width: 900px) {
+  .pg.t-piste, .pg.t-kv { grid-template-columns: minmax(0, 1fr); }
+  .pg-titre-b { max-width: 100%; }
+}
