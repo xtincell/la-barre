@@ -136,7 +136,7 @@ window.VUE_PLANCHE = (function () {
         el("span.plc-bas", {},
           el("span.plc-copy" + (k.copy ? "" : ".vide"), {}, k.copy || "Accroche non écrite"),
           el("span.plc-sous", {}, [
-            KV.NIVEAUX[KV.niveau(l)].nom.toLowerCase(),
+            KV.estMaitre(l) && l.nom ? l.nom : KV.NIVEAUX[KV.niveau(l)].nom.toLowerCase(),
             O.langue(k.langue) || "langue ?",
             decl ? decl + (decl > 1 ? " formats" : " format") : "aucun format",
             mks ? mks + " en situation" : null,

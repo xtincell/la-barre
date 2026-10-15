@@ -63,6 +63,14 @@ client et de la diffusion. Une seule piste retenue sans choix explicite reste un
 référence déduite, annoncée comme telle. `npm run test:decisions` exerce concurrence,
 réponse perdue, reprise, péremption et conservation des décisions.
 
+La planche montre le nom de chaque maître, même sans maquette ou accroche.
+Les dépendances distinguent une référence à qualifier, une référence disponible
+et un élément manquant. Une restriction s'applique au seul fichier concerné.
+Ces lectures ne changent ni versions, ni arbitrages, ni droits déclarés.
+Compiler une gamme ne marque pas les produits du catalogue ; lire les blocages
+d'un dossier ne résout pas ceux des autres dossiers.
+`npm run test:manuel` vérifie aussi ces états avec les composants existants.
+
 ## Le système visuel
 
 Tous les composants vivent dans **`app/ui.js` + `styles/systeme.css`**, et nulle part

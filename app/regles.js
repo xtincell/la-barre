@@ -709,7 +709,7 @@ window.REGLES = (function () {
       }
     });
 
-    return reconcilier(trouves);
+    return reconcilier(trouves, projetId);
   }
 
   /* Un champ critique a trois états, pas deux : reçu, inféré, absent. */
@@ -797,7 +797,7 @@ window.REGLES = (function () {
 
   /* Rapproche les blocages calculés du registre : date de naissance, résolution,
    * et les « ce n'en est pas un ». */
-  function reconcilier(calcules) {
+  function reconcilier(calcules, projetId) {
     var registre = DEPOT.liste("blocages");
     var parCle = {};
     registre.forEach(function (r) { parCle[r.cle] = r; });
@@ -818,10 +818,11 @@ window.REGLES = (function () {
       sortie.push(b);
     });
 
-    /* Ceux du registre qui ne sont plus calculés sont résolus. */
+    /* Une lecture d'un seul dossier ne résout pas les blocages des autres. */
     var clesVives = {};
     calcules.forEach(function (b) { clesVives[b.cle] = true; });
     registre.forEach(function (r) {
+      if (projetId && r.cle.indexOf(projetId + "|") !== 0) return;
       if (!clesVives[r.cle] && !r.resolu_le) r.resolu_le = maintenant;
     });
 

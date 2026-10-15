@@ -274,17 +274,18 @@ window.UI = (function () {
     liens.forEach(function (l, i) {
       var angle = (i / n) * Math.PI * 2 - Math.PI / 2;
       var x = cx + Math.cos(angle) * 92, y = cy + Math.sin(angle) * 72;
+      var inconnu = l.ok === null;
       traits.push(svg("line", { x1: cx, y1: cy, x2: x, y2: y,
-        stroke: l.ok ? "var(--trait-clair)" : "var(--alerte)", "stroke-width": "1",
+        stroke: inconnu ? "var(--clair-terne)" : l.ok ? "var(--trait-clair)" : "var(--alerte)", "stroke-width": "1",
         "stroke-dasharray": l.ok ? "" : "3 3" }));
       noeuds.push(svg("circle", { cx: x, cy: y, r: 5,
-        fill: l.ok ? "var(--vert)" : "var(--alerte)" }));
+        fill: inconnu ? "var(--clair-terne)" : l.ok ? "var(--vert)" : "var(--alerte)" }));
       var t = svg("text", { x: x, y: y - 10, "text-anchor": "middle", class: "g-nom" });
       t.textContent = l.nom.length > 16 ? l.nom.slice(0, 15) + "…" : l.nom;
       noeuds.push(t);
     });
     var cCentre = svg("circle", { cx: cx, cy: cy, r: 24, fill: "none",
-      stroke: centre.ok ? "var(--vert)" : "var(--alerte)", "stroke-width": "1.5" });
+      stroke: centre.ok === null ? "var(--clair-terne)" : centre.ok ? "var(--vert)" : "var(--alerte)", "stroke-width": "1.5" });
     var tCentre = svg("text", { x: cx, y: cy + 3, "text-anchor": "middle", class: "g-centre" });
     tCentre.textContent = centre.nom.length > 14 ? centre.nom.slice(0, 13) + "…" : centre.nom;
     return svg("svg", { viewBox: "0 0 " + w + " " + h, class: "graphe" },

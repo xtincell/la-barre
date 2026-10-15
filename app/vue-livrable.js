@@ -444,7 +444,12 @@ window.VUE_LIVRABLE = (function () {
     (l.entrees || []).forEach(function (e) { liens.push({ nom: e.quoi, ok: !!e.fournisseur }); });
     (l.assets || []).forEach(function (aid) {
       var a = DEPOT.trouve("assets", aid);
-      if (a) liens.push({ nom: a.nom, ok: !REGLES.droitsInsuffisants(l) });
+      if (!a) {
+        liens.push({ nom: "Élément de marque introuvable · " + aid, ok: false });
+        return;
+      }
+      var droits = REGLES.droitsInsuffisants(Object.assign({}, l, { assets: [aid] }));
+      liens.push({ nom: a.nom, ok: droits ? false : a.aQualifier ? null : true });
     });
     var adapt = REGLES.adaptations(p, l.id);
     adapt.forEach(function (a) {
@@ -456,14 +461,18 @@ window.VUE_LIVRABLE = (function () {
       return l.maitre ? reference(p, l, apres) : el("div", {}, UI.banniere("", "Aucune dépendance renseignée pour ce livrable."));
     }
 
-    var manquants = liens.filter(function (x) { return !x.ok; }).length;
+    var manquants = liens.filter(function (x) { return x.ok === false; }).length;
+    var aQualifier = liens.filter(function (x) { return x.ok === null; }).length;
     return el("div", {},
       reference(p, l, apres),
       manquants ? UI.banniere("rouge", manquants + (manquants > 1 ? " dépendances non satisfaites" : " dépendance non satisfaite")
         + " — c'est ce qui se découvre à l'impression quand on ne le regarde pas.") : null,
-      el("div.graphe-boite", {}, UI.graphe({ nom: l.nom, ok: !manquants }, liens)),
+      aQualifier ? UI.banniere("", aQualifier + (aQualifier > 1 ? " références à qualifier" : " référence à qualifier")
+        + " : vérifier la version et les droits avant usage.") : null,
+      el("div.graphe-boite", {}, UI.graphe({ nom: l.nom, ok: manquants ? false : aQualifier ? null : true }, liens)),
       el("div", {}, liens.map(function (x) {
-        return UI.fileItem(null, x.nom, null, UI.eti(x.ok ? "ok" : "manque", x.ok ? "vert" : "alerte"));
+        return UI.fileItem(null, x.nom, null, UI.eti(x.ok === null ? "à qualifier" : x.ok ? "ok" : "manque",
+          x.ok === null ? "terne" : x.ok ? "vert" : "alerte"));
       }))
     );
   }

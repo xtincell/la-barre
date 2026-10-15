@@ -257,13 +257,12 @@ window.COMPILATEUR = (function () {
           if (d.length && !d.some(function (id) { return marches[id] || marches["M-" + id]; })) return;
         }
         vus[s.id] = true;
-        s.__retenu = retenu;
         out.push(s);
       });
     });
     /* Les déclarés d'abord : ce sont ceux qu'on montre vraiment. */
     return out.sort(function (a, b) {
-      return (b.__retenu ? 1 : 0) - (a.__retenu ? 1 : 0); });
+      return (declares[b.id] ? 1 : 0) - (declares[a.id] ? 1 : 0); });
   }
 
   function cadrage(p) {
