@@ -70,4 +70,9 @@ jobs:
             sleep 1
           done
           curl -fsS http://127.0.0.1:5173/depots/receipt.json | grep -q RECEIPT-ONLY
+          for i in $(seq 1 25); do
+            if [ "$(docker inspect la-barre-receipt --format '{{.State.Health.Status}}')" = healthy ]; then break; fi
+            sleep 1
+          done
+          test "$(docker inspect la-barre-receipt --format '{{.State.Health.Status}}')" = healthy
           docker image inspect la-barre:receipt --format 'Image bytes: {{.Size}}'
