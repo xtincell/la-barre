@@ -447,10 +447,12 @@ window.COMPILATEUR = (function () {
         v: Array.isArray(x) ? x.join(" · ") : String(x) };
     });
     var docs = MARQUE.assets(m.id, "plateforme");
+    var recues = (VAULT.CHAMPS || []).map(function (c) { return VAULT.sourceDe("marque", m.id, c.cle); })
+      .filter(function (x, i, a) { return x && a.indexOf(x) === i; });
     return { t: "Plateforme — " + m.nom, lignes: lignes, elements: docs,
       siVide: "aucune plateforme de marque à la bibliothèque : le brief n'en fournit pas pour " + m.nom
         + ". À demander au client avant la séance.",
-      source: docs.length ? "brand propeller remis par le client, rangé à la bibliothèque"
+      source: recues.length ? recues.join(" ; ") : docs.length ? "brand propeller remis par le client, rangé à la bibliothèque"
         : "bibliothèque de marque — le brief ne fournit pas de brand propeller pour " + m.nom
           + (lignes.length ? " : seul ce qui suit est écrit" : "") };
   }

@@ -51,6 +51,7 @@ jobs:
           const base='http://127.0.0.1:5173';
           const page=await fetch(base+'/');
           assert.equal(page.status,200);assert.match(await page.text(),/La Barre/i);
+          assert.match(page.headers.get('x-la-barre-runtime'),/^[a-f0-9]{64}$/);
           for(const path of ['/depots/private-build-probe.json','/assets/review/private-build-probe.png','/.env.production']) {
             assert.equal((await fetch(base+path)).status,404,path);
           }
@@ -63,6 +64,13 @@ jobs:
           assert.equal(await (await fetch(base+'/depots/receipt.json')).text(),body);
           const media=await fetch(base+'/assets/review/receipt.png',{method:'PUT',body:'data:image/png;base64,cHJvYmU='});
           assert.equal(media.status,200);assert.equal(await (await fetch(base+'/assets/review/receipt.png')).text(),'probe');
+          const packetPath='/assets/review/partage/'+'a'.repeat(24)+'.json';
+          const packet=JSON.stringify({schema:1,projectId:'RECEIPT-ONLY',doc:'cadrage',html:'<h1>Document reçu</h1>'});
+          const packetWrite=await fetch(base+packetPath,{method:'PUT',headers:{'If-None-Match':'*','Content-Type':'application/json'},body:packet});
+          assert.equal(packetWrite.status,200);
+          const packetRead=await fetch(base+packetPath);assert.ok(packetRead.headers.get('etag'));assert.equal(await packetRead.text(),packet);
+          assert.equal((await fetch(base+packetPath,{method:'PUT',headers:{'If-Match':'"stale"'},body:'{}'})).status,409);
+          assert.equal((await fetch(base+'/assets/review/partage/other.json',{method:'PUT',body:'{}'})).status,403);
           JS
           docker restart la-barre-receipt
           for i in $(seq 1 20); do
@@ -70,6 +78,7 @@ jobs:
             sleep 1
           done
           curl -fsS http://127.0.0.1:5173/depots/receipt.json | grep -q RECEIPT-ONLY
+          curl -fsS http://127.0.0.1:5173/assets/review/partage/aaaaaaaaaaaaaaaaaaaaaaaa.json | grep -q RECEIPT-ONLY
           for i in $(seq 1 25); do
             if [ "$(docker inspect la-barre-receipt --format '{{.State.Health.Status}}')" = healthy ]; then break; fi
             sleep 1

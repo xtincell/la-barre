@@ -379,6 +379,7 @@ window.APP = (function () {
     var zone = el("div.zone", { id: "contenu", tabindex: "-1" });
     corps.appendChild(zone);
     r.vue.vue().rendre(zone, r.arg, r.sous);
+    if (window.VAULT && VAULT.statutContexte().etat === "erreur") zone.prepend(UI.banniere("", "La plateforme de marque n’a pas pu être actualisée. Les références déjà reçues restent identifiées ; rechargez ce dossier pour réessayer."));
     window.scrollTo(0, 0);
   }
 
@@ -399,6 +400,14 @@ window.APP = (function () {
     function noter(x) { journalAmorce.push(x); window.__amorcage = journalAmorce; }
 
     var local = DEPOT.charger();
+    if (window.VAULT) {
+      function actualiserReferences() {
+        VAULT.initialiser(function () { var x = window.scrollX, y = window.scrollY; rendre(); window.scrollTo(x, y); });
+      }
+      actualiserReferences();
+      window.addEventListener("pageshow", function (e) { if (e.persisted) actualiserReferences(); });
+      document.addEventListener("visibilitychange", function () { if (!document.hidden) actualiserReferences(); });
+    }
     var surExemple = local && AMORCE.present();
     noter("local=" + local + " surExemple=" + surExemple);
 

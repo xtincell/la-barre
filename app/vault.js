@@ -32,13 +32,13 @@ window.VAULT = (function () {
    * ————— */
   var CHAMPS = [
     /* ————— A · Authenticité — Le Gospel : ce que la marque EST ————— */
-    { cle: "vision", pilier: "A", code: "a.prophecy", nom: "Vision", type: "long",
+    { cle: "vision", pilier: "A", code: "a.prophecy", lecture: "vision", nom: "Vision", type: "long",
       aide: "Le monde que la marque veut créer. Pas ce qu'elle vend — ce qu'elle veut voir advenir." },
     { cle: "mission", pilier: "A", code: "a.missionStatement", nom: "Mission", type: "texte",
       aide: "Comment elle réalise sa vision. Vingt-cinq mots au plus." },
-    { cle: "valeurs", pilier: "A", code: "a.valeurs", nom: "Valeurs", type: "puces",
+    { cle: "valeurs", pilier: "A", code: "a.valeurs", lecture: "[].valeur", nom: "Valeurs", type: "puces",
       aide: "Trois au maximum. Au-delà, ce ne sont plus des valeurs : c'est une liste." },
-    { cle: "origine", pilier: "A", code: "a.originMyth", nom: "Mythe d'origine", type: "long",
+    { cle: "origine", pilier: "A", code: "a.originMyth", lecture: "storytelling", nom: "Mythe d'origine", type: "long",
       aide: "L'histoire fondatrice qui justifie qu'elle existe." },
     { cle: "archetype", pilier: "A", code: "a.archetype", nom: "Archétype", type: "texte",
       aide: "Le patron narratif : le Sage, le Héros, le Créateur, le Rebelle…" },
@@ -51,7 +51,7 @@ window.VAULT = (function () {
     { cle: "promesse", pilier: "D", code: "d.promesseMaitre", nom: "Promesse", type: "texte" },
     { cle: "idee_directrice", pilier: "D", code: "d.ideeDirectrice", nom: "Idée directrice", type: "texte",
       aide: "Pluriannuelle. Les campagnes en sont des déclinaisons." },
-    { cle: "ton", pilier: "D", code: "d.tonDeVoix", nom: "Personnalité et ton", type: "long" },
+    { cle: "ton", pilier: "D", code: "d.tonDeVoix", lecture: "personnalite", nom: "Personnalité et ton", type: "long" },
     { cle: "symboles", pilier: "D", code: "d.symboles", nom: "Symboles", type: "puces" },
     { cle: "dialecte", pilier: "D", code: "d.assetsLinguistiques", nom: "Vocabulaire propriétaire", type: "puces",
       aide: "Les mots qui n'appartiennent qu'à elle : signature, mantras, lexique." },
@@ -79,6 +79,58 @@ window.VAULT = (function () {
       aide: "Une par ligne, au format « écrit → correct ». Ex. Nourissons → Nourrissons" },
   ];
 
+  /* Lecture depuis la plateforme actuelle, séparée du dépôt et de ses écritures.
+   * Les codes ci-dessus restent l'unique correspondance. Une édition publiée
+   * garde ses références ; connecter ce lecteur ne réécrit jamais une marque. */
+  var contexte = { brands: {} };
+  var etatContexte = "independant";
+  function connecter(recu) {
+    if (!recu || !recu.brands || typeof recu.brands !== "object") throw new Error("Références illisibles");
+    contexte = recu; etatContexte = "recu";
+  }
+  function reference(type, id, cle) {
+    if (type !== "marque") return null;
+    var marque = contexte.brands[id];
+    var champ = CHAMPS.filter(function (c) { return c.cle === cle; })[0];
+    var valeur = marque && champ && marque.fields && marque.fields[champ.code];
+    return valeur ? { marque: marque, champ: champ, valeur: valeur } : null;
+  }
+  function texteStructure(v) {
+    if (v === null || v === undefined) return "";
+    if (Array.isArray(v)) return v.map(texteStructure).join("\n");
+    if (typeof v === "object") return Object.keys(v).filter(function (k) { return k.charAt(0) !== "_"; })
+      .map(function (k) { return k.replace(/([a-z])([A-Z])/g, "$1 $2") + " : " + texteStructure(v[k]); }).join("\n");
+    return String(v);
+  }
+  function valeurReference(r) {
+    var v = r.valeur.value, chemin = r.champ.lecture;
+    if (chemin && v && typeof v === "object") {
+      if (chemin.indexOf("[].") === 0 && Array.isArray(v)) {
+        var cle = chemin.slice(3);
+        if (v.every(function (x) { return x && x[cle] !== undefined; })) v = v.map(function (x) { return x[cle]; });
+      } else if (!Array.isArray(v) && v[chemin] !== undefined) v = v[chemin];
+    }
+    return r.champ.type === "puces" ? (Array.isArray(v) ? v : [v]).map(texteStructure) : texteStructure(v);
+  }
+  function provenanceReference(r) {
+    var noms = { HUMAN: "saisi", SOURCE: "documenté", INFERRED: "déduit — à confirmer", UNKNOWN: "origine à qualifier" };
+    return "La Fusée · " + r.marque.name + " · " + (noms[r.valeur.provenance] || noms.UNKNOWN)
+      + (r.valeur.sourceVersion === null ? "" : " · version " + r.valeur.sourceVersion);
+  }
+  function initialiser(apres) {
+    if (location.pathname.indexOf("/la-barre/") !== 0) return;
+    var avant = JSON.stringify([contexte.brands, contexte.issues, contexte.sharingMode]), etatAvant = etatContexte;
+    etatContexte = "chargement";
+    return fetch("contexte.json", { cache: "no-store", credentials: "same-origin" })
+      .then(function (r) { if (!r.ok) throw new Error("Références indisponibles"); return r.json(); })
+      .then(connecter).catch(function () { etatContexte = "erreur"; })
+      .then(function () {
+        if (apres && (etatAvant !== etatContexte || avant !== JSON.stringify([contexte.brands, contexte.issues, contexte.sharingMode]))) apres();
+      });
+  }
+  function statutContexte() { return { etat: etatContexte, quand: contexte.generatedAt || null,
+    partage: etatContexte === "recu" && contexte.sharingMode === "DOCUMENT_V2", issues: contexte.issues || [] }; }
+
   /* Les quatre piliers viennent de la maison : c'est de la doctrine d'agence,
    * pas une loi du métier. Le repli garde le produit debout si la maison ne
    * les déclare pas. */
@@ -94,10 +146,7 @@ window.VAULT = (function () {
   function marque(id) { return DEPOT.trouve("marques", id); }
 
   function de(marqueId) {
-    var m = marque(marqueId);
-    if (!m) return null;
-    if (!m.vault) m.vault = {};
-    return m.vault;
+    return vaultDe("marque", marqueId);
   }
 
   function valeur(marqueId, cle) {
@@ -181,11 +230,25 @@ window.VAULT = (function () {
     return null;
   }
 
-  function vaultDe(type, id) {
+  function vaultLocal(type, id) {
     var n = noeud(type, id);
     if (!n) return null;
     if (!n.vault) n.vault = {};
     return n.vault;
+  }
+
+  function vaultDe(type, id) {
+    var local = vaultLocal(type, id);
+    if (!local || type !== "marque" || !contexte.brands[id]) return local;
+    var lu = Object.assign({}, local, { sources: Object.assign({}, local.sources), inferences: Object.assign({}, local.inferences) });
+    CHAMPS.forEach(function (c) {
+      var r = reference(type, id, c.cle);
+      if (!r) return;
+      lu[c.cle] = valeurReference(r); lu.sources[c.cle] = provenanceReference(r);
+      delete lu.inferences[c.cle];
+      if (r.valeur.provenance === "INFERRED") lu.inferences[c.cle] = { pourquoi: provenanceReference(r), reference: true };
+    });
+    return lu;
   }
 
   /* La valeur d'un champ à ce niveau : la sienne si elle existe, sinon celle
@@ -287,7 +350,8 @@ window.VAULT = (function () {
    * on ne supprime pas. Une révision sans changement n'en est pas une — on ne
    * consigne que ce qui bouge. */
   function ecrireNiveau(type, id, cle, val, motif) {
-    var v = vaultDe(type, id);
+    if (reference(type, id, cle)) return false;
+    var v = vaultLocal(type, id);
     if (!v) return false;
     var avant = v[cle];
     if (JSON.stringify(avant === undefined ? null : avant) === JSON.stringify(val === undefined ? null : val)) {
@@ -326,7 +390,8 @@ window.VAULT = (function () {
   }
 
   function contresigner(type, id, cle) {
-    var v = vaultDe(type, id);
+    if (reference(type, id, cle)) return false;
+    var v = vaultLocal(type, id);
     if (!v || !v.inferences || !v.inferences[cle]) return false;
     v.inferencesLevees = v.inferencesLevees || [];
     v.inferencesLevees.push({ champ: cle, quand: new Date().toISOString(), qui: MAISON.titulaire,
@@ -339,6 +404,8 @@ window.VAULT = (function () {
 
   function sourceDe(type, id, cle) {
     var v = vaultDe(type, id);
+    if (type === "marque" && contexte.brands[id] && !reference(type, id, cle) && v && !vide(v[cle]))
+      return "Référence La Barre — champ absent de la plateforme La Fusée";
     return (v && v.sources && v.sources[cle]) || null;
   }
 
@@ -409,7 +476,7 @@ window.VAULT = (function () {
   }
 
   function ajouterPromo(marqueId, nom, detail) {
-    var v = vaultDe("marque", marqueId);
+    var v = vaultLocal("marque", marqueId);
     if (!v) return false;
     v.promos = v.promos || [];
     if (v.promos.some(function (p) { return O.normalise(p.nom) === O.normalise(nom); })) return false;
@@ -419,7 +486,7 @@ window.VAULT = (function () {
   }
 
   function basculerDecideur(marqueId, contactId) {
-    var v = vaultDe("marque", marqueId);
+    var v = vaultLocal("marque", marqueId);
     if (!v) return false;
     v.decideurs = v.decideurs || [];
     var i = v.decideurs.indexOf(contactId);
@@ -876,6 +943,7 @@ window.VAULT = (function () {
   }
 
   return { CHAMPS: CHAMPS, PILIERS: PILIERS, champsDuPilier: champsDuPilier, FICHE: FICHE, CATEGORIES: CATEGORIES,
+    connecter: connecter, initialiser: initialiser, reference: reference, statutContexte: statutContexte,
     revisions: revisions, inference: inference, contresigner: contresigner, inferencesDe: inferencesDe, sourceDe: sourceDe,
     clientDe: clientDe, marchesDuClient: marchesDuClient, categoriesDuClient: categoriesDuClient,
     marchesPossibles: marchesPossibles, categoriesPossibles: categoriesPossibles,

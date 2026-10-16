@@ -4,7 +4,7 @@
 // Usage : node servir.mjs [port]
 
 import { createServer } from "node:http";
-import { readFile, writeFile, rename, mkdir, stat, unlink } from "node:fs/promises";
+import { readFile, writeFile, rename, mkdir, stat, unlink, readdir } from "node:fs/promises";
 import { createHash, randomUUID } from "node:crypto";
 import { join, normalize, extname, dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +14,25 @@ import { execFile } from "node:child_process";
 
 const RACINE = fileURLToPath(new URL(".", import.meta.url));
 const PORT = Number(process.argv[2] || process.env.PORT || 5173);
+
+// Le lecteur de documents peut vérifier qu'il utilise un seul runtime natif,
+// même pendant un remplacement de conteneur. Les médias/dépôts n'entrent pas
+// dans cette empreinte de code ; ils conservent leurs révisions distinctes.
+async function empreinteRuntime() {
+  const h = createHash("sha256");
+  async function ajouter(rel) {
+    const cible = join(RACINE, rel);
+    let info;
+    try { info = await stat(cible); }
+    catch (e) { if (e.code === "ENOENT") { h.update(rel + "\0absent\0"); return; } throw e; }
+    if (info.isDirectory()) {
+      for (const nom of (await readdir(cible)).sort()) await ajouter(join(rel, nom));
+    } else h.update(rel).update("\0").update(await readFile(cible)).update("\0");
+  }
+  for (const rel of ["index.html", "app", "styles"]) await ajouter(rel);
+  return h.digest("hex");
+}
+const RUNTIME = await empreinteRuntime();
 
 const TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -157,6 +176,10 @@ function depotAutorise(chemin) {
   return !!m;
 }
 
+function publicationAutorisee(chemin) {
+  return /^\/assets\/review\/partage\/[a-f0-9]{24}\.json$/.test(chemin);
+}
+
 // Les vignettes vivent à côté des packshots, pas dans le dépôt.
 //
 // Elles y étaient : 93 % du fichier, 4,8 Mo pour 0,3 Mo de données métier. Un
@@ -282,6 +305,7 @@ async function partagePdf(projetId) {
 }
 
 const serveur = createServer(async (requete, reponse) => {
+  reponse.setHeader("X-La-Barre-Runtime", RUNTIME);
   try {
     const url = new URL(requete.url, "http://localhost");
     let chemin = decodeURIComponent(url.pathname);
@@ -335,7 +359,7 @@ const serveur = createServer(async (requete, reponse) => {
     // L'écriture du dépôt, et celle des vignettes.
     if (requete.method === "PUT" || requete.method === "POST") {
       const estVignette = vignetteAutorisee(chemin);
-      if (!depotAutorise(chemin) && !estVignette) {
+      if (!depotAutorise(chemin) && !publicationAutorisee(chemin) && !estVignette) {
         reponse.writeHead(403, { "Content-Type": "application/json" })
           .end(JSON.stringify({ ok: false,
             quoi: "seuls les .json de /depots et les images d'/assets/review s'écrivent" }));
@@ -448,7 +472,7 @@ const serveur = createServer(async (requete, reponse) => {
     reponse.writeHead(200, {
       "Content-Type": TYPES[extname(absolu).toLowerCase()] || "application/octet-stream",
       "Cache-Control": "no-store",
-      ...(depotAutorise(chemin) ? { ETag: revision(corps) } : {}),
+      ...(depotAutorise(chemin) || publicationAutorisee(chemin) ? { ETag: revision(corps) } : {}),
     });
     reponse.end(corps);
   } catch (erreur) {

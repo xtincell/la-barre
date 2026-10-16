@@ -828,6 +828,14 @@ window.VUE_VAULT = (function () {
   /* Écrire au niveau où l'on est. Un champ posé sur l'ombrelle vaut pour toutes
    * ses marques ; posé sur la gamme, il ne vaut que là. */
   function editer(n, c, hote) {
+    var ref = VAULT.reference(n.type, n.id, c.cle);
+    if (ref) {
+      PANNEAU.ouvrir(c.nom, "Référence de marque", el("div", {},
+        el("p", {}, "Cette référence est lue dans la plateforme de marque. La modifier à cet endroit alimente les campagnes qui l'utilisent."),
+        el("a.b.or", { href: ref.marque.url }, "Ouvrir la plateforme de marque"),
+        el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Fermer")));
+      return;
+    }
     var v = VAULT.vaultDe(n.type, n.id) || {};
     var h = VAULT.herite(n.type, n.id, c.cle);
     var f = FORM.rendre([c], v, {});

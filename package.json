@@ -10,7 +10,7 @@
     "test:persistance": "node --test tests/persistance.test.mjs tests/reconciliation.test.mjs tests/depot-reprise.test.mjs",
     "test:manuel": "node --test tests/saisie-manuelle.test.mjs tests/acteur.test.mjs tests/formulaire.test.mjs tests/lecture-dependances.test.mjs",
     "test:marches": "node --test tests/marches.test.mjs",
-    "test:provenances": "node --test tests/provenances-plateformes.test.mjs",
+    "test:provenances": "node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs",
     "test:decisions": "node --test tests/reference-campagne.test.mjs",
     "test:bilan": "node --test tests/bilan-preuves.test.mjs"
   },

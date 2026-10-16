@@ -10,8 +10,8 @@
  *   p.partagesRevoques = [{ doc, jeton, cree_le, revoque_le }]
  *   p.partagePdf = { chemin, quand, pages }   — posé par le serveur local
  *
- * Le jeton rend l'adresse impossible à deviner et révocable. Ce n'est pas un
- * secret fort : la base du site en ligne est lisible, et l'écran le dit.
+ * Dans la session de La Fusée, le geste publie une pièce, jamais le dépôt.
+ * Un ancien lien exposé avec le dépôt doit être renouvelé explicitement.
  */
 
 window.PARTAGE = (function () {
@@ -29,9 +29,15 @@ window.PARTAGE = (function () {
 
   function creer(p, doc) {
     p.partages = p.partages || {};
-    if (!p.partages[doc]) p.partages[doc] = { jeton: jeton(), cree_le: new Date().toISOString() };
-    DEPOT.tracer("partage", "projets", p.id, "lien de partage créé — " + doc);
-    DEPOT.enregistrer();
+    var protege = window.VAULT && VAULT.statutContexte().partage;
+    if (!p.partages[doc] || (protege && p.partages[doc].portee !== "document")) {
+      if (protege && !(window.crypto && crypto.getRandomValues)) throw new Error("Ouvrez ce dossier dans une connexion sécurisée pour créer le lien.");
+      if (p.partages[doc]) revoquer(p, doc);
+      p.partages[doc] = { jeton: jeton(), cree_le: new Date().toISOString() };
+      if (protege) p.partages[doc].portee = "document";
+      DEPOT.tracer("partage", "projets", p.id, "lien de partage créé — " + doc);
+      DEPOT.enregistrer();
+    }
     return p.partages[doc];
   }
 
@@ -45,7 +51,28 @@ window.PARTAGE = (function () {
     DEPOT.enregistrer();
   }
 
-  function lien(x) { return EN_LIGNE + "#/partage/" + x.jeton; }
+  function lien(x) { return x.portee === "document" ? location.origin + "/la-barre/partage/" + x.jeton + "/document" : EN_LIGNE + "#/partage/" + x.jeton; }
+
+  function partager(p, doc, bouton, rafraichir) {
+    if (!(window.VAULT && VAULT.statutContexte().partage)) {
+      copier(lien(creer(p, doc)), "Le lien du document");
+      if (rafraichir) rafraichir(); return;
+    }
+    try { creer(p, doc); }
+    catch (e) { if (window.AVIS) AVIS.refus(e.message); return; }
+    if (bouton) { bouton.disabled = true; bouton.textContent = "Publication…"; }
+    return new Promise(function (resolve, reject) {
+      DEPOT.ecrireSurDisque(function (ok, pourquoi) { ok ? resolve() : reject(new Error(pourquoi || "Le lien n’a pas été sauvegardé.")); });
+    }).then(function () {
+      return fetch("publication", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: p.id, doc: doc }) });
+    }).then(function (r) {
+      return r.json().then(function (data) { if (!r.ok) throw new Error(data.quoi || "La publication n’a pas été reçue."); return data; });
+    }).then(function (data) {
+      copier(new URL(data.url, location.origin).href, "Le lien du document publié");
+    }).catch(function (e) { if (window.AVIS) AVIS.refus(e.message); })
+      .finally(function () { if (bouton) bouton.disabled = false; if (rafraichir) rafraichir(); });
+  }
 
   function trouver(j) {
     var out = null;
@@ -68,18 +95,18 @@ window.PARTAGE = (function () {
     var local = window.DISQUE && DISQUE.local;
     return el("section.pt-bloc", {},
       el("div.section-titre", {}, "Partager", el("span.taille", {}, "· un lien par document, et le PDF de la présentation")),
-      el("div.pt-liste", {}, DOCS.map(function (doc) {
+      el("div.pt-liste", {}, DOCS.concat(["presentation"]).map(function (doc) {
         var x = de(p, doc);
         return el("div.pt-l", {},
-          el("div.pt-n", {}, el("b", {}, COMPILATEUR.DOCS[doc].nom),
+          el("div.pt-n", {}, el("b", {}, nomDoc(doc)),
             el("span", {}, x ? "lien créé le " + O.joli(String(x.cree_le).slice(0, 10)) : "pas encore de lien")),
           el("div.pt-g", {}, x ? [
-            el("button.b", { type: "button", onclick: function () {
-              copier(lien(x), "Le lien du " + COMPILATEUR.DOCS[doc].nom.toLowerCase()); } }, "Copier le lien"),
-            el("a.b.nu", { href: "#/partage/" + x.jeton, target: "_blank", rel: "noopener" }, "Ouvrir"),
+            el("button.b", { type: "button", onclick: function (e) { partager(p, doc, e.target, rafraichir); } },
+              window.VAULT && VAULT.statutContexte().partage && x.portee !== "document" ? "Renouveler et copier le lien" : "Copier le lien à jour"),
+            el("a.b.nu", { href: x.portee === "document" ? lien(x) : "#/partage/" + x.jeton, target: "_blank", rel: "noopener" }, "Ouvrir"),
             el("button.b.nu", { type: "button", onclick: function () {
               if (confirm("Révoquer ce lien ? Ceux qui l'ont reçu ne pourront plus l'ouvrir.")) { revoquer(p, doc); rafraichir(); } } }, "Révoquer"),
-          ] : el("button.b.or", { type: "button", onclick: function () { creer(p, doc); rafraichir(); } }, "Créer le lien")));
+          ] : el("button.b.or", { type: "button", onclick: function (e) { partager(p, doc, e.target, rafraichir); } }, "Créer et copier le lien")));
       })),
       el("div.pt-pdf", {},
         el("div.pt-n", {}, el("b", {}, "PDF de la présentation"),
@@ -91,8 +118,10 @@ window.PARTAGE = (function () {
           local ? el("button.b" + (pdf ? "" : ".or"), { type: "button", onclick: function (e) { generer(p, e.target, rafraichir); } },
             pdf ? "Regénérer et publier" : "Générer et publier")
             : el("span.pt-q", {}, "Le PDF se génère depuis LA BARRE sur l'iMac."))),
-      el("p.pt-q", {}, "Les liens s'ouvrent sans LA BARRE autour et proposent le PDF. Ils sont impossibles à deviner et révocables, "
-        + "mais ce ne sont pas des secrets : la base du site en ligne est lisible. Le PDF suit la présentation du jour où il est généré. "
+      el("p.pt-q", {}, (window.VAULT && VAULT.statutContexte().partage
+        ? "Un lien publié ouvre seulement son document et les médias qu'il montre. Renouvelez les anciens liens exposés avec le dépôt. Copier le lien à jour publie l'édition courante ; révoquer le lien ferme aussi ses médias. "
+        : "Les liens de travail nécessitent une session autorisée. Le partage limité au document se prépare dans La Barre ouverte depuis La Fusée. ")
+        + "Le PDF conserve sa date de génération. "
         + "Le PowerPoint sort les mêmes diapositives en objets éditables ; sur l'iMac, avec les images originales du disque, en ligne avec leurs aperçus."));
   }
 
@@ -172,7 +201,7 @@ window.PARTAGE = (function () {
       return;
     }
     var p = t.p, d = VUE_PRESENTATION.pres(p);
-    var pdf = p.partagePdf;
+    var pdf = t.doc === "presentation" ? p.partagePdf : null;
 
     /* La route d'impression : les diapositives seules, pour Chrome. */
     if (sous === "impression") {
@@ -199,8 +228,8 @@ window.PARTAGE = (function () {
           el("h1", {}, p.nom),
           el("div.pt-meta", {}, [i.client, p.ref, "à jour au " + O.joli(new Date().toISOString())].filter(Boolean).join(" · "))),
         el("div.pt-tete-d", {},
-          pdf ? el("a.b.or", { href: pdf.chemin, download: nomPdf(p) }, "Télécharger la présentation (PDF)")
-            : el("span.pt-q", {}, "Le PDF de la présentation n'est pas encore publié."),
+          pdf ? el("a.b.or", { href: pdf.chemin, download: nomPdf(p) }, "PDF de la présentation · " + O.joli(String(pdf.quand).slice(0, 10)))
+            : t.doc === "presentation" ? el("span.pt-q", {}, "Le PDF de la présentation n'est pas encore publié.") : null,
           el("button.b.nu", { type: "button", onclick: function () { window.print(); } }, "Imprimer ce document"))),
       el("main.pt-corps", {}, corps),
       el("footer.pt-pied", {}, "Document compilé par LA BARRE depuis le dossier " + (p.ref || "") + ".")));
