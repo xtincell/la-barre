@@ -21,6 +21,12 @@ HOST=127.0.0.1 node servir.mjs 5173
 puis `http://localhost:5173/`. L'accès réseau doit être protégé par l'installation :
 ce serveur seul ne fournit pas d'authentification.
 
+L'image Docker utilise le même serveur, sans Nix ni dépendance de développement.
+Les données et médias sont conservés dans deux volumes : `/app/depots` et
+`/app/assets/review`. Ils ne sont jamais inclus dans le contexte de construction.
+En production, garder l'entrée réseau protégée par la session de l'installation ;
+la construction d'une image ne crée pas de permission d'accès.
+
 ## Sauvegarder — à lire une fois
 
 Si `depots/manifeste.json` désigne une `reference`, le fichier servi fait foi.

@@ -24,3 +24,50 @@ jobs:
       - run: npm run test:provenances
       - run: npm run test:decisions
       - run: npm run test:bilan
+  image:
+    needs: verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Préparer des témoins privés exclus du contexte
+        run: |
+          mkdir -p depots assets/review
+          printf '{"privateBuildProbe":true}' > depots/private-build-probe.json
+          printf 'private-media-probe' > assets/review/private-build-probe.png
+          printf 'PRIVATE_BUILD_PROBE=1\n' > .env.production
+      - name: Construire et exercer la vraie image
+        run: |
+          set -euo pipefail
+          docker build -t la-barre:receipt .
+          docker run -d --name la-barre-receipt -p 127.0.0.1:5173:3000 \
+            -v receipt-depots:/app/depots -v receipt-review:/app/assets/review la-barre:receipt
+          trap 'docker rm -f la-barre-receipt >/dev/null' EXIT
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:5173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          const base='http://127.0.0.1:5173';
+          const page=await fetch(base+'/');
+          assert.equal(page.status,200);assert.match(await page.text(),/La Barre/i);
+          for(const path of ['/depots/private-build-probe.json','/assets/review/private-build-probe.png','/.env.production']) {
+            assert.equal((await fetch(base+path)).status,404,path);
+          }
+          const body=JSON.stringify({enregistre_le:'2026-10-16T00:00:00Z',projets:[{id:'RECEIPT-ONLY'}]});
+          const write=await fetch(base+'/depots/receipt.json',{method:'PUT',headers:{'If-None-Match':'*','Content-Type':'application/json'},body});
+          assert.equal(write.status,200);
+          const read=await fetch(base+'/depots/receipt.json');assert.equal(await read.text(),body);
+          const stale=await fetch(base+'/depots/receipt.json',{method:'PUT',headers:{'If-Match':'"stale"','Content-Type':'application/json'},body:JSON.stringify({projets:[]})});
+          assert.equal(stale.status,409);
+          assert.equal(await (await fetch(base+'/depots/receipt.json')).text(),body);
+          const media=await fetch(base+'/assets/review/receipt.png',{method:'PUT',body:'data:image/png;base64,cHJvYmU='});
+          assert.equal(media.status,200);assert.equal(await (await fetch(base+'/assets/review/receipt.png')).text(),'probe');
+          JS
+          docker restart la-barre-receipt
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:5173/depots/receipt.json | grep -q RECEIPT-ONLY; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:5173/depots/receipt.json | grep -q RECEIPT-ONLY
+          docker image inspect la-barre:receipt --format 'Image bytes: {{.Size}}'

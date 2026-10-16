@@ -1,0 +1,26 @@
+# Contexte explicite : ni dépôt client, ni média, ni secret local dans l'image.
+**
+!index.html
+!servir.mjs
+!package.json
+!LICENSE
+!app/
+!app/**
+!styles/
+!styles/**
+!docs/
+!docs/**
+!documents/
+!documents/**
+!extraits/
+!extraits/**
+!sources/
+!sources/**
+!kit-ordi-dedie/
+!kit-ordi-dedie/**
+!outils/
+!outils/**
+documents/BEIGNET_PARADISE_deduction.md
+outils/plateformes-2026/
+**/__pycache__/
+**/.DS_Store
