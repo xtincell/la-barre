@@ -124,6 +124,32 @@ test('compiler la gamme ordonne les packs déclarés sans écrire dans le catalo
   assert.equal(JSON.stringify(catalogue), before);
 });
 
+test('la conception reste préparatoire sans arbitrage et ne reprend pas une piste écartée', () => {
+  const m = moteur();
+  m.sb.MARQUE = { de: () => null, toutes: () => [] };
+  m.sb.RETRO = { etat: () => null };
+  m.sb.KV = { tous: () => [] };
+  vm.runInContext(sources.compilateur, m.context);
+  const rejetee = { id: 'ancienne', titre: 'Ancienne', statut: 'ecartee', concept: 'CONCEPT_ECARTE' };
+  const ouverte = { id: 'ouverte', titre: 'Ouverte', statut: 'proposee', concept: 'CONCEPT_OUVERT' };
+  const p = { nom: 'Campagne', ref: 'DEMO', sections: { pistes: [rejetee, ouverte] }, livrables: [] };
+  const before = JSON.stringify(p);
+  const doc = m.sb.COMPILATEUR.compiler(p, 'conception');
+  assert.match(doc.sous, /Ouverte.*NON ARBITRÉE/);
+  assert.equal(doc.blocs.find(b => b.t === 'La piste proposée')?.corps, 'CONCEPT_OUVERT');
+  assert.equal(doc.blocs.some(b => b.t === 'La piste retenue'), false);
+  assert.doesNotMatch(JSON.stringify(doc), /CONCEPT_ECARTE/);
+  assert.equal(JSON.stringify(p), before, 'compiler ne décide pas et ne réécrit pas le dossier');
+  ouverte.statut = 'retenue';
+  const arbitre = m.sb.COMPILATEUR.compiler(p, 'conception');
+  assert.doesNotMatch(arbitre.sous, /NON ARBITRÉE/);
+  assert.equal(arbitre.blocs.find(b => b.t === 'La piste retenue')?.corps, 'CONCEPT_OUVERT');
+  p.sections.pistes = [rejetee];
+  const sansPiste = m.sb.COMPILATEUR.compiler(p, 'conception');
+  assert.match(sansPiste.sous, /aucune piste retenue/);
+  assert.doesNotMatch(JSON.stringify(sansPiste), /CONCEPT_ECARTE/);
+});
+
 test('lire les blocages d’un dossier conserve les résolutions des autres dossiers', () => {
   const m = moteur();
   const donnees = { projets: ['A', 'A-2', 'B'].map(id => ({ id, sections: {

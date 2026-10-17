@@ -9,7 +9,7 @@
  * Le même contenu, rangé dans l'ordre où la séance s'en sert :
  *
  *   1  La séance     ce qu'on écrit au mur : la question, ce qu'elle doit
- *                    produire, ce qui est déjà tranché, ce qu'on ne proposera
+ *                    produire, ce qui reste à trancher, ce qu'on ne proposera
  *                    pas. Une page, qui se lit en cinq minutes avant d'entrer.
  *   2  La matière    ce qu'on apporte : les insights, les territoires, les
  *                    amorces, les big ideas par école, le moodboard.
@@ -135,7 +135,7 @@ window.CADRAGE_SEANCE = (function () {
         rubrique("À qui on parle", lede(b.cible)),
         rubrique("Le job to be done", lede(b.jtbd))),
 
-      paire(colonne("Déjà tranché", puces(pr.a_trancher, "cds-ok"), "cds-oui"),
+      paire(colonne("À trancher", puces(pr.a_trancher)),
             colonne("On ne proposera pas", puces(interdits, "cds-non"), "cds-non")),
 
       paire(colonne("Ce qu'il faut produire", puces(b.livrables_attendus)),

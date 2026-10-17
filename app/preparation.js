@@ -20,7 +20,7 @@ window.PREPARATION = (function () {
     { cle: "question", nom: "La question de la séance", type: "texte",
       aide: "Une seule, commençant par « comment ». C'est elle qu'on écrit au mur." },
     { cle: "a_trancher", nom: "À trancher avant d'entrer", type: "puces",
-      aide: "Ce que la séance ne doit pas rediscuter : le marché, la cible, l'insight retenu, les interdits." },
+      aide: "Les points encore ouverts à arbitrer : marché, cible, insight ou limites. Leur présence dans cette liste ne vaut pas décision." },
     { cle: "amorces", nom: "Les amorces", type: "puces",
       aide: "Des provocations qui lancent — une par ligne. Elles se jettent, elles ne se défendent pas." },
     { cle: "directions", nom: "Les directions à explorer", type: "puces" },
