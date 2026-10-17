@@ -593,7 +593,7 @@ window.COMPILATEUR = (function () {
   function conception(p) {
     var b = p.sections.bigidea || {};
     var retenue = (p.sections.pistes || []).filter(function (x) { return x.statut === "retenue"; })[0]
-      || (p.sections.pistes || [])[0];
+      || (p.sections.pistes || []).filter(function (x) { return x.statut !== "ecartee"; })[0];
     var e = retenue ? RETRO.etat(p, retenue) : null;
     var kvs = retenue ? KV.tous(p).filter(function (l) { return l.pisteId === retenue.id; }) : [];
     var auteur = b.auteur ? DEPOT.trouve("personnes", b.auteur) : null;
@@ -620,7 +620,7 @@ window.COMPILATEUR = (function () {
           source: "les seuls éléments opposables au travail" },
         { t: "Les directions interdites", puces: b.interdits },
         racineBloc(p, retenue),
-        retenue ? { t: "La piste retenue", corps: retenue.concept, fort: true,
+        retenue ? { t: retenue.statut === "retenue" ? "La piste retenue" : "La piste proposée", corps: retenue.concept, fort: true,
           source: da ? "direction artistique : " + da.nom : null } : null,
         retenue ? { t: "L'axe", lignes: (window.AXE ? AXE.CHAMPS : []).map(function (c) {
             var v = retenue[c.cle];
