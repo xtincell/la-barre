@@ -94,3 +94,32 @@ test('une identité absente, ambiguë ou occupée ne crée aucune marque', async
   assert.throws(() => c.VAULT.admettreMarque('MQ-FUSEE-inconnu'), /plus disponible/);
   assert.equal(JSON.stringify(state), before);
 });
+
+test('le raccord courant conserve la marque historique et ne déduit rien d’un nom identique', async () => {
+  const { c, state, context } = await ouvrir();
+  c.DEPOT.ajoute = (type, row) => { state[type].push(row); return row; };
+  context.brands.MQ.nodeId = 'node-a';
+  context.choices = [
+    { id: 'MQ-FUSEE-node-a', nodeId: 'node-a', strategyId: 'current', name: 'Autre libellé' },
+    { id: 'MQ-FUSEE-node-b', nodeId: 'node-b', strategyId: 'other', name: 'Marque courante' },
+  ];
+  c.VAULT.connecter(context);
+  assert.deepEqual(Array.from(c.VAULT.marquesDisponibles(), x => x.id), ['MQ', 'MQ-FUSEE-node-b']);
+  const before = JSON.stringify(state);
+  assert.equal(c.VAULT.admettreMarque('MQ-FUSEE-node-a'), 'MQ', 'un choix ancien rejoint le vrai identifiant déjà présent');
+  assert.equal(JSON.stringify(state), before);
+  assert.equal(c.VAULT.plateforme('marque', 'MQ'), null, 'le contrat de lecture local historique reste distinct du pointeur canonique');
+  assert.equal(c.VAULT.ecrireNiveau('marque', 'MQ', 'idee_directrice', 'Encore locale'), true);
+});
+
+test('plusieurs marques historiques reliées au même nœud ne sont ni fusionnées ni choisies implicitement', async () => {
+  const { c, state, context } = await ouvrir();
+  c.DEPOT.ajoute = (type, row) => { state[type].push(row); return row; };
+  state.marques.push({ id: 'MQ2', nom: 'Autre entrée historique' });
+  context.brands.MQ.nodeId = 'node-a';
+  context.brands.MQ2 = { ...context.brands.MQ };
+  context.choices = [{ id: 'MQ-FUSEE-node-a', nodeId: 'node-a', strategyId: 'current', name: 'Marque courante' }];
+  c.VAULT.connecter(context); const before = JSON.stringify(state);
+  assert.throws(() => c.VAULT.admettreMarque('MQ-FUSEE-node-a'), /plusieurs marques/i);
+  assert.equal(JSON.stringify(state), before);
+});
