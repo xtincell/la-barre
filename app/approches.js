@@ -3,6 +3,17 @@
 window.APPROCHES = (function () {
   var el = O.el, contract = APPROCHES_CONTEXT;
   function texte(v) { return typeof v === 'string' ? v : ''; }
+  function canonique(value) {
+    if (Array.isArray(value)) return value.map(canonique);
+    if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(function (key) { return [key, canonique(value[key])]; }));
+    return value;
+  }
+  function identite(data, route) {
+    var c = data.context;
+    return JSON.stringify(canonique({ context: c && { schema: c.schema, depot: c.depot,
+      projectId: c.projectId, sourceVersion: c.sourceVersion },
+      methodVersion: data.methodVersion, brief: data.brief, route: route }));
+  }
   function brief(p) {
     var s = p.sections || {}, b = s.brief || {}, identite = s.identite || {};
     var noms = (identite.marqueIds || []).map(function (id) { return (DEPOT.trouve('marques', id) || {}).nom || ''; }).filter(Boolean);
@@ -48,12 +59,20 @@ window.APPROCHES = (function () {
     if (!current || current.fusionne) throw Error('Ce projet n’est plus disponible.');
     var route = data?.routes?.find(function (r) { return r.i === routeId; });
     if (!route) throw Error('Choisissez une piste du tirage.');
-    var importId = await contract.version({ context: data.context, methodVersion: data.methodVersion, brief: data.brief, route: route });
+    // A JSON export may reorder object keys on reload. Identify the logical
+    // proposal while retaining the original file and the sourceVersion contract.
+    var signature = identite(data, route), importId = await contract.version(signature);
+    function dejaRecue(pi) {
+      var recu = pi.provenance_approches, original = recu?.original;
+      var oldRoute = original?.routes?.find(function (r) { return r.i === recu.routeId; });
+      // Preserve earlier order-sensitive receipts; no data migration or new piste.
+      return recu?.id === importId || Boolean(original && oldRoute && identite(original, oldRoute) === signature);
+    }
     var pistes = (current.sections || {}).pistes || [];
-    var prior = pistes.find(function (pi) { return pi.provenance_approches?.id === importId; });
+    var prior = pistes.find(dejaRecue);
     if (prior) return { piste: prior, dejaRecu: true };
     await lire(data, current); // Recheck after the preview, before any mutation.
-    prior = ((current.sections || {}).pistes || []).find(function (pi) { return pi.provenance_approches?.id === importId; });
+    prior = ((current.sections || {}).pistes || []).find(dejaRecue);
     if (prior) return { piste: prior, dejaRecu: true };
     var pi = { id: O.id('PI'), titre: route.title, concept: route.one,
       axe_directrice: route.one, statut: 'proposee', version: 1, soumis_le: new Date().toISOString(),

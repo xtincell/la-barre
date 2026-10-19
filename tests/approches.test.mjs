@@ -93,3 +93,25 @@ test('unknown method and malformed routes are rejected without retaining an impl
   }
   assert.equal(f.project.sections.pistes.length, 0); assert.equal(f.saves, 0);
 });
+
+test('the same logical export after reload or JSON key reordering reuses its received proposal', async () => {
+  const f = fixture(), packet = await f.packet();
+  const first = await f.api.admettre(f.project, packet, 1);
+  first.piste.provenance_approches.id = 'legacy-order-sensitive-receipt';
+  function reorder(value) {
+    if (Array.isArray(value)) return value.map(reorder);
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).reverse().map(([key, v]) => [key, reorder(v)]));
+    return value;
+  }
+  const afterReload = reorder(packet);
+  assert.deepEqual(afterReload, packet);
+  assert.notEqual(JSON.stringify(afterReload), JSON.stringify(packet));
+  afterReload.context.projectName = 'Project display name corrected';
+  afterReload.context.projectRef = 'NEW-READABLE-REFERENCE';
+  const replay = await f.api.admettre(f.project, afterReload, 1);
+  assert.equal(replay.piste.id, first.piste.id);
+  assert.equal(replay.dejaRecu, true);
+  assert.equal(replay.piste.provenance_approches.id, 'legacy-order-sensitive-receipt');
+  assert.equal(f.project.sections.pistes.length, 1);
+  assert.equal(f.saves, 1);
+});
