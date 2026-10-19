@@ -25,7 +25,11 @@ inventé. Le ton, le sacrifice, les arguments et l’arbitrage restent à produi
 la compatibilité des catégories n’est pas une validation du client.
 
 Une réception identique retrouve la même piste, même après modification du
-brief. Une nouvelle réception issue d’un autre dossier ou d’un brief périmé
+brief. Son identité compare les valeurs JSON en préservant l’ordre des tableaux,
+indépendamment de l’ordre des propriétés d’objet. Les reçus antérieurs gardent
+leur identifiant et leur original ; leur rejeu ne crée pas une seconde piste.
+L’empreinte des entrées du brief n’est pas modifiée par cette normalisation.
+Une nouvelle réception issue d’un autre dossier ou d’un brief périmé
 échoue avant écriture. Le contrôle est répété après la prévisualisation et
 l’admission du même tirage est protégée contre deux clics concurrents. Le dépôt,
 son journal, sa sauvegarde et sa réconciliation restent les seules autorités.
