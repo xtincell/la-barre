@@ -293,6 +293,12 @@ génériques exige les sources exactes et une révision explicite. Le résultat 
 un fichier de travail : sa réception dans le dépôt partagé doit passer par son
 protocole de révision (`If-Match`), jamais écraser directement le fichier servi.
 
+Le choix de marque conserve une identité historique déjà reliée au même nœud
+La Fusée. Un ancien choix rejoint cette entrée sans créer de doublon ; plusieurs
+entrées pour ce même nœud demandent un choix explicite. Des noms identiques ne
+constituent jamais une correspondance d’identité. Les champs locaux historiques
+gardent leur contrat de lecture ; aucune plateforme n’est copiée.
+
 Vérification : `npm run test:provenances` ; cas synthétiques isolés, aucun corpus
 client ni appel externe. Le parcours complet du navigateur reste distinct.
 

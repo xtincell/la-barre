@@ -103,10 +103,14 @@ window.VAULT = (function () {
   function marquesDisponibles() {
     var locals = DEPOT.liste("marques").slice();
     var linked = {};
-    locals.forEach(function (m) { var p = plateforme("marque", m.id); if (p) linked[p.nodeId] = true; });
+    locals.forEach(function (m) { var nodeId = noeudDeMarque(m.id); if (nodeId) linked[nodeId] = true; });
     return locals.map(function (m) { return { id: m.id, nom: (contexte.brands[m.id] || {}).name || m.nom }; })
       .concat((contexte.choices || []).filter(function (c) { return !linked[c.nodeId] && !locals.some(function (m) { return m.id === c.id; }); })
         .map(function (c) { return { id: c.id, nom: c.name }; }));
+  }
+  function noeudDeMarque(id) {
+    var p = plateforme("marque", id) || contexte.brands[id];
+    return p && p.nodeId;
   }
   function admettreMarque(id) {
     var local = DEPOT.trouve("marques", id);
@@ -119,6 +123,9 @@ window.VAULT = (function () {
     if (etatContexte !== "recu" || choice.length !== 1 || id !== "MQ-FUSEE-" + choice[0].nodeId)
       throw new Error("La marque n’est plus disponible. Relisez les références avant de la rattacher.");
     var c = choice[0];
+    var existantes = DEPOT.liste("marques").filter(function (m) { return noeudDeMarque(m.id) === c.nodeId; });
+    if (existantes.length > 1) throw new Error("Cette plateforme correspond à plusieurs marques du dépôt. Choisissez leur identité existante avant de la rattacher.");
+    if (existantes.length === 1) return existantes[0].id;
     return DEPOT.ajoute("marques", { id: id, nom: c.name, sourceRefs: [
       { system: "LA_FUSEE", kind: "brand", id: c.nodeId },
       { system: "LA_FUSEE", kind: "strategy", id: c.strategyId }
