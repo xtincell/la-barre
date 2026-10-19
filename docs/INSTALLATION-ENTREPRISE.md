@@ -58,9 +58,18 @@ arrête l’initialisation ; aucun exemple ne masque le travail à retrouver.
 Le serveur natif reste sans authentification : le placer sur le réseau privé de
 l’installation. La Fusée fournit déjà le raccord authentifié `/la-barre/`, les
 contrôles d’origine et les permissions d’écriture. Configurer les mécanismes
-existants `PORTFOLIO_BARRE_UPSTREAM` et `PORTFOLIO_BARRE_OPERATOR_IDS` dans cette
+existants `PORTFOLIO_BARRE_UPSTREAM`, `PORTFOLIO_BARRE_OPERATOR_IDS`,
+`PORTFOLIO_BARRE_INSTANCE` et `PORTFOLIO_BARRE_DEPOT` (`entreprise.json`) dans cette
 installation ; ne jamais partager l’adresse du serveur d’une autre entreprise.
 
 La sauvegarde doit recevoir ensemble le dépôt, ses fichiers de revue et le
 profil, en plus de la base et des originaux de La Fusée. Un succès de build ou
 un dépôt vide ne vaut pas réception de cette reprise ni de toute la flotte.
+
+Le formulaire natif Nouveau projet propose les marques autorisées de l’équipe.
+Le choix explicite admet uniquement un pointeur vers le BrandNode et sa stratégie,
+sans copier leurs réponses dans le dépôt. La création/classification de la marque
+et le rattachement d’une stratégie se font dans le portefeuille existant. Un
+projet peut commencer avec une marque à rattacher ; aucun socle n’est inventé.
+Les champs d’un pointeur canonique restent édités dans La Fusée, même absents ou
+indisponibles. Le portefeuille relit les projets réellement rattachés au pointeur.

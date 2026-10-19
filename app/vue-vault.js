@@ -829,10 +829,12 @@ window.VUE_VAULT = (function () {
    * ses marques ; posé sur la gamme, il ne vaut que là. */
   function editer(n, c, hote) {
     var ref = VAULT.reference(n.type, n.id, c.cle);
-    if (ref) {
+    var plateforme = VAULT.plateforme(n.type, n.id);
+    if (ref || plateforme) {
+      var lien = ref ? ref.marque.url : plateforme.url;
       PANNEAU.ouvrir(c.nom, "Référence de marque", el("div", {},
         el("p", {}, "Cette référence est lue dans la plateforme de marque. La modifier à cet endroit alimente les campagnes qui l'utilisent."),
-        el("a.b.or", { href: ref.marque.url }, "Ouvrir la plateforme de marque"),
+        lien ? el("a.b.or", { href: lien }, "Ouvrir la plateforme de marque") : el("p", {}, "Le rattachement de cette marque reste à vérifier."),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Fermer")));
       return;
     }

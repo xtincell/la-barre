@@ -65,3 +65,32 @@ test('un ancien lien exposé est renouvelé seulement sur le geste explicite ; l
   c.PARTAGE.revoquer(project, 'cadrage');
   assert.equal(project.partages.cadrage, undefined);
 });
+
+test('une marque sélectionnée admet seulement un pointeur et conserve son autorité même sans champ reçu', async () => {
+  const { c, state, context } = await ouvrir();
+  c.DEPOT.ajoute = (type, row) => { state[type].push(row); return row; };
+  context.choices = [{ id: 'MQ-FUSEE-node-a', nodeId: 'node-a', strategyId: 'strategy-a', name: 'Atelier Boréal', url: '/cockpit/brand/fondation?strategy=strategy-a' }];
+  c.VAULT.connecter(context);
+  assert.deepEqual(Array.from(c.VAULT.marquesDisponibles(), x => x.nom), ['Marque courante', 'Atelier Boréal']);
+  assert.equal(state.marques.length, 1);
+  assert.equal(c.VAULT.admettreMarque('MQ-FUSEE-node-a'), 'MQ-FUSEE-node-a');
+  const pointer = state.marques[1];
+  assert.equal(pointer.vault, undefined);
+  assert.equal(JSON.stringify(pointer.sourceRefs), JSON.stringify([{ system: 'LA_FUSEE', kind: 'brand', id: 'node-a' }, { system: 'LA_FUSEE', kind: 'strategy', id: 'strategy-a' }]));
+  assert.equal(c.VAULT.ecrireNiveau('marque', pointer.id, 'promesse', 'Fork local'), false);
+  assert.equal(c.VAULT.plateforme('marque', pointer.id).url, '/cockpit/brand/fondation?strategy=strategy-a');
+  c.VAULT.admettreMarque(pointer.id); assert.equal(state.marques.length, 2);
+  c.VAULT.connecter({ brands: {}, choices: [] });
+  assert.equal(c.VAULT.ecrireNiveau('marque', pointer.id, 'mission', 'Fork hors ligne'), false);
+  assert.equal(c.VAULT.ecrireNiveau('gamme', pointer.id + '|SERVICE', 'promesse', 'Spécialisation locale'), true);
+});
+
+test('une identité absente, ambiguë ou occupée ne crée aucune marque', async () => {
+  const { c, state, context } = await ouvrir();
+  c.DEPOT.ajoute = (type, row) => { state[type].push(row); return row; };
+  context.choices = [{ id: 'MQ', nodeId: 'node-a', strategyId: 'strategy-a', name: 'Autre' }];
+  c.VAULT.connecter(context); const before = JSON.stringify(state);
+  assert.throws(() => c.VAULT.admettreMarque('MQ'), /déjà utilisée/);
+  assert.throws(() => c.VAULT.admettreMarque('MQ-FUSEE-inconnu'), /plus disponible/);
+  assert.equal(JSON.stringify(state), before);
+});
