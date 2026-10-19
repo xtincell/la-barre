@@ -55,6 +55,7 @@ window.VUE_ROUTE = (function () {
         controle(p, da)
       ),
       scene(p, pi, apres),
+      window.APPROCHES ? APPROCHES.source(pi) : null,
       PRIORITE.bande(p, pi, apres),
       el("div", {}, VALIDATION.bande(p, "piste", pi, apres)),
       bande(p, pi, mes, decl, apres),
