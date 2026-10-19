@@ -1,0 +1,16 @@
+**
+!Dockerfile
+!.dockerignore
+!distribution.json
+!index.html
+!servir.mjs
+!package.json
+!LICENSE
+!app/
+!app/**
+!styles/
+!styles/**
+!outils/
+!outils/preparer-entreprise.mjs
+!outils/distribuer-entreprise.mjs
+**/.DS_Store

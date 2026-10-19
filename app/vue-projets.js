@@ -272,11 +272,11 @@ window.VUE_PROJETS = (function () {
 
       (r.radar || []).length
         ? el("div", { style: { "margin-top": ".7rem" } },
-            el("div.rlv-eti", {}, "Au Radar Matanga"),
+            el("div.rlv-eti", {}, "Au " + ((MAISON.registres || {}).radar || "registre des briefs")),
             el("p.rlv-p", {}, r.radar.join("  ·  ")),
             el("a.b.nu", { href: "#/referentiel/radar" }, "Voir le registre →"))
         : el("div", { style: { "margin-top": ".7rem" } },
-            el("div.rlv-eti", {}, "Au Radar Matanga"),
+            el("div.rlv-eti", {}, "Au " + ((MAISON.registres || {}).radar || "registre des briefs")),
             el("p.rlv-p", {}, "Aucun brief apparié. La campagne est documentée, "
               + "sa demande d'origine n'a pas été retrouvée au registre.")));
   }
@@ -1221,7 +1221,7 @@ window.VUE_PROJETS = (function () {
     if (!x) return null;
     var n = (x.refs || []).length;
     return el("div.pe-people" + (n > 1 ? ".multiple" : n ? "" : ".absent"), {},
-      el("span.pep-t", {}, "Chez Matanga People"),
+      el("span.pep-t", {}, "Dans " + ((MAISON.registres || {}).people || "le registre des projets")),
       el("span.pep-r", {}, n
         ? (x.refs || []).join("  ·  ") + (x.nom ? "  —  " + x.nom : "")
         : "aucun dossier correspondant"),

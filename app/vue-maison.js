@@ -26,8 +26,8 @@ window.VUE_MAISON = (function () {
     { cle: "marches", nom: "Marchés et supports", quoi: "marchés, supports, gabarits, éléments de marque" },
     /* Le registre de l'autre outil. Il n'a pas sa place dans les projets : ce
      * n'est pas du travail, c'est ce qui dit lequel manque. */
-    { cle: "people", nom: "Matanga People", quoi: "ce qui existe là-bas, et n'existe pas ici" },
-    { cle: "radar", nom: "Radar Matanga", quoi: "les 366 briefs du registre, et lesquels ont un dossier ici" },
+    { cle: "people", nom: ((MAISON.registres || {}).people || "Registre des projets"), quoi: "ce qui existe là-bas, et n'existe pas ici" },
+    { cle: "radar", nom: ((MAISON.registres || {}).radar || "Registre des briefs"), quoi: "les briefs du registre, et lesquels ont un dossier ici" },
     { cle: "intake", nom: "Boîte d'entrée", quoi: "ce qui est tombé au vol, et qu'il reste à ranger" },
     /* Les vidéos et les EXE des exports : lus depuis le disque, en local. */
     { cle: "disque", nom: "Le disque", quoi: "les vidéos et les EXE des exports, rattachés ou non" },

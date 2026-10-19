@@ -129,10 +129,10 @@ window.VUE_REGLAGES = (function () {
       el("div.section-titre", {}, "Le poste de travail"),
       el("div.reglages", {},
         choixActeur(),
-        el("div.reglage", {},
+        AMORCE.disponible === false ? null : el("div.reglage", {},
           el("h4", {}, "Le jeu d'exemple"),
           el("p", {}, AMORCE.present()
-            ? "MT-0020 est chargé, avec ses trous : identité à 4 champs sur 9, porte B non arbitrée."
+            ? (MAISON.exempleDescription || "Un exemple est chargé.")
             : "Aucun exemple chargé."),
           AMORCE.present()
             ? el("button.b", { type: "button", onclick: function () {

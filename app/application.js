@@ -32,7 +32,7 @@ window.APP = (function () {
       quoi: "où en est chaque projet",
       vue: function () { return VUE_PROJETS; } },
     { cle: "galerie", ico: "galerie", nom: "Galerie",
-      quoi: "les campagnes, en images — Matanga, UPgraders, Friends Studio",
+      quoi: "les campagnes et leur structure, en images",
       vue: function () { return VUE_GALERIE; } },
     { cle: "referentiel", ico: "referentiel", nom: "Ressources",
       quoi: "marques, marchés, gabarits, base",

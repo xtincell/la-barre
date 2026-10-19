@@ -1,22 +1,5 @@
-/* concepts.js — la réserve de concepts d'une marque.
- *
- * Demande du titulaire (07/10/2026) : « La Pasta dans la marmite, ça sent bon
- * déjà… on ne l'a pas exploité. J'aimerais que ce concept soit réexploité — on
- * a une section brouillon de concept ? »
- *
- * Il n'y en avait pas. Une idée vivait dans un projet : sa séance de concept, ses
- * pistes. Un concept qu'aucune campagne n'a pris — trop tôt, pas le bon brief, pas
- * de budget — disparaissait avec le dossier qui l'avait vu naître. La réserve le
- * garde au niveau de la marque, avec son auteur, sa date et ce qui le porte (un
- * son, un visuel). Reprendre un concept le pose comme idée dans la séance d'un
- * projet : il y entre avec son auteur d'origine, et la réserve garde la trace de
- * chaque reprise. On n'efface rien : un concept écarté reste lisible, avec son motif.
- *
- *   marque.concepts = [{ id, titre, phrase, texte, auteur, cree_le, statut,
- *                        sons: [chemin disque], visuels: [chemin], source,
- *                        reprises: [{ projetId, ideeId, quand }], motif }]
- *   statut : « reserve » · « repris » · « ecarte »
- */
+/* Réserve de concepts : chaque reprise conserve l’auteur et la source
+ * d’origine, sans transformer une proposition en validation. */
 
 window.CONCEPTS = (function () {
   var el = O.el;
@@ -39,11 +22,13 @@ window.CONCEPTS = (function () {
   }
 
   function poser(m, apres) {
-    var titre = el("input", { type: "text", placeholder: "La Pasta dans la marmite" });
+    var titre = el("input", { type: "text", placeholder: "Titre du concept" });
     var phrase = el("textarea", { rows: 3, placeholder: "Le concept en une phrase" });
     var auteur = el("select", {}, DEPOT.liste("personnes").map(function (p) {
       return el("option", { value: p.id }, p.nom); }));
-    auteur.value = "P-alex";
+    var personne = window.ACTEUR && ACTEUR.personne();
+    if (personne) auteur.value = personne.id;
+    else auteur.selectedIndex = -1;
     var corps = el("div", {},
       el("div.form", {},
         el("div.champ", {}, el("label", {}, "Titre"), titre),

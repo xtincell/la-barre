@@ -588,8 +588,10 @@ window.VUE_PRESENTATION = (function () {
     return n;
   }
 
-  var LOGO = "assets/review/agence/matanga-logo-blanc.png";
-  var MONTAGNE = "assets/review/agence/matanga-montagne.png";
+  function logoMaison() {
+    return MAISON.presentation.logo ? el("img.pg-logo", { src: MAISON.presentation.logo, alt: MAISON.nom })
+      : el("div.pg-logo", {}, MAISON.nom);
+  }
 
   function pageBrute(p, pg) {
     var c = PRESENTATION.contenu(p, pg);
@@ -598,8 +600,8 @@ window.VUE_PRESENTATION = (function () {
 
     if (pg.type === "titre") {
       return el("div.pg.pg-titre", {},
-        el("img.pg-logo", { src: LOGO, alt: "Matanga Agency" }),
-        el("img.pg-montagne", { src: MONTAGNE, alt: "" }),
+        logoMaison(),
+        MAISON.presentation.decor ? el("img.pg-montagne", { src: MAISON.presentation.decor, alt: "" }) : null,
         el("div.pg-titre-b", {},
           el("div.pg-t", {}, c.titre),
           el("div.pg-trait", {}),
@@ -609,7 +611,7 @@ window.VUE_PRESENTATION = (function () {
 
     if (pg.type === "merci") {
       return el("div.pg.pg-merci", {},
-        el("img.pg-logo", { src: LOGO, alt: "Matanga Agency" }),
+        logoMaison(),
         el("div.pg-t", {}, c.titre),
         c.campagne ? el("div.pg-merci-c", {}, c.campagne) : null);
     }

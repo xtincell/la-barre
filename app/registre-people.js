@@ -87,7 +87,7 @@ window.REGISTRE = (function () {
   function pire() {
     var b = bilan();
     if (!b.total) {
-      return { t: "Aucun relevé de Matanga People",
+      return { t: "Aucun relevé de " + ((MAISON.registres || {}).people || "registre des projets"),
         q: "Sans relevé, on ne sait pas ce qui existe là-bas et n'existe pas ici — "
           + "et on relance sur ce qui se voit." };
     }
@@ -127,7 +127,7 @@ window.REGISTRE = (function () {
 
     if (!rs.length) {
       hote.appendChild(el("p.rien", {},
-        "Aucun relevé. Le registre se remplit depuis une extraction de Matanga People."));
+        "Aucun relevé. Le registre se remplit depuis une extraction de " + ((MAISON.registres || {}).people || "vos projets") + "."));
       return;
     }
 
@@ -136,7 +136,7 @@ window.REGISTRE = (function () {
 
     hote.appendChild(el("div.reg", {},
       el("div.reg-t", {},
-        el("h2.regt-l", {}, "Matanga People"),
+        el("h2.regt-l", {}, MAISON.registres.people),
         el("span.regt-d", {}, age === null ? "Date de relevé inconnue"
           : age <= 0 ? "Relevé aujourd'hui"
           : "Relevé il y a " + age + (age > 1 ? " jours" : " jour")

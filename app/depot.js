@@ -525,7 +525,9 @@ window.DEPOT = (function () {
       if (rendu) return; rendu = true;
       if (!ok && pourquoi && window.AVIS) {
         AVIS.refus("La base de référence n'a pas pu être lue : " + pourquoi
-          + ". Ce que vous voyez est le jeu de démonstration, pas votre base.");
+          + (window.AMORCE && AMORCE.disponible === false
+            ? ". Votre dépôt n’est pas chargé ; aucun exemple ne le remplace."
+            : ". Ce que vous voyez est le jeu de démonstration, pas votre base."));
       }
       if (apres) apres(ok);
     }

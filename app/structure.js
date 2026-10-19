@@ -1,27 +1,12 @@
-/* structure.js — sous quelle structure une opération a été faite.
- *
- * LA BARRE tient les dossiers de Matanga, et aussi ce qu'Alexandre a fait
- * ailleurs : la photo à son nom sous couvert de Friends Photography Studio, le
- * conseil, le design et l'événementiel sous couvert d'UPgraders. Les deux
- * vivaient comme des « clients », mélangés aux vrais clients — Akwa Palace
- * rangé sous UPgraders comme Bonnet Rouge sous FrieslandCampina — et comptés
- * dans les indicateurs de l'agence.
- *
- * La structure est maintenant un axe à part : p.structure, avec sa source
- * (la facture quand elle existe, le corpus, ou la règle). Les indicateurs
- * d'agence ne lisent que les dossiers Matanga ; la liste des projets se filtre
- * par structure ; chaque dossier montre ses pièces de facturation — leur
- * présence prouve l'opération, leur absence se dit.
+/* La structure porte l’entreprise qui a fait le travail.
+ * Les noms et la structure principale viennent de son profil ; les pièces
+ * de facturation et leur source restent dans son dépôt.
  */
 
 window.STRUCTURE = (function () {
   var el = O.el;
-  var DEFAUT = [
-    { id: "matanga", nom: "Matanga Agency", court: "Matanga" },
-    { id: "upgraders", nom: "UPgraders SARL", court: "UPgraders" },
-    { id: "friends", nom: "Friends Photography Studio SARL", court: "Friends Studio" },
-    { id: "nom-propre", nom: "Alexandre Djengue, en nom propre", court: "Nom propre" },
-  ];
+  var DEFAUT = MAISON.structures;
+  function principale() { return MAISON.structurePrincipale; }
 
   function liste() {
     var s = DEPOT.liste("structures");
@@ -31,10 +16,10 @@ window.STRUCTURE = (function () {
     }) : DEFAUT;
   }
   function de(p) {
-    var id = (p && p.structure) || "matanga";
+    var id = (p && p.structure) || principale();
     return liste().filter(function (s) { return s.id === id; })[0] || DEFAUT[0];
   }
-  function estAgence(p) { return !p.structure || p.structure === "matanga"; }
+  function estAgence(p) { return !p.structure || p.structure === principale(); }
 
   /* Les dossiers qui font les indicateurs de l'agence. */
   function agence() { return DEPOT.liste("projets").filter(function (p) { return estAgence(p) && !p.fusionne; }); }
@@ -43,7 +28,7 @@ window.STRUCTURE = (function () {
   function deMarque(marqueId) {
     var vus = {};
     DEPOT.liste("projets").forEach(function (p) {
-      if (((p.sections.identite || {}).marqueIds || []).indexOf(marqueId) !== -1) vus[(p.structure || "matanga")] = true;
+      if (((p.sections.identite || {}).marqueIds || []).indexOf(marqueId) !== -1) vus[(p.structure || principale())] = true;
     });
     return liste().filter(function (s) { return vus[s.id]; });
   }
@@ -87,12 +72,12 @@ window.STRUCTURE = (function () {
   var CLE = "labarre.filtreStructure";
   function filtre() { try { return localStorage.getItem(CLE) || "toutes"; } catch (e) { return "toutes"; } }
   function choisir(v) { try { localStorage.setItem(CLE, v); } catch (e) {} }
-  function garde(p) { var f = filtre(); return f === "toutes" || (p.structure || "matanga") === f; }
+  function garde(p) { var f = filtre(); return f === "toutes" || (p.structure || principale()) === f; }
 
   function puces(tous, quand) {
     var f = filtre();
     var compte = {};
-    tous.forEach(function (p) { var k = p.structure || "matanga"; compte[k] = (compte[k] || 0) + 1; });
+    tous.forEach(function (p) { var k = p.structure || principale(); compte[k] = (compte[k] || 0) + 1; });
     var opts = [{ id: "toutes", court: "Toutes" }].concat(liste().filter(function (s) { return compte[s.id]; }));
     return el("div.st-filtre", { role: "group", "aria-label": "Filtrer par structure" }, opts.map(function (s) {
       return el("button.st-f" + (f === s.id ? ".ici" : ""), { type: "button", "aria-pressed": f === s.id ? "true" : "false",
@@ -101,6 +86,6 @@ window.STRUCTURE = (function () {
     }));
   }
 
-  return { liste: liste, de: de, estAgence: estAgence, agence: agence, deMarque: deMarque,
+  return { principale: principale, liste: liste, de: de, estAgence: estAgence, agence: agence, deMarque: deMarque,
     factures: factures, ligne: ligne, puces: puces, garde: garde, filtre: filtre };
 })();

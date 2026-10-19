@@ -138,7 +138,7 @@ window.VUE_STUDIO = (function () {
         /* Les dossiers UPgraders et Friends Studio sont presque tous clos : filtrer
          * sur leur structure montre tout, en cours et archivés ensemble. */
         var f = window.STRUCTURE ? STRUCTURE.filtre() : "toutes";
-        var etatOk = (f === "toutes" || f === "matanga") ? CLOTURE.est(p) === archives : true;
+        var etatOk = (f === "toutes" || f === STRUCTURE.principale()) ? CLOTURE.est(p) === archives : true;
         return etatOk && (!window.STRUCTURE || STRUCTURE.garde(p))
           && (!recherche || O.contient([p.nom, p.ref, ident.client, ident.marque].join(" "), recherche));
       }).sort(function (a, b) {
@@ -146,7 +146,7 @@ window.VUE_STUDIO = (function () {
       });
       var fs = window.STRUCTURE ? STRUCTURE.filtre() : "toutes";
       compte.textContent = visibles.length + (visibles.length > 1 ? " projets" : " projet")
-        + (fs !== "toutes" && fs !== "matanga" ? ", en cours et archivés" : archives ? " archivés" : " en cours");
+        + (fs !== "toutes" && fs !== STRUCTURE.principale() ? ", en cours et archivés" : archives ? " archivés" : " en cours");
       visibles.forEach(function (p) { liste.appendChild(dossier(p)); });
       if (!visibles.length) liste.appendChild(el("div.studio-vide", {}, el("h3", {}, recherche ? "Aucun projet ne correspond." : archives ? "Aucun projet archivé." : "Votre prochain projet commence ici."),
         el("p", {}, recherche ? "Essayez un autre nom, un client ou une référence." : "Les dossiers restent accessibles, de leur premier brief à leur bilan."),
