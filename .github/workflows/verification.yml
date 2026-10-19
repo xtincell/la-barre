@@ -24,6 +24,8 @@ jobs:
       - run: npm run test:provenances
       - run: npm run test:decisions
       - run: npm run test:bilan
+      - run: node outils/distribuer-approches.mjs --check
+      - run: node --test tests/approches.test.mjs
   image:
     needs: verification
     runs-on: ubuntu-latest

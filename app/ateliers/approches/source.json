@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "repository": "xtincell/generateur-approches",
+  "commit": "fe77cf50b38df2b660394320c5bacb75fcd7ea34",
+  "notice": "Generated distribution copy. Edit the canonical component, then regenerate with its explicit commit.",
+  "files": {
+    "index.html": "2fe8505dc94347fcb6dfb6a22dfcb33e8e5420ee662a1e65a8de8e1280431f8d",
+    "raccord.js": "1434a9757f4b0e6c19e6ae5f76219c05359ad6cf04d5c243420122403d0dbc93",
+    "LICENSE": "464ebd84218eb4977cb01c7566ddeaeb8d1efc25c353110b3fdeb984d24e0d5f"
+  }
+}

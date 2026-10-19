@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Générateur d’approches publicitaires</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--ink:#15171a;--muted:#666b73;--line:#dde1e5;--soft:#edf0f3;--r:16px;--shadow:0 12px 30px rgba(0,0,0,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select,textarea{font:inherit}.app{max-width:1450px;margin:auto;padding:26px}.hero{display:grid;grid-template-columns:1.6fr .7fr;gap:18px;align-items:end;margin-bottom:20px}
+h1{margin:0;font-size:clamp(2.2rem,5vw,4.7rem);line-height:.95;letter-spacing:-.055em}.hero p{color:var(--muted);max-width:850px;margin:12px 0 0}
+.note{background:#111;color:#fff;border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}.note b{display:block;margin-bottom:4px}
+.layout{display:grid;grid-template-columns:370px minmax(0,1fr);gap:20px;align-items:start}.panel,.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.panel{padding:19px;position:sticky;top:14px;max-height:calc(100dvh - 28px);overflow-y:auto;scrollbar-gutter:stable}.panel h2{margin:0 0 4px}.intro{margin:0 0 16px;color:var(--muted);font-size:.9rem}
+.field{margin-bottom:12px}.field label{display:flex;justify-content:space-between;font-size:.76rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}.field small{font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted)}
+input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:#fff;outline:none;color:var(--ink)}textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:#8e949c;box-shadow:0 0 0 3px rgba(0,0,0,.06)}.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.checks{display:grid;gap:7px;margin:12px 0}.check{display:grid;grid-template-columns:17px 1fr;gap:8px;color:var(--muted);font-size:.85rem}.check input{width:16px;height:16px}
+.actions{display:grid;gap:8px}.a2{display:grid;grid-template-columns:1fr 1fr;gap:8px}button{border:0;border-radius:11px;padding:11px 12px;font-weight:800;cursor:pointer}.primary{background:#111;color:#fff}.secondary{background:var(--soft)}.ghost{background:#fff;border:1px solid var(--line)}
+button:hover{transform:translateY(-1px)}.head{display:flex;justify-content:space-between;align-items:end;margin-bottom:12px}.head h2{margin:0}.head p{margin:3px 0 0;color:var(--muted);font-size:.9rem}
+.results{display:grid;gap:16px}.empty{min-height:350px;border:1px dashed #b9bec5;border-radius:var(--r);display:grid;place-items:center;text-align:center;color:var(--muted);padding:28px;background:rgba(255,255,255,.55)}
+.card{overflow:hidden}.top{display:grid;grid-template-columns:1fr auto;gap:15px;padding:19px 21px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,#fff,#f8f8f8)}
+.kicker{font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.top h3{margin:4px 0 0;font-size:clamp(1.5rem,2.6vw,2.35rem);line-height:1;letter-spacing:-.035em}.top p{margin:8px 0 0;color:#3d4147}
+.score{min-width:76px;background:#111;color:#fff;border-radius:14px;text-align:center;padding:10px}.score b{font-size:1.45rem;display:block;line-height:1}.score small{opacity:.7}
+.body{padding:18px 21px 21px}.meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:15px}.pill{display:inline-flex;padding:4px 9px;border-radius:999px;background:var(--soft);font-size:.74rem;font-weight:750}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.block{border:1px solid var(--line);border-radius:13px;padding:13px}.wide{grid-column:1/-1}.block h4{margin:0 0 5px;font-size:.73rem;text-transform:uppercase;letter-spacing:.07em}.block p{margin:0;color:#3d4147;font-size:.91rem}
+ul{margin:0;padding-left:18px}li{margin:4px 0;color:#3d4147;font-size:.89rem}.prompt{white-space:pre-wrap;font:12.5px/1.48 ui-monospace,SFMono-Regular,Menlo,monospace;background:#f6f7f8;padding:11px;border-radius:9px}
+.risk{border-left:4px solid #a33}.defense{border-left:4px solid #2d6b43}.card-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.card-actions button{padding:7px 9px;font-size:.8rem}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111;color:#fff;border-radius:999px;padding:9px 14px;opacity:0;transition:.2s;pointer-events:none}.toast.show{opacity:1}
+@media(max-width:980px){.hero,.layout{grid-template-columns:1fr}.panel{position:static;max-height:none;overflow:visible}}@media(max-width:650px){.app{padding:14px}.g2,.a2,.grid{grid-template-columns:1fr}.top{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="hero">
+<div><h1>Générateur d’approches publicitaires</h1><p>Le moteur randomise l’approche, mais contrôle la cohérence entre problème marketing, promesse, famille de concept, mécanisme rhétorique, exécution, rôle du produit, image/copy, temporalité et niveau d’audace.</p></div>
+<aside class="note"><b>Règle centrale</b>Le hasard propose. La matrice guide les associations ; les choix forcés et les contraintes du brief demandent une vérification humaine.</aside>
+</header>
+<main class="layout">
+<aside class="panel">
+<h2>Brief minimal</h2><p class="intro">Le même brief et la même seed rejouent le même tirage avec la même version de méthode. Votre travail reste sur cet appareil.</p>
+<p class="intro" id="project-context" hidden></p><a id="return-project" hidden>Revenir au projet dans La Barre</a>
+<div class="field"><label for="brand">Marque <small>optionnel</small></label><input id="brand" placeholder="Ex. Bonnet Rouge"></div>
+<div class="field"><label for="product">Produit / service</label><input id="product" value="le produit"></div>
+<div class="field"><label for="benefit">Promesse</label><textarea id="benefit">rend l’expérience plus simple, désirable et mémorable</textarea></div>
+<div class="field"><label for="problem">Problème / tension</label><textarea id="problem">le bénéfice reste difficile à rendre visible immédiatement</textarea></div>
+<div class="g2">
+<div class="field"><label for="audience">Cible</label><input id="audience" value="un public urbain contemporain"></div>
+<div class="field"><label for="market">Marché</label><input id="market" value="Afrique centrale et de l’Ouest"></div>
+</div>
+<div class="g2">
+<div class="field"><label for="objective">Objectif</label><select id="objective"></select></div>
+<div class="field"><label for="medium">Média</label><select id="medium"></select></div>
+</div>
+<div class="g2">
+<div class="field"><label for="mode">Mode</label><select id="mode"><option value="coherent">Cohérent</option><option value="divergent" selected>Divergent</option><option value="radical">Radical contrôlé</option></select></div>
+<div class="field"><label for="count">Pistes</label><select id="count"><option>1</option><option>3</option><option selected>5</option><option>8</option></select></div>
+</div>
+<div class="g2">
+<div class="field"><label for="audacity">Audace</label><select id="audacity"><option value="1">Sage</option><option value="2" selected>Piste agence</option><option value="3">Déjanté</option><option value="4">Radical / Big Money</option></select></div>
+<div class="field"><label for="seed">Seed</label><input id="seed" value="MATANGA-01"></div>
+</div>
+<div class="g2">
+<div class="field"><label for="familyLock">Famille forcée</label><select id="familyLock"></select></div>
+<div class="field"><label for="executionLock">Exécution forcée</label><select id="executionLock"></select></div>
+</div>
+<div class="checks">
+<label class="check"><input id="productVisible" type="checkbox" checked><span>Le produit peut être visible.</span></label>
+<label class="check"><input id="allowTemporal" type="checkbox" checked><span>Autoriser Sans / Avant / Pendant / Après si pertinent.</span></label>
+<label class="check"><input id="strictDiversity" type="checkbox" checked><span>Forcer des moteurs conceptuels distincts.</span></label>
+<label class="check"><input id="avoidCliches" type="checkbox" checked><span>Éviter les éclaboussures, particules et halos automatiques.</span></label>
+</div>
+<div class="field"><label for="constraints">Contraintes</label><textarea id="constraints" placeholder="Ex. aucun logo, zone copy à droite"></textarea></div>
+<div class="actions">
+<button class="primary" id="generate">Générer les approches</button>
+<div class="a2"><button class="secondary" id="newSeed">Nouveau hasard</button><button class="ghost" id="copyAll">Copier tout</button></div>
+<div class="a2"><button class="ghost" id="exportMd">Exporter Markdown</button><button class="ghost" id="exportJson">Exporter JSON</button></div>
+<button class="ghost" id="importJson">Rejouer un brief JSON</button>
+<input id="importFile" type="file" accept=".json,application/json" hidden>
+<p id="continuity" class="intro" role="status" aria-live="polite">Les contraintes libres restent à vérifier lors du choix d’une piste.</p>
+</div>
+</aside>
+<section>
+<div class="head"><div><h2>Approches proposées</h2><p id="sub">Le générateur doit encore être lancé.</p></div></div>
+<div id="results" class="results"><div class="empty"><div><b>Aucun tirage pour le moment.</b><br>Générez plusieurs pistes, puis sélectionnez celles qui méritent une direction artistique.</div></div></div>
+</section>
+</main>
+</div>
+<div class="toast" id="toast">Copié</div>
+<script src="raccord.js"></script>
+<script>
+"use strict";
+const E=id=>document.getElementById(id);
+const brand=E("brand"),product=E("product"),benefit=E("benefit"),problem=E("problem"),audience=E("audience"),market=E("market"),objective=E("objective"),medium=E("medium"),mode=E("mode"),count=E("count"),audacity=E("audacity"),seed=E("seed"),familyLock=E("familyLock"),executionLock=E("executionLock"),productVisible=E("productVisible"),allowTemporal=E("allowTemporal"),strictDiversity=E("strictDiversity"),avoidCliches=E("avoidCliches"),constraints=E("constraints"),generateBtn=E("generate"),newSeedBtn=E("newSeed"),copyAllBtn=E("copyAll"),exportMdBtn=E("exportMd"),exportJsonBtn=E("exportJson"),sub=E("sub"),results=E("results"),toast=E("toast");
+const OBJECTIVES=[
+{id:"auto",label:"Automatique",tags:[]},{id:"awareness",label:"Notoriété / mémorisation",tags:["distinctive","brand"]},{id:"launch",label:"Lancement",tags:["novelty","product"]},{id:"feature",label:"Expliquer une fonctionnalité",tags:["functional","proof"]},{id:"superiority",label:"Prouver une supériorité",tags:["comparative","proof"]},{id:"desire",label:"Créer de la désirabilité",tags:["emotional","aspirational"]},{id:"barrier",label:"Lever un frein d’usage",tags:["problem","functional"]},{id:"occasion",label:"Créer une occasion",tags:["context","behavior"]},{id:"culture",label:"Moment culturel",tags:["context","brand"]},{id:"tone",label:"Installer un ton de marque",tags:["brand","distinctive"]}];
+const MEDIA=[{id:"ooh",label:"OOH / Billboard"},{id:"print",label:"Print / Presse"},{id:"social",label:"Social media"},{id:"pos",label:"Point de vente / Cafétéria"},{id:"digital",label:"Display digital"},{id:"film",label:"Film / storyboard"}];
+const PROMISES=[{id:"functional",label:"Fonctionnelle",fits:["feature","barrier","superiority"]},{id:"emotional",label:"Émotionnelle",fits:["desire","awareness","tone"]},{id:"experiential",label:"Expérientielle",fits:["desire","occasion","launch"]},{id:"comparative",label:"Comparative",fits:["superiority","culture"]},{id:"identity",label:"Identitaire",fits:["tone","awareness"]},{id:"contextual",label:"Contextuelle",fits:["culture","occasion"]}];
+const EXECUTIONS=[
+{id:"studio",label:"Still life studio minimal"},{id:"sculptural",label:"Sculpture publicitaire"},{id:"object",label:"Objet-théâtre"},{id:"photomontage",label:"Photomontage conceptuel"},{id:"tableau",label:"Tableau photographique narratif"},{id:"cgi",label:"CGI / monde construit"},{id:"miniature",label:"Miniature / maquette"},{id:"graphic",label:"Poster graphique minimal"},{id:"illustration",label:"Illustration éditoriale"},{id:"film-frame",label:"Image de film / climax"}];
+const FAMILIES=[
+{id:"demonstration",label:"Démonstration amplifiée",tags:["functional","proof","feature","barrier"],exec:["tableau","studio","object","photomontage"],temporal:1,roles:["hero","tool","proof","trigger"],mech:["Littéralisation","Exagération contrôlée","Réaction en chaîne"],titles:["La preuve impossible","La fonction grandeur nature"]},
+{id:"analogy",label:"Analogie fonctionnelle",tags:["functional","proof","superiority","barrier"],exec:["studio","photomontage","miniature"],temporal:0,roles:["absent","signature","hero"],mech:["Substitution","Équivalence visuelle","Contraste"],titles:["L’équivalent parfait","Une autre manière de le prouver"]},
+{id:"metaphor",label:"Métaphore visuelle",tags:["emotional","experiential","functional","distinctive"],exec:["photomontage","cgi","tableau","graphic"],temporal:1,roles:["trigger","material","portal","hero"],mech:["Littéralisation","Fusion","Transposition"],titles:["La promesse devient réelle","Au sens propre"]},
+{id:"personification",label:"Personnification",tags:["distinctive","functional","brand","problem"],exec:["studio","object","cgi","illustration"],temporal:1,roles:["character","hero","tool"],mech:["Personnification","Inversion","Substitution"],titles:["Quand l’objet prend les choses en main","Le bénéfice devient personnage"]},
+{id:"inversion",label:"Inversion de rôles",tags:["distinctive","problem","comparative","brand"],exec:["studio","photomontage","tableau","graphic"],temporal:0,roles:["hero","signature","absent"],mech:["Inversion","Ironie","Contraste"],titles:["Le monde à l’envers","Qui aide vraiment qui ?"]},
+{id:"comparison",label:"Confrontation / rivalité",tags:["comparative","superiority","context","brand"],exec:["photomontage","studio","graphic","tableau"],temporal:1,roles:["hero","opponent","trophy"],mech:["Duel","Déguisement","Appropriation"],titles:["Le duel inattendu","Face-à-face"]},
+{id:"visual-pun",label:"Jeu visuel compressé",tags:["fast","simple","distinctive","brand"],exec:["studio","graphic","photomontage"],temporal:0,roles:["hero","signature","symbol"],mech:["Fusion","Condensation","Double lecture"],titles:["Une image, deux lectures","Le raccourci visuel"]},
+{id:"problem-object",label:"Objet-symbole du problème",tags:["problem","functional","barrier","proof"],exec:["studio","object","sculptural"],temporal:0,roles:["absent","signature","symbol"],mech:["Condensation","Personnification","Exagération"],titles:["Le problème tient dans un objet","L’obstacle matérialisé"]},
+{id:"worldbuilding",label:"Monde construit par la promesse",tags:["experiential","emotional","aspirational","launch"],exec:["cgi","illustration","tableau","miniature"],temporal:1,roles:["material","portal","trigger","world"],mech:["Transposition","Changement d’échelle","Architecture"],titles:["Un monde entier à partir du produit","La destination de la promesse"]},
+{id:"miniature",label:"Monde miniature",tags:["distinctive","experiential","proof"],exec:["miniature","cgi","tableau"],temporal:1,roles:["world","material","platform","trigger"],mech:["Changement d’échelle","Personnification","Réaction en chaîne"],titles:["Tout un monde au travail","La preuve en miniature"]},
+{id:"physics",label:"Lois physiques détournées",tags:["experiential","distinctive","emotional","proof"],exec:["cgi","tableau","photomontage"],temporal:1,roles:["trigger","gravity","proof"],mech:["Altération de la gravité","Altération du temps","Inversion"],titles:["La nouvelle loi du lieu","Le centre de gravité"]},
+{id:"choreography",label:"Chorégraphie du bénéfice",tags:["experiential","emotional","behavior","brand"],exec:["tableau","film-frame","photomontage"],temporal:1,roles:["trigger","conductor","signature"],mech:["Synchronisation","Rythme visuel","Réaction en chaîne"],titles:["Tout se met au même rythme","L’harmonie déclenchée"]},
+{id:"genre-shift",label:"Changement de genre visuel",tags:["experiential","brand","distinctive","context"],exec:["tableau","cgi","photomontage","film-frame"],temporal:1,roles:["portal","trigger","signature"],mech:["Transposition","Contamination progressive","Monde divisé"],titles:["Le réel change de registre","Le passage entre les mondes"]},
+{id:"context",label:"Appropriation contextuelle",tags:["contextual","culture","brand","comparative"],exec:["photomontage","graphic","studio"],temporal:0,roles:["hero","signature","disguise"],mech:["Appropriation","Déguisement","Ironie"],titles:["Le contexte détourné","Le calendrier devient média"]},
+{id:"behavior",label:"Déplacement comportemental",tags:["emotional","functional","brand","problem"],exec:["tableau","film-frame"],temporal:1,roles:["absent","signature","trigger"],mech:["Transposition","Contraste","Inversion"],titles:["Le décalage révélateur","La réaction qui prouve tout"]}
+];
+const MOMENTS=[{id:"sans",label:"Sans",text:"le monde privé de la solution"},{id:"avant",label:"Avant",text:"la tension juste avant l’accès au bénéfice"},{id:"pendant",label:"Pendant",text:"l’usage au moment exact où le monde réagit"},{id:"apres",label:"Après",text:"le nouvel état du monde déjà accompli"},{id:"non",label:"Non temporel",text:"une équation visuelle sans récit avant/après"}];
+const AUDACITY=[null,{label:"Sage",scale:"transformation locale, plausible et élégante"},{label:"Piste agence",scale:"mécanisme impossible mais immédiatement lisible"},{label:"Déjanté",scale:"le mécanisme transforme l’espace entier sans perdre la promesse"},{label:"Radical / Big Money",scale:"la promesse devient une nouvelle loi du monde"}];
+const COPY=[{id:"autonomous",label:"Image presque autonome"},{id:"lock",label:"Image + copy verrouillée"},{id:"copy-led",label:"Copy dominante, image support"}];
+const CODES=["publicité print minimaliste","cinéma de genre","science-fiction propre","comédie visuelle","afro-futurisme contemporain","objet sculptural","miniature hyperréaliste","photographie éditoriale","jeu de combat","comédie musicale","architecture spéculative","documentaire stylisé","cartoon premium","thriller atmosphérique","pop graphique"];
+const SPATIAL=["composition centrale iconique","diagonale de tension","symétrie frontale","perspective grand-angle déformée","macro avec changement d’échelle","tableau panoramique en profondeur","objet isolé dans un grand vide","split-screen intégré au décor","point de fuite unique"];
+const ANALOGIES=["une équipe de démineurs manipulant un objet fragile","un funambule traversant un espace impossible","un pit-stop de course automobile","un système d’écluses parfaitement alignées","un jeu d’adresse avec des éléments extrêmement fragiles","une forteresse qui absorbe l’impact","un aimant qui ordonne instantanément le chaos"];
+const SYMBOLS=["une clé surchargée qui porte physiquement le problème","un parapluie qui contient tout un climat","une chaise qui matérialise l’effort évité","un plateau qui refuse de basculer malgré le chaos","une corde dont la tension raconte le bénéfice","un bouton unique qui remplace une mécanique complexe"];
+const WORLDS=["une ville construite à partir du bénéfice","un royaume dont chaque bâtiment démontre un usage","un paysage miniature organisé par le produit","une arène où la promesse devient une règle de compétition","un laboratoire géant où l’avantage est mesuré","une scène d’opéra où chaque élément répond au geste","une dimension parallèle correspondant à l’expérience ressentie"];
+const ROLES={hero:"héros central",tool:"outil qui résout",proof:"preuve visible",trigger:"déclencheur",absent:"absent mais inféré",signature:"signature finale",material:"matière du monde",portal:"portail",character:"personnage",opponent:"adversaire symbolique",trophy:"objet de désir",symbol:"objet-symbole",world:"source du monde",platform:"plateforme de l’action",gravity:"centre de gravité",conductor:"chef d’orchestre",disguise:"déguisement"};
+function xmur3(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19}return()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return(h^=h>>>16)>>>0}}
+function mulberry32(a){return()=>{let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+const pick=(a,r)=>a[Math.floor(r()*a.length)], esc=s=>String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+function weighted(items,fn,r){const a=items.map(x=>[x,Math.max(.01,fn(x))]),t=a.reduce((s,x)=>s+x[1],0);let c=r()*t;for(const x of a){c-=x[1];if(c<=0)return x[0]}return a.at(-1)[0]}
+function brief(){return{brand:brand.value.trim()||"la marque",product:product.value.trim()||"le produit",benefit:benefit.value.trim()||"rend l’expérience plus désirable",problem:problem.value.trim()||"le bénéfice est difficile à voir",audience:audience.value.trim()||"la cible",market:market.value.trim()||"le marché",objective:objective.value,medium:medium.value,mode:mode.value,count:+count.value,audacity:+audacity.value,familyLock:familyLock.value,executionLock:executionLock.value,productVisible:productVisible.checked,allowTemporal:allowTemporal.checked,strictDiversity:strictDiversity.checked,avoidCliches:avoidCliches.checked,constraints:constraints.value.trim(),seed:seed.value.trim()||Date.now()+""}}
+function objectiveFor(b,r){if(b.objective!=="auto")return OBJECTIVES.find(x=>x.id===b.objective);const t=(b.problem+" "+b.benefit).toLowerCase(),ids=/précis|fonction|simple|facile|rapide|automatique/.test(t)?["feature","barrier"]:/meilleur|supérieur|compar/.test(t)?["superiority"]:/fête|saison|halloween|ramadan|noël/.test(t)?["culture","occasion"]:["awareness","desire","launch"];return pick(OBJECTIVES.filter(x=>ids.includes(x.id)),r)}
+function promiseFor(o,r){return weighted(PROMISES,p=>2+(p.fits.includes(o.id)?9:0),r)}
+function familyFor(o,p,b,r,used){if(b.familyLock!=="auto")return FAMILIES.find(x=>x.id===b.familyLock);const pool=b.strictDiversity?FAMILIES.filter(f=>!used.has(f.id)):FAMILIES;return weighted(pool.length?pool:FAMILIES,f=>{let s=2;if(f.tags.includes(o.id))s+=8;if(f.tags.includes(p.id))s+=7;o.tags.forEach(t=>{if(f.tags.includes(t))s+=3});if(b.medium==="ooh"&&["visual-pun","analogy","problem-object","comparison","metaphor"].includes(f.id))s+=4;if(b.mode==="radical"&&["worldbuilding","physics","genre-shift","miniature","choreography"].includes(f.id))s+=7;if(b.strictDiversity&&used.has(f.id))s*=.03;return s},r)}
+function executionFor(f,b,r,used){if(b.executionLock!=="auto")return EXECUTIONS.find(x=>x.id===b.executionLock);return weighted(EXECUTIONS.filter(e=>f.exec.includes(e.id)),e=>{let s=4;if(b.medium==="ooh"&&["studio","graphic","photomontage"].includes(e.id))s+=5;if(b.mode==="radical"&&["cgi","miniature","tableau","film-frame"].includes(e.id))s+=5;if(b.strictDiversity&&used.has(e.id))s*=.3;return s},r)}
+function momentFor(f,b,r){if(!b.allowTemporal||!f.temporal)return MOMENTS.find(x=>x.id==="non");let a=MOMENTS.filter(x=>x.id!=="non");if(f.id==="demonstration")a=a.filter(x=>["sans","pendant","apres"].includes(x.id));return pick(a,r)}
+function copyFor(f,e,b,r){return weighted(COPY,c=>{let s=2;if(b.medium==="ooh"&&c.id==="autonomous")s+=6;if(["analogy","problem-object","context"].includes(f.id)&&c.id==="lock")s+=7;if(["studio","graphic"].includes(e.id)&&c.id==="autonomous")s+=4;if(b.medium==="ooh"&&c.id==="copy-led")s*=.1;return s},r)}
+function coreIdea(f,b,r){const a=pick(ANALOGIES,r),s=pick(SYMBOLS,r),w=pick(WORLDS,r);return({
+demonstration:`Mettre ${b.product} dans une épreuve impossible où il doit prouver visuellement qu’il « ${b.benefit} », tandis que « ${b.problem} » devient une contrainte physique mesurable.`,
+analogy:`Remplacer la démonstration directe par ${a}. Cette scène devient l’équivalent visuel de « ${b.benefit} », puis ${b.product} n’apparaît qu’en signature ou preuve finale.`,
+metaphor:`Prendre « ${b.benefit} » au sens propre : ${b.product} transforme matériellement le lieu afin que le bénéfice soit impossible à manquer.`,
+personification:`Donner à ${b.product} un rôle humain précis : il agit comme le spécialiste chargé de résoudre « ${b.problem} ».`,
+inversion:`Inverser la relation entre l’utilisateur, ${b.product} et le problème : ce qui devait être difficile devient l’élément qui demande de l’aide.`,
+comparison:`Créer un face-à-face où ${b.product} affronte une force qui matérialise « ${b.problem} ». La victoire constitue la preuve.`,
+"visual-pun":`Fusionner ${b.product} avec un second objet dont la forme ou la fonction exprime « ${b.benefit} ». Une image, deux lectures.`,
+"problem-object":`Condenser « ${b.problem} » dans ${s}. Le produit reste absent ou discret ; l’objet seul rend le besoin évident.`,
+worldbuilding:`Construire ${w}. Chaque détail traduit un usage ou une conséquence de « ${b.benefit} », et ${b.product} devient la source du monde.`,
+miniature:`Installer une microsociété autour de ${b.product}. Les personnages miniatures travaillent à produire, protéger ou amplifier « ${b.benefit} ».`,
+physics:`Faire de ${b.product} le centre d’une nouvelle loi physique. La déformation du réel devient la preuve immédiate de « ${b.benefit} ».`,
+choreography:`Au moment où ${b.product} est utilisé, les personnes, objets et architecture se synchronisent. L’action devient une direction d’orchestre.`,
+"genre-shift":`Chaque interaction avec ${b.product} fait basculer une zone du décor dans un autre genre visuel, révélant plusieurs facettes de « ${b.benefit} ».`,
+context:`Détourner un code culturel, saisonnier ou concurrentiel pour faire de ${b.product} l’interprétation la plus inattendue du moment.`,
+behavior:`Montrer une personne qui adopte, dans une situation ordinaire, un comportement normalement associé à un autre univers. Ce décalage prouve « ${b.benefit} ».`
+})[f.id]}
+function oneLine(f,b){return({
+demonstration:`${b.product} prouve ${b.benefit} dans une épreuve impossible.`,analogy:`Une analogie inattendue rend ${b.benefit} évident avant même que ${b.product} apparaisse.`,metaphor:`La promesse « ${b.benefit} » devient littéralement le décor.`,personification:`${b.product} prend un rôle humain pour résoudre ${b.problem}.`,inversion:`Le problème et la solution échangent leurs rôles.`,comparison:`${b.product} affronte une force qui matérialise ${b.problem}.`,"visual-pun":`Deux objets fusionnent pour condenser ${b.benefit} en une seule image.`,"problem-object":`Un objet impossible porte tout le poids de ${b.problem}.`,worldbuilding:`Un monde entier est bâti à partir de ${b.benefit}.`,miniature:`Une civilisation miniature travaille à rendre ${b.benefit} visible.`,physics:`${b.product} modifie une loi physique pour prouver ${b.benefit}.`,choreography:`L’usage de ${b.product} synchronise tout le monde autour du bénéfice.`,"genre-shift":`Le réel change de genre visuel à chaque manifestation du bénéfice.`,context:`Un moment culturel est détourné pour rendre ${b.product} mémorable.`,behavior:`Un comportement impossible devient la preuve vivante de ${b.benefit}.`})[f.id]}
+function layers(e,m,role,b,r){const sp=pick(SPATIAL,r),simple=["studio","graphic","sculptural"].includes(e.id);return{sp,front:simple?"Un seul détail matériel ou une ombre oriente le regard vers l’objet-concept.":"Un indice proche caméra introduit la matière, l’échelle ou la tension.",main:simple?`L’objet ou le produit porte seul l’équation visuelle dans une ${sp}.`:`L’action principale montre ${m.text}; ${b.product} agit comme ${ROLES[role]}.`,mid:simple?"Une relation secondaire unique apporte la double lecture ou la preuve.":"Les éléments secondaires rendent le mécanisme visible par propagation, réaction ou contraste.",back:simple?"Fond très peu détaillé, pensé comme respiration et zone de copy.":`Le contexte ancre ${b.market} et prolonge l’idée sans concurrencer l’action.`,copy:b.medium==="ooh"?"Réserver environ un tiers du cadre à faible détail pour une copy de 3 à 7 mots.":"Prévoir une zone de copy intégrée à l’architecture.",flow:simple?"objet-concept → anomalie → bénéfice → signature":"action centrale → réaction du monde → preuve → copy / signature"}}
+function audacityFor(b,r){let n=b.audacity+(b.mode==="radical"?1:b.mode==="coherent"?-1:0)+(r()<.25?(r()<.5?-1:1):0);return Math.max(1,Math.min(4,n))}
+function prompt(route,b){return `Créer un Key Visual publicitaire ${route.execution.label.toLowerCase()} pour ${b.brand}, autour de ${b.product}.
+
+OBJECTIF
+${route.objective.label}. Promesse : ${b.benefit}. Tension : ${b.problem}.
+
+CONCEPT
+Famille : ${route.family.label}. Mécanisme : ${route.mechanism}. Idée : ${route.core}.
+
+INTENTION
+${route.moment.label} — ${route.moment.text}. Audace : ${route.audacity.label}, soit ${route.audacity.scale}.
+
+RÔLE DU PRODUIT
+${ROLES[route.role]}. ${b.productVisible?"Le produit peut être visible et doit jouer ce rôle narratif.":"Ne pas montrer de pack identifiable ; faire inférer le produit par le bénéfice."}
+
+EXÉCUTION ET CODES
+${route.execution.label}. Code principal : ${route.code1}. Code invité : ${route.code2}. Composition : ${route.layers.sp}.
+
+LAYERING
+Avant-premier plan : ${route.layers.front}
+Premier plan : ${route.layers.main}
+Milieu de plan : ${route.layers.mid}
+Arrière-plan : ${route.layers.back}
+Zone copy : ${route.layers.copy}
+Flux : ${route.layers.flow}
+
+CASTING ET CONTEXTE
+Représentation contemporaine, crédible et non folklorique de ${b.audience}, adaptée à ${b.market}.
+
+GARDE-FOUS
+Une seule idée dominante. Chaque élément doit prouver la promesse, soutenir la narration, l’identité ou la lisibilité. ${b.avoidCliches?"Éviter éclaboussures, particules, halos et objets flottants comme solution automatique.":""} Aucun texte illisible ni logo inventé. ${b.constraints?`Contraintes : ${b.constraints}.`:""}`.trim()}
+function route(b,r,usedF,usedE,i){const o=objectiveFor(b,r),p=promiseFor(o,r),f=familyFor(o,p,b,r,usedF),e=executionFor(f,b,r,usedE),m=momentFor(f,b,r),n=audacityFor(b,r),role=pick((!b.productVisible?f.roles.filter(x=>["absent","signature","trigger","world","material"].includes(x)):f.roles).length?(!b.productVisible?f.roles.filter(x=>["absent","signature","trigger","world","material"].includes(x)):f.roles):["signature"],r),copy=copyFor(f,e,b,r),codes=[pick(CODES,r),pick(CODES,r)],L=layers(e,m,role,b,r);usedF.add(f.id);usedE.add(e.id);const R={i,objective:o,promise:p,family:f,execution:e,moment:m,audacity:AUDACITY[n],role,copyRelation:copy,mechanism:pick(f.mech,r),title:pick(f.titles,r),core:coreIdea(f,b,r),one:oneLine(f,b),code1:codes[0],code2:codes[1],layers:L};R.score=Math.min(96,65+(f.tags.includes(p.id)?8:0)+(f.tags.includes(o.id)?8:0)+(f.exec.includes(e.id)?8:0)+(b.medium==="ooh"&&["studio","graphic","photomontage"].includes(e.id)?5:0));R.prompt=prompt(R,b);return R}
+function generateData(b=brief()){const r=mulberry32(xmur3(b.seed)()),F=new Set,E=new Set,rs=[];for(let i=1;i<=b.count;i++)rs.push(route(b,r,F,E,i));return{methodVersion:METHOD_VERSION,brief:b,routes:rs}}
+function card(x,b){const meta=[x.objective.label,x.promise.label,x.family.label,x.mechanism,x.execution.label,x.moment.label,x.audacity.label,ROLES[x.role]];return `<article class="card"><header class="top"><div><span class="kicker">Piste ${x.i}</span><h3>${esc(x.title)}</h3><p>${esc(x.one)}</p></div><div class="score" title="Compatibilité interne des catégories choisies. Ni qualité créative ni validation du brief."><b>${x.score}</b><small>/ 100 · compatibilité</small></div></header><div class="body"><div class="meta">${meta.map(v=>`<span class="pill">${esc(v)}</span>`).join("")}</div><div class="grid">
+<section class="block wide"><h4>Concept créatif</h4><p>${esc(x.core)}</p></section>
+<section class="block"><h4>Équation stratégique</h4><p>${esc(x.promise.label)} + ${esc(x.mechanism.toLowerCase())} + ${esc(ROLES[x.role])} = preuve de « ${esc(b.benefit)} ».</p></section>
+<section class="block"><h4>Régime d’exécution</h4><p>${esc(x.execution.label)} avec ${esc(x.code1)} et ${esc(x.code2)}.</p></section>
+<section class="block"><h4>Sage → déjanté</h4><p><b>${esc(x.audacity.label)} :</b> ${esc(x.audacity.scale)}. L’intensité augmente l’écart au réel, pas le désordre.</p></section>
+<section class="block"><h4>Image / copy</h4><p>${esc(x.copyRelation.label)}. Le texte doit fermer la lecture sans expliquer une image faible.</p></section>
+<section class="block wide"><h4>Composition en couches</h4><ul><li><b>Avant-premier plan :</b> ${esc(x.layers.front)}</li><li><b>Premier plan :</b> ${esc(x.layers.main)}</li><li><b>Milieu :</b> ${esc(x.layers.mid)}</li><li><b>Arrière-plan :</b> ${esc(x.layers.back)}</li><li><b>Copy :</b> ${esc(x.layers.copy)}</li><li><b>Flux :</b> ${esc(x.layers.flow)}</li></ul></section>
+<section class="block defense"><h4>Hypothèse à défendre</h4><p>${x.family.exec.includes(x.execution.id)?"La famille et l’exécution sont associées dans la matrice. Vérifiez que le mécanisme démontre réellement la promesse et respecte les contraintes du brief.":"L’exécution forcée sort des associations prévues pour cette famille. Cette expérimentation demande une justification créative avant de retenir la piste."}</p></section>
+<section class="block risk"><h4>Risque principal</h4><p>${x.audacity.label.includes("Déjanté")||x.audacity.label.includes("Radical")?"Le spectacle peut dépasser la promesse : préserver une action centrale unique.":"L’image peut devenir trop sage : maintenir une anomalie conceptuelle lisible."}</p></section>
+<section class="block wide"><h4>Prompt de génération</h4><p class="prompt">${esc(x.prompt)}</p></section>
+</div><div class="card-actions"><button class="secondary" onclick="copyRoute(${x.i})">Copier la piste</button><button class="ghost" onclick="copyPrompt(${x.i})">Copier le prompt</button></div></div></article>`}
+let last=null;
+function render(d){last=d;sub.textContent=`${d.routes.length} piste(s), seed « ${d.brief.seed} ».`;results.innerHTML=d.routes.map(x=>card(x,d.brief)).join("")}
+function routeMd(x,b){return `## Piste ${x.i} — ${x.title}
+
+**Objectif :** ${x.objective.label}
+**Promesse :** ${x.promise.label}
+**Famille :** ${x.family.label}
+**Mécanisme :** ${x.mechanism}
+**Exécution :** ${x.execution.label}
+**Intention :** ${x.moment.label}
+**Audace :** ${x.audacity.label}
+**Rôle produit :** ${ROLES[x.role]}
+**Compatibilité interne :** ${x.score}/100 — ne vaut pas validation créative ou client.
+**Association :** ${x.family.exec.includes(x.execution.id)?"prévue par la matrice, à confronter au brief":"exécution forcée hors matrice, à justifier"}.
+
+### Concept
+${x.core}
+
+### Composition
+- Avant-premier plan : ${x.layers.front}
+- Premier plan : ${x.layers.main}
+- Milieu : ${x.layers.mid}
+- Arrière-plan : ${x.layers.back}
+- Zone copy : ${x.layers.copy}
+
+### Prompt
+${x.prompt}
+`}
+function allMd(d){return `# Approches publicitaires — ${d.brief.brand}
+
+**Produit :** ${d.brief.product}
+**Promesse :** ${d.brief.benefit}
+**Tension :** ${d.brief.problem}
+**Cible :** ${d.brief.audience}
+**Marché :** ${d.brief.market}
+**Seed :** ${d.brief.seed}
+**Version de méthode :** ${d.methodVersion}
+
+${d.routes.map(x=>routeMd(x,d.brief)).join("\n---\n")}`}
+function toastMsg(t){toast.textContent=t;toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),1200)}
+async function copyText(text,message){try{await navigator.clipboard.writeText(text);toastMsg(message)}catch{toastMsg("Copie indisponible. Utilisez l’export Markdown.")}}
+window.copyRoute=i=>{const x=last.routes.find(z=>z.i===i);return copyText(routeMd(x,last.brief),"Piste copiée")}
+window.copyPrompt=i=>{const x=last.routes.find(z=>z.i===i);return copyText(x.prompt,"Prompt copié")}
+function download(name,text,type){const u=URL.createObjectURL(new Blob([text],{type})),a=document.createElement("a");a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),400)}
+function fill(id,data,auto){const s=document.getElementById(id);if(auto)s.innerHTML=`<option value="auto">Automatique</option>`;data.forEach(x=>{if(x.id!=="auto")s.insertAdjacentHTML("beforeend",`<option value="${x.id}">${x.label}</option>`)})}
+fill("objective",OBJECTIVES,1);objective.value="auto";fill("medium",MEDIA,0);medium.value="ooh";fill("familyLock",FAMILIES,1);fill("executionLock",EXECUTIONS,1);
+const METHOD_VERSION=2,continuity=E("continuity");
+let projectContext=null,launch=null,contextError=null;
+try{launch=APPROCHES_CONTEXT.readLaunch(location.hash);projectContext=launch?.context||null}catch(error){contextError=error.message}
+function showContext(){const label=E("project-context"),back=E("return-project");label.hidden=!projectContext&&!contextError;label.textContent=contextError?`Contexte refusé : ${contextError}`:projectContext?`${projectContext.projectRef} · ${projectContext.projectName}. Le tirage reste une proposition ; l’arbitrage appartient à La Barre.`:'';back.hidden=!projectContext||!location.pathname.endsWith('/app/ateliers/approches/index.html');if(!back.hidden)back.href='../../../index.html#/projets/'+encodeURIComponent(projectContext.projectId)+'/pistes'}
+function exportData(){return {...last,...(projectContext?{context:projectContext}:{})}}
+const FIELDS=["brand","product","benefit","problem","audience","market","objective","medium","mode","count","audacity","seed","familyLock","executionLock","productVisible","allowTemporal","strictDiversity","avoidCliches","constraints"];
+const CHECKS=["productVisible","allowTemporal","strictDiversity","avoidCliches"];
+function readDraft(){return Object.fromEntries(FIELDS.map(k=>[k,CHECKS.includes(k)?E(k).checked:["count","audacity"].includes(k)?+E(k).value:E(k).value]))}
+function validateBrief(b){
+  if(!b||typeof b!=="object"||Array.isArray(b))throw Error("Ce fichier ne contient pas de brief.");
+  for(const k of FIELDS){
+    if(CHECKS.includes(k)){if(typeof b[k]!=="boolean")throw Error("Options du brief invalides.")}
+    else if(["count","audacity"].includes(k)){if(!Number.isInteger(b[k]))throw Error("Nombre de pistes ou audace invalide.")}
+    else if(typeof b[k]!=="string"||b[k].length>10000)throw Error("Champs du brief incomplets ou trop longs.");
+  }
+  const enums={objective:OBJECTIVES.map(x=>x.id),medium:MEDIA.map(x=>x.id),mode:["coherent","divergent","radical"],count:[1,3,5,8],audacity:[1,2,3,4],familyLock:["auto",...FAMILIES.map(x=>x.id)],executionLock:["auto",...EXECUTIONS.map(x=>x.id)]};
+  for(const [k,values] of Object.entries(enums))if(!values.includes(b[k]))throw Error("Une option du brief n’est pas reconnue.");
+  return Object.fromEntries(FIELDS.map(k=>[k,b[k]]));
+}
+function applyDraft(b){for(const k of FIELDS){if(CHECKS.includes(k))E(k).checked=b[k];else E(k).value=b[k]}}
+function saveWork(){
+  try{localStorage.setItem(APPROCHES_CONTEXT.storageKey(projectContext),JSON.stringify({version:1,methodVersion:METHOD_VERSION,context:projectContext,draft:readDraft(),generatedBrief:last?.brief??null}));
+    const changed=last&&Object.entries(last.brief).some(([k,v])=>brief()[k]!==v);
+    continuity.textContent=changed?"Brouillon conservé. Le brief a changé : relancez le tirage pour actualiser les pistes.":"Travail conservé sur cet appareil. Les contraintes libres restent à vérifier avant de retenir une piste.";
+  }catch{continuity.textContent="Sauvegarde locale indisponible. Exportez votre tirage avant de fermer."}
+}
+function generate(){if(contextError)return toastMsg('Contexte refusé : ouvrez à nouveau l’outil depuis le projet.');if(!seed.value.trim())seed.value=Date.now().toString();render(generateData());saveWork()}
+generateBtn.onclick=generate;
+newSeedBtn.onclick=()=>{seed.value="MATANGA-"+Math.random().toString(36).slice(2,8).toUpperCase();generate()};
+copyAllBtn.onclick=()=>{if(!last)return toastMsg("Générez d’abord");return copyText(allMd(last),"Tout copié")};
+exportMdBtn.onclick=()=>{if(!last)return toastMsg("Générez d’abord");download("approches-publicitaires.md",allMd(last),"text/markdown;charset=utf-8")};
+exportJsonBtn.onclick=()=>{if(!last)return toastMsg("Générez d’abord");download("approches-publicitaires.json",JSON.stringify(exportData(),null,2),"application/json;charset=utf-8")};
+for(const k of FIELDS)E(k).addEventListener("input",saveWork);
+E("importJson").onclick=()=>E("importFile").click();
+E("importFile").onchange=async event=>{
+  const file=event.target.files?.[0];event.target.value="";if(!file)return;
+  try{if(file.size>2000000)throw Error("Le fichier dépasse 2 Mo.");const data=JSON.parse(await file.text()),b=validateBrief(data.brief),incoming=data.context?APPROCHES_CONTEXT.validate(data.context):null;
+    if(projectContext&&(!incoming||JSON.stringify(incoming)!==JSON.stringify(projectContext)))throw Error('Le projet ou la version du brief diffère. Ouvrez ce tirage depuis son propre dossier.');
+    const replay=generateData(b);projectContext=incoming;contextError=null;showContext();applyDraft(b);render(replay);saveWork();toastMsg("Brief rejoué. Le tirage suit la version actuelle de la méthode.")}
+  catch(error){continuity.textContent=`Import refusé : ${error.message} Votre travail reste inchangé.`}
+};
+if(launch)applyDraft({...readDraft(),...launch.brief});
+try{const raw=localStorage.getItem(APPROCHES_CONTEXT.storageKey(projectContext));if(raw){const saved=JSON.parse(raw);if(saved.version!==1)throw Error("Version inconnue");if(projectContext&&saved.context?.sourceVersion!==projectContext.sourceVersion){continuity.textContent='Le brief source a changé : le nouveau brief est chargé. Les anciens résultats restent dans vos exports.'}else{const draft=validateBrief(saved.draft),sameMethod=saved.methodVersion===METHOD_VERSION,generated=saved.generatedBrief&&sameMethod?generateData(validateBrief(saved.generatedBrief)):null;applyDraft(draft);if(generated)render(generated);if(sameMethod)saveWork();else continuity.textContent="Brief retrouvé. La méthode a changé : générez un nouveau tirage. Vos anciens résultats restent dans vos exports."}}}
+catch{continuity.textContent="La sauvegarde locale n’a pas pu être relue. Vous pouvez rejouer un export JSON."}
+showContext();
+</script>
+</body>
+</html>

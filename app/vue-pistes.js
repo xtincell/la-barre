@@ -63,6 +63,7 @@ window.VUE_PISTES = (function () {
 
   function gestes(p, rafraichir) {
     return el("div.form-actions", {},
+      window.APPROCHES ? APPROCHES.bloc(p, rafraichir) : null,
       el("button.b", { type: "button", onclick: function () { seance(p, rafraichir); } },
         "Ouvrir une séance de concept"),
       el("button.b.nu", { type: "button", onclick: function () { editer(p, null, rafraichir); } },
