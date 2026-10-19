@@ -88,6 +88,42 @@ window.VAULT = (function () {
     if (!recu || !recu.brands || typeof recu.brands !== "object") throw new Error("Références illisibles");
     contexte = recu; etatContexte = "recu";
   }
+  /* An admitted identity pointer never becomes a second brand platform. */
+  function plateforme(type, id) {
+    if (type !== "marque") return null;
+    var local = DEPOT.trouve("marques", id);
+    var refs = (local && local.sourceRefs || []).filter(function (r) { return r.system === "LA_FUSEE"; });
+    var node = refs.filter(function (r) { return r.kind === "brand"; });
+    if (!node.length) return null;
+    var strategy = refs.filter(function (r) { return r.kind === "strategy"; });
+    var current = contexte.brands[id];
+    return { nodeId: node[0].id, name: current ? current.name : local.nom,
+      url: current ? current.url : (strategy.length === 1 ? "/cockpit/brand/fondation?strategy=" + encodeURIComponent(strategy[0].id) : null) };
+  }
+  function marquesDisponibles() {
+    var locals = DEPOT.liste("marques").slice();
+    var linked = {};
+    locals.forEach(function (m) { var p = plateforme("marque", m.id); if (p) linked[p.nodeId] = true; });
+    return locals.map(function (m) { return { id: m.id, nom: (contexte.brands[m.id] || {}).name || m.nom }; })
+      .concat((contexte.choices || []).filter(function (c) { return !linked[c.nodeId] && !locals.some(function (m) { return m.id === c.id; }); })
+        .map(function (c) { return { id: c.id, nom: c.name }; }));
+  }
+  function admettreMarque(id) {
+    var local = DEPOT.trouve("marques", id);
+    var choice = (contexte.choices || []).filter(function (c) { return c.id === id; });
+    if (local) {
+      if (choice.length && (!plateforme("marque", id) || plateforme("marque", id).nodeId !== choice[0].nodeId))
+        throw new Error("Cette identité de marque est déjà utilisée. Vérifiez son rattachement.");
+      return local.id;
+    }
+    if (etatContexte !== "recu" || choice.length !== 1 || id !== "MQ-FUSEE-" + choice[0].nodeId)
+      throw new Error("La marque n’est plus disponible. Relisez les références avant de la rattacher.");
+    var c = choice[0];
+    return DEPOT.ajoute("marques", { id: id, nom: c.name, sourceRefs: [
+      { system: "LA_FUSEE", kind: "brand", id: c.nodeId },
+      { system: "LA_FUSEE", kind: "strategy", id: c.strategyId }
+    ] }).id;
+  }
   function reference(type, id, cle) {
     if (type !== "marque") return null;
     var marque = contexte.brands[id];
@@ -119,13 +155,14 @@ window.VAULT = (function () {
   }
   function initialiser(apres) {
     if (location.pathname.indexOf("/la-barre/") !== 0) return;
-    var avant = JSON.stringify([contexte.brands, contexte.issues, contexte.sharingMode]), etatAvant = etatContexte;
+    var avant = JSON.stringify([contexte.brands, contexte.choices, contexte.issues, contexte.sharingMode]), etatAvant = etatContexte;
     etatContexte = "chargement";
-    return fetch("contexte.json", { cache: "no-store", credentials: "same-origin" })
+    var ids = DEPOT.liste("marques").map(function (m) { return m.id; });
+    return fetch("contexte.json" + (ids.length ? "?" + ids.map(function (id) { return "brand=" + encodeURIComponent(id); }).join("&") : ""), { cache: "no-store", credentials: "same-origin" })
       .then(function (r) { if (!r.ok) throw new Error("Références indisponibles"); return r.json(); })
       .then(connecter).catch(function () { etatContexte = "erreur"; })
       .then(function () {
-        if (apres && (etatAvant !== etatContexte || avant !== JSON.stringify([contexte.brands, contexte.issues, contexte.sharingMode]))) apres();
+        if (apres && (etatAvant !== etatContexte || avant !== JSON.stringify([contexte.brands, contexte.choices, contexte.issues, contexte.sharingMode]))) apres();
       });
   }
   function statutContexte() { return { etat: etatContexte, quand: contexte.generatedAt || null,
@@ -350,7 +387,7 @@ window.VAULT = (function () {
    * on ne supprime pas. Une révision sans changement n'en est pas une — on ne
    * consigne que ce qui bouge. */
   function ecrireNiveau(type, id, cle, val, motif) {
-    if (reference(type, id, cle)) return false;
+    if (plateforme(type, id) || reference(type, id, cle)) return false;
     var v = vaultLocal(type, id);
     if (!v) return false;
     var avant = v[cle];
@@ -390,7 +427,7 @@ window.VAULT = (function () {
   }
 
   function contresigner(type, id, cle) {
-    if (reference(type, id, cle)) return false;
+    if (plateforme(type, id) || reference(type, id, cle)) return false;
     var v = vaultLocal(type, id);
     if (!v || !v.inferences || !v.inferences[cle]) return false;
     v.inferencesLevees = v.inferencesLevees || [];
@@ -943,6 +980,7 @@ window.VAULT = (function () {
   }
 
   return { CHAMPS: CHAMPS, PILIERS: PILIERS, champsDuPilier: champsDuPilier, FICHE: FICHE, CATEGORIES: CATEGORIES,
+    plateforme: plateforme, marquesDisponibles: marquesDisponibles, admettreMarque: admettreMarque,
     connecter: connecter, initialiser: initialiser, reference: reference, statutContexte: statutContexte,
     revisions: revisions, inference: inference, contresigner: contresigner, inferencesDe: inferencesDe, sourceDe: sourceDe,
     clientDe: clientDe, marchesDuClient: marchesDuClient, categoriesDuClient: categoriesDuClient,

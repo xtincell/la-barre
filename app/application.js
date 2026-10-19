@@ -32,7 +32,7 @@ window.APP = (function () {
       quoi: "où en est chaque projet",
       vue: function () { return VUE_PROJETS; } },
     { cle: "galerie", ico: "galerie", nom: "Galerie",
-      quoi: "les campagnes, en images — Matanga, UPgraders, Friends Studio",
+      quoi: "les campagnes et leur structure, en images",
       vue: function () { return VUE_GALERIE; } },
     { cle: "referentiel", ico: "referentiel", nom: "Ressources",
       quoi: "marques, marchés, gabarits, base",
@@ -411,7 +411,7 @@ window.APP = (function () {
     var surExemple = local && AMORCE.present();
     noter("local=" + local + " surExemple=" + surExemple);
 
-    if (local && !surExemple) DEPOT.rattacherAuFichier(function () { noter("rattaché"); rendre(); });
+    if (local && !surExemple) DEPOT.rattacherAuFichier(function () { noter("rattaché"); actualiserReferences(); rendre(); });
 
     if (!local || surExemple) {
       DEPOT.referenceDisponible(function (m) {
@@ -424,7 +424,7 @@ window.APP = (function () {
         DEPOT.chargerReference(m, function (ok) {
           noter("référence chargée=" + ok);
           if (!ok && !local) AMORCE.poser();
-          rendre();
+          actualiserReferences(); rendre();
         });
       });
       if (!local) { AMORCE.poser(); noter("exemple posé en attendant"); }

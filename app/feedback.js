@@ -22,7 +22,7 @@ window.FEEDBACK = (function () {
     /* Les retours relevés dans les commentaires de tâche de Matanga People. Ce
      * canal n'était dans aucune table : la fiche du livrable plantait dessus.
      * Il se relève, il ne se saisit pas — le formulaire ne le propose pas. */
-    people: { nom: "Relevé de Matanga People", trace: true, releve: true },
+    people: { nom: "Relevé de " + ((MAISON.registres || {}).people || "registre des projets"), trace: true, releve: true },
   };
 
   /* Le niveau auquel un retour s'applique. C'est lui qui dit l'onde de choc et

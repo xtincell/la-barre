@@ -142,7 +142,7 @@ window.REGISTRE_RADAR = (function () {
 
     hote.appendChild(el("div.reg", {},
       el("div.reg-t", {},
-        el("h2.regt-l", {}, "Radar Matanga"),
+        el("h2.regt-l", {}, MAISON.registres.radar),
         el("span.regt-d", {}, age === null ? "Date de relevé inconnue"
           : age <= 0 ? "Relevé aujourd'hui"
           : "Relevé il y a " + age + (age > 1 ? " jours" : " jour")

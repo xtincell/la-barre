@@ -272,11 +272,11 @@ window.VUE_PROJETS = (function () {
 
       (r.radar || []).length
         ? el("div", { style: { "margin-top": ".7rem" } },
-            el("div.rlv-eti", {}, "Au Radar Matanga"),
+            el("div.rlv-eti", {}, "Au " + ((MAISON.registres || {}).radar || "registre des briefs")),
             el("p.rlv-p", {}, r.radar.join("  ·  ")),
             el("a.b.nu", { href: "#/referentiel/radar" }, "Voir le registre →"))
         : el("div", { style: { "margin-top": ".7rem" } },
-            el("div.rlv-eti", {}, "Au Radar Matanga"),
+            el("div.rlv-eti", {}, "Au " + ((MAISON.registres || {}).radar || "registre des briefs")),
             el("p.rlv-p", {}, "Aucun brief apparié. La campagne est documentée, "
               + "sa demande d'origine n'a pas été retrouvée au registre.")));
   }
@@ -1079,22 +1079,29 @@ window.VUE_PROJETS = (function () {
       { cle: "echeance", nom: "Échéance", type: "date" },
     ], {});
 
-    PANNEAU.ouvrir("Nouveau projet", "quatre champs suffisent", el("div", {},
+    var selMarque = el("select", { id: "nouveau-projet-marque" }, el("option", { value: "" }, "À rattacher plus tard"));
+    VAULT.marquesDisponibles().forEach(function (m) { selMarque.appendChild(el("option", { value: m.id }, m.nom)); });
+    PANNEAU.ouvrir("Nouveau projet", "le projet peut commencer avant que tout soit renseigné", el("div", {},
       el("div.champ", {}, el("label", {}, "Gabarit"),
         el("div.indice", {}, "Une demande simple n'a pas huit sections. Le gabarit se choisit maintenant et ne change plus."), selG),
       f.noeud,
+      el("div.champ", {}, el("label", { htmlFor: "nouveau-projet-marque" }, "Marque"), selMarque),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           var d = f.valeurs();
           if (!d.nom || !d.client) { AVIS.refus("Renseignez le client et le nom du projet."); return; }
+          var marqueId;
+          try { marqueId = selMarque.value ? VAULT.admettreMarque(selMarque.value) : null; }
+          catch (e) { AVIS.refus(e.message); return; }
           var p = DEPOT.ajoute("projets", {
             ref: d.ref || "PRJ-" + String(DEPOT.liste("projets").length + 1).padStart(4, "0"),
             nom: d.nom, nature: choixG, statut: "ouvert", equipe: [],
-            sections: { identite: { client: d.client || "", echeance: d.echeance || "" } },
+            sections: { identite: { client: d.client || "", echeance: d.echeance || "", marqueIds: marqueId ? [marqueId] : [] } },
             volets: [], livrables: [],
           });
           PANNEAU.fermer();
           location.hash = "#/projets/" + p.id;
+          VAULT.initialiser(function () { APP.rendre(); });
         } }, "Créer"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler")
       )
@@ -1221,7 +1228,7 @@ window.VUE_PROJETS = (function () {
     if (!x) return null;
     var n = (x.refs || []).length;
     return el("div.pe-people" + (n > 1 ? ".multiple" : n ? "" : ".absent"), {},
-      el("span.pep-t", {}, "Chez Matanga People"),
+      el("span.pep-t", {}, "Dans " + ((MAISON.registres || {}).people || "le registre des projets")),
       el("span.pep-r", {}, n
         ? (x.refs || []).join("  ·  ") + (x.nom ? "  —  " + x.nom : "")
         : "aucun dossier correspondant"),

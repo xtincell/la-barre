@@ -6,8 +6,7 @@
  * son KV, sinon ce que ses projets montrent, sinon une carte typographique
  * aux couleurs de sa marque — rangée par année, la plus récente d'abord.
  *
- * Elle montre tout, et sous quelle structure : Matanga, UPgraders, Friends
- * Studio. Les filtres se souviennent, par navigateur.
+ * Elle montre tout, sous la structure portée par chaque dossier. Les filtres se souviennent, par navigateur.
  */
 
 window.VUE_GALERIE = (function () {
@@ -21,14 +20,14 @@ window.VUE_GALERIE = (function () {
   }
   function garder() { try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (e) {} }
 
-  var NOMS_STRUCT = { matanga: "Matanga", upgraders: "UPgraders", friends: "Friends Studio", "nom-propre": "Nom propre" };
+  function nomStructure(id) { var s = STRUCTURE.liste().filter(function (x) { return x.id === id; })[0]; return s ? s.court : id; }
 
   /* Ce qu'une carte dit d'une campagne, calculé une fois. */
   function fiche(c) {
     var ps = CAMPAGNE.projets(c.id);
     var structs = {};
-    ps.forEach(function (p) { structs[p.structure || "matanga"] = true; });
-    var structure = Object.keys(structs)[0] || "matanga";
+    ps.forEach(function (p) { structs[p.structure || STRUCTURE.principale()] = true; });
+    var structure = Object.keys(structs)[0] || STRUCTURE.principale();
     var bouts = String(c.nom).split(" — ");
     var porteur = bouts.length > 1 ? bouts[0] : ((DEPOT.trouve("marques", (c.marqueIds || [])[0]) || {}).nom || "");
     var titre = (bouts.length > 1 ? bouts.slice(1).join(" — ") : c.nom).replace(/ · (UPgraders|Friends Studio)$/, "");
@@ -82,7 +81,7 @@ window.VUE_GALERIE = (function () {
       el("div.gal-visuel", {}, image ? COUVERTURE.rendre(couv, "galerie", x.c.nom) : carteTypo(x)),
       el("div.gal-texte", {},
         el("p.gal-porteur", {}, x.porteur,
-          x.structure !== "matanga" ? el("span.st-badge.st-" + x.structure, {}, NOMS_STRUCT[x.structure]) : null),
+          x.structure !== STRUCTURE.principale() ? el("span.st-badge.st-" + x.structure, {}, nomStructure(x.structure)) : null),
         el("h3.gal-titre", {}, x.titre),
         el("p.gal-meta", {}, [
           x.fil ? "Le fil de l'année" : "Temps fort",
@@ -147,12 +146,12 @@ window.VUE_GALERIE = (function () {
         el("p.studio-date", {}, "Le travail, en images"),
         el("h1", {}, "La galerie."),
         el("p.studio-intro", {}, toutes.length + " campagnes, " + projetsTotal + " projets, de "
-          + listeAns[listeAns.length - 1] + " à " + listeAns[0] + " — sous Matanga, UPgraders et Friends Studio. "
+          + listeAns[listeAns.length - 1] + " à " + listeAns[0] + " — " + STRUCTURE.liste().map(function (s) { return s.court; }).join(", ") + ". "
           + "Chaque carte ouvre sa campagne et ses projets."))));
 
     hote.appendChild(el("div.gal-filtres", {},
-      puces("Structure", [{ v: "toutes", nom: "Toutes", n: toutes.length }].concat(["matanga", "upgraders", "friends"]
-        .filter(function (s) { return parStruct[s]; }).map(function (s) { return { v: s, nom: NOMS_STRUCT[s], n: parStruct[s] }; })), "structure", tout),
+      puces("Structure", [{ v: "toutes", nom: "Toutes", n: toutes.length }].concat(STRUCTURE.liste()
+        .filter(function (s) { return parStruct[s.id]; }).map(function (s) { return { v: s.id, nom: s.court, n: parStruct[s.id] }; })), "structure", tout),
       puces("Année", [{ v: "toutes", nom: "Toutes" }].concat(listeAns.map(function (a) { return { v: a, nom: a, n: ans[a] }; })), "annee", tout),
       puces("Régime", [{ v: "tous", nom: "Tout" }, { v: "temps", nom: "Temps forts" }, { v: "fil", nom: "Fils de l'année" }], "regime", tout),
       champ));
