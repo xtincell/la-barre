@@ -277,7 +277,9 @@ window.VUE_CONSTATER = (function () {
    * avec sa cause et le geste qui le remonte. Les cinq autres se réduisent à
    * une ligne — ils restent lisibles, ils ne réclament rien. */
   function indicateurs(s) {
-    var reprise = BILAN.indicateurs(s).filter(function (m) { return m.nom === "livrables repris"; })[0];
+    var lus = BILAN.indicateurs(s);
+    var reprise = lus.filter(function (m) { return m.nom === "livrables repris"; })[0];
+    var delai = lus.filter(function (m) { return m.nom === "mon délai de verdict"; })[0];
     return [
       { cle: "briefs", v: s.traites + " / " + s.projets, nom: "briefs traités",
         ko: s.projets > 0 && s.traites < s.projets,
@@ -312,10 +314,11 @@ window.VUE_CONSTATER = (function () {
         ko: s.verdict !== null && s.verdict > s.cibleVerdict,
         creux: s.verdict === null,
         quoi: s.verdict === null
-          ? "aucun verdict daté : le seul indicateur qui porte sur moi ne se calcule pas"
-          : s.verdict > s.cibleVerdict
+          ? delai.sansQuoi
+          : (s.verdict > s.cibleVerdict
             ? "au-delà de ma cible de " + s.cibleVerdict + " j"
-            : "sous ma cible de " + s.cibleVerdict + " j",
+            : "sous ma cible de " + s.cibleVerdict + " j")
+            + (s.verdictsSansDelai ? " ; " + BILAN.sansDelai(s.verdictsSansDelai) : ""),
         pourquoi: "C'est la dérive nommée dans ma fiche : « une dépendance qui bloque toute décision en son absence ».",
         geste: { nom: "Trancher ce qui attend", ou: "#/valider/file" } },
 
