@@ -15,11 +15,13 @@ Double-cliquer `index.html`. Aucun serveur, aucune installation, aucun compte.
 Avec une URL, depuis la racine du dépôt :
 
 ```bash
-HOST=127.0.0.1 node servir.mjs 5173
+node servir.mjs 5173
 ```
 
-puis `http://localhost:5173/`. L'accès réseau doit être protégé par l'installation :
-ce serveur seul ne fournit pas d'authentification.
+puis `http://localhost:5173/`. Le serveur n'écoute que sur cette machine par défaut :
+il ne fournit aucune authentification. L'ouvrir au réseau (`HOST=0.0.0.0`) est un
+choix explicite, que l'installation doit alors protéger. Les images Docker le font,
+car leur port publié en dépend.
 
 L'image Docker utilise le même serveur, sans Nix ni dépendance de développement.
 Les données et médias sont conservés dans deux volumes : `/app/depots` et
