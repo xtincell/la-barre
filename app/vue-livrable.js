@@ -429,7 +429,7 @@ window.VUE_LIVRABLE = (function () {
   function poser(p, l, v, verdict, motif, apres) {
     v.verdict = verdict.cle; v.motif = motif; v.juge_le = new Date().toISOString();
     if (verdict.cle === "approuve") l.points.central = "pret";
-    DEPOT.ajoute("decisions", { objet: l.id, type: "livrable", projet: p.id, verdict: verdict.cle,
+    DECISION.poser({ objet: l.id, type: "livrable", projet: p.id, verdict: verdict.cle,
       motif: motif, quand: v.juge_le, qui: MAISON.titulaire, titre: l.nom });
     DEPOT.enregistrer();
     if (apres) apres();

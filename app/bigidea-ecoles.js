@@ -239,7 +239,7 @@ window.BI_ECOLES = (function () {
       var e = ecoleDe(c);
       if (e && e.etages.indexOf("territoire") !== -1) p.ecoles.territoire = c.ecole;
     }
-    DEPOT.ajoute("decisions", { objet: c.id, type: "bigidea", projet: p.id, verdict: "approuve",
+    DECISION.poser({ objet: c.id, type: "bigidea", projet: p.id, verdict: "approuve",
       motif: motif, quand: c.retenue_le, qui: MAISON.titulaire, titre: c.titre || c.phrase });
     DEPOT.tracer("big idea retenue", "projets", p.id, (e ? e.nom + " — " : "") + (c.titre || c.phrase));
   }

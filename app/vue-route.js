@@ -394,7 +394,7 @@ window.VUE_ROUTE = (function () {
           (p.sections.pistes || []).forEach(function (x) { if (x.statut === "retenue") x.statut = "ecartee"; });
           pi.statut = "retenue"; pi.motif = champ.value.trim(); pi.arbitre_le = new Date().toISOString();
           var n = creer.checked ? DISPOSITIF.ouvrirProduction(p, pi) : 0;
-          DEPOT.ajoute("decisions", { objet: pi.id, type: "piste", projet: p.id, verdict: "approuve",
+          DECISION.poser({ objet: pi.id, type: "piste", projet: p.id, verdict: "approuve",
             motif: pi.motif, quand: pi.arbitre_le, qui: MAISON.titulaire, titre: pi.titre });
           DEPOT.tracer("piste retenue", "pistes", p.id,
             pi.titre + (n ? " — " + n + " livrables ouverts en production" : ""));

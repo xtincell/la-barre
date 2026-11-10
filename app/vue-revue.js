@@ -281,7 +281,7 @@ window.VUE_REVUE = (function () {
 
   function rendre_verdict(pc, v, motif) {
     var quand = new Date().toISOString();
-    DEPOT.ajoute("decisions", {
+    DECISION.poser({
       objet: pc.id, type: pc.type, projet: pc.projet.id, verdict: v.cle,
       motif: motif, quand: quand, qui: MAISON.titulaire, titre: pc.titre,
     });
