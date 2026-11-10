@@ -24,6 +24,7 @@ jobs:
       - run: npm run test:provenances
       - run: npm run test:decisions
       - run: npm run test:bilan
+      - run: node --test tests/bilan-delai.test.mjs tests/ecarts.test.mjs tests/registre-radar.test.mjs
       - run: node outils/distribuer-approches.mjs --check
       - run: node --test tests/approches.test.mjs
       - run: node --test tests/entreprise.test.mjs
