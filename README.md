@@ -1,16 +1,80 @@
-# LA BARRE
+# La Barre
 
-**Le poste de travail du directeur de la création.** Du brief au livrable, et les talents
-qui les font.
+La Barre est le poste de travail du directeur de la création : du brief au
+livrable, et les talents qui les font.
 
-*Placer la barre* — fixer et tenir le standard créatif. *Tenir la barre* — garder le cap
-quand le client tire, quand le délai serre, quand deux concepts s'affrontent.
+C'est une application web statique. `index.html` charge directement les scripts
+de `app/` et les feuilles de `styles/`, sans étape de compilation. Un petit
+serveur Node, `servir.mjs`, la sert et enregistre la base dans un fichier. Il
+n'utilise que les modules natifs de Node.
 
----
+## Les vues
 
-## Lancer
+La navigation (`app/application.js`) compte sept entrées. Chaque mode a sa
+propre adresse, par exemple `#/referentiel/parametres`. Les anciennes adresses
+(`#/reglages`, `#/attentes`, `#/decider`…) mènent au mode correspondant.
 
-Double-cliquer `index.html`. Aucun serveur, aucune installation, aucun compte.
+| Entrée | Adresse | Ce qu'on y trouve | Fichiers de `app/` |
+|---|---|---|---|
+| Bureau | `#/bureau` | Les créations à regarder et les projets en cours. Un livrable à examiner s'ouvre en panneau. | `vue-studio.js`, `vue-revue.js`, `vue-asset.js` |
+| Décisions | `#/valider` | À traiter · Retours attendus | `vue-decider.js`, `file-action.js`, `vue-attentes.js` |
+| Planning | `#/planning` | Priorités · Plan de charge · Équipe · Livraisons | `vue-placer.js`, `vue-pipeline.js`, `vue-direction.js`, `vue-livraisons.js` |
+| Bilan | `#/reporting` | Indicateurs · Reprises · Évaluation · Bilan mensuel · Arbitrages | `vue-constater.js`, `bilan.js`, `vue-equipe.js`, `vue-findemois.js`, `vue-jurisprudence.js` |
+| Projets | `#/projets` | La liste des projets, leur lecture par marque, l'écran d'une marque ou d'une campagne, puis le dossier d'un projet. | `vue-projets.js`, `vue-studio.js` |
+| Galerie | `#/galerie` | Les campagnes et leur structure, en images, par année. | `vue-galerie.js` |
+| Ressources | `#/referentiel` | Marques · Marchés et supports · Registre des projets · Registre des briefs · Boîte d'entrée · Le disque · Doctrine · Paramètres | `vue-maison.js`, `vue-vault.js`, `vue-referentiel.js`, `registre-people.js`, `registre-radar.js`, `intake.js`, `disque.js`, `vue-doctrine.js`, `vue-reglages.js` |
+
+Les noms des deux registres viennent du profil de l'installation
+(`MAISON.registres`).
+
+Le dossier d'un projet s'ouvre à `#/projets/<id>/<section>`. Ses sections
+dépendent de la nature du projet (`MAISON.natures`, dans `app/maison-base.js`) :
+
+| Section | Fichier de `app/` |
+|---|---|
+| Identité, Brief-back | `vue-projets.js` (champs de `modele-champs.js`) |
+| Brief | `vue-brief.js` |
+| Plateforme de marque | `vue-socle.js` |
+| Stratégie | `vue-insight.js` |
+| Séance de créa | `vue-atelier.js` |
+| Big idea | `vue-bigidea.js` |
+| Pistes créatives | `vue-pistes.js`, `vue-route.js` |
+| Déclinaisons | `vue-planche.js` |
+| Livrables (matrice support × marché) | `vue-matrice.js` |
+| Planche de livraison | `vue-livraison.js` |
+| Présentation | `vue-presentation.js` |
+
+Un livrable s'ouvre en panneau (`vue-asset.js`, avec les onglets de
+`vue-livrable.js`). L'adresse `#/partage/<jeton>` affiche un document compilé
+ou la présentation, sans la navigation (`partage.js`). Depuis les pistes,
+« Explorer des approches » ouvre l'atelier `app/ateliers/approches/index.html` ;
+son résultat revient par un fichier JSON (voir
+[docs/RECEPTION-APPROCHES.md](docs/RECEPTION-APPROCHES.md)).
+
+## Ouvrir La Barre
+
+### Sans serveur
+
+Ouvrir `index.html` dans un navigateur. Aucune installation ni compte.
+
+Ce qui fonctionne :
+
+- tous les écrans ;
+- la base, gardée dans le `localStorage` de ce navigateur ;
+- à la première ouverture, le jeu d'exemple du profil historique : MT-0020 et
+  MT-0031 ;
+- l'export et l'import de la base en JSON.
+
+Ce qui ne fonctionne pas en `file://` :
+
+- l'écriture dans un fichier partagé : chaque navigateur garde sa propre base ;
+- les brouillons de reprise (IndexedDB) ;
+- l'envoi d'images et de médias : l'application refuse et demande `servir.mjs` ;
+- les routes du serveur local : lecture des exports (`/disque/`), PDF de la
+  présentation ;
+- les références de marque de La Fusée.
+
+### Avec `servir.mjs`
 
 Avec une URL, depuis la racine du dépôt :
 
@@ -21,312 +85,203 @@ HOST=127.0.0.1 node servir.mjs 5173
 puis `http://localhost:5173/`. L'accès réseau doit être protégé par l'installation :
 ce serveur seul ne fournit pas d'authentification.
 
-L'image Docker utilise le même serveur, sans Nix ni dépendance de développement.
-Les données et médias sont conservés dans deux volumes : `/app/depots` et
-`/app/assets/review`. Ils ne sont jamais inclus dans le contexte de construction.
-En production, garder l'entrée réseau protégée par la session de l'installation ;
-la construction d'une image ne crée pas de permission d'accès.
+`npm start` lance `node servir.mjs`, sur le port `5173` ou sur `PORT`. Un port
+passé en argument prime sur `PORT`. Pour l'adresse d'écoute, voir `HOST`
+plus bas.
 
-## Sauvegarder — à lire une fois
+Le serveur :
 
-Si `depots/manifeste.json` désigne une `reference`, le fichier servi fait foi.
-Les modifications sont sauvegardées automatiquement. **Ressources → Paramètres**
-indique leur réception, les divergences à arbitrer et les brouillons à reprendre.
-Deux modifications sur des champs différents se réunissent ; deux valeurs du même
-champ demandent un choix. Une coupure conserve un brouillon IndexedDB par onglet,
-récupérable après rechargement ou depuis un autre onglet du même navigateur.
+- sert en lecture tout fichier situé sous son dossier, sans authentification ;
+- n'accepte d'écriture (`PUT` ou `POST`) que pour les `.json` d'un dossier
+  `depots/`, les paquets `assets/review/partage/<24 caractères hexadécimaux>.json`
+  et les médias de `assets/review/` (images, vidéos et PDF envoyés en `data:`
+  base64), dans la limite de 24 Mo ;
+- réserve trois routes à la machine locale : `/disque/…` lit les exports,
+  `/disque-ouvrir` les ouvre avec la commande `open` de macOS, `/partage-pdf`
+  imprime la présentation en PDF avec Chrome puis l'envoie à l'instance en ligne ;
+- ajoute à chaque réponse l'en-tête `X-La-Barre-Runtime`, empreinte de
+  `index.html`, `app/` et `styles/`.
 
-Le serveur exige la révision lue (`ETag` → `If-Match`), vérifie et remplace le fichier
-dans une seule section critique. `X-Base` reste accepté pour les anciens clients ;
-les nouveaux importeurs doivent utiliser `If-Match`. Une création utilise
-`If-None-Match: *`. Une réponse perdue peut être redemandée avec le même corps.
-Cette garantie porte sur **un processus serveur** : écrire directement le JSON sur
-disque ou lancer plusieurs processus sur le même fichier contourne ce protocole.
+### Avec Docker
 
-En ouverture par double-clic ou sur un hébergement statique, le navigateur reste le
-seul stockage : exporter en fin de séance et importer au changement de poste.
-L'export reste disponible dans tous les modes. Effacer les données du navigateur
-efface ses brouillons non reçus ; cela ne remplace pas une sauvegarde du serveur.
-
-La première mise à jour conserve tout cache ancien différent dans une copie de
-reprise séparée, sans le pousser automatiquement sur le fichier partagé.
-
-`npm run test:persistance` exerce concurrence, idempotence, fichiers illisibles,
-rapprochement, coupures et reprise. Les parcours visuels vivent dans `tests/parcours.mjs`.
-
-## La référence créative d'une campagne
-
-Plusieurs projets peuvent retenir chacun une piste. Leur ordre dans la liste ne
-désigne pas le concept commun : l'écran campagne affiche la concurrence et permet
-de **Choisir la référence commune**, avec un motif. Ce choix conserve les pistes,
-leurs livrables et les décisions précédentes. Le cadrage et les contrôles lisent
-le même résolveur. Une modification du concept ou de son arbitrage rend le choix
-à relire ; ajouter un fichier de production ne le réarbitre pas.
-
-Le reçu conserve la paire projet/piste, le contenu créatif, sa version, le motif,
-la date et l'acteur local. Il s'agit d'un choix interne, distinct de l'accord
-client et de la diffusion. Une seule piste retenue sans choix explicite reste une
-référence déduite, annoncée comme telle. `npm run test:decisions` exerce concurrence,
-réponse perdue, reprise, péremption et conservation des décisions.
-
-La planche montre le nom de chaque maître, même sans maquette ou accroche.
-Les dépendances distinguent une référence à qualifier, une référence disponible
-et un élément manquant. Une restriction s'applique au seul fichier concerné.
-Ces lectures ne changent ni versions, ni arbitrages, ni droits déclarés.
-Compiler une gamme ne marque pas les produits du catalogue ; lire les blocages
-d'un dossier ne résout pas ceux des autres dossiers.
-`npm run test:manuel` vérifie aussi ces états avec les composants existants.
-
-## Le système visuel
-
-Tous les composants vivent dans **`app/ui.js` + `styles/systeme.css`**, et nulle part
-ailleurs : icônes, avatars, drapeaux de marché, anneau de progression, barres, sparkline,
-répartition, fil d'étapes (deux tailles), cartes de statistique, bannière, mur de
-vignettes, bande de vignettes, frise datée, cartes numérotées, graphe de dépendances,
-onglets.
-
-Trois règles tenues : **aucune couleur écrite en dur** hors des jetons de `base.css` —
-vérifiable par `grep -n "#[0-9a-f]\{6\}" app/*.js`, qui ne doit rien rendre en dehors de
-`maison.js` et `amorce.js` · **aucun composant recopié** d'un écran à l'autre · **chaque
-composant sait dire son état vide**, comme la vignette dit « aucun visuel ».
-
-## Les écrans
-
-| Écran | Ce qu'on y fait |
-|---|---|
-| **Mon lundi** | Le rituel. Tout ce qui attend un verdict, avec l'idée et les critères d'acceptation affichés à côté. Quatre verdicts, et le motif se choisit d'abord dans les critères écrits. Puis ce qui bloque, la pile à ranger, et ce que tu attends des autres. |
-| **Mes projets** | La liste, puis la vue 360 : les sections, les volets, la matrice support × marché, les livrables avec leurs dix axes de complétude. |
-| **Mes attentes** | Ce que tu as renvoyé et qui n'est pas revenu — à qui, depuis combien de jours, sur quel critère, avec le message d'origine. |
-| **Référentiel** | Marchés, supports et leurs gabarits par marché, assets et leurs droits. Il se remplit par l'usage, jamais en préalable. |
-| **Réglages** | Export et import, jeu d'exemple, tes règles, l'équipe, le journal. |
-
-Et **six écrans de détail**, ouverts depuis les onglets d'un projet :
-
-| Écran | Ce qu'il montre |
-|---|---|
-| **Brief** | La santé du brief en anneau avec sa liste de contrôle, le problème en une phrase, ce qu'on va dire et faire en trois colonnes, les preuves, la cible, les territoires avec leurs langues, **la frise du timing**. À droite : ce qui manque, les contacts clés. |
-| **Big idea** | L'idée en une phrase et sa signature, la mécanique, le rattachement au socle, la condition de validité. Les routes côte à côte, les exécutions qu'elle a produites en mur de vignettes. À droite : **validation centrale et locales par marché**, origine et périmètre, activité. |
-| **Plateforme de marque** | Neuf cartes numérotées — chaque carte vide se voit, c'est la dette du socle. Un bouton **vérifie le vocabulaire** : les mots que la marque ne dit jamais et les noms retirés, détectés dans tout le projet (règles R10 et R12). |
-| **Livrable** | L'aperçu, **le fil d'étapes en grand**, « où en sommes-nous » en une phrase, trois chiffres — tours consommés, temps réel contre estimé, complétude. **La bannière ambre quand les tours dépassent le vendu.** Les critères en ✓/✕, **les retours posés sur le visuel et les mises en situation**, les dépendances en graphe, l'historique des versions. |
-| **Planche des KV** | Le niveau qui manquait : **le KV maître par marché, avant déclinaisons**. Une ligne par marque, une case par marché, et chaque case porte sa combinaison — marque, accroche, langue, SKU montrés, l'enfant, le métier illustré. La case dit si elle est conforme à *son* marché : le Ghana servi en français, l'accroche de neuf mots, le SKU qui n'est pas distribué là. **Décliner** engendre les formats depuis le KV — et toute reprise du maître les périme, avec le nombre écrit. |
-| **Présentation** | Le dossier client, **engendré depuis le projet**. Chaque page dit d'où elle tire ce qu'elle montre ; une page dont la source est vide affiche sa dette et le bouton qui y renvoie — l'outil ne remplit jamais un champ dont il n'est pas propriétaire. Mode **présenter** en plein écran, flèches au clavier. À la fin de séance, les retours se saisissent et **redescendent sur la pièce qu'ils visent**, comme annotations. |
-
-## Les gestes
-
-- **Ctrl/⌘ + K** — noter quelque chose. Une ligne, ça part dans la pile *à ranger*, on
-  range au moment du rituel. C'est le seul endroit où l'on a le droit d'être sale.
-- **Annoter** — cliquer sur un visuel pose un point numéroté, avec son auteur, sa date et
-  sa version. Une annotation qui arrive après une validation n'est pas un commentaire :
-  l'outil l'appelle une reprise, et le dit avant qu'on la pose.
-- **Mettre en situation** — le mockup se fabrique ailleurs ; ici il est rattaché à sa pièce
-  et à sa version. Le jour où le visuel repart en V2, l'outil sait que ce mockup montre
-  une image qui n'existe plus.
-- **Rechercher** — projets, livrables, pistes, marchés, supports, assets, attentes.
-- **Imprimer** — la mise en page tient sur papier pour la réunion de production.
-- **Renvoyer** — sur toute pièce : le destinataire est proposé par la table des
-  souverainetés, le message est rédigé, l'attente est datée. L'outil n'envoie rien : il
-  écrit, tu portes.
-
-## Les trois niveaux d'un visuel
-
-C'est la hiérarchie que la planche imprimée aplatit, et que l'outil tient :
-
-| Niveau | Ce qu'il porte | Ce qui le périme |
-|---|---|---|
-| **Idée** | l'idée en une phrase, sa mécanique, sa signature | rien : elle est arbitrée une fois |
-| **KV maître, un par marché** | marque, accroche, langue, SKU montrés, enfant, métier illustré, mentions | un écart de conformité à son marché |
-| **Déclinaison** | un format, hérité d'un KV | **une nouvelle version du maître** — toutes basculent, le nombre est écrit |
-
-Une planche papier montre quatorze images côte à côte et ne dit jamais qu'un SKU n'est pas
-distribué au Ghana. Ici la planche est **une vue** sur ces quatorze objets — pas l'objectif.
-
-## L'ordre du pipeline — ce qui passe avant, et pourquoi
-
-Une agence ne manque pas de travail, elle manque d'ordre. Le vrai risque n'est pas de mal
-faire : c'est de passer trois jours sur les déclinaisons d'une piste que personne n'a payée
-pendant qu'un client qui a signé attend son EXE.
-
-L'ordre ne se discute pas, il se déduit de l'état commercial de la route :
-
-| Rang | État | La règle |
-|---|---|---|
-| **Ferme** | validé **et payé** | rétroplanning contractuel. Rien ne passe devant. Un jour pris ici est un jour pris à un client qui a signé |
-| **Engagé** | validé, pas encore facturé | on produit, et on relance la facturation : produire sans bon de commande, c'est financer le client |
-| **Présenté** | chez le client | on ne décline pas. Tant qu'aucune route n'est retenue, chaque format produit peut être jeté |
-| **Spéculatif** | en élaboration | se fait avec le temps qui reste. Mûrir une piste augmente ses chances — jamais au prix d'un ferme |
-
-**La validation client est le pivot.** C'est à ce moment que les KV et leurs adaptations
-passent en **demande d'EXE**, que la route change de rang, et que la priorité du pipeline
-bascule. L'écran le dit avant d'appliquer : combien de pièces passent en exécution, et
-combien de pièces spéculatives passent après.
-
-**Le conflit d'ordre** est la seule alerte qui compte : quelqu'un tient du spéculatif
-pendant qu'un engagement contractuel est en retard. *« Ce n'est pas un reproche : c'est
-l'ordre qui n'a pas été dit. Le spéculatif ne s'arrête pas, il passe après. »*
-
-**La maturité d'une piste** se lit en pourcentage — idée, sacrifice et argument, KV maître,
-deux à trois KV montrables, dispositif, rétroplanning, situations, adaptations,
-déclinaisons. Les quatre premiers sont le **minimum client** : en dessous, on présente une
-intention, pas une campagne.
-
-## Ce que le client reçoit
-
-À minima : **le problème, la stratégie, l'idée, les routes et leurs KV.** Pas plus. La
-présentation se compose à ce niveau par défaut ; un bouton la passe en **pitch ambitieux**
-— dispositif, planches de déclinaisons, mises en situation, calendrier. Mettre les
-déclinaisons dans une présentation spéculative, c'est promettre un travail qu'on n'a pas
-vendu.
-
-## Ce qui ouvre la production
-
-Une route retenue n'ouvre rien. Ce qui ouvre la production, c'est **le fichier** — et la
-porte a cinq conditions, chacune avec son prix :
-
-| Condition | Ce que ça coûte de passer outre |
-|---|---|
-| Route retenue | produire sur une route non arbitrée, c'est parier |
-| Fichier ouvert | aucune correction possible sans tout refaire |
-| BAT signé | l'imprimeur travaille sans accord écrit : l'erreur est pour l'agence |
-| Mise en situation liée au fichier | le mockup montre une image d'écran, pas ce qui part à l'impression |
-| Rien de périmé | envoyer un fichier d'une version antérieure, c'est imprimer ce qui a été corrigé |
-
-Chaque fichier est rattaché à **la version de sa pièce**. Le jour où elle repart en V2,
-il apparaît comme périmé.
-
-## Tout se versionne, pas seulement les livrables
-
-Le brief, la plateforme, la stratégie, l'idée, les routes : chacun porte son numéro de
-version et son historique. Une version **naît d'une cause écrite**, choisie dans cinq
-origines — première, décision interne, retour client, non-conformité, nouveau périmètre.
-Seules deux comptent dans les tours de révision vendus, et c'est ce compteur qui rend la
-clause de reprise opposable en négociation.
-
-Conséquence directe : **un verdict rendu sur la V1 ne couvre plus la V2.** L'écran le dit
-au lieu de laisser croire que c'est validé.
-
-## Le principe
-
-**Rien ne bloque, rien ne peut se taire, et tout raccourci affiche son prix.**
-
-Aucune transition n'est interdite. Mais un blocage est un objet : il a un propriétaire,
-une date de naissance, un compteur de jours, et il ne disparaît que résolu. Et quand tu
-prends un raccourci, l'outil écrit ce qu'il coûte — *« vous assignez sans critères
-d'acceptation : ce travail ne pourra être refusé que par goût »*.
-
-## Changer de maison
-
-Tout ce qui est propre à une agence vit dans **`app/maison.js`** : les postes, les délais,
-les étages, les critères de refus, le vocabulaire surveillé, les axes, les gabarits de
-projet, la palette. Le reste du code n'écrit jamais « Matanga » ni « 24 h ».
-
-Installer une autre agence : remplacer ce fichier. Rien d'autre.
-
-## Ajouter un champ
-
-Dans **`app/modele-champs.js`**, une ligne dans la section concernée. Le formulaire, la
-lecture, la complétude et les manquants suivent tout seuls.
-
-**Le schéma est versionné.** On n'ajoute ni ne renomme un champ sans incrémenter
-`CHAMPS.version`, sinon les projets d'avant ne se lisent plus. Une évolution du process se
-décide, se date, et s'applique aux projets suivants — pas aux anciens, sinon les
-indicateurs ne se comparent plus d'un mois sur l'autre.
-
-## Le jeu d'exemple
-
-MT-0020 est pré-rempli **avec ses trous** : brief à 4 champs d'identité sur 9, décideur
-final absent depuis le 10 août, échéance dépassée depuis le 17, deux pistes en lice et
-aucune retenue. C'est ce qui rend l'exemple utile — on voit l'outil sur un dossier qui va
-mal. Réglages → *Vider l'exemple* pour repartir propre.
-
-Un second exemple, **MT-0031**, porte le cas multi-marchés : quatorze KV maîtres, trois
-marques, six marchés — avec ses erreurs volontaires, celles qu'une planche imprimée ne
-signale pas. Un marché anglophone servi en français, une accroche de neuf mots, deux SKU
-montrés là où ils ne sont pas distribués. Les visuels ne sont pas fournis : ils viennent
-de ton artboard.
-
-## Ce que l'outil ne fait pas
-
-Comptabilité, paie, stock, sauvegarde technique, achat média, production graphique. Il
-pointe vers eux, il ne les remplace pas. Il ne fabrique rien et ne facture rien : il
-garantit qu'aucun problème ne se découvre à l'impression.
-
-## Fichiers
-
-```
-index.html
-app/
-  maison.js          la configuration : postes, délais, critères, axes, palette
-  outils.js          construction d'éléments, dates, formatage
-  depot.js           persistance, journal, trace de lecture, export/import
-  modele-champs.js   les champs de chaque section, versionnés
-  regles.js          blocages calculés, prix des raccourcis, complétude, grilles, vocabulaire
-  amorce.js          le jeu d'exemple MT-0020
-  panneau.js         le panneau latéral
-  formulaire.js      moteur de saisie et de lecture
-  renvoi.js          « ceci n'est pas à moi » : critère, destinataire, message, attente
-  vue-lundi.js       le rituel
-  vue-projets.js     liste et vue 360
-  vue-pistes.js      pistes créatives et séance de concept
-  vue-matrice.js     volets, matrice support × marché, livrables et axes
-  vue-attentes.js    ce qui n'est pas revenu
-  vue-referentiel.js marchés, supports, gabarits, assets et droits
-  vue-reglages.js    dépôt, règles, équipe, journal
-  application.js     barre, routage, recherche, capture rapide
-styles/
-  base.css  ecrans.css
-documents/           les fiches et amendements à remettre
+```bash
+docker build -t la-barre .
+docker run -d -p 127.0.0.1:5173:3000 \
+  -v la-barre-depots:/app/depots -v la-barre-review:/app/assets/review la-barre
 ```
 
-## Provenance des plateformes
+L'image part de `node:22-alpine` et lance `node servir.mjs 3000`, sans
+dépendance de développement. Les deux volumes gardent la base et les médias.
+Le contexte de construction (`.dockerignore`) ne retient qu'une liste de
+fichiers et de dossiers : ni `depots/`, ni `assets/`, ni `tests/`. Il retient
+en revanche `docs/`, `documents/`, `extraits/`, `sources/`, `kit-ordi-dedie/`
+et `outils/`, que le serveur sert comme le reste.
 
-L’importeur existant `outils/completer-plateformes-2026.py` (Python 3) sépare les
-valeurs reçues (`recu`) des hypothèses (`infere`). Chaque hypothèse peut porter
-son motif dans `inferences[champ].pourquoi`, le même format que le dépôt. Un
-`motif` commun explicite à la marque est aussi accepté. Sans motif précis,
-la provenance reste « à qualifier » : la liste `_sources` du lot ne prouve
-jamais une inférence ni l’usage d’un document par un autre champ.
+Ce Dockerfile est celui de l'installation historique. Pour une autre
+entreprise, une image neutre se construit à partir de
+`outils/distribuer-entreprise.mjs` et de `profils/entreprise/Dockerfile`. Elle
+tourne sous l'utilisateur `node` et crée au premier démarrage
+`depots/entreprise.json` et son manifeste. Voir
+[docs/INSTALLATION-ENTREPRISE.md](docs/INSTALLATION-ENTREPRISE.md).
 
-L’importeur conserve les valeurs déjà présentes et les révisions des inférences
-remplacées par une valeur reçue. Il ne répare pas rétroactivement une provenance
-historique ni ne confirme une hypothèse. Un rapprochement des anciens motifs
-génériques exige les sources exactes et une révision explicite. Le résultat est
-un fichier de travail : sa réception dans le dépôt partagé doit passer par son
-protocole de révision (`If-Match`), jamais écraser directement le fichier servi.
+| Variable | Effet |
+|---|---|
+| `PORT` | Port d'écoute quand aucun port n'est passé en argument. Défaut : `5173`. L'image pose `PORT=3000`, et sa commande passe aussi `3000`. |
+| `HOST` | Adresse d'écoute. Sur `main`, sans elle, `servir.mjs` écoute sur `0.0.0.0`, c'est-à-dire sur toutes les interfaces. À la fusion de #14, ce défaut devient `127.0.0.1`, et les deux Dockerfile posent `HOST=0.0.0.0`. |
+| `LA_BARRE_EXPORT_MATANGA`, `LA_BARRE_EXPORT_UPGRADERS` | Dossiers lus par `/disque/`. Défaut : les deux exports rangés dans `~/Downloads`. |
+| `LA_BARRE_CHROME` | Chrome utilisé par `/partage-pdf`. Défaut : le chemin de Google Chrome sous macOS. |
+| `LA_BARRE_EN_LIGNE` | Instance où `/partage-pdf` envoie le PDF et la base. Défaut : `https://labarre.powerupgraders.com/`. |
 
-Le choix de marque conserve une identité historique déjà reliée au même nœud
-La Fusée. Un ancien choix rejoint cette entrée sans créer de doublon ; plusieurs
-entrées pour ce même nœud demandent un choix explicite. Des noms identiques ne
-constituent jamais une correspondance d’identité. Les champs locaux historiques
-gardent leur contrat de lecture ; aucune plateforme n’est copiée.
+## Où vivent les données
 
-Vérification : `npm run test:provenances` ; cas synthétiques isolés, aucun corpus
-client ni appel externe. Le parcours complet du navigateur reste distinct.
+Il n'y a pas de compte. La personne qui agit se choisit dans Ressources →
+Paramètres, parmi les personnes de la base. Ce choix est gardé dans le
+`sessionStorage` de l'onglet. Il attribue les gestes ; il n'ouvre aucun droit.
 
-## Assise du bilan
+**Dans le navigateur.** La base entière est copiée dans le `localStorage`, sous
+la clé `la-barre`. Sans fichier servi, c'est le seul endroit : chaque navigateur
+a sa propre base. Ressources → Paramètres affiche sa taille face à un plafond
+de 5 Mo.
 
-Le taux de reprise client / périmètre porte sur les historiques enregistrés
-dont les causes sont reconnues. Les livrables sans historique lisible restent
-comptés à part ; ils ne constituent pas des zéros. Le dépassement relit la
-même cohorte de remise, avec les tours vendus renseignés. La charge calculée
-reste une estimation explicite (`tours dépassés × estimé × 0,5`), et aucun jour
-n'est inventé si l'estimé manque. Ces réserves suivent aussi l'export texte.
+**Dans un fichier.** Avec `servir.mjs`, si `depots/manifeste.json` désigne une
+`reference` (`{"reference": "nom.json"}`), le fichier `depots/nom.json` fait foi.
+Il doit déjà exister : l'application ne le crée pas. Sans manifeste, elle reste
+sur la base du navigateur, même servie. La base est envoyée au serveur environ
+une seconde après le dernier geste. Le `localStorage` reste un filet.
 
-Les notes de résultat restent enregistrables et visibles quand elles sont
-partielles. Mesure, valeur (y compris zéro), source, niveau reconnu et date
-valide sont nécessaires pour les qualifier. La chronologie de marque et le
-contrôle des dossiers clos relisent cette même qualification. Une preuve
-renseignée ne signifie pas que sa source a été vérifiée. Le bilan de campagne
-et le transfert dans La Fusée restent des réceptions distinctes.
+- Le serveur exige la révision lue (`ETag` → `If-Match`). Une création utilise
+  `If-None-Match: *`. Sans l'une ni l'autre, le serveur répond 428. Si le
+  fichier a changé entre-temps, il répond 409. `X-Base` reste accepté pour les
+  anciens clients.
+- Le serveur contrôle puis remplace le fichier dans une seule section critique.
+  Une réponse perdue peut être redemandée avec le même corps. Un JSON illisible
+  n'écrase jamais la base.
+- Cette garantie porte sur un seul processus serveur. Écrire le fichier
+  directement, ou lancer plusieurs processus sur le même fichier, contourne ce
+  protocole. `outils/ingerer-corpus.mjs --ecrire` écrit ainsi
+  `depots/beignet-paradise.json`.
+- Deux modifications sur des champs différents se réunissent. Deux valeurs du
+  même champ demandent un choix : Ressources → Paramètres → « Rapprocher les
+  modifications ».
+- Tant qu'une sauvegarde n'est pas reçue, chaque onglet garde un brouillon dans
+  IndexedDB (`la-barre-reprises`). Il est repris au rechargement. Le brouillon
+  d'un autre onglet se reprend depuis Ressources → Paramètres.
 
-Vérification : `npm run test:bilan`, sur fixtures synthétiques.
+**Les médias.** Les vignettes et médias envoyés sont rangés dans
+`assets/review/`. La base n'en garde que le chemin.
 
-## Ce qui vient ensuite
+**Export et import.** Le bouton de sauvegarde, en bas de la barre latérale, et
+« Exporter la base » (Ressources → Paramètres) téléchargent la base en JSON
+(`la-barre_<date>_<heure>.json`). Ils fonctionnent dans tous les modes.
+« Importer un fichier » remplace la base par le fichier choisi. Un fichier d'un
+schéma plus récent que 5 est refusé ; un plus ancien est migré. Avec un fichier
+servi, la base importée est ensuite sauvegardée dans ce fichier.
 
-**1b — encadrer.** Mon équipe, Mon standard, la fiche d'évaluation pré-remplie de faits,
-l'estimé et le réel, Ma fin de mois.
+`depots/*.json` et `assets/` sont exclus de Git (`.gitignore`) et de l'image.
 
-**1c — tenir la chaîne.** Preuves, contacts et décideurs locaux, reprises chiffrées,
-bibliothèque.
+**Derrière La Fusée.** Servie sous un chemin `/la-barre/`, l'application lit
+aussi `contexte.json`, les références de marque de La Fusée, avec les cookies de
+la même origine. Si ce contexte le permet, la publication d'un document passe
+par `POST publication`, et son lien prend la forme
+`/la-barre/partage/<jeton>/document`. `servir.mjs` ne sert ni `contexte.json`
+ni `publication` : ils viennent de l'hôte qui sert `/la-barre/`. Selon
+[docs/INSTALLATION-ENTREPRISE.md](docs/INSTALLATION-ENTREPRISE.md), La Fusée
+fournit ce raccord authentifié. Hors de ce chemin, l'application ne fait aucune
+de ces requêtes.
 
-**Puis l'intégration à Matanga People** : l'export devient un état partagé, les attentes
-deviennent des blocages chez leurs destinataires, les notifications partent seules.
+## Lancer les tests
+
+La CI (`.github/workflows/verification.yml`) tourne sous Node 22, à chaque push
+et à chaque pull request vers `main`, sans `npm install`. Le job `verification`
+exécute :
+
+```bash
+node --check servir.mjs
+for fichier in app/*.js; do node --check "$fichier" || exit; done
+npm run test:persistance
+npm run test:manuel
+npm run test:marches
+npm run test:provenances
+npm run test:decisions
+npm run test:bilan
+node outils/distribuer-approches.mjs --check
+node --test tests/approches.test.mjs
+node --test tests/entreprise.test.mjs
+```
+
+S'il réussit, deux jobs construisent et exercent les images Docker :
+
+- `image` lance l'image racine avec deux volumes. Il vérifie la page d'accueil
+  et l'en-tête `X-La-Barre-Runtime`, l'absence des fichiers privés (404), la
+  création d'une base, le refus d'une révision dépassée (409), l'écriture d'un
+  média et d'un paquet de partage, leur conservation après redémarrage et
+  l'état `healthy`.
+- `image-entreprise` prépare la distribution neutre et construit son image. Il
+  vérifie une base `Entreprise` vide, l'exemple désactivé, l'absence de noms de
+  l'installation historique et des fichiers privés (404), puis une écriture
+  conservée après redémarrage.
+
+Les scripts de `package.json` :
+
+| Script | Commande |
+|---|---|
+| `npm start` | `node servir.mjs` |
+| `npm test` | `node tests/parcours.mjs` |
+| `npm run test:persistance` | `node --test tests/persistance.test.mjs tests/reconciliation.test.mjs tests/depot-reprise.test.mjs` |
+| `npm run test:manuel` | `node --test tests/saisie-manuelle.test.mjs tests/acteur.test.mjs tests/formulaire.test.mjs tests/lecture-dependances.test.mjs` |
+| `npm run test:marches` | `node --test tests/marches.test.mjs` |
+| `npm run test:provenances` | `node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs` |
+| `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs` |
+| `npm run test:bilan` | `node --test tests/bilan-preuves.test.mjs` |
+
+Les tests `node --test` n'ont besoin d'aucune dépendance npm ;
+`tests/entreprise.test.mjs` appelle aussi `git`. `npm test` lance un
+parcours dans Chromium avec Playwright, sur un serveur éphémère et la base
+fictive `tests/fixtures/studio.json`. Il demande `npm install` et un Chromium
+pour Playwright (`npx playwright install chromium`, ou `BROWSER_CHANNEL` pour
+un navigateur installé). La CI ne le lance pas.
+
+## Ce qui manque
+
+- **Aucun câblage vers Radar.** Le registre des briefs (Ressources) est un
+  relevé. `outils/ingerer-corpus.mjs` le lit dans un CSV d'un corpus situé hors
+  du dépôt (`../DOSSIER PROJETS — XTINCELL/00 DOCUMENTATION/RADAR — briefs releves.csv`)
+  et l'écrit dans la base. L'application ne lit pas Radar en direct et ne lui
+  envoie aucune décision.
+- **Un registre des projets sans source dans le dépôt.** Le registre des
+  projets se lit dans la base, mais aucun outil du dépôt ne le remplit.
+- **Des écarts qu'on ne peut pas écarter.** `ECARTS.ecarterUn` et
+  `ECARTS.reprendre` (`app/ecarts.js`) n'ont aucun appelant. Depuis
+  l'interface, un écart ne peut être ni écarté ni repris. Les écarts déjà
+  écartés dans une base (`ecartsEcartes`) restent lus, notamment par les
+  arbitrages.
+- **Aucune authentification dans `servir.mjs`.** Quiconque joint son port peut
+  lire tout le dossier et écrire là où le serveur l'accepte.
+- **Aucun envoi.** « Demander un retour » rédige le message et date l'attente.
+  L'application n'envoie ni e-mail ni notification.
+- **Des routes locales pensées pour macOS.** `/disque-ouvrir` appelle `open` ;
+  `/partage-pdf` cherche Chrome à son chemin macOS, sauf si `LA_BARRE_CHROME`
+  est défini.
+- **Un parcours navigateur hors CI.** `npm test` ne se lance qu'à la main.
+
+## Adapter l'installation
+
+Le profil d'une installation vit dans `app/maison.js` ; les règles communes,
+dans `app/maison-base.js`. Les champs de saisie sont déclarés dans
+`app/modele-champs.js`, dont le schéma porte une version (`CHAMPS.version`).
+
+## Documents
+
+- [docs/INSTALLATION-ENTREPRISE.md](docs/INSTALLATION-ENTREPRISE.md) — image
+  neutre pour une autre entreprise.
+- [docs/RECEPTION-PERSISTANCE.md](docs/RECEPTION-PERSISTANCE.md),
+  [docs/RECEPTION-SAISIE.md](docs/RECEPTION-SAISIE.md),
+  [docs/RECEPTION-MARCHES.md](docs/RECEPTION-MARCHES.md),
+  [docs/RECEPTION-APPROCHES.md](docs/RECEPTION-APPROCHES.md) — notes de
+  réception de ces chantiers.
+- `documents/` et `sources/` — documents de travail de l'installation
+  historique : fiches, processus, doctrine, modèles.
+
+## Licence
+
+Licence propriétaire — UPgraders SARL. Voir [LICENSE](LICENSE).
