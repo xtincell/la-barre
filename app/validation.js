@@ -166,7 +166,7 @@ window.VALIDATION = (function () {
             portee: INFERENCE.compte(p, cle) ? "travail" : "document",
             confirmationsEnAttente: INFERENCE.liste(p, cle).map(function (x) { return x.cle; }),
             version: VERSION.num(objet) };
-          DEPOT.ajoute("decisions", { objet: cle, type: cle, projet: p.id,
+          DECISION.poser({ objet: cle, type: cle, projet: p.id,
             verdict: verdict.cle, motif: motif || null, quand: objet.validation.quand,
             qui: MAISON.titulaire, acteur: objet.validation.acteur, version: objet.validation.version,
             portee: objet.validation.portee, titre: def.nom });

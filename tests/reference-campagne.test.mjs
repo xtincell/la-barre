@@ -17,7 +17,7 @@ async function atelier(ps = [projet('A', piste('a')), projet('B', piste('b'))]) 
       tracer(...args) { data.journal.push(args); }, enregistrer() { saves++; } },
   });
   ctx.window = ctx;
-  vm.runInContext(await readFile(new URL('../app/campagne.js', import.meta.url), 'utf8'), ctx);
+  for (const name of ['decision', 'campagne']) vm.runInContext(await readFile(new URL('../app/' + name + '.js', import.meta.url), 'utf8'), ctx);
   return { ctx, data, publications, get saves() { return saves; } };
 }
 
