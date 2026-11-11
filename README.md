@@ -20,7 +20,7 @@ propre adresse, par exemple `#/referentiel/parametres`. Les anciennes adresses
 | Décisions | `#/valider` | À traiter · Retours attendus | `vue-decider.js`, `file-action.js`, `vue-attentes.js` |
 | Planning | `#/planning` | Priorités · Plan de charge · Équipe · Livraisons | `vue-placer.js`, `vue-pipeline.js`, `vue-direction.js`, `vue-livraisons.js` |
 | Bilan | `#/reporting` | Indicateurs · Reprises · Évaluation · Bilan mensuel · Arbitrages | `vue-constater.js`, `bilan.js`, `vue-equipe.js`, `vue-findemois.js`, `vue-jurisprudence.js` |
-| Projets | `#/projets` | La liste des projets, leur lecture par marque, l'écran d'une marque ou d'une campagne, puis le dossier d'un projet. | `vue-projets.js`, `vue-studio.js` |
+| Projets | `#/projets` | La liste des projets, leur lecture par marque, l'écran d'une marque ou d'une campagne (avec son bilan), puis le dossier d'un projet. | `vue-projets.js`, `vue-studio.js` |
 | Galerie | `#/galerie` | Les campagnes et leur structure, en images, par année. | `vue-galerie.js` |
 | Ressources | `#/referentiel` | Marques · Marchés et supports · Registre des projets · Registre des briefs · Boîte d'entrée · Le disque · Doctrine · Paramètres | `vue-maison.js`, `vue-vault.js`, `vue-referentiel.js`, `registre-people.js`, `registre-radar.js`, `intake.js`, `disque.js`, `vue-doctrine.js`, `vue-reglages.js` |
 
@@ -147,9 +147,10 @@ libre. Elle se rattache à un projet, à une campagne ou à une marque. Passent
 par lui : la big idea, la piste ou l'idée retenue ou écartée, la référence
 commune d'une campagne, le verdict sur un document, un livrable ou une pièce
 en revue, le concept écarté de la réserve d'une marque, le brief accepté ou
-retourné, la case écartée de la composition d'une campagne et l'écart d'un
-projet à la référence commune. Chaque décision ajoute une ligne au journal,
-qui porte l'acteur. Toutes portent `qui`, le poste titulaire. La référence de
+retourné, la case écartée de la composition d'une campagne, l'écart d'un
+projet à la référence commune et l'arrêt du bilan d'une campagne. Chaque
+décision ajoute une ligne au journal, qui porte l'acteur. Toutes portent
+`qui`, le poste titulaire. La référence de
 campagne, le verdict sur un document et les gestes de choix ajoutés au
 registre portent aussi `acteur`, la personne choisie ci-dessus. Les six autres
 écrivains d'origine (big idea retenue, idée tranchée, piste retenue sur deux
@@ -165,6 +166,23 @@ l'objet visé, relu dans la base ; sinon la décision est refusée et rien n'est
 écrit. L'écart d'un projet de campagne se déclare depuis l'écran de la
 campagne, sous la référence commune ; il fait taire le contrôle « piste propre
 alors que … gouverne la campagne » pour ce seul projet.
+
+**Le bilan de campagne.** C'est le diagnostic que la campagne suivante doit
+pouvoir opposer : ni la fiche mensuelle (Bilan → Bilan mensuel), ni le texte
+de clôture d'un projet, ni la chronologie de la marque. Il s'écrit en bas de
+l'écran de la campagne (`app/campagne.js`, `blocBilan`). Le texte de travail
+(`campagne.bilan`) se réécrit librement ; « Clore le bilan de campagne » est
+une décision (`bilan-campagne`, portée `campagne`) qui fige une version dans
+`campagne.bilanVersions`. Une version porte une identité stable
+(`BIL-<campagne>`), son numéro, sa date (`arrete_le`, recopiée dans
+`campagne.bilan_le`), la campagne et ses marques telles qu'elles étaient, le
+texte, l'acteur, la décision, l'empreinte de la version précédente et la
+sienne : SHA-256 du JSON aux clés triées, sans le champ `empreinte`. Une
+nouvelle version exige d'écrire ce qu'elle change ; les précédentes ne sont
+jamais réécrites. L'empreinte se calcule avec `crypto.subtle`, que le
+navigateur réserve aux contextes sécurisés (HTTPS, `localhost`) : sur une
+adresse HTTP du réseau, le bilan n'est pas arrêté.
+`tests/fixtures/bilan-campagne-v1.json` est le jeu commun avec La Fusée.
 
 **Dans le navigateur.** La base entière est copiée dans le `localStorage`, sous
 la clé `la-barre`. Sans fichier servi, c'est le seul endroit : chaque navigateur
@@ -211,8 +229,15 @@ servi, la base importée est ensuite sauvegardée dans ce fichier.
 aussi `contexte.json`, les références de marque de La Fusée, avec les cookies de
 la même origine. Si ce contexte le permet, la publication d'un document passe
 par `POST publication`, et son lien prend la forme
-`/la-barre/partage/<jeton>/document`. `servir.mjs` ne sert ni `contexte.json`
-ni `publication` : ils viennent de l'hôte qui sert `/la-barre/`. Selon
+`/la-barre/partage/<jeton>/document`. Si le contexte déclare
+`campaignReviewReception: "CAMPAIGN_REVIEW_V1"`, chaque version arrêtée d'un
+bilan de campagne propose « Transmettre à La Fusée » : la base est d'abord
+enregistrée, puis `POST bilan` n'envoie que `campagneId`, `bilanId`, `version`
+et `empreinte`. La Fusée relit la version dans la base enregistrée, recalcule
+son empreinte et la range dans les documents de la marque ; son accusé est
+gardé dans `campagne.bilanRecus`, sans toucher à la version. `servir.mjs` ne
+sert ni `contexte.json`, ni `publication`, ni `bilan` : ils viennent de l'hôte
+qui sert `/la-barre/`. Selon
 [docs/INSTALLATION-ENTREPRISE.md](docs/INSTALLATION-ENTREPRISE.md), La Fusée
 fournit ce raccord authentifié. Hors de ce chemin, l'application ne fait aucune
 de ces requêtes.
@@ -261,7 +286,7 @@ Les scripts de `package.json` :
 | `npm run test:marches` | `node --test tests/marches.test.mjs tests/grille.test.mjs` |
 | `npm run test:provenances` | `node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs` |
 | `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs` |
-| `npm run test:bilan` | `node --test tests/bilan-preuves.test.mjs` |
+| `npm run test:bilan` | `node --test tests/bilan-preuves.test.mjs tests/bilan-campagne.test.mjs` |
 
 Les tests `node --test` n'ont besoin d'aucune dépendance npm ;
 `tests/entreprise.test.mjs` appelle aussi `git`. `npm test` lance un
@@ -304,6 +329,12 @@ un navigateur installé). La CI ne le lance pas.
   brief porte sur la campagne, et `BRIEFS.pourNature` ne l'offre jamais sur un
   dossier (`app/briefs.js`). Les deux gestes passent par le registre des
   décisions, mais aucun écran ne les montre.
+- **Un bilan reçu n'est pas encore relu pour la campagne suivante.** La Fusée
+  range chaque version transmise comme proposition dans les documents de la
+  marque ; rien ne la ramène encore automatiquement dans le brief ou la
+  composition de la campagne suivante, et la transmission se fait version par
+  version, à la main. L'acteur d'une version reste celui choisi sur le poste ;
+  La Fusée enregistre de son côté la personne connectée qui transmet.
 - **Aucun envoi.** « Demander un retour » rédige le message et date l'attente.
   L'application n'envoie ni e-mail ni notification.
 - **Des routes locales pensées pour macOS.** `/disque-ouvrir` appelle `open` ;

@@ -591,6 +591,10 @@ window.VUE_PROJETS = (function () {
         el("div.mpl-liste", {}, ps.map(function (x) {
           return ligneProjetChainee(x, ps, rafraichir); }))));
     }
+
+    /* Le bilan de la campagne : son brouillon, ses versions arrêtées et leur
+     * transmission à La Fusée quand La Barre y est ouverte. */
+    hote.appendChild(CAMPAGNE.blocBilan(c, rafraichir));
   }
 
   /* Les SKU que la campagne montre : relevés sur ses visuels (c.skus, avec le fichier

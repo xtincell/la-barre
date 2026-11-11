@@ -27,12 +27,16 @@
  * big idea, écarter un concept de la réserve d'une marque, accepter ou
  * retourner un brief, écarter une case de la composition d'une campagne et
  * déclarer l'écart d'un projet à la référence commune. Leur forme suit celle
- * des huit premiers, avec `acteur`. Une décision se rattache donc à un projet,
- * à une campagne ou à une marque ; `projet` n'est plus exigé seul :
+ * des huit premiers, avec `acteur`. Clore le bilan d'une campagne en est un
+ * aussi : la décision `bilan-campagne` désigne la version arrêtée (`objet`,
+ * l'identité du bilan ; `version` ; `empreinte`). Une décision se rattache
+ * donc à un projet, à une campagne ou à une marque ; `projet` n'est plus
+ * exigé seul :
  *
  *   projet       tous les gestes sur un dossier
  *   campagne     case de composition écartée (sans projet), écart à la
- *                référence commune (avec le projet qui s'écarte)
+ *                référence commune (avec le projet qui s'écarte), bilan de
+ *                campagne arrêté (sans projet)
  *   marque       concept écarté de la réserve (sans projet)
  *
  * Une déviation s'écarte d'une décision ou du plan. Elle le dit (`ecart`),

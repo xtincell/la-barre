@@ -33,6 +33,7 @@ window.JURISPRUDENCE = (function () {
     recevabilite: { nom: "brief accepté ou retourné", famille: "brief", poids: 5 },
     composition: { nom: "case écartée de la composition", famille: "proposition", poids: 3 },
     "ecart-campagne": { nom: "écart déclaré à la référence commune", famille: "proposition", poids: 4 },
+    "bilan-campagne": { nom: "bilan de campagne arrêté", famille: "livrable", poids: 4 },
     revue: { nom: "dite en revue", famille: "proposition", poids: 2 },
     blocage: { nom: "blocage écarté", famille: "livrable", poids: 4 },
     ecart: { nom: "écart écarté", famille: "livrable", poids: 3 },

@@ -74,11 +74,14 @@ window.CAMPAGNE = (function () {
           + "Composer, c'est dire ce qu'elle appelle — et ce qu'elle n'appelle pas." };
     }
     if (clos === n) {
-      var avecBilan = !!((c.bilan || "").trim());
-      return { cle: "close", nom: "tous les projets clos", ton: avecBilan ? "terne" : "attente",
-        quoi: avecBilan ? "Le bilan est au dossier."
-          : (n > 1 ? "Les " + n + " projets sont clos" : "Son seul projet est clos")
-            + " et la campagne n'a pas de bilan : la suivante repartira sans son diagnostic." };
+      /* Un texte écrit n'est pas un bilan qui fait foi : seule une version
+       * arrêtée l'est, et un texte modifié depuis ne l'est plus. */
+      var b = etatBilan(c);
+      return { cle: "close", nom: "tous les projets clos", ton: b.cle === "arrete" ? "terne" : "attente",
+        quoi: b.cle === "absent"
+          ? (n > 1 ? "Les " + n + " projets sont clos" : "Son seul projet est clos")
+            + " et la campagne n'a pas de bilan : la suivante repartira sans son diagnostic."
+          : b.quoi };
     }
     /* Ce qui retarde le reste : la première arête du chaînage qui ne tient pas. */
     var bloquants = ps.filter(function (p) {
@@ -545,8 +548,286 @@ window.CAMPAGNE = (function () {
       } }, lu.etat === "choisie" ? "Revoir la référence commune" : "Choisir la référence commune") : null);
   }
 
+  /* ————————————————————— Le bilan de campagne —————————————————————
+   *
+   * La campagne porte son bilan depuis le premier jour (`c.bilan`, un texte),
+   * et rien ne l'écrivait. Ce n'est ni la fiche mensuelle (bilan.js), ni le
+   * texte de clôture d'un projet (cloture.js), ni la chronologie de la marque
+   * (vie-marque.js) : c'est le diagnostic que la campagne suivante doit pouvoir
+   * opposer.
+   *
+   * Le texte reste un brouillon qu'on écrit et réécrit. Le clore est un choix :
+   * il passe par la fabrique (une décision `bilan-campagne`, son acteur et sa
+   * ligne de journal) et fige une version, que rien ne réécrit ensuite :
+   *
+   *   c.bilan          le texte de travail
+   *   c.bilan_le       la date du dernier arrêt, lue par la chronologie
+   *   c.bilanVersions  les versions arrêtées, dans l'ordre, jamais modifiées
+   *   c.bilanRecus     l'accusé de La Fusée pour chaque version transmise
+   *
+   * Une version arrêtée garde son identité (la même d'une version à l'autre),
+   * son numéro, sa date, la campagne et ses marques telles qu'elles étaient,
+   * le texte, ce qu'elle change, l'empreinte de la précédente et la sienne :
+   * SHA-256 du JSON aux clés triées, sans le champ `empreinte`. La Fusée la
+   * recalcule à la réception ; le jeu tests/fixtures/bilan-campagne-v1.json
+   * est commun aux deux dépôts. */
+
+  var BILAN_SCHEMA = "la-barre/bilan-campagne";
+  var BILAN_MAX = 60000;
+  var NOTE_MAX = 4000;
+
+  function identiteBilan(c) { return "BIL-" + c.id; }
+
+  function bilanVersions(c) { return c && Array.isArray(c.bilanVersions) ? c.bilanVersions : []; }
+
+  function dernierBilan(c) {
+    var vs = bilanVersions(c);
+    return vs.length ? vs[vs.length - 1] : null;
+  }
+
+  /* L'état du bilan, et la révision que le dialogue relit avant d'arrêter. */
+  function etatBilan(c) {
+    var texte = String((c && c.bilan) || "").trim(), d = dernierBilan(c);
+    var revision = JSON.stringify([texte, bilanVersions(c).length, d ? d.empreinte : null]);
+    if (!d && !texte) return { cle: "absent", nom: "aucun bilan", ton: "attente", revision: revision,
+      quoi: "Aucun bilan n'est écrit : la campagne suivante repartira sans son diagnostic." };
+    if (!d) return { cle: "brouillon", nom: "bilan écrit, non arrêté", ton: "attente", revision: revision,
+      quoi: "Le bilan est écrit, pas encore arrêté : il ne fait pas foi tant qu'il n'est pas clos." };
+    var quand = "arrêté le " + O.jourCourt(d.arrete_le) + ", version " + d.version;
+    if (texte === d.contenu) return { cle: "arrete", nom: "bilan arrêté", ton: "terne", revision: revision,
+      version: d, quoi: "Le bilan est " + quand + "." };
+    return { cle: "modifie", nom: "bilan modifié", ton: "attente", revision: revision, version: d,
+      quoi: "Le bilan a changé depuis sa version " + d.version + " (" + quand + ") : "
+        + "arrêtez une nouvelle version pour qu'il fasse foi." };
+  }
+
+  /* Le brouillon : un texte qu'on écrit, pas une décision. */
+  function ecrireBilan(c, texte) {
+    if (!c) return false;
+    var t = String(texte || "");
+    if (t === (c.bilan || "")) return false;
+    c.bilan = t;
+    DEPOT.tracer("bilan écrit", "campagnes", c.id, t.trim().slice(0, 80), c.marqueIds || []);
+    DEPOT.enregistrer();
+    return true;
+  }
+
+  /* Le JSON canonique : clés triées, rien d'autre. Une valeur indéfinie n'a
+   * pas de forme commune aux deux dépôts ; la version n'en porte aucune. */
+  function canonique(v) {
+    if (Array.isArray(v)) return v.map(canonique);
+    if (v && typeof v === "object") {
+      var o = {};
+      Object.keys(v).sort().forEach(function (k) { o[k] = canonique(v[k]); });
+      return o;
+    }
+    return v;
+  }
+
+  function empreinteBilan(doc) {
+    var subtil = window.crypto && window.crypto.subtle;
+    if (!subtil || !window.TextEncoder) {
+      return Promise.reject(new Error("Ouvrez La Barre dans une connexion sécurisée pour arrêter le bilan : son empreinte en dépend."));
+    }
+    var sans = {};
+    Object.keys(doc).forEach(function (k) { if (k !== "empreinte") sans[k] = doc[k]; });
+    var texte = JSON.stringify(canonique(sans));
+    return subtil.digest("SHA-256", new window.TextEncoder().encode(texte)).then(function (h) {
+      return Array.prototype.map.call(new Uint8Array(h), function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+    });
+  }
+
+  function arreterBilan(campagneId, note, attendu) {
+    var c = de(campagneId);
+    if (!c) return Promise.resolve({ ok: false, erreur: "Campagne introuvable." });
+    var lu = etatBilan(c), texte = String(c.bilan || "").trim(), d = dernierBilan(c);
+    note = typeof note === "string" ? note.trim() : "";
+    if (!texte) return Promise.resolve({ ok: false, erreur: "Écrivez le bilan avant de le clore." });
+    /* Un rejeu exact retrouve sa version, même depuis un dialogue déjà relu. */
+    if (d && d.contenu === texte) return Promise.resolve({ ok: true, dejaRecu: true, version: d });
+    if (attendu !== lu.revision) return Promise.resolve({ ok: false,
+      erreur: "Le bilan a changé. Relisez-le avant de l'arrêter." });
+    if (texte.length > BILAN_MAX) return Promise.resolve({ ok: false,
+      erreur: "Un bilan arrêté tient en 60 000 caractères. Resserrez-le, ou joignez le détail en pièce." });
+    if (d && !note) return Promise.resolve({ ok: false,
+      erreur: "Dites ce que cette nouvelle version change : la version " + d.version + " reste conservée telle quelle." });
+    if (note.length > NOTE_MAX) return Promise.resolve({ ok: false, erreur: "Ce que la version change tient en 4 000 caractères." });
+
+    var quand = new Date().toISOString();
+    var fenetre = c.fenetre || {};
+    var doc;
+    try {
+      doc = {
+        schema: BILAN_SCHEMA, schemaVersion: 1, id: identiteBilan(c), version: d ? d.version + 1 : 1, arrete_le: quand,
+        campagne: { id: c.id, nom: c.nom || null, regime: c.regime || null, occasion: c.occasion || null,
+          debut: fenetre.debut || null, fin: fenetre.fin || null },
+        marques: (c.marqueIds || []).map(function (id) {
+          var m = DEPOT.trouve("marques", id);
+          return { id: id, nom: m && m.nom ? m.nom : null };
+        }),
+        contenu: texte, note: note || null, precedente: d ? d.empreinte : null,
+        /* L'identifiant de la décision est tiré d'avance : la version le porte. */
+        decision: DECISION.identifiant(), qui: MAISON.titulaire, acteur: DECISION.acteur(),
+      };
+    } catch (e) {
+      if (DECISION.estRefus(e)) return Promise.resolve({ ok: false, erreur: e.message });
+      throw e;
+    }
+    return empreinteBilan(doc).then(function (h) {
+      /* Le calcul est asynchrone : on relit avant d'écrire. */
+      if (etatBilan(c).revision !== lu.revision || de(campagneId) !== c) {
+        return { ok: false, erreur: "Le bilan a changé pendant son arrêt. Relisez-le avant de le clore." };
+      }
+      doc.empreinte = h;
+      var decision;
+      try {
+        decision = DECISION.construire({ id: doc.decision, type: "bilan-campagne", objet: doc.id, campagne: c.id,
+          verdict: "approuve", portee: "campagne", motif: doc.note, quand: quand, qui: doc.qui, acteur: doc.acteur,
+          version: doc.version, titre: "Bilan de campagne — " + (c.nom || c.id), empreinte: h });
+      } catch (e) {
+        if (DECISION.estRefus(e)) return { ok: false, erreur: e.message };
+        throw e;
+      }
+      /* Comme pour la référence : la version est posée avant que ajouter()
+       * ne publie, pour ne jamais publier la décision sans elle. */
+      c.bilanVersions = bilanVersions(c).concat([doc]);
+      c.bilan_le = quand;
+      DECISION.ajouter(decision);
+      DEPOT.tracer("bilan arrêté", "campagnes", c.id, "version " + doc.version + " · " + h.slice(0, 12), c.marqueIds || []);
+      DEPOT.enregistrer();
+      return { ok: true, dejaRecu: false, version: doc, decision: decision };
+    }, function (e) { return { ok: false, erreur: e.message }; });
+  }
+
+  /* La transmission : La Fusée relit la version dans la base enregistrée et
+   * recalcule son empreinte. Le navigateur n'envoie que ce qui la désigne. */
+  function peutTransmettre() {
+    return !!(window.VAULT && VAULT.statutContexte && VAULT.statutContexte().bilan);
+  }
+
+  function transmettreBilan(campagneId, version) {
+    var c = de(campagneId);
+    var v = bilanVersions(c).filter(function (x) { return x.version === version; })[0];
+    if (!v) return Promise.resolve({ ok: false, erreur: "Cette version du bilan est introuvable." });
+    if (!peutTransmettre()) return Promise.resolve({ ok: false,
+      erreur: "La transmission se fait depuis La Barre ouverte dans La Fusée." });
+    return new Promise(function (resolve, reject) {
+      DEPOT.ecrireSurDisque(function (ok, pourquoi) {
+        ok ? resolve() : reject(new Error(pourquoi || "La base n'est pas enregistrée : le bilan ne peut pas encore être relu."));
+      });
+    }).then(function () {
+      return window.fetch("bilan", { method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campagneId: c.id, bilanId: v.id, version: v.version, empreinte: v.empreinte }) });
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (data) {
+        if (!r.ok) throw new Error(data.quoi || "Le bilan n'a pas été reçu par La Fusée.");
+        return data;
+      });
+    }).then(function (data) {
+      c.bilanRecus = c.bilanRecus || {};
+      c.bilanRecus[String(v.version)] = { quand: data.receivedAt || new Date().toISOString(), empreinte: v.empreinte,
+        source: data.sourceId || null, edition: typeof data.edition === "number" ? data.edition : null,
+        lien: typeof data.url === "string" && data.url.charAt(0) === "/" ? data.url : null };
+      DEPOT.tracer("bilan reçu par La Fusée", "campagnes", c.id, "version " + v.version
+        + (data.alreadyReceived ? " · déjà reçue" : ""), c.marqueIds || []);
+      DEPOT.enregistrer();
+      return { ok: true, recu: data };
+    }).catch(function (e) { return { ok: false, erreur: e.message }; });
+  }
+
+  /* ————— L'écran ————— */
+
+  function clore(c, apres) {
+    var lu = etatBilan(c), d = dernierBilan(c), n = d ? d.version + 1 : 1;
+    var ouverts = projets(c.id).filter(function (p) { return !(window.CLOTURE && CLOTURE.est(p)); }).length;
+    var note = el("textarea", { id: "bilan-note", rows: 2 });
+    PANNEAU.sur("Clore le bilan", c.nom, el("div", {},
+      UI.banniere("", "Arrêter fige ce texte en version " + n + ", daté et rattaché à votre décision. "
+        + (d ? "La version " + d.version + " reste conservée telle quelle. " : "")
+        + "Pour le modifier ensuite, il faudra arrêter une nouvelle version."),
+      ouverts ? UI.banniere("attente", ouverts > 1 ? ouverts + " projets de la campagne sont encore ouverts : le bilan ne dira rien de leur suite."
+        : "Un projet de la campagne est encore ouvert : le bilan ne dira rien de sa suite.") : null,
+      (c.marqueIds || []).length ? null : UI.banniere("attente", "La campagne n'a pas de marque : La Fusée ne pourra pas ranger ce bilan."),
+      PANNEAU.sousbloc ? PANNEAU.sousbloc("Le texte arrêté", el("p.lire", {}, String(c.bilan || "").trim()))
+        : el("p.lire", {}, String(c.bilan || "").trim()),
+      el("div.form", {}, el("div.champ", {},
+        el("label", { "for": "bilan-note" }, d ? "Ce que cette version change" : "Une note de version, si besoin"),
+        el("div.indice", {}, d ? "Obligatoire : elle accompagne la version dans le registre des décisions."
+          : "Facultative. Elle accompagne la version dans le registre des décisions."), note)),
+      el("div.form-actions", {},
+        el("button.b.or", { type: "button", onclick: function (e) {
+          var b = e && e.target;
+          if (b) b.disabled = true;
+          return arreterBilan(c.id, note.value, lu.revision).then(function (r) {
+            if (b) b.disabled = false;
+            if (!r.ok) { AVIS.refus(r.erreur); return; }
+            PANNEAU.fermerSur();
+            AVIS.fait(r.dejaRecu ? "Cette version était déjà arrêtée." : "Le bilan est arrêté en version " + r.version.version + ".");
+            if (apres) apres();
+          });
+        } }, "Arrêter la version " + n),
+        el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Annuler"))));
+  }
+
+  function ligneVersion(c, v, apres) {
+    var recu = (c.bilanRecus || {})[String(v.version)];
+    var par = v.acteur && v.acteur.nom ? v.acteur.nom : O.poste(v.qui || MAISON.titulaire).nom;
+    return el("li", {},
+      el("details", {},
+        el("summary", {}, "Version " + v.version + " · arrêtée le " + O.jourCourt(v.arrete_le) + " par " + par
+          + " · empreinte " + String(v.empreinte).slice(0, 12)),
+        v.note ? el("p.cg-q", {}, "Ce qu'elle change : " + v.note) : null,
+        el("p.lire", {}, v.contenu)),
+      recu && recu.empreinte === v.empreinte
+        ? el("span.cg-q", {}, " Reçue par La Fusée le " + O.jourCourt(recu.quand)
+            + (recu.edition ? " (édition " + recu.edition + ")" : ""), recu.lien ? [" · ", el("a", { href: recu.lien }, "l'ouvrir")] : null)
+        : null,
+      peutTransmettre() ? el("button.studio-lien", { type: "button", onclick: function (e) {
+        var b = e && e.target;
+        if (b) b.disabled = true;
+        return transmettreBilan(c.id, v.version).then(function (r) {
+          if (b) b.disabled = false;
+          if (!r.ok) { AVIS.refus(r.erreur); return; }
+          AVIS.fait(r.recu.alreadyReceived ? "La Fusée avait déjà reçu cette version." : "La Fusée a reçu la version " + v.version + " du bilan.");
+          if (apres) apres();
+        });
+      } }, recu ? "Transmettre de nouveau" : "Transmettre à La Fusée") : null);
+  }
+
+  function blocBilan(c, apres) {
+    var e = etatBilan(c), vs = bilanVersions(c);
+    var champ = el("textarea", { id: "bilan-campagne", rows: 8 });
+    champ.value = c.bilan || "";
+    return el("section.cg-bloc" + (e.cle === "arrete" ? "" : ".f-attente"), {},
+      el("div.section-titre", {}, "Le bilan de campagne",
+        el("span.taille", {}, vs.length ? "· version " + vs[vs.length - 1].version + " arrêtée" : "· non arrêté")),
+      el("p.cg-q", {}, e.quoi),
+      el("div.form", {}, el("div.champ", {},
+        el("label", { "for": "bilan-campagne" }, "Ce que la campagne a appris"),
+        el("div.indice", {}, "Distinct du bilan mensuel et du texte de clôture des projets. Le brouillon se réécrit ; une version arrêtée ne change plus."),
+        champ)),
+      el("div.form-actions", {},
+        el("button.b.nu", { type: "button", onclick: function () {
+          ecrireBilan(c, champ.value);
+          AVIS.fait("Le brouillon du bilan est enregistré.");
+          if (apres) apres();
+        } }, "Enregistrer le brouillon"),
+        el("button.b.or", { type: "button", onclick: function () {
+          ecrireBilan(c, champ.value);
+          if (!String(c.bilan || "").trim()) { AVIS.refus("Écrivez le bilan avant de le clore."); return; }
+          if (etatBilan(c).cle === "arrete") { AVIS.fait("Ce texte est déjà arrêté en version " + dernierBilan(c).version + "."); return; }
+          clore(c, apres);
+        } }, "Clore le bilan de campagne")),
+      vs.length ? el("ul.cg-versions", {}, vs.slice().reverse().map(function (v) { return ligneVersion(c, v, apres); })) : null,
+      vs.length && !peutTransmettre() ? el("p.cg-q", {},
+        "La transmission à La Fusée se fait depuis La Barre ouverte dans La Fusée.") : null);
+  }
+
   return { liste: liste, de: de, deMarque: deMarque, cycleDe: cycleDe,
     projets: projets, occasion: occasion, etat: etat,
+    etatBilan: etatBilan, ecrireBilan: ecrireBilan, empreinteBilan: empreinteBilan,
+    arreterBilan: arreterBilan, transmettreBilan: transmettreBilan, blocBilan: blocBilan,
     composition: composition, ecarter: ecarter, reprendre: reprendre,
     creer: creer, pisteDeReference: pisteDeReference, reference: reference,
     designerReference: designerReference, choisirReference: choisirReference, blocReference: blocReference,

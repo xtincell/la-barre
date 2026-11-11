@@ -2011,7 +2011,10 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
  * est la grille de comparaison des pistes (passe 4c). */
 .cg-piste, .cg-bloc { background: var(--surface-1); border: 1px solid var(--trait); border-radius: 10px;
   padding: 18px 22px; margin-bottom: 16px; min-width: 0; }
-.cg-piste.f-attente { border-left: 3px solid var(--ton); }
+.cg-piste.f-attente, .cg-bloc.f-attente { border-left: 3px solid var(--ton); }
+/* Les versions arrêtées du bilan : la plus récente en tête, le texte déplié à la demande. */
+.cg-versions { margin: 14px 0 0; padding-left: 18px; display: grid; gap: 8px; }
+.cg-versions summary { cursor: pointer; font-size: 13px; overflow-wrap: anywhere; }
 .cg-l { font-size: 11px; color: var(--clair-terne); }
 .cg-signe { color: var(--ton, var(--clair-terne)); }
 /* Le titre de la piste, écrit par quelqu'un : l'aplat d'intention. */

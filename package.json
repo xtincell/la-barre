@@ -12,7 +12,7 @@
     "test:marches": "node --test tests/marches.test.mjs tests/grille.test.mjs",
     "test:provenances": "node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs",
     "test:decisions": "node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs",
-    "test:bilan": "node --test tests/bilan-preuves.test.mjs"
+    "test:bilan": "node --test tests/bilan-preuves.test.mjs tests/bilan-campagne.test.mjs"
   },
   "engines": {
     "node": ">=18"

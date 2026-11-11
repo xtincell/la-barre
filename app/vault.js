@@ -172,8 +172,12 @@ window.VAULT = (function () {
         if (apres && (etatAvant !== etatContexte || avant !== JSON.stringify([contexte.brands, contexte.choices, contexte.issues, contexte.sharingMode]))) apres();
       });
   }
+  /* `bilan` : l'hôte déclare savoir recevoir un bilan de campagne arrêté
+   * (POST bilan). Sans cette déclaration, rien n'est proposé ni envoyé. */
   function statutContexte() { return { etat: etatContexte, quand: contexte.generatedAt || null,
-    partage: etatContexte === "recu" && contexte.sharingMode === "DOCUMENT_V2", issues: contexte.issues || [] }; }
+    partage: etatContexte === "recu" && contexte.sharingMode === "DOCUMENT_V2",
+    bilan: etatContexte === "recu" && contexte.campaignReviewReception === "CAMPAIGN_REVIEW_V1",
+    issues: contexte.issues || [] }; }
 
   /* Les quatre piliers viennent de la maison : c'est de la doctrine d'agence,
    * pas une loi du métier. Le repli garde le produit debout si la maison ne

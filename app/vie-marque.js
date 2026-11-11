@@ -52,7 +52,13 @@ window.VIE_MARQUE = (function () {
         pousser(c.cree_le, "campagne",
           c.regime === "always-on" ? "Cycle ouvert" : "Campagne ouverte",
           c.nom + (c.infere ? "  ·  rattachement inféré" : ""));
-        if ((c.bilan || "").trim()) {
+        /* Une version arrêtée est un acte daté ; un texte jamais arrêté garde
+         * sa lecture d'avant. */
+        var arretes = Array.isArray(c.bilanVersions) ? c.bilanVersions : [];
+        arretes.forEach(function (v) {
+          pousser(v.arrete_le, "bilan", "Bilan de campagne arrêté", c.nom + "  ·  version " + v.version);
+        });
+        if (!arretes.length && (c.bilan || "").trim()) {
           pousser(c.bilan_le || c.cree_le, "bilan", "Bilan de campagne", c.nom);
         }
       });
