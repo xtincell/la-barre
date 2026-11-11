@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 /* La grille support × marché : une case vide se crée d'un geste. Le « + »
  * utilisait une variable `volets` inexistante et échouait avant la création. */
-async function atelier() {
+async function atelier({ avecEcarts = false } = {}) {
   let sequence = 0, ouvert = null, enregistrements = 0;
   const supports = [{ id: 'S-KV', nom: 'KV' }, { id: 'S-OOH', nom: 'Affiche' }];
   const marches = [{ id: 'M-CI', nom: 'Côte d’Ivoire', code: 'CI', langues: ['fr'] },
@@ -29,6 +29,7 @@ async function atelier() {
   sb.window = sb;
   vm.createContext(sb);
   vm.runInContext(await readFile(new URL('../app/vue-matrice.js', import.meta.url), 'utf8'), sb);
+  if (avecEcarts) vm.runInContext(await readFile(new URL('../app/ecarts-marche.js', import.meta.url), 'utf8'), sb);
   function find(node, predicate) {
     if (!node || typeof node !== 'object') return;
     if (predicate(node)) return node;
@@ -47,7 +48,13 @@ async function atelier() {
     arbre = sb.VUE_MATRICE.rendre(p, () => {});
     return all(arbre, n => n.tag === 'button.case-m.absente');
   }
-  return { sb, grille, get ouvert() { return ouvert; }, get enregistrements() { return enregistrements; } };
+  function lecture(p) {
+    sb.VUE_MATRICE.rendre(p, () => {});
+    const arbre = sb.VUE_MATRICE.rendre(p, () => {});
+    const texte = n => n == null ? '' : typeof n !== 'object' ? String(n) : (n.children || []).map(texte).join(' ');
+    return texte(arbre);
+  }
+  return { sb, grille, lecture, get ouvert() { return ouvert; }, get enregistrements() { return enregistrements; } };
 }
 const projet = (marchesDuVolet) => ({ id: 'P-RECETTE', sections: { pistes: [{ id: 'PI-1', statut: 'retenue' }] },
   volets: [{ id: 'V-1', nom: 'Volet de recette', supports: ['S-KV', 'S-OOH'], marches: marchesDuVolet }], livrables: [] });
@@ -88,4 +95,15 @@ test('une case créée n’est plus proposée vide', async () => {
   const s = await atelier(), p = projet(['M-CI', 'M-GH']);
   s.grille(p)[0].onclick();
   assert.equal(s.grille(p).length, 3);
+});
+
+test('la grille montre les écarts déclarés de chaque marché du projet', async () => {
+  const s = await atelier({ avecEcarts: true }), p = projet(['M-CI', 'M-GH']);
+  p.perimetre = { supports: [], marches: [], ecarts: { 'M-GH': { types: ['marque', 'langue'], detail: 'bascule' } } };
+  s.grille(p);
+  const texte = s.lecture(p);
+  assert.match(texte, /Écarts déclarés par marché/);
+  assert.match(texte, /1 sur 2 marchés déclarés/);
+  assert.match(texte, /GH · Ghana Langue \+ Marque bascule/);
+  assert.match(texte, /CI · Côte d’Ivoire non déclaré/);
 });
