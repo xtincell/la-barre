@@ -3,6 +3,22 @@
 window.RECONCILIATION = (function () {
   function copie(v) { return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); }
   function egal(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+  /* Servie derrière La Fusée, une entrée reçoit son attestation à
+   * l'enregistrement : la même entrée peut donc revenir du serveur attestée et
+   * rester nue ici. Ce n'est pas une modification concurrente. L'attestation
+   * du serveur fait foi ; La Fusée rétablit d'ailleurs celle qu'un envoi omet. */
+  function nu(v) { return JSON.stringify(v, function (k, x) { return k === "attestation" ? undefined : x; }); }
+  function egalNu(a, b) { return nu(a) === nu(b); }
+  function avecAttestations(i, d) {
+    if (Array.isArray(i) && Array.isArray(d)) return d.map(function (x, n) { return avecAttestations(i[n], x); });
+    if (objet(i) && objet(d)) {
+      var o = {};
+      Object.keys(d).forEach(function (k) { o[k] = k === "attestation" ? copie(d[k]) : avecAttestations(i[k], d[k]); });
+      if (i.attestation != null && d.attestation == null) o.attestation = copie(i.attestation);
+      return o;
+    }
+    return copie(d);
+  }
   function objet(v) { return v !== null && typeof v === "object" && !Array.isArray(v); }
   function identifies(a) {
     if (!Array.isArray(a)) return false;
@@ -41,6 +57,7 @@ window.RECONCILIATION = (function () {
     var conflits = [];
     function marcher(b, i, d, chemin) {
       if (egal(i, d)) return copie(i);
+      if (i !== undefined && d !== undefined && egalNu(i, d)) return avecAttestations(i, d);
       if (egal(i, b)) return copie(d);
       if (egal(d, b)) return copie(i);
       if (chemin.length === 1 && (chemin[0] === "enregistre_le" || chemin[0] === "machine")) return copie(i);
@@ -86,10 +103,10 @@ window.RECONCILIATION = (function () {
           return priorite.map(function (id) { return parId.get(id); });
         }
         // Seuls les suffixes append-only des journaux sont réunis sans choix.
-        if (traces && egal(i.slice(0, b.length), b) && egal(d.slice(0, b.length), b)) {
+        if (traces && egalNu(i.slice(0, b.length), b) && egalNu(d.slice(0, b.length), b)) {
           var vus = new Set(), journal = [];
           d.concat(i.slice(b.length)).forEach(function (v) {
-            var cle = JSON.stringify(v); if (!vus.has(cle)) { vus.add(cle); journal.push(copie(v)); }
+            var cle = nu(v); if (!vus.has(cle)) { vus.add(cle); journal.push(copie(v)); }
           });
           return journal;
         }

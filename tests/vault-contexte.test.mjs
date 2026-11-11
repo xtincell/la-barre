@@ -123,3 +123,35 @@ test('plusieurs marques historiques reliées au même nœud ne sont ni fusionné
   assert.throws(() => c.VAULT.admettreMarque('MQ-FUSEE-node-a'), /plusieurs marques/i);
   assert.equal(JSON.stringify(state), before);
 });
+
+test('la personne connectée n’est déclarée que si La Fusée atteste ses gestes (LB3)', async () => {
+  const { c, context } = await ouvrir();
+  c.VAULT.connecter(context);
+  assert.equal(c.VAULT.statutContexte().acteur, null);
+  c.VAULT.connecter({ ...context, actor: { id: 'user-alice', name: 'Alice Martin' } });
+  assert.equal(c.VAULT.statutContexte().acteur, null, 'sans la capacité, aucune personne imposée');
+  c.VAULT.connecter({ ...context, actorAttestation: 'SESSION_V1', actor: { id: 'user-alice', name: ' Alice Martin ' } });
+  assert.deepEqual(JSON.parse(JSON.stringify(c.VAULT.statutContexte().acteur)), { id: 'user-alice', nom: 'Alice Martin' });
+  c.VAULT.connecter({ ...context, actorAttestation: 'SESSION_V1', actor: { id: '', name: 'Personne' } });
+  assert.equal(c.VAULT.statutContexte().acteur, null);
+  c.VAULT.connecter({ ...context, actorAttestation: 'SESSION_V1', actor: { id: 'user-b', name: null } });
+  assert.equal(c.VAULT.statutContexte().acteur.nom, null);
+});
+
+test('une relecture du contexte garde la personne connectée jusqu’à sa réponse', async () => {
+  const { c, context } = await ouvrir();
+  let repondre; c.fetch = () => new Promise(r => { repondre = r; });
+  c.VAULT.connecter({ ...context, actorAttestation: 'SESSION_V1', actor: { id: 'user-alice', name: 'Alice Martin' } });
+  let redessins = 0;
+  const lecture = c.VAULT.initialiser(() => { redessins++; });
+  assert.equal(c.VAULT.statutContexte().etat, 'recu');
+  assert.equal(c.VAULT.statutContexte().acteur.id, 'user-alice', 'l’écran redessiné pendant le réseau garde la personne');
+  repondre({ ok: true, json: async () => ({ ...context, actorAttestation: 'SESSION_V1', actor: { id: 'user-alice', name: 'Alice Martin' } }) });
+  await lecture;
+  assert.equal(redessins, 0, 'rien n’a changé : pas de redessin');
+  const echec = c.VAULT.initialiser(() => { redessins++; });
+  repondre({ ok: false });
+  await echec;
+  assert.equal(c.VAULT.statutContexte().etat, 'erreur'); assert.equal(c.VAULT.statutContexte().acteur, null);
+  assert.equal(redessins, 1);
+});

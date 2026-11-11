@@ -136,9 +136,28 @@ tourne sous l'utilisateur `node` et crée au premier démarrage
 
 ## Où vivent les données
 
-Il n'y a pas de compte. La personne qui agit se choisit dans Ressources →
-Paramètres, parmi les personnes de la base. Ce choix est gardé dans le
-`sessionStorage` de l'onglet. Il attribue les gestes ; il n'ouvre aucun droit.
+**Qui agit.** Deux régimes, et l'écran dit toujours lequel s'applique, sous le
+nom au pied du rail :
+
+- *Authentifié par La Fusée.* Servie derrière La Fusée (`/la-barre/`), La Barre
+  lit dans `contexte.json` la capacité `actorAttestation: "SESSION_V1"` et la
+  personne connectée (identifiant stable et nom, jamais l'e-mail). Elle est
+  imposée : le sélecteur de Ressources → Paramètres est verrouillé sur elle, et
+  ses postes sont ceux de l'installation, sans casquette prêtée. À chaque
+  enregistrement de la base, La Fusée relit la version courante, pose sur chaque
+  décision, ligne de journal et version de bilan nouvelle le champ
+  `attestation` (`par: "la-fusee"`, identifiant, nom, date, empreinte du
+  contenu, sceau) et rend dans son reçu ce qu'elle a attesté. Le navigateur ne
+  peut pas en présenter une, en modifier une ni en effacer une : une
+  attestation omise est rétablie, une attestation inconnue ou une entrée
+  attestée retirée ou modifiée est refusée (422). Seules les lignes de journal
+  sans marque peuvent disparaître, par la troncature du journal. Le journal et
+  le recueil des arbitrages (Doctrine) affichent l'identité attestée.
+- *Déclaré sur ce poste.* Utilisée seule, sans La Fusée, la personne qui agit
+  se choisit dans Ressources → Paramètres, parmi les personnes de la base. Ce
+  choix est gardé dans le `sessionStorage` de l'onglet. Il attribue les
+  gestes ; il ne prouve rien et n'ouvre aucun droit. Le journal et le recueil
+  le disent : « déclaré sur ce poste ».
 
 **Le registre des décisions.** Une décision rejoint la collection `decisions`
 par un seul chemin, `app/decision.js` : verdict parmi quatre (`approuve`,
@@ -152,7 +171,8 @@ projet à la référence commune et l'arrêt du bilan d'une campagne. Chaque
 décision ajoute une ligne au journal, qui porte l'acteur. Toutes portent
 `qui`, le poste titulaire. La référence de
 campagne, le verdict sur un document et les gestes de choix ajoutés au
-registre portent aussi `acteur`, la personne choisie ci-dessus. Les six autres
+registre portent aussi `acteur`, l'acteur du poste ci-dessus. Derrière La
+Fusée, toute décision nouvelle porte en plus son `attestation`. Les six autres
 écrivains d'origine (big idea retenue, idée tranchée, piste retenue sur deux
 écrans, livrable jugé, pièce jugée en revue) ne le recopient pas dans la
 décision : leur forme stockée est figée par `tests/decisions.test.mjs`.
@@ -177,12 +197,16 @@ une décision (`bilan-campagne`, portée `campagne`) qui fige une version dans
 (`BIL-<campagne>`), son numéro, sa date (`arrete_le`, recopiée dans
 `campagne.bilan_le`), la campagne et ses marques telles qu'elles étaient, le
 texte, l'acteur, la décision, l'empreinte de la version précédente et la
-sienne : SHA-256 du JSON aux clés triées, sans le champ `empreinte`. Une
+sienne : SHA-256 du JSON aux clés triées, sans les champs `empreinte` et
+`attestation`. Derrière La Fusée, la version reçoit l'attestation de la
+personne connectée à son enregistrement, hors de l'empreinte ; La Fusée vérifie
+cette attestation à la réception. Une
 nouvelle version exige d'écrire ce qu'elle change ; les précédentes ne sont
 jamais réécrites. L'empreinte se calcule avec `crypto.subtle`, que le
 navigateur réserve aux contextes sécurisés (HTTPS, `localhost`) : sur une
 adresse HTTP du réseau, le bilan n'est pas arrêté.
-`tests/fixtures/bilan-campagne-v1.json` est le jeu commun avec La Fusée.
+`tests/fixtures/bilan-campagne-v1.json` et `bilan-campagne-atteste-v1.json`
+sont les jeux communs avec La Fusée.
 
 **Dans le navigateur.** La base entière est copiée dans le `localStorage`, sous
 la clé `la-barre`. Sans fichier servi, c'est le seul endroit : chaque navigateur
@@ -285,7 +309,7 @@ Les scripts de `package.json` :
 | `npm run test:manuel` | `node --test tests/saisie-manuelle.test.mjs tests/acteur.test.mjs tests/formulaire.test.mjs tests/lecture-dependances.test.mjs` |
 | `npm run test:marches` | `node --test tests/marches.test.mjs tests/grille.test.mjs` |
 | `npm run test:provenances` | `node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs` |
-| `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs` |
+| `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs tests/attestation.test.mjs` |
 | `npm run test:bilan` | `node --test tests/bilan-preuves.test.mjs tests/bilan-campagne.test.mjs` |
 
 Les tests `node --test` n'ont besoin d'aucune dépendance npm ;
@@ -310,19 +334,20 @@ un navigateur installé). La CI ne le lance pas.
   écartés dans une base (`ecartsEcartes`) restent lus, notamment par les
   arbitrages.
 - **Aucune authentification dans `servir.mjs`.** Quiconque joint son port peut
-  lire tout le dossier et écrire là où le serveur l'accepte.
-- **Aucun acteur authentifié pour les décisions.** `acteur` vient du choix fait
-  dans l'onglet (`app/acteur.js`) : c'est le navigateur qui le déclare. Pour
-  qu'un geste sans acteur authentifié soit refusé, trois pièces manquent.
-  `servir.mjs` ne connaît aucune identité. Derrière La Fusée, la route qui sert
-  `/la-barre/` authentifie la session et relit l'affectation de l'opérateur,
-  mais ne transmet à La Barre que six en-têtes (`content-type`, `range`,
-  `if-match`, `if-none-match`, `if-modified-since`, `x-base`), jamais les
-  cookies ni l'identité ; `contexte.json` ne nomme pas non plus la personne
-  connectée (`ADVE-project`, `src/app/la-barre/[[...path]]/route.ts` et
-  `src/server/services/brand-node/barre-context.ts`, au commit `d52ffad`).
-  Enfin la base s'écrit d'un bloc (`PUT depots/<fichier>.json`) : le serveur
-  reçoit un fichier, pas un geste de décision qu'il pourrait attribuer.
+  lire tout le dossier et écrire là où le serveur l'accepte, attestations
+  comprises : `servir.mjs` ne connaît aucune identité et ne vérifie aucun
+  sceau. L'attestation n'a de valeur que si le port de La Barre n'est joint que
+  par La Fusée, comme dans l'installation conteneurisée.
+- **Ce que l'acteur authentifié ne couvre pas encore.** La Fusée atteste les
+  entrées nouvelles des décisions, du journal et des versions de bilan ; elle
+  vérifie le sceau à la réception d'un bilan seulement. La Barre ne peut pas le
+  vérifier : elle affiche ce qui est enregistré. Les autres objets de la base
+  (projets, livrables, réglages) restent écrits d'un bloc, sans attestation.
+  Les décisions et lignes prises avant l'arrivée du contexte, ou hors de La
+  Fusée, restent déclarées et ne sont jamais attestées après coup. La personne
+  connectée n'est reliée à aucune personne de la base : ses casquettes ne sont
+  pas reprises. Un geste sans acteur authentifié n'est pas refusé : sans La
+  Fusée, la base reste ouverte aux gestes déclarés.
 - **L'acceptation du brief n'est plus proposée.** « Accepter le brief » et
   « Retourner sous réserve » (`app/vue-brief.js`, `corpsCampagne`) ne
   s'affichent que si la nature du projet offre le brief de campagne. Or ce
@@ -333,8 +358,10 @@ un navigateur installé). La CI ne le lance pas.
   range chaque version transmise comme proposition dans les documents de la
   marque ; rien ne la ramène encore automatiquement dans le brief ou la
   composition de la campagne suivante, et la transmission se fait version par
-  version, à la main. L'acteur d'une version reste celui choisi sur le poste ;
-  La Fusée enregistre de son côté la personne connectée qui transmet.
+  version, à la main. Derrière La Fusée, une version arrêtée porte
+  l'attestation de la personne connectée qui l'a enregistrée ; La Fusée
+  enregistre en plus celle qui transmet. Une version arrêtée hors de La Fusée
+  reste déclarée.
 - **Aucun envoi.** « Demander un retour » rédige le message et date l'attente.
   L'application n'envoie ni e-mail ni notification.
 - **Des routes locales pensées pour macOS.** `/disque-ouvrir` appelle `open` ;

@@ -160,23 +160,41 @@ window.VAULT = (function () {
     return "La Fusée · " + r.marque.name + " · " + (noms[r.valeur.provenance] || noms.UNKNOWN)
       + (r.valeur.sourceVersion === null ? "" : " · version " + r.valeur.sourceVersion);
   }
+  /* Ce dont l'écran dépend : il se redessine quand l'une de ces valeurs change,
+   * y compris la personne connectée, qui verrouille l'acteur. */
+  function empreinteContexte() {
+    return JSON.stringify([contexte.brands, contexte.choices, contexte.issues, contexte.sharingMode,
+      contexte.actorAttestation, contexte.actor]);
+  }
   function initialiser(apres) {
     if (location.pathname.indexOf("/la-barre/") !== 0) return;
-    var avant = JSON.stringify([contexte.brands, contexte.choices, contexte.issues, contexte.sharingMode]), etatAvant = etatContexte;
-    etatContexte = "chargement";
+    var avant = empreinteContexte(), etatAvant = etatContexte;
+    /* Une relecture garde le contexte déjà reçu jusqu'à sa réponse : sans
+     * cela, l'écran redessiné pendant le réseau perdait la personne connectée
+     * (l'acteur repassait « déclaré ») et les capacités de partage et de bilan. */
+    if (etatContexte !== "recu") etatContexte = "chargement";
     var ids = DEPOT.liste("marques").map(function (m) { return m.id; });
     return fetch("contexte.json" + (ids.length ? "?" + ids.map(function (id) { return "brand=" + encodeURIComponent(id); }).join("&") : ""), { cache: "no-store", credentials: "same-origin" })
       .then(function (r) { if (!r.ok) throw new Error("Références indisponibles"); return r.json(); })
       .then(connecter).catch(function () { etatContexte = "erreur"; })
       .then(function () {
-        if (apres && (etatAvant !== etatContexte || avant !== JSON.stringify([contexte.brands, contexte.choices, contexte.issues, contexte.sharingMode]))) apres();
+        if (apres && (etatAvant !== etatContexte || avant !== empreinteContexte())) apres();
       });
   }
   /* `bilan` : l'hôte déclare savoir recevoir un bilan de campagne arrêté
-   * (POST bilan). Sans cette déclaration, rien n'est proposé ni envoyé. */
+   * (POST bilan). Sans cette déclaration, rien n'est proposé ni envoyé.
+   * `acteur` : l'hôte authentifie la personne connectée et atteste ses gestes
+   * à l'enregistrement (`actorAttestation: "SESSION_V1"`). Sans cette
+   * déclaration, l'acteur reste celui choisi sur le poste. */
+  function acteurContexte() {
+    var a = contexte.actor;
+    if (etatContexte !== "recu" || contexte.actorAttestation !== "SESSION_V1" || !a || typeof a.id !== "string" || !a.id) return null;
+    return { id: a.id, nom: typeof a.name === "string" && a.name.trim() ? a.name.trim() : null };
+  }
   function statutContexte() { return { etat: etatContexte, quand: contexte.generatedAt || null,
     partage: etatContexte === "recu" && contexte.sharingMode === "DOCUMENT_V2",
     bilan: etatContexte === "recu" && contexte.campaignReviewReception === "CAMPAIGN_REVIEW_V1",
+    acteur: acteurContexte(),
     issues: contexte.issues || [] }; }
 
   /* Les quatre piliers viennent de la maison : c'est de la doctrine d'agence,

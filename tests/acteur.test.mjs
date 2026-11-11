@@ -27,3 +27,41 @@ test('deux onglets et deux dépôts gardent des acteurs distincts',()=>{
   a.fichier('atelier-b.json');assert.equal(a.acteur.personne(),null);
   a.fichier('atelier-a.json');assert.equal(a.acteur.personne().id,'P1');
 });
+
+/* Servie derrière La Fusée : la personne connectée est imposée (LB3). */
+function posteAvecContexte() {
+  const mem=new Map();let statut={etat:'independant',acteur:null};
+  const personnes=[{id:'P1',nom:'Camille',poste:'direction-generale',casquettes:[{poste:'clientele'}]}];
+  const sb={MAISON:{titulaire:'creation',nom:'Recette'},O:{poste:p=>({court:p,nom:'Poste '+p+' (nom long)'})},
+    sessionStorage:{getItem:k=>mem.get(k),setItem:(k,v)=>mem.set(k,v),removeItem:k=>mem.delete(k)},
+    DEPOT:{poids:()=>({fichier:'atelier-a.json'}),tout:()=>({}),trouve:(type,id)=>personnes.find(p=>p.id===id)},
+    VAULT:{statutContexte:()=>statut}};
+  sb.window=sb;vm.runInContext(source,vm.createContext(sb));
+  return {acteur:sb.ACTEUR,contexte:s=>{statut=s;}};
+}
+test('derrière La Fusée, la personne connectée est imposée et le choix du poste verrouillé',()=>{
+  const {acteur:a,contexte}=posteAvecContexte();
+  assert.equal(a.choisir('P1'),true);assert.equal(a.mode(),'declare');assert.equal(a.mention(),'déclaré sur ce poste');
+  contexte({etat:'recu',acteur:{id:'user-alice',nom:'Alice Martin'}});
+  assert.equal(a.mode(),'authentifie');assert.equal(a.mention(),'authentifié par La Fusée');
+  assert.equal(a.personne(),null,'le choix local ne vaut plus');assert.equal(a.nom(),'Alice Martin');
+  assert.equal(a.choisir('P1'),false);assert.equal(a.choisir(''),false);
+  assert.deepEqual(JSON.parse(JSON.stringify(a.trace())),{personneId:null,nom:'Alice Martin',poste:'creation',postes:['creation']});
+  /* Aucune casquette prêtée : les postes sont ceux de l'installation. */
+  assert.equal(a.exerce('clientele'),false);assert.equal(a.exerce('creation'),true);
+  contexte({etat:'recu',acteur:{id:'user-sans-nom',nom:null}});
+  assert.equal(a.nom(),'Personne connectée');assert.equal(a.trace().nom,null);
+  /* Sans La Fusée, le choix déclaré revient tel quel. */
+  contexte({etat:'erreur',acteur:null});
+  assert.equal(a.mode(),'declare');assert.equal(a.personne().id,'P1');assert.equal(a.exerce('clientele'),true);
+});
+test('l’attribution d’une entrée distingue l’identité attestée de l’acteur déclaré',()=>{
+  const {acteur:a}=posteAvecContexte();
+  const atteste={type:'piste',acteur:{personneId:'P1',nom:'Camille'},attestation:{par:'la-fusee',userId:'user-alice',nom:'Alice Martin',at:'2026-11-11T10:00:00.000Z',empreinte:'e'.repeat(64),sceau:'s'.repeat(64)}};
+  assert.deepEqual(JSON.parse(JSON.stringify(a.attribution(atteste))),{mode:'authentifie',nom:'Alice Martin',quand:'2026-11-11T10:00:00.000Z',texte:'Alice Martin · authentifié par La Fusée'});
+  assert.equal(a.attribution({acteur:{nom:'Camille'}}).texte,'Camille · déclaré sur ce poste');
+  assert.equal(a.attribution({qui:'creation'}).texte,'Poste creation (nom long) · déclaré sur ce poste');
+  /* Une attestation qui n'a pas la forme de La Fusée n'est pas lue comme telle. */
+  assert.equal(a.attribution({acteur:{nom:'Camille'},attestation:{par:'navigateur',userId:'x'}}).mode,'declare');
+  assert.equal(a.attribution({attestation:{par:'la-fusee',userId:'u',nom:null}}).nom,'personne connectée');
+});

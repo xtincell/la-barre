@@ -49,12 +49,14 @@
  *                de campagne « campagne » : ce ne sont pas des déviations
  *
  * Ce que ce module ne fait pas. Il n'authentifie personne : `qui` reste le
- * poste titulaire de l'installation, `acteur` le choix fait sur le poste,
- * gardé dans le sessionStorage de l'onglet (acteur.js). Aucune identité
- * authentifiée n'atteint La Barre : servir.mjs n'en a pas, l'hôte qui la sert
- * derrière La Fusée authentifie la session sans la transmettre, et la base
- * s'écrit d'un bloc. Le README dit ce qui manque.
- * Il ne transmet rien à Radar. Ces deux sujets attendent leurs arbitrages.
+ * poste titulaire de l'installation, `acteur` l'acteur du poste (acteur.js).
+ * Servie derrière La Fusée, `acteur` est la personne connectée que La Fusée
+ * déclare, et c'est La Fusée qui atteste : à l'enregistrement de la base, elle
+ * pose sur chaque décision nouvelle le champ `attestation` (identité de la
+ * session, date, empreinte du contenu, sceau), que le navigateur ne peut ni
+ * forger, ni modifier, ni effacer. Ce module ne l'écrit jamais. Seule, sans La
+ * Fusée, La Barre garde l'acteur déclaré sur le poste.
+ * Il ne transmet rien à Radar : ce sujet attend son arbitrage.
  * L'unicité vaut pour la base locale : deux postes hors ligne peuvent encore
  * tirer le même identifiant, la réconciliation le voit, ce module non.
  */
@@ -227,8 +229,9 @@ window.DECISION = (function () {
 
   function poser(champs) { return ajouter(construire(champs)); }
 
-  /* L'attribution locale du geste, telle que la posent les écrivains récents.
-   * Ce n'est pas une identité authentifiée : voir l'en-tête. */
+  /* L'acteur du geste, tel que la posent les écrivains récents : la personne
+   * connectée derrière La Fusée, sinon le choix du poste. La preuve de
+   * l'identité est l'attestation que La Fusée pose à l'enregistrement. */
   function acteur() { return window.ACTEUR ? ACTEUR.trace() : null; }
 
   /* Un écran rend le refus à la personne, et laisse passer le reste. */
