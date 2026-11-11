@@ -484,6 +484,9 @@ const serveur = createServer(async (requete, reponse) => {
   }
 });
 
-serveur.listen(PORT, process.env.HOST || "0.0.0.0", () => {
+/* Écoute locale par défaut : ce serveur n'a aucune authentification, lecture et
+ * écriture comprises. L'ouvrir au réseau est un choix explicite (HOST), que les
+ * images Docker font pour être jointes à travers leur port publié. */
+serveur.listen(PORT, process.env.HOST || "127.0.0.1", () => {
   console.log(`Processus Matanga — http://localhost:${PORT}`);
 });

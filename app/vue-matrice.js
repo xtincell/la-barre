@@ -770,7 +770,7 @@ window.VUE_MATRICE = (function () {
       responsable: null, echeance: null, remise: null, publication: null,
       origine: "prevu", pisteId: pisteRetenue(p), maitre: null, version: 1, versions: [],
       estime: null, reel: null, toursVendus: null, assets: [], entrees: [],
-      volets: volets,
+      points: points,
     };
     if (!p.livrables) p.livrables = [];
     p.livrables.push(l);

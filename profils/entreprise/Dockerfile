@@ -9,6 +9,8 @@ RUN node outils/distribuer-entreprise.mjs --verifier . \
     && chmod 700 /app/depots /app/assets/review
 USER node
 ENV PORT=3000
+# Dans le conteneur, l'écoute réseau est voulue : le port publié en dépend.
+ENV HOST=0.0.0.0
 EXPOSE 3000
 HEALTHCHECK --interval=5s --timeout=3s --start-period=5s --retries=12 CMD ["node", "--input-type=module", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 CMD ["sh", "-c", "node outils/preparer-entreprise.mjs && exec node servir.mjs 3000"]
