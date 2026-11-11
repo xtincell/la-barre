@@ -129,7 +129,7 @@ tourne sous l'utilisateur `node` et crée au premier démarrage
 | Variable | Effet |
 |---|---|
 | `PORT` | Port d'écoute quand aucun port n'est passé en argument. Défaut : `5173`. L'image pose `PORT=3000`, et sa commande passe aussi `3000`. |
-| `HOST` | Adresse d'écoute. Sur `main`, sans elle, `servir.mjs` écoute sur `0.0.0.0`, c'est-à-dire sur toutes les interfaces. À la fusion de #14, ce défaut devient `127.0.0.1`, et les deux Dockerfile posent `HOST=0.0.0.0`. |
+| `HOST` | Adresse d'écoute. Défaut : `127.0.0.1`, cette machine seulement. Les deux Dockerfile posent `HOST=0.0.0.0`, car leur port publié en dépend. |
 | `LA_BARRE_EXPORT_MATANGA`, `LA_BARRE_EXPORT_UPGRADERS` | Dossiers lus par `/disque/`. Défaut : les deux exports rangés dans `~/Downloads`. |
 | `LA_BARRE_CHROME` | Chrome utilisé par `/partage-pdf`. Défaut : le chemin de Google Chrome sous macOS. |
 | `LA_BARRE_EN_LIGNE` | Instance où `/partage-pdf` envoie le PDF et la base. Défaut : `https://labarre.powerupgraders.com/`. |
@@ -206,6 +206,7 @@ npm run test:marches
 npm run test:provenances
 npm run test:decisions
 npm run test:bilan
+node --test tests/bilan-delai.test.mjs tests/ecarts.test.mjs tests/registre-radar.test.mjs
 node outils/distribuer-approches.mjs --check
 node --test tests/approches.test.mjs
 node --test tests/entreprise.test.mjs
@@ -231,9 +232,9 @@ Les scripts de `package.json` :
 | `npm test` | `node tests/parcours.mjs` |
 | `npm run test:persistance` | `node --test tests/persistance.test.mjs tests/reconciliation.test.mjs tests/depot-reprise.test.mjs` |
 | `npm run test:manuel` | `node --test tests/saisie-manuelle.test.mjs tests/acteur.test.mjs tests/formulaire.test.mjs tests/lecture-dependances.test.mjs` |
-| `npm run test:marches` | `node --test tests/marches.test.mjs` |
+| `npm run test:marches` | `node --test tests/marches.test.mjs tests/grille.test.mjs` |
 | `npm run test:provenances` | `node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs` |
-| `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs` |
+| `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs` |
 | `npm run test:bilan` | `node --test tests/bilan-preuves.test.mjs` |
 
 Les tests `node --test` n'ont besoin d'aucune dépendance npm ;
