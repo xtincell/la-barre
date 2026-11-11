@@ -12,6 +12,12 @@
  *   bigidea      elle ne tient pas un critère d'acceptation écrit
  *   agence       nous avons changé d'avis. Le coût est pour nous.
  *   donneur      le client demande autre chose. C'est là que la reprise se compte.
+ *
+ * L'origine dit qui paie ; elle ne dit pas ce qui change. Chaque écart porte
+ * aussi `types`, la liste des types de la méthode (langue, marque, produit,
+ * reglementaire — voir ecarts-marche.js) que son contrôle vérifie. Un KV en
+ * français sur le Ghana est d'origine `brief` et de type `langue`. Un écart que
+ * rien ne rattache à un type porte une liste vide.
  */
 
 window.ECARTS = (function () {
@@ -77,10 +83,11 @@ window.ECARTS = (function () {
     });
   }
 
-  function pousser(out, p, l, origine, quoi, cout, poste) {
+  function pousser(out, p, l, origine, quoi, cout, poste, types) {
     out.push({
       cle: p.id + "|" + (l ? l.id : "-") + "|" + origine + "|" + quoi,
       projet: p, livrable: l || null, origine: origine, quoi: quoi, cout: cout,
+      types: (types || []).slice(),
       poste: poste || "da",
       responsable: l && l.responsable ? l.responsable : null,
       ecarte: ecarte(p.id + "|" + (l ? l.id : "-") + "|" + origine + "|" + quoi),
@@ -95,7 +102,7 @@ window.ECARTS = (function () {
       KV.conformite(p, l).forEach(function (c) {
         if (c.ok) return;
         var origine = c.quoi === "Accroche ≤ 5 mots" ? "bigidea" : "brief";
-        pousser(out, p, l, origine, c.quoi, c.cout, "da");
+        pousser(out, p, l, origine, c.quoi, c.cout, "da", c.types);
       });
     });
     /* Les périmètres promis et non produits.
@@ -183,7 +190,7 @@ window.ECARTS = (function () {
       var l = i.pieces[0] || null;
       out.push({
         cle: p.id + "|fb|" + f.id,
-        projet: p, livrable: l, origine: "donneur",
+        projet: p, livrable: l, origine: "donneur", types: [],
         quoi: f.texte.slice(0, 110) + (f.texte.length > 110 ? "…" : ""),
         cout: FEEDBACK.nomAuteur(f.auteur) + " · " + O.joli(f.quand)
           + "  ·  " + i.assets + (i.assets > 1 ? " livrables" : " livrable")
@@ -242,10 +249,21 @@ window.ECARTS = (function () {
     return m;
   }
 
+  /* Le même relevé, compté par type : un écart à deux types compte dans les deux. */
+  function compteParType(projetId) {
+    var m = {};
+    tous(projetId).forEach(function (x) {
+      if (x.ecarte) return;
+      (x.types || []).forEach(function (t) { m[t] = (m[t] || 0) + 1; });
+    });
+    return m;
+  }
+
   function total(projetId) {
     return tous(projetId).filter(function (x) { return !x.ecarte; }).length;
   }
 
-  return { ORIGINES: ORIGINES, def: def, depuisQuand: depuisQuand, tous: tous, compte: compte, total: total,
+  return { ORIGINES: ORIGINES, def: def, depuisQuand: depuisQuand, tous: tous, compte: compte,
+    compteParType: compteParType, total: total,
     ecarterUn: ecarterUn, reprendre: reprendre };
 })();

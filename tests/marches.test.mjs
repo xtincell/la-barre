@@ -72,6 +72,14 @@ test('un référentiel reçu permet les contrôles positifs et expose les vrais 
   l.kv.langue = 'EN'; l.kv.sku = ['Pack B']; l.kv.mentions = [];
   for (const nom of ['Langue du marché', 'SKU distribués ici', 'Mentions obligatoires']) assert.equal(controle(s, p, l, nom).ok, false);
 });
+test('chaque contrôle de conformité nomme le type d’écart de la méthode qu’il vérifie', async () => {
+  const s = await atelier({ id: 'M-1', langues: ['FR'], sku: ['Pack A'], mentions: ['Mention A'] }), p = projet(), l = kv();
+  const types = Object.fromEntries(s.sb.KV.conformite(p, l).map(c => [c.quoi, JSON.parse(JSON.stringify(c.types || []))]));
+  assert.deepEqual(types, {
+    'Marque': ['marque'], 'Langue du marché': ['langue'], 'Accroche ≤ 5 mots': [],
+    'SKU distribués ici': ['produit'], 'Choix de DA posés': [], 'Mentions obligatoires': ['reglementaire'],
+  });
+});
 test('la planche crée réellement un format relié à la version du master', async () => {
   const s = await atelier({ id: 'M-1', code: 'CM', langues: ['FR'], sku: ['Pack A'], mentions: ['Mention A'] });
   const p = projet(); p.livrables.push(kv());

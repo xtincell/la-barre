@@ -99,13 +99,16 @@ window.VUE_MATRICE = (function () {
 
       MODE === "calendrier" ? VUE_CYCLE.rendre(p, rafraichir)
         : MODE === "mur" ? mur(p, rafraichir)
-        : volets.length
+        : [volets.length
           ? volets.map(function (v) { return blocVolet(p, v, rafraichir); })
           /* Sans volet, le dossier n'était pas vide pour autant : son périmètre
            * dit déjà ce qu'on s'est engagé à produire. Afficher « Aucun volet »
            * décrivait le dossier par ce qui lui manquait, alors que ce qui
            * manque est un découpage, pas une promesse. */
           : blocPerimetre(p, rafraichir),
+          /* Ce que chaque marché a le droit de changer du master : déclaré par
+           * projet et par marché, compté avec la grille (ecarts-marche.js). */
+          window.ECARTS_MARCHE ? ECARTS_MARCHE.bloc(p, rafraichir) : null],
 
       el("div.form-actions", { style: { "margin-top": "1rem" } },
         el("button.b.or", { type: "button", onclick: function () { editerVolet(p, null, rafraichir); } }, "Ajouter un volet"),

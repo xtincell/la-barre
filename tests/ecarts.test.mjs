@@ -212,3 +212,23 @@ test('les origines déclarées et la date d’un écart calculé', async () => {
   assert.equal(q({ livrable: { versions: [{ soumis_le: 'S1' }] }, projet: { cree_le: 'P' } }), 'P');
   assert.equal(q({}), null);
 });
+
+test('un écart porte la liste des types de la méthode que son contrôle vérifie', async () => {
+  const kv = { id: 'L-KV', nom: 'KV · GH', kv: { copy: 'Signe' } };
+  const s = await atelier({ projets: [dossier({ livrables: [kv],
+    sections: sections({ brief: { livrables_attendus: ['Kakémono'] } }) })], conformite: { 'L-KV': [
+    { quoi: 'Langue du marché', ok: false, cout: 'le KV est en français', types: ['langue'] },
+    { quoi: 'SKU distribués ici', ok: false, cout: 'Pack B', types: ['produit'] },
+    { quoi: 'Accroche ≤ 5 mots', ok: false, cout: 'sept mots' },
+  ] } });
+  const t = s.E.tous();
+  assert.deepEqual(t.map(x => [x.quoi, x.types]), [
+    ['Langue du marché', ['langue']],
+    ['SKU distribués ici', ['produit']],
+    ['« Kakémono » promis au brief, absent du dossier', []],
+    ['Accroche ≤ 5 mots', []],
+  ], 'l’origine dit qui paie, le type ce qui change : les deux axes se croisent');
+  assert.deepEqual(copie(s.E.compteParType()), { langue: 1, produit: 1 });
+  s.E.ecarterUn('P-1|L-KV|brief|SKU distribués ici', 'Distribution confirmée');
+  assert.deepEqual(copie(s.E.compteParType()), { langue: 1 }, 'un écart écarté ne compte plus');
+});

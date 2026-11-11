@@ -40,7 +40,7 @@ dépendent de la nature du projet (`MAISON.natures`, dans `app/maison-base.js`) 
 | Big idea | `vue-bigidea.js` |
 | Pistes créatives | `vue-pistes.js`, `vue-route.js` |
 | Déclinaisons | `vue-planche.js` |
-| Livrables (matrice support × marché) | `vue-matrice.js` |
+| Livrables (matrice support × marché, écarts déclarés par marché) | `vue-matrice.js`, `ecarts-marche.js` |
 | Planche de livraison | `vue-livraison.js` |
 | Présentation | `vue-presentation.js` |
 
@@ -187,6 +187,39 @@ l'objet visé, relu dans la base ; sinon la décision est refusée et rien n'est
 campagne, sous la référence commune ; il fait taire le contrôle « piste propre
 alors que … gouverne la campagne » pour ce seul projet.
 
+**Les écarts de marché déclarés.** Ce que chaque marché a le droit de changer
+du master se déclare au cadrage, sur le couple projet × marché, depuis la grille
+des livrables (« Écarts déclarés par marché », `app/ecarts-marche.js`). Une
+déclaration porte une liste de types, ceux du
+[Market Expansion System](https://github.com/xtincell/market-expansion-system) :
+`langue`, `marque`, `produit` (produit / SKU), `reglementaire`. Le Ghana en porte
+deux. Elle vit sous le périmètre, indexée par marché :
+`p.perimetre.ecarts[marcheId] = { types, detail, declare_le, acteur, source }`,
+avec `par` et `importe_le` quand elle vient d'un import. Aucune migration : un
+marché absent est « non déclaré », ce qui n'est pas « aucun écart »
+(`types: []`). Une ancienne déclaration à un seul type (`type: "marque"`) se lit
+comme une liste d'un élément.
+
+Ces types croisent les origines de `app/ecarts.js` sans les remplacer :
+l'origine dit qui paie, le type ce qui change. Les contrôles de conformité du KV
+nomment le type qu'ils vérifient (« Langue du marché » : `langue`, « SKU
+distribués ici » : `produit`, « Mentions obligatoires » : `reglementaire`,
+« Marque » : `marque`), et chaque écart calculé porte cette liste dans `types` ;
+`ECARTS.compteParType` les compte. L'accroche et les choix de direction
+artistique n'ont pas de type.
+
+« Exporter » et « Importer » suivent le format d'échange `ecarts-marche`,
+version 1, décrit dans `METHODE.md` du Market Expansion System. Il y est produit
+depuis la matrice de cadrage (`node scripts/ecarts.mjs vers-json`). Un fichier
+porte un écart par couple projet × marché : le projet par sa référence, le
+marché par son code. À l'import, une ligne vaut pour le dossier ouvert si son
+projet est sa référence, son identifiant ou le `ndeg` d'un brief du registre
+Radar qui lui est rattaché ; les lignes d'autres projets sont ignorées. Un
+marché inconnu du référentiel, un type inconnu ou un couple déclaré deux fois
+refusent l'import entier : rien n'est écrit. Un marché hors du périmètre est
+déclaré quand même, et signalé ; le périmètre ne change pas. Une date absente du
+fichier reste absente.
+
 **Le bilan de campagne.** C'est le diagnostic que la campagne suivante doit
 pouvoir opposer : ni la fiche mensuelle (Bilan → Bilan mensuel), ni le texte
 de clôture d'un projet, ni la chronologie de la marque. Il s'écrit en bas de
@@ -307,7 +340,7 @@ Les scripts de `package.json` :
 | `npm test` | `node tests/parcours.mjs` |
 | `npm run test:persistance` | `node --test tests/persistance.test.mjs tests/reconciliation.test.mjs tests/depot-reprise.test.mjs` |
 | `npm run test:manuel` | `node --test tests/saisie-manuelle.test.mjs tests/acteur.test.mjs tests/formulaire.test.mjs tests/lecture-dependances.test.mjs` |
-| `npm run test:marches` | `node --test tests/marches.test.mjs tests/grille.test.mjs` |
+| `npm run test:marches` | `node --test tests/marches.test.mjs tests/grille.test.mjs tests/ecarts-marche.test.mjs` |
 | `npm run test:provenances` | `node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs` |
 | `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs tests/attestation.test.mjs` |
 | `npm run test:bilan` | `node --test tests/bilan-preuves.test.mjs tests/bilan-campagne.test.mjs` |
@@ -333,6 +366,13 @@ un navigateur installé). La CI ne le lance pas.
   l'interface, un écart ne peut être ni écarté ni repris. Les écarts déjà
   écartés dans une base (`ecartsEcartes`) restent lus, notamment par les
   arbitrages.
+- **Une déclaration d'écart ne juge encore rien.** Les adaptations d'un marché
+  ne sont pas comparées à sa déclaration : une adaptation qui change la marque
+  du master sans `marque` déclaré ne produit aucun écart. L'origine d'un tel
+  écart n'est pas calculable — rien ne dit qui l'a demandé — et reste à
+  trancher. La règle « déclaré avant le premier crayon » n'est pas contrôlée
+  non plus : la date de déclaration n'est pas comparée à la première pièce du
+  marché. Le contrôle « Marque » vérifie une présence, pas une bascule.
 - **Aucune authentification dans `servir.mjs`.** Quiconque joint son port peut
   lire tout le dossier et écrire là où le serveur l'accepte, attestations
   comprises : `servir.mjs` ne connaît aucune identité et ne vérifie aucun
