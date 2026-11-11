@@ -123,7 +123,8 @@ window.VUE_JURISPRUDENCE = (function () {
          * écrite dans la maison tombait sous 4,5:1. */
         v ? el("span.jucas-v.v-" + v.cle, {}, el("span.v-signe", { "aria-hidden": "true" }, v.signe + " "), v.nom) : null),
       el("div.jucas-o", {}, a.quoi),
-      el("div.jucas-m", {}, a.motif));
+      el("div.jucas-m", {}, a.motif),
+      a.attribution ? el("div.jucas-a" + (a.attribution.mode === "authentifie" ? ".atteste" : ""), {}, a.attribution.texte) : null);
   }
 
   /* ————————————————————— À écrire ————————————————————— */

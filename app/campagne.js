@@ -568,9 +568,12 @@ window.CAMPAGNE = (function () {
    * Une version arrêtée garde son identité (la même d'une version à l'autre),
    * son numéro, sa date, la campagne et ses marques telles qu'elles étaient,
    * le texte, ce qu'elle change, l'empreinte de la précédente et la sienne :
-   * SHA-256 du JSON aux clés triées, sans le champ `empreinte`. La Fusée la
-   * recalcule à la réception ; le jeu tests/fixtures/bilan-campagne-v1.json
-   * est commun aux deux dépôts. */
+   * SHA-256 du JSON aux clés triées, sans les champs `empreinte` et
+   * `attestation`. Servie derrière La Fusée, une version reçoit en plus à son
+   * enregistrement l'attestation de la personne connectée, posée après l'arrêt
+   * et donc hors de l'empreinte. La Fusée recalcule l'empreinte et vérifie
+   * l'attestation à la réception ; les jeux tests/fixtures/bilan-campagne-v1.json
+   * et bilan-campagne-atteste-v1.json sont communs aux deux dépôts. */
 
   var BILAN_SCHEMA = "la-barre/bilan-campagne";
   var BILAN_MAX = 60000;
@@ -630,7 +633,7 @@ window.CAMPAGNE = (function () {
       return Promise.reject(new Error("Ouvrez La Barre dans une connexion sécurisée pour arrêter le bilan : son empreinte en dépend."));
     }
     var sans = {};
-    Object.keys(doc).forEach(function (k) { if (k !== "empreinte") sans[k] = doc[k]; });
+    Object.keys(doc).forEach(function (k) { if (k !== "empreinte" && k !== "attestation") sans[k] = doc[k]; });
     var texte = JSON.stringify(canonique(sans));
     return subtil.digest("SHA-256", new window.TextEncoder().encode(texte)).then(function (h) {
       return Array.prototype.map.call(new Uint8Array(h), function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
@@ -772,10 +775,11 @@ window.CAMPAGNE = (function () {
 
   function ligneVersion(c, v, apres) {
     var recu = (c.bilanRecus || {})[String(v.version)];
-    var par = v.acteur && v.acteur.nom ? v.acteur.nom : O.poste(v.qui || MAISON.titulaire).nom;
+    var par = ACTEUR.attribution(v);
     return el("li", {},
       el("details", {},
-        el("summary", {}, "Version " + v.version + " · arrêtée le " + O.jourCourt(v.arrete_le) + " par " + par
+        el("summary", {}, "Version " + v.version + " · arrêtée le " + O.jourCourt(v.arrete_le) + " par " + par.nom
+          + " (" + (par.mode === "authentifie" ? "authentifié par La Fusée" : "déclaré sur ce poste") + ")"
           + " · empreinte " + String(v.empreinte).slice(0, 12)),
         v.note ? el("p.cg-q", {}, "Ce qu'elle change : " + v.note) : null,
         el("p.lire", {}, v.contenu)),

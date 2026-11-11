@@ -165,6 +165,9 @@
 .journal-l { display: grid; grid-template-columns: 5rem 6rem 1fr; gap: .5rem;
   padding: .26rem 0; border-bottom: 1px solid var(--trait); color: var(--clair-doux); }
 .journal-l .h { color: var(--clair-terne); font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
+/* Qui a fait le geste : attesté par La Fusée, ou déclaré sur le poste. */
+.journal-l .journal-qui { grid-column: 2 / -1; color: var(--clair-terne); font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
+.journal-l .journal-qui.atteste { color: var(--vert); }
 
 /* ————————————————————— Barre d'actions rapides ————————————————————— */
 

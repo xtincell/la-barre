@@ -159,17 +159,34 @@ window.VUE_REGLAGES = (function () {
 
     hote.appendChild(el("div.groupe", {},
       el("div.section-titre", {}, "Journal", el("span.droite", {}, "les cent dernières traces")),
-      el("div.journal", {}, DEPOT.journal().slice(0, 100).map(function (l) {
-        return el("div.journal-l", {},
-          el("span.h", {}, O.jolieHeure(l.quand) + " " + O.joli(l.quand)),
-          el("span.a", {}, l.action || l.quoi || "—"),
-          el("span", {}, (l.type || l.objet ? (l.type || l.objet) + "  ·  " : "")
-            + (l.detail || l.id || "")));
-      }))
+      el("div.journal", {}, DEPOT.journal().slice(0, 100).map(ligneJournal))
     ));
   }
 
+  function ligneJournal(l) {
+    var par = ACTEUR.attribution(l);
+    return el("div.journal-l", {},
+      el("span.h", {}, O.jolieHeure(l.quand) + " " + O.joli(l.quand)),
+      el("span.a", {}, l.action || l.quoi || "—"),
+      el("span", {}, (l.type || l.objet ? (l.type || l.objet) + "  ·  " : "")
+        + (l.detail || l.id || "")),
+      /* Qui : l'identité attestée par La Fusée, ou ce que le poste a déclaré. */
+      el("span.journal-qui" + (par.mode === "authentifie" ? ".atteste" : ""), {}, par.texte));
+  }
+
   function choixActeur() {
+    var connecte = ACTEUR.authentifie();
+    if (connecte) {
+      /* Derrière La Fusée, la personne connectée est imposée : le sélecteur est
+       * verrouillé sur elle, et La Fusée atteste ses gestes à l'enregistrement. */
+      var verrou = el("select", { "aria-label": "Personne qui travaille ici", disabled: true },
+        el("option", { value: "" }, ACTEUR.nom()));
+      return el("div.reglage", {}, el("h4", {}, "Qui travaille ici"),
+        el("p", {}, "Authentifié par La Fusée : les décisions, les lignes de journal et les versions de bilan "
+          + "enregistrées depuis cet onglet portent l'identité de la personne connectée. Elle ne se choisit pas ici."),
+        verrou, el("p.indice", {}, "Postes : " + ACTEUR.postes().map(function (x) { return O.poste(x).court; }).join(" · ")
+          + " — ceux de l'installation : aucune casquette n'est prêtée à la personne connectée."));
+    }
     var p = ACTEUR.personne();
     var choix = el("select", { "aria-label": "Personne qui travaille ici", onchange: function () {
       if (!ACTEUR.choisir(choix.value)) { AVIS.refus("Le choix n’a pas pu être conservé dans cet onglet."); return; }
@@ -179,7 +196,8 @@ window.VUE_REGLAGES = (function () {
       choix.appendChild(el("option", { value: x.id, selected: p && p.id === x.id ? true : null }, x.nom));
     });
     return el("div.reglage", {}, el("h4", {}, "Qui travaille ici"),
-      el("p", {}, "Les gestes sont attribués à cette personne dans cet onglet. Ses postes cumulés sont pris en compte."),
+      el("p", {}, "Déclaré sur ce poste : les gestes sont attribués à cette personne dans cet onglet, sans rien prouver. "
+        + "Ses postes cumulés sont pris en compte. Ouverte depuis La Fusée, La Barre impose la personne connectée."),
       choix, el("p.indice", {}, "Postes : " + ACTEUR.postes().map(function (x) { return O.poste(x).court; }).join(" · ")));
   }
 

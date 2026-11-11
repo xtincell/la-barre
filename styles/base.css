@@ -416,6 +416,7 @@ body {
 }
 .rail-pied .nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
 .rail-pied .poste { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.rail-pied .poste.acteur-authentifie { color: var(--vert); }
 .rail-pied .version { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); margin-top: .6rem; }
 .rail-pied .sauvegarde { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); margin-top: .15rem; }
 .rail-pied .sauvegarde.ok { color: var(--vert); }

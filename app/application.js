@@ -129,7 +129,9 @@ window.APP = (function () {
           el("div.portrait", {}, initiales(moi())),
           el("div", {},
             el("div.nom", {}, moi()),
-            el("div.poste", {}, ACTEUR.postes().map(function (p) { return O.poste(p).court; }).join(" · "))
+            el("div.poste", {}, ACTEUR.postes().map(function (p) { return O.poste(p).court; }).join(" · ")),
+            /* Le régime de l'acteur, toujours dit : imposé par La Fusée, ou choisi ici. */
+            el("div.poste.acteur-" + ACTEUR.mode(), {}, ACTEUR.mention())
           )
         ),
         el("a.rail-suite", { href: MAISON.suite.url, target: "_blank", rel: "noopener noreferrer" }, "Dans la suite Shinkiro ↗"),

@@ -2546,6 +2546,8 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .jucas-v.v-hors .v-signe { color: var(--bloquant); }
 .jucas-o { font-size: 13px; color: var(--clair); }
 .jucas-m { font-size: 13px; line-height: 1.5; color: var(--clair-terne); max-width: 65ch; }
+.jucas-a { font-size: 12px; color: var(--clair-terne); }
+.jucas-a.atteste { color: var(--vert); }
 /* Les critères jamais invoqués : un inventaire, pas une alerte. */
 .ju-jamais { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--trait); }
 .jub-t { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; font: 550 15px var(--affichage); color: var(--clair); }

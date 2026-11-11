@@ -295,11 +295,20 @@ window.DEPOT = (function () {
           });
         });
       }
+      if (r.status === 422) {
+        // Une attestation refusée : renvoyer la même base ne changera rien.
+        return r.json().catch(function () { return {}; }).then(function (erreur) {
+          throw new Error(erreur.quoi || "La sauvegarde a été refusée (422)");
+        });
+      }
       if (!r.ok) throw new Error("La sauvegarde n’a pas été reçue (" + r.status + ")");
       return r.json();
     }).then(function (j) {
       if (!j) { if (conflitEnCours) finirRappels(false, "conflit à rapprocher"); return; }
       if (!j.ok) throw new Error("La sauvegarde n’a pas été reçue");
+      // Derrière La Fusée, ce qui vient d'être attesté revient avec le reçu :
+      // le document envoyé et l'état courant le portent avant d'être comparés.
+      if (appliquerAttestations(j.attestations, envoye)) ecrire();
       // Le reçu porte le document envoyé, jamais celui qui a pu changer
       // pendant le réseau. Le geste suivant utilise cette nouvelle base.
       poserBase(envoye, j.revision);
@@ -324,6 +333,40 @@ window.DEPOT = (function () {
       sauvegardeEnCours = false;
       if (suiteDemandee && !conflitEnCours) planifierDisque();
     });
+  }
+
+  /* Les attestations posées ou rétablies par La Fusée à l'enregistrement.
+   *
+   * Chacune désigne une entrée par son chemin dans le document envoyé. On la
+   * pose là, puis sur la même entrée de l'état courant : même conteneur (relu
+   * par identifiant quand il en a un), même contenu, encore sans attestation.
+   * Une entrée qui a changé pendant le réseau est laissée : La Fusée rétablit
+   * l'attestation au prochain enregistrement. Rien n'est tracé ni réenvoyé :
+   * c'est ce que le serveur porte déjà. */
+  function appliquerAttestations(liste, envoye) {
+    if (!Array.isArray(liste) || !liste.length) return false;
+    var pose = false;
+    liste.forEach(function (a) {
+      if (!a || !Array.isArray(a.chemin) || !a.chemin.length || !a.attestation || typeof a.attestation !== "object") return;
+      var source = envoye, ici = etat, k;
+      for (k = 0; k < a.chemin.length - 1; k++) {
+        var pas = a.chemin[k], suivant = source && source[pas];
+        if (typeof pas === "number" && Array.isArray(ici) && suivant && typeof suivant.id === "string") {
+          ici = ici.filter(function (x) { return x && x.id === suivant.id; })[0];
+        } else ici = ici && ici[pas];
+        source = suivant;
+      }
+      var dernier = a.chemin[a.chemin.length - 1];
+      var cible = source && source[dernier];
+      if (!cible || typeof cible !== "object" || Array.isArray(cible)) return;
+      delete cible.attestation;
+      var cle = JSON.stringify(cible);
+      cible.attestation = RECONCILIATION.copie(a.attestation);
+      if (!Array.isArray(ici)) return;
+      var meme = ici.filter(function (x) { return x && typeof x === "object" && x.attestation == null && JSON.stringify(x) === cle; })[0];
+      if (meme) { delete meme.attestation; meme.attestation = RECONCILIATION.copie(a.attestation); pose = true; }
+    });
+    return pose;
   }
 
   function chargerDepuisServeur(lu, version) {

@@ -66,7 +66,7 @@ window.JURISPRUDENCE = (function () {
       source: o.source, def: SOURCES[o.source] || { nom: o.source, famille: "autre", poids: 1 },
       quand: o.quand, projet: o.projet || null, quoi: o.quoi, motif: o.motif,
       verdict: o.verdict || null, qui: o.qui || MAISON.titulaire,
-      critere: crit,
+      critere: crit, attribution: o.attribution || null,
     };
   }
 
@@ -77,7 +77,9 @@ window.JURISPRUDENCE = (function () {
     /* Le registre canonique, quand il existe. */
     DEPOT.liste("decisions").forEach(function (d) {
       pousse({ source: d.type, quand: d.quand, projet: DEPOT.trouve("projets", d.projet),
-        quoi: d.titre, motif: d.motif, verdict: d.verdict, qui: d.qui });
+        quoi: d.titre, motif: d.motif, verdict: d.verdict, qui: d.qui,
+        /* Qui a décidé : l'identité attestée par La Fusée, ou ce que le poste a déclaré. */
+        attribution: window.ACTEUR ? ACTEUR.attribution(d) : null });
     });
 
     /* Et tout ce qui porte un motif sans être passé par lui — un dossier
