@@ -4,7 +4,8 @@ import vm from 'node:vm';
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
-import { ECRIVAINS, CAPTURE, rejouer, extraire, commit, bac, semer, projet, livrable, PERSONNES } from './decisions-scenarios.mjs';
+import { ECRIVAINS, CAPTURE, rejouer, extraire, commit, bac, semer, projet, livrable, piste, PERSONNES,
+  bouton, saisie, cliquer } from './decisions-scenarios.mjs';
 
 const APP = fileURLToPath(new URL('../app/', import.meta.url));
 const capture = JSON.parse(await readFile(CAPTURE, 'utf8'));
@@ -49,13 +50,13 @@ test('la capture est bien ce qu’écrivait origin/main', { skip: sha ? false : 
 
 /* ————— La fabrique elle-même ————— */
 
-function fabrique({ decisions = [], tirages = [] } = {}) {
-  const data = { decisions: copie(decisions) };
+function fabrique({ decisions = [], tirages = [], projets = [], campagnes = [] } = {}) {
+  const data = { decisions: copie(decisions), projets: copie(projets), campagnes: copie(campagnes) };
   const ajouts = [];
   let n = 0;
   const ctx = vm.createContext({ Date, console,
     O: { id: prefixe => (n < tirages.length ? tirages[n++] : prefixe + '-' + String(++n).padStart(6, '0')) },
-    DEPOT: { liste: k => data[k] || [],
+    DEPOT: { liste: k => data[k] || [], trouve: (k, id) => (data[k] || []).find(x => x && x.id === id) || null,
       ajoute(k, d) { ajouts.push(k); d.cree_le = d.cree_le || new Date().toISOString(); data[k].push(d); return d; } },
   });
   ctx.window = ctx;
@@ -184,15 +185,296 @@ test('rien d’autre que la fabrique n’écrit dans la collection des décision
     const n = ((await readFile(f, 'utf8')).match(/DECISION\.(poser|ajouter)\(/g) || []).length;
     if (n) appels.push(f.slice(APP.length) + ':' + n);
   }
-  assert.deepEqual(appels.sort(), ['bigidea-ecoles.js:1', 'campagne.js:1', 'validation.js:1', 'vue-atelier.js:1',
-    'vue-bigidea.js:1', 'vue-livrable.js:1', 'vue-revue.js:1', 'vue-route.js:1']);
+  /* Les huit écrivains d'origine, plus les gestes de choix qui écrivaient leur
+   * objet sans décision : écarter une piste ou une proposition de big idea,
+   * écarter un concept de la réserve, accepter ou retourner le brief, écarter
+   * une case de la composition et déclarer l'écart d'un projet de campagne. */
+  assert.deepEqual(appels.sort(), ['bigidea-ecoles.js:2', 'campagne.js:3', 'concepts.js:1', 'validation.js:1', 'vue-atelier.js:1',
+    'vue-bigidea.js:1', 'vue-brief.js:1', 'vue-livrable.js:1', 'vue-revue.js:1', 'vue-route.js:2']);
+});
+
+test('aucun module ne déclare deux fois la même fonction : la seconde remplacerait la première en silence', async () => {
+  /* vue-brief.js portait déjà `recevabilite(p, d, ident)` ; une seconde
+   * déclaration du même nom, pour la décision, l'aurait remplacée dans tout le
+   * module et cassé l'écran du brief sans qu'aucun geste testé ne le voie. */
+  const doubles = [];
+  for (const nom of (await readdir(APP)).filter(f => f.endsWith('.js'))) {
+    const vus = {};
+    for (const m of (await readFile(join(APP, nom), 'utf8')).matchAll(/^ {2}function ([A-Za-z_$][\w$]*)\s*\(/gm)) {
+      vus[m[1]] = (vus[m[1]] || 0) + 1;
+    }
+    for (const [f, n] of Object.entries(vus)) if (n > 1) doubles.push(nom + ' : ' + f + ' ×' + n);
+  }
+  assert.deepEqual(doubles, []);
 });
 
 test('decision.js est chargé avant le premier écrivain et après le dépôt', async () => {
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   const rang = nom => html.indexOf('<script src="app/' + nom + '.js">');
   assert.ok(rang('decision') > rang('depot') && rang('depot') > rang('outils'));
-  for (const nom of ['bigidea-ecoles', 'campagne', 'validation', 'vue-atelier', 'vue-bigidea', 'vue-livrable', 'vue-revue', 'vue-route']) {
+  for (const nom of ['bigidea-ecoles', 'campagne', 'concepts', 'validation', 'vue-atelier', 'vue-bigidea', 'vue-brief', 'vue-livrable', 'vue-revue', 'vue-route']) {
     assert.ok(rang(nom) > rang('decision'), nom);
+  }
+});
+
+/* ————— Le rattachement d'une décision ————— */
+
+const sans = (o, ...cles) => { const r = { ...o }; for (const k of cles) delete r[k]; return r; };
+
+test('une décision se rattache à un projet, à une campagne ou à une marque, jamais à rien', () => {
+  const f = fabrique();
+  /* Écarter une case de la composition vise la campagne ; écarter un concept
+   * de la réserve vise sa marque. Ni l'un ni l'autre n'a de projet. */
+  const c = f.D.poser({ ...sans(champs({ verdict: 'hors', motif: 'Pas de film pour ce temps fort' }), 'projet'),
+    type: 'composition', objet: 'film', campagne: 'C-1' });
+  assert.equal(c.campagne, 'C-1'); assert.equal('projet' in c, false);
+  const m = f.D.poser({ ...sans(champs({ verdict: 'hors', motif: 'Déjà porté par le concurrent' }), 'projet'),
+    type: 'concept', objet: 'CO-1', marque: 'MQ-1' });
+  assert.equal(m.marque, 'MQ-1');
+  assert.throws(() => f.D.poser(sans(champs(), 'projet')), { name: 'DecisionRefusee', message: /incomplète : projet \(ou campagne, ou marque\)/ });
+  /* Un rattachement nommé doit être lisible, même à côté d'un autre. */
+  for (const v of ['', '   ', 3, []]) {
+    assert.throws(() => f.D.poser(champs({ campagne: v })), { message: /incomplète : campagne/ }, 'campagne=' + v);
+    assert.throws(() => f.D.poser({ ...sans(champs(), 'projet'), marque: v }), { message: /incomplète : marque/ }, 'marque=' + v);
+  }
+  assert.deepEqual(f.data.decisions.map(d => d.type), ['composition', 'concept']);
+});
+
+/* ————— La portée des déviations ————— */
+
+/* Une déviation s'écarte d'une décision ou du plan. Elle nomme ce dont elle
+ * s'écarte (`ecart`), porte un motif et déclare sa portée dans le vocabulaire
+ * des objets du dépôt : livrable, projet ou campagne. */
+const DEPOT_ECARTS = {
+  campagnes: [{ id: 'C-1', nom: 'Noël' }, { id: 'C-2', nom: 'Rentrée' }],
+  projets: [
+    { id: 'P-ref', campagneId: 'C-1', sections: { pistes: [{ id: 'pi-ref', statut: 'retenue' }] }, livrables: [] },
+    { id: 'P-1', campagneId: 'C-1', sections: { pistes: [{ id: 'pi-local', statut: 'retenue' }] }, livrables: [{ id: 'L-1' }] },
+    { id: 'P-2', campagneId: 'C-2', sections: { pistes: [{ id: 'pi-ailleurs', statut: 'retenue' }] }, livrables: [] },
+  ],
+  decisions: [
+    { id: 'DEC-ref001', type: 'reference-campagne', campagne: 'C-1', projet: 'P-ref', objet: 'pi-ref', verdict: 'approuve', portee: 'campagne' },
+    { id: 'DEC-ref002', type: 'reference-campagne', campagne: 'C-2', projet: 'P-2', objet: 'pi-ailleurs', verdict: 'approuve', portee: 'campagne' },
+  ],
+};
+const ecartDeCampagne = extra => champs({ type: 'ecart-campagne', objet: 'pi-local', projet: 'P-1', campagne: 'C-1',
+  motif: 'Le film garde son propre concept', portee: 'projet', ecart: { de: 'reference-campagne', ref: 'DEC-ref001' }, ...extra });
+const composition = extra => ({ ...sans(champs({ verdict: 'hors', motif: 'La campagne n’a pas de film' }), 'projet'),
+  type: 'composition', objet: 'film', campagne: 'C-1', portee: 'campagne', ecart: { de: 'composition', ref: 'noel' }, ...extra });
+const recevabilite = extra => champs({ type: 'recevabilite', objet: 'brief', projet: 'P-1', motif: 'Le client a confirmé par écrit',
+  portee: 'projet', ecart: { de: 'recevabilite', ref: null }, ...extra });
+
+test('une déviation déclare sa portée : absente ou inconnue, elle est refusée sans rien écrire', () => {
+  const f = fabrique(DEPOT_ECARTS);
+  for (const portee of [undefined, null, '', '   ']) {
+    assert.throws(() => f.D.poser(ecartDeCampagne({ portee })),
+      { name: 'DecisionRefusee', message: /déclare sa portée : livrable, projet ou campagne/ }, String(portee));
+  }
+  /* « document » et « travail » sont des portées de validation, pas de déviation. */
+  for (const portee of ['document', 'travail', 'marque', 'Projet', 'monde', 3]) {
+    assert.throws(() => f.D.poser(ecartDeCampagne({ portee })), { message: /Portée inconnue/ }, String(portee));
+  }
+  assert.deepEqual(f.ajouts, []); assert.equal(f.data.decisions.length, 2); assert.equal(f.tirages, 0);
+});
+
+test('la portée d’une déviation doit correspondre à l’objet visé', () => {
+  const f = fabrique(DEPOT_ECARTS);
+  const pasLeNiveau = /ne correspond pas à l'objet visé/;
+  /* Une piste relève de son projet : ni un livrable, ni la campagne. Une
+   * déviation qui engagerait la campagne ne serait plus un écart, mais une
+   * référence. */
+  assert.throws(() => f.D.poser(ecartDeCampagne({ portee: 'livrable' })), pasLeNiveau);
+  assert.throws(() => f.D.poser(ecartDeCampagne({ portee: 'campagne' })), pasLeNiveau);
+  /* Un livrable visé est de portée livrable, pas projet. */
+  assert.throws(() => f.D.poser(ecartDeCampagne({ objet: 'L-1', portee: 'projet' })), pasLeNiveau);
+  /* Le projet doit exister et appartenir à la campagne nommée. */
+  assert.throws(() => f.D.poser(ecartDeCampagne({ projet: 'P-2', objet: 'pi-ailleurs' })), /n'appartient pas à la campagne/);
+  assert.throws(() => f.D.poser(ecartDeCampagne({ projet: 'P-absent' })), /projet visé est introuvable/);
+  /* Une case de composition relève de la campagne, et la campagne doit exister. */
+  assert.throws(() => f.D.poser(composition({ portee: 'projet' })), pasLeNiveau);
+  assert.throws(() => f.D.poser(composition({ campagne: 'C-absente' })), /campagne visée est introuvable/);
+  assert.throws(() => f.D.poser(recevabilite({ portee: 'campagne' })), pasLeNiveau);
+  assert.deepEqual(f.ajouts, []);
+
+  assert.equal(f.D.poser(ecartDeCampagne()).portee, 'projet');
+  assert.equal(f.D.poser(ecartDeCampagne({ objet: 'L-1', portee: 'livrable' })).portee, 'livrable');
+  assert.equal(f.D.poser(composition()).portee, 'campagne');
+  assert.equal(f.D.poser(recevabilite()).portee, 'projet');
+  assert.deepEqual(f.data.decisions.slice(2).map(d => d.type + ':' + d.portee),
+    ['ecart-campagne:projet', 'ecart-campagne:livrable', 'composition:campagne', 'recevabilite:projet']);
+});
+
+test('une déviation porte un motif, nomme ce dont elle s’écarte et s’adosse à une référence existante', () => {
+  const f = fabrique(DEPOT_ECARTS);
+  /* Même approuvée : s'écarter sans dire pourquoi, c'est s'écarter par goût. */
+  for (const motif of ['', '  ', null]) assert.throws(() => f.D.poser(ecartDeCampagne({ motif })), /déviation exige un motif/);
+  for (const ecart of [null, 'reference-campagne', [], {}, { de: '' }, { de: 3 }]) {
+    assert.throws(() => f.D.poser(ecartDeCampagne({ ecart })), /nomme ce dont elle s'écarte/, JSON.stringify(ecart));
+  }
+  assert.throws(() => f.D.poser(ecartDeCampagne({ ecart: { de: 'humeur' } })), /Écart inconnu : « humeur »/);
+  assert.throws(() => f.D.poser(recevabilite({ ecart: { de: 'recevabilite', ref: 3 } })), /référence de l'écart est illisible/);
+  /* L'écart de campagne s'adosse à la décision de référence de cette campagne. */
+  for (const ref of [undefined, null, 'DEC-absente', 'DEC-ref002']) {
+    assert.throws(() => f.D.poser(ecartDeCampagne({ ecart: { de: 'reference-campagne', ref } })),
+      /référence commune de la campagne C-1/, String(ref));
+  }
+  assert.throws(() => f.D.poser({ ...ecartDeCampagne(), campagne: undefined }), /écart à la référence commune nomme sa campagne/);
+  assert.deepEqual(f.ajouts, []);
+});
+
+test('une décision qui n’est pas une déviation garde sa portée telle quelle', () => {
+  /* Le verdict sur un document (document, travail) et la référence de campagne
+   * (campagne, depuis le projet de la piste) ne sont pas des déviations : leur
+   * portée dit ce que le verdict engage, et la fabrique ne la relit pas. */
+  const f = fabrique();
+  for (const portee of ['document', 'travail', 'campagne']) assert.equal(f.D.poser(champs({ portee })).portee, portee);
+});
+
+/* ————— Les autres gestes de choix passent par la fabrique ————— */
+
+const derniere = s => {
+  const ds = s.ctx.DEPOT.liste('decisions');
+  assert.ok(ds.length, 'le geste n’a écrit aucune décision');
+  return copie(ds[ds.length - 1]);
+};
+const journalDe = (s, d) => copie(s.ctx.DEPOT.journal().filter(e => e.type === 'decisions' && e.id === d.id));
+const iso = v => typeof v === 'string' && new Date(v).toISOString() === v;
+
+function memeGeste(s, d, attendu) {
+  for (const [k, v] of Object.entries(attendu)) assert.deepEqual(d[k], v, k);
+  assert.equal(d.qui, s.ctx.MAISON.titulaire);
+  assert.equal(d.acteur.personneId, 'P-recette');
+  assert.ok(iso(d.quand) && iso(d.cree_le) && d.quand <= d.cree_le);
+  const j = journalDe(s, d);
+  assert.equal(j.length, 1, 'une ligne de journal pour la décision');
+  assert.equal(j[0].acteur.personneId, 'P-recette');
+  assert.ok(s.ctx.localStorage.getItem('la-barre'), 'la base est sauvegardée');
+}
+
+test('écarter une piste depuis sa route passe par la fabrique, motif exigé', async () => {
+  const s = await bac(APP, 21);
+  await s.charger('vue-route', ['ecarter']);
+  semer(s.ctx, { personnes: PERSONNES, projets: [projet('EC', { sections: { pistes: [piste('pi-e')] } })] });
+  const p = s.ctx.DEPOT.trouve('projets', 'EC'), pi = p.sections.pistes[0];
+  s.interne['vue-route'].ecarter(p, pi, () => {});
+  cliquer(bouton(s.dernier(), 'Écarter'));
+  assert.equal(s.ctx.DEPOT.liste('decisions').length, 0); assert.equal(pi.statut, 'proposee');
+  saisie(s.dernier()).value = 'Trop proche du concurrent';
+  cliquer(bouton(s.dernier(), 'Écarter'));
+  const d = derniere(s);
+  memeGeste(s, d, { type: 'piste', objet: 'pi-e', projet: 'EC', verdict: 'hors', motif: 'Trop proche du concurrent', titre: 'Piste pi-e' });
+  assert.equal(pi.statut, 'ecartee'); assert.equal(pi.motif, d.motif);
+});
+
+test('écarter une proposition de big idea passe par la fabrique, au même registre que la retenue', async () => {
+  const s = await bac(APP, 22);
+  await s.charger('bigidea-ecoles');
+  semer(s.ctx, { personnes: PERSONNES, projets: [projet('BE', { bigideas: [{ id: 'BE-2', titre: 'Le gué', phrase: 'Tout passe à gué',
+    statut: 'proposee', cree_le: '2026-11-01T08:00:00.000Z' }] })] });
+  const p = s.ctx.DEPOT.trouve('projets', 'BE'), c = p.bigideas[0];
+  assert.throws(() => s.ctx.BI_ECOLES.ecarter(p, c, '   '), { name: 'DecisionRefusee' });
+  assert.equal(c.statut, 'proposee'); assert.equal(s.ctx.DEPOT.liste('decisions').length, 0);
+  s.ctx.BI_ECOLES.ecarter(p, c, 'Elle ne tient pas trois ans');
+  const d = derniere(s);
+  memeGeste(s, d, { type: 'bigidea', objet: 'BE-2', projet: 'BE', verdict: 'hors', motif: 'Elle ne tient pas trois ans', titre: 'Le gué' });
+  assert.equal(c.statut, 'ecartee'); assert.equal(c.ecartee_le, d.quand);
+});
+
+test('écarter un concept de la réserve passe par la fabrique, rattaché à sa marque', async () => {
+  const s = await bac(APP, 23);
+  await s.charger('concepts', ['ecarter']);
+  semer(s.ctx, { personnes: PERSONNES, marques: [{ id: 'MQ-r', nom: 'Marque de recette', concepts: [{ id: 'CO-1', titre: 'Le pont',
+    phrase: 'Tout passe par le pont', auteur: 'P-junior', statut: 'reserve', cree_le: '2026-11-01T08:00:00.000Z' }] }] });
+  const m = s.ctx.DEPOT.trouve('marques', 'MQ-r'), c = m.concepts[0];
+  s.interne.concepts.ecarter(m, c, () => {});
+  s.demandes.pop()('Déjà porté par le concurrent');
+  const d = derniere(s);
+  memeGeste(s, d, { type: 'concept', objet: 'CO-1', marque: 'MQ-r', verdict: 'hors', motif: 'Déjà porté par le concurrent', titre: 'Le pont' });
+  assert.equal('projet' in d, false);
+  assert.equal(c.statut, 'ecarte'); assert.equal(c.ecarte_le, d.quand);
+});
+
+test('accepter ou retourner le brief passe par la fabrique ; l’accepter malgré ses manques est une déviation de portée projet', async () => {
+  const s = await bac(APP, 24);
+  await s.charger('vue-brief', ['accepter', 'retourner']);
+  semer(s.ctx, { personnes: PERSONNES, projets: [projet('BR'), projet('BM'), projet('BS')] });
+  const brief = id => s.ctx.DEPOT.trouve('projets', id).sections.brief;
+  const manques = { recevable: false, controles: [{ ok: true, quoi: 'Objectif écrit' },
+    { ok: false, quoi: 'Aucune cible nommée', cout: 'la cible se devinera' }, { ok: false, quoi: 'Pas de date', cout: 'aucun délai' }] };
+
+  s.interne['vue-brief'].accepter(s.ctx.DEPOT.trouve('projets', 'BR'), brief('BR'), { recevable: true, controles: [] }, () => {});
+  let d = derniere(s);
+  memeGeste(s, d, { type: 'recevabilite', objet: 'brief', projet: 'BR', verdict: 'approuve', motif: null });
+  assert.equal('portee' in d, false); assert.equal('ecart' in d, false);
+  assert.equal(brief('BR').statut, 'accepte'); assert.equal(brief('BR').accepte_le, d.quand);
+
+  /* Accepter malgré deux manques : le motif est demandé, la portée est le projet. */
+  s.interne['vue-brief'].accepter(s.ctx.DEPOT.trouve('projets', 'BM'), brief('BM'), manques, () => {});
+  cliquer(bouton(s.dernier(), 'Accepter quand même'));
+  assert.equal(brief('BM').statut, undefined); assert.equal(s.ctx.DEPOT.liste('decisions').length, 1);
+  saisie(s.dernier()).value = 'Le client a confirmé la cible par écrit';
+  cliquer(bouton(s.dernier(), 'Accepter quand même'));
+  d = derniere(s);
+  memeGeste(s, d, { type: 'recevabilite', objet: 'brief', projet: 'BM', verdict: 'approuve', portee: 'projet',
+    motif: 'Le client a confirmé la cible par écrit', ecart: { de: 'recevabilite', ref: null, conditions: ['Aucune cible nommée', 'Pas de date'] } });
+  assert.equal(brief('BM').accepte_malgre, 2);
+
+  s.interne['vue-brief'].retourner(s.ctx.DEPOT.trouve('projets', 'BS'), brief('BS'), manques, () => {});
+  cliquer(bouton(s.dernier(), 'Aucune cible nommée — la cible se devinera'));
+  cliquer(bouton(s.dernier(), 'Retourner'));
+  d = derniere(s);
+  memeGeste(s, d, { type: 'recevabilite', objet: 'brief', projet: 'BS', verdict: 'reserve', motif: 'Aucune cible nommée' });
+  assert.equal(brief('BS').statut, 'sous_reserve'); assert.equal(brief('BS').reserve.quand, d.quand);
+});
+
+test('écarter une case de la composition est une déviation de portée campagne ; sans motif, rien n’est écrit', async () => {
+  const s = await bac(APP, 25);
+  await s.charger('campagne');
+  semer(s.ctx, { personnes: PERSONNES, campagnes: [{ id: 'C-n', nom: 'Noël de recette', occasion: 'noel', ecartes: {} }] });
+  const c = s.ctx.DEPOT.trouve('campagnes', 'C-n');
+  for (const motif of ['', '   ', undefined]) {
+    assert.throws(() => s.ctx.CAMPAGNE.ecarter(c, 'film', motif), { name: 'DecisionRefusee' });
+  }
+  assert.deepEqual(copie(c.ecartes), {}); assert.equal(s.ctx.DEPOT.liste('decisions').length, 0);
+  s.ctx.CAMPAGNE.ecarter(c, 'film', 'Le budget ne couvre pas un tournage');
+  const d = derniere(s);
+  memeGeste(s, d, { type: 'composition', objet: 'film', campagne: 'C-n', verdict: 'hors', portee: 'campagne',
+    motif: 'Le budget ne couvre pas un tournage', ecart: { de: 'composition', ref: 'noel' } });
+  assert.equal('projet' in d, false);
+  assert.deepEqual(copie(c.ecartes.film), { motif: d.motif, quand: d.quand });
+});
+
+test('déclarer l’écart d’un projet depuis la référence commune passe par la fabrique, portée projet', async () => {
+  const s = await bac(APP, 26);
+  await s.charger('campagne');
+  semer(s.ctx, { personnes: PERSONNES, campagnes: [{ id: 'C-r', nom: 'Rentrée de recette' }], projets: [
+    projet('RA', { campagneId: 'C-r', sections: { pistes: [piste('pi-a', { statut: 'retenue', arbitre_le: '2026-11-04T08:00:00.000Z' })] } }),
+    projet('RB', { campagneId: 'C-r', sections: { pistes: [piste('pi-b', { statut: 'retenue', arbitre_le: '2026-11-05T08:00:00.000Z' })] } })] });
+  const C = s.ctx.CAMPAGNE;
+  assert.equal(C.designerReference('C-r', 'RA', 'pi-a', 'Le socle commun', C.reference('C-r').revision).ok, true);
+  const ref = derniere(s);
+  /* L'écran de la campagne propose la déclaration pour le projet qui s'écarte. */
+  const bloc = C.blocReference('C-r', () => {});
+  cliquer(bouton(bloc, 'Déclarer l\'écart de REF-RB'));
+  cliquer(bouton(s.dernier(), 'Déclarer l\'écart'));
+  assert.equal(s.ctx.DEPOT.liste('decisions').length, 1, 'sans motif, rien n’est déclaré');
+  saisie(s.dernier()).value = 'Le film vise un autre public';
+  cliquer(bouton(s.dernier(), 'Déclarer l\'écart'));
+  const d = derniere(s);
+  memeGeste(s, d, { type: 'ecart-campagne', objet: 'pi-b', projet: 'RB', campagne: 'C-r', verdict: 'approuve', portee: 'projet',
+    motif: 'Le film vise un autre public', ecart: { de: 'reference-campagne', ref: ref.id } });
+  assert.equal(s.ctx.DEPOT.trouve('projets', 'RB').ecartDeCampagne, 'Le film vise un autre public');
+  assert.equal(C.reference('C-r').etat, 'choisie', 'l’écart déclaré ne touche pas à la référence commune');
+});
+
+test('chaque type de décision écrit par un geste est rangé dans la jurisprudence', async () => {
+  const ctx = vm.createContext({ console });
+  ctx.window = ctx;
+  vm.runInContext(await readFile(join(APP, 'jurisprudence.js'), 'utf8'), ctx);
+  const familles = ['brief', 'bigidea', 'proposition', 'livrable'];
+  for (const type of ['bigidea', 'reference-campagne', 'brief', 'socle', 'idee', 'piste', 'livrable',
+    'concept', 'recevabilite', 'composition', 'ecart-campagne']) {
+    assert.ok(ctx.JURISPRUDENCE.SOURCES[type], type);
+    assert.ok(familles.includes(ctx.JURISPRUDENCE.SOURCES[type].famille), type);
   }
 });

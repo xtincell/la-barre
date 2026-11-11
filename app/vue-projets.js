@@ -678,7 +678,9 @@ window.VUE_PROJETS = (function () {
                         + "datée et ne se rediscutera pas.",
                     lignes: 2, requis: "Un écart sans motif se rediscute la semaine suivante.",
                   }, function (motif) {
-                    CAMPAGNE.ecarter(c, x.nature.cle, motif); rafraichir(); });
+                    try { CAMPAGNE.ecarter(c, x.nature.cle, motif); }
+                    catch (e) { if (DECISION.estRefus(e)) { AVIS.refus(e.message); return; } throw e; }
+                    rafraichir(); });
                 } }, "Écarter")]
             : null));
   }

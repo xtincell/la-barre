@@ -414,7 +414,16 @@ window.VUE_ROUTE = (function () {
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           if (!champ.value.trim()) { AVIS.refus("Écarter sans motif écrit, c'est écarter par goût."); return; }
-          pi.statut = "ecartee"; pi.motif = champ.value.trim();
+          /* Écarter est une décision, au même registre que retenir : elle se
+           * vérifie avant que la piste ne change. */
+          var decision;
+          try {
+            decision = DECISION.construire({ objet: pi.id, type: "piste", projet: p.id, verdict: "hors",
+              motif: champ.value.trim(), quand: new Date().toISOString(), qui: MAISON.titulaire,
+              acteur: DECISION.acteur(), titre: pi.titre });
+          } catch (e) { if (DECISION.estRefus(e)) { AVIS.refus(e.message); return; } throw e; }
+          pi.statut = "ecartee"; pi.motif = decision.motif;
+          DECISION.ajouter(decision);
           DEPOT.tracer("piste écartée", "pistes", p.id, pi.titre);
           DEPOT.enregistrer(); PANNEAU.fermerSur(); apres();
         } }, "Écarter"),

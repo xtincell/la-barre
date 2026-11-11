@@ -79,7 +79,16 @@ window.CONCEPTS = (function () {
     PANNEAU.demander("Écarter « " + c.titre + " »", { label: "Pourquoi", lignes: 2,
       aide: "Il reste lisible dans la réserve, avec ce motif.", requis: "Un concept écarté sans motif se rediscute." },
       function (motif) {
-        c.statut = "ecarte"; c.motif = motif; c.ecarte_le = new Date().toISOString();
+        /* Écarter est une décision : la réserve est celle de la marque, c'est
+         * elle que la décision nomme. Elle se vérifie avant que le concept ne change. */
+        var decision;
+        try {
+          decision = DECISION.construire({ objet: c.id, type: "concept", marque: m.id, verdict: "hors",
+            motif: motif, quand: new Date().toISOString(), qui: MAISON.titulaire,
+            acteur: DECISION.acteur(), titre: c.titre });
+        } catch (e) { if (DECISION.estRefus(e)) { AVIS.refus(e.message); return; } throw e; }
+        c.statut = "ecarte"; c.motif = decision.motif; c.ecarte_le = decision.quand;
+        DECISION.ajouter(decision);
         DEPOT.tracer("concept écarté", "marques", m.id, c.titre + " · " + motif);
         DEPOT.enregistrer(); if (apres) apres();
       });

@@ -244,15 +244,33 @@ window.VUE_BRIEF = (function () {
     );
   }
 
+  /* Accepter ou retourner le brief est une décision sur sa recevabilité, au
+   * registre commun. Elle se vérifie avant que le brief ne change. L'accepter
+   * malgré des conditions non remplies s'écarte du processus : c'est une
+   * déviation, motivée, de portée projet. Rend la décision, ou rien si elle
+   * est refusée. */
+  function trancher(p, verdict, motif, ecart, appliquer) {
+    var champs = { objet: "brief", type: "recevabilite", projet: p.id, verdict: verdict, motif: motif,
+      quand: new Date().toISOString(), qui: MAISON.titulaire, acteur: DECISION.acteur(), titre: "le brief" };
+    if (ecart) { champs.portee = "projet"; champs.ecart = ecart; }
+    var decision;
+    try { decision = DECISION.construire(champs); }
+    catch (e) { if (DECISION.estRefus(e)) { AVIS.refus(e.message); return null; } throw e; }
+    appliquer(decision);
+    return DECISION.ajouter(decision);
+  }
+
   function accepter(p, d, r, rafraichir) {
     if (r.recevable) {
-      d.statut = "accepte"; d.accepte_le = new Date().toISOString(); d.accepte_malgre = 0;
+      if (!trancher(p, "approuve", null, null, function (x) {
+        d.statut = "accepte"; d.accepte_le = x.quand; d.accepte_malgre = 0; })) return;
       DEPOT.tracer("acceptation", "projets", p.id, "brief accepté");
       DEPOT.enregistrer(); rafraichir();
       return;
     }
 
     var manques = r.controles.filter(function (c) { return !c.ok; });
+    var motif = el("textarea", { id: "br-malgre", rows: 2, placeholder: "Le client a confirmé la cible par écrit, le délai démarre quand même…" });
     PANNEAU.ouvrir("Avant d'accepter", "ce que ça engage", el("div", {},
       UI.banniere("rouge", manques.length + " conditions ne sont pas remplies. Accepter, c'est renoncer à les opposer plus tard."),
       el("div.sousbloc", {}, el("h3", {}, "Ce que ça coûte"),
@@ -263,10 +281,16 @@ window.VUE_BRIEF = (function () {
       el("div.sousbloc", {}, el("h3", {}, "Ce que ça débloque"),
         el("div.oc-l.gagne", {}, UI.icone("revue", 13),
           el("span", {}, "La plateforme créative peut être écrite, et le délai de réponse démarre."))),
+      el("div.form", {}, el("div.champ", {},
+        el("label", { "for": "br-malgre" }, "Pourquoi l'accepter quand même"),
+        el("div.indice", {}, "Un écart au processus, pour ce projet seulement. Il reste au dossier avec son motif."),
+        motif)),
       el("div.form-actions", { style: { "margin-top": "1.2rem" } },
         el("button.b.or", { type: "button", onclick: function () {
-          d.statut = "accepte"; d.accepte_le = new Date().toISOString();
-          d.accepte_malgre = manques.length;
+          if (!motif.value.trim()) { AVIS.refus("Accepter malgré les manques sans dire pourquoi, c'est y renoncer par goût."); return; }
+          if (!trancher(p, "approuve", motif.value.trim(),
+            { de: "recevabilite", ref: null, conditions: manques.map(function (c) { return c.quoi; }) },
+            function (x) { d.statut = "accepte"; d.accepte_le = x.quand; d.accepte_malgre = manques.length; })) return;
           DEPOT.tracer("acceptation", "projets", p.id, "brief accepté malgré " + manques.length + " manques");
           DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
         } }, "Accepter quand même"),
@@ -295,8 +319,8 @@ window.VUE_BRIEF = (function () {
         el("button.b.or", { type: "button", onclick: function () {
           var motif = choisi || libre.value.trim();
           if (!motif) { AVIS.refus("Un retour sans motif n'est pas un retour."); return; }
-          d.statut = "sous_reserve";
-          d.reserve = { quand: new Date().toISOString(), motif: motif };
+          if (!trancher(p, "reserve", motif, null, function (x) {
+            d.statut = "sous_reserve"; d.reserve = { quand: x.quand, motif: motif }; })) return;
           DEPOT.tracer("retour sous réserve", "projets", p.id, motif);
           DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
           RENVOI.ouvrir({ quoi: "Brief — " + p.ref, projet: p.ref, projetId: p.id, objet: "brief" });
