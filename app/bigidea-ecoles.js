@@ -244,6 +244,19 @@ window.BI_ECOLES = (function () {
     DEPOT.tracer("big idea retenue", "projets", p.id, (e ? e.nom + " — " : "") + (c.titre || c.phrase));
   }
 
+  /* Écarter une proposition est une décision, au même registre que la retenir.
+   * Elle se vérifie avant que la proposition ne change : un motif vide laisse
+   * la proposition telle quelle. */
+  function ecarter(p, c, motif) {
+    var decision = DECISION.construire({ objet: c.id, type: "bigidea", projet: p.id, verdict: "hors",
+      motif: typeof motif === "string" ? motif.trim() : motif, quand: new Date().toISOString(),
+      qui: MAISON.titulaire, acteur: DECISION.acteur(), titre: c.titre || c.phrase });
+    c.statut = "ecartee"; c.motif = decision.motif; c.ecartee_le = decision.quand;
+    DECISION.ajouter(decision);
+    DEPOT.tracer("big idea écartée", "projets", p.id, (c.titre || c.phrase) + " — " + c.motif);
+    return decision;
+  }
+
   /* Contresigner une proposition inférée : le motif reste, daté, à côté. */
   function contresigner(c) {
     if (!c.infere) return;
@@ -476,8 +489,8 @@ window.BI_ECOLES = (function () {
         !neuf && c.statut !== "ecartee" ? el("button.b.nu", { type: "button", onclick: function () {
           var m = window.prompt("Pourquoi l'écarter ? Une ligne — elle reste au dossier.");
           if (!m || !m.trim()) return;
-          c.statut = "ecartee"; c.motif = m.trim(); c.ecartee_le = new Date().toISOString();
-          DEPOT.tracer("big idea écartée", "projets", p.id, (c.titre || c.phrase) + " — " + c.motif);
+          try { ecarter(p, c, m); }
+          catch (e) { if (DECISION.estRefus(e)) { AVIS.refus(e.message); return; } throw e; }
           DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
         } }, "Écarter") : null,
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
@@ -508,5 +521,5 @@ window.BI_ECOLES = (function () {
 
   return { GABARITS: GABARITS, ENDROITS: ENDROITS, gabarit: gabarit, liste: liste,
     vivantes: vivantes, racine: racine, racines: racines, manques: manques, etat: etat,
-    creer: creer, retenir: retenir, contresigner: contresigner, bloc: bloc, editer: editer };
+    creer: creer, retenir: retenir, ecarter: ecarter, contresigner: contresigner, bloc: bloc, editer: editer };
 })();

@@ -140,6 +140,32 @@ Il n'y a pas de compte. La personne qui agit se choisit dans Ressources →
 Paramètres, parmi les personnes de la base. Ce choix est gardé dans le
 `sessionStorage` de l'onglet. Il attribue les gestes ; il n'ouvre aucun droit.
 
+**Le registre des décisions.** Une décision rejoint la collection `decisions`
+par un seul chemin, `app/decision.js` : verdict parmi quatre (`approuve`,
+`reserve`, `retour`, `hors`), motif écrit hors approbation, date, identifiant
+libre. Elle se rattache à un projet, à une campagne ou à une marque. Passent
+par lui : la big idea, la piste ou l'idée retenue ou écartée, la référence
+commune d'une campagne, le verdict sur un document, un livrable ou une pièce
+en revue, le concept écarté de la réserve d'une marque, le brief accepté ou
+retourné, la case écartée de la composition d'une campagne et l'écart d'un
+projet à la référence commune. Chaque décision ajoute une ligne au journal,
+qui porte l'acteur. Toutes portent `qui`, le poste titulaire. La référence de
+campagne, le verdict sur un document et les gestes de choix ajoutés au
+registre portent aussi `acteur`, la personne choisie ci-dessus. Les six autres
+écrivains d'origine (big idea retenue, idée tranchée, piste retenue sur deux
+écrans, livrable jugé, pièce jugée en revue) ne le recopient pas dans la
+décision : leur forme stockée est figée par `tests/decisions.test.mjs`.
+
+Une déviation s'écarte d'une décision ou du plan : un projet qui garde sa
+propre piste alors qu'une référence commune est désignée, une case de la
+composition écartée, un brief accepté malgré des conditions non remplies.
+Elle nomme ce dont elle s'écarte (`ecart`), porte un motif et déclare sa
+portée : `livrable`, `projet` ou `campagne`. La portée doit être le niveau de
+l'objet visé, relu dans la base ; sinon la décision est refusée et rien n'est
+écrit. L'écart d'un projet de campagne se déclare depuis l'écran de la
+campagne, sous la référence commune ; il fait taire le contrôle « piste propre
+alors que … gouverne la campagne » pour ce seul projet.
+
 **Dans le navigateur.** La base entière est copiée dans le `localStorage`, sous
 la clé `la-barre`. Sans fichier servi, c'est le seul endroit : chaque navigateur
 a sa propre base. Ressources → Paramètres affiche sa taille face à un plafond
@@ -250,7 +276,7 @@ un navigateur installé). La CI ne le lance pas.
   relevé. `outils/ingerer-corpus.mjs` le lit dans un CSV d'un corpus situé hors
   du dépôt (`../DOSSIER PROJETS — XTINCELL/00 DOCUMENTATION/RADAR — briefs releves.csv`)
   et l'écrit dans la base. L'application ne lit pas Radar en direct et ne lui
-  envoie aucune décision.
+  envoie aucune décision ; La Fusée n'en reçoit pas non plus.
 - **Un registre des projets sans source dans le dépôt.** Le registre des
   projets se lit dans la base, mais aucun outil du dépôt ne le remplit.
 - **Des écarts qu'on ne peut pas écarter.** `ECARTS.ecarterUn` et
@@ -260,6 +286,24 @@ un navigateur installé). La CI ne le lance pas.
   arbitrages.
 - **Aucune authentification dans `servir.mjs`.** Quiconque joint son port peut
   lire tout le dossier et écrire là où le serveur l'accepte.
+- **Aucun acteur authentifié pour les décisions.** `acteur` vient du choix fait
+  dans l'onglet (`app/acteur.js`) : c'est le navigateur qui le déclare. Pour
+  qu'un geste sans acteur authentifié soit refusé, trois pièces manquent.
+  `servir.mjs` ne connaît aucune identité. Derrière La Fusée, la route qui sert
+  `/la-barre/` authentifie la session et relit l'affectation de l'opérateur,
+  mais ne transmet à La Barre que six en-têtes (`content-type`, `range`,
+  `if-match`, `if-none-match`, `if-modified-since`, `x-base`), jamais les
+  cookies ni l'identité ; `contexte.json` ne nomme pas non plus la personne
+  connectée (`ADVE-project`, `src/app/la-barre/[[...path]]/route.ts` et
+  `src/server/services/brand-node/barre-context.ts`, au commit `d52ffad`).
+  Enfin la base s'écrit d'un bloc (`PUT depots/<fichier>.json`) : le serveur
+  reçoit un fichier, pas un geste de décision qu'il pourrait attribuer.
+- **L'acceptation du brief n'est plus proposée.** « Accepter le brief » et
+  « Retourner sous réserve » (`app/vue-brief.js`, `corpsCampagne`) ne
+  s'affichent que si la nature du projet offre le brief de campagne. Or ce
+  brief porte sur la campagne, et `BRIEFS.pourNature` ne l'offre jamais sur un
+  dossier (`app/briefs.js`). Les deux gestes passent par le registre des
+  décisions, mais aucun écran ne les montre.
 - **Aucun envoi.** « Demander un retour » rédige le message et date l'attente.
   L'application n'envoie ni e-mail ni notification.
 - **Des routes locales pensées pour macOS.** `/disque-ouvrir` appelle `open` ;

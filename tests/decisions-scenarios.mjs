@@ -64,17 +64,17 @@ function parcourir(n, test, out = []) {
   for (const e of n.childNodes || []) parcourir(e, test, out);
   return out;
 }
-function bouton(racine, libelle) {
+export function bouton(racine, libelle) {
   const b = parcourir(racine, n => n.tagName === 'BUTTON' && n.textContent.trim() === libelle)[0];
   if (!b) throw new Error('Bouton introuvable : ' + libelle);
   return b;
 }
-function saisie(racine) {
+export function saisie(racine) {
   const c = parcourir(racine, n => n.tagName === 'TEXTAREA' || (n.tagName === 'INPUT' && n.attributs.type !== 'checkbox'))[0];
   if (!c) throw new Error('Aucun champ de saisie');
   return c;
 }
-function cliquer(n) { for (const f of n.ecouteurs.click || []) f.call(n, { preventDefault() {}, target: n }); }
+export function cliquer(n) { for (const f of n.ecouteurs.click || []) f.call(n, { preventDefault() {}, target: n }); }
 
 /* ————— L'horloge et le hasard figés ————— */
 
@@ -173,7 +173,7 @@ export const PERSONNES = [
   { id: 'P-recette', nom: 'Personne de recette', poste: 'creation', seniorite: 'senior' },
   { id: 'P-junior', nom: 'Junior de recette', poste: 'da', seniorite: 'junior' },
 ];
-const piste = (id, extra = {}) => ({ id, titre: 'Piste ' + id, concept: 'Concept ' + id, axe: 'Axe ' + id,
+export const piste = (id, extra = {}) => ({ id, titre: 'Piste ' + id, concept: 'Concept ' + id, axe: 'Axe ' + id,
   statut: 'proposee', version: 1, soumis_le: '2026-11-02T08:00:00.000Z', ...extra });
 export const livrable = (id, extra = {}) => ({ id, nom: 'Livrable ' + id, support: 'S-affiche', marche: 'M-cm',
   points: { central: 'en cours' }, versions: [{ n: 1, soumis_le: '2026-11-03T08:00:00.000Z' }], ...extra });

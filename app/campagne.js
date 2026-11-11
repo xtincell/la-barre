@@ -113,13 +113,23 @@ window.CAMPAGNE = (function () {
 
   /* Écarter, c'est décider — donc ça se date et ça porte un motif. Une case
    * vide sans motif se rediscute deux fois ; une case écartée avec sa date
-   * ne se rediscute plus. */
+   * ne se rediscute plus.
+   *
+   * La décision passe par le registre commun. Elle s'écarte de ce que
+   * l'occasion appelle : c'est une déviation de portée campagne, refusée sans
+   * motif. Elle se vérifie avant que la campagne ne change. */
   function ecarter(c, natureCle, motif) {
+    var nature = window.NATURE ? NATURE.liste().filter(function (x) { return x.cle === natureCle; })[0] : null;
+    var decision = DECISION.construire({ objet: natureCle, type: "composition", campagne: c.id, verdict: "hors",
+      portee: "campagne", motif: typeof motif === "string" ? motif.trim() : "", quand: new Date().toISOString(),
+      qui: MAISON.titulaire, acteur: DECISION.acteur(), titre: nature ? nature.nom : natureCle,
+      ecart: { de: "composition", ref: c.occasion || null } });
     c.ecartes = c.ecartes || {};
-    c.ecartes[natureCle] = { motif: (motif || "").trim() || "sans motif écrit",
-      quand: new Date().toISOString() };
+    c.ecartes[natureCle] = { motif: decision.motif, quand: decision.quand };
+    DECISION.ajouter(decision);
     DEPOT.tracer("écarté de la composition", "campagnes", c.id, natureCle);
     DEPOT.enregistrer();
+    return decision;
   }
 
   function reprendre(c, natureCle) {
@@ -405,6 +415,112 @@ window.CAMPAGNE = (function () {
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Annuler"))));
   }
 
+  /* ————————————————————— L'écart à la référence commune —————————————————————
+   *
+   * Une fois la référence désignée, un projet de la campagne qui garde sa
+   * propre piste retenue s'écarte d'une décision. Le contrôle « hors piste de
+   * campagne » (regles.js) se tait sur le projet qui a écrit son écart, dans
+   * `ecartDeCampagne` ; rien ne l'écrivait. Ce geste l'écrit, avec un reçu au
+   * registre des décisions : le motif, l'acteur, la référence dont il s'écarte
+   * et sa portée. La portée est le projet : sa piste relève de lui seul, et un
+   * écart qui engagerait la campagne serait une nouvelle référence. */
+
+  /* La déclaration d'écart d'une piste locale, adossée à la référence actuelle. */
+  function declaration(campagneId, projetId, pisteId) {
+    var c = de(campagneId), ref = c && c.referencePiste ? c.referencePiste.decisionId : null;
+    var ds = DEPOT.liste("decisions").filter(function (d) {
+      return d && d.type === "ecart-campagne" && d.campagne === campagneId && d.projet === projetId
+        && d.objet === pisteId && d.ecart && d.ecart.ref === ref;
+    });
+    return ds[ds.length - 1] || null;
+  }
+
+  /* Les pistes retenues hors du projet de la référence, avec leur déclaration. */
+  function ecartsLocaux(campagneId) {
+    var lu = reference(campagneId);
+    if (lu.etat !== "choisie") return [];
+    return lu.candidates.filter(function (x) { return x.projet.id !== lu.reference.projet.id; })
+      .map(function (x) {
+        return { projet: x.projet, piste: x.piste, declaration: declaration(campagneId, x.projet.id, x.piste.id) };
+      });
+  }
+
+  function declarerEcart(campagneId, projetId, pisteId, motif, portee, attendu) {
+    var c = de(campagneId), lu = reference(campagneId);
+    if (!c) return { ok: false, erreur: "Campagne introuvable." };
+    if (lu.etat !== "choisie") {
+      return { ok: false, erreur: "Aucune référence commune n'est désignée : il n'y a pas d'écart à déclarer." };
+    }
+    if (lu.reference.projet.id === projetId && lu.reference.piste.id === pisteId) {
+      return { ok: false, erreur: "Cette piste porte la référence commune : elle ne s'en écarte pas." };
+    }
+    motif = typeof motif === "string" ? motif.trim() : "";
+    if (!motif) return { ok: false, erreur: "Écrivez pourquoi ce projet garde sa propre piste." };
+    var x = lu.candidates.filter(function (y) { return y.projet.id === projetId && y.piste.id === pisteId; })[0];
+    if (!x) return { ok: false, erreur: "Cette piste n'est plus retenue dans cette campagne." };
+    /* Un rejeu exact retrouve son reçu, même depuis un dialogue déjà relu. */
+    var precedente = declaration(campagneId, projetId, pisteId);
+    if (precedente && precedente.motif === motif && precedente.portee === portee
+        && (x.projet.ecartDeCampagne || "").trim() === motif) {
+      return { ok: true, dejaRecu: true, decision: precedente };
+    }
+    if (attendu !== lu.revision) return { ok: false,
+      erreur: "Les pistes ou la référence ont changé. Relisez la campagne avant de déclarer l'écart." };
+    var decision;
+    try {
+      decision = DECISION.construire({ type: "ecart-campagne", objet: pisteId, projet: projetId, campagne: campagneId,
+        verdict: "approuve", portee: portee, motif: motif, quand: new Date().toISOString(), qui: MAISON.titulaire,
+        acteur: DECISION.acteur(), version: x.piste.version || 1, titre: x.piste.titre || "Piste retenue",
+        ecart: { de: "reference-campagne", ref: c.referencePiste.decisionId } });
+    } catch (e) { if (DECISION.estRefus(e)) return { ok: false, erreur: e.message }; throw e; }
+    /* Comme pour la référence : l'écart est posé avant que ajouter() ne
+     * publie, pour ne jamais publier le reçu sans lui. */
+    x.projet.ecartDeCampagne = motif;
+    DECISION.ajouter(decision);
+    DEPOT.tracer("écart à la référence commune", "projets", projetId, decision.titre + " — " + motif);
+    DEPOT.enregistrer();
+    return { ok: true, dejaRecu: false, decision: decision };
+  }
+
+  function declarerEcartDialogue(campagneId, x, apres) {
+    var lu = reference(campagneId), c = de(campagneId);
+    if (lu.etat !== "choisie") return;
+    var motif = el("textarea", { id: "ecart-campagne-motif", rows: 3 });
+    PANNEAU.sur("L'écart de « " + x.projet.nom + " »", c ? c.nom : "", el("div", {},
+      UI.banniere("", "La référence commune reste « " + (lu.reference.piste.titre || "la piste retenue") + " », sur « "
+        + lu.reference.projet.nom + " ». Ce projet garde sa propre piste, « " + (x.piste.titre || "piste sans titre")
+        + " ». Portée de l'écart : ce projet seulement. Les autres projets suivent toujours la référence."),
+      el("div.form", {}, el("div.champ", {},
+        el("label", { "for": "ecart-campagne-motif" }, "Pourquoi ce projet garde sa piste"), motif)),
+      el("div.form-actions", {},
+        el("button.b.or", { type: "button", onclick: function () {
+          var r = declarerEcart(campagneId, x.projet.id, x.piste.id, motif.value, "projet", lu.revision);
+          if (!r.ok) { AVIS.refus(r.erreur); return; }
+          PANNEAU.fermerSur(); if (apres) apres();
+        } }, "Déclarer l'écart"),
+        el("button.b.nu", { type: "button", onclick: PANNEAU.fermerSur }, "Annuler"))));
+  }
+
+  function blocEcarts(campagneId, apres) {
+    var xs = ecartsLocaux(campagneId);
+    if (!xs.length) return null;
+    return el("div", {},
+      el("p.cg-q", {}, xs.length > 1 ? xs.length + " projets gardent leur propre piste :" : "Un projet garde sa propre piste :"),
+      el("ul", {}, xs.map(function (x) {
+        /* Un motif écrit sans reçu pour la référence actuelle — importé, ou
+         * déclaré avant que la référence ne soit redésignée — reste lisible,
+         * et se confirme par le même geste. */
+        var note = (x.projet.ecartDeCampagne || "").trim();
+        return el("li", {},
+          el("a", { href: "#/projets/" + x.projet.id }, (x.piste.titre || "Piste sans titre") + " — " + x.projet.nom),
+          x.declaration
+            ? " · écart déclaré pour ce projet le " + O.jourCourt(x.declaration.quand) + " : « " + x.declaration.motif + " »"
+            : [note ? " · écart noté sans reçu pour la référence actuelle : « " + note + " ». " : " · écart non déclaré. ",
+               el("button.studio-lien", { type: "button", onclick: function () {
+                 declarerEcartDialogue(campagneId, x, apres); } }, "Déclarer l'écart de " + (x.projet.ref || x.projet.nom))]);
+      })));
+  }
+
   function blocReference(campagneId, apres) {
     var lu = reference(campagneId), ref = lu.reference;
     var conflit = lu.etat === "conflit" || lu.etat === "perimee";
@@ -423,6 +539,7 @@ window.CAMPAGNE = (function () {
         return el("li", {}, el("a", { href: "#/projets/" + x.projet.id },
           (x.piste.titre || "Piste sans titre") + " — " + x.projet.nom));
       })) : null,
+      lu.etat === "choisie" ? blocEcarts(campagneId, apres) : null,
       lu.candidates.length ? el("button.b.nu", { type: "button", onclick: function () {
         choisirReference(campagneId, apres);
       } }, lu.etat === "choisie" ? "Revoir la référence commune" : "Choisir la référence commune") : null);
@@ -433,5 +550,6 @@ window.CAMPAGNE = (function () {
     composition: composition, ecarter: ecarter, reprendre: reprendre,
     creer: creer, pisteDeReference: pisteDeReference, reference: reference,
     designerReference: designerReference, choisirReference: choisirReference, blocReference: blocReference,
+    ecartsLocaux: ecartsLocaux, declarerEcart: declarerEcart,
     rattacher: rattacher, candidates: candidates, choisir: choisir, accueillir: accueillir };
 })();
