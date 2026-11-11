@@ -338,7 +338,7 @@ window.VUE_BIGIDEA = (function () {
           });
           pi.statut = "retenue"; pi.motif = motif.value.trim(); pi.arbitre_le = new Date().toISOString();
           (p.livrables || []).forEach(function (l) { if (!l.pisteId) l.pisteId = pi.id; });
-          DEPOT.ajoute("decisions", { objet: pi.id, type: "piste", projet: p.id,
+          DECISION.poser({ objet: pi.id, type: "piste", projet: p.id,
             verdict: "approuve", motif: pi.motif, quand: pi.arbitre_le, qui: MAISON.titulaire, titre: pi.titre });
           DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
         } }, "Retenir"),

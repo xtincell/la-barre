@@ -65,7 +65,13 @@ try {
   await page.getByLabel('Client', { exact: true }).fill('Studio fictif');
   await page.getByLabel('Nom du projet', { exact: true }).fill('Projet de contrôle');
   await page.getByRole('button', { name:'Créer', exact:true }).click();
-  await page.waitForFunction(() => location.hash.startsWith('#/projets/PRJ-'));
+  // Le projet créé s'ouvre sur sa propre route. Le préfixe de l'identifiant
+  // vient du dépôt (DEPOT.ajoute) : on vérifie la route du projet réellement
+  // créé plutôt qu'un préfixe supposé, qui avait dérivé (PRJ- contre PRO-).
+  await page.waitForFunction(() => {
+    const cree = DEPOT.liste('projets').find(p => p.nom === 'Projet de contrôle');
+    return cree && location.hash === '#/projets/' + cree.id;
+  });
   assert.ok(await page.evaluate(() => DEPOT.liste('projets').some(p => p.nom === 'Projet de contrôle')));
   // Aucun ancien lien ne doit provoquer d'erreur de rendu.
   for (const route of ['bureau','valider','planning','reporting','projets','projets/marques','referentiel','attentes','reglages']) {

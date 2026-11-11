@@ -45,6 +45,13 @@ window.BILAN = (function () {
     return d >= f.debut && d <= f.fin;
   }
 
+  /* Une date lisible, ou rien : une date illisible ne devient pas un zéro. */
+  function horodatage(iso) {
+    if (!iso) return null;
+    var t = new Date(iso).getTime();
+    return isNaN(t) ? null : t;
+  }
+
   function historiqueLisible(l) {
     var vs = l.versions || [];
     return vs.length > 0 && vs.every(function (v) {
@@ -61,6 +68,12 @@ window.BILAN = (function () {
       + x.n + (x.n > 1 ? " historiques enregistrés" : " historique enregistré")
       + (x.sansHistorique ? " ; " + x.sansHistorique
         + (x.sansHistorique > 1 ? " livrables" : " livrable") + " sans historique lisible" : "");
+  }
+
+  /* Les verdicts dont la version ne dit pas quand elle m'a été soumise. */
+  function sansDelai(n) {
+    return n + (n > 1 ? " verdicts sans date de soumission, non comptés"
+      : " verdict sans date de soumission, non compté");
   }
 
   /* ————————————————————— Une mesure ————————————————————— */
@@ -132,19 +145,35 @@ window.BILAN = (function () {
       });
     });
 
-    /* Mon propre délai de verdict. Inconfortable, et c'est le but. */
-    var delais = [];
-    DEPOT.liste("decisions").forEach(function (d) {
-      if (!d.quand || !d.soumis_le) return;
-      if (f && !dedans(f, d.quand)) return;
-      delais.push(Math.max(0, Math.round((new Date(d.quand) - new Date(d.soumis_le)) / 86400000)));
-    });
-    var enAttente = [];
+    /* Mon propre délai de verdict. Inconfortable, et c'est le but.
+     *
+     * Il se lit sur la version jugée elle-même : « Soumettre une version » y
+     * écrit `soumis_le`, le verdict y écrit `juge_le`. C'est la définition que
+     * la revue et mes objectifs emploient déjà — ce qui attend mon verdict, ce
+     * sont les versions soumises sans verdict. Le journal des décisions ne porte
+     * que la date du verdict : y chercher la date de soumission, c'était lire un
+     * champ que personne n'écrit, et l'indicateur restait vide pour toujours.
+     *
+     * Un verdict dont la version ne porte pas de date de soumission lisible n'a
+     * pas de délai. Il est compté à part, jamais deviné : une version archivée
+     * par une reprise porte sa date de clôture, pas celle d'une soumission. */
+    var delais = [], verdictsSansDelai = 0, enAttente = [];
     projets.forEach(function (p) {
+      var clos = !!(window.CLOTURE && CLOTURE.est(p));
       (p.livrables || []).forEach(function (l) {
-        if (l.annule) return;
-        var v = (l.versions || [])[(l.versions || []).length - 1];
-        if (v && !v.verdict && v.close_le) enAttente.push(O.depuis(v.close_le));
+        var vs = l.versions || [];
+        vs.forEach(function (v) {
+          if (!v || !v.verdict) return;
+          if (f && !dedans(f, v.juge_le)) return;
+          var soumis = horodatage(v.soumis_le), juge = horodatage(v.juge_le);
+          if (soumis === null || juge === null) { verdictsSansDelai++; return; }
+          delais.push(Math.max(0, Math.round((juge - soumis) / 86400000)));
+        });
+        /* L'attente se compte comme la revue la présente : la dernière version
+         * soumise et pas encore jugée, hors livrable annulé et dossier clos. */
+        if (l.annule || clos) return;
+        var v = vs[vs.length - 1];
+        if (v && !v.verdict && horodatage(v.soumis_le) !== null) enAttente.push(O.depuis(v.soumis_le));
       });
     });
     var tous = delais.concat(f ? [] : enAttente);
@@ -205,6 +234,7 @@ window.BILAN = (function () {
       idees: idees, retenues: retenues, alignees: alignees,
       props: props, avecArg: avecArg, premiere: premiere,
       verdict: verdict, cibleVerdict: 2, decisions: delais.length,
+      verdictsSansDelai: verdictsSansDelai,
       reprise: reprise, pieces: pieces, reprises: reprises, avecVersions: avecVersions,
       horsFenetre: horsFenetre,
       parCompte: parCompte, parMarche: parMarche,
@@ -247,11 +277,17 @@ window.BILAN = (function () {
         valeur: s.verdict === null ? "?" : s.verdict + " j", brut: s.verdict,
         assise: s.decisions,
         ton: s.verdict === null ? "" : s.verdict > s.cibleVerdict ? "alerte" : "vert",
-        quoi: s.verdict > s.cibleVerdict
+        quoi: (s.verdict > s.cibleVerdict
           ? "au-delà de ma cible de " + s.cibleVerdict + " j — c'est la dérive nommée dans ma fiche"
-          : "sous ma cible de " + s.cibleVerdict + " j",
-        sansQuoi: "aucun verdict daté : le seul indicateur qui porte sur moi ne se calcule pas. "
-          + "Il le fera dès qu'un livrable soumis recevra une décision" }),
+          : "sous ma cible de " + s.cibleVerdict + " j")
+          + (s.verdictsSansDelai ? " ; " + sansDelai(s.verdictsSansDelai) : ""),
+        sansQuoi: s.verdictsSansDelai
+          ? s.verdictsSansDelai + (s.verdictsSansDelai > 1
+              ? " verdicts rendus sans date de soumission : leur délai reste inconnu"
+              : " verdict rendu sans date de soumission : son délai reste inconnu")
+            + ", il n'est pas deviné. Il se calculera sur la prochaine version soumise puis jugée"
+          : "aucun verdict daté : le seul indicateur qui porte sur moi ne se calcule pas. "
+            + "Il le fera dès qu'un livrable soumis recevra une décision" }),
 
       mesure({ nom: "livrables repris",
         valeur: s.reprise === null ? "?" : s.reprise + " %", brut: s.reprise,
@@ -566,6 +602,6 @@ window.BILAN = (function () {
   }
 
   return { PERIODES: PERIODES, fenetre: fenetre, dedans: dedans,
-    chiffres: chiffres, indicateurs: indicateurs,
+    chiffres: chiffres, indicateurs: indicateurs, sansDelai: sansDelai,
     compiler: compiler, parPersonne: parPersonne, texte: texte };
 })();

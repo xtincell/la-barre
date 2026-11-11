@@ -358,17 +358,20 @@ window.CAMPAGNE = (function () {
     }
     if (attendu !== lu.revision) return { ok: false,
       erreur: "Les pistes ou la référence ont changé. Relisez la campagne avant de choisir." };
-    var decision = { id: O.id("DEC"), type: "reference-campagne", objet: pisteId,
+    /* L'identifiant est tiré d'avance, en tête de la décision : la référence
+     * le porte avant la publication. La décision est vérifiée avant que la
+     * campagne ne change. */
+    var decision = DECISION.construire({ id: DECISION.identifiant(), type: "reference-campagne", objet: pisteId,
       projet: projetId, campagne: campagneId, verdict: "approuve", portee: "campagne",
       motif: motif, quand: new Date().toISOString(), qui: MAISON.titulaire,
       acteur: window.ACTEUR ? ACTEUR.trace() : null, version: candidate.piste.version || 1,
       titre: candidate.piste.titre || "Piste retenue", contenuPiste: contenuPiste(candidate.piste),
-      revisionSource: lu.revision, remplace: precedente ? precedente.id : null };
+      revisionSource: lu.revision, remplace: precedente ? precedente.id : null });
     c.referencePiste = { projetId: projetId, pisteId: pisteId,
       decisionId: decision.id, contenu: decision.contenuPiste };
-    /* ajoute() publie et sauvegarde immédiatement. Poser la référence avant
+    /* ajouter() publie et sauvegarde immédiatement. Poser la référence avant
      * cet appel empêche de publier un reçu sans son choix commun. */
-    DEPOT.ajoute("decisions", decision);
+    DECISION.ajouter(decision);
     DEPOT.tracer("référence de campagne", "campagnes", c.id, decision.titre + " — " + motif);
     DEPOT.enregistrer();
     return { ok: true, dejaRecu: false, decision: decision };

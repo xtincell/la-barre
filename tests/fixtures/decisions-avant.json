@@ -1,0 +1,1531 @@
+{
+  "source": {
+    "depot": "xtincell/la-barre",
+    "commit": "2586992e972020016e7009f042d2c3714e7803bb"
+  },
+  "ecrivains": {
+    "bigidea-ecoles": {
+      "decisions": [
+        {
+          "objet": "BE-1",
+          "type": "bigidea",
+          "projet": "BI",
+          "verdict": "approuve",
+          "motif": "Elle répond au brief et tient trois ans",
+          "quand": "2026-11-10T09:00:01.000Z",
+          "qui": "direction-generale",
+          "titre": "Le pont",
+          "id": "DEC-8mbtqk",
+          "cree_le": "2026-11-10T09:00:02.000Z"
+        }
+      ],
+      "base": {
+        "schema": 5,
+        "maison": "Entreprise",
+        "machine": "",
+        "enregistre_le": "2026-11-10T09:00:06.000Z",
+        "personnes": [
+          {
+            "id": "P-recette",
+            "nom": "Personne de recette",
+            "poste": "creation",
+            "seniorite": "senior"
+          },
+          {
+            "id": "P-junior",
+            "nom": "Junior de recette",
+            "poste": "da",
+            "seniorite": "junior"
+          }
+        ],
+        "clients": [],
+        "marques": [],
+        "marches": [],
+        "supports": [],
+        "contacts": [],
+        "feedbacks": [],
+        "sku": [],
+        "people": [],
+        "radar": [],
+        "radar_releve_le": null,
+        "campagnes": [],
+        "inclassables": [],
+        "structures": [],
+        "factures": [],
+        "critiques": [],
+        "engagementsTenus": [],
+        "criteresAjoutes": {},
+        "assets": [],
+        "projets": [
+          {
+            "id": "BI",
+            "ref": "REF-BI",
+            "nom": "Projet BI",
+            "cree_le": "2026-11-01T08:00:00.000Z",
+            "sections": {
+              "brief": {
+                "objectif": "Faire connaître"
+              },
+              "identite": {
+                "marque": "Marque de recette"
+              },
+              "pistes": [],
+              "bigidea": {
+                "idee": "Tout passe par le pont",
+                "campagne": "Le pont",
+                "auteur": "P-junior",
+                "ecole": null,
+                "propositionId": "BE-1"
+              }
+            },
+            "livrables": [],
+            "idees": [],
+            "bigideas": [
+              {
+                "id": "BE-1",
+                "ecole": null,
+                "titre": "Le pont",
+                "phrase": "Tout passe par le pont",
+                "mecanique": "",
+                "champs": {},
+                "insightId": null,
+                "territoireId": null,
+                "auteur": "P-junior",
+                "statut": "retenue",
+                "cree_le": "2026-11-01T08:00:00.000Z",
+                "motif": "Elle répond au brief et tient trois ans",
+                "retenue_le": "2026-11-10T09:00:01.000Z"
+              }
+            ],
+            "bigideaPrecedentes": [
+              {
+                "quand": "2026-11-10T09:00:00.000Z",
+                "motif": "Elle répond au brief et tient trois ans",
+                "remplacee_par": "BE-1",
+                "section": {
+                  "idee": "Une idée plus ancienne"
+                }
+              }
+            ]
+          }
+        ],
+        "attentes": [],
+        "blocages": [],
+        "captures": [],
+        "decisions": [
+          {
+            "objet": "BE-1",
+            "type": "bigidea",
+            "projet": "BI",
+            "verdict": "approuve",
+            "motif": "Elle répond au brief et tient trois ans",
+            "quand": "2026-11-10T09:00:01.000Z",
+            "qui": "direction-generale",
+            "titre": "Le pont",
+            "id": "DEC-8mbtqk",
+            "cree_le": "2026-11-10T09:00:02.000Z"
+          }
+        ],
+        "lectures": [],
+        "journal": [
+          {
+            "quand": "2026-11-10T09:00:03.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-8mbtqk",
+            "detail": "Le pont"
+          },
+          {
+            "quand": "2026-11-10T09:00:05.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "big idea retenue",
+            "type": "projets",
+            "id": "BI",
+            "detail": "Le pont"
+          }
+        ]
+      },
+      "refus": []
+    },
+    "campagne": {
+      "decisions": [
+        {
+          "id": "DEC-atsksq",
+          "type": "reference-campagne",
+          "objet": "pi-a",
+          "projet": "CA",
+          "campagne": "C-1",
+          "verdict": "approuve",
+          "portee": "campagne",
+          "motif": "Elle porte le socle commun",
+          "quand": "2026-11-10T09:00:00.000Z",
+          "qui": "direction-generale",
+          "acteur": {
+            "personneId": "P-recette",
+            "nom": "Personne de recette",
+            "poste": "creation",
+            "postes": [
+              "creation"
+            ]
+          },
+          "version": 1,
+          "titre": "Piste pi-a",
+          "contenuPiste": "[\"pi-a\",1,\"2026-11-04T08:00:00.000Z\",\"Piste pi-a\",\"Concept pi-a\",\"Axe pi-a\",null,null,null,null,null,null]",
+          "revisionSource": "[null,[[\"CA\",\"pi-a\",\"[\\\"pi-a\\\",1,\\\"2026-11-04T08:00:00.000Z\\\",\\\"Piste pi-a\\\",\\\"Concept pi-a\\\",\\\"Axe pi-a\\\",null,null,null,null,null,null]\"]]]",
+          "remplace": null,
+          "cree_le": "2026-11-10T09:00:01.000Z"
+        },
+        {
+          "id": "DEC-nfs5ju",
+          "type": "reference-campagne",
+          "objet": "pi-a",
+          "projet": "CA",
+          "campagne": "C-1",
+          "verdict": "approuve",
+          "portee": "campagne",
+          "motif": "Le motif amendé",
+          "quand": "2026-11-10T09:00:06.000Z",
+          "qui": "direction-generale",
+          "acteur": {
+            "personneId": "P-recette",
+            "nom": "Personne de recette",
+            "poste": "creation",
+            "postes": [
+              "creation"
+            ]
+          },
+          "version": 1,
+          "titre": "Piste pi-a",
+          "contenuPiste": "[\"pi-a\",1,\"2026-11-04T08:00:00.000Z\",\"Piste pi-a\",\"Concept pi-a\",\"Axe pi-a\",null,null,null,null,null,null]",
+          "revisionSource": "[{\"projetId\":\"CA\",\"pisteId\":\"pi-a\",\"decisionId\":\"DEC-atsksq\",\"contenu\":\"[\\\"pi-a\\\",1,\\\"2026-11-04T08:00:00.000Z\\\",\\\"Piste pi-a\\\",\\\"Concept pi-a\\\",\\\"Axe pi-a\\\",null,null,null,null,null,null]\"},[[\"CA\",\"pi-a\",\"[\\\"pi-a\\\",1,\\\"2026-11-04T08:00:00.000Z\\\",\\\"Piste pi-a\\\",\\\"Concept pi-a\\\",\\\"Axe pi-a\\\",null,null,null,null,null,null]\"]]]",
+          "remplace": "DEC-atsksq",
+          "cree_le": "2026-11-10T09:00:07.000Z"
+        }
+      ],
+      "base": {
+        "schema": 5,
+        "maison": "Entreprise",
+        "machine": "",
+        "enregistre_le": "2026-11-10T09:00:11.000Z",
+        "personnes": [
+          {
+            "id": "P-recette",
+            "nom": "Personne de recette",
+            "poste": "creation",
+            "seniorite": "senior"
+          },
+          {
+            "id": "P-junior",
+            "nom": "Junior de recette",
+            "poste": "da",
+            "seniorite": "junior"
+          }
+        ],
+        "clients": [],
+        "marques": [],
+        "marches": [],
+        "supports": [],
+        "contacts": [],
+        "feedbacks": [],
+        "sku": [],
+        "people": [],
+        "radar": [],
+        "radar_releve_le": null,
+        "campagnes": [
+          {
+            "id": "C-1",
+            "nom": "Campagne de recette",
+            "referencePiste": {
+              "projetId": "CA",
+              "pisteId": "pi-a",
+              "decisionId": "DEC-nfs5ju",
+              "contenu": "[\"pi-a\",1,\"2026-11-04T08:00:00.000Z\",\"Piste pi-a\",\"Concept pi-a\",\"Axe pi-a\",null,null,null,null,null,null]"
+            }
+          }
+        ],
+        "inclassables": [],
+        "structures": [],
+        "factures": [],
+        "critiques": [],
+        "engagementsTenus": [],
+        "criteresAjoutes": {},
+        "assets": [],
+        "projets": [
+          {
+            "id": "CA",
+            "ref": "REF-CA",
+            "nom": "Projet CA",
+            "cree_le": "2026-11-01T08:00:00.000Z",
+            "sections": {
+              "pistes": [
+                {
+                  "id": "pi-a",
+                  "titre": "Piste pi-a",
+                  "concept": "Concept pi-a",
+                  "axe": "Axe pi-a",
+                  "statut": "retenue",
+                  "version": 1,
+                  "soumis_le": "2026-11-02T08:00:00.000Z",
+                  "arbitre_le": "2026-11-04T08:00:00.000Z"
+                }
+              ]
+            },
+            "livrables": [],
+            "idees": [],
+            "campagneId": "C-1"
+          }
+        ],
+        "attentes": [],
+        "blocages": [],
+        "captures": [],
+        "decisions": [
+          {
+            "id": "DEC-atsksq",
+            "type": "reference-campagne",
+            "objet": "pi-a",
+            "projet": "CA",
+            "campagne": "C-1",
+            "verdict": "approuve",
+            "portee": "campagne",
+            "motif": "Elle porte le socle commun",
+            "quand": "2026-11-10T09:00:00.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "version": 1,
+            "titre": "Piste pi-a",
+            "contenuPiste": "[\"pi-a\",1,\"2026-11-04T08:00:00.000Z\",\"Piste pi-a\",\"Concept pi-a\",\"Axe pi-a\",null,null,null,null,null,null]",
+            "revisionSource": "[null,[[\"CA\",\"pi-a\",\"[\\\"pi-a\\\",1,\\\"2026-11-04T08:00:00.000Z\\\",\\\"Piste pi-a\\\",\\\"Concept pi-a\\\",\\\"Axe pi-a\\\",null,null,null,null,null,null]\"]]]",
+            "remplace": null,
+            "cree_le": "2026-11-10T09:00:01.000Z"
+          },
+          {
+            "id": "DEC-nfs5ju",
+            "type": "reference-campagne",
+            "objet": "pi-a",
+            "projet": "CA",
+            "campagne": "C-1",
+            "verdict": "approuve",
+            "portee": "campagne",
+            "motif": "Le motif amendé",
+            "quand": "2026-11-10T09:00:06.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "version": 1,
+            "titre": "Piste pi-a",
+            "contenuPiste": "[\"pi-a\",1,\"2026-11-04T08:00:00.000Z\",\"Piste pi-a\",\"Concept pi-a\",\"Axe pi-a\",null,null,null,null,null,null]",
+            "revisionSource": "[{\"projetId\":\"CA\",\"pisteId\":\"pi-a\",\"decisionId\":\"DEC-atsksq\",\"contenu\":\"[\\\"pi-a\\\",1,\\\"2026-11-04T08:00:00.000Z\\\",\\\"Piste pi-a\\\",\\\"Concept pi-a\\\",\\\"Axe pi-a\\\",null,null,null,null,null,null]\"},[[\"CA\",\"pi-a\",\"[\\\"pi-a\\\",1,\\\"2026-11-04T08:00:00.000Z\\\",\\\"Piste pi-a\\\",\\\"Concept pi-a\\\",\\\"Axe pi-a\\\",null,null,null,null,null,null]\"]]]",
+            "remplace": "DEC-atsksq",
+            "cree_le": "2026-11-10T09:00:07.000Z"
+          }
+        ],
+        "lectures": [],
+        "journal": [
+          {
+            "quand": "2026-11-10T09:00:02.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-atsksq",
+            "detail": "Piste pi-a"
+          },
+          {
+            "quand": "2026-11-10T09:00:04.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "référence de campagne",
+            "type": "campagnes",
+            "id": "C-1",
+            "detail": "Piste pi-a — Elle porte le socle commun"
+          },
+          {
+            "quand": "2026-11-10T09:00:08.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-nfs5ju",
+            "detail": "Piste pi-a"
+          },
+          {
+            "quand": "2026-11-10T09:00:10.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "référence de campagne",
+            "type": "campagnes",
+            "id": "C-1",
+            "detail": "Piste pi-a — Le motif amendé"
+          }
+        ]
+      },
+      "refus": []
+    },
+    "validation": {
+      "decisions": [
+        {
+          "objet": "brief",
+          "type": "brief",
+          "projet": "VA",
+          "verdict": "reserve",
+          "motif": "L'un des onze champs critiques est vide",
+          "quand": "2026-11-10T09:00:00.000Z",
+          "qui": "direction-generale",
+          "acteur": {
+            "personneId": "P-recette",
+            "nom": "Personne de recette",
+            "poste": "creation",
+            "postes": [
+              "creation"
+            ]
+          },
+          "version": 1,
+          "portee": "document",
+          "titre": "le brief",
+          "id": "DEC-j7l19p",
+          "cree_le": "2026-11-10T09:00:01.000Z"
+        },
+        {
+          "objet": "socle",
+          "type": "socle",
+          "projet": "VA",
+          "verdict": "approuve",
+          "motif": null,
+          "quand": "2026-11-10T09:00:06.000Z",
+          "qui": "direction-generale",
+          "acteur": {
+            "personneId": "P-recette",
+            "nom": "Personne de recette",
+            "poste": "creation",
+            "postes": [
+              "creation"
+            ]
+          },
+          "version": 1,
+          "portee": "travail",
+          "titre": "la plateforme de marque",
+          "id": "DEC-sj447m",
+          "cree_le": "2026-11-10T09:00:07.000Z"
+        }
+      ],
+      "base": {
+        "schema": 5,
+        "maison": "Entreprise",
+        "machine": "",
+        "enregistre_le": "2026-11-10T09:00:11.000Z",
+        "personnes": [
+          {
+            "id": "P-recette",
+            "nom": "Personne de recette",
+            "poste": "creation",
+            "seniorite": "senior"
+          },
+          {
+            "id": "P-junior",
+            "nom": "Junior de recette",
+            "poste": "da",
+            "seniorite": "junior"
+          }
+        ],
+        "clients": [],
+        "marques": [],
+        "marches": [],
+        "supports": [],
+        "contacts": [],
+        "feedbacks": [],
+        "sku": [],
+        "people": [],
+        "radar": [],
+        "radar_releve_le": null,
+        "campagnes": [],
+        "inclassables": [],
+        "structures": [],
+        "factures": [],
+        "critiques": [],
+        "engagementsTenus": [],
+        "criteresAjoutes": {},
+        "assets": [],
+        "projets": [
+          {
+            "id": "VA",
+            "ref": "REF-VA",
+            "nom": "Projet VA",
+            "cree_le": "2026-11-01T08:00:00.000Z",
+            "sections": {
+              "brief": {
+                "objectif": "Faire connaître",
+                "validation": {
+                  "verdict": "reserve",
+                  "motif": "L'un des onze champs critiques est vide",
+                  "quand": "2026-11-10T09:00:00.000Z",
+                  "par": "direction-generale",
+                  "acteur": {
+                    "personneId": "P-recette",
+                    "nom": "Personne de recette",
+                    "poste": "creation",
+                    "postes": [
+                      "creation"
+                    ]
+                  },
+                  "portee": "document",
+                  "confirmationsEnAttente": [],
+                  "version": 1
+                }
+              },
+              "identite": {
+                "marque": "Marque de recette"
+              },
+              "pistes": [],
+              "socle": {
+                "promesse": "Une promesse",
+                "validation": {
+                  "verdict": "approuve",
+                  "motif": null,
+                  "quand": "2026-11-10T09:00:06.000Z",
+                  "par": "direction-generale",
+                  "acteur": {
+                    "personneId": "P-recette",
+                    "nom": "Personne de recette",
+                    "poste": "creation",
+                    "postes": [
+                      "creation"
+                    ]
+                  },
+                  "portee": "travail",
+                  "confirmationsEnAttente": [
+                    "promesse"
+                  ],
+                  "version": 1
+                }
+              }
+            },
+            "livrables": [],
+            "idees": [],
+            "inferences": {
+              "socle": [
+                {
+                  "cle": "promesse"
+                }
+              ]
+            }
+          }
+        ],
+        "attentes": [],
+        "blocages": [],
+        "captures": [],
+        "decisions": [
+          {
+            "objet": "brief",
+            "type": "brief",
+            "projet": "VA",
+            "verdict": "reserve",
+            "motif": "L'un des onze champs critiques est vide",
+            "quand": "2026-11-10T09:00:00.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "version": 1,
+            "portee": "document",
+            "titre": "le brief",
+            "id": "DEC-j7l19p",
+            "cree_le": "2026-11-10T09:00:01.000Z"
+          },
+          {
+            "objet": "socle",
+            "type": "socle",
+            "projet": "VA",
+            "verdict": "approuve",
+            "motif": null,
+            "quand": "2026-11-10T09:00:06.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "version": 1,
+            "portee": "travail",
+            "titre": "la plateforme de marque",
+            "id": "DEC-sj447m",
+            "cree_le": "2026-11-10T09:00:07.000Z"
+          }
+        ],
+        "lectures": [],
+        "journal": [
+          {
+            "quand": "2026-11-10T09:00:02.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-j7l19p",
+            "detail": "le brief"
+          },
+          {
+            "quand": "2026-11-10T09:00:04.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "verdict",
+            "type": "brief",
+            "id": "VA",
+            "detail": "Approuvé sous réserve — L'un des onze champs critiques est vide"
+          },
+          {
+            "quand": "2026-11-10T09:00:08.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-sj447m",
+            "detail": "la plateforme de marque"
+          },
+          {
+            "quand": "2026-11-10T09:00:10.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "verdict",
+            "type": "socle",
+            "id": "VA",
+            "detail": "Approuvé"
+          }
+        ]
+      },
+      "refus": []
+    },
+    "vue-atelier": {
+      "decisions": [
+        {
+          "objet": "ID-1",
+          "type": "idee",
+          "projet": "AT",
+          "verdict": "approuve",
+          "motif": "Elle porte le territoire",
+          "quand": "2026-11-10T09:00:00.000Z",
+          "qui": "direction-generale",
+          "titre": "Un pont entre deux rives, et les gens qui le traversent",
+          "id": "DEC-3ld6qn",
+          "cree_le": "2026-11-10T09:00:01.000Z"
+        },
+        {
+          "objet": "ID-2",
+          "type": "idee",
+          "projet": "AT",
+          "verdict": "hors",
+          "motif": "Trop proche du concurrent",
+          "quand": "2026-11-10T09:00:05.000Z",
+          "qui": "direction-generale",
+          "titre": "Une idée trop proche du concurrent",
+          "id": "DEC-zyoc6o",
+          "cree_le": "2026-11-10T09:00:06.000Z"
+        }
+      ],
+      "base": {
+        "schema": 5,
+        "maison": "Entreprise",
+        "machine": "",
+        "enregistre_le": "2026-11-10T09:00:09.000Z",
+        "personnes": [
+          {
+            "id": "P-recette",
+            "nom": "Personne de recette",
+            "poste": "creation",
+            "seniorite": "senior"
+          },
+          {
+            "id": "P-junior",
+            "nom": "Junior de recette",
+            "poste": "da",
+            "seniorite": "junior"
+          }
+        ],
+        "clients": [],
+        "marques": [],
+        "marches": [],
+        "supports": [],
+        "contacts": [],
+        "feedbacks": [],
+        "sku": [],
+        "people": [],
+        "radar": [],
+        "radar_releve_le": null,
+        "campagnes": [],
+        "inclassables": [],
+        "structures": [],
+        "factures": [],
+        "critiques": [],
+        "engagementsTenus": [],
+        "criteresAjoutes": {},
+        "assets": [],
+        "projets": [
+          {
+            "id": "AT",
+            "ref": "REF-AT",
+            "nom": "Projet AT",
+            "cree_le": "2026-11-01T08:00:00.000Z",
+            "sections": {
+              "brief": {
+                "objectif": "Faire connaître"
+              },
+              "identite": {
+                "marque": "Marque de recette"
+              },
+              "pistes": []
+            },
+            "livrables": [],
+            "idees": [
+              {
+                "id": "ID-1",
+                "texte": "Un pont entre deux rives, et les gens qui le traversent",
+                "auteur": "P-junior",
+                "statut": "retenue",
+                "motif": "Elle porte le territoire",
+                "arbitre_le": "2026-11-10T09:00:00.000Z"
+              },
+              {
+                "id": "ID-2",
+                "texte": "Une idée trop proche du concurrent",
+                "auteur": null,
+                "statut": "ecartee",
+                "motif": "Trop proche du concurrent",
+                "arbitre_le": "2026-11-10T09:00:05.000Z"
+              }
+            ]
+          }
+        ],
+        "attentes": [],
+        "blocages": [],
+        "captures": [],
+        "decisions": [
+          {
+            "objet": "ID-1",
+            "type": "idee",
+            "projet": "AT",
+            "verdict": "approuve",
+            "motif": "Elle porte le territoire",
+            "quand": "2026-11-10T09:00:00.000Z",
+            "qui": "direction-generale",
+            "titre": "Un pont entre deux rives, et les gens qui le traversent",
+            "id": "DEC-3ld6qn",
+            "cree_le": "2026-11-10T09:00:01.000Z"
+          },
+          {
+            "objet": "ID-2",
+            "type": "idee",
+            "projet": "AT",
+            "verdict": "hors",
+            "motif": "Trop proche du concurrent",
+            "quand": "2026-11-10T09:00:05.000Z",
+            "qui": "direction-generale",
+            "titre": "Une idée trop proche du concurrent",
+            "id": "DEC-zyoc6o",
+            "cree_le": "2026-11-10T09:00:06.000Z"
+          }
+        ],
+        "lectures": [],
+        "journal": [
+          {
+            "quand": "2026-11-10T09:00:02.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-3ld6qn",
+            "detail": "Un pont entre deux rives, et les gens qui le traversent"
+          },
+          {
+            "quand": "2026-11-10T09:00:07.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-zyoc6o",
+            "detail": "Une idée trop proche du concurrent"
+          }
+        ]
+      },
+      "refus": []
+    },
+    "vue-bigidea": {
+      "decisions": [
+        {
+          "objet": "pi-b",
+          "type": "piste",
+          "projet": "VB",
+          "verdict": "approuve",
+          "motif": "La seule qui tient la promesse",
+          "quand": "2026-11-10T09:00:00.000Z",
+          "qui": "direction-generale",
+          "titre": "Piste pi-b",
+          "id": "DEC-0ed4kb",
+          "cree_le": "2026-11-10T09:00:01.000Z"
+        }
+      ],
+      "base": {
+        "schema": 5,
+        "maison": "Entreprise",
+        "machine": "",
+        "enregistre_le": "2026-11-10T09:00:04.000Z",
+        "personnes": [
+          {
+            "id": "P-recette",
+            "nom": "Personne de recette",
+            "poste": "creation",
+            "seniorite": "senior"
+          },
+          {
+            "id": "P-junior",
+            "nom": "Junior de recette",
+            "poste": "da",
+            "seniorite": "junior"
+          }
+        ],
+        "clients": [],
+        "marques": [],
+        "marches": [],
+        "supports": [],
+        "contacts": [],
+        "feedbacks": [],
+        "sku": [],
+        "people": [],
+        "radar": [],
+        "radar_releve_le": null,
+        "campagnes": [],
+        "inclassables": [],
+        "structures": [],
+        "factures": [],
+        "critiques": [],
+        "engagementsTenus": [],
+        "criteresAjoutes": {},
+        "assets": [],
+        "projets": [
+          {
+            "id": "VB",
+            "ref": "REF-VB",
+            "nom": "Projet VB",
+            "cree_le": "2026-11-01T08:00:00.000Z",
+            "sections": {
+              "pistes": [
+                {
+                  "id": "pi-b",
+                  "titre": "Piste pi-b",
+                  "concept": "Concept pi-b",
+                  "axe": "Axe pi-b",
+                  "statut": "retenue",
+                  "version": 1,
+                  "soumis_le": "2026-11-02T08:00:00.000Z",
+                  "motif": "La seule qui tient la promesse",
+                  "arbitre_le": "2026-11-10T09:00:00.000Z"
+                },
+                {
+                  "id": "pi-c",
+                  "titre": "Piste pi-c",
+                  "concept": "Concept pi-c",
+                  "axe": "Axe pi-c",
+                  "statut": "ecartee",
+                  "version": 1,
+                  "soumis_le": "2026-11-02T08:00:00.000Z"
+                }
+              ]
+            },
+            "livrables": [
+              {
+                "id": "L-vb",
+                "nom": "Livrable L-vb",
+                "support": "S-affiche",
+                "marche": "M-cm",
+                "points": {
+                  "central": "en cours"
+                },
+                "versions": [
+                  {
+                    "n": 1,
+                    "soumis_le": "2026-11-03T08:00:00.000Z"
+                  }
+                ],
+                "pisteId": "pi-b"
+              }
+            ],
+            "idees": []
+          }
+        ],
+        "attentes": [],
+        "blocages": [],
+        "captures": [],
+        "decisions": [
+          {
+            "objet": "pi-b",
+            "type": "piste",
+            "projet": "VB",
+            "verdict": "approuve",
+            "motif": "La seule qui tient la promesse",
+            "quand": "2026-11-10T09:00:00.000Z",
+            "qui": "direction-generale",
+            "titre": "Piste pi-b",
+            "id": "DEC-0ed4kb",
+            "cree_le": "2026-11-10T09:00:01.000Z"
+          }
+        ],
+        "lectures": [],
+        "journal": [
+          {
+            "quand": "2026-11-10T09:00:02.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-0ed4kb",
+            "detail": "Piste pi-b"
+          }
+        ]
+      },
+      "refus": []
+    },
+    "vue-livrable": {
+      "decisions": [
+        {
+          "objet": "L-1",
+          "type": "livrable",
+          "projet": "LI",
+          "verdict": "approuve",
+          "motif": "",
+          "quand": "2026-11-10T09:00:00.000Z",
+          "qui": "direction-generale",
+          "titre": "Livrable L-1",
+          "id": "DEC-gjv4y2",
+          "cree_le": "2026-11-10T09:00:01.000Z"
+        },
+        {
+          "objet": "L-2",
+          "type": "livrable",
+          "projet": "LI",
+          "verdict": "retour",
+          "motif": "Le logo est sous la taille minimale",
+          "quand": "2026-11-10T09:00:05.000Z",
+          "qui": "direction-generale",
+          "titre": "Livrable L-2",
+          "id": "DEC-mrr3hb",
+          "cree_le": "2026-11-10T09:00:06.000Z"
+        }
+      ],
+      "base": {
+        "schema": 5,
+        "maison": "Entreprise",
+        "machine": "",
+        "enregistre_le": "2026-11-10T09:00:09.000Z",
+        "personnes": [
+          {
+            "id": "P-recette",
+            "nom": "Personne de recette",
+            "poste": "creation",
+            "seniorite": "senior"
+          },
+          {
+            "id": "P-junior",
+            "nom": "Junior de recette",
+            "poste": "da",
+            "seniorite": "junior"
+          }
+        ],
+        "clients": [],
+        "marques": [],
+        "marches": [],
+        "supports": [],
+        "contacts": [],
+        "feedbacks": [],
+        "sku": [],
+        "people": [],
+        "radar": [],
+        "radar_releve_le": null,
+        "campagnes": [],
+        "inclassables": [],
+        "structures": [],
+        "factures": [],
+        "critiques": [],
+        "engagementsTenus": [],
+        "criteresAjoutes": {},
+        "assets": [],
+        "projets": [
+          {
+            "id": "LI",
+            "ref": "REF-LI",
+            "nom": "Projet LI",
+            "cree_le": "2026-11-01T08:00:00.000Z",
+            "sections": {
+              "brief": {
+                "objectif": "Faire connaître"
+              },
+              "identite": {
+                "marque": "Marque de recette"
+              },
+              "pistes": []
+            },
+            "livrables": [
+              {
+                "id": "L-1",
+                "nom": "Livrable L-1",
+                "support": "S-affiche",
+                "marche": "M-cm",
+                "points": {
+                  "central": "pret"
+                },
+                "versions": [
+                  {
+                    "n": 1,
+                    "soumis_le": "2026-11-03T08:00:00.000Z",
+                    "verdict": "approuve",
+                    "motif": "",
+                    "juge_le": "2026-11-10T09:00:00.000Z"
+                  }
+                ]
+              },
+              {
+                "id": "L-2",
+                "nom": "Livrable L-2",
+                "support": "S-affiche",
+                "marche": "M-cm",
+                "points": {
+                  "central": "en cours"
+                },
+                "versions": [
+                  {
+                    "n": 1,
+                    "soumis_le": "2026-11-03T08:00:00.000Z",
+                    "verdict": "retour",
+                    "motif": "Le logo est sous la taille minimale",
+                    "juge_le": "2026-11-10T09:00:05.000Z"
+                  }
+                ]
+              }
+            ],
+            "idees": []
+          }
+        ],
+        "attentes": [],
+        "blocages": [],
+        "captures": [],
+        "decisions": [
+          {
+            "objet": "L-1",
+            "type": "livrable",
+            "projet": "LI",
+            "verdict": "approuve",
+            "motif": "",
+            "quand": "2026-11-10T09:00:00.000Z",
+            "qui": "direction-generale",
+            "titre": "Livrable L-1",
+            "id": "DEC-gjv4y2",
+            "cree_le": "2026-11-10T09:00:01.000Z"
+          },
+          {
+            "objet": "L-2",
+            "type": "livrable",
+            "projet": "LI",
+            "verdict": "retour",
+            "motif": "Le logo est sous la taille minimale",
+            "quand": "2026-11-10T09:00:05.000Z",
+            "qui": "direction-generale",
+            "titre": "Livrable L-2",
+            "id": "DEC-mrr3hb",
+            "cree_le": "2026-11-10T09:00:06.000Z"
+          }
+        ],
+        "lectures": [],
+        "journal": [
+          {
+            "quand": "2026-11-10T09:00:02.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-gjv4y2",
+            "detail": "Livrable L-1"
+          },
+          {
+            "quand": "2026-11-10T09:00:07.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-mrr3hb",
+            "detail": "Livrable L-2"
+          }
+        ]
+      },
+      "refus": []
+    },
+    "vue-revue": {
+      "decisions": [
+        {
+          "objet": "pi-r",
+          "type": "piste",
+          "projet": "RE",
+          "verdict": "approuve",
+          "motif": "",
+          "quand": "2026-11-10T09:00:00.000Z",
+          "qui": "direction-generale",
+          "titre": "Piste pi-r",
+          "id": "DEC-6f62mn",
+          "cree_le": "2026-11-10T09:00:01.000Z"
+        },
+        {
+          "objet": "L-r",
+          "type": "livrable",
+          "projet": "RE",
+          "verdict": "hors",
+          "motif": "La promesse ne se lit pas en trois secondes",
+          "quand": "2026-11-10T09:00:05.000Z",
+          "qui": "direction-generale",
+          "titre": "Livrable L-r — V1",
+          "id": "DEC-ithotg",
+          "cree_le": "2026-11-10T09:00:06.000Z"
+        }
+      ],
+      "base": {
+        "schema": 5,
+        "maison": "Entreprise",
+        "machine": "",
+        "enregistre_le": "2026-11-10T09:00:09.000Z",
+        "personnes": [
+          {
+            "id": "P-recette",
+            "nom": "Personne de recette",
+            "poste": "creation",
+            "seniorite": "senior"
+          },
+          {
+            "id": "P-junior",
+            "nom": "Junior de recette",
+            "poste": "da",
+            "seniorite": "junior"
+          }
+        ],
+        "clients": [],
+        "marques": [],
+        "marches": [
+          {
+            "id": "M-cm",
+            "nom": "Cameroun"
+          }
+        ],
+        "supports": [
+          {
+            "id": "S-affiche",
+            "nom": "Affiche"
+          }
+        ],
+        "contacts": [],
+        "feedbacks": [],
+        "sku": [],
+        "people": [],
+        "radar": [],
+        "radar_releve_le": null,
+        "campagnes": [],
+        "inclassables": [],
+        "structures": [],
+        "factures": [],
+        "critiques": [],
+        "engagementsTenus": [],
+        "criteresAjoutes": {},
+        "assets": [],
+        "projets": [
+          {
+            "id": "RE",
+            "ref": "REF-RE",
+            "nom": "Projet RE",
+            "cree_le": "2026-11-01T08:00:00.000Z",
+            "sections": {
+              "pistes": [
+                {
+                  "id": "pi-r",
+                  "titre": "Piste pi-r",
+                  "concept": "Concept pi-r",
+                  "axe": "Axe pi-r",
+                  "statut": "retenue",
+                  "version": 1,
+                  "soumis_le": "2026-11-02T08:00:00.000Z",
+                  "arbitre_le": "2026-11-10T09:00:00.000Z",
+                  "motif": ""
+                }
+              ]
+            },
+            "livrables": [
+              {
+                "id": "L-r",
+                "nom": "Livrable L-r",
+                "support": "S-affiche",
+                "marche": "M-cm",
+                "points": {
+                  "central": "en cours"
+                },
+                "versions": [
+                  {
+                    "n": 1,
+                    "soumis_le": "2026-11-03T08:00:00.000Z",
+                    "verdict": "hors",
+                    "motif": "La promesse ne se lit pas en trois secondes",
+                    "juge_le": "2026-11-10T09:00:05.000Z"
+                  }
+                ],
+                "pisteId": "pi-r"
+              }
+            ],
+            "idees": []
+          }
+        ],
+        "attentes": [],
+        "blocages": [],
+        "captures": [],
+        "decisions": [
+          {
+            "objet": "pi-r",
+            "type": "piste",
+            "projet": "RE",
+            "verdict": "approuve",
+            "motif": "",
+            "quand": "2026-11-10T09:00:00.000Z",
+            "qui": "direction-generale",
+            "titre": "Piste pi-r",
+            "id": "DEC-6f62mn",
+            "cree_le": "2026-11-10T09:00:01.000Z"
+          },
+          {
+            "objet": "L-r",
+            "type": "livrable",
+            "projet": "RE",
+            "verdict": "hors",
+            "motif": "La promesse ne se lit pas en trois secondes",
+            "quand": "2026-11-10T09:00:05.000Z",
+            "qui": "direction-generale",
+            "titre": "Livrable L-r — V1",
+            "id": "DEC-ithotg",
+            "cree_le": "2026-11-10T09:00:06.000Z"
+          }
+        ],
+        "lectures": [],
+        "journal": [
+          {
+            "quand": "2026-11-10T09:00:02.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-6f62mn",
+            "detail": "Piste pi-r"
+          },
+          {
+            "quand": "2026-11-10T09:00:07.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-ithotg",
+            "detail": "Livrable L-r — V1"
+          }
+        ]
+      },
+      "refus": []
+    },
+    "vue-route": {
+      "decisions": [
+        {
+          "objet": "pi-o",
+          "type": "piste",
+          "projet": "RO",
+          "verdict": "approuve",
+          "motif": "Elle se décline sur tout le dispositif",
+          "quand": "2026-11-10T09:00:00.000Z",
+          "qui": "direction-generale",
+          "titre": "Piste pi-o",
+          "id": "DEC-me4fzy",
+          "cree_le": "2026-11-10T09:00:01.000Z"
+        }
+      ],
+      "base": {
+        "schema": 5,
+        "maison": "Entreprise",
+        "machine": "",
+        "enregistre_le": "2026-11-10T09:00:05.000Z",
+        "personnes": [
+          {
+            "id": "P-recette",
+            "nom": "Personne de recette",
+            "poste": "creation",
+            "seniorite": "senior"
+          },
+          {
+            "id": "P-junior",
+            "nom": "Junior de recette",
+            "poste": "da",
+            "seniorite": "junior"
+          }
+        ],
+        "clients": [],
+        "marques": [],
+        "marches": [],
+        "supports": [],
+        "contacts": [],
+        "feedbacks": [],
+        "sku": [],
+        "people": [],
+        "radar": [],
+        "radar_releve_le": null,
+        "campagnes": [],
+        "inclassables": [],
+        "structures": [],
+        "factures": [],
+        "critiques": [],
+        "engagementsTenus": [],
+        "criteresAjoutes": {},
+        "assets": [],
+        "projets": [
+          {
+            "id": "RO",
+            "ref": "REF-RO",
+            "nom": "Projet RO",
+            "cree_le": "2026-11-01T08:00:00.000Z",
+            "sections": {
+              "pistes": [
+                {
+                  "id": "pi-o",
+                  "titre": "Piste pi-o",
+                  "concept": "Concept pi-o",
+                  "axe": "Axe pi-o",
+                  "statut": "retenue",
+                  "version": 1,
+                  "soumis_le": "2026-11-02T08:00:00.000Z",
+                  "motif": "Elle se décline sur tout le dispositif",
+                  "arbitre_le": "2026-11-10T09:00:00.000Z"
+                },
+                {
+                  "id": "pi-p",
+                  "titre": "Piste pi-p",
+                  "concept": "Concept pi-p",
+                  "axe": "Axe pi-p",
+                  "statut": "ecartee",
+                  "version": 1,
+                  "soumis_le": "2026-11-02T08:00:00.000Z"
+                }
+              ]
+            },
+            "livrables": [
+              {
+                "id": "L-ro",
+                "nom": "Livrable L-ro",
+                "support": "S-affiche",
+                "marche": "M-cm",
+                "points": {
+                  "central": "en cours"
+                },
+                "versions": [
+                  {
+                    "n": 1,
+                    "soumis_le": "2026-11-03T08:00:00.000Z"
+                  }
+                ],
+                "pisteId": "pi-p"
+              }
+            ],
+            "idees": []
+          }
+        ],
+        "attentes": [],
+        "blocages": [],
+        "captures": [],
+        "decisions": [
+          {
+            "objet": "pi-o",
+            "type": "piste",
+            "projet": "RO",
+            "verdict": "approuve",
+            "motif": "Elle se décline sur tout le dispositif",
+            "quand": "2026-11-10T09:00:00.000Z",
+            "qui": "direction-generale",
+            "titre": "Piste pi-o",
+            "id": "DEC-me4fzy",
+            "cree_le": "2026-11-10T09:00:01.000Z"
+          }
+        ],
+        "lectures": [],
+        "journal": [
+          {
+            "quand": "2026-11-10T09:00:02.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "création",
+            "type": "decisions",
+            "id": "DEC-me4fzy",
+            "detail": "Piste pi-o"
+          },
+          {
+            "quand": "2026-11-10T09:00:04.000Z",
+            "qui": "direction-generale",
+            "acteur": {
+              "personneId": "P-recette",
+              "nom": "Personne de recette",
+              "poste": "creation",
+              "postes": [
+                "creation"
+              ]
+            },
+            "action": "piste retenue",
+            "type": "pistes",
+            "id": "RO",
+            "detail": "Piste pi-o — 1 livrables ouverts en production"
+          }
+        ]
+      },
+      "refus": []
+    }
+  }
+}

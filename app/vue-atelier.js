@@ -218,7 +218,7 @@ window.VUE_ATELIER = (function () {
           if (!champ.value.trim()) { AVIS.refus("Trancher sans argument écrit, c'est trancher par goût."); return; }
           i.statut = statut; i.motif = champ.value.trim();
           i.arbitre_le = new Date().toISOString();
-          DEPOT.ajoute("decisions", { objet: i.id, type: "idee", projet: p.id,
+          DECISION.poser({ objet: i.id, type: "idee", projet: p.id,
             verdict: statut === "retenue" ? "approuve" : "hors", motif: i.motif,
             quand: i.arbitre_le, qui: MAISON.titulaire, titre: i.texte.slice(0, 60) });
           DEPOT.enregistrer(); PANNEAU.fermerSur(); rafraichir();

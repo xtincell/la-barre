@@ -5,6 +5,8 @@ WORKDIR /app
 COPY . .
 RUN mkdir -p /app/depots /app/assets/review
 ENV PORT=3000
+# Dans le conteneur, l'écoute réseau est voulue : le port publié en dépend.
+ENV HOST=0.0.0.0
 EXPOSE 3000
 HEALTHCHECK --interval=15s --timeout=5s --start-period=5s --retries=3 CMD ["node", "--input-type=module", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 CMD ["node", "servir.mjs", "3000"]

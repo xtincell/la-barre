@@ -14,7 +14,7 @@ async function poste() {
   ] };
   const sb = { console, Date, Set, Map,
     MAISON:{ titulaire:'creation', criteresDe:()=>[], verdicts:[{cle:'approuve',nom:'Approuvé'}], postes:[{cle:'creation'},{cle:'clientele'},{cle:'planning'}] },
-    O:{ el, poste:p => ({ nom:p, court:p }) },
+    O:{ el, poste:p => ({ nom:p, court:p }), id:p => p+'-recette' },
     UI:{ banniere:(...x)=>el('div',{},...x), eti:(...x)=>el('span',{},...x) },
     AVIS:{ refus:message => { sb.erreur = message; } },
     CHAMPS:{ section:()=>def },
@@ -30,7 +30,7 @@ async function poste() {
   sb.window=sb;
   const ctx=vm.createContext(sb);
   const rendre=sb.FORM.rendre;
-  for (const name of ['reconciliation','formulaire','inference','version','validation','vue-projets']) {
+  for (const name of ['reconciliation','decision','formulaire','inference','version','validation','vue-projets']) {
     vm.runInContext(await readFile(new URL('../app/'+name+'.js',import.meta.url),'utf8'),ctx);
   }
   ctx.FORM.rendre=rendre;

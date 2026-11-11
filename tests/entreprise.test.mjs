@@ -17,6 +17,15 @@ function contexte() {
   return sb;
 }
 
+test('le serveur n’écoute que localement par défaut ; seules les images s’ouvrent au réseau', async () => {
+  const serveur = await readFile(new URL('servir.mjs', root), 'utf8');
+  assert.match(serveur, /listen\(PORT, process\.env\.HOST \|\| "127\.0\.0\.1"/);
+  assert.doesNotMatch(serveur, /process\.env\.HOST \|\| "0\.0\.0\.0"/);
+  for (const image of ['Dockerfile', 'profils/entreprise/Dockerfile']) {
+    assert.match(await readFile(new URL(image, root), 'utf8'), /^ENV HOST=0\.0\.0\.0$/m, image);
+  }
+});
+
 test('les profils partagent la méthode, sans partager leurs choix ni inventer une organisation', () => {
   const sb = contexte();
   const a = sb.MAISON_BASE.creer({ nom: 'Recette A' });
