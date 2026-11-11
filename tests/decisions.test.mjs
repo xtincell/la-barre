@@ -188,8 +188,9 @@ test('rien d’autre que la fabrique n’écrit dans la collection des décision
   /* Les huit écrivains d'origine, plus les gestes de choix qui écrivaient leur
    * objet sans décision : écarter une piste ou une proposition de big idea,
    * écarter un concept de la réserve, accepter ou retourner le brief, écarter
-   * une case de la composition et déclarer l'écart d'un projet de campagne. */
-  assert.deepEqual(appels.sort(), ['bigidea-ecoles.js:2', 'campagne.js:3', 'concepts.js:1', 'validation.js:1', 'vue-atelier.js:1',
+   * une case de la composition, déclarer l'écart d'un projet de campagne et
+   * clore le bilan d'une campagne. */
+  assert.deepEqual(appels.sort(), ['bigidea-ecoles.js:2', 'campagne.js:4', 'concepts.js:1', 'validation.js:1', 'vue-atelier.js:1',
     'vue-bigidea.js:1', 'vue-brief.js:1', 'vue-livrable.js:1', 'vue-revue.js:1', 'vue-route.js:2']);
 });
 
@@ -473,7 +474,7 @@ test('chaque type de décision écrit par un geste est rangé dans la jurisprude
   vm.runInContext(await readFile(join(APP, 'jurisprudence.js'), 'utf8'), ctx);
   const familles = ['brief', 'bigidea', 'proposition', 'livrable'];
   for (const type of ['bigidea', 'reference-campagne', 'brief', 'socle', 'idee', 'piste', 'livrable',
-    'concept', 'recevabilite', 'composition', 'ecart-campagne']) {
+    'concept', 'recevabilite', 'composition', 'ecart-campagne', 'bilan-campagne']) {
     assert.ok(ctx.JURISPRUDENCE.SOURCES[type], type);
     assert.ok(familles.includes(ctx.JURISPRUDENCE.SOURCES[type].famille), type);
   }
