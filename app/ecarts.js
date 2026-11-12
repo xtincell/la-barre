@@ -220,22 +220,92 @@ window.ECARTS = (function () {
     return out;
   }
 
-  /* ————————————————————— « Ce n'en est pas un » ————————————————————— */
+  /* ————————————————————— « Ce n'en est pas un » —————————————————————
+   *
+   * Écarter un écart, c'est dire que ce que le contrôle réclame ne l'est pas
+   * ici : le périmètre a changé par avenant, la règle ne s'applique pas à ce
+   * livrable. Le reprendre le rouvre. Les deux gestes passent par la fabrique
+   * (decision.js), dans le type que la jurisprudence range déjà, `ecart` :
+   *
+   *   écarter    verdict « hors », motif exigé par la fabrique
+   *   reprendre  verdict « approuve » — l'écart est fondé, il est de nouveau
+   *              dû —, motif facultatif ; `remplace` nomme la décision qui
+   *              l'avait écarté, quand il y en a une
+   *
+   * `objet` est la clé de l'écart, `titre` ce qu'il dit, `origine` qui le doit.
+   * Ce n'est pas une déviation : rien n'est déclaré, l'écart reste calculé.
+   *
+   * Un écart écarté n'est plus compté comme ouvert ; il reste au relevé, marqué
+   * de `ecartsEcartes[cle]` : son motif, sa date et sa décision. Une entrée
+   * écrite avant la fabrique n'a pas de décision : elle se lit telle quelle,
+   * et se reprend comme les autres. */
 
   function ecartes() { return DEPOT.tout().ecartsEcartes || {}; }
   function ecarte(cle) { return ecartes()[cle] || null; }
 
-  function ecarterUn(cle, motif) {
-    var d = DEPOT.tout();
-    if (!d.ecartsEcartes) d.ecartsEcartes = {};
-    d.ecartsEcartes[cle] = { motif: motif, quand: new Date().toISOString() };
-    DEPOT.enregistrer();
+  /* Le dossier d'une clé : elle commence par son identifiant. */
+  function projetDe(cle) {
+    if (typeof cle !== "string") return null;
+    return DEPOT.liste("projets").filter(function (p) { return p && cle.indexOf(p.id + "|") === 0; })[0] || null;
   }
 
-  function reprendre(cle) {
-    var d = DEPOT.tout();
-    if (d.ecartsEcartes) delete d.ecartsEcartes[cle];
+  /* L'écart au relevé de son dossier, clos ou non : on écarte depuis le
+   * dossier ce que la liste de tous les dossiers ne montre plus. */
+  function trouver(cle) {
+    var p = projetDe(cle);
+    if (!p) return null;
+    return tous(p.id).filter(function (x) { return x.cle === cle; })[0] || null;
+  }
+
+  function refusDe(e) {
+    if (window.DECISION && DECISION.estRefus(e)) return { ok: false, erreur: e.message };
+    throw e;
+  }
+
+  function ecarterUn(cle, motif) {
+    var x = trouver(cle);
+    if (!x) return { ok: false, erreur: "Cet écart n'est pas au relevé : il n'y a rien à écarter." };
+    if (x.ecarte) return { ok: false, erreur: "Cet écart est déjà écarté depuis le " + O.joli(x.ecarte.quand) + "." };
+    var d;
+    try {
+      d = DECISION.construire({ objet: cle, type: "ecart", projet: x.projet.id, verdict: "hors",
+        motif: typeof motif === "string" ? motif.trim() : "", quand: new Date().toISOString(),
+        qui: MAISON.titulaire, acteur: DECISION.acteur(), titre: x.quoi,
+        origine: x.origine, livrable: x.livrable ? x.livrable.id : null });
+    } catch (e) { return refusDe(e); }
+    var base = DEPOT.tout();
+    if (!base.ecartsEcartes) base.ecartsEcartes = {};
+    base.ecartsEcartes[cle] = { motif: d.motif, quand: d.quand, decision: d.id };
+    DECISION.ajouter(d);
+    DEPOT.tracer("écart écarté", "projets", x.projet.id, x.quoi);
     DEPOT.enregistrer();
+    return { ok: true, decision: d };
+  }
+
+  function reprendre(cle, motif) {
+    var e = ecarte(cle);
+    if (!e) return { ok: false, erreur: "Cet écart n'est pas écarté : il est déjà compté comme ouvert." };
+    /* Un écart écarté peut ne plus être calculé : la décision qui l'avait
+     * écarté dit encore ce qu'il était. */
+    var avant = e.decision ? DEPOT.trouve("decisions", e.decision) : null;
+    var x = trouver(cle), p = x ? x.projet : projetDe(cle);
+    if (!p) return { ok: false, erreur: "Le dossier de cet écart est introuvable." };
+    var texte = typeof motif === "string" ? motif.trim() : "";
+    var d;
+    try {
+      d = DECISION.construire({ objet: cle, type: "ecart", projet: p.id, verdict: "approuve",
+        motif: texte || null, quand: new Date().toISOString(),
+        qui: MAISON.titulaire, acteur: DECISION.acteur(),
+        titre: x ? x.quoi : avant ? avant.titre : cle,
+        origine: x ? x.origine : avant ? avant.origine : null,
+        livrable: x ? (x.livrable ? x.livrable.id : null) : avant ? avant.livrable : null,
+        remplace: avant ? avant.id : null });
+    } catch (err) { return refusDe(err); }
+    delete DEPOT.tout().ecartsEcartes[cle];
+    DECISION.ajouter(d);
+    DEPOT.tracer("écart repris", "projets", p.id, d.titre);
+    DEPOT.enregistrer();
+    return { ok: true, decision: d };
   }
 
   /* ————————————————————— Le compte ————————————————————— */

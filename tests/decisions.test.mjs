@@ -189,9 +189,10 @@ test('rien d’autre que la fabrique n’écrit dans la collection des décision
    * objet sans décision : écarter une piste ou une proposition de big idea,
    * écarter un concept de la réserve, accepter ou retourner le brief, écarter
    * une case de la composition, déclarer l'écart d'un projet de campagne,
-   * clore le bilan d'une campagne, et trancher une adaptation hors de l'écart
-   * déclaré de son marché (corriger l'écart déclaré ou l'adaptation). */
-  assert.deepEqual(appels.sort(), ['bigidea-ecoles.js:2', 'campagne.js:4', 'concepts.js:1', 'ecarts-marche.js:2', 'validation.js:1', 'vue-atelier.js:1',
+   * clore le bilan d'une campagne, trancher une adaptation hors de l'écart
+   * déclaré de son marché (corriger l'écart déclaré ou l'adaptation), et
+   * écarter un écart du relevé ou le reprendre. */
+  assert.deepEqual(appels.sort(), ['bigidea-ecoles.js:2', 'campagne.js:4', 'concepts.js:1', 'ecarts-marche.js:2', 'ecarts.js:2', 'validation.js:1', 'vue-atelier.js:1',
     'vue-bigidea.js:1', 'vue-brief.js:1', 'vue-livrable.js:1', 'vue-revue.js:1', 'vue-route.js:2']);
 });
 
@@ -214,7 +215,7 @@ test('decision.js est chargé avant le premier écrivain et après le dépôt', 
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   const rang = nom => html.indexOf('<script src="app/' + nom + '.js">');
   assert.ok(rang('decision') > rang('depot') && rang('depot') > rang('outils'));
-  for (const nom of ['bigidea-ecoles', 'campagne', 'concepts', 'ecarts-marche', 'validation', 'vue-atelier', 'vue-bigidea', 'vue-brief', 'vue-livrable', 'vue-revue', 'vue-route']) {
+  for (const nom of ['bigidea-ecoles', 'campagne', 'concepts', 'ecarts', 'ecarts-marche', 'validation', 'vue-atelier', 'vue-bigidea', 'vue-brief', 'vue-livrable', 'vue-revue', 'vue-route']) {
     assert.ok(rang(nom) > rang('decision'), nom);
   }
 });
@@ -475,8 +476,114 @@ test('chaque type de décision écrit par un geste est rangé dans la jurisprude
   vm.runInContext(await readFile(join(APP, 'jurisprudence.js'), 'utf8'), ctx);
   const familles = ['brief', 'bigidea', 'proposition', 'livrable'];
   for (const type of ['bigidea', 'reference-campagne', 'brief', 'socle', 'idee', 'piste', 'livrable',
-    'concept', 'recevabilite', 'composition', 'ecart-campagne', 'bilan-campagne', 'ecart-marche', 'hors-ecart']) {
+    'concept', 'recevabilite', 'composition', 'ecart-campagne', 'bilan-campagne', 'ecart-marche', 'hors-ecart', 'ecart']) {
     assert.ok(ctx.JURISPRUDENCE.SOURCES[type], type);
     assert.ok(familles.includes(ctx.JURISPRUDENCE.SOURCES[type].famille), type);
   }
+});
+
+/* ————— Écarter un écart du relevé, et le reprendre —————
+ *
+ * Retours attendus montre ce qu'on me doit, calculé par ecarts.js. « Écarter »
+ * dit que ce que le contrôle réclame ne l'est pas ici, motif exigé ;
+ * « Reprendre » rouvre l'écart. Les deux gestes passent par la fabrique, dans
+ * le type que la jurisprudence range déjà : `ecart`. */
+
+const texteDe = n => (n && n.textContent) || '';
+
+async function releve(graine, projets) {
+  const s = await bac(APP, graine);
+  s.ctx.KV.conformite = () => [];
+  s.ctx.FEEDBACK = { ordre: () => [], nomAuteur: a => a };
+  s.ctx.ANNOT = { ouvertes: () => [] };
+  s.ctx.PANNEAU.ligne = (etiq, val) => s.ctx.O.el('div.ligne', {}, s.ctx.O.el('span.etiq', {}, etiq), s.ctx.O.el('span.val', {}, val || ''));
+  for (const nom of ['ecarts', 'jurisprudence', 'vue-attentes']) await s.charger(nom);
+  semer(s.ctx, { personnes: PERSONNES, projets });
+  return s;
+}
+const promesse = (id, ...attendus) => projet(id, { sections: { brief: { livrables_attendus: attendus }, pistes: [] } });
+
+test('écarter un écart depuis Retours attendus passe par la fabrique, motif exigé ; il reste visible, et se reprend', async () => {
+  const s = await releve(27, [promesse('EA', 'Kakémono')]);
+  const E = s.ctx.ECARTS, cle = 'EA|-|brief|« Kakémono » promis au brief, absent du dossier';
+  const zone = s.ctx.document.createElement('div');
+  s.ctx.VUE_ATTENTES.rendre(zone);
+  assert.equal(E.total(), 1);
+  assert.match(texteDe(zone), /Kakémono/);
+
+  cliquer(bouton(zone, 'Écarter'));
+  assert.match(texteDe(s.dernier()), /Kakémono/, 'le panneau dit ce qui est écarté');
+  cliquer(bouton(s.dernier(), 'Écarter'));
+  assert.equal(s.ctx.DEPOT.liste('decisions').length, 0, 'sans motif, rien n’est écarté');
+  assert.ok(s.refus.some(m => /motif/.test(m)), 'le refus de la fabrique est rendu à la personne');
+  assert.equal(E.total(), 1);
+
+  saisie(s.dernier()).value = 'Retiré du périmètre par avenant';
+  cliquer(bouton(s.dernier(), 'Écarter'));
+  const d = derniere(s);
+  memeGeste(s, d, { type: 'ecart', objet: cle, projet: 'EA', verdict: 'hors', motif: 'Retiré du périmètre par avenant',
+    titre: '« Kakémono » promis au brief, absent du dossier', origine: 'brief' });
+  assert.deepEqual(copie(s.ctx.DEPOT.tout().ecartsEcartes[cle]), { motif: d.motif, quand: d.quand, decision: d.id });
+  assert.equal(E.total(), 0, 'écarté, il n’est plus compté comme ouvert');
+
+  /* La vue est relue : plus rien n'est dû, et l'écart écarté reste visible,
+   * avec son motif et qui l'a dit. */
+  assert.match(texteDe(zone), /Rien ne m'est dû/);
+  cliquer(bouton(zone, 'Voir les écarts écartés (1)'));
+  assert.match(texteDe(zone), /Retiré du périmètre par avenant/);
+  assert.match(texteDe(zone), /Personne de recette/);
+  assert.match(texteDe(zone), /REF-EA/);
+
+  /* Le registre des arbitrages le compte une fois, pas deux. */
+  const arbs = s.ctx.JURISPRUDENCE.tout().filter(a => a.source === 'ecart');
+  assert.equal(arbs.length, 1);
+  assert.equal(arbs[0].motif, 'Retiré du périmètre par avenant');
+  assert.equal(arbs[0].verdict, 'hors');
+
+  cliquer(bouton(zone, 'Reprendre'));
+  assert.match(texteDe(s.dernier()), /Retiré du périmètre par avenant/, 'le panneau rappelle le motif de l’écartement');
+  cliquer(bouton(s.dernier(), 'Reprendre'));
+  const r = derniere(s);
+  memeGeste(s, r, { type: 'ecart', objet: cle, projet: 'EA', verdict: 'approuve', motif: null, remplace: d.id, origine: 'brief' });
+  assert.equal(cle in s.ctx.DEPOT.tout().ecartsEcartes, false);
+  assert.equal(E.total(), 1, 'repris, il est de nouveau dû');
+  assert.doesNotMatch(texteDe(zone), /Rien ne m'est dû/);
+  assert.doesNotMatch(texteDe(zone), /écarts écartés/);
+  assert.equal(s.ctx.DEPOT.liste('decisions').length, 2, 'l’écartement reste au registre');
+});
+
+test('une ligne qui regroupe la même cause s’écarte d’un geste : une décision par écart, chacun se reprend seul', async () => {
+  const s = await releve(28, [promesse('GA', 'Kakémono'), promesse('GB', 'Kakémono'), promesse('GC', 'Affiche')]);
+  const E = s.ctx.ECARTS;
+  const zone = s.ctx.document.createElement('div');
+  s.ctx.VUE_ATTENTES.rendre(zone);
+  assert.equal(E.total(), 3);
+  /* La première ligne est celle du kakémono, sur deux dossiers. */
+  cliquer(bouton(zone, 'Écarter'));
+  assert.match(texteDe(s.dernier()), /REF-GA[^]*REF-GB/);
+  saisie(s.dernier()).value = 'Le kakémono sort du dispositif';
+  cliquer(bouton(s.dernier(), 'Écarter'));
+  const ds = copie(s.ctx.DEPOT.liste('decisions'));
+  assert.deepEqual(ds.map(d => [d.projet, d.verdict, d.motif]),
+    [['GA', 'hors', 'Le kakémono sort du dispositif'], ['GB', 'hors', 'Le kakémono sort du dispositif']]);
+  assert.equal(E.total(), 1);
+  assert.deepEqual(copie(E.tous().filter(x => !x.ecarte).map(x => x.projet.id)), ['GC']);
+
+  cliquer(bouton(zone, 'Voir les écarts écartés (2)'));
+  cliquer(bouton(zone, 'Reprendre'));
+  saisie(s.dernier()).value = 'GA garde son kakémono';
+  cliquer(bouton(s.dernier(), 'Reprendre'));
+  const r = derniere(s);
+  assert.deepEqual([r.projet, r.verdict, r.motif, r.remplace], ['GA', 'approuve', 'GA garde son kakémono', ds[0].id]);
+  assert.equal(E.total(), 2);
+  assert.deepEqual(copie(E.tous().filter(x => x.ecarte).map(x => x.projet.id)), ['GB'], 'l’autre reste écarté');
+});
+
+test('un écart écarté avant la fabrique reste au registre des arbitrages ; celui de la fabrique n’y est pas doublé', async () => {
+  const s = await releve(29, [promesse('JA', 'Kakémono', 'Affiche')]);
+  const ancien = 'JA|-|brief|« Affiche » promis au brief, absent du dossier';
+  s.ctx.DEPOT.tout().ecartsEcartes = { [ancien]: { motif: 'Hors devis signé', quand: '2026-10-01T08:00:00.000Z' } };
+  assert.equal(s.ctx.ECARTS.ecarterUn('JA|-|brief|« Kakémono » promis au brief, absent du dossier', 'Remplacé par une oriflamme').ok, true);
+  const arbs = s.ctx.JURISPRUDENCE.tout().filter(a => a.source === 'ecart');
+  assert.deepEqual(copie(arbs.map(a => a.motif)).sort(), ['Hors devis signé', 'Remplacé par une oriflamme']);
 });

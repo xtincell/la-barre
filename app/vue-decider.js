@@ -101,9 +101,11 @@ window.VUE_DECIDER = (function () {
 
   /* ————————————————————— Ce qu'on me doit ————————————————————— */
 
+  /* Écarter ou reprendre un écart change ce qui m'est dû : l'en-tête le
+   * compte, il se relit avec la liste. */
   function du_(hote) {
     var zone = el("div");
-    VUE_ATTENTES.rendre(zone);
+    VUE_ATTENTES.rendre(zone, function () { rendre(hote); });
     return zone;
   }
 
