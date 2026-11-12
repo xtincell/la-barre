@@ -567,13 +567,19 @@ window.CAMPAGNE = (function () {
    *
    * Une version arrêtée garde son identité (la même d'une version à l'autre),
    * son numéro, sa date, la campagne et ses marques telles qu'elles étaient,
-   * le texte, ce qu'elle change, l'empreinte de la précédente et la sienne :
+   * le texte, ce qu'elle change, les reprises du relevé à l'arrêt (`reprises`,
+   * voir plus bas), l'empreinte de la précédente et la sienne :
    * SHA-256 du JSON aux clés triées, sans les champs `empreinte` et
    * `attestation`. Servie derrière La Fusée, une version reçoit en plus à son
    * enregistrement l'attestation de la personne connectée, posée après l'arrêt
    * et donc hors de l'empreinte. La Fusée recalcule l'empreinte et vérifie
-   * l'attestation à la réception ; les jeux tests/fixtures/bilan-campagne-v1.json
-   * et bilan-campagne-atteste-v1.json sont communs aux deux dépôts. */
+   * l'attestation à la réception ; les jeux tests/fixtures/bilan-campagne-v1.json,
+   * bilan-campagne-atteste-v1.json et bilan-campagne-reprises-v1.json sont
+   * communs aux deux dépôts.
+   *
+   * Une version arrêtée avant le 12 novembre 2026 ne porte pas `reprises`, et
+   * rien ne le lui ajoute : son contenu et son empreinte restent ceux de son
+   * arrêt. L'écran le dit. */
 
   var BILAN_SCHEMA = "la-barre/bilan-campagne";
   var BILAN_MAX = 60000;
@@ -627,6 +633,45 @@ window.CAMPAGNE = (function () {
     return v;
   }
 
+  /* ————— Les reprises du bilan —————
+   *
+   * Décision du 12 novembre 2026 : le bilan sépare les reprises facturables au
+   * client de celles à la charge de l'agence. Il les lit dans le relevé des
+   * écarts (ecarts.js), projet par projet : chaque écart ouvert est une reprise
+   * due, et son origine dit si elle se facture (ECARTS.compteFacturable). Les
+   * projets clos y sont, puisque le bilan se tient quand ils le sont ; un projet
+   * fusionné n'y est plus. Un écart écarté n'est pas une reprise : il est compté
+   * à part. Une reprise déjà faite — retour tranché, annotation traitée, KV
+   * corrigé — ne figure plus au relevé : elle n'est pas comptée ici.
+   *
+   * Sans le relevé, rien ne se compte : `null`, pas zéro, et le bilan ne
+   * s'arrête pas sans son compte. On compte des reprises, jamais un montant. */
+  function reprises(c) {
+    if (!c || !window.ECARTS || typeof ECARTS.compteFacturable !== "function") return null;
+    var ps = projets(c.id), releve = [];
+    ps.forEach(function (p) { releve = releve.concat(ECARTS.tous(p.id)); });
+    var r = ECARTS.compteFacturable(releve);
+    return { projets: ps.length, facturables: r.facturables, chargeAgence: r.chargeAgence,
+      nonQualifiees: r.nonQualifiees, ecartes: r.ecartes, parOrigine: r.parOrigine };
+  }
+
+  function memeCompte(a, b) { return JSON.stringify(canonique(a)) === JSON.stringify(canonique(b)); }
+
+  function pluriel(n, un, plusieurs) { return n + " " + (n > 1 ? plusieurs : un); }
+
+  function phraseReprises(r) {
+    if (!r) return "Le relevé des écarts n'est pas chargé ici : les reprises ne se comptent pas.";
+    if (!r.projets) return "Aucun projet dans la campagne : aucune reprise à relever.";
+    var dues = r.facturables + r.chargeAgence + r.nonQualifiees;
+    var tete = !dues ? "Aucune reprise au relevé"
+      : [pluriel(r.facturables, "reprise facturable", "reprises facturables") + " au client",
+         pluriel(r.chargeAgence, "reprise", "reprises") + " à la charge de l'agence"]
+        .concat(r.nonQualifiees ? [pluriel(r.nonQualifiees, "reprise non qualifiée", "reprises non qualifiées")] : [])
+        .join(" · ");
+    return tete + " — sur " + pluriel(r.projets, "projet", "projets")
+      + (r.ecartes ? " ; " + pluriel(r.ecartes, "écart écarté", "écarts écartés") + ", hors des comptes" : "") + ".";
+  }
+
   function empreinteBilan(doc) {
     var subtil = window.crypto && window.crypto.subtle;
     if (!subtil || !window.TextEncoder) {
@@ -640,7 +685,9 @@ window.CAMPAGNE = (function () {
     });
   }
 
-  function arreterBilan(campagneId, note, attendu) {
+  /* `reprisesLues`, facultatif : le compte que le dialogue a montré. S'il ne
+   * tient plus, rien n'est arrêté — on fige ce qu'on a lu. */
+  function arreterBilan(campagneId, note, attendu, reprisesLues) {
     var c = de(campagneId);
     if (!c) return Promise.resolve({ ok: false, erreur: "Campagne introuvable." });
     var lu = etatBilan(c), texte = String(c.bilan || "").trim(), d = dernierBilan(c);
@@ -655,6 +702,11 @@ window.CAMPAGNE = (function () {
     if (d && !note) return Promise.resolve({ ok: false,
       erreur: "Dites ce que cette nouvelle version change : la version " + d.version + " reste conservée telle quelle." });
     if (note.length > NOTE_MAX) return Promise.resolve({ ok: false, erreur: "Ce que la version change tient en 4 000 caractères." });
+    var compte = reprises(c);
+    if (!compte) return Promise.resolve({ ok: false,
+      erreur: "Le relevé des écarts n'est pas chargé : le bilan ne peut pas compter ses reprises, il n'est pas arrêté." });
+    if (reprisesLues !== undefined && !memeCompte(reprisesLues, compte)) return Promise.resolve({ ok: false,
+      erreur: "Le relevé des écarts de la campagne a changé depuis l'ouverture : relisez les reprises avant d'arrêter." });
 
     var quand = new Date().toISOString();
     var fenetre = c.fenetre || {};
@@ -668,7 +720,7 @@ window.CAMPAGNE = (function () {
           var m = DEPOT.trouve("marques", id);
           return { id: id, nom: m && m.nom ? m.nom : null };
         }),
-        contenu: texte, note: note || null, precedente: d ? d.empreinte : null,
+        contenu: texte, note: note || null, reprises: compte, precedente: d ? d.empreinte : null,
         /* L'identifiant de la décision est tiré d'avance : la version le porte. */
         decision: DECISION.identifiant(), qui: MAISON.titulaire, acteur: DECISION.acteur(),
       };
@@ -680,6 +732,9 @@ window.CAMPAGNE = (function () {
       /* Le calcul est asynchrone : on relit avant d'écrire. */
       if (etatBilan(c).revision !== lu.revision || de(campagneId) !== c) {
         return { ok: false, erreur: "Le bilan a changé pendant son arrêt. Relisez-le avant de le clore." };
+      }
+      if (!memeCompte(reprises(c), compte)) {
+        return { ok: false, erreur: "Le relevé des écarts a changé pendant l'arrêt. Relisez les reprises avant de clore." };
       }
       doc.empreinte = h;
       var decision;
@@ -744,11 +799,13 @@ window.CAMPAGNE = (function () {
   function clore(c, apres) {
     var lu = etatBilan(c), d = dernierBilan(c), n = d ? d.version + 1 : 1;
     var ouverts = projets(c.id).filter(function (p) { return !(window.CLOTURE && CLOTURE.est(p)); }).length;
+    var lus = reprises(c);
     var note = el("textarea", { id: "bilan-note", rows: 2 });
     PANNEAU.sur("Clore le bilan", c.nom, el("div", {},
       UI.banniere("", "Arrêter fige ce texte en version " + n + ", daté et rattaché à votre décision. "
         + (d ? "La version " + d.version + " reste conservée telle quelle. " : "")
         + "Pour le modifier ensuite, il faudra arrêter une nouvelle version."),
+      el("p.cg-q", {}, "Les reprises figées avec cette version, au relevé d'aujourd'hui : " + phraseReprises(lus)),
       ouverts ? UI.banniere("attente", ouverts > 1 ? ouverts + " projets de la campagne sont encore ouverts : le bilan ne dira rien de leur suite."
         : "Un projet de la campagne est encore ouvert : le bilan ne dira rien de sa suite.") : null,
       (c.marqueIds || []).length ? null : UI.banniere("attente", "La campagne n'a pas de marque : La Fusée ne pourra pas ranger ce bilan."),
@@ -762,7 +819,7 @@ window.CAMPAGNE = (function () {
         el("button.b.or", { type: "button", onclick: function (e) {
           var b = e && e.target;
           if (b) b.disabled = true;
-          return arreterBilan(c.id, note.value, lu.revision).then(function (r) {
+          return arreterBilan(c.id, note.value, lu.revision, lus).then(function (r) {
             if (b) b.disabled = false;
             if (!r.ok) { AVIS.refus(r.erreur); return; }
             PANNEAU.fermerSur();
@@ -783,6 +840,10 @@ window.CAMPAGNE = (function () {
           + " · empreinte " + String(v.empreinte).slice(0, 12)),
         v.note ? el("p.cg-q", {}, "Ce qu'elle change : " + v.note) : null,
         el("p.lire", {}, v.contenu)),
+      /* Le compte figé, ou son absence : une version d'avant ne se recalcule pas. */
+      el("p.cg-q", {}, v.reprises
+        ? "À l'arrêt : " + phraseReprises(v.reprises)
+        : "Version arrêtée avant le compte des reprises : elle ne le porte pas, et rien ne le lui ajoute après coup."),
       recu && recu.empreinte === v.empreinte
         ? el("span.cg-q", {}, " Reçue par La Fusée le " + O.jourCourt(recu.quand)
             + (recu.edition ? " (édition " + recu.edition + ")" : ""), recu.lien ? [" · ", el("a", { href: recu.lien }, "l'ouvrir")] : null)
@@ -800,13 +861,21 @@ window.CAMPAGNE = (function () {
   }
 
   function blocBilan(c, apres) {
-    var e = etatBilan(c), vs = bilanVersions(c);
+    var e = etatBilan(c), vs = bilanVersions(c), rep = reprises(c);
     var champ = el("textarea", { id: "bilan-campagne", rows: 8 });
     champ.value = c.bilan || "";
     return el("section.cg-bloc" + (e.cle === "arrete" ? "" : ".f-attente"), {},
       el("div.section-titre", {}, "Le bilan de campagne",
         el("span.taille", {}, vs.length ? "· version " + vs[vs.length - 1].version + " arrêtée" : "· non arrêté")),
       el("p.cg-q", {}, e.quoi),
+      el("p.cg-l", {}, "Les reprises au relevé, aujourd'hui"),
+      el("p.cg-q", {}, phraseReprises(rep)),
+      rep && rep.projets ? el("p.cg-q", {}, "Chaque écart ouvert au relevé des projets de la campagne est une reprise due : "
+        + "facturable au client quand elle vient de ses desiderata, à la charge de l'agence sinon. "
+        + "Une reprise déjà faite ne figure plus au relevé : elle n'est pas comptée ici. "
+        + "Chaque version arrêtée garde le compte de son arrêt."
+        + (rep.nonQualifiees ? " Une reprise non qualifiée vient d'une origine qui ne dit pas si elle se facture : "
+          + "elle n'est rangée ni chez le client, ni chez l'agence." : "")) : null,
       el("div.form", {}, el("div.champ", {},
         el("label", { "for": "bilan-campagne" }, "Ce que la campagne a appris"),
         el("div.indice", {}, "Distinct du bilan mensuel et du texte de clôture des projets. Le brouillon se réécrit ; une version arrêtée ne change plus."),
@@ -830,7 +899,7 @@ window.CAMPAGNE = (function () {
 
   return { liste: liste, de: de, deMarque: deMarque, cycleDe: cycleDe,
     projets: projets, occasion: occasion, etat: etat,
-    etatBilan: etatBilan, ecrireBilan: ecrireBilan, empreinteBilan: empreinteBilan,
+    etatBilan: etatBilan, ecrireBilan: ecrireBilan, empreinteBilan: empreinteBilan, reprises: reprises,
     arreterBilan: arreterBilan, transmettreBilan: transmettreBilan, blocBilan: blocBilan,
     composition: composition, ecarter: ecarter, reprendre: reprendre,
     creer: creer, pisteDeReference: pisteDeReference, reference: reference,
