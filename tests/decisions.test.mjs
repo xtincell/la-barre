@@ -10,6 +10,7 @@ import { ECRIVAINS, CAPTURE, rejouer, extraire, commit, bac, semer, projet, livr
 const APP = fileURLToPath(new URL('../app/', import.meta.url));
 const capture = JSON.parse(await readFile(CAPTURE, 'utf8'));
 const source = await readFile(join(APP, 'decision.js'), 'utf8');
+const outils = await readFile(join(APP, 'outils.js'), 'utf8');
 const copie = x => JSON.parse(JSON.stringify(x));
 
 /* ————— Les huit écrivains : même forme qu'avant la fabrique ————— */
@@ -65,19 +66,26 @@ test('la capture est bien ce qu’écrivait origin/main', { skip: sha ? false : 
 /* ————— La fabrique elle-même ————— */
 
 /* Le hasard de la fabrique est figé : le code du poste est déjà gardé dans ce
- * navigateur, et chaque tirage rend la suite donnée, puis un compteur. */
+ * navigateur, et chaque tirage rend la suite donnée, puis un compteur. Le
+ * tirage est le vrai (O.identifiantUnique, app/outils.js) : la suite lui
+ * arrive par crypto, caractère pour octet. */
 function fabrique({ decisions = [], tirages = [], projets = [], campagnes = [] } = {}) {
   const data = { decisions: copie(decisions), projets: copie(projets), campagnes: copie(campagnes) };
   const ajouts = [];
   let n = 0;
   const stockage = new Map([['la-barre-poste', 'p0st']]);
-  const ctx = vm.createContext({ Date, console,
+  const crypto = { getRandomValues(a) {
+    const t = n < tirages.length ? tirages[n++] : String(++n).padStart(12, '0');
+    for (let i = 0; i < a.length; i++) a[i] = parseInt(t[i], 36);
+    return a;
+  } };
+  const ctx = vm.createContext({ Date, console, crypto, Uint8Array,
     localStorage: { getItem: k => (stockage.has(k) ? stockage.get(k) : null), setItem: (k, v) => stockage.set(k, String(v)) },
-    O: { aleatoire: () => (n < tirages.length ? tirages[n++] : String(++n).padStart(12, '0')) },
     DEPOT: { liste: k => data[k] || [], trouve: (k, id) => (data[k] || []).find(x => x && x.id === id) || null,
       ajoute(k, d) { ajouts.push(k); d.cree_le = d.cree_le || new Date().toISOString(); data[k].push(d); return d; } },
   });
   ctx.window = ctx;
+  vm.runInContext(outils, ctx);
   vm.runInContext(source, ctx);
   return { D: ctx.DECISION, data, ajouts, get tirages() { return n; } };
 }

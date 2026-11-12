@@ -254,7 +254,8 @@ function format(c, p, kv, supportId, nom, extra) {
   const { DEPOT, MAISON } = c.ctx;
   const m = DEPOT.trouve('marches', kv.marche);
   const l = {
-    id: c.ctx.O.id('L'), niveau: 'declinaison', voletId: null, support: supportId, marche: kv.marche,
+    id: c.ctx.DEPOT.identifiant('L'), cree_le: new c.Date().toISOString(),
+    niveau: 'declinaison', voletId: null, support: supportId, marche: kv.marche,
     nom: nom + ' · ' + m.code, responsable: 'PE-yao', origine: 'prevu', pisteId: kv.pisteId,
     maitre: kv.id, versionMaitre: kv.version || 1, version: 1, versions: [],
     estime: 1, reel: null, toursVendus: 2, remise: null, echeance: null, publication: null,

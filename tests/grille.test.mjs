@@ -19,7 +19,7 @@ async function atelier({ avecEcarts = false } = {}) {
     DEPOT: {
       trouve: (collection, id) => (collection === 'supports' ? supports : marches).find(x => x.id === id),
       liste: collection => collection === 'supports' ? supports : collection === 'marches' ? marches : [],
-      tracer() {}, enregistrer() { enregistrements += 1; },
+      tracer() {}, enregistrer() { enregistrements += 1; }, identifiant: prefix => prefix + '-' + (++sequence),
     },
     REGLES: { maitrePerime: () => false, pretSur: () => ({ part: 0, pret: 0, total: 0 }), droitsInsuffisants: () => false },
     ANNOT: { ouvertes: () => [] },

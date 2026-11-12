@@ -20,7 +20,7 @@ async function atelier(marche) {
     DEPOT: {
       trouve: (collection, id) => collection === 'marches' && marche?.id === id ? marche : supports.find(x => x.id === id),
       liste: collection => collection === 'marches' ? (marche ? [marche] : []) : collection === 'supports' ? supports : [],
-      tracer() {}, enregistrer() {},
+      tracer() {}, enregistrer() {}, identifiant: prefix => prefix + (++sequence),
     },
     UI: { recevabilite: (titre, controles, rien, actions) => ({ tag: 'actions', children: actions.map(a => el('button', { onclick: a.quand }, a.nom)) }),
       banniere: (...x) => el('div', {}, ...x), icone: () => el('span'),

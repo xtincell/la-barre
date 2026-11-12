@@ -786,7 +786,7 @@ window.VUE_MATRICE = (function () {
     if (!v.marches || v.marches.length < 2) points.local = "sansobjet";
 
     var l = {
-      id: O.id("L"), voletId: v.id, support: s.id, marche: m.id,
+      id: DEPOT.identifiant("L"), cree_le: new Date().toISOString(), voletId: v.id, support: s.id, marche: m.id,
       nom: s.nom + " · " + m.code,
       responsable: null, echeance: null, remise: null, publication: null,
       origine: "prevu", pisteId: pisteRetenue(p), maitre: null, version: 1, versions: [],

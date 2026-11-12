@@ -134,7 +134,7 @@ window.KV = (function () {
     if (m && (m.langues || []).length === 1) axes.langue = "pret";
 
     var l = {
-      id: O.id("KV"), niveau: cible,
+      id: DEPOT.identifiant("KV"), cree_le: new Date().toISOString(), niveau: cible,
       voletId: base && base.voletId ? base.voletId : null,
       support: support.id, marche: marcheId || null,
       nom: m ? "KV · " + m.code : "KV master commun",
