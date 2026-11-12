@@ -188,9 +188,10 @@ test('rien d’autre que la fabrique n’écrit dans la collection des décision
   /* Les huit écrivains d'origine, plus les gestes de choix qui écrivaient leur
    * objet sans décision : écarter une piste ou une proposition de big idea,
    * écarter un concept de la réserve, accepter ou retourner le brief, écarter
-   * une case de la composition, déclarer l'écart d'un projet de campagne et
-   * clore le bilan d'une campagne. */
-  assert.deepEqual(appels.sort(), ['bigidea-ecoles.js:2', 'campagne.js:4', 'concepts.js:1', 'validation.js:1', 'vue-atelier.js:1',
+   * une case de la composition, déclarer l'écart d'un projet de campagne,
+   * clore le bilan d'une campagne, et trancher une adaptation hors de l'écart
+   * déclaré de son marché (corriger l'écart déclaré ou l'adaptation). */
+  assert.deepEqual(appels.sort(), ['bigidea-ecoles.js:2', 'campagne.js:4', 'concepts.js:1', 'ecarts-marche.js:2', 'validation.js:1', 'vue-atelier.js:1',
     'vue-bigidea.js:1', 'vue-brief.js:1', 'vue-livrable.js:1', 'vue-revue.js:1', 'vue-route.js:2']);
 });
 
@@ -213,7 +214,7 @@ test('decision.js est chargé avant le premier écrivain et après le dépôt', 
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   const rang = nom => html.indexOf('<script src="app/' + nom + '.js">');
   assert.ok(rang('decision') > rang('depot') && rang('depot') > rang('outils'));
-  for (const nom of ['bigidea-ecoles', 'campagne', 'concepts', 'validation', 'vue-atelier', 'vue-bigidea', 'vue-brief', 'vue-livrable', 'vue-revue', 'vue-route']) {
+  for (const nom of ['bigidea-ecoles', 'campagne', 'concepts', 'ecarts-marche', 'validation', 'vue-atelier', 'vue-bigidea', 'vue-brief', 'vue-livrable', 'vue-revue', 'vue-route']) {
     assert.ok(rang(nom) > rang('decision'), nom);
   }
 });
@@ -474,7 +475,7 @@ test('chaque type de décision écrit par un geste est rangé dans la jurisprude
   vm.runInContext(await readFile(join(APP, 'jurisprudence.js'), 'utf8'), ctx);
   const familles = ['brief', 'bigidea', 'proposition', 'livrable'];
   for (const type of ['bigidea', 'reference-campagne', 'brief', 'socle', 'idee', 'piste', 'livrable',
-    'concept', 'recevabilite', 'composition', 'ecart-campagne', 'bilan-campagne']) {
+    'concept', 'recevabilite', 'composition', 'ecart-campagne', 'bilan-campagne', 'ecart-marche', 'hors-ecart']) {
     assert.ok(ctx.JURISPRUDENCE.SOURCES[type], type);
     assert.ok(familles.includes(ctx.JURISPRUDENCE.SOURCES[type].famille), type);
   }

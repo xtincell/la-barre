@@ -56,6 +56,12 @@ window.VUE_MATRICE = (function () {
     return REGLES.maitrePerime(p, l) || ANNOT.ouvertes(l).length > 0;
   }
 
+  /* Une adaptation hors de l'écart déclaré de son marché. Ce n'est pas un
+   * blocage : elle se compte à part, comme ce qui demande un jugement. */
+  function horsEcart(p, l) {
+    return !!(window.ECARTS_MARCHE && ECARTS_MARCHE.etiquette(p, l));
+  }
+
   function retenue(p, l) {
     if (filtre.marque && l.marqueId !== filtre.marque) return false;
     if (filtre.marche && l.marche !== filtre.marche) return false;
@@ -423,6 +429,7 @@ window.VUE_MATRICE = (function () {
           return a.concat([g.kv], g.ls); }, []);
         var bloques = pieces.filter(function (l) { return bloquee(p, l); }).length;
         var sansVisuel = pieces.filter(muette).length;
+        var horsMq = pieces.filter(function (l) { return horsEcart(p, l); }).length;
 
         return el("div.mr-mq" + (mqOuvert ? "" : ".replie"),
           bloc.m ? { style: { "border-left-color": (VAULT.de(bloc.m.id) || {}).couleur || "var(--trait-clair)" } } : {},
@@ -435,7 +442,8 @@ window.VUE_MATRICE = (function () {
                 el("span.mrmqt-q", {}, bloc.n + (bloc.n > 1 ? " livrables" : " livrable")
                   + " · " + bloc.groupes.length + " KV"
                   + (sansVisuel ? " · " + sansVisuel + " sans visuel" : "")
-                  + (bloques ? " · " + bloques + (bloques > 1 ? " bloquées" : " bloquée") : "")),
+                  + (bloques ? " · " + bloques + (bloques > 1 ? " bloquées" : " bloquée") : "")
+                  + (horsMq ? " · " + horsMq + " hors écart déclaré" : "")),
                 el("span.mrmqt-x", {}, mqOuvert ? "−" : "+"))
             : null,
 
@@ -445,6 +453,7 @@ window.VUE_MATRICE = (function () {
         var dedans = [g.kv].concat(g.ls);
         var bl = dedans.filter(function (l) { return bloquee(p, l); }).length;
         var mu = dedans.filter(muette).length;
+        var ho = dedans.filter(function (l) { return horsEcart(p, l); }).length;
 
         return el("div.mr-groupe" + (kvOuvert ? "" : ".replie"), {},
           el("button.mrg-tete", { type: "button",
@@ -455,7 +464,8 @@ window.VUE_MATRICE = (function () {
               ? g.ls.length + (g.ls.length > 1 ? " formats" : " format")
               : KV.estMaitre(g.kv) ? "les formats naissent des adaptations" : "rien à imprimer")
               + (mu ? " · " + mu + " sans visuel" : "")
-              + (bl ? " · " + bl + (bl > 1 ? " bloquées" : " bloquée") : "")),
+              + (bl ? " · " + bl + (bl > 1 ? " bloquées" : " bloquée") : "")
+              + (ho ? " · " + ho + " hors écart déclaré" : "")),
             el("span.mrg-x", {}, kvOuvert ? "−" : "+")),
 
           kvOuvert ? el("div.rt-mur", {},
@@ -517,6 +527,9 @@ window.VUE_MATRICE = (function () {
     var retours = ANNOT.ouvertes(l).length;
     var mk = (l.mockups || []).length;
     var pr = REGLES.pretSur(l);
+    /* Une adaptation hors de l'écart déclaré de son marché : signalée, pas
+     * bloquée. Le filet prend le ton de l'arbitrage — elle demande un jugement. */
+    var hors = window.ECARTS_MARCHE ? ECARTS_MARCHE.etiquette(p, l) : null;
 
     /* La carte porte le nom du LIVRABLE.
      *
@@ -526,11 +539,12 @@ window.VUE_MATRICE = (function () {
      * pas lire ne se travaille pas. Le support est un fait de gabarit, il
      * descend à la ligne de méta ; le nom du livrable remonte à sa place. */
     var noeud = el("button.rt-c" + (maitre ? ".grand" : "") + (perime ? ".perime" : "")
+      + (hors ? ".hors-ecart" : "")
       /* Sans visuel, le bandeau n'a rien à recouvrir : il descend sous le
        * texte plutôt que de flotter dessus. Deux blocs de texte superposés
        * s'amputent l'un l'autre, et c'est le nom du fichier qui disparaît. */
       + (l.vignette ? "" : ".sans-visuel"), {
-      type: "button", title: l.nom + (s ? " · " + s.nom : ""),
+      type: "button", title: l.nom + (s ? " · " + s.nom : "") + (hors ? " — " + hors.texte + ", " + hors.suite : ""),
       onclick: function () { VUE_LIVRABLE.ouvrir(p, l, rafraichir); },
     },
       IMAGE.vignette(l, "planche"),
@@ -545,7 +559,8 @@ window.VUE_MATRICE = (function () {
           mk ? mk + " en situation" : null,
           perime ? "maître dépassé" : null,
           !l.responsable ? "sans responsable" : null,
-        ].filter(Boolean).join(" · "))
+        ].filter(Boolean).join(" · ")),
+        hors ? el("span.rtc-hors", {}, hors.texte) : null
       )
     );
 
@@ -720,10 +735,13 @@ window.VUE_MATRICE = (function () {
     });
     var moyenne = Math.round(somme / ls.length);
     var classe = perime ? "perime" : bloque ? "bloque" : pire === 100 ? "pret" : "encours";
+    /* Le signal ne change pas l'état de la case : il s'y ajoute. */
+    var hors = window.ECARTS_MARCHE ? ls.map(function (l) { return ECARTS_MARCHE.etiquette(p, l); }).filter(Boolean) : [];
 
-    return el("button.case-m." + classe, {
+    return el("button.case-m." + classe + (hors.length ? ".hors-ecart" : ""), {
       type: "button",
-      title: ls.map(function (l) { return l.nom; }).join(" · ") + (perime ? " — maître dépassé" : ""),
+      title: ls.map(function (l) { return l.nom; }).join(" · ") + (perime ? " — maître dépassé" : "")
+        + (hors.length ? " — " + hors.map(function (h) { return h.texte; }).join(" ; ") : ""),
       onclick: function () {
         if (ls.length === 1) VUE_LIVRABLE.ouvrir(p, ls[0], rafraichir);
         else liste(p, s, m, ls, rafraichir);

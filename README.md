@@ -221,7 +221,8 @@ par lui : la big idea, la piste ou l'idée retenue ou écartée, la référence
 commune d'une campagne, le verdict sur un document, un livrable ou une pièce
 en revue, le concept écarté de la réserve d'une marque, le brief accepté ou
 retourné, la case écartée de la composition d'une campagne, l'écart d'un
-projet à la référence commune et l'arrêt du bilan d'une campagne. Chaque
+projet à la référence commune, l'arrêt du bilan d'une campagne, et la revue
+d'une adaptation hors de l'écart déclaré de son marché. Chaque
 décision ajoute une ligne au journal, qui porte l'acteur. Toutes portent
 `qui`, le poste titulaire. La référence de
 campagne, le verdict sur un document et les gestes de choix ajoutés au
@@ -261,6 +262,38 @@ distribués ici » : `produit`, « Mentions obligatoires » : `reglementaire`,
 « Marque » : `marque`), et chaque écart calculé porte cette liste dans `types` ;
 `ECARTS.compteParType` les compte. L'accroche et les choix de direction
 artistique n'ont pas de type.
+
+**Une adaptation hors de son écart déclaré.** Décision du 12 novembre 2026 :
+une adaptation qui change ce que son marché n'a pas déclaré n'est pas bloquée.
+Elle passe, et elle est signalée « hors écart déclaré », avec la dimension qui
+sort (`ECARTS_MARCHE.evaluer`). Le signal se voit sur la carte du mur et dans la
+grille des livrables, sur la planche des KV, dans le bloc « Écarts déclarés par
+marché » et dans Décisions → À traiter. La revue tranche, depuis le même
+panneau, et chaque geste est une décision de `app/decision.js`, motif exigé :
+
+- « Corriger l'écart déclaré » étend la déclaration du marché à ce que
+  l'adaptation change (`source: "revue"`, avec l'identifiant de la décision).
+  La décision `ecart-marche` est une déviation du cadrage, de portée `projet`,
+  qui garde les types d'avant et d'après dans `ecart`.
+- « Corriger l'adaptation » renvoie l'adaptation à ce que le marché a déclaré.
+  La décision `hors-ecart` est un retour (`verdict: "retour"`) sur le livrable ;
+  la déclaration ne bouge pas, et le signal reste, marqué « retour décidé »,
+  jusqu'à ce que l'adaptation soit corrigée. Dans la file, elle passe alors de
+  « Trancher » à « Réclamer ».
+
+Ce qu'une adaptation change se lit contre son point de départ, `l.depart`, que
+`KV.creer` pose à sa création : le master (identifiant, version) et ce qu'elle
+en a reçu, avec la langue et les mentions du référentiel du marché. La langue
+ou les mentions imposées par le marché ne sont donc pas des écarts. Les champs
+du KV se rangent par type : `langue` et l'accroche (la titraille) pour
+`langue`, `marque`, les SKU montrés pour `produit`, les mentions et les
+restrictions pour `reglementaire`. Les choix de direction artistique n'ont pas
+de type. Un champ que le départ laissait vide se complète sans écart ; le
+retirer est un changement. Une reprise du master renouvelle le départ d'une
+adaptation qui en a un. Un marché non déclaré n'a rien déclaré : ce que
+l'adaptation change en sort. Une adaptation créée avant cette capture n'a pas
+de point de départ : elle est « non évaluée », comptée dans le bloc, jamais
+signalée. Aucune n'est évaluée après coup.
 
 « Exporter » et « Importer » suivent le format d'échange `ecarts-marche`,
 version 1, décrit dans `METHODE.md` du Market Expansion System. Il y est produit
@@ -395,7 +428,7 @@ Les scripts de `package.json` :
 | `npm test` | `node tests/parcours.mjs` |
 | `npm run test:persistance` | `node --test tests/persistance.test.mjs tests/reconciliation.test.mjs tests/depot-reprise.test.mjs` |
 | `npm run test:manuel` | `node --test tests/saisie-manuelle.test.mjs tests/acteur.test.mjs tests/formulaire.test.mjs tests/lecture-dependances.test.mjs` |
-| `npm run test:marches` | `node --test tests/marches.test.mjs tests/grille.test.mjs tests/ecarts-marche.test.mjs` |
+| `npm run test:marches` | `node --test tests/marches.test.mjs tests/grille.test.mjs tests/ecarts-marche.test.mjs tests/hors-ecart.test.mjs` |
 | `npm run test:provenances` | `node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs` |
 | `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs tests/attestation.test.mjs` |
 | `npm run test:bilan` | `node --test tests/bilan-preuves.test.mjs tests/bilan-campagne.test.mjs` |
@@ -427,13 +460,16 @@ un navigateur installé). La CI ne le lance pas.
   l'interface, un écart ne peut être ni écarté ni repris. Les écarts déjà
   écartés dans une base (`ecartsEcartes`) restent lus, notamment par les
   arbitrages.
-- **Une déclaration d'écart ne juge encore rien.** Les adaptations d'un marché
-  ne sont pas comparées à sa déclaration : une adaptation qui change la marque
-  du master sans `marque` déclaré ne produit aucun écart. L'origine d'un tel
-  écart n'est pas calculable — rien ne dit qui l'a demandé — et reste à
-  trancher. La règle « déclaré avant le premier crayon » n'est pas contrôlée
-  non plus : la date de déclaration n'est pas comparée à la première pièce du
-  marché. Le contrôle « Marque » vérifie une présence, pas une bascule.
+- **Une déclaration d'écart ne juge que les adaptations.** Une adaptation hors
+  de son écart déclaré est signalée et tranchée en revue ; elle ne produit pas
+  d'écart calculé dans `app/ecarts.js`, faute d'origine : rien ne dit qui a
+  demandé le changement, ni qui paie sa reprise. Les formats ne sont pas
+  évalués, ni les adaptations créées avant le point de départ (« non
+  évaluées »), ni les choix de direction artistique. La règle « déclaré avant
+  le premier crayon » n'est pas contrôlée : la date de déclaration n'est pas
+  comparée à la première pièce du marché, et une déclaration corrigée en revue
+  porte sa propre date. Le contrôle « Marque » de la conformité vérifie une
+  présence ; la bascule, elle, se lit maintenant contre le point de départ.
 - **Aucune authentification dans `servir.mjs`.** Quiconque joint son port peut
   lire tout le dossier et écrire là où le serveur l'accepte, attestations
   comprises : `servir.mjs` ne connaît aucune identité et ne vérifie aucun

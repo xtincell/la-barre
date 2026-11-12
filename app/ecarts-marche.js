@@ -28,6 +28,23 @@
  * code. Le Market Expansion System le produit depuis sa matrice de cadrage
  * (`scripts/ecarts.mjs vers-json`) ; La Barre l'importe et l'exporte, dossier par
  * dossier.
+ *
+ * Décision du 12 novembre 2026 : une adaptation qui change autre chose que ce
+ * que son marché a déclaré n'est pas bloquée. Elle passe, signalée « hors écart
+ * déclaré » avec la dimension qui sort, et la revue tranche : corriger l'écart
+ * déclaré, ou corriger l'adaptation. Les deux sont des décisions de la fabrique
+ * (decision.js) :
+ *
+ *   ecart-marche  la déclaration s'étend à ce que l'adaptation change. C'est une
+ *                 déviation du cadrage — l'écart devait être déclaré avant le
+ *                 premier crayon —, de portée projet, motif exigé.
+ *   hors-ecart    l'adaptation revient à ce que le marché a déclaré. Un retour
+ *                 motivé sur le livrable ; le signal reste jusqu'à la correction.
+ *
+ * Ce qu'une adaptation change se lit contre son point de départ (`l.depart`,
+ * posé par KV.creer) : ce qu'elle a reçu du master et du référentiel du marché.
+ * Une adaptation créée avant cette capture n'en a pas : elle est « non
+ * évaluée », jamais signalée — on ne lui invente pas un départ.
  */
 
 window.ECARTS_MARCHE = (function () {
@@ -234,6 +251,225 @@ window.ECARTS_MARCHE = (function () {
     return r;
   }
 
+  /* ————————————————————— Ce qu'une adaptation change ————————————————————— */
+
+  /* Les champs du KV que chaque type couvre. L'accroche est la titraille : elle
+   * relève de la langue, comme la méthode le dit (« titraille, signature,
+   * mentions légales »). Les choix de direction artistique n'ont pas de type :
+   * ils distinguent les KV par construction. */
+  var CHAMPS = { langue: ["langue", "copy"], marque: ["marque"], produit: ["sku"],
+    reglementaire: ["mentions", "restrictions"] };
+  var NOMS_CHAMPS = { langue: "langue", copy: "accroche", marque: "marque", sku: "SKU montrés",
+    mentions: "mentions", restrictions: "restrictions" };
+
+  /* Une liste se compare sans son ordre ; un code de langue, sans sa casse. */
+  function forme(champ, v) {
+    if (Array.isArray(v)) return v.map(function (x) { return String(x).trim(); }).filter(Boolean).sort().join("\n");
+    var t = v === undefined || v === null ? "" : String(v).trim();
+    return champ === "langue" ? t.toLowerCase() : t;
+  }
+
+  /* Ce qui a changé depuis le point de départ, par type. null : rien ne dit
+   * d'où l'adaptation est partie. Un champ que le départ laissait vide se
+   * complète sans s'écarter du master : le master n'en avait rien décidé. */
+  function changements(l) {
+    var d = l && l.depart;
+    if (!d || !d.kv || typeof d.kv !== "object") return null;
+    var k = l.kv || {}, types = [], champs = [];
+    ORDRE.forEach(function (type) {
+      CHAMPS[type].forEach(function (c) {
+        var avant = forme(c, d.kv[c]);
+        if (avant === "" || forme(c, k[c]) === avant) return;
+        champs.push(c);
+        if (types.indexOf(type) === -1) types.push(type);
+      });
+    });
+    return { types: types, champs: champs };
+  }
+
+  function estAdaptation(l) {
+    return !!l && !l.annule && (window.KV ? KV.estAdaptation(l) : l.niveau === "adaptation");
+  }
+
+  /* Le retour déjà décidé sur ce qui sort aujourd'hui. Un retour ne couvre que
+   * ce qu'il a tranché : une dimension de plus demande une nouvelle revue. */
+  function renvoi(p, l, hors) {
+    var r = null;
+    DEPOT.liste("decisions").forEach(function (d) {
+      if (!d || d.type !== "hors-ecart" || d.projet !== p.id || d.objet !== l.id) return;
+      var types = Array.isArray(d.types) ? d.types : [];
+      if (!hors.every(function (t) { return types.indexOf(t) !== -1; })) return;
+      if (!r || String(d.quand || "") >= String(r.quand || "")) r = d;
+    });
+    return r;
+  }
+
+  /* L'adaptation face à la déclaration de son marché :
+   *
+   *   sans-objet     ce n'est pas une adaptation (master, format, livrable annulé)
+   *   non-evaluee    elle n'a pas de point de départ
+   *   dans-l-ecart   tout ce qu'elle change est déclaré — ou elle ne change rien
+   *   hors-ecart     elle change une dimension que le marché n'a pas déclarée ;
+   *                  un marché non déclaré n'en a déclaré aucune
+   *
+   * Signaler n'est pas bloquer : rien ici n'entre dans la conformité, les
+   * blocages ou la porte de production. */
+  function evaluer(p, l) {
+    var r = { livrable: l ? l.id : null, marche: l ? l.marche || null : null, etat: "sans-objet",
+      change: [], hors: [], champs: [], declaration: null, revue: null };
+    if (!estAdaptation(l)) return r;
+    r.declaration = declaration(p, l.marche);
+    var c = changements(l);
+    if (!c) { r.etat = "non-evaluee"; return r; }
+    r.change = c.types; r.champs = c.champs;
+    var permis = r.declaration ? r.declaration.types : [];
+    r.hors = c.types.filter(function (t) { return permis.indexOf(t) === -1; });
+    r.etat = r.hors.length ? "hors-ecart" : "dans-l-ecart";
+    if (r.hors.length) r.revue = renvoi(p, l, r.hors);
+    return r;
+  }
+
+  function adaptations(p) { return (p.livrables || []).filter(estAdaptation); }
+
+  /* Les adaptations du dossier signalées hors écart déclaré. */
+  function signales(p) {
+    return adaptations(p).map(function (l) { return evaluer(p, l); })
+      .filter(function (x) { return x.etat === "hors-ecart"; });
+  }
+
+  /* Ce que la file de décision doit montrer : chaque adaptation signalée d'un
+   * dossier ouvert. Tranchée par un retour, elle est due par son auteur ; sinon
+   * elle attend la revue. Un dossier clos ne réclame plus rien. */
+  function aTrancher() {
+    var out = [];
+    DEPOT.liste("projets").forEach(function (p) {
+      if (window.CLOTURE && CLOTURE.est(p)) return;
+      signales(p).forEach(function (x) {
+        var l = (p.livrables || []).filter(function (y) { return y.id === x.livrable; })[0];
+        var m = DEPOT.trouve("marches", x.marche);
+        out.push({ projet: p.id, ref: p.ref || p.id, nomProjet: p.nom, livrable: x.livrable,
+          nom: l ? l.nom : x.livrable, marche: m ? m.code : x.marche, hors: x.hors.slice(),
+          declaration: x.declaration ? x.declaration.types.slice() : null,
+          etat: x.revue ? "renvoyee" : "a-trancher", revue: x.revue,
+          ouvrir: function (apres) { revoir(p, l, apres); } });
+      });
+    });
+    return out;
+  }
+
+  /* Une ligne courte, pour une carte : le signal, et s'il est déjà tranché. */
+  function etiquette(p, l) {
+    var x = evaluer(p, l);
+    if (x.etat !== "hors-ecart") return null;
+    return { texte: "Hors écart déclaré · " + libelle(x.hors), revue: x.revue,
+      suite: x.revue ? "retour décidé" : "à revoir" };
+  }
+
+  /* ————————————————————— La revue tranche ————————————————————— */
+
+  function refusDe(e) {
+    if (window.DECISION && DECISION.estRefus(e)) return { ok: false, erreur: e.message };
+    throw e;
+  }
+
+  function pasHors(x) {
+    return x.etat === "non-evaluee"
+      ? "Cette adaptation n'a pas de point de départ : ce qu'elle change n'est pas évalué."
+      : "Cette adaptation ne sort pas de l'écart déclaré de son marché.";
+  }
+
+  /* Corriger l'écart déclaré : la déclaration s'étend à ce que l'adaptation
+   * change. La décision se vérifie avant que la déclaration ne change ; sans
+   * motif, rien n'est écrit. */
+  function corrigerDeclaration(p, l, motif) {
+    var x = evaluer(p, l);
+    if (x.etat !== "hors-ecart") return { ok: false, erreur: pasHors(x) };
+    var m = DEPOT.trouve("marches", l.marche);
+    if (!m) return { ok: false, erreur: "Ce marché n'est pas au référentiel." };
+    var avant = x.declaration ? x.declaration.types.slice() : null;
+    var apres = ordonner((avant || []).concat(x.hors));
+    var d;
+    try {
+      d = DECISION.construire({ objet: m.id, type: "ecart-marche", projet: p.id, verdict: "approuve", portee: "projet",
+        motif: typeof motif === "string" ? motif.trim() : "", quand: new Date().toISOString(),
+        qui: MAISON.titulaire, acteur: DECISION.acteur(),
+        titre: m.code + " : écart déclaré étendu à " + libelle(x.hors), livrable: l.id,
+        ecart: { de: "ecart-marche", ref: m.id, avant: avant, apres: apres } });
+    } catch (e) { return refusDe(e); }
+    poser(p, m.id, { types: apres, detail: x.declaration ? x.declaration.detail : "",
+      declare_le: d.quand, acteur: d.acteur, source: "revue", decision: d.id });
+    DECISION.ajouter(d);
+    DEPOT.tracer("écart de marché corrigé en revue", "projets", p.id, m.code + " : " + libelle(apres));
+    DEPOT.enregistrer();
+    return { ok: true, decision: d, declaration: declaration(p, m.id) };
+  }
+
+  /* Corriger l'adaptation : elle revient à ce que son marché a déclaré. La
+   * décision est un retour motivé ; la déclaration ne bouge pas, et le signal
+   * reste jusqu'à ce que l'adaptation soit corrigée. */
+  function corrigerAdaptation(p, l, motif) {
+    var x = evaluer(p, l);
+    if (x.etat !== "hors-ecart") return { ok: false, erreur: pasHors(x) };
+    var d;
+    try {
+      d = DECISION.poser({ objet: l.id, type: "hors-ecart", projet: p.id, verdict: "retour",
+        motif: typeof motif === "string" ? motif.trim() : "", quand: new Date().toISOString(),
+        qui: MAISON.titulaire, acteur: DECISION.acteur(),
+        titre: (l.nom || "Adaptation") + " : hors écart déclaré (" + libelle(x.hors) + ")",
+        marche: l.marche, types: x.hors.slice() });
+    } catch (e) { return refusDe(e); }
+    DEPOT.tracer("adaptation renvoyée hors écart déclaré", "livrables", p.id, (l.nom || l.id) + " : " + libelle(x.hors));
+    DEPOT.enregistrer();
+    return { ok: true, decision: d };
+  }
+
+  function champsDe(x, type) {
+    return x.champs.filter(function (c) { return CHAMPS[type].indexOf(c) !== -1; })
+      .map(function (c) { return NOMS_CHAMPS[c] || c; });
+  }
+
+  /* La ligne d'un panneau, dans la forme de PANNEAU.ligne. */
+  function ligne(etiq, valeur) {
+    return el("div.ligne", {}, el("span.etiq", {}, etiq), el("span.val", {}, valeur || "non renseigné"));
+  }
+
+  /* Le panneau de revue : ce que le marché a déclaré, ce que l'adaptation
+   * change, ce qui sort, et les deux gestes. Le motif est exigé par la fabrique. */
+  function revoir(p, l, apres) {
+    var x = evaluer(p, l);
+    var m = DEPOT.trouve("marches", l && l.marche) || { code: (l && l.marche) || "?", nom: "absent du référentiel" };
+    if (x.etat !== "hors-ecart") { AVIS.refus(pasHors(x)); return; }
+    var zone = el("textarea", { id: "ecm-motif", rows: 3 });
+    function geste(faire, fait) {
+      return function () {
+        var r = faire(p, l, zone.value);
+        if (!r.ok) { AVIS.refus(r.erreur); return; }
+        PANNEAU.fermer();
+        AVIS.fait(fait);
+        if (apres) apres();
+      };
+    }
+    PANNEAU.ouvrir("Hors écart déclaré", (l.nom || "Adaptation") + " · " + m.nom, el("div", {},
+      el("p.meta", {}, "Cette adaptation change ce que " + m.code + " n'a pas déclaré. Elle n'est pas bloquée : "
+        + "la revue tranche. Corriger l'écart déclaré l'étend à ce que l'adaptation change ; corriger l'adaptation "
+        + "la renvoie à ce que le marché a déclaré."),
+      el("div.form", {},
+        ligne("Déclaré pour " + m.code, x.declaration
+          ? libelle(x.declaration.types) + (x.declaration.detail ? " — " + x.declaration.detail : "")
+          : "non déclaré"),
+        ligne("L'adaptation change", x.change.map(function (t) {
+          return libelle([t]) + " (" + champsDe(x, t).join(", ") + ")"; }).join(" · ")),
+        ligne("Hors écart déclaré", libelle(x.hors)),
+        x.revue ? ligne("Retour décidé", O.joli(x.revue.quand) + " — " + x.revue.motif) : null,
+        el("div.champ", {}, el("label", { "for": "ecm-motif" }, "Pourquoi"), zone)),
+      el("div.form-actions", {},
+        el("button.b.or", { type: "button", onclick: geste(corrigerDeclaration,
+          m.code + " : écart déclaré étendu à " + libelle(x.hors) + ".") }, "Corriger l'écart déclaré"),
+        el("button.b", { type: "button", onclick: geste(corrigerAdaptation,
+          (l.nom || "L'adaptation") + " renvoyée : elle revient à l'écart déclaré.") }, "Corriger l'adaptation"),
+        el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); } }, "Annuler"))));
+  }
+
   /* ————————————————————— À l'écran ————————————————————— */
 
   function telecharger(p) {
@@ -298,19 +534,38 @@ window.ECARTS_MARCHE = (function () {
         el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); } }, "Annuler"))));
   }
 
-  /* Le bloc de la grille : un marché par ligne, sa déclaration, et le geste. */
+  /* Le bloc de la grille : un marché par ligne, sa déclaration, le geste, et
+   * ce que ses adaptations en font. Une adaptation hors écart déclaré se revoit
+   * d'ici ; une adaptation non évaluée se compte, sans signal. */
   function bloc(p, rafraichir) {
     var lignes = marches(p);
     var declares = lignes.filter(function (x) { return x.declaration; }).length;
+    var evals = adaptations(p).map(function (l) { return { l: l, x: evaluer(p, l) }; });
+    var hors = evals.filter(function (e) { return e.x.etat === "hors-ecart"; }).length;
+    var nonEvaluees = evals.filter(function (e) { return e.x.etat === "non-evaluee"; }).length;
+    function adaptationsDe(marcheId) {
+      return evals.filter(function (e) { return e.l.marche === marcheId; }).map(function (e) {
+        var nom = e.l.nom || "adaptation";
+        if (e.x.etat !== "hors-ecart") {
+          return el("span.ecm-ad", {}, nom + " : " + (e.x.etat === "non-evaluee" ? "non évaluée" : "dans l'écart"));
+        }
+        return el("button.b.nu.ecm-signal", { type: "button", title: "Revoir l'écart de " + nom,
+          onclick: function () { revoir(p, e.l, rafraichir); } },
+          nom + " : hors écart déclaré : " + libelle(e.x.hors) + (e.x.revue ? " · retour décidé" : " · à revoir"));
+      });
+    }
     return el("div.volet", {},
       el("div.volet-tete", {},
         el("b", {}, "Écarts déclarés par marché"),
         el("span.age", {}, declares + " sur " + lignes.length + " marchés déclarés"),
+        hors ? el("span.ecm-compte", {}, hors + (hors > 1 ? " adaptations hors écart déclaré" : " adaptation hors écart déclaré")) : null,
+        nonEvaluees ? el("span.age", {}, nonEvaluees + (nonEvaluees > 1 ? " adaptations non évaluées" : " adaptation non évaluée")) : null,
         el("button.b.nu", { type: "button", onclick: function () { telecharger(p); } }, "Exporter"),
         el("button.b.nu", { type: "button", onclick: function () { choisirFichier(p, rafraichir); } }, "Importer")),
       el("p.meta", { style: { padding: "0 .8rem .4rem" } },
         "Ce que chaque marché a le droit de changer du master, pour ce projet : langue, marque, produit / SKU, "
         + "réglementaire. Un marché peut en porter plusieurs. « Non déclaré » n'est pas « aucun écart ». "
+        + "Une adaptation qui change autre chose passe, signalée « hors écart déclaré » : la revue tranche. "
         + "L'import et l'export suivent le format ecarts-marche du Market Expansion System."),
       lignes.length
         ? el("div", { style: { overflow: "auto" } }, el("table.matrice", {}, el("tbody", {}, lignes.map(function (x) {
@@ -319,6 +574,7 @@ window.ECARTS_MARCHE = (function () {
               el("td.entete-ligne", {}, x.marche.code + " · " + x.marche.nom),
               el("td", {}, d ? libelle(d.types) + (d.inconnus.length ? " · inconnus : " + d.inconnus.join(", ") : "") : "non déclaré"),
               el("td", {}, d ? d.detail : ""),
+              el("td.ecm-adaptations", {}, adaptationsDe(x.marche.id)),
               el("td", {}, el("button.b.nu", { type: "button", "aria-label": "Déclarer l’écart de " + x.marche.code,
                 onclick: function () { dialogue(p, x.marche, rafraichir); } }, d ? "modifier" : "déclarer")));
           }))))
@@ -327,5 +583,8 @@ window.ECARTS_MARCHE = (function () {
 
   return { FORMAT: FORMAT, VERSION: VERSION, TYPES: TYPES, lireTypes: lireTypes, libelle: libelle,
     declaration: declaration, marches: marches, declarer: declarer, retirer: retirer,
-    exporter: exporter, lire: lire, importer: importer, bloc: bloc, dialogue: dialogue };
+    exporter: exporter, lire: lire, importer: importer, bloc: bloc, dialogue: dialogue,
+    CHAMPS: CHAMPS, changements: changements, evaluer: evaluer, signales: signales, aTrancher: aTrancher,
+    etiquette: etiquette, corrigerDeclaration: corrigerDeclaration, corrigerAdaptation: corrigerAdaptation,
+    revoir: revoir };
 })();

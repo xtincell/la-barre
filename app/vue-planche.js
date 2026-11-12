@@ -120,8 +120,11 @@ window.VUE_PLANCHE = (function () {
     var retours = ANNOT.ouvertes(l).length;
     var decl = KV.declinaisons(p, l.id).length;
     var mks = (l.mockups || []).length;
+    /* Hors de l'écart déclaré de son marché : un signal pour la revue, pas un
+     * manquement. Il ne compte pas dans les écarts de la case et ne bloque rien. */
+    var hors = window.ECARTS_MARCHE ? ECARTS_MARCHE.etiquette(p, l) : null;
 
-    return el("div.pl-c" + (ecarts.length ? ".ecart" : ".ok"), {},
+    return el("div.pl-c" + (ecarts.length ? ".ecart" : ".ok") + (hors ? ".hors-ecart" : ""), {},
       el("button.plc-visuel", { type: "button", title: l.nom,
         onclick: function () { detail(p, l, rafraichir); } },
         IMAGE.vignette(l, "planche"),
@@ -165,6 +168,10 @@ window.VUE_PLANCHE = (function () {
                   "Et " + (ecarts.length - 4) + " autres →")
               : null)
         : null,
+
+      hors ? el("button.plc-hors", { type: "button", title: "Revoir ce que cette adaptation change hors de l'écart déclaré",
+        onclick: function () { ECARTS_MARCHE.revoir(p, l, rafraichir); } },
+        el("span.plch-q", {}, hors.texte), el("span.plch-x", {}, hors.suite)) : null,
 
       el("div.plc-gestes", {},
         el("button.b.nu", { type: "button", onclick: function () { detail(p, l, rafraichir); } }, "Régler"),
