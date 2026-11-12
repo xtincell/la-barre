@@ -13,7 +13,7 @@
  * La forme stockée ne change pas. Ce module ne renomme, ne réordonne et ne
  * convertit aucun champ : il recopie ceux du geste, dans l'ordre du geste. Le
  * bilan, la jurisprudence et les exports lisent cette forme ; c'est aussi
- * celle que SHK-0005 propose de transmettre à Radar.
+ * celle que Radar lit (SHK-0005, sens 1).
  *
  *   objet, type, projet, verdict, motif, quand, qui, titre   tous les gestes
  *   acteur, version, portee      verdict sur un document, référence de campagne
@@ -56,7 +56,10 @@
  * session, date, empreinte du contenu, sceau), que le navigateur ne peut ni
  * forger, ni modifier, ni effacer. Ce module ne l'écrit jamais. Seule, sans La
  * Fusée, La Barre garde l'acteur déclaré sur le poste.
- * Il ne transmet rien à Radar : ce sujet attend son arbitrage.
+ * Il ne transmet rien à Radar lui-même. Depuis l'arbitrage 5.5 (11 novembre
+ * 2026), Radar vient lire les décisions sur la route /radar/decisions de
+ * servir.mjs, derrière un jeton machine, réduites aux champs qui les datent
+ * et les attribuent : ni contenuPiste, ni attestation.
  * L'unicité vaut pour la base locale : deux postes hors ligne peuvent encore
  * tirer le même identifiant, la réconciliation le voit, ce module non.
  */

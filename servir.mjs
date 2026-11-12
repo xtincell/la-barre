@@ -5,7 +5,7 @@
 
 import { createServer } from "node:http";
 import { readFile, writeFile, rename, mkdir, stat, unlink, readdir } from "node:fs/promises";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { join, normalize, extname, dirname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createReadStream } from "node:fs";
@@ -168,6 +168,130 @@ function json(reponse, statut, valeur, version) {
   }).end(JSON.stringify(valeur));
 }
 
+// ————— Les décisions, lues par Radar —————
+//
+// SHK-0005, sens 1, arbitrage 5.5 du 11 novembre 2026 : Radar vient chercher
+// les décisions. Cette route ne sert qu'elles — jamais les personnes, la
+// facturation ni le reste de la base — et seulement à la machine qui présente
+// le jeton BARRE_RADAR_TOKEN en Bearer, comparé en temps constant. Sans jeton
+// configuré, ou avec un jeton de moins de 32 caractères, elle reste fermée
+// (503) : elle n'est jamais ouverte par défaut.
+//
+// Elle ne ferme rien d'autre. Le reste de ce serveur reste sans
+// authentification : une installation qui l'expose à Radar n'expose que cette
+// route (La Fusée devant, ou une règle réseau), pas tout le port.
+//
+// Chaque décision garde la forme de la fabrique (app/decision.js), réduite aux
+// champs qui la datent et l'attribuent. `quand` est la date de la décision,
+// distincte de l'heure du transfert ; `qui` et `acteur` sont l'auteur tel que
+// déclaré (pour `acteur` : personneId, nom, poste). Deux champs ne sortent pas :
+// `contenuPiste`, le travail créatif que recopie la référence de campagne, et
+// `attestation`, le sceau de session de La Fusée. `empreinte_contenu` est le
+// SHA-256 du JSON canonique (clés triées, sans espace) de tous les autres
+// champs servis : Radar s'en sert pour reconnaître une décision déjà reçue ou
+// changée. Une décision sans identifiant, ou dont l'identifiant est pris deux
+// fois, n'est pas servie : elle est nommée dans `ecartees`, pour que Radar ne
+// la prenne pas pour une décision retirée.
+const JETON_RADAR = process.env.BARRE_RADAR_TOKEN || "";
+const JETON_RADAR_MIN = 32;
+const CHAMPS_DECISION = ["id", "projet", "objet", "type", "verdict", "motif", "quand", "qui", "acteur", "titre"];
+const CHAMPS_DECISION_SI_PRESENTS = ["campagne", "marque", "version", "portee", "remplace", "ecart", "empreinte",
+  "revisionSource", "cree_le"];
+
+function jetonRadarValide(entete) {
+  const m = /^Bearer (\S+)$/.exec(String(entete || ""));
+  if (!m) return false;
+  // Deux empreintes de même longueur : la comparaison ne dit rien de la taille.
+  const recu = createHash("sha256").update(m[1]).digest();
+  const attendu = createHash("sha256").update(JETON_RADAR).digest();
+  return timingSafeEqual(recu, attendu);
+}
+
+function canonique(v) {
+  if (Array.isArray(v)) return "[" + v.map(canonique).join(",") + "]";
+  if (v && typeof v === "object") {
+    return "{" + Object.keys(v).sort().map((k) => JSON.stringify(k) + ":" + canonique(v[k])).join(",") + "}";
+  }
+  return JSON.stringify(v);
+}
+
+function acteurDeclare(a) {
+  if (a === undefined) return null;
+  if (!a || typeof a !== "object" || Array.isArray(a)) return a;
+  const nul = (x) => (x === undefined ? null : x);
+  return { personneId: nul(a.personneId), nom: nul(a.nom), poste: nul(a.poste) };
+}
+
+function decisionServie(d) {
+  const s = {};
+  for (const k of CHAMPS_DECISION) s[k] = k === "acteur" ? acteurDeclare(d.acteur) : (d[k] === undefined ? null : d[k]);
+  for (const k of CHAMPS_DECISION_SI_PRESENTS) if (d[k] !== undefined) s[k] = d[k];
+  s.empreinte_contenu = "sha256:" + createHash("sha256").update(canonique(s)).digest("hex");
+  return s;
+}
+
+function decisionsServies(liste) {
+  const occurrences = new Map();
+  const lisible = (d) => d && typeof d === "object" && !Array.isArray(d) && typeof d.id === "string" && d.id.trim() !== "";
+  for (const d of liste) if (lisible(d)) occurrences.set(d.id, (occurrences.get(d.id) || 0) + 1);
+  const decisions = [], ecartees = [], doubles = new Set();
+  for (const d of liste) {
+    if (!d || typeof d !== "object" || Array.isArray(d)) { ecartees.push({ id: null, raison: "pas un objet" }); continue; }
+    if (!lisible(d)) { ecartees.push({ id: null, raison: "sans identifiant" }); continue; }
+    if (occurrences.get(d.id) > 1) {
+      if (!doubles.has(d.id)) { doubles.add(d.id); ecartees.push({ id: d.id, raison: "identifiant en double" }); }
+      continue;
+    }
+    decisions.push(decisionServie(d));
+  }
+  return { decisions, ecartees };
+}
+
+async function servirDecisionsRadar(requete, reponse) {
+  const tete = requete.method === "HEAD";
+  const refus = (statut, code, quoi, entetes = {}) => {
+    reponse.writeHead(statut, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...entetes })
+      .end(tete ? undefined : JSON.stringify({ ok: false, code, quoi }));
+  };
+  if (requete.method !== "GET" && !tete) {
+    refus(405, "LECTURE_SEULE", "Cette route se lit ; elle n'écrit rien.", { Allow: "GET, HEAD" }); return;
+  }
+  if (JETON_RADAR.length < JETON_RADAR_MIN) {
+    refus(503, "ROUTE_FERMEE", "Aucun jeton machine d'au moins " + JETON_RADAR_MIN + " caractères n'est configuré (BARRE_RADAR_TOKEN) : la route reste fermée.");
+    return;
+  }
+  if (!jetonRadarValide(requete.headers.authorization)) {
+    refus(401, "JETON_REFUSE", "Jeton machine absent ou refusé.", { "WWW-Authenticate": 'Bearer realm="la-barre-decisions"' });
+    return;
+  }
+  let corps;
+  try {
+    // Le dépôt est remplacé d'un bloc (remplacer) : une lecture voit l'ancien
+    // fichier ou le nouveau, jamais un fichier à moitié écrit.
+    const manifeste = JSON.parse(await readFile(join(RACINE, "depots", "manifeste.json"), "utf8"));
+    const reference = manifeste && manifeste.reference;
+    if (typeof reference !== "string" || reference.includes("..") || !/^[a-zA-Z0-9._-]+\.json$/.test(reference)) {
+      throw new Error("référence illisible");
+    }
+    const donnees = JSON.parse(await readFile(join(RACINE, "depots", reference), "utf8"));
+    // Une base sans collection de décisions n'est pas une base sans décision.
+    if (!donnees || typeof donnees !== "object" || !Array.isArray(donnees.decisions)) throw new Error("décisions absentes");
+    const { decisions, ecartees } = decisionsServies(donnees.decisions);
+    corps = JSON.stringify({ schema: 1, maison: typeof donnees.maison === "string" ? donnees.maison : null,
+      depot: reference, decisions, ecartees });
+  } catch {
+    refus(503, "BASE_INDISPONIBLE", "La base de référence n'a pas pu être lue ; aucune décision n'est servie.");
+    return;
+  }
+  // L'empreinte porte sur ce qui est servi : une base qui bouge ailleurs que
+  // dans ses décisions garde la même.
+  const version = revision(corps);
+  const connues = String(requete.headers["if-none-match"] || "").split(",").map((x) => x.trim().replace(/^W\//, ""));
+  if (connues.includes(version)) { reponse.writeHead(304, { ETag: version, "Cache-Control": "no-store" }).end(); return; }
+  reponse.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ETag: version })
+    .end(tete ? undefined : corps);
+}
+
 function depotAutorise(chemin) {
   // L'application peut être servie depuis un sous-dossier (/la-barre/…) :
   // on exige un segment « depots » quelque part, pas un préfixe.
@@ -310,6 +434,9 @@ const serveur = createServer(async (requete, reponse) => {
     const url = new URL(requete.url, "http://localhost");
     let chemin = decodeURIComponent(url.pathname);
     if (chemin === "/") chemin = "/index.html";
+
+    // Les décisions que lit Radar : avant toute autre route, écriture comprise.
+    if (chemin === "/radar/decisions") { await servirDecisionsRadar(requete, reponse); return; }
 
     // Le disque de l'agence : lire un fichier, ou l'ouvrir dans son logiciel.
     // Le PDF de la présentation : Chrome, sur cette machine, imprime les

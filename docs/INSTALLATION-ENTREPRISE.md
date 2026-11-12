@@ -62,6 +62,13 @@ existants `PORTFOLIO_BARRE_UPSTREAM`, `PORTFOLIO_BARRE_OPERATOR_IDS`,
 `PORTFOLIO_BARRE_INSTANCE` et `PORTFOLIO_BARRE_DEPOT` (`entreprise.json`) dans cette
 installation ; ne jamais partager l’adresse du serveur d’une autre entreprise.
 
+Radar peut lire les décisions de l’installation sur `GET /radar/decisions`
+(voir le README). La route reste fermée tant que `BARRE_RADAR_TOKEN` n’est pas
+posé dans l’environnement du conteneur, avec au moins 32 caractères ; ce jeton
+se garde avec les autres secrets de l’installation, jamais dans le profil ni
+dans le dépôt. Elle ne protège qu’elle-même : n’exposer à Radar que ce chemin,
+pas le port entier du serveur.
+
 La sauvegarde doit recevoir ensemble le dépôt, ses fichiers de revue et le
 profil, en plus de la base et des originaux de La Fusée. Un succès de build ou
 un dépôt vide ne vaut pas réception de cette reprise ni de toute la flotte.
