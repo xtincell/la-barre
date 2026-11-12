@@ -7,13 +7,16 @@
  * habitude, le verdict n'était vérifié nulle part, et l'identifiant était tiré
  * au hasard sans regarder s'il existait déjà.
  *
- * Ici, une décision se construit, se vérifie, reçoit un identifiant libre dans
- * la base locale et rejoint le dépôt. Rien d'autre n'écrit dans `decisions`.
+ * Ici, une décision se construit, se vérifie, reçoit un identifiant unique
+ * entre postes et rejoint le dépôt. Rien d'autre n'écrit dans `decisions` :
+ * l'import d'une base y passe aussi (`admettre`), et le rapprochement de deux
+ * bases (`departager`).
  *
  * La forme stockée ne change pas. Ce module ne renomme, ne réordonne et ne
  * convertit aucun champ : il recopie ceux du geste, dans l'ordre du geste. Le
  * bilan, la jurisprudence et les exports lisent cette forme ; c'est aussi
- * celle que Radar lit (SHK-0005, sens 1).
+ * celle que Radar lit (SHK-0005, sens 1). Seul un identifiant déjà pris est
+ * changé, et la décision le dit (`renommage`).
  *
  *   objet, type, projet, verdict, motif, quand, qui, titre   tous les gestes
  *   acteur, version, portee      verdict sur un document, référence de campagne
@@ -21,20 +24,24 @@
  *   id                           tiré ici, après les champs du geste, sauf
  *                                quand le geste le demande d'avance
  *   cree_le                      posé par DEPOT.ajoute
+ *   renommage                    { de, le, raison } : posé ici seulement quand
+ *                                l'identifiant était déjà pris (voir plus bas)
  *
  * D'autres gestes de choix écrivaient leur objet sans décision. Ils passent
  * désormais par ici : écarter une piste depuis sa route ou une proposition de
  * big idea, écarter un concept de la réserve d'une marque, accepter ou
  * retourner un brief, écarter une case de la composition d'une campagne,
- * déclarer l'écart d'un projet à la référence commune, et trancher une
+ * déclarer l'écart d'un projet à la référence commune, trancher une
  * adaptation hors de l'écart déclaré de son marché — corriger l'écart déclaré
  * (`ecart-marche`, une déviation de portée projet) ou corriger l'adaptation
- * (`hors-ecart`, un retour motivé sur le livrable). Leur forme suit celle
- * des huit premiers, avec `acteur`. Clore le bilan d'une campagne en est un
- * aussi : la décision `bilan-campagne` désigne la version arrêtée (`objet`,
- * l'identité du bilan ; `version` ; `empreinte`). Une décision se rattache
- * donc à un projet, à une campagne ou à une marque ; `projet` n'est plus
- * exigé seul :
+ * (`hors-ecart`, un retour motivé sur le livrable) —, et écarter un écart du
+ * relevé (`ecart`, verdict « hors », motif exigé) ou le reprendre (`ecart`,
+ * verdict « approuve », `remplace` nommant la décision qui l'avait écarté ;
+ * ecarts.js). Leur forme suit celle des huit premiers, avec `acteur`. Clore
+ * le bilan d'une campagne en est un aussi : la décision `bilan-campagne`
+ * désigne la version arrêtée (`objet`, l'identité du bilan ; `version` ;
+ * `empreinte`). Une décision se rattache donc à un projet, à une campagne ou
+ * à une marque ; `projet` n'est plus exigé seul :
  *
  *   projet       tous les gestes sur un dossier
  *   campagne     case de composition écartée (sans projet), écart à la
@@ -63,8 +70,27 @@
  * 2026), Radar vient lire les décisions sur la route /radar/decisions de
  * servir.mjs, derrière un jeton machine, réduites aux champs qui les datent
  * et les attribuent : ni contenuPiste, ni attestation.
- * L'unicité vaut pour la base locale : deux postes hors ligne peuvent encore
- * tirer le même identifiant, la réconciliation le voit, ce module non.
+ *
+ * L'identifiant, entre postes. Radar reconnaît une décision à l'instance La
+ * Barre et à son identifiant ; plusieurs postes écrivent dans la même base
+ * sans voir ce que les autres tirent. L'identifiant porte donc le code du
+ * poste qui l'a tiré et douze caractères au hasard (DEC-k3f9-0a1b2c3d4e5f) ;
+ * les anciens (DEC- et six caractères) restent tels quels. Si deux décisions
+ * se rencontrent malgré tout sous le même identifiant, rien ne se perd en
+ * silence :
+ *
+ *   rapprochement  la décision de ce poste est renommée (`departager`) ;
+ *                  celle de la base de référence garde le sien
+ *   import         une base importée passe par ici (`admettre`) : mêmes
+ *                  gardes que le geste, même forme, aucune décision du
+ *                  registre remplacée ni retirée
+ *   écriture       servir.mjs refuse une base qui ferait porter un même
+ *                  identifiant à deux décisions
+ *
+ * Un renommage se trace dans la décision (`renommage`) et dans le journal.
+ * Une décision attestée, ou citée par une version de bilan arrêtée, ne se
+ * renomme jamais : son sceau ou son empreinte ne tiendrait plus. Elle reste un
+ * conflit à trancher, ou l'import est refusé.
  */
 
 window.DECISION = (function () {
@@ -76,9 +102,18 @@ window.DECISION = (function () {
   /* Le préfixe que DEPOT.ajoute donnait déjà : « decisions » → DEC. */
   var PREFIXE = "DEC";
 
-  /* Six caractères en base 36 : une collision est rare, mais une base vit
-   * des années. Au-delà de ce nombre de tirages pris, quelque chose d'autre
-   * est cassé — le hasard ou la base — et on refuse plutôt que d'écraser. */
+  /* DEC, le code du poste, douze caractères : DEC-k3f9-0a1b2c3d4e5f. Le code
+   * est tiré une fois et gardé dans ce navigateur ; les douze caractères
+   * (36¹², environ 4,7 × 10¹⁸) le sont à chaque décision. Deux postes ne se
+   * rencontrent que si leurs codes et leurs douze caractères tombent
+   * ensemble. Les identifiants de l'ancienne forme, DEC et six caractères,
+   * ne sont jamais réécrits : c'est sous eux que Radar les a reçus. */
+  var CODE_POSTE = 4, ALEA = 12;
+  var FORME = /^DEC-[0-9a-z]{4}-[0-9a-z]{12}$/;
+  var CLE_POSTE = "la-barre-poste";
+
+  /* Au-delà de ce nombre de tirages pris, quelque chose d'autre est cassé —
+   * le hasard ou la base — et on refuse plutôt que d'écraser. */
   var TIRAGES = 64;
 
   /* Une décision se rattache à au moins un de ces objets du dépôt. Le projet
@@ -120,11 +155,32 @@ window.DECISION = (function () {
     return DEPOT.liste("decisions").some(function (d) { return d && d.id === id; });
   }
 
-  /* Un identifiant que la base locale ne porte pas encore. */
-  function identifiant() {
+  /* Le code de ce poste : lu dans ce navigateur, sinon tiré une fois et
+   * gardé. Deux onglets du même navigateur partagent le code ; leurs douze
+   * caractères les séparent. La démonstration n'écrit rien dans le
+   * navigateur : son code vit le temps de la page. */
+  var codePoste = null;
+  function demonstration() {
+    return !!(window.DEPOT && typeof DEPOT.estDemonstration === "function" && DEPOT.estDemonstration());
+  }
+  function poste() {
+    if (codePoste) return codePoste;
+    var demo = demonstration(), lu = null;
+    if (!demo) { try { lu = window.localStorage.getItem(CLE_POSTE); } catch (e) { lu = null; } }
+    if (typeof lu === "string" && /^[0-9a-z]{4}$/.test(lu)) return (codePoste = lu);
+    codePoste = O.aleatoire(CODE_POSTE);
+    if (!demo) { try { window.localStorage.setItem(CLE_POSTE, codePoste); } catch (e) { /* gardé en mémoire */ } }
+    return codePoste;
+  }
+
+  function tirer() { return PREFIXE + "-" + poste() + "-" + O.aleatoire(ALEA); }
+
+  /* Un identifiant que la base locale ne porte pas encore — ni aucun de ceux
+   * de `pris`, quand on départage deux bases. */
+  function identifiant(pris) {
     for (var i = 0; i < TIRAGES; i++) {
-      var id = O.id(PREFIXE);
-      if (!existe(id)) return id;
+      var id = tirer();
+      if (!existe(id) && !(pris && pris.has(id))) return id;
     }
     throw refus("Aucun identifiant de décision libre après " + TIRAGES + " tirages.");
   }
@@ -161,8 +217,15 @@ window.DECISION = (function () {
   /* Une déviation nomme ce dont elle s'écarte, le motive et déclare sa
    * portée. La portée est le niveau de l'objet visé : une déviation sur une
    * piste ne s'étend pas à la campagne — elle deviendrait une référence —, et
-   * une déviation sur un livrable ne vaut pas pour tout son projet. */
-  function verifierDeviation(d) {
+   * une déviation sur un livrable ne vaut pas pour tout son projet.
+   *
+   * Deux temps. Ce que la déviation déclare d'elle-même se vérifie toujours ;
+   * ce qu'elle affirme du dépôt — la référence existe, la portée est le
+   * niveau de l'objet — se relit au moment du geste, dans la base où il est
+   * fait. Une décision importée a été relue quand elle a été prise : le
+   * livrable qu'elle visait peut avoir disparu depuis, sans qu'elle soit
+   * fausse. */
+  function formeDeviation(d) {
     var e = d.ecart;
     if (!e || typeof e !== "object" || Array.isArray(e) || !texte(e.de)) {
       throw refus("Une déviation nomme ce dont elle s'écarte.");
@@ -180,6 +243,10 @@ window.DECISION = (function () {
     if (!texte(d[def.rattache])) {
       throw refus("Un écart à " + def.quoi + " nomme sa " + def.rattache + ".");
     }
+  }
+
+  function relireDeviation(d) {
+    var e = d.ecart;
     if (e.de === "reference-campagne") {
       var r = texte(e.ref) ? DEPOT.trouve("decisions", e.ref) : null;
       if (!r || r.type !== "reference-campagne" || r.campagne !== d.campagne) {
@@ -192,7 +259,9 @@ window.DECISION = (function () {
     }
   }
 
-  function verifier(d) {
+  /* Ce que la décision dit d'elle-même : la garde de tout écrivain, import
+   * compris. */
+  function verifierForme(d) {
     if (!d || typeof d !== "object" || Array.isArray(d)) throw refus("Une décision est un objet.");
     /* Dans l'ordre de la forme : objet, type, rattachement, qui. */
     var manque = ["objet", "type"].filter(function (k) { return !texte(d[k]); })
@@ -209,7 +278,14 @@ window.DECISION = (function () {
       throw refus("Le verdict « " + d.verdict + " » exige un motif écrit.");
     }
     if (d.id !== undefined && !texte(d.id)) throw refus("Identifiant de décision illisible.");
-    if (d.ecart !== undefined) verifierDeviation(d);
+    if (d.ecart !== undefined) formeDeviation(d);
+    return d;
+  }
+
+  /* La garde d'un geste : la forme, puis ce qu'une déviation affirme du dépôt. */
+  function verifier(d) {
+    verifierForme(d);
+    if (d.ecart !== undefined) relireDeviation(d);
     return d;
   }
 
@@ -246,6 +322,198 @@ window.DECISION = (function () {
   /* Un écran rend le refus à la personne, et laisse passer le reste. */
   function estRefus(e) { return !!e && e.name === "DecisionRefusee"; }
 
-  return { VERDICTS: VERDICTS.slice(), PORTEES: PORTEES.slice(), identifiant: identifiant, verifier: verifier,
-    construire: construire, ajouter: ajouter, poser: poser, acteur: acteur, estRefus: estRefus };
+  /* ————— Deux décisions sous un même identifiant —————
+   *
+   * Le contenu d'une décision, sans l'attestation que La Fusée y pose et sans
+   * dépendre de l'ordre des clés : deux copies d'une même décision se
+   * reconnaissent, deux décisions différentes non. */
+  function objet(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
+  function canonique(v) {
+    if (Array.isArray(v)) return "[" + v.map(function (x) { return x === undefined ? "null" : canonique(x); }).join(",") + "]";
+    if (objet(v)) {
+      return "{" + Object.keys(v).filter(function (k) { return v[k] !== undefined; }).sort()
+        .map(function (k) { return JSON.stringify(k) + ":" + canonique(v[k]); }).join(",") + "}";
+    }
+    return JSON.stringify(v);
+  }
+  function contenu(d) {
+    if (!objet(d)) return canonique(d);
+    var sans = {};
+    Object.keys(d).forEach(function (k) { if (k !== "attestation") sans[k] = d[k]; });
+    return canonique(sans);
+  }
+  function decisionsDe(b) { return b && Array.isArray(b.decisions) ? b.decisions : []; }
+  /* identifiant → contenus des décisions qui le portent */
+  function parId(b) {
+    var m = new Map();
+    decisionsDe(b).forEach(function (d) {
+      if (!objet(d) || !texte(d.id)) return;
+      if (!m.has(d.id)) m.set(d.id, []);
+      m.get(d.id).push(contenu(d));
+    });
+    return m;
+  }
+  function copie(v) { return JSON.parse(JSON.stringify(v)); }
+
+  /* Les endroits scellés, où une citation ne se réécrit pas : une entrée
+   * attestée par La Fusée, dont le sceau couvre le contenu, et les versions
+   * arrêtées d'un bilan avec leurs accusés, que leur empreinte couvre. */
+  var SCELLES = ["bilanVersions", "bilanRecus"];
+
+  /* Où un identifiant est cité, mot pour mot, sous les entrées données
+   * ({ conteneur, cle }). Seules les valeurs comptent : une clé d'objet n'est
+   * pas une citation, et un texte qui contient l'identifiant non plus — ainsi
+   * `revisionSource`, l'état relu au moment d'une désignation de référence,
+   * qui date ce geste et ne se réécrit pas. */
+  function citations(entrees, cible) {
+    var libres = [], scellees = [];
+    function marcher(v, scelle) {
+      if (Array.isArray(v)) { v.forEach(function (x, i) { visiter(v, i, scelle); }); return; }
+      if (objet(v)) Object.keys(v).forEach(function (k) { visiter(v, k, scelle || SCELLES.indexOf(k) !== -1); });
+    }
+    function visiter(conteneur, cle, scelle) {
+      var x = conteneur[cle];
+      if (x === cible) { (scelle ? scellees : libres).push({ conteneur: conteneur, cle: cle }); return; }
+      if (x && typeof x === "object") marcher(x, scelle || (objet(x) && x.attestation != null));
+    }
+    entrees.forEach(function (e) { visiter(e.conteneur, e.cle, SCELLES.indexOf(e.cle) !== -1); });
+    return { libres: libres, scellees: scellees };
+  }
+  function entreesDe(b, sauf) {
+    return Object.keys(b).filter(function (k) { return k !== sauf; }).map(function (k) { return { conteneur: b, cle: k }; });
+  }
+
+  var RAISONS = {
+    base: "identifiant déjà pris dans la base de référence par une autre décision",
+    registre: "identifiant déjà pris au registre par une autre décision",
+    fichier: "identifiant pris deux fois dans le fichier",
+    absent: "sans identifiant",
+  };
+  var SCELLEE = "citée par une version de bilan arrêtée ou par une entrée attestée : la réécrire briserait son empreinte";
+
+  /* Départager deux bases, avant de les rapprocher. `ici` est la base de ce
+   * poste, `distant` celle qu'on vient de relire, `base` la dernière que ce
+   * poste avait reçue. Une décision d'ici absente de `base`, dont
+   * l'identifiant est pris là-bas par une autre décision, n'est pas une
+   * modification concurrente : ce sont deux décisions. Celle de là-bas garde
+   * son identifiant — elle est déjà dans la base commune, Radar a pu la lire.
+   * Celle d'ici en reçoit un neuf, libre des trois côtés ; ce qui la cite ici
+   * la suit, et elle garde la trace de l'ancien. Ce qui ne peut pas être
+   * renommé est rendu dans `bloquees`, et reste un conflit à trancher.
+   *
+   * `ici` est modifiée sur place : c'est l'état du dépôt, que les écrans
+   * ouverts tiennent. Rien n'est tracé ici ; le dépôt écrit le journal. */
+  function departager(base, ici, distant) {
+    var connues = parId(base), la = parId(distant), ailleurs = parId(ici);
+    var renommees = [], bloquees = [], pris = null;
+    decisionsDe(ici).forEach(function (d) {
+      if (!objet(d) || !texte(d.id) || connues.has(d.id) || !la.has(d.id)) return;
+      if (la.get(d.id).indexOf(contenu(d)) !== -1) return; // la même décision, revenue du serveur
+      var ancien = d.id;
+      if (d.attestation != null) {
+        bloquees.push({ id: ancien, raison: "attestée par La Fusée : son sceau couvre son identifiant" }); return;
+      }
+      if (ailleurs.get(ancien).length > 1) {
+        bloquees.push({ id: ancien, raison: "l'identifiant est déjà pris deux fois dans ce poste" }); return;
+      }
+      var cites = citations(entreesDe(ici), ancien);
+      if (cites.scellees.length) { bloquees.push({ id: ancien, raison: SCELLEE }); return; }
+      if (!pris) {
+        pris = new Set();
+        [base, ici, distant].forEach(function (b) { decisionsDe(b).forEach(function (x) { if (objet(x) && texte(x.id)) pris.add(x.id); }); });
+      }
+      var nouveau = identifiant(pris);
+      pris.add(nouveau);
+      cites.libres.forEach(function (c) { c.conteneur[c.cle] = nouveau; });
+      d.renommage = { de: ancien, le: maintenant(), raison: RAISONS.base };
+      renommees.push({ de: ancien, vers: nouveau, titre: texte(d.titre) ? d.titre : d.objet });
+    });
+    return { renommees: renommees, bloquees: bloquees };
+  }
+
+  /* Admettre les décisions d'une base importée dans le registre de `courant`.
+   *
+   * Importer remplace la base, sauf ce registre : une décision prise ne se
+   * retire pas, et Radar la lit peut-être déjà. Chaque décision du fichier
+   * passe la garde du geste (verifierForme) et garde sa forme, octet pour
+   * octet ; celle que le registre porte déjà, à l'identique, n'est pas
+   * ajoutée deux fois. Les autres sont ajoutées après le registre, dans
+   * l'ordre du fichier. Un identifiant que le registre porte pour une autre
+   * décision, pris deux fois dans le fichier, ou absent, se renomme et se
+   * trace ; ce que le fichier citait de la décision renommée la suit, sauf
+   * quand la citation est ambiguë (deux décisions du fichier sous le même
+   * identifiant).
+   *
+   * Une seule faute refuse l'import entier, avant toute écriture : une
+   * décision qui ne passe pas la garde, une décision attestée qu'il faudrait
+   * renommer, une décision citée par une version de bilan arrêtée. `lu.decisions`
+   * devient le registre admis. Retourne ce qui a été reçu, ajouté, retrouvé
+   * et renommé. */
+  function admettre(lu, courant) {
+    if (!objet(lu)) throw refus("Une base importée est un objet.");
+    var fichier = lu.decisions;
+    if (fichier === undefined) fichier = [];
+    if (!Array.isArray(fichier)) throw refus("La collection des décisions du fichier est illisible : rien n'est importé.");
+    var registre = decisionsDe(courant), auRegistre = parId(courant);
+    var compte = new Map();
+    fichier.forEach(function (d) { if (objet(d) && texte(d.id)) compte.set(d.id, (compte.get(d.id) || 0) + 1); });
+    var rapport = { recues: fichier.length, ajoutees: 0, deja: 0, doublons: 0, renommees: [] };
+    var fautes = [], admises = [], prevus = [], vus = new Map();
+
+    fichier.forEach(function (d, n) {
+      var nom = "décision n° " + (n + 1) + (objet(d) && texte(d.id) ? " (" + d.id + ")" : "");
+      try { verifierForme(d); }
+      catch (e) { if (!estRefus(e)) throw e; fautes.push(nom + " : " + e.message); return; }
+      var c = contenu(d);
+      function renommer(raison, citee) {
+        if (d.attestation != null) { fautes.push(nom + " : attestée par La Fusée, elle ne peut pas être renommée (" + raison + ")"); return; }
+        prevus.push({ d: d, de: d.id === undefined ? null : d.id, raison: raison, citee: citee, nom: nom });
+        admises.push(d);
+      }
+      if (d.id === undefined) { renommer(RAISONS.absent, false); return; }
+      if (auRegistre.has(d.id)) {
+        if (auRegistre.get(d.id).indexOf(c) !== -1) { rapport.deja++; return; }
+        renommer(RAISONS.registre, compte.get(d.id) === 1); return;
+      }
+      if (vus.has(d.id)) {
+        if (vus.get(d.id).indexOf(c) !== -1) { rapport.doublons++; return; }
+        vus.get(d.id).push(c);
+        renommer(RAISONS.fichier, false); return;
+      }
+      vus.set(d.id, [c]);
+      admises.push(d);
+    });
+
+    /* Ce que le fichier cite d'une décision à renommer : hors du registre
+     * courant, que l'import garde tel quel. */
+    var entrees = entreesDe(lu, "decisions").concat(admises.map(function (d, i) { return { conteneur: admises, cle: i }; }));
+    prevus.forEach(function (p) {
+      if (!p.citee) return;
+      p.citations = citations(entrees, p.de);
+      if (p.citations.scellees.length) fautes.push(p.nom + " : " + SCELLEE + " (" + p.raison + ")");
+    });
+    if (fautes.length) {
+      throw refus("le fichier porte " + fautes.length + " décision(s) que la fabrique refuse, rien n'est importé — "
+        + fautes.slice(0, 5).join(" ; ") + (fautes.length > 5 ? " ; et " + (fautes.length - 5) + " autre(s)" : "") + ".");
+    }
+
+    var pris = new Set();
+    registre.concat(fichier).forEach(function (x) { if (objet(x) && texte(x.id)) pris.add(x.id); });
+    prevus.forEach(function (p) {
+      var nouveau = identifiant(pris);
+      pris.add(nouveau);
+      if (p.citee) p.citations.libres.forEach(function (c) { c.conteneur[c.cle] = nouveau; });
+      else p.d.id = nouveau;
+      p.d.renommage = { de: p.de, le: maintenant(), raison: p.raison };
+      rapport.renommees.push({ de: p.de, vers: nouveau, raison: p.raison });
+    });
+    rapport.ajoutees = admises.length;
+    lu.decisions = copie(registre).concat(admises);
+    return rapport;
+  }
+
+  return { VERDICTS: VERDICTS.slice(), PORTEES: PORTEES.slice(), FORME: FORME, identifiant: identifiant, poste: poste,
+    verifier: verifier, verifierForme: verifierForme,
+    construire: construire, ajouter: ajouter, poser: poser, acteur: acteur, estRefus: estRefus,
+    departager: departager, admettre: admettre };
 })();

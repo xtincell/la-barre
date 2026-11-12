@@ -211,8 +211,12 @@ window.VUE_REGLAGES = (function () {
       var lecteur = new FileReader();
       lecteur.onload = function () {
         try {
-          DEPOT.importer(String(lecteur.result));
-          AVIS.refus("Base importée.");
+          /* Les décisions du fichier passent par la fabrique : celles du
+           * registre restent, les autres s'ajoutent, un identifiant déjà pris
+           * se renomme et se trace au journal. */
+          var d = DEPOT.importer(String(lecteur.result)).decisions;
+          AVIS.fait("Base importée. Décisions : " + d.ajoutees + " ajoutée(s), " + d.deja + " déjà au registre"
+            + (d.renommees.length ? ", " + d.renommees.length + " renommée(s) parce que leur identifiant était pris (voir le journal)" : "") + ".");
           rendre(hote);
         } catch (e) { AVIS.refus("Import impossible : " + e.message); }
       };

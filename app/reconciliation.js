@@ -20,6 +20,15 @@ window.RECONCILIATION = (function () {
     return copie(d);
   }
   function objet(v) { return v !== null && typeof v === "object" && !Array.isArray(v); }
+  /* Le contenu, sans attestation et sans dépendre de l'ordre des clés. */
+  function trie(v) {
+    if (Array.isArray(v)) return v.map(trie);
+    if (!objet(v)) return v;
+    var o = Object.create(null);
+    Object.keys(v).sort().forEach(function (k) { if (k !== "attestation") o[k] = trie(v[k]); });
+    return o;
+  }
+  function memeContenu(a, b) { return JSON.stringify(trie(a)) === JSON.stringify(trie(b)); }
   function identifies(a) {
     if (!Array.isArray(a)) return false;
     var ids = new Set();
@@ -55,6 +64,19 @@ window.RECONCILIATION = (function () {
   }
   function reconcilier(base, ici, distant, choix) {
     var conflits = [];
+    /* Deux décisions nées chacune de son côté sous le même identifiant ne sont
+     * pas deux versions d'une même décision : elles ne se fondent pas champ
+     * par champ, ce qui en ferait une troisième que personne n'a prise.
+     * decision.js renomme celle d'ici avant le rapprochement ; celle qui ne
+     * peut pas l'être reste à choisir, entière. */
+    function entiere(i, d, chemin) {
+      var cle = JSON.stringify(chemin), decision = choix && choix[cle];
+      if (decision === "ici") return copie(i);
+      if (decision === "distant") return copie(d);
+      conflits.push({ cle: cle, chemin: chemin, base: undefined, ici: copie(i), distant: copie(d),
+        iciPresent: true, distantPresent: true });
+      return copie(i);
+    }
     function marcher(b, i, d, chemin) {
       if (egal(i, d)) return copie(i);
       if (i !== undefined && d !== undefined && egalNu(i, d)) return avecAttestations(i, d);
@@ -80,9 +102,12 @@ window.RECONCILIATION = (function () {
           var im = new Map(i.map(function (v) { return [v.id, v]; }));
           var dm = new Map(d.map(function (v) { return [v.id, v]; }));
           var ids = new Set(d.concat(i, b).map(function (v) { return v.id; }));
+          var registre = chemin.length === 1 && chemin[0] === "decisions";
           var rows = [];
           ids.forEach(function (id) {
-            var v = marcher(bm.get(id), im.get(id), dm.get(id), chemin.concat(id));
+            var v = registre && !bm.has(id) && im.has(id) && dm.has(id) && !memeContenu(im.get(id), dm.get(id))
+              ? entiere(im.get(id), dm.get(id), chemin.concat(id))
+              : marcher(bm.get(id), im.get(id), dm.get(id), chemin.concat(id));
             if (v !== undefined) rows.push(v);
           });
           var communs = new Set(b.filter(function (v) { return im.has(v.id) && dm.has(v.id); }).map(function (v) { return v.id; }));

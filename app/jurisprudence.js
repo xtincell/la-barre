@@ -38,7 +38,7 @@ window.JURISPRUDENCE = (function () {
     "hors-ecart": { nom: "adaptation renvoyée hors écart déclaré", famille: "livrable", poids: 4 },
     revue: { nom: "dite en revue", famille: "proposition", poids: 2 },
     blocage: { nom: "blocage écarté", famille: "livrable", poids: 4 },
-    ecart: { nom: "écart écarté", famille: "livrable", poids: 3 },
+    ecart: { nom: "écart écarté ou repris", famille: "livrable", poids: 3 },
   };
 
   /* Tous les critères écrits de la maison, à plat, avec leur famille. */
@@ -134,8 +134,11 @@ window.JURISPRUDENCE = (function () {
       pousse({ source: "blocage", quand: b.ecarte.quand, quoi: b.cle,
         motif: b.ecarte.motif, verdict: "hors" });
     });
+    /* Un écart écarté par la fabrique est déjà au registre, avec sa décision ;
+     * seul celui d'avant elle n'est connu que par son marquage. */
     var ee = DEPOT.tout().ecartsEcartes || {};
     Object.keys(ee).forEach(function (k) {
+      if (ee[k].decision && DEPOT.trouve("decisions", ee[k].decision)) return;
       pousse({ source: "ecart", quand: ee[k].quand, quoi: k,
         motif: ee[k].motif, verdict: "hors" });
     });
