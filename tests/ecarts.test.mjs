@@ -305,6 +305,57 @@ test('les origines déclarées et la date d’un écart calculé', async () => {
   assert.equal(q({}), null);
 });
 
+/* ————— Qui paie la reprise : `facturable`, lu par origine —————
+ *
+ * `facturable` est posé sur l'origine (ORIGINES), pas sur l'écart ni sur son
+ * type. Le compte le lit tel quel : une origine que la table ne connaît pas, ou
+ * qui ne dit pas si elle se facture, n'est pas qualifiée — `def()` la rangerait
+ * chez l'agence, le compte ne le fait pas. Un écart écarté n'est pas une reprise. */
+
+test('facturable se lit sur l’origine, sans repli : une origine inconnue n’est pas qualifiée', async () => {
+  const s = await atelier();
+  assert.equal(s.E.facturable('donneur'), true);
+  for (const o of ['brief', 'plateforme', 'bigidea', 'agence']) assert.equal(s.E.facturable(o), false, o);
+  for (const o of ['inconnue', '', null, undefined, 'toString', '__proto__']) assert.equal(s.E.facturable(o), null, String(o));
+  delete s.E.ORIGINES.plateforme.facturable;
+  assert.equal(s.E.facturable('plateforme'), null, 'une origine qui ne dit pas si elle se facture n’est pas qualifiée');
+  s.E.ORIGINES.plateforme.facturable = 'oui';
+  assert.equal(s.E.facturable('plateforme'), null, 'seul un booléen qualifie');
+});
+
+test('le compte sépare les reprises facturables au client de celles à la charge de l’agence ; l’écarté n’en est pas une', async () => {
+  const kv = { id: 'L-KV', nom: 'KV', kv: { copy: 'Signe' } };
+  const s = await atelier({
+    projets: [dossier({ livrables: [kv], sections: sections({ brief: { livrables_attendus: ['Kakémono'] } }) })],
+    conformite: { 'L-KV': [{ quoi: 'Langue du marché', ok: false, cout: 'le KV est en français', types: ['langue'] }] },
+    retours: { 'P-1': [
+      { f: { id: 'FB-1', texte: 'Changer le fond', auteur: 'A', quand: '2026-10-03T10:00:00Z' },
+        impact: { pieces: [kv], assets: 1, jours: 1, enProduction: 0 }, niveau: { rang: 1 }, attend: [], pret: true },
+      { f: { id: 'FB-2', texte: 'Changer la typo', auteur: 'A', quand: '2026-10-04T10:00:00Z' },
+        impact: { pieces: [kv], assets: 1, jours: 1, enProduction: 0 }, niveau: { rang: 2 }, attend: [], pret: true }] },
+    annotations: { 'L-KV': [{ texte: 'Recadrer', quand: '2026-10-04T10:00:00Z' },
+      { texte: 'Après validation', quand: '2026-10-06T10:00:00Z', reprise: true }] },
+  });
+  assert.deepEqual(copie(s.E.compteFacturable(s.E.tous('P-1'))), {
+    facturables: 3, chargeAgence: 3, nonQualifiees: 0, ecartes: 0,
+    parOrigine: { brief: { facturable: false, n: 2 }, agence: { facturable: false, n: 1 }, donneur: { facturable: true, n: 3 } },
+  });
+  assert.equal(s.E.ecarterUn('P-1|fb|FB-2', 'Retiré par le client lui-même').ok, true);
+  assert.deepEqual(copie(s.E.compteFacturable(s.E.tous('P-1'))), {
+    facturables: 2, chargeAgence: 3, nonQualifiees: 0, ecartes: 1,
+    parOrigine: { brief: { facturable: false, n: 2 }, agence: { facturable: false, n: 1 }, donneur: { facturable: true, n: 2 } },
+  }, 'un écart écarté sort des reprises facturables et se compte à part');
+
+  /* Une origine sans qualification est comptée à part, jamais rangée chez l'agence. */
+  const releve = [{ origine: 'donneur' }, { origine: 'inconnue' }, { origine: 'inconnue', ecarte: { motif: 'x' } }, {}];
+  assert.deepEqual(copie(s.E.compteFacturable(releve)), {
+    facturables: 1, chargeAgence: 0, nonQualifiees: 2, ecartes: 1,
+    parOrigine: { donneur: { facturable: true, n: 1 }, inconnue: { facturable: null, n: 1 }, 'sans origine': { facturable: null, n: 1 } },
+  });
+  assert.deepEqual(copie(s.E.compteFacturable([])),
+    { facturables: 0, chargeAgence: 0, nonQualifiees: 0, ecartes: 0, parOrigine: {} });
+});
+
 test('un écart porte la liste des types de la méthode que son contrôle vérifie', async () => {
   const kv = { id: 'L-KV', nom: 'KV · GH', kv: { copy: 'Signe' } };
   const s = await atelier({ projets: [dossier({ livrables: [kv],

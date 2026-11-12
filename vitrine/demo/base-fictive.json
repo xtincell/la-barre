@@ -219,6 +219,19 @@
      ],
      "contenu": "Ce qui a tenu : la source se reconnaît, la marque a été citée spontanément sur les deux marchés (relevé fictif).\nCe qui n’a pas tenu : la fraîcheur se montrait trop tard dans la journée, et les visuels sans produit ne se lisaient pas à trois mètres.\nPour la campagne suivante : montrer le produit, et chercher un moment de la journée que la marque n’occupe pas encore.",
      "note": null,
+     "reprises": {
+      "projets": 1,
+      "facturables": 0,
+      "chargeAgence": 1,
+      "nonQualifiees": 0,
+      "ecartes": 0,
+      "parOrigine": {
+       "brief": {
+        "facturable": false,
+        "n": 1
+       }
+      }
+     },
      "precedente": null,
      "decision": "DEC-c3ih-5wi81gqe09a4",
      "qui": "creation",
@@ -230,7 +243,7 @@
        "creation"
       ]
      },
-     "empreinte": "b1946a9216f143b6122fa6cd91d9130255e92f165e9ce9c73e6c88e9fba35f48"
+     "empreinte": "23212637668697872920ea4bc3a3a1c1978e1f93279e65d8eff39a26d4facfc1"
     }
    ],
    "bilan_le": "2026-06-26T09:00:00.000Z"
@@ -1401,7 +1414,7 @@
    },
    "version": 1,
    "titre": "Bilan de campagne — Orvelle Source 2026",
-   "empreinte": "b1946a9216f143b6122fa6cd91d9130255e92f165e9ce9c73e6c88e9fba35f48",
+   "empreinte": "23212637668697872920ea4bc3a3a1c1978e1f93279e65d8eff39a26d4facfc1",
    "cree_le": "2026-06-26T09:00:01.000Z"
   },
   {
@@ -1694,7 +1707,7 @@
    "action": "bilan arrêté",
    "type": "campagnes",
    "id": "CMP-orvelle-source",
-   "detail": "version 1 · b1946a9216f1",
+   "detail": "version 1 · 232126376686",
    "marques": [
     "MQ-orvelle"
    ]

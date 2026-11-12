@@ -26,12 +26,20 @@ const sceau = d => { const { empreinte: _e, ...reste } = d; return createHash('s
 const CAMPAGNE = { id: 'C-bilan', nom: 'Marque de recette — Noël', regime: 'ponctuelle', occasion: 'noel',
   fenetre: { debut: '2026-11-15', fin: '2027-01-06' }, marqueIds: ['MQ-r'], bilan: '', ecartes: {} };
 
-async function atelier({ campagne = {}, projets = [], securise = true } = {}) {
+/* Le relevé des écarts est le vrai module (ecarts.js). Ses voisins — conformité
+ * KV, retours client, annotations — sont remplacés par ce qu'ils rendent :
+ * le bilan lit le relevé, pas leur fabrication. */
+async function atelier({ campagne = {}, projets = [], securise = true, releve = true,
+  conformite = {}, retours = {}, annotations = {}, campagnes = [] } = {}) {
   const s = await bac(APP, 31);
   if (securise) { s.ctx.crypto = webcrypto; s.ctx.TextEncoder = TextEncoder; }
+  s.ctx.KV.conformite = (p, l) => conformite[l.id] || [];
+  s.ctx.FEEDBACK = { ordre: id => retours[id] || [], nomAuteur: a => 'Auteur ' + a };
+  s.ctx.ANNOT = { ouvertes: l => annotations[l.id] || [] };
+  if (releve) await s.charger('ecarts');
   await s.charger('campagne');
   semer(s.ctx, { personnes: PERSONNES, marques: [{ id: 'MQ-r', nom: 'Marque de recette' }],
-    campagnes: [{ ...copie(CAMPAGNE), ...campagne }], projets });
+    campagnes: [{ ...copie(CAMPAGNE), ...campagne }, ...campagnes], projets });
   return s;
 }
 const lire = s => s.ctx.DEPOT.trouve('campagnes', 'C-bilan');
@@ -62,7 +70,9 @@ test('clore le bilan fige une version : identité, version, date, campagne, marq
   const c = lire(s), v = copie(c.bilanVersions[0]);
   assert.equal(c.bilanVersions.length, 1);
   assert.deepEqual(Object.keys(v), ['schema', 'schemaVersion', 'id', 'version', 'arrete_le', 'campagne', 'marques',
-    'contenu', 'note', 'precedente', 'decision', 'qui', 'acteur', 'empreinte']);
+    'contenu', 'note', 'reprises', 'precedente', 'decision', 'qui', 'acteur', 'empreinte']);
+  assert.deepEqual(v.reprises, { projets: 0, facturables: 0, chargeAgence: 0, nonQualifiees: 0, ecartes: 0, parOrigine: {} },
+    'sans projet, le compte dit qu’il n’a rien relu : zéro projet, pas zéro reprise constatée');
   assert.equal(v.schema, 'la-barre/bilan-campagne'); assert.equal(v.schemaVersion, 1);
   assert.equal(v.id, 'BIL-C-bilan'); assert.equal(v.version, 1);
   assert.deepEqual(v.campagne, { id: 'C-bilan', nom: 'Marque de recette — Noël', regime: 'ponctuelle', occasion: 'noel',
@@ -143,6 +153,151 @@ test('sans empreinte possible, le bilan n’est pas arrêté', async () => {
   const r = await s.ctx.CAMPAGNE.arreterBilan('C-bilan', '', revision(s));
   assert.equal(r.ok, false); assert.match(r.erreur, /connexion sécurisée/);
   assert.equal(lire(s).bilanVersions, undefined); assert.equal(decisions(s).length, 0);
+});
+
+/* ————— Les reprises : facturables au client, ou à la charge de l'agence —————
+ *
+ * Décision du 12 novembre 2026 : le champ `facturable` des origines d'écart se
+ * compte. La version figée porte le relevé des projets de la campagne tel
+ * qu'il est à l'arrêt ; une version arrêtée avant ce compte ne le porte pas, et
+ * rien ne le lui ajoute. */
+
+const texte = n => (n.childNodes || []).map(x => x.data !== undefined ? x.data : texte(x)).join('');
+const REPRISES_FIXTURE = JSON.parse(await readFile(new URL('./fixtures/bilan-campagne-reprises-v1.json', import.meta.url), 'utf8'));
+
+/* Deux projets de la campagne, dont un clos ; un projet d'une autre campagne et
+ * un projet fusionné, que le compte ne lit pas. */
+function campagneAvecReprises(extra = {}) {
+  const kvA = { id: 'L-a', nom: 'KV A', kv: { copy: 'Signe' } };
+  const kvB = { id: 'L-b', nom: 'KV B', kv: { copy: 'Signe' } };
+  const retour = (id, quand) => ({ f: { id, texte: 'Retour ' + id, auteur: 'A', quand },
+    impact: { pieces: [], assets: 1, jours: 1, enProduction: 0 }, niveau: { rang: 1 }, attend: [], pret: true });
+  return {
+    projets: [
+      projet('Pa', { campagneId: 'C-bilan', livrables: [kvA] }),
+      projet('Pb', { campagneId: 'C-bilan', livrables: [kvB], cloture: { le: '2026-11-09T08:00:00.000Z', bilan: 'Clos.' } }),
+      projet('Pailleurs', { campagneId: 'C-autre' }),
+      projet('Pfusion', { campagneId: 'C-bilan', fusionne: 'Pa' }),
+    ],
+    campagnes: [{ id: 'C-autre', nom: 'Une autre campagne', marqueIds: ['MQ-r'], bilan: '', ecartes: {} }],
+    conformite: { 'L-a': [{ quoi: 'Langue du marché', ok: false, cout: 'le KV est en français', types: ['langue'] }] },
+    retours: { Pa: [retour('FB-1', '2026-11-04T10:00:00Z')], Pb: [retour('FB-2', '2026-11-05T10:00:00Z')],
+      Pailleurs: [retour('FB-3', '2026-11-05T10:00:00Z')], Pfusion: [retour('FB-4', '2026-11-05T10:00:00Z')] },
+    annotations: { 'L-a': [{ texte: 'Recadrer', quand: '2026-11-04T10:00:00Z' }],
+      'L-b': [{ texte: 'Après validation', quand: '2026-11-06T10:00:00Z', reprise: true }] },
+    ...extra,
+  };
+}
+const ATTENDU = { projets: 2, facturables: 2, chargeAgence: 2, nonQualifiees: 0, ecartes: 1,
+  parOrigine: { brief: { facturable: false, n: 1 }, agence: { facturable: false, n: 1 }, donneur: { facturable: true, n: 2 } } };
+
+test('la version figée compte les reprises du relevé de ses projets, clos compris ; l’écarté n’en est pas une', async () => {
+  const s = await atelier(campagneAvecReprises({ campagne: { bilan: 'Le film a porté.' } }));
+  assert.equal(s.ctx.ECARTS.ecarterUn('Pb|fb|FB-2', 'Le client l’a retiré lui-même').ok, true);
+  const r = await s.ctx.CAMPAGNE.arreterBilan('C-bilan', '', revision(s));
+  assert.equal(r.ok, true, r.erreur);
+  const v = copie(lire(s).bilanVersions[0]);
+  assert.deepEqual(v.reprises, ATTENDU);
+  assert.deepEqual(copie(s.ctx.CAMPAGNE.reprises(lire(s))), ATTENDU, 'la version porte le compte que la campagne lit');
+  assert.equal(sceau(v), v.empreinte, 'le compte est sous l’empreinte');
+  const d = decisions(s).find(x => x.type === 'bilan-campagne');
+  assert.equal('reprises' in d, false, 'la décision ne change pas de forme : le compte vit dans la version');
+  /* Le relevé bouge ensuite : la version arrêtée ne se recalcule pas. */
+  assert.equal(s.ctx.ECARTS.reprendre('Pb|fb|FB-2').ok, true);
+  assert.equal(s.ctx.CAMPAGNE.reprises(lire(s)).facturables, 3);
+  assert.deepEqual(copie(lire(s).bilanVersions[0]), v);
+  assert.equal(s.ctx.CAMPAGNE.etatBilan(lire(s)).cle, 'arrete', 'un relevé qui bouge ne rouvre pas le bilan');
+});
+
+test('une version arrêtée avant le compte garde sa forme et son empreinte ; la vue le dit, la suivante compte', async () => {
+  const anciennes = copie(FIXTURE.versions);
+  const s = await atelier(campagneAvecReprises({ campagne: { id: 'C-bilan', bilan: anciennes[1].contenu,
+    bilanVersions: anciennes, bilan_le: anciennes[1].arrete_le } }));
+  /* L'identité suit la campagne : on rejoue la fixture sous l'identité de C-bilan. */
+  assert.equal(s.ctx.CAMPAGNE.etatBilan(lire(s)).cle, 'arrete');
+  const vue = texte(s.ctx.CAMPAGNE.blocBilan(lire(s), () => {}));
+  assert.equal(vue.match(/arrêtée avant le compte des reprises/g).length, 2, vue);
+  for (const ancienne of FIXTURE.versions) assert.equal(await s.ctx.CAMPAGNE.empreinteBilan(ancienne), ancienne.empreinte);
+
+  s.ctx.CAMPAGNE.ecrireBilan(lire(s), anciennes[1].contenu + '\nTroisième lecture.');
+  const r = await s.ctx.CAMPAGNE.arreterBilan('C-bilan', 'Troisième lecture', revision(s));
+  assert.equal(r.ok, true, r.erreur);
+  const vs = copie(lire(s).bilanVersions);
+  assert.deepEqual(vs.slice(0, 2), FIXTURE.versions, 'les versions arrêtées avant ne bougent pas d’un octet');
+  assert.equal('reprises' in vs[0], false); assert.equal('reprises' in vs[1], false);
+  assert.equal(vs[2].version, 3); assert.equal(vs[2].precedente, FIXTURE.versions[1].empreinte);
+  assert.deepEqual(vs[2].reprises, { ...ATTENDU, ecartes: 0, facturables: 3,
+    parOrigine: { ...ATTENDU.parOrigine, donneur: { facturable: true, n: 3 } } });
+  assert.equal(sceau(vs[2]), vs[2].empreinte);
+  const apres = texte(s.ctx.CAMPAGNE.blocBilan(lire(s), () => {}));
+  assert.equal(apres.match(/arrêtée avant le compte des reprises/g).length, 2, 'seules les anciennes le disent');
+  assert.match(apres, /À l'arrêt : 3 reprises facturables au client · 2 reprises à la charge de l'agence — sur 2 projets/);
+});
+
+test('la vue du bilan montre les reprises du relevé aujourd’hui, écartés et non qualifiées à part', async () => {
+  const s = await atelier(campagneAvecReprises());
+  s.ctx.ECARTS.ecarterUn('Pb|fb|FB-2', 'Le client l’a retiré lui-même');
+  let vue = texte(s.ctx.CAMPAGNE.blocBilan(lire(s), () => {}));
+  assert.match(vue, /Les reprises au relevé/);
+  assert.match(vue, /2 reprises facturables au client · 2 reprises à la charge de l'agence — sur 2 projets/);
+  assert.match(vue, /1 écart écarté, hors des comptes/);
+  assert.match(vue, /Une reprise déjà faite ne figure plus au relevé/);
+  assert.doesNotMatch(vue, /non qualifiée/, 'aucune origine sans qualification : rien à en dire');
+  /* Une origine qui ne dit plus si elle se facture n'est rangée nulle part. */
+  delete s.ctx.ECARTS.ORIGINES.agence.facturable;
+  vue = texte(s.ctx.CAMPAGNE.blocBilan(lire(s), () => {}));
+  assert.match(vue, /2 reprises facturables au client · 1 reprise à la charge de l'agence · 1 reprise non qualifiée — sur 2 projets/);
+
+  const vide = await atelier();
+  assert.match(texte(vide.ctx.CAMPAGNE.blocBilan(lire(vide), () => {})), /Aucun projet dans la campagne : aucune reprise à relever/);
+  const calme = await atelier({ projets: [projet('Pc', { campagneId: 'C-bilan' })] });
+  assert.match(texte(calme.ctx.CAMPAGNE.blocBilan(lire(calme), () => {})), /Aucune reprise au relevé — sur 1 projet/);
+});
+
+test('le relevé qui a changé depuis le dialogue n’arrête rien : on arrête ce qu’on a lu', async () => {
+  const s = await atelier(campagneAvecReprises({ campagne: { bilan: 'Le film a porté.' } }));
+  cliquer(bouton(s.ctx.CAMPAGNE.blocBilan(lire(s), () => {}), 'Clore le bilan de campagne'));
+  const dialogue = s.dernier();
+  assert.match(texte(dialogue), /3 reprises facturables au client · 2 reprises à la charge de l'agence — sur 2 projets/);
+  s.ctx.ECARTS.ecarterUn('Pb|fb|FB-2', 'Le client l’a retiré lui-même');
+  cliquer(bouton(dialogue, 'Arrêter la version 1'));
+  await attendre(() => s.refus.length === 1);
+  assert.match(s.refus[0], /Le relevé des écarts de la campagne a changé/);
+  assert.equal(lire(s).bilanVersions, undefined);
+  assert.equal(decisions(s).filter(d => d.type === 'bilan-campagne').length, 0);
+
+  const lus = s.ctx.CAMPAGNE.reprises(lire(s));
+  const r = await s.ctx.CAMPAGNE.arreterBilan('C-bilan', '', revision(s), lus);
+  assert.equal(r.ok, true, r.erreur);
+  assert.deepEqual(copie(r.version.reprises), ATTENDU);
+});
+
+test('sans le relevé des écarts, le bilan n’est pas arrêté : il ne se fige pas sans son compte', async () => {
+  const s = await atelier({ campagne: { bilan: 'Le film a porté.' }, releve: false });
+  const r = await s.ctx.CAMPAGNE.arreterBilan('C-bilan', '', revision(s));
+  assert.equal(r.ok, false); assert.match(r.erreur, /relevé des écarts/);
+  assert.equal(lire(s).bilanVersions, undefined); assert.equal(decisions(s).length, 0);
+  assert.match(texte(s.ctx.CAMPAGNE.blocBilan(lire(s), () => {})), /relevé des écarts n'est pas chargé/);
+});
+
+test('le jeu commun des reprises : une version d’avant, une d’après, la même empreinte que La Fusée recalcule', async () => {
+  const s = await atelier();
+  const [avant, apres] = REPRISES_FIXTURE.versions;
+  assert.deepEqual(avant, FIXTURE.versions[0], 'la version d’avant est celle du premier jeu commun, octet pour octet');
+  assert.equal('reprises' in avant, false);
+  for (const v of REPRISES_FIXTURE.versions) {
+    assert.equal(sceau(v), v.empreinte);
+    assert.equal(await s.ctx.CAMPAGNE.empreinteBilan(v), v.empreinte);
+  }
+  assert.equal(apres.precedente, avant.empreinte); assert.equal(apres.schemaVersion, 1);
+  assert.deepEqual(Object.keys(apres.reprises), ['projets', 'facturables', 'chargeAgence', 'nonQualifiees', 'ecartes', 'parOrigine']);
+  const parOrigine = Object.values(apres.reprises.parOrigine);
+  assert.equal(apres.reprises.facturables, parOrigine.filter(x => x.facturable === true).reduce((n, x) => n + x.n, 0));
+  assert.equal(apres.reprises.chargeAgence, parOrigine.filter(x => x.facturable === false).reduce((n, x) => n + x.n, 0));
+  assert.equal(apres.reprises.nonQualifiees, parOrigine.filter(x => x.facturable === null).reduce((n, x) => n + x.n, 0));
+  /* Un compte modifié après l'arrêt ne tient plus. */
+  const altere = copie(apres); altere.reprises.facturables++;
+  assert.notEqual(await s.ctx.CAMPAGNE.empreinteBilan(altere), apres.empreinte);
 });
 
 test('le geste natif : l’écran de campagne écrit, puis clôt le bilan par la fabrique', async () => {
