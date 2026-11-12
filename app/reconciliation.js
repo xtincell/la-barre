@@ -223,6 +223,25 @@ window.RECONCILIATION = (function () {
     });
     return { renommes: renommes, bloques: bloques };
   }
+  /* ————— La référence attribuée pendant une réponse perdue —————
+   *
+   * Un projet de ce poste attend sa référence (`refDemandee`) ; la base relue
+   * porte le même projet — même identifiant, même date de naissance — avec sa
+   * référence attribuée : le serveur l'a reçu, la réponse s'est perdue. Ce
+   * n'est pas une modification concurrente : on reprend la référence attribuée,
+   * qui ne changera plus, et la demande tombe. Rendu : ce qui a été repris. */
+  function adopterReferences(ici, distant) {
+    var la = new Map();
+    projetsDe(distant).forEach(function (p) { if (texte(p.id) && !p.refDemandee && texte(p.ref)) la.set(p.id, p); });
+    var repris = [];
+    projetsDe(ici).forEach(function (p) {
+      var d = p.refDemandee && la.get(p.id);
+      if (!d || memeObjet(p, d) !== true) return;
+      p.ref = d.ref; delete p.refDemandee;
+      repris.push({ projet: p.id, ref: d.ref, nom: p.nom || p.id });
+    });
+    return repris;
+  }
   function identifies(a) {
     if (!Array.isArray(a)) return false;
     var ids = new Set();
@@ -350,5 +369,6 @@ window.RECONCILIATION = (function () {
     return { valeur: marcher(base, ici, distant, []), conflits: conflits };
   }
   return { reconcilier: reconcilier, copie: copie, actualiser: actualiser,
-    memeObjet: memeObjet, citations: citations, reecrire: reecrire, departager: departager };
+    memeObjet: memeObjet, citations: citations, reecrire: reecrire, departager: departager,
+    adopterReferences: adopterReferences };
 })();

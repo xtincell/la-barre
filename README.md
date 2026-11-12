@@ -403,6 +403,45 @@ livrable se cite partout : décisions, retours, formats, écarts.
   remplacerait un projet ou un livrable enregistré par un autre objet sous le
   même identifiant (voir « Dans un fichier »).
 
+**La référence d'un projet, attribuée par la base de référence.** Décision du
+propriétaire du 12 novembre 2026. La référence (`ref` : `MT-0042`, `PRJ-0003`)
+est montrée au client, affichée par La Fusée comme code du projet, et désigne
+le projet dans le format `ecarts-marche` du Market Expansion System. Quatre
+écrans la tiraient sur le poste ; deux postes ouvraient le même `MT-…`.
+
+- *La demande.* Un projet neuf demande sa référence (`refDemandee`) : le
+  préfixe de l'écran (`MT` pour la boîte d'entrée, l'ouverture depuis une
+  campagne et le registre People ; `PRJ` pour « Nouveau projet »), et la
+  référence saisie s'il y en a une. Une saisie que ce poste voit déjà portée par
+  un autre projet est refusée tout de suite. En attendant, `ref` porte une
+  étiquette provisoire, que tous les écrans montrent : `MT-… (provisoire)`, ou
+  `CLI-12 (provisoire)` pour une saisie. L'en-tête du dossier propose alors
+  « changer la référence demandée » (vide : le numéro suivant).
+- *L'attribution.* Au premier enregistrement, `servir.mjs` attribue le numéro
+  suivant du préfixe, unique dans la base de référence : `MT-0043` après
+  `MT-0042`. Seules comptent les références de la forme exacte `PRÉFIXE-nombre` ;
+  le numéro garde quatre chiffres au moins. Une saisie est gardée si aucun
+  autre projet ne la porte. Le serveur retire la demande, écrit, et rend dans
+  son reçu ce qu'il a attribué ; l'écran le dit. Une réponse perdue ne fait pas
+  de doublon : au rapprochement suivant, le poste reprend la référence que la base
+  porte (`RECONCILIATION.adopterReferences`). Une référence attribuée ne change
+  plus jamais.
+- *Les références existantes* restent telles quelles et valent attribuées,
+  doublons compris ; aucune n'est renumérotée, aucune n'est donnée à un projet
+  qui n'en demandait pas.
+- *Ce qui part chez le client attend la référence.* Le manifeste de remise,
+  l'export du cas client (étude) et l'export des écarts déclarés refusent tant
+  qu'elle est provisoire, avec un message : la sauvegarde suit le geste d'environ
+  une seconde. Les documents compilés et la page d'un lien partagé ne montrent
+  pas une référence provisoire. Une publication derrière La Fusée attend déjà
+  l'enregistrement, et La Fusée compile depuis la base enregistrée, qui ne porte
+  que des références attribuées.
+- *Sans base de référence* — navigateur jamais rattaché à un fichier servi,
+  exemple d'amorce, démonstration —, la base du poste est la référence : il
+  attribue lui-même, tout de suite, avec la même règle (`O.referenceSuivante`).
+  La démonstration n'écrit toujours rien. Une base déjà rattachée à un fichier
+  servi continue de demander, même si le serveur ne répond pas au chargement.
+
 **Les écarts du relevé.** Ce qu'on me doit se calcule, il ne se saisit pas
 (`app/ecarts.js`) : un livrable qui ne tient pas le brief, une plateforme
 contredite, un critère d'acceptation non tenu, une annotation ouverte, un retour
@@ -575,6 +614,15 @@ une seconde après le dernier geste. Le `localStorage` reste un filet.
   projets), `LIVRABLE_REMPLACE`. Un projet ou un livrable est remplacé quand sa
   date de naissance (`cree_le`) change, ou quand un livrable change de projet.
   Ses autres champs se modifient librement.
+- Le serveur attribue la référence demandée d'un projet (voir « La référence
+  d'un projet »), et refuse en 422 `REFERENCE_ILLISIBLE` (une demande mal
+  formée), `REFERENCE_CHANGEE` (la référence d'un projet enregistré changerait
+  ou disparaîtrait) et `REFERENCE_PRISE` (une référence saisie, ou posée sans
+  demande par un ancien poste ou un import, déjà portée par un autre projet). Une
+  base qui porte déjà deux fois la même référence reste inscriptible. Sans
+  référence à attribuer, le corps reçu s'écrit octet pour octet ; avec, le
+  serveur réécrit la base (indentation d'un espace) et rend `references` dans
+  son reçu.
 - Cette garantie porte sur un seul processus serveur. Écrire le fichier
   directement, ou lancer plusieurs processus sur le même fichier, contourne ce
   protocole. `outils/ingerer-corpus.mjs --ecrire` écrit ainsi
@@ -661,7 +709,7 @@ Les scripts de `package.json` :
 |---|---|
 | `npm start` | `node servir.mjs` |
 | `npm test` | `node tests/parcours.mjs` |
-| `npm run test:persistance` | `node --test tests/persistance.test.mjs tests/reconciliation.test.mjs tests/depot-reprise.test.mjs tests/identifiants-unicite.test.mjs` |
+| `npm run test:persistance` | `node --test tests/persistance.test.mjs tests/reconciliation.test.mjs tests/depot-reprise.test.mjs tests/identifiants-unicite.test.mjs tests/references.test.mjs` |
 | `npm run test:manuel` | `node --test tests/saisie-manuelle.test.mjs tests/acteur.test.mjs tests/formulaire.test.mjs tests/lecture-dependances.test.mjs` |
 | `npm run test:marches` | `node --test tests/marches.test.mjs tests/grille.test.mjs tests/ecarts-marche.test.mjs tests/hors-ecart.test.mjs` |
 | `npm run test:provenances` | `node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs` |
@@ -692,23 +740,16 @@ un navigateur installé). La CI ne le lance pas.
   vers Radar.
 - **Un registre des projets sans source dans le dépôt.** Le registre des
   projets se lit dans la base, mais aucun outil du dépôt ne le remplit.
-- **La référence humaine d'un projet peut encore se répéter entre postes.**
-  `ref` (`MT-0042`, `PRJ-0003`…) est tirée à la création par quatre écrans, sur
-  deux règles : le nombre de projets plus un (boîte d'entrée, ouverture depuis
-  une campagne, « Nouveau projet », avec `PRJ-` si la référence n'est pas
-  saisie) ou le plus grand numéro plus un, à partir de 42 (registre People).
-  Deux postes ouvrent donc le même `MT-…`, et le compte peut déjà retomber sur
-  une référence existante dans un seul poste. Le rapprochement départage
-  l'identifiant, pas la référence ; `tests/identifiants-unicite.test.mjs` garde
-  ce cas en attente (`todo`). La correction dépend d'un choix à faire, pas d'un
-  correctif : la référence est montrée au client (documents publiés, manifeste
-  de remise, noms de fichiers), La Fusée l'affiche comme code du projet, le
-  format d'échange `ecarts-marche` du Market Expansion System désigne le projet
-  par elle, et les codes `ndeg` de Radar ont la même forme (préfixe et
-  numéro) : le corpus recopie le `ndeg` comme référence. Renuméroter au
-  rapprochement, porter le code du poste dans la référence ou la faire attribuer
-  ailleurs sont trois réponses différentes. Le contrat de `GET /radar/decisions`
-  ne porte pas `ref`.
+- **La référence attribuée a ses limites.** Une saisie que deux postes font hors
+  ligne pour deux projets passe sur le premier enregistré ; le second reçoit
+  `REFERENCE_PRISE` et ne sauvegarde plus tant que la demande n'est pas changée,
+  depuis l'en-tête du dossier. Le registre People commençait à `MT-0042` ; il
+  prend maintenant, comme les autres écrans, le numéro qui suit le plus grand
+  `MT-` de la base. Un message de relance (« Demander un retour ») et le contexte
+  d'un tirage d'approches reprennent l'étiquette provisoire, marquée comme telle.
+  Le serveur ne contrôle que les écritures par `PUT` : l'ingestion du corpus pose
+  ses propres références (`ndeg` de Radar, `XC-…`) en écrivant le fichier
+  directement. Le contrat de `GET /radar/decisions` ne porte pas `ref`.
 - **L'unicité vaut pour les décisions, les projets et les livrables.** Les
   autres objets (retours, annotations, attentes, pistes…) gardent un préfixe et
   six caractères tirés par `Math.random`, sans contrôle entre postes ; le

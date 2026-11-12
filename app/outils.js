@@ -221,6 +221,27 @@ window.O = (function () {
     return null;
   }
 
+  /* ————— La référence humaine d'un dossier —————
+   *
+   * MT-0043 après MT-0042 : la référence suivante d'un préfixe, libre parmi
+   * `prises` (un ensemble de références). Seules comptent celles de la forme
+   * exacte PRÉFIXE-nombre ; une autre forme (XC-012, ORV-2026-01) ne décale
+   * rien. Le numéro garde quatre chiffres au moins. C'est servir.mjs qui
+   * l'attribue, au premier enregistrement, dans la base de référence ; le poste
+   * ne s'en sert que sans base de référence (navigateur seul, démonstration),
+   * où sa base est la référence. Les deux textes disent la même règle, et
+   * tests/references.test.mjs vérifie qu'ils rendent le même numéro. */
+  var PREFIXE_REFERENCE = /^[A-Za-z][A-Za-z0-9]{0,11}$/;
+  function referenceSuivante(prefixe, prises) {
+    if (!PREFIXE_REFERENCE.test(prefixe)) throw new Error("Préfixe de référence illisible : « " + prefixe + " ».");
+    var motif = new RegExp("^" + prefixe + "-(\\d+)$"), max = 0;
+    prises.forEach(function (r) { var m = motif.exec(r); if (m && Number(m[1]) > max) max = Number(m[1]); });
+    for (var n = max + 1; ; n++) {
+      var ref = prefixe + "-" + String(n).padStart(4, "0");
+      if (!prises.has(ref)) return ref;
+    }
+  }
+
   function poste(cle) {
     var t = null;
     MAISON.postes.forEach(function (p) { if (p.cle === cle) t = p; });
@@ -265,6 +286,7 @@ window.O = (function () {
     resoudrePartout: resoudrePartout, jour: jour, joli: joli, jolieHeure: jolieHeure,
     depuis: depuis, ancien: ancien, semaine: semaine, auj: auj, jourCourt: jourCourt,
     id: id, aleatoire: aleatoire, codePoste: codePoste, identifiantUnique: identifiantUnique, TIRAGES: TIRAGES,
+    referenceSuivante: referenceSuivante, PREFIXE_REFERENCE: PREFIXE_REFERENCE,
     poste: poste, jeton: jeton, normalise: normalise, contient: contient,
     milliers: milliers, decimal: decimal,
     langue: langue,

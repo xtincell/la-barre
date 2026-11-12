@@ -150,3 +150,60 @@ Ces preuves sont locales, sur données fictives : ni CI distante, ni production.
   chemin de fichier.
 - Le refus du serveur ne couvre que les écritures par `PUT` ; l'ingestion du
   corpus écrit son fichier directement.
+
+## Référence d'un projet attribuée par la base de référence — 12 novembre 2026
+
+Décision du propriétaire, option 3 : le serveur attribue la référence humaine
+(`ref`) au premier enregistrement. La limite laissée ouverte ci-dessus est close.
+Quatre écrans tiraient la référence sur le poste (`app/intake.js`,
+`app/registre-people.js`, `app/vue-projets.js` deux fois), sur deux règles ;
+deux postes ouvraient le même `MT-…`, et un seul poste pouvait retomber sur une
+référence existante.
+
+Un projet neuf demande désormais sa référence (`refDemandee` : le préfixe de
+l'écran, et la saisie s'il y en a une) et montre une étiquette provisoire.
+`servir.mjs` attribue le numéro suivant du préfixe, unique dans la base, retire
+la demande, écrit et rend `references` dans son reçu ; le poste l'applique
+(`DEPOT`), ou la reprend au rapprochement après une réponse perdue
+(`RECONCILIATION.adopterReferences`). Une référence attribuée ne change plus
+(`REFERENCE_CHANGEE`) ; une saisie ou une référence posée sans demande déjà
+portée par un autre projet est refusée (`REFERENCE_PRISE`) ; une demande mal
+formée aussi (`REFERENCE_ILLISIBLE`). Les références existantes restent
+attribuées, telles quelles. Le manifeste de remise, l'étude et l'export des écarts
+attendent la référence ; les documents compilés et la page partagée ne montrent
+pas une référence provisoire. Sans base de référence (navigateur jamais rattaché
+à un fichier servi, exemple, démonstration), le poste attribue lui-même avec la
+même règle (`O.referenceSuivante`) ; une base déjà rattachée continue de demander
+si le serveur ne répond pas. `GET /radar/decisions` est inchangé.
+
+### Preuves
+
+- Tests écrits d'abord : `tests/references.test.mjs` et le test de la référence
+  de `tests/identifiants-unicite.test.mjs`, jusque-là en attente (`todo`),
+  désormais exercé contre le vrai `servir.mjs` : 12 rouges avant la correction ;
+  un treizième, l'écriture octet pour octet sans référence à attribuer, était déjà
+  vert et le reste.
+- Après correction, 298 tests Node verts sur les suites de la CI, aucun en
+  attente ; syntaxe, `distribuer-approches.mjs --check` et `vitrine-base.mjs
+  --check` à zéro (la base fictive ne change pas).
+- Parcours Chromium (`npm test`) : sans base servie, « Nouveau projet » reçoit
+  `PRJ-0001` sur le poste ; avec `servir.mjs` et une base servie, il montre
+  `PRJ-… (provisoire)`, la base enregistrée porte `PRJ-0001` sans demande, et
+  l'en-tête le montre après rechargement.
+- Les assertions HTTP des jobs `image` et `image-entreprise` rejouées sur
+  `servir.mjs` lancé directement ; le démon Docker n'était pas disponible.
+
+Ces preuves sont locales, sur données fictives : ni CI distante, ni production.
+
+### Limites
+
+- Une saisie faite hors ligne sur deux postes passe sur le premier enregistré ;
+  le second ne sauvegarde plus tant que sa demande n'est pas changée, depuis
+  l'en-tête du dossier.
+- Le registre People ne commence plus à `MT-0042` : il suit le plus grand `MT-`
+  de la base, comme les autres écrans.
+- Un message de relance et le contexte d'un tirage d'approches reprennent
+  l'étiquette provisoire, marquée comme telle.
+- La règle de numérotation est écrite deux fois, dans `app/outils.js` et dans
+  `servir.mjs`, qui reste sans dépendance ; un test vérifie qu'elles rendent le
+  même numéro.

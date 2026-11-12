@@ -230,11 +230,9 @@ function cap(t) { t = String(t || ""); return t.charAt(0).toUpperCase() + t.slic
 
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          var refs = DEPOT.liste("projets").map(function (x) {
-            return parseInt(String(x.ref).replace(/\D/g, ""), 10) || 0; });
-          var num = Math.max.apply(null, refs.concat([41])) + 1;
-          var p = DEPOT.ajoute("projets", {
-            ref: "MT-" + String(num).padStart(4, "0"),
+          /* La référence est demandée : la base de référence attribue le
+           * numéro suivant au premier enregistrement. */
+          var p = DEPOT.ajoute("projets", Object.assign(DEPOT.referenceNeuve("MT"), {
             nom: champNom.value.trim() || r.nom,
             nature: selG.value,
             cree_le: new Date().toISOString(),
@@ -245,7 +243,7 @@ function cap(t) { t = String(t || ""); return t.charAt(0).toUpperCase() + t.slic
               /* Ce que People sait, posé tel quel — jamais complété d'hypothèses. */
               note: r.description || null } },
             livrables: [], volets: [], idees: [],
-          });
+          }));
           DEPOT.tracer("ouverture", "projets", p.id, p.ref + " — depuis " + r.ref);
           DEPOT.enregistrer();
           PANNEAU.fermer();

@@ -692,8 +692,7 @@ window.VUE_PROJETS = (function () {
   /* Ouvrir un projet DEPUIS la campagne : il hérite ce qu'elle porte déjà —
    * client, marques, marchés, fenêtre. C'est tout l'intérêt de l'étage. */
   function ouvrirDepuisCampagne(c, nature, rafraichir) {
-    var p = DEPOT.ajoute("projets", {
-      ref: "MT-" + String(DEPOT.liste("projets").length + 1).padStart(4, "0"),
+    var p = DEPOT.ajoute("projets", Object.assign(DEPOT.referenceNeuve("MT"), {
       nom: c.nom + " — " + nature.nom.toLowerCase(),
       nature: nature.cle,
       campagneId: c.id,
@@ -713,7 +712,7 @@ window.VUE_PROJETS = (function () {
       },
       perimetre: { supports: [], marches: (c.marches || []).slice() },
       livrables: [], volets: [],
-    });
+    }));
     DEPOT.tracer("création depuis campagne", "projets", p.id, c.nom + " · " + nature.nom);
     DEPOT.enregistrer();
     AVIS.fait("« " + p.nom + " » est ouvert. Il hérite le client, les marques, "
@@ -958,7 +957,8 @@ window.VUE_PROJETS = (function () {
       x.blocs.forEach(function (b) {
         if (!par[b.type]) par[b.type] = { type: b.type, quoi: b.quoi, n: 0, dossiers: {} };
         par[b.type].n++;
-        par[b.type].dossiers[x.p.ref] = true;
+        /* Par identifiant : deux références provisoires se ressemblent. */
+        par[b.type].dossiers[x.p.id] = x.p.ref;
       });
     });
     var tous = Object.keys(par).map(function (k) { return par[k]; })
@@ -980,7 +980,7 @@ window.VUE_PROJETS = (function () {
           el("span.dlmb-c", {},
             el("span.dlmb-q", {}, nomCourt(t.quoi), el("b", {}, String(t.n))),
             el("span.dlmb-x", {}, REGLES.prix(t.type)),
-            el("span.dlmb-d", {}, Object.keys(t.dossiers).join("  ·  "))));
+            el("span.dlmb-d", {}, Object.keys(t.dossiers).map(function (id) { return t.dossiers[id]; }).join("  ·  "))));
       })));
   }
 
@@ -1096,15 +1096,18 @@ window.VUE_PROJETS = (function () {
         el("button.b.or", { type: "button", onclick: function () {
           var d = f.valeurs();
           if (!d.nom || !d.client) { AVIS.refus("Renseignez le client et le nom du projet."); return; }
-          var marqueId;
+          /* Une référence saisie est gardée si aucun autre projet ne la porte ;
+           * sans saisie, la base de référence attribue le numéro suivant. */
+          var marqueId, reference;
+          try { reference = DEPOT.referenceNeuve("PRJ", d.ref); }
+          catch (e) { AVIS.refus(e.message); return; }
           try { marqueId = selMarque.value ? VAULT.admettreMarque(selMarque.value) : null; }
           catch (e) { AVIS.refus(e.message); return; }
-          var p = DEPOT.ajoute("projets", {
-            ref: d.ref || "PRJ-" + String(DEPOT.liste("projets").length + 1).padStart(4, "0"),
+          var p = DEPOT.ajoute("projets", Object.assign(reference, {
             nom: d.nom, nature: choixG, statut: "ouvert", equipe: [],
             sections: { identite: { client: d.client || "", echeance: d.echeance || "", marqueIds: marqueId ? [marqueId] : [] } },
             volets: [], livrables: [],
-          });
+          }));
           PANNEAU.fermer();
           location.hash = "#/projets/" + p.id;
           VAULT.initialiser(function () { APP.rendre(); });
@@ -1156,7 +1159,9 @@ window.VUE_PROJETS = (function () {
         el("div.pj-id", {},
           MARQUE.pastille(p, 44),
           el("div.pj-id-t", {},
-            el("p.studio-date", {}, p.ref + " · " + g.nom),
+            el("p.studio-date", {}, p.ref + " · " + g.nom,
+              p.refDemandee ? [" · ", el("button.studio-lien", { type: "button", onclick: function () { redemander(p, rafraichir); } },
+                "changer la référence demandée")] : null),
             el("h1", {}, p.nom),
             el("p.studio-intro", {}, ident.client || "Client non renseigné"),
             ligneCampagne(p, rafraichir),
@@ -1558,6 +1563,23 @@ window.VUE_PROJETS = (function () {
     var ct = i.decideurId ? DEPOT.trouve("contacts", i.decideurId) : null;
     if (ct) return ct.nom + (ct.role ? "  ·  " + ct.role : "");
     return i.decideur || null;
+  }
+
+  /* Une référence encore provisoire se change : une saisie que la base de
+   * référence refuse, parce qu'un autre projet la porte déjà (REFERENCE_PRISE),
+   * se corrige ici. Vide, la base attribue le numéro suivant du préfixe. Une
+   * référence attribuée ne se change plus. */
+  function redemander(p, rafraichir) {
+    var d = p.refDemandee;
+    PANNEAU.demander("Référence demandée", {
+      label: "Référence", valeur: d.saisie || "", etiquette: p.nom,
+      aide: "Elle est attribuée au prochain enregistrement, si aucun autre projet ne la porte. "
+        + "Laissez vide pour recevoir le numéro suivant (" + (d.prefixe || "PRJ") + "-…).",
+    }, function (v) {
+      try { DEPOT.redemanderReference(p, v); }
+      catch (e) { AVIS.refus(e.message); return; }
+      rafraichir();
+    });
   }
 
   /* Renommer la campagne. Le nom est du dossier, pas d'une section — il n'avait
