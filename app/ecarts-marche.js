@@ -169,7 +169,10 @@ window.ECARTS_MARCHE = (function () {
 
   /* ————————————————————— Le format d'échange ————————————————————— */
 
+  /* Le format d'échange désigne le projet par sa référence (METHODE.md du
+   * Market Expansion System) : une référence encore provisoire n'en sort pas. */
   function exporter(p) {
+    if (p.refDemandee) throw new Error("La référence de « " + (p.nom || p.id) + " » est encore provisoire : l’export des écarts déclarés l’attend.");
     var ecarts = [];
     marches(p).forEach(function (x) {
       var d = x.declaration;
@@ -473,6 +476,7 @@ window.ECARTS_MARCHE = (function () {
   /* ————————————————————— À l'écran ————————————————————— */
 
   function telecharger(p) {
+    if (!DEPOT.exigerReference(p, "L’export des écarts déclarés")) return;
     var texte = JSON.stringify(exporter(p), null, 2);
     var a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([texte], { type: "application/json" }));

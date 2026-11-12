@@ -122,6 +122,96 @@ window.DEPOT = (function () {
     return id;
   }
 
+  /* ————— La référence humaine d'un projet —————
+   *
+   * Décision du propriétaire (12 novembre 2026) : la base de référence attribue
+   * la référence au premier enregistrement. Un projet neuf la demande :
+   *
+   *   refDemandee: { prefixe }           le numéro suivant du préfixe (MT, PRJ)
+   *   refDemandee: { prefixe, saisie }   la référence saisie, si elle est libre
+   *
+   * et `ref` porte en attendant une étiquette provisoire, que tous les écrans
+   * montrent telle quelle (« MT-… (provisoire) »). servir.mjs attribue la
+   * référence, retire la demande et la rend dans son reçu (appliquerReferences).
+   * Une référence attribuée ne change plus. Une référence provisoire ne sort pas
+   * vers le client : le manifeste de remise, l'étude et l'export des écarts
+   * attendent (exigerReference), les documents compilés et la page partagée ne
+   * la montrent pas.
+   *
+   * Sans base de référence — navigateur seul jamais rattaché à un fichier servi,
+   * démonstration, exemple —, la base de ce poste est la référence : il attribue
+   * lui-même, avec la même règle (O.referenceSuivante). Une référence déjà
+   * présente est attribuée. */
+  var PROVISOIRE = " (provisoire)", SAISIE_MAX = 60;
+  function referenceAttribuee(p) {
+    return p && !p.refDemandee && typeof p.ref === "string" && p.ref.trim() ? p.ref : null;
+  }
+  function referencesPrises(sauf) {
+    var prises = new Set();
+    liste("projets").forEach(function (p) {
+      if (!p || p === sauf) return;
+      var r = referenceAttribuee(p);
+      if (r) prises.add(r);
+      if (p.refDemandee && typeof p.refDemandee.saisie === "string") prises.add(p.refDemandee.saisie);
+    });
+    return prises;
+  }
+  /* Sans base de référence : la démonstration, l'exemple, ou une base jamais
+   * rattachée à un fichier servi. Une base déjà rattachée (`etat.reference`)
+   * continue de demander, même quand le serveur ne répond pas au chargement :
+   * attribuer ici ferait deux références pour deux postes. */
+  function sansBaseDeReference() { return !!DEMO || etat.exemple === true || (!fichier && !etat.reference); }
+  function demande(prefixe, saisie, sauf) {
+    if (typeof prefixe !== "string" || !O.PREFIXE_REFERENCE.test(prefixe)) {
+      throw new Error("Préfixe de référence illisible : « " + prefixe + " ».");
+    }
+    var s = typeof saisie === "string" ? saisie.trim() : "";
+    if (s.length > SAISIE_MAX) throw new Error("Une référence tient en " + SAISIE_MAX + " caractères.");
+    var prises = referencesPrises(sauf);
+    if (s && prises.has(s)) throw new Error("La référence « " + s + " » est déjà portée par un autre projet.");
+    if (sansBaseDeReference()) return { ref: s || O.referenceSuivante(prefixe, prises) };
+    return s ? { ref: s + PROVISOIRE, refDemandee: { prefixe: prefixe, saisie: s } }
+      : { ref: prefixe + "-…" + PROVISOIRE, refDemandee: { prefixe: prefixe } };
+  }
+  /* Les champs de référence d'un projet neuf, à poser en tête de l'objet. */
+  function referenceNeuve(prefixe, saisie) { return demande(prefixe, saisie, null); }
+  /* Changer la demande tant qu'elle n'est pas attribuée : une saisie refusée
+   * par le serveur (REFERENCE_PRISE) se corrige ici. Vide, le serveur attribue
+   * le numéro suivant du préfixe. */
+  function redemanderReference(p, saisie) {
+    if (!p || !p.refDemandee) throw new Error("La référence " + (p && p.ref) + " est attribuée : elle ne change plus.");
+    var r = demande(p.refDemandee.prefixe, saisie, p);
+    p.ref = r.ref;
+    if (r.refDemandee) p.refDemandee = r.refDemandee; else delete p.refDemandee;
+    tracer("référence demandée", "projets", p.id, r.refDemandee && r.refDemandee.saisie ? r.refDemandee.saisie : "numéro suivant");
+    enregistrer();
+    return p;
+  }
+  /* Un geste qui sort vers le client attend la référence attribuée. */
+  function exigerReference(p, quoi) {
+    if (!p || !p.refDemandee) return true;
+    if (window.AVIS) AVIS.refus(quoi + " attend la référence de « " + (p.nom || p.id) + " », encore provisoire : la base de référence "
+      + "l’attribue au prochain enregistrement. Réessayez une fois la sauvegarde reçue.");
+    return false;
+  }
+  /* Le reçu du serveur rend les références qu'il vient d'attribuer. On les
+   * pose sur le document envoyé — il devient la base, et doit être ce que le
+   * fichier porte — et sur l'état courant. */
+  function appliquerReferences(recues, envoye) {
+    if (!Array.isArray(recues) || !recues.length) return false;
+    recues.forEach(function (x) {
+      if (!x || typeof x.projet !== "string" || typeof x.ref !== "string") return;
+      [envoye, etat].forEach(function (b) {
+        ((b && b.projets) || []).forEach(function (p) {
+          if (p && p.id === x.projet && p.refDemandee) { p.ref = x.ref; delete p.refDemandee; }
+        });
+      });
+      var p = trouve("projets", x.projet);
+      if (window.AVIS) AVIS.fait("« " + (p && p.nom ? p.nom : x.projet) + " » reçoit sa référence : " + x.ref + ".");
+    });
+    return true;
+  }
+
   function ajoute(type, objet) {
     if (!objet.id) objet.id = type === "projets" ? identifiant("PRO") : O.id(type.slice(0, 3).toUpperCase());
     objet.cree_le = objet.cree_le || new Date().toISOString();
@@ -280,6 +370,11 @@ window.DEPOT = (function () {
    * renommé reste un conflit à trancher, et se dit aussi. */
   var NOMS = { projets: ["le projet", "un autre projet"], livrables: ["le livrable", "un autre livrable"] };
   function departager(base, distant) {
+    /* Une référence attribuée pendant qu'une réponse se perdait : le serveur
+     * l'a écrite, ce poste attendait encore. On la reprend avant tout. */
+    RECONCILIATION.adopterReferences(etat, distant).forEach(function (x) {
+      if (window.AVIS) AVIS.fait("« " + x.nom + " » reçoit sa référence : " + x.ref + ".");
+    });
     if (window.DECISION) {
       var r = DECISION.departager(base, etat, distant);
       r.renommees.forEach(function (x) {
@@ -381,6 +476,8 @@ window.DEPOT = (function () {
       // Derrière La Fusée, ce qui vient d'être attesté revient avec le reçu :
       // le document envoyé et l'état courant le portent avant d'être comparés.
       if (appliquerAttestations(j.attestations, envoye)) ecrire();
+      // Les références attribuées au premier enregistrement reviennent aussi.
+      if (appliquerReferences(j.references, envoye)) ecrire();
       // Le reçu porte le document envoyé, jamais celui qui a pu changer
       // pendant le réseau. Le geste suivant utilise cette nouvelle base.
       poserBase(envoye, j.revision);
@@ -950,6 +1047,8 @@ window.DEPOT = (function () {
 
   return {
     tout: tout, liste: liste, trouve: trouve, ajoute: ajoute, modifie: modifie, retire: retire, identifiant: identifiant,
+    referenceNeuve: referenceNeuve, redemanderReference: redemanderReference, referenceAttribuee: referenceAttribuee,
+    exigerReference: exigerReference,
     tracer: tracer, journal: journal, lu: lu, lectures: lectures,
     charger: charger, enregistrer: enregistrer, exporter: exporter, importer: importer,
     reinitialiser: reinitialiser, surChangement: surChangement,

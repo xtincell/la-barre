@@ -164,12 +164,13 @@ window.VUE_ATTENTES = (function () {
         var cibles = r.l.map(function (y) { return y.ecart && y.ecart.livrable ? y.ecart.livrable.nom : null; })
           .filter(Boolean);
         var projets = {};
-        r.l.forEach(function (y) { if (y.ecart && y.ecart.projet) projets[y.ecart.projet.ref || y.ecart.projet.id] = 1; });
+        /* Par identifiant : deux références provisoires se ressemblent. */
+        r.l.forEach(function (y) { if (y.ecart && y.ecart.projet) projets[y.ecart.projet.id] = y.ecart.projet.ref || y.ecart.projet.id; });
         var li = el("li.du-ligne.f-" + t, {},
           el("div.dul-texte", {},
             el("span.dul-cat", {}, x.critere && x.critere !== x.quoi ? x.quoi : (x.origine || x.source)),
             el("strong", {}, x.critere || x.quoi),
-            el("span.dul-meta", {}, [Object.keys(projets).join(", "),
+            el("span.dul-meta", {}, [Object.keys(projets).map(function (id) { return projets[id]; }).join(", "),
               cibles.length ? cibles.slice(0, 2).join(" · ")
                 + (cibles.length > 2 ? " et " + (cibles.length - 2) + " autres" : "") : null]
               .filter(Boolean).join(" — "))),

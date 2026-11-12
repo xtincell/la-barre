@@ -227,6 +227,9 @@ window.PARTAGE = (function () {
     }
 
     var i = p.sections.identite || {};
+    /* Une référence encore provisoire (`refDemandee`) ne part pas chez le
+     * client : la page la tait plutôt que de montrer une étiquette d'attente. */
+    var ref = p.refDemandee ? null : p.ref;
     var corps = t.doc === "presentation"
       ? el("div.prd-diapos", {}, d.pages.map(function (pg) { return el("div.pr-diapo", {}, VUE_PRESENTATION.page(p, pg)); }))
       : COMPILATEUR.document(COMPILATEUR.compiler(p, t.doc));
@@ -236,13 +239,13 @@ window.PARTAGE = (function () {
         el("div.pt-tete-g", {},
           el("div.pt-doc", {}, nomDoc(t.doc)),
           el("h1", {}, p.nom),
-          el("div.pt-meta", {}, [i.client, p.ref, "à jour au " + O.joli(new Date().toISOString())].filter(Boolean).join(" · "))),
+          el("div.pt-meta", {}, [i.client, ref, "à jour au " + O.joli(new Date().toISOString())].filter(Boolean).join(" · "))),
         el("div.pt-tete-d", {},
           pdf ? el("a.b.or", { href: pdf.chemin, download: nomPdf(p) }, "PDF de la présentation · " + O.joli(String(pdf.quand).slice(0, 10)))
             : t.doc === "presentation" ? el("span.pt-q", {}, "Le PDF de la présentation n'est pas encore publié.") : null,
           el("button.b.nu", { type: "button", onclick: function () { window.print(); } }, "Imprimer ce document"))),
       el("main.pt-corps", {}, corps),
-      el("footer.pt-pied", {}, "Document compilé par LA BARRE depuis le dossier " + (p.ref || "") + ".")));
+      el("footer.pt-pied", {}, "Document compilé par LA BARRE depuis le dossier " + (ref || "") + ".")));
   }
 
   return { DOCS: DOCS, creer: creer, revoquer: revoquer, lien: lien, trouver: trouver, bloc: bloc, page: page, de: de };

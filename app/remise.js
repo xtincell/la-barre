@@ -182,6 +182,8 @@ window.REMISE = (function () {
   /* ————————————————————— Le manifeste, à l'écran ————————————————————— */
 
   function ouvrir(p) {
+    /* Le manifeste part chez le client : il attend la référence attribuée. */
+    if (!DEPOT.exigerReference(p, "Le paquet de remise")) return;
     var L = lot(p);
     if (!L.total) { AVIS.refus("Aucun livrable approuvé : la remise vient après le verdict."); return; }
 
@@ -228,6 +230,7 @@ window.REMISE = (function () {
   /* Le manifeste part par le presse-papier : le produit n'envoie rien, il
    * écrit. C'est la même règle que le renvoi depuis le premier jour. */
   function copier(p, L) {
+    if (!DEPOT.exigerReference(p, "Le manifeste de remise")) return;
     var lignes = ["MANIFESTE DE REMISE", p.ref + " · " + p.nom,
       "composé le " + O.joli(new Date().toISOString()), ""];
     L.pieces.forEach(function (x) {
