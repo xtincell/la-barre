@@ -10,7 +10,7 @@ async function atelier(ps = [projet('A', piste('a')), projet('B', piste('b'))]) 
   let sequence = 0, saves = 0;
   const data = { campagnes: [{ id: 'C-test', nom: 'Campagne de recette' }], projets: ps, decisions: [], journal: [] };
   const publications = [];
-  const ctx = vm.createContext({ Date, console, O: { el() {}, id: prefix => prefix + (++sequence) }, MAISON: { titulaire: 'creation' },
+  const ctx = vm.createContext({ Date, console, O: { el() {}, id: prefix => prefix + (++sequence), aleatoire: n => String(++sequence).padStart(n, '0') }, MAISON: { titulaire: 'creation' },
     ACTEUR: { trace: () => ({ personneId: 'P-recette', poste: 'creation' }) },
     DEPOT: { liste: key => data[key] || [], trouve: (key, id) => (data[key] || []).find(x => x.id === id),
       ajoute(key, value) { const row = { id: 'D-' + (++sequence), ...value }; data[key].push(row); publications.push(copy(data)); return row; },
@@ -144,7 +144,7 @@ test('deux choix concurrents ne fusionnent pas en un choix implicite ; leurs deu
   const origin = await atelier(), base = copy(origin.data);
   const a = await atelier(), b = await atelier();
   a.ctx.CAMPAGNE.designerReference('C-test', 'A', 'a', 'Choix A', a.ctx.CAMPAGNE.reference('C-test').revision);
-  b.ctx.O.id = () => 'DEC-b';
+  b.ctx.O.aleatoire = n => 'b'.repeat(n);
   b.ctx.CAMPAGNE.designerReference('C-test', 'B', 'b', 'Choix B', b.ctx.CAMPAGNE.reference('C-test').revision);
   vm.runInContext(await readFile(new URL('../app/reconciliation.js', import.meta.url), 'utf8'), origin.ctx);
   const merge = origin.ctx.RECONCILIATION.reconcilier(base, a.data, b.data);

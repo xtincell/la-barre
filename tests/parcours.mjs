@@ -99,10 +99,28 @@ try {
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Pas de débordement ${route} à ${width}px`);
     }
   }
+  // La décision rendue plus haut porte le code de ce poste, tiré par crypto et
+  // gardé dans le navigateur. Réimporter la base ne double aucune décision ;
+  // une décision d'un autre poste sous le même identifiant est renommée et tracée.
+  const unicite = await page.evaluate(() => {
+    const avant = DEPOT.liste('decisions').map(d => d.id);
+    const fichier = JSON.parse(JSON.stringify(DEPOT.tout()));
+    const d = fichier.decisions[fichier.decisions.length - 1];
+    fichier.decisions.push({ ...d, titre: 'Vue par un autre poste', motif: 'Approuvée ailleurs' });
+    const r = DEPOT.importer(JSON.stringify(fichier)).decisions;
+    return { avant, apres: DEPOT.liste('decisions').map(x => x.id), poste: localStorage.getItem('la-barre-poste'), r,
+      trace: DEPOT.journal().some(e => e.action === 'renommage' && e.id === r.renommees[0].vers) };
+  });
+  assert.equal(unicite.avant.length, 1);
+  assert.match(unicite.avant[0], /^DEC-[0-9a-z]{4}-[0-9a-z]{12}$/);
+  assert.equal(unicite.avant[0].split('-')[1], unicite.poste);
+  assert.equal(unicite.r.deja, 1); assert.equal(unicite.r.renommees.length, 1);
+  assert.deepEqual(unicite.apres, [unicite.avant[0], unicite.r.renommees[0].vers]);
+  assert.ok(unicite.trace, 'le renommage est au journal');
   await page.evaluate(() => { DEPOT.reinitialiser(); location.hash = '#/bureau'; APP.rendre(); });
   await page.getByRole('button', { name:'Créer mon premier projet', exact:true }).waitFor();
   assert.deepEqual(errors, []);
-  console.log('PASS — revue, verdict persistant, retours distincts, recherche, création, 9 routes, clavier, 3 formats, base vide.');
+  console.log('PASS — revue, verdict persistant, retours distincts, recherche, création, 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
 } finally {
   if (browser) await browser.close();
   await new Promise(r => server.close(r));

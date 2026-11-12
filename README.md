@@ -189,7 +189,19 @@ toutes les profondeurs, sans espace — de tous les autres champs servis.
 
 Une décision sans identifiant, ou dont l'identifiant est pris deux fois, n'est
 pas servie : elle est nommée dans `ecartees`, pour que le lecteur ne la prenne
-pas pour une décision retirée.
+pas pour une décision retirée. La Barre ne laisse plus naître un tel doublon
+(voir « Un identifiant, une décision » plus bas) ; la route garde ce refus pour
+une base écrite autrement, par un ancien poste ou directement dans le fichier.
+
+**Identifiants.** Une décision neuve porte `DEC-<poste>-<douze caractères>`,
+par exemple `DEC-k3f9-0a1b2c3d4e5f` ; les décisions déjà prises gardent leur
+`DEC-` et six caractères. Le contrat de la route ne change pas : `id` reste une
+chaîne opaque — Radar l'accepte jusqu'à 200 caractères —, la clé de reçu reste
+l'instance La Barre et `decision.id`, et aucune décision déjà enregistrée n'est
+renommée, donc son `empreinte_contenu` ne bouge pas. Une décision renommée parce
+que son identifiant était pris ne l'a jamais été dans la base de référence :
+Radar ne l'a jamais lue sous l'ancien. Le champ `renommage` qui en garde la
+trace n'est pas servi.
 
 La route ne ferme qu'elle-même. Le reste de `servir.mjs` reste sans
 authentification : une installation qui l'ouvre à Radar n'expose que
@@ -279,7 +291,7 @@ nom au pied du rail :
 **Le registre des décisions.** Une décision rejoint la collection `decisions`
 par un seul chemin, `app/decision.js` : verdict parmi quatre (`approuve`,
 `reserve`, `retour`, `hors`), motif écrit hors approbation, date, identifiant
-libre. Elle se rattache à un projet, à une campagne ou à une marque. Passent
+unique entre postes. Elle se rattache à un projet, à une campagne ou à une marque. Passent
 par lui : la big idea, la piste ou l'idée retenue ou écartée, la référence
 commune d'une campagne, le verdict sur un document, un livrable ou une pièce
 en revue, le concept écarté de la réserve d'une marque, le brief accepté ou
@@ -294,7 +306,8 @@ registre portent aussi `acteur`, l'acteur du poste ci-dessus. Derrière La
 Fusée, toute décision nouvelle porte en plus son `attestation`. Les six autres
 écrivains d'origine (big idea retenue, idée tranchée, piste retenue sur deux
 écrans, livrable jugé, pièce jugée en revue) ne le recopient pas dans la
-décision : leur forme stockée est figée par `tests/decisions.test.mjs`.
+décision : leur forme stockée est figée par `tests/decisions.test.mjs`, hors
+la forme de l'identifiant.
 
 Une déviation s'écarte d'une décision ou du plan : un projet qui garde sa
 propre piste alors qu'une référence commune est désignée, une case de la
@@ -305,6 +318,51 @@ l'objet visé, relu dans la base ; sinon la décision est refusée et rien n'est
 écrit. L'écart d'un projet de campagne se déclare depuis l'écran de la
 campagne, sous la référence commune ; il fait taire le contrôle « piste propre
 alors que … gouverne la campagne » pour ce seul projet.
+
+**Un identifiant, une décision.** Plusieurs postes écrivent dans la même base
+de référence, et Radar reconnaît une décision à son identifiant. Une décision
+neuve porte donc le code du poste qui l'a tirée — quatre caractères, tirés une
+fois et gardés dans le `localStorage` de ce navigateur sous `la-barre-poste` —
+et douze caractères tirés par `crypto.getRandomValues` (`Math.random` à défaut) :
+`DEC-k3f9-0a1b2c3d4e5f`. La démonstration ne garde pas ce code : il vit le temps
+de la page. La fabrique refuse toujours un identifiant que la base locale porte
+déjà. Si deux décisions se rencontrent malgré tout sous un même identifiant,
+rien ne se perd en silence :
+
+- *Au rapprochement*, quand ce poste relit la base de référence (sauvegarde
+  refusée en 409, relecture, reprise d'un brouillon), une décision de ce poste
+  absente de la dernière base reçue, dont l'identifiant y est pris par une autre
+  décision, est renommée avant de rapprocher (`DECISION.departager`). Celle de la
+  base de référence garde le sien. Ce qui la cite dans ce poste la suit —
+  `remplace`, la référence d'une campagne, le journal, un écart écarté — et elle
+  porte `renommage` (`de`, `le`, `raison`). Le journal reçoit une ligne
+  « renommage », l'écran le dit. Une décision attestée par La Fusée, ou citée par
+  une version de bilan arrêtée, ne se renomme pas : son sceau ou son empreinte
+  ne tiendrait plus. Elle reste un conflit à trancher dans Réglages →
+  « Rapprocher les modifications », et l'écran le dit : le serveur refuse
+  qu'elle remplace la décision enregistrée, et exporter la base la garde. Le
+  rapprochement ne fond jamais deux décisions en une : sans renommage, la
+  décision entière est à choisir.
+- *À l'import*, les décisions du fichier passent par la fabrique
+  (`DECISION.admettre`). Elles reçoivent la garde du geste : forme, verdict,
+  date, motif, rattachement, forme d'une déviation. Ce qu'une déviation affirme
+  de la base — la référence existe, la portée est le niveau de l'objet — se
+  relit au moment du geste et ne se rejoue pas : le livrable visé a pu
+  disparaître depuis. Chaque décision admise garde sa forme octet pour octet,
+  donc son empreinte pour Radar. Le registre courant reste : aucune décision
+  n'est retirée ni remplacée par l'import, celles que le fichier porte à
+  l'identique ne sont pas doublées, les autres s'ajoutent après, dans l'ordre du
+  fichier. Un identifiant que le registre porte pour une autre décision, pris
+  deux fois dans le fichier, ou absent, se renomme et se trace ; ce que le
+  fichier citait de la décision renommée la suit, sauf si la citation est
+  ambiguë (deux décisions du fichier sous le même identifiant : elle reste sur
+  la première). Une seule faute refuse l'import entier, sans rien écrire : une
+  décision qui ne passe pas la garde, une décision attestée qu'il faudrait
+  renommer, une décision citée par une version de bilan arrêtée. L'écran dit ce
+  qui a été ajouté, retrouvé et renommé.
+- *À l'écriture*, `servir.mjs` refuse une base qui ferait porter un même
+  identifiant à deux décisions, ou remplacerait une décision enregistrée (voir
+  « Dans un fichier »).
 
 **Les écarts du relevé.** Ce qu'on me doit se calcule, il ne se saisit pas
 (`app/ecarts.js`) : un livrable qui ne tient pas le brief, une plateforme
@@ -434,10 +492,17 @@ une seconde après le dernier geste. Le `localStorage` reste un filet.
 - Le serveur contrôle puis remplace le fichier dans une seule section critique.
   Une réponse perdue peut être redemandée avec le même corps. Un JSON illisible
   n'écrase jamais la base.
+- Le serveur refuse (422) une base qui ferait porter un même identifiant à
+  deux décisions (`DECISION_EN_DOUBLE`), ou qui remplacerait une décision
+  enregistrée par une autre sous le même identifiant (`DECISION_REMPLACEE`).
+  La base reste telle quelle. Le contenu se compare sans l'`attestation` de La
+  Fusée et sans dépendre de l'ordre des clés ; une base qui porte déjà un
+  doublon reste inscriptible, seul ce que l'écriture ajoute est refusé.
 - Cette garantie porte sur un seul processus serveur. Écrire le fichier
   directement, ou lancer plusieurs processus sur le même fichier, contourne ce
   protocole. `outils/ingerer-corpus.mjs --ecrire` écrit ainsi
-  `depots/beignet-paradise.json`.
+  `depots/beignet-paradise.json` ; il n'écrit aucune décision, et vérifie avant
+  d'écrire que la collection repart telle qu'il l'a lue.
 - Deux modifications sur des champs différents se réunissent. Deux valeurs du
   même champ demandent un choix : Ressources → Paramètres → « Rapprocher les
   modifications ».
@@ -451,9 +516,12 @@ une seconde après le dernier geste. Le `localStorage` reste un filet.
 **Export et import.** Le bouton de sauvegarde, en bas de la barre latérale, et
 « Exporter la base » (Ressources → Paramètres) téléchargent la base en JSON
 (`la-barre_<date>_<heure>.json`). Ils fonctionnent dans tous les modes.
-« Importer un fichier » remplace la base par le fichier choisi. Un fichier d'un
-schéma plus récent que 5 est refusé ; un plus ancien est migré. Avec un fichier
-servi, la base importée est ensuite sauvegardée dans ce fichier.
+« Importer un fichier » remplace la base par le fichier choisi, sauf le registre
+des décisions, qui garde ce qu'il porte : une décision prise ne se retire pas
+par un import. Un fichier d'un schéma plus récent que 5 est refusé ; un plus
+ancien est migré. Avec un fichier servi, la base importée est ensuite
+sauvegardée dans ce fichier. Les décisions du fichier passent par la fabrique
+(`DECISION.admettre`) : voir « Un identifiant, une décision ».
 
 `depots/*.json` et `assets/` sont exclus de Git (`.gitignore`) et de l'image.
 
@@ -520,7 +588,7 @@ Les scripts de `package.json` :
 | `npm run test:manuel` | `node --test tests/saisie-manuelle.test.mjs tests/acteur.test.mjs tests/formulaire.test.mjs tests/lecture-dependances.test.mjs` |
 | `npm run test:marches` | `node --test tests/marches.test.mjs tests/grille.test.mjs tests/ecarts-marche.test.mjs tests/hors-ecart.test.mjs` |
 | `npm run test:provenances` | `node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs` |
-| `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs tests/attestation.test.mjs` |
+| `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs tests/decisions-unicite.test.mjs tests/attestation.test.mjs` |
 | `npm run test:bilan` | `node --test tests/bilan-preuves.test.mjs tests/bilan-campagne.test.mjs` |
 | `npm run test:radar` | `node --test tests/radar-decisions.test.mjs` |
 | `npm run test:vitrine` | `node --test tests/vitrine.test.mjs` |
@@ -547,6 +615,19 @@ un navigateur installé). La CI ne le lance pas.
   vers Radar.
 - **Un registre des projets sans source dans le dépôt.** Le registre des
   projets se lit dans la base, mais aucun outil du dépôt ne le remplit.
+- **L'unicité ne vaut que pour les décisions.** Les autres objets (projets,
+  livrables, retours…) gardent un préfixe et six caractères tirés par
+  `Math.random`, sans contrôle entre postes ; le rapprochement les réunit par
+  identifiant. Un poste dont le navigateur efface ses données tire un nouveau
+  code, et deux postes peuvent tirer le même code : les douze caractères les
+  séparent encore. Un renommage ne réécrit qu'une citation mot pour mot :
+  `revisionSource`, l'état relu au moment d'une désignation de référence, garde
+  l'ancien identifiant dans son texte. Le refus du serveur ne couvre que les
+  écritures par `PUT` : un fichier écrit directement, comme le fait
+  `outils/ingerer-corpus.mjs --ecrire`, ne passe pas par lui. Une décision
+  ancienne qui ne passerait pas la garde de la fabrique (verdict hors des
+  quatre, date non ISO, motif absent d'un refus) fait refuser l'import de son
+  fichier : elle se corrige dans le fichier, l'application ne la réécrit pas.
 - **Un écart écarté ne se lit que dans Retours attendus.** La planche des KV
   et la route d'une piste lisent la conformité du KV directement : un
   manquement écarté y reste affiché comme manquement. Aucun écran ne montre le

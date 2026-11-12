@@ -127,6 +127,11 @@ const MASTERS_HISTORIQUES = IDX_MASTER_TOUT.length - IDX_MASTER.length;
 const IDX_KV = csv(join(CORPUS, "03 KEY VISUALS PAR MARQUE/_INDEX.csv"));
 
 const depot = JSON.parse(readFileSync(DEPOT, "utf8"));
+/* L'ingestion n'écrit aucune décision. Une décision rejoint le registre par la
+ * fabrique (app/decision.js) : un geste dans l'application, ou l'import d'une
+ * base. La collection lue ici repart telle quelle, et on le vérifie avant
+ * d'écrire. */
+const DECISIONS_LUES = JSON.stringify(depot.decisions);
 
 /* ————————————————————— Le rapport —————————————————————
  *
@@ -980,6 +985,10 @@ depot.radar_releve_le = MAINTENANT;
 depot.schema = 4;
 depot.enregistre_le = MAINTENANT;
 depot.machine = "ingestion corpus Xtincell";
+if (JSON.stringify(depot.decisions) !== DECISIONS_LUES) {
+  console.error("  ÉCHEC — la passe a touché au registre des décisions : l'ingestion n'écrit aucune décision. Rien n'est écrit.");
+  process.exit(1);
+}
 writeFileSync(DEPOT, JSON.stringify(depot, null, 1));
 
 const ko = Math.round(Buffer.byteLength(JSON.stringify(depot)) / 1024);

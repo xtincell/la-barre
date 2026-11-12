@@ -53,12 +53,21 @@ function memoire() {
     removeItem: k => m.delete(k), clear: () => m.clear() };
 }
 
+/* Le hasard de crypto, figé lui aussi : les identifiants de décision y sont
+ * tirés (app/outils.js, O.aleatoire). Les empreintes gardent le vrai
+ * crypto.subtle. */
+function cryptoFige(graine) {
+  const tirage = hasard(graine);
+  return { subtle: webcrypto.subtle,
+    getRandomValues(a) { for (let i = 0; i < a.length; i++) a[i] = Math.floor(tirage() * 256); return a; } };
+}
+
 async function bac() {
   const Date = horloge();
   const refus = [];
   const sandbox = {
     console, Date, Math: Object.create(Math, { random: { value: hasard(2027) } }),
-    crypto: webcrypto, TextEncoder, Uint8Array,
+    crypto: cryptoFige(2028), TextEncoder, Uint8Array,
     location: { protocol: 'http:', hash: '', hostname: 'localhost', pathname: '/vitrine/demo/' },
     navigator: { platform: 'Démonstration' }, localStorage: memoire(), sessionStorage: memoire(),
     setTimeout: () => 0, clearTimeout() {},

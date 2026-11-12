@@ -164,6 +164,23 @@ window.O = (function () {
     return prefixe + "-" + Math.random().toString(36).slice(2, 8);
   }
 
+  /* Des caractères tirés au hasard, en base 36 — pour un identifiant qui doit
+   * rester unique entre postes (decision.js). Le hasard vient de crypto, que
+   * tout navigateur fournit, même hors connexion sécurisée ; Math.random n'est
+   * pris qu'à défaut. Un octet au-delà de 251 est rejeté : 252 = 7 × 36, et
+   * chaque caractère garde la même chance. On ne tire que ce qui manque : aucun
+   * octet accepté n'est jeté. */
+  function aleatoire(n) {
+    var c = window.crypto, sur = !!c && typeof c.getRandomValues === "function", s = "";
+    while (s.length < n) {
+      var octets = new Uint8Array(n - s.length);
+      if (sur) c.getRandomValues(octets);
+      else for (var i = 0; i < octets.length; i++) octets[i] = Math.floor(Math.random() * 256);
+      for (var j = 0; j < octets.length; j++) if (octets[j] < 252) s += (octets[j] % 36).toString(36);
+    }
+    return s;
+  }
+
   function poste(cle) {
     var t = null;
     MAISON.postes.forEach(function (p) { if (p.cle === cle) t = p; });
@@ -207,7 +224,7 @@ window.O = (function () {
     el: el, vider: vider, sortir: sortir, arrive: arrive,
     resoudrePartout: resoudrePartout, jour: jour, joli: joli, jolieHeure: jolieHeure,
     depuis: depuis, ancien: ancien, semaine: semaine, auj: auj, jourCourt: jourCourt,
-    id: id, poste: poste, jeton: jeton, normalise: normalise, contient: contient,
+    id: id, aleatoire: aleatoire, poste: poste, jeton: jeton, normalise: normalise, contient: contient,
     milliers: milliers, decimal: decimal,
     langue: langue,
   };

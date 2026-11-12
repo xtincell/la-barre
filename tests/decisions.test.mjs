@@ -23,16 +23,30 @@ test('la capture couvre les huit écrivains, chacun avec au moins une décision'
   }
 });
 
+/* L'identifiant d'une décision a changé de forme : préfixe, code du poste et
+ * douze caractères tirés au hasard, pour qu'il reste unique entre postes. Tout
+ * le reste est comparé tel quel, chaque identifiant de décision remplacé par
+ * son rang — y compris là où la base le cite : journal, référence, remplace,
+ * et l'empreinte textuelle d'une désignation (revisionSource). */
+const ANCIENNE = /^DEC-[0-9a-z]{6}$/, NEUVE = /^DEC-[0-9a-z]{4}-[0-9a-z]{12}$/;
+function parRang(r) {
+  const rangs = r.decisions.map((d, i) => [d.id, '«décision ' + (i + 1) + '»']);
+  return JSON.parse(JSON.stringify(r, (k, v) => (typeof v === 'string'
+    ? rangs.reduce((t, [id, rang]) => t.split(id).join(rang), v) : v)));
+}
+
 for (const nom of Object.keys(ECRIVAINS)) {
   test(`${nom} : la décision est celle d'avant la fabrique, champ pour champ et dans le même ordre`, async () => {
     const avant = capture.ecrivains[nom], apres = await rejouer(APP, nom);
     assert.deepEqual(apres.refus, []);
+    for (const d of avant.decisions) assert.match(d.id, ANCIENNE);
+    for (const d of apres.decisions) assert.match(d.id, NEUVE);
     /* La chaîne JSON compare aussi l'ordre des champs : c'est ce qui part
      * dans le fichier, et ce qu'un relevé lirait. */
-    assert.equal(JSON.stringify(apres.decisions), JSON.stringify(avant.decisions));
-    assert.deepEqual(apres.decisions.map(d => typeof d.id), avant.decisions.map(() => 'string'));
+    const a = parRang(apres), b = parRang(avant);
+    assert.equal(JSON.stringify(a.decisions), JSON.stringify(b.decisions));
     /* Et le reste de la base n'a pas bougé : journal, pièce jugée, sauvegarde. */
-    assert.equal(JSON.stringify(apres.base), JSON.stringify(avant.base));
+    assert.equal(JSON.stringify(a.base), JSON.stringify(b.base));
   });
 }
 
@@ -50,12 +64,16 @@ test('la capture est bien ce qu’écrivait origin/main', { skip: sha ? false : 
 
 /* ————— La fabrique elle-même ————— */
 
+/* Le hasard de la fabrique est figé : le code du poste est déjà gardé dans ce
+ * navigateur, et chaque tirage rend la suite donnée, puis un compteur. */
 function fabrique({ decisions = [], tirages = [], projets = [], campagnes = [] } = {}) {
   const data = { decisions: copie(decisions), projets: copie(projets), campagnes: copie(campagnes) };
   const ajouts = [];
   let n = 0;
+  const stockage = new Map([['la-barre-poste', 'p0st']]);
   const ctx = vm.createContext({ Date, console,
-    O: { id: prefixe => (n < tirages.length ? tirages[n++] : prefixe + '-' + String(++n).padStart(6, '0')) },
+    localStorage: { getItem: k => (stockage.has(k) ? stockage.get(k) : null), setItem: (k, v) => stockage.set(k, String(v)) },
+    O: { aleatoire: () => (n < tirages.length ? tirages[n++] : String(++n).padStart(12, '0')) },
     DEPOT: { liste: k => data[k] || [], trouve: (k, id) => (data[k] || []).find(x => x && x.id === id) || null,
       ajoute(k, d) { ajouts.push(k); d.cree_le = d.cree_le || new Date().toISOString(); data[k].push(d); return d; } },
   });
@@ -67,16 +85,17 @@ const champs = extra => ({ objet: 'L-1', type: 'livrable', projet: 'P-1', verdic
   quand: '2026-11-10T09:00:00.000Z', qui: 'creation', titre: 'Livrable', ...extra });
 
 test('un identifiant déjà pris dans la base locale est retiré, jamais réutilisé', () => {
-  const f = fabrique({ decisions: [{ id: 'DEC-aaaaaa' }, { id: 'DEC-bbbbbb' }], tirages: ['DEC-aaaaaa', 'DEC-bbbbbb', 'DEC-cccccc'] });
+  const f = fabrique({ decisions: [{ id: 'DEC-p0st-aaaaaaaaaaaa' }, { id: 'DEC-p0st-bbbbbbbbbbbb' }],
+    tirages: ['aaaaaaaaaaaa', 'bbbbbbbbbbbb', 'cccccccccccc'] });
   const d = f.D.poser(champs());
-  assert.equal(d.id, 'DEC-cccccc');
+  assert.equal(d.id, 'DEC-p0st-cccccccccccc');
   assert.equal(f.tirages, 3);
-  assert.deepEqual(f.data.decisions.map(x => x.id), ['DEC-aaaaaa', 'DEC-bbbbbb', 'DEC-cccccc']);
+  assert.deepEqual(f.data.decisions.map(x => x.id), ['DEC-p0st-aaaaaaaaaaaa', 'DEC-p0st-bbbbbbbbbbbb', 'DEC-p0st-cccccccccccc']);
   assert.equal(new Set(f.data.decisions.map(x => x.id)).size, 3);
 });
 
 test('après soixante-quatre tirages tous pris, la fabrique refuse au lieu d’écraser', () => {
-  const f = fabrique({ decisions: [{ id: 'DEC-aaaaaa' }], tirages: Array(70).fill('DEC-aaaaaa') });
+  const f = fabrique({ decisions: [{ id: 'DEC-p0st-aaaaaaaaaaaa' }], tirages: Array(70).fill('aaaaaaaaaaaa') });
   assert.throws(() => f.D.poser(champs()), { name: 'DecisionRefusee', message: /Aucun identifiant de décision libre après 64 tirages/ });
   assert.equal(f.tirages, 64);
   assert.deepEqual(f.ajouts, []);
@@ -165,25 +184,32 @@ test('les quatre verdicts du contrat sont ceux que l’écran propose', async ()
 
 test('rien d’autre que la fabrique n’écrit dans la collection des décisions', async () => {
   const fichiers = [];
-  const lister = async dossier => {
+  const lister = async (dossier, ext) => {
     for (const e of await readdir(dossier, { withFileTypes: true })) {
-      if (e.isDirectory()) await lister(join(dossier, e.name));
-      else if (e.name.endsWith('.js')) fichiers.push(join(dossier, e.name));
+      if (e.isDirectory()) await lister(join(dossier, e.name), ext);
+      else if (e.name.endsWith(ext)) fichiers.push(join(dossier, e.name));
     }
   };
-  await lister(APP);
+  /* L'application, et les outils qui écrivent une base : l'ingestion du corpus
+   * et la base fictive de la démonstration. */
+  const RACINE = join(APP, '..');
+  await lister(APP, '.js');
+  await lister(join(RACINE, 'outils'), '.mjs');
+  const nom = f => f.slice(RACINE.length + 1).replace(/^app\//, '');
   const ecritures = [];
   for (const f of fichiers) {
     const texte = await readFile(f, 'utf8');
     for (const motif of [/ajoute\(\s*["'`]decisions["'`]/g, /decisions["'`]?\]?\)?\s*\.(push|unshift|splice)\(/g, /\.decisions\s*=\s*(?!\[\])/g]) {
-      for (const m of texte.matchAll(motif)) ecritures.push(f.slice(APP.length) + ' : ' + m[0]);
+      for (const m of texte.matchAll(motif)) ecritures.push(nom(f) + ' : ' + m[0]);
     }
   }
-  assert.deepEqual(ecritures, ['decision.js : ajoute("decisions"']);
+  /* Deux écritures, toutes deux dans la fabrique : le geste qui ajoute une
+   * décision, et l'import qui admet celles d'un fichier dans le registre. */
+  assert.deepEqual(ecritures, ['decision.js : ajoute("decisions"', 'decision.js : .decisions = ']);
   const appels = [];
   for (const f of fichiers) {
-    const n = ((await readFile(f, 'utf8')).match(/DECISION\.(poser|ajouter)\(/g) || []).length;
-    if (n) appels.push(f.slice(APP.length) + ':' + n);
+    const n = ((await readFile(f, 'utf8')).match(/DECISION\.(poser|ajouter|admettre|departager)\(/g) || []).length;
+    if (n) appels.push(nom(f) + ':' + n);
   }
   /* Les huit écrivains d'origine, plus les gestes de choix qui écrivaient leur
    * objet sans décision : écarter une piste ou une proposition de big idea,
@@ -191,9 +217,19 @@ test('rien d’autre que la fabrique n’écrit dans la collection des décision
    * une case de la composition, déclarer l'écart d'un projet de campagne,
    * clore le bilan d'une campagne, trancher une adaptation hors de l'écart
    * déclaré de son marché (corriger l'écart déclaré ou l'adaptation), et
-   * écarter un écart du relevé ou le reprendre. */
-  assert.deepEqual(appels.sort(), ['bigidea-ecoles.js:2', 'campagne.js:4', 'concepts.js:1', 'ecarts-marche.js:2', 'ecarts.js:2', 'validation.js:1', 'vue-atelier.js:1',
-    'vue-bigidea.js:1', 'vue-brief.js:1', 'vue-livrable.js:1', 'vue-revue.js:1', 'vue-route.js:2']);
+   * écarter un écart du relevé ou le reprendre. Le dépôt, lui, passe par la
+   * fabrique à deux endroits : l'import d'une base (`admettre`) et le
+   * rapprochement avec la base de référence (`departager`). La base fictive de
+   * la démonstration est écrite par les mêmes gestes. L'ingestion du corpus
+   * n'écrit aucune décision : elle rend la collection telle qu'elle l'a lue. */
+  assert.deepEqual(appels.sort(), ['bigidea-ecoles.js:2', 'campagne.js:4', 'concepts.js:1', 'depot.js:2', 'ecarts-marche.js:2', 'ecarts.js:2',
+    'outils/vitrine-base.mjs:8', 'validation.js:1', 'vue-atelier.js:1', 'vue-bigidea.js:1', 'vue-brief.js:1', 'vue-livrable.js:1', 'vue-revue.js:1', 'vue-route.js:2']);
+  /* Le dépôt n'y passe que par ces deux portes : ni ajout, ni affectation. */
+  const depot = await readFile(join(APP, 'depot.js'), 'utf8');
+  assert.match(depot, /DECISION\.admettre\(lu, etat\)/);
+  assert.match(depot, /DECISION\.departager\(/);
+  const corpus = await readFile(join(RACINE, 'outils', 'ingerer-corpus.mjs'), 'utf8');
+  assert.match(corpus, /n'écrit aucune décision/);
 });
 
 test('aucun module ne déclare deux fois la même fonction : la seconde remplacerait la première en silence', async () => {
