@@ -36,8 +36,8 @@ d'attendre.
 **Voir sans installer.** La vitrine, `vitrine/index.html`, raconte ce parcours
 sur une marque inventée, Orvelle Zeste, et ouvre une démonstration :
 l'application elle-même, sur une base fictive, qui ne lit ni n'écrit aucune
-base réelle. Voir [La vitrine](#la-vitrine) et
-[docs/VITRINE.md](docs/VITRINE.md).
+base réelle. Elle est publiée sur https://la-barre-vitrine.powerupgraders.com.
+Voir [La vitrine](#la-vitrine) et [docs/VITRINE.md](docs/VITRINE.md).
 
 ## L'application
 
