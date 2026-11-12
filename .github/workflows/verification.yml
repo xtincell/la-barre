@@ -29,6 +29,8 @@ jobs:
       - run: node --test tests/approches.test.mjs
       - run: node --test tests/entreprise.test.mjs
       - run: npm run test:radar
+      - run: node outils/vitrine-base.mjs --check
+      - run: npm run test:vitrine
   image-entreprise:
     needs: verification
     runs-on: ubuntu-latest

@@ -107,7 +107,7 @@ window.DEMANDE = (function () {
     var neuf = !d;
     d = d || { etat: "brouillon", etage: 1, criteres: [], interdits: [], latitude: [], entrees: [] };
 
-    var titre = el("input", { type: "text", placeholder: "Proposition créative — lancement Beignet Paradise" });
+    var titre = el("input", { type: "text", placeholder: "Proposition créative — lancement de la marque" });
     titre.value = d.titre || "";
 
     /* 1 · Le DA */

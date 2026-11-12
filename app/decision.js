@@ -25,8 +25,11 @@
  * D'autres gestes de choix écrivaient leur objet sans décision. Ils passent
  * désormais par ici : écarter une piste depuis sa route ou une proposition de
  * big idea, écarter un concept de la réserve d'une marque, accepter ou
- * retourner un brief, écarter une case de la composition d'une campagne et
- * déclarer l'écart d'un projet à la référence commune. Leur forme suit celle
+ * retourner un brief, écarter une case de la composition d'une campagne,
+ * déclarer l'écart d'un projet à la référence commune, et trancher une
+ * adaptation hors de l'écart déclaré de son marché — corriger l'écart déclaré
+ * (`ecart-marche`, une déviation de portée projet) ou corriger l'adaptation
+ * (`hors-ecart`, un retour motivé sur le livrable). Leur forme suit celle
  * des huit premiers, avec `acteur`. Clore le bilan d'une campagne en est un
  * aussi : la décision `bilan-campagne` désigne la version arrêtée (`objet`,
  * l'identité du bilan ; `version` ; `empreinte`). Une décision se rattache
@@ -90,6 +93,9 @@ window.DECISION = (function () {
     "reference-campagne": { quoi: "la référence commune", rattache: "campagne" },
     composition: { quoi: "la composition de l'occasion", rattache: "campagne" },
     recevabilite: { quoi: "la recevabilité du brief", rattache: "projet" },
+    /* L'écart déclaré au cadrage pour un marché du projet, corrigé en revue
+     * parce qu'une adaptation en sortait (ecarts-marche.js). */
+    "ecart-marche": { quoi: "l'écart déclaré du marché", rattache: "projet" },
   };
 
   function refus(message) {

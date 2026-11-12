@@ -20,6 +20,10 @@ window.IMAGE = (function () {
   var QUALITE = 0.72;
   var DOSSIER = "assets/review/vignettes/";
 
+  /* La démonstration n'envoie aucun fichier : elle n'a pas de disque. */
+  var DEMO_REFUS = "la démonstration n'enregistre aucun fichier : ses visuels sont fictifs et rien ne part au serveur";
+  function demonstration() { return !!(window.DEPOT && DEPOT.estDemonstration && DEPOT.estDemonstration()); }
+
   /* Ouvre le sélecteur, redimensionne, rend une donnée compacte. Cette donnée
    * sert à l'aperçu immédiat ; c'est « ranger » qui la pose sur le disque. */
   function choisir(apres) {
@@ -68,6 +72,7 @@ window.IMAGE = (function () {
     if (!donnee) { apres(null, "aucune image"); return; }
     if (estFichier(donnee)) { apres(donnee, null); return; }
 
+    if (demonstration()) { apres(null, DEMO_REFUS); return; }
     if (location.protocol === "file:" || !window.fetch) {
       apres(null, "l'application est ouverte par double-clic : elle ne peut rien "
         + "écrire sur le disque. Sers-la par « node servir.mjs » pour poser un visuel.");
@@ -310,6 +315,7 @@ window.IMAGE = (function () {
   }
 
   function monter(chemin, donnee, apres, siRefus) {
+    if (demonstration()) { AVIS.refus(DEMO_REFUS.charAt(0).toUpperCase() + DEMO_REFUS.slice(1) + "."); if (siRefus) siRefus(false); return; }
     if (location.protocol === "file:" || !window.fetch) {
       AVIS.refus("L'application est ouverte par double-clic : elle ne peut rien écrire "
         + "sur le disque. Sers-la par « node servir.mjs » pour importer un fichier.");

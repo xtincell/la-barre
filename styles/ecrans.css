@@ -105,6 +105,12 @@
 .case-m.encours .rond { background: var(--attente); }
 .case-m.bloque .rond { background: var(--alerte); }
 .case-m.perime .rond { background: var(--alerte); box-shadow: 0 0 0 3px rgba(217,83,74,.22); }
+.case-m.hors-ecart .rond { outline: 2px solid var(--arbitrage); outline-offset: 2px; }
+/* Les adaptations d'un marché face à sa déclaration, dans le bloc des écarts. */
+.ecm-compte { font-size: var(--t-eti); line-height: var(--lh-eti); color: var(--arbitrage); font-weight: 600; }
+.ecm-adaptations { display: grid; gap: .15rem; justify-items: start; }
+.ecm-ad { font-size: var(--t-eti); line-height: var(--lh-eti); color: var(--clair-terne); }
+.b.nu.ecm-signal { color: var(--arbitrage); text-align: left; }
 .case-m .part { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); }
 .case-m.absente { color: var(--clair-terne); cursor: pointer; }
 .case-m.absente:hover .part { color: var(--or); }

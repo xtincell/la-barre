@@ -95,7 +95,8 @@ window.APP = (function () {
       el("div.rail-marque", {},
         el("span.studio-signe", { "aria-hidden": "true" }, "▰"),
         el("a.rail-logo", { href: "#/bureau" }, "La Barre", el("span", {}, ".")),
-        el("div.os", {}, "Direction créative")
+        el("div.os", {}, "Direction créative"),
+        DEPOT.estDemonstration() ? el("div.demo-marque", {}, "Démonstration — données fictives") : null
       ),
 
       /* Chaque place dit ce qui l'attend. Un compteur qui ne bouge jamais est
@@ -191,6 +192,8 @@ window.APP = (function () {
     /* Le dépôt d'abord : c'est la seule perte irréversible du produit, et il
      * vit derrière cette place depuis que les réglages y ont déménagé. */
     if (cle === "referentiel") {
+      /* La démonstration ne garde rien : réclamer un export n'y aurait pas de sens. */
+      if (DEPOT.estDemonstration()) return {};
       var pds = DEPOT.poids();
       if (pds.fichier && !pds.surDisque) return { n: "!", ton: "alerte", quoi: "sauvegarde en attente — voir les paramètres" };
       if (!pds.fichier && (age === null || age > 2)) {
@@ -363,6 +366,7 @@ window.APP = (function () {
       if (railNoeud && railNoeud.parentNode) railNoeud.parentNode.removeChild(railNoeud);
       railNoeud = null;
       O.vider(corps);
+      if (DEPOT.estDemonstration()) corps.appendChild(bandeauDemonstration());
       PARTAGE.page(corps, brut[1] || "", brut[2] || null);
       window.scrollTo(0, 0);
       return;
@@ -377,6 +381,7 @@ window.APP = (function () {
     railNoeud = nouveauRail;
 
     O.vider(corps);
+    if (DEPOT.estDemonstration()) corps.appendChild(bandeauDemonstration());
     corps.appendChild(chapeau());
     var zone = el("div.zone", { id: "contenu", tabindex: "-1" });
     corps.appendChild(zone);
@@ -385,11 +390,60 @@ window.APP = (function () {
     window.scrollTo(0, 0);
   }
 
+  /* ————————————————————— La démonstration —————————————————————
+   *
+   * Servie depuis vitrine/demo/, La Barre tourne sur une base fictive lue à
+   * côté de sa page. Le dépôt n'y lit ni n'écrit rien d'autre (depot.js) ; la
+   * coque le dit sur chaque écran. */
+
+  function bandeauDemonstration() {
+    var d = DEPOT.demonstration() || {};
+    return el("div.demo-bandeau", { role: "note" },
+      el("strong", {}, "Démonstration — données fictives."),
+      el("span", {}, " Aucune marque, aucune personne ni aucune campagne réelle. Rien ne s'enregistre : "
+        + "recharger la page remet la démonstration à zéro."),
+      d.vitrine ? el("a", { href: d.vitrine }, "← La vitrine") : null);
+  }
+
+  /* La base fictive est un fichier JSON posé à côté de la page, et rien
+   * d'autre : un nom simple, sans dossier. Elle ne peut donc désigner ni un
+   * dépôt servi, ni un fichier hors de la démonstration. */
+  function demarrerDemonstration() {
+    var d = DEPOT.demonstration();
+    var base = String(d.base || "");
+    function dire(texte) { O.vider(corps); corps.appendChild(bandeauDemonstration()); corps.appendChild(el("p.demo-attente", {}, texte)); }
+    if (!/^[a-z0-9][a-z0-9-]*\.json$/.test(base)) { dire("La base de démonstration n'est pas désignée."); return; }
+    dire("Chargement de la démonstration…");
+    fetch(base, { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (lu) {
+        DEPOT.poserDemonstration(lu);
+        if (d.acteur && window.ACTEUR) ACTEUR.choisir(d.acteur);
+        rendre();
+      })
+      .catch(function (e) { dire("La base de démonstration n'a pas pu être lue (" + (e && e.message) + ")."); });
+  }
+
+  function ecouter() {
+    window.addEventListener("hashchange", function () { PANNEAU.fermer(); rendre(); });
+    document.addEventListener("keydown", function (e) {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      var k = e.key.toLowerCase();
+      if (k === "k") { e.preventDefault(); CAPTURE.ouvrir(); }
+
+      if (k === "f") { e.preventDefault(); var c = document.querySelector(".chapeau-outils input"); if (c) c.focus(); }
+    });
+  }
+
   function demarrer() {
     corps = document.getElementById("corps");
     document.querySelector(".aller-contenu").addEventListener("click", function (e) {
       e.preventDefault(); document.getElementById("contenu").focus();
     });
+
+    /* La démonstration ne lit ni le cache, ni un manifeste, ni l'exemple, ni
+     * le contexte de La Fusée : seulement sa base fictive. */
+    if (DEPOT.estDemonstration()) { ecouter(); demarrerDemonstration(); return; }
 
     /* localStorage est propre à un navigateur : ouvrir la même adresse ailleurs
      * donnait un autre contenu, et l'exemple d'amorce l'emportait. La règle est
@@ -432,14 +486,7 @@ window.APP = (function () {
       if (!local) { AMORCE.poser(); noter("exemple posé en attendant"); }
     }
 
-    window.addEventListener("hashchange", function () { PANNEAU.fermer(); rendre(); });
-    document.addEventListener("keydown", function (e) {
-      if (!(e.metaKey || e.ctrlKey)) return;
-      var k = e.key.toLowerCase();
-      if (k === "k") { e.preventDefault(); CAPTURE.ouvrir(); }
-
-      if (k === "f") { e.preventDefault(); var c = document.querySelector(".chapeau-outils input"); if (c) c.focus(); }
-    });
+    ecouter();
     rendre();
   }
 

@@ -220,7 +220,7 @@ window.CAMPAGNE = (function () {
       cand.autres.map(function (c) { return el("option", { value: c.id }, c.nom); })));
 
     var ident = p.sections.identite || {};
-    var nom = el("input", { id: "cmp-nom", type: "text", placeholder: "Bonnet Rouge — Back to School 2026" });
+    var nom = el("input", { id: "cmp-nom", type: "text", placeholder: "Marque — temps fort, année" });
     var occ = el("select", { id: "cmp-occ" }, [el("option", { value: "" }, "Occasion non déclarée")]
       .concat((MAISON.occasions || []).map(function (o) { return el("option", { value: o.cle }, o.nom); })));
     var deb = el("input", { id: "cmp-deb", type: "date" });

@@ -839,3 +839,22 @@ button, a, input, select, textarea, summary {
 .rde.alerte::before { content: "●"; }
 .rde.attente::before { content: "◐"; }
 .rde.vert::before { content: "✓"; }
+
+/* ————————————————————— La démonstration ————————————————————— */
+
+/* Servie depuis vitrine/demo/, La Barre tourne sur une base fictive. Chaque
+ * écran le dit, en tête, et le rail le répète : une capture d'écran ne doit
+ * jamais pouvoir passer pour un dossier réel. */
+.demo-bandeau { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem .6rem;
+  margin: 0 0 .9rem; padding: .55rem .8rem; border-left: 3px solid var(--or-plein); border-radius: 0 6px 6px 0;
+  background: var(--surface-1); box-shadow: var(--elev-1); font-size: var(--t-meta); line-height: var(--lh-meta); }
+.demo-bandeau strong { color: var(--or); font-weight: 650; }
+.demo-bandeau span { color: var(--clair-terne); flex: 1 1 24rem; }
+.demo-bandeau a { color: var(--info); white-space: nowrap; }
+.demo-marque { margin-top: .35rem; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--or); font-weight: 600; }
+.demo-attente { margin: 2rem 0; color: var(--clair-terne); }
+@media (max-width: 820px) {
+  .demo-marque { margin: 0 .8rem 0 0; }
+}
+@media print { .demo-bandeau { box-shadow: none; } }

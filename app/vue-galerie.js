@@ -14,11 +14,16 @@ window.VUE_GALERIE = (function () {
   var CLE = "labarre.galerie";
   var etat = lire();
 
+  /* La démonstration ne lit ni n'écrit ce navigateur : servie à la même
+   * origine, elle partagerait les filtres de l'outil. */
+  function demo() { return !!(window.DEPOT && DEPOT.estDemonstration && DEPOT.estDemonstration()); }
   function lire() {
-    try { return Object.assign({ structure: "toutes", annee: "toutes", regime: "tous", q: "" }, JSON.parse(localStorage.getItem(CLE) || "{}")); }
+    var defaut = { structure: "toutes", annee: "toutes", regime: "tous", q: "" };
+    if (demo()) return defaut;
+    try { return Object.assign(defaut, JSON.parse(localStorage.getItem(CLE) || "{}")); }
     catch (e) { return { structure: "toutes", annee: "toutes", regime: "tous", q: "" }; }
   }
-  function garder() { try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (e) {} }
+  function garder() { if (demo()) return; try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (e) {} }
 
   function nomStructure(id) { var s = STRUCTURE.liste().filter(function (x) { return x.id === id; })[0]; return s ? s.court : id; }
 

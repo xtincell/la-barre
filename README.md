@@ -1,7 +1,45 @@
 # La Barre
 
-La Barre est le poste de travail du directeur de la création : du brief au
-livrable, et les talents qui les font.
+**Du brief au BAT, chaque arbitrage est situé.**
+
+Un brief arrive chez le directeur de la création. Il doit devenir une idée, des
+pistes, un visuel maître, des variantes par marché, puis des fichiers qui
+partent chez l'imprimeur. Entre chaque étape, quelqu'un tranche — et c'est là
+que le travail se perd : le brief compris de mémoire, la piste retenue sans
+motif, la V3 approuvée à la place de la V2, la variante d'un marché qui change
+ce que personne n'avait autorisé, le BAT signé sur une autre version que celle
+qu'on a montrée.
+
+La Barre est le poste de travail qui tient ce chemin, et les talents qui le
+font :
+
+1. **Le brief** s'accepte sur pièces : ses champs critiques, son décideur, le
+   bilan de la campagne précédente. Le brief-back part par écrit.
+2. **La big idea** porte ses critères d'acceptation, écrits avant le travail :
+   ce sont les seuls refus opposables.
+3. **Les pistes** disent ce qu'elles sacrifient. L'une est retenue sur un
+   argument, les autres sont écartées avec leur motif.
+4. **Le KV master** se juge version par version : une approbation ne vaut que
+   pour la version jugée.
+5. **Les variantes par marché** ne portent que l'écart que leur marché a
+   déclaré au cadrage. Celle qui change autre chose n'est pas bloquée : elle
+   est signalée « hors écart déclaré », et la revue tranche.
+6. **Le BAT** se pose et se signe sur une version précise ; la remise vérifie
+   le manifeste avant que le fichier parte.
+7. **Le bilan** de la campagne s'arrête en une version figée, que la campagne
+   suivante peut opposer.
+
+Chaque décision rejoint un seul registre — verdict, motif, date, personne — et
+ce qui reste à trancher remonte dans une seule file, triée par ce que ça coûte
+d'attendre.
+
+**Voir sans installer.** La vitrine, `vitrine/index.html`, raconte ce parcours
+sur une marque inventée, Orvelle Zeste, et ouvre une démonstration :
+l'application elle-même, sur une base fictive, qui ne lit ni n'écrit aucune
+base réelle. Voir [La vitrine](#la-vitrine) et
+[docs/VITRINE.md](docs/VITRINE.md).
+
+## L'application
 
 C'est une application web statique. `index.html` charge directement les scripts
 de `app/` et les feuilles de `styles/`, sans étape de compilation. Un petit
@@ -157,6 +195,31 @@ La route ne ferme qu'elle-même. Le reste de `servir.mjs` reste sans
 authentification : une installation qui l'ouvre à Radar n'expose que
 `/radar/decisions` (La Fusée devant, ou une règle réseau), jamais tout le port.
 
+### La vitrine
+
+`vitrine/index.html` raconte le brief-au-BAT ; `vitrine/demo/index.html` est
+l'application en mode démonstration, sur la base fictive
+`vitrine/demo/base-fictive.json` (une marque, une agence, des personnes et des
+campagnes inventées). Avec `servir.mjs` : `http://localhost:5173/vitrine/index.html`
+(le serveur ne sert pas d'index de dossier).
+
+La page de démonstration charge les mêmes scripts que `index.html`, dans le
+même ordre, avec le profil d'une agence fictive et sans l'exemple de
+l'installation historique. Elle déclare `window.LA_BARRE_DEMO` avant tout
+module : le dépôt ne lit alors ni le cache du navigateur, ni un manifeste, ni
+un dépôt servi, et n'écrit nulle part ; la base vit en mémoire et se remet à
+zéro au rechargement. Le contexte de La Fusée n'est pas demandé, l'envoi de
+médias et la publication sont refusés. Chaque écran porte « Démonstration —
+données fictives ».
+
+La base fictive est rejouée par les modules de l'application
+(`node outils/vitrine-base.mjs`, vérifiée par `--check` en CI). La vitrine se
+publie comme une distribution statique extraite d'un commit
+(`node outils/distribuer-vitrine.mjs <nouveau-dossier> <commit>`), jamais en
+exposant `servir.mjs` ou l'image Docker, qui servent tout le dossier sans
+authentification. L'image Docker ne contient pas `vitrine/`. Déploiement et ce
+que la production demande encore : [docs/VITRINE.md](docs/VITRINE.md).
+
 ### Avec Docker
 
 ```bash
@@ -221,7 +284,8 @@ par lui : la big idea, la piste ou l'idée retenue ou écartée, la référence
 commune d'une campagne, le verdict sur un document, un livrable ou une pièce
 en revue, le concept écarté de la réserve d'une marque, le brief accepté ou
 retourné, la case écartée de la composition d'une campagne, l'écart d'un
-projet à la référence commune et l'arrêt du bilan d'une campagne. Chaque
+projet à la référence commune, l'arrêt du bilan d'une campagne, et la revue
+d'une adaptation hors de l'écart déclaré de son marché. Chaque
 décision ajoute une ligne au journal, qui porte l'acteur. Toutes portent
 `qui`, le poste titulaire. La référence de
 campagne, le verdict sur un document et les gestes de choix ajoutés au
@@ -261,6 +325,38 @@ distribués ici » : `produit`, « Mentions obligatoires » : `reglementaire`,
 « Marque » : `marque`), et chaque écart calculé porte cette liste dans `types` ;
 `ECARTS.compteParType` les compte. L'accroche et les choix de direction
 artistique n'ont pas de type.
+
+**Une adaptation hors de son écart déclaré.** Décision du 12 novembre 2026 :
+une adaptation qui change ce que son marché n'a pas déclaré n'est pas bloquée.
+Elle passe, et elle est signalée « hors écart déclaré », avec la dimension qui
+sort (`ECARTS_MARCHE.evaluer`). Le signal se voit sur la carte du mur et dans la
+grille des livrables, sur la planche des KV, dans le bloc « Écarts déclarés par
+marché » et dans Décisions → À traiter. La revue tranche, depuis le même
+panneau, et chaque geste est une décision de `app/decision.js`, motif exigé :
+
+- « Corriger l'écart déclaré » étend la déclaration du marché à ce que
+  l'adaptation change (`source: "revue"`, avec l'identifiant de la décision).
+  La décision `ecart-marche` est une déviation du cadrage, de portée `projet`,
+  qui garde les types d'avant et d'après dans `ecart`.
+- « Corriger l'adaptation » renvoie l'adaptation à ce que le marché a déclaré.
+  La décision `hors-ecart` est un retour (`verdict: "retour"`) sur le livrable ;
+  la déclaration ne bouge pas, et le signal reste, marqué « retour décidé »,
+  jusqu'à ce que l'adaptation soit corrigée. Dans la file, elle passe alors de
+  « Trancher » à « Réclamer ».
+
+Ce qu'une adaptation change se lit contre son point de départ, `l.depart`, que
+`KV.creer` pose à sa création : le master (identifiant, version) et ce qu'elle
+en a reçu, avec la langue et les mentions du référentiel du marché. La langue
+ou les mentions imposées par le marché ne sont donc pas des écarts. Les champs
+du KV se rangent par type : `langue` et l'accroche (la titraille) pour
+`langue`, `marque`, les SKU montrés pour `produit`, les mentions et les
+restrictions pour `reglementaire`. Les choix de direction artistique n'ont pas
+de type. Un champ que le départ laissait vide se complète sans écart ; le
+retirer est un changement. Une reprise du master renouvelle le départ d'une
+adaptation qui en a un. Un marché non déclaré n'a rien déclaré : ce que
+l'adaptation change en sort. Une adaptation créée avant cette capture n'a pas
+de point de départ : elle est « non évaluée », comptée dans le bloc, jamais
+signalée. Aucune n'est évaluée après coup.
 
 « Exporter » et « Importer » suivent le format d'échange `ecarts-marche`,
 version 1, décrit dans `METHODE.md` du Market Expansion System. Il y est produit
@@ -373,6 +469,8 @@ node outils/distribuer-approches.mjs --check
 node --test tests/approches.test.mjs
 node --test tests/entreprise.test.mjs
 npm run test:radar
+node outils/vitrine-base.mjs --check
+npm run test:vitrine
 ```
 
 S'il réussit, deux jobs construisent et exercent les images Docker :
@@ -395,14 +493,16 @@ Les scripts de `package.json` :
 | `npm test` | `node tests/parcours.mjs` |
 | `npm run test:persistance` | `node --test tests/persistance.test.mjs tests/reconciliation.test.mjs tests/depot-reprise.test.mjs` |
 | `npm run test:manuel` | `node --test tests/saisie-manuelle.test.mjs tests/acteur.test.mjs tests/formulaire.test.mjs tests/lecture-dependances.test.mjs` |
-| `npm run test:marches` | `node --test tests/marches.test.mjs tests/grille.test.mjs tests/ecarts-marche.test.mjs` |
+| `npm run test:marches` | `node --test tests/marches.test.mjs tests/grille.test.mjs tests/ecarts-marche.test.mjs tests/hors-ecart.test.mjs` |
 | `npm run test:provenances` | `node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs` |
 | `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs tests/attestation.test.mjs` |
 | `npm run test:bilan` | `node --test tests/bilan-preuves.test.mjs tests/bilan-campagne.test.mjs` |
 | `npm run test:radar` | `node --test tests/radar-decisions.test.mjs` |
+| `npm run test:vitrine` | `node --test tests/vitrine.test.mjs` |
+| `npm run vitrine:base` | `node outils/vitrine-base.mjs` (réécrit la base fictive de la démonstration) |
 
 Les tests `node --test` n'ont besoin d'aucune dépendance npm ;
-`tests/entreprise.test.mjs` appelle aussi `git`. `npm test` lance un
+`tests/entreprise.test.mjs` et `tests/vitrine.test.mjs` appellent aussi `git`. `npm test` lance un
 parcours dans Chromium avec Playwright, sur un serveur éphémère et la base
 fictive `tests/fixtures/studio.json`. Il demande `npm install` et un Chromium
 pour Playwright (`npx playwright install chromium`, ou `BROWSER_CHANNEL` pour
@@ -427,13 +527,16 @@ un navigateur installé). La CI ne le lance pas.
   l'interface, un écart ne peut être ni écarté ni repris. Les écarts déjà
   écartés dans une base (`ecartsEcartes`) restent lus, notamment par les
   arbitrages.
-- **Une déclaration d'écart ne juge encore rien.** Les adaptations d'un marché
-  ne sont pas comparées à sa déclaration : une adaptation qui change la marque
-  du master sans `marque` déclaré ne produit aucun écart. L'origine d'un tel
-  écart n'est pas calculable — rien ne dit qui l'a demandé — et reste à
-  trancher. La règle « déclaré avant le premier crayon » n'est pas contrôlée
-  non plus : la date de déclaration n'est pas comparée à la première pièce du
-  marché. Le contrôle « Marque » vérifie une présence, pas une bascule.
+- **Une déclaration d'écart ne juge que les adaptations.** Une adaptation hors
+  de son écart déclaré est signalée et tranchée en revue ; elle ne produit pas
+  d'écart calculé dans `app/ecarts.js`, faute d'origine : rien ne dit qui a
+  demandé le changement, ni qui paie sa reprise. Les formats ne sont pas
+  évalués, ni les adaptations créées avant le point de départ (« non
+  évaluées »), ni les choix de direction artistique. La règle « déclaré avant
+  le premier crayon » n'est pas contrôlée : la date de déclaration n'est pas
+  comparée à la première pièce du marché, et une déclaration corrigée en revue
+  porte sa propre date. Le contrôle « Marque » de la conformité vérifie une
+  présence ; la bascule, elle, se lit maintenant contre le point de départ.
 - **Aucune authentification dans `servir.mjs`.** Quiconque joint son port peut
   lire tout le dossier et écrire là où le serveur l'accepte, attestations
   comprises : `servir.mjs` ne connaît aucune identité et ne vérifie aucun
@@ -465,6 +568,10 @@ un navigateur installé). La CI ne le lance pas.
   reste déclarée.
 - **Aucun envoi.** « Demander un retour » rédige le message et date l'attente.
   L'application n'envoie ni e-mail ni notification.
+- **Une vitrine prête, pas encore publiée.** La distribution statique de la
+  vitrine existe et se vérifie ; aucun hébergement, aucune adresse ni aucune
+  route publique de La Fusée n'est configuré. Voir
+  [docs/VITRINE.md](docs/VITRINE.md), « Ce que la production demande encore ».
 - **Des routes locales pensées pour macOS.** `/disque-ouvrir` appelle `open` ;
   `/partage-pdf` cherche Chrome à son chemin macOS, sauf si `LA_BARRE_CHROME`
   est défini.
@@ -480,6 +587,8 @@ dans `app/maison-base.js`. Les champs de saisie sont déclarés dans
 
 - [docs/INSTALLATION-ENTREPRISE.md](docs/INSTALLATION-ENTREPRISE.md) — image
   neutre pour une autre entreprise.
+- [docs/VITRINE.md](docs/VITRINE.md) — la vitrine publique et sa
+  démonstration sur données fictives : isolement, base, publication.
 - [docs/RECEPTION-PERSISTANCE.md](docs/RECEPTION-PERSISTANCE.md),
   [docs/RECEPTION-SAISIE.md](docs/RECEPTION-SAISIE.md),
   [docs/RECEPTION-MARCHES.md](docs/RECEPTION-MARCHES.md),

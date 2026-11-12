@@ -71,6 +71,30 @@ window.FILE = (function () {
           } }] }));
     }
 
+    /* 1 bis · Les adaptations hors de l'écart déclaré de leur marché. Elles ne
+     * sont pas bloquées : la revue tranche — corriger l'écart déclaré, ou
+     * corriger l'adaptation. Une fois renvoyée, l'adaptation est due par son
+     * auteur : elle passe de « trancher » à « réclamer ». */
+    if (window.ECARTS_MARCHE) ECARTS_MARCHE.aTrancher().forEach(function (x) {
+      var p = DEPOT.trouve("projets", x.projet);
+      var l = p ? (p.livrables || []).filter(function (y) { return y.id === x.livrable; })[0] : null;
+      var hors = ECARTS_MARCHE.libelle(x.hors);
+      var renvoyee = x.etat === "renvoyee";
+      out.push(item(renvoyee ? "reclamer" : "trancher",
+        x.nom + " (" + x.ref + ") : hors écart déclaré — " + hors,
+        renvoyee
+          ? "Renvoyée le " + O.joli(x.revue.quand) + " : l'adaptation revient à ce que " + x.marche + " a déclaré."
+          : (x.declaration ? x.marche + " a déclaré : " + ECARTS_MARCHE.libelle(x.declaration)
+              : x.marche + " n'a déclaré aucun écart") + " ; l'adaptation change aussi : " + hors.toLowerCase() + ".",
+        renvoyee ? 62 : 92, "#/projets/" + x.projet + "/livrables", l && l.vignette ? [l] : [],
+        { chiffre: x.marche + " · hors écart déclaré : " + hors,
+          depuis: renvoyee && x.revue.quand ? O.depuis(x.revue.quand) : 0,
+          trancher: renvoyee
+            ? "Faire corriger l'adaptation par son auteur, ou revenir sur le retour en corrigeant l'écart déclaré."
+            : "Corriger l'écart déclaré, ou corriger l'adaptation. Elle n'est pas bloquée : la décision dit laquelle tient.",
+          gestes: [{ nom: "Revoir l'écart", fort: true, quand: function () { x.ouvrir(function () { APP.rendre(); }); } }] }));
+    });
+
     /* 2 · Les retours client non tranchés : ils suspendent des livrables. */
     FEEDBACK.ouverts().forEach(function (f) {
       var p = DEPOT.trouve("projets", f.projet);

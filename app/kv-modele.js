@@ -145,14 +145,7 @@ window.KV = (function () {
       version: 1, versions: [], estime: base ? base.estime : null,
       reel: null, toursVendus: base ? base.toursVendus : null,
       assets: [], entrees: [], annotations: [], mockups: [], points: axes,
-      kv: {
-        marque: base && base.kv ? base.kv.marque : "",
-        copy: base && base.kv ? base.kv.copy : "",
-        langue: m && (m.langues || []).length === 1 ? m.langues[0] : "",
-        sku: base && base.kv ? (base.kv.sku || []).slice() : [],
-        mentions: m ? (m.mentions || []).slice() : [],
-        restrictions: base && base.kv ? (base.kv.restrictions || []).slice() : [],
-      },
+      kv: herite(base, m),
     };
     /* Une adaptation est le travail du directeur artistique qui a porté la
      * piste : c'est lui qui sait ce que le marché doit garder du master et ce
@@ -166,10 +159,43 @@ window.KV = (function () {
     champsDA(p).forEach(function (a) {
       l.kv[a.cle] = base && base.kv ? (base.kv[a.cle] || "") : "";
     });
+    if (cible === "adaptation") l.depart = pointDeDepart(base, l.kv);
     if (!p.livrables) p.livrables = [];
     p.livrables.push(l);
     DEPOT.tracer("création", "kv", p.id, l.nom);
     return l;
+  }
+
+  /* Ce qu'une adaptation reçoit en naissant : le contenu du master, et du
+   * référentiel du marché sa langue (quand il n'en parle qu'une) et ses
+   * mentions. Une langue ou une mention héritées du marché ne sont pas un
+   * écart au master : c'est le marché qui les impose, pas l'adaptation. */
+  function herite(base, m) {
+    return {
+      marque: base && base.kv ? base.kv.marque : "",
+      copy: base && base.kv ? base.kv.copy : "",
+      langue: m && (m.langues || []).length === 1 ? m.langues[0] : "",
+      sku: base && base.kv ? (base.kv.sku || []).slice() : [],
+      mentions: m ? (m.mentions || []).slice() : [],
+      restrictions: base && base.kv ? (base.kv.restrictions || []).slice() : [],
+    };
+  }
+
+  /* Le point de départ d'une adaptation : ce qu'elle a reçu, et de quelle
+   * version du master. Une copie figée des champs de CHAMPS_KV — les choix de
+   * DA n'en sont pas, ils changent d'un KV à l'autre par construction.
+   *
+   * C'est ce qui permet de dire ce qu'une adaptation CHANGE, et donc si son
+   * marché l'a déclaré (ecarts-marche.js). Une adaptation créée avant cette
+   * capture n'en a pas, et on ne lui en invente pas : elle reste « non
+   * évaluée ». */
+  function pointDeDepart(base, kv) {
+    var recu = {};
+    CHAMPS_KV.forEach(function (c) {
+      var v = kv[c.cle];
+      recu[c.cle] = Array.isArray(v) ? v.slice() : v;
+    });
+    return { maitre: base.id, versionMaitre: base.version || 1, le: new Date().toISOString(), kv: recu };
   }
 
   /* Le directeur artistique d'une piste. C'est lui qui répond de ses
@@ -216,6 +242,11 @@ window.KV = (function () {
     if (!String(motif || "").trim()) throw new Error("Décrire ce qui a été repris ou pourquoi aucun ajustement n'était nécessaire.");
     VERSION.ouvrir(l, "interne", "Reprise sur « " + m.nom + " » V" + (m.version || 1) + " : " + motif.trim(), null, { complet: true });
     l.versionMaitre = m.version || 1;
+    /* Une adaptation évaluée repart de la référence reprise : ce qu'elle change
+     * se lit désormais contre elle. Sans cela, reprendre la titraille du master
+     * passerait pour un écart à l'ancien. Une adaptation qui n'avait pas de
+     * départ n'en reçoit pas ici : la reprise ne copie rien. */
+    if (l.depart && estAdaptation(l)) l.depart = pointDeDepart(m, herite(m, DEPOT.trouve("marches", l.marche)));
     return l.version;
   }
 
