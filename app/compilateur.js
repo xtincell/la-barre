@@ -192,6 +192,10 @@ window.COMPILATEUR = (function () {
 
   /* ————————————————————— Le document ————————————————————— */
 
+  /* Le document compilé part chez le client : une référence encore provisoire
+   * (`refDemandee`, depot.js) n'y figure pas. */
+  function refDuDocument(p) { return p.refDemandee ? null : p.ref; }
+
   function compiler(p, cle) {
     if (cle === "cadrage") return cadrage(p);
     if (cle === "production") return production(p);
@@ -288,8 +292,7 @@ window.COMPILATEUR = (function () {
 
     return {
       titre: "Cadrage — " + p.nom,
-      sous: p.ref + "  ·  " + (i.client || "client non renseigné")
-        + (i.marque ? "  ·  " + i.marque : ""),
+      sous: [refDuDocument(p), i.client || "client non renseigné", i.marque].filter(Boolean).join("  ·  "),
       logo: logo,
       blocs: [
         campagneBloc(p),
@@ -601,7 +604,7 @@ window.COMPILATEUR = (function () {
 
     return {
       titre: "Conception — " + (b.campagne || p.nom),
-      sous: p.ref + (retenue ? "  ·  piste « " + retenue.titre + " »" : "  ·  aucune piste retenue")
+      sous: [refDuDocument(p), retenue ? "piste « " + retenue.titre + " »" : "aucune piste retenue"].filter(Boolean).join("  ·  ")
         + (retenue && retenue.statut === "retenue" ? "" : "  —  NON ARBITRÉE"),
       blocs: [
         { t: "La marque", elements: (function () {
@@ -758,7 +761,7 @@ window.COMPILATEUR = (function () {
 
     return {
       titre: "Production — " + p.nom,
-      sous: p.ref + "  ·  " + pleins.length + " / " + ls.length + " livrables portent leur visuel"
+      sous: [refDuDocument(p), pleins.length + " / " + ls.length + " livrables portent leur visuel"].filter(Boolean).join("  ·  ")
         + (retenue ? "  ·  piste « " + retenue.titre + " »" : ""),
       logo: (function () { var m = MARQUE.de(p); return m ? MARQUE.logo(m.id) : null; })(),
       blocs: [

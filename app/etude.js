@@ -84,6 +84,8 @@ window.ETUDE = (function () {
   /* `noeud` est le dossier déjà composé à l'écran : on le clone, on le nettoie,
    * on l'emballe. Rien n'est recomposé — ce qu'on lit est ce qui part. */
   function exporter(p, noeud) {
+    /* L'étude part chez le client, et son nom de fichier porte la référence. */
+    if (!DEPOT.exigerReference(p, "L’export du cas client")) return;
     if (!noeud) { AVIS.refus("Rien à exporter : le dossier n'est pas composé."); return; }
 
     AVIS.fait("Composition du dossier… les visuels sont intégrés au fichier, ça prend quelques secondes.");

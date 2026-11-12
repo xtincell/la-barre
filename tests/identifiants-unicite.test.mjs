@@ -335,19 +335,41 @@ test('le rapprochement ne fond jamais deux livrables nés séparément ; sans da
 
 /* ————— La référence humaine ————— */
 
-test('deux projets ouverts sur deux postes depuis la même campagne ne portent pas la même référence', {
-  todo: 'format ou attribution de la référence à arbitrer : voir README, « Ce qui manque »',
-}, async () => {
-  const { serveur, A, B } = await deuxPostes({ ecrans: true });
-  const c = A.depot.trouve('campagnes', 'C-1');
-  A.ecran.ouvrirDepuisCampagne(c, { cle: 'activation', nom: 'Activation' }, () => {});
-  await sauver(A);
+/* Décision du propriétaire (12 novembre 2026, option 3) : le serveur attribue
+ * la référence au premier enregistrement. On rejoue ici les deux postes contre
+ * le vrai servir.mjs, et l'écran qui ouvre un projet depuis sa campagne. */
+test('deux projets ouverts sur deux postes depuis la même campagne ne portent pas la même référence', async () => {
+  const s = await lancer();
+  const reel = { fetch: (chemin, init) => fetch(s.origin + '/' + chemin, init) };
+  const A = poste({ serveur: reel, ecrans: true }), B = poste({ serveur: reel, ecrans: true });
+  const base = copie(A.depot.vide());
+  Object.assign(base, { enregistre_le: '2026-11-12T08:00:00.000Z', rattachement2: true,
+    campagnes: [{ id: 'C-1', nom: 'Noël', marches: [], marqueIds: [] }],
+    projets: [{ id: 'P-1', ref: 'MT-0001', nom: 'Projet', nature: 'campagne', campagneId: 'C-1', cree_le: '2026-11-01T08:00:00.000Z',
+      perimetre: { supports: [], marches: [] }, livrables: [] }] });
+  await writeFile(join(s.root, 'depots', 'manifeste.json'), JSON.stringify({ reference: 'recette.json' }));
+  await writeFile(join(s.root, 'depots', 'recette.json'), JSON.stringify(base));
+  for (const p of [A, B]) await new Promise(r => p.depot.chargerReference({ reference: 'recette.json' }, r));
+  const fini = (p, condition) => new Promise(r => {
+    const t = setInterval(() => { if (condition()) { clearInterval(t); r(true); } }, 10);
+    setTimeout(() => { clearInterval(t); r(false); }, 4000);
+  });
+
+  A.ecran.ouvrirDepuisCampagne(A.depot.trouve('campagnes', 'C-1'), { cle: 'activation', nom: 'Activation' }, () => {});
   B.ecran.ouvrirDepuisCampagne(B.depot.trouve('campagnes', 'C-1'), { cle: 'film', nom: 'Film' }, () => {});
-  await sauver(B); await sauver(B);
-  const ps = serveur.value.projets;
+  /* Hors ligne, chaque poste montre une référence provisoire, et la même : ce n'est pas encore une référence. */
+  for (const p of [A, B]) assert.match(p.depot.liste('projets')[1].ref, /^MT-… \(provisoire\)$/);
+  A.depot.ecrireSurDisque();
+  assert.ok(await fini(A, () => A.depot.liste('projets')[1].ref === 'MT-0002'), 'A reçoit la sienne');
+  B.depot.ecrireSurDisque();
+  assert.ok(await fini(B, () => B.depot.liste('projets').length === 3), 'B relit la base et rapproche');
+  B.depot.ecrireSurDisque();
+  assert.ok(await fini(B, () => (B.depot.liste('projets').find(p => /film/.test(p.nom)) || {}).ref === 'MT-0003'), 'B reçoit la suivante');
+  const ps = JSON.parse(await readFile(join(s.root, 'depots', 'recette.json'), 'utf8')).projets;
   assert.equal(ps.length, 3);
   assert.equal(new Set(ps.map(p => p.id)).size, 3, 'les identifiants sont départagés');
-  assert.equal(new Set(ps.map(p => p.ref)).size, 3, 'les références aussi');
+  assert.deepEqual(ps.map(p => p.ref), ['MT-0001', 'MT-0002', 'MT-0003'], 'les références aussi');
+  assert.ok(ps.every(p => !('refDemandee' in p)), 'aucune demande ne reste dans la base de référence');
 });
 
 /* ————— Le serveur, dernier garde ————— */

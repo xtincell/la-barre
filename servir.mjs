@@ -235,6 +235,95 @@ const REGISTRES = [
     quoiDouble: "deux livrables porteraient le même identifiant",
     quoiRemplace: "un livrable enregistré serait remplacé par un autre livrable sous le même identifiant" },
 ];
+// ————— La référence humaine d'un projet —————
+//
+// Décision du propriétaire, 12 novembre 2026 : la base de référence attribue
+// la référence (`ref`) au premier enregistrement. Le poste la demande
+// (`refDemandee`) et montre en attendant une étiquette provisoire :
+//
+//   { prefixe }           le numéro suivant du préfixe, unique dans la base :
+//                         MT-0043 après MT-0042 (seules comptent les références
+//                         de la forme exacte PRÉFIXE-nombre ; quatre chiffres
+//                         au moins) — même règle que O.referenceSuivante
+//   { saisie, prefixe? }  la référence saisie, si aucun autre projet ne la porte
+//
+// Le serveur pose `ref`, retire `refDemandee`, écrit et rend dans son reçu ce
+// qu'il a attribué (`references`). Sans référence à attribuer, le corps reçu
+// s'écrit tel quel. Refusé (422), rien n'est écrit :
+//
+//   REFERENCE_ILLISIBLE   une demande qui n'a pas cette forme
+//   REFERENCE_CHANGEE     un projet enregistré avec sa référence la perdrait ou
+//                         en changerait : une référence attribuée ne change plus
+//   REFERENCE_PRISE       une référence saisie, ou posée sans demande (ancien
+//                         poste, import), déjà portée par un autre projet ;
+//                         une base qui porte déjà un doublon reste inscriptible
+//
+// Une référence déjà présente dans une base est attribuée, telle quelle.
+const PREFIXE_REFERENCE = /^[A-Za-z][A-Za-z0-9]{0,11}$/;
+const SAISIE_MAX = 60;
+function referenceSuivante(prefixe, prises) {
+  const motif = new RegExp("^" + prefixe + "-(\\d+)$");
+  let max = 0;
+  for (const r of prises) { const m = motif.exec(r); if (m && Number(m[1]) > max) max = Number(m[1]); }
+  for (let n = max + 1; ; n++) {
+    const ref = prefixe + "-" + String(n).padStart(4, "0");
+    if (!prises.has(ref)) return ref;
+  }
+}
+const refAttribuee = (p) => (p.refDemandee === undefined && typeof p.ref === "string" && p.ref.trim() ? p.ref : null);
+function demandeLisible(d) {
+  if (!d || typeof d !== "object" || Array.isArray(d)) return false;
+  if (d.saisie !== undefined) {
+    return typeof d.saisie === "string" && d.saisie.trim() !== "" && d.saisie.trim().length <= SAISIE_MAX
+      && (d.prefixe === undefined || (typeof d.prefixe === "string" && PREFIXE_REFERENCE.test(d.prefixe)));
+  }
+  return typeof d.prefixe === "string" && PREFIXE_REFERENCE.test(d.prefixe);
+}
+function attribuerReferences(actuel, neuf) {
+  const avant = listeDe(actuel, "projets").filter(objetLisible), apres = listeDe(neuf, "projets").filter(objetLisible);
+  const refus = (code, ids, quoi) => ({ refus: { code, identifiants: ids, quoi } });
+  const illisibles = apres.filter((p) => p.refDemandee !== undefined && !demandeLisible(p.refDemandee));
+  if (illisibles.length) return refus("REFERENCE_ILLISIBLE", illisibles.map((p) => p.id), "une demande de référence est illisible");
+  const anciennes = new Map(avant.filter((p) => typeof p.ref === "string" && p.ref.trim()).map((p) => [p.id, p.ref]));
+  const changees = apres.filter((p) => anciennes.has(p.id) && refAttribuee(p) !== anciennes.get(p.id));
+  if (changees.length) {
+    return refus("REFERENCE_CHANGEE", changees.map((p) => p.id), "une référence attribuée changerait ("
+      + changees.map((p) => p.id + " : " + anciennes.get(p.id)).join(", ") + ") ; elle ne change plus");
+  }
+  // Ce que l'écriture ajoute : une référence posée sans demande, portée par
+  // plus de projets qu'avant.
+  const compte = (projets) => {
+    const m = new Map();
+    for (const p of projets) { const r = refAttribuee(p); if (r) m.set(r, (m.get(r) || []).concat(p.id)); }
+    return m;
+  };
+  const porteurs = compte(avant), prises = [];
+  for (const [ref, ids] of compte(apres)) {
+    const deja = porteurs.get(ref) || [];
+    if (ids.length > 1 && ids.length > deja.length) prises.push(...ids.filter((id) => !deja.includes(id)).map((id) => [id, ref]));
+  }
+  if (prises.length) {
+    return refus("REFERENCE_PRISE", prises.map((x) => x[0]), "une référence serait portée par deux projets ("
+      + prises.map((x) => x[1]).join(", ") + ")");
+  }
+  const tenues = new Set();
+  for (const p of avant.concat(apres)) { const r = refAttribuee(p); if (r) tenues.add(r); }
+  const attribuees = [];
+  for (const p of apres.filter((x) => x.refDemandee !== undefined && x.refDemandee.saisie !== undefined)) {
+    const s = p.refDemandee.saisie.trim();
+    if (tenues.has(s)) return refus("REFERENCE_PRISE", [p.id], "la référence saisie « " + s + " » est déjà portée par un autre projet");
+    tenues.add(s); attribuees.push({ p, ref: s });
+  }
+  for (const p of apres.filter((x) => x.refDemandee !== undefined && x.refDemandee.saisie === undefined)) {
+    const ref = referenceSuivante(p.refDemandee.prefixe, tenues);
+    tenues.add(ref); attribuees.push({ p, ref });
+  }
+  // Dans l'ordre des projets de la base.
+  attribuees.sort((a, b) => apres.indexOf(a.p) - apres.indexOf(b.p));
+  for (const { p, ref } of attribuees) { p.ref = ref; delete p.refDemandee; }
+  return { attribuees: attribuees.map(({ p, ref }) => ({ projet: p.id, ref })) };
+}
+
 // Le premier refus, dans l'ordre des registres : décisions, projets, livrables.
 function identifiantsEnConflit(actuel, neuf) {
   for (const r of REGISTRES) {
@@ -610,7 +699,7 @@ const serveur = createServer(async (requete, reponse) => {
       if (!cible.startsWith(RACINE)) { reponse.writeHead(403).end("Interdit"); return; }
 
       await exclusivement(cible, async () => {
-        const version = revision(contenu);
+        let ecrit = contenu, version = revision(contenu), references = null;
         if (!estVignette) {
           let avant = null, actuel = null;
           try { avant = await readFile(cible); }
@@ -650,11 +739,23 @@ const serveur = createServer(async (requete, reponse) => {
               quoi: "La base n'a pas été remplacée : " + conflit.quoi + " (" + conflit.identifiants.join(", ") + ")." }, courante);
             return;
           }
+          const attribution = attribuerReferences(actuel, neuf);
+          if (attribution.refus) {
+            const r = attribution.refus;
+            json(reponse, 422, { ok: false, code: r.code, identifiants: r.identifiants,
+              quoi: "La base n'a pas été remplacée : " + r.quoi + "." }, courante);
+            return;
+          }
+          if (attribution.attribuees.length) {
+            ecrit = Buffer.from(JSON.stringify(neuf, null, 1), "utf8");
+            version = revision(ecrit);
+            references = attribution.attribuees;
+          }
         }
-        await remplacer(cible, contenu);
-        json(reponse, 200, { ok: true, octets: contenu.length,
+        await remplacer(cible, ecrit);
+        json(reponse, 200, { ok: true, octets: ecrit.length,
           revision: version, enregistre_le: neuf?.enregistre_le || null,
-          quand: new Date().toISOString() }, version);
+          quand: new Date().toISOString(), ...(references ? { references } : {}) }, version);
       });
       return;
     }

@@ -153,15 +153,16 @@ function cap(t) { t = String(t || ""); return t.charAt(0).toUpperCase() + t.slic
       el("div.form-actions", {},
         el("button.bouton", { type: "button", onclick: function () {
           if (!champNom.value.trim()) { AVIS.refus("Un dossier a besoin d'un nom."); return; }
-          var p = DEPOT.ajoute("projets", {
-            ref: "MT-" + String(DEPOT.liste("projets").length + 1).padStart(4, "0"),
+          /* La référence est demandée : la base de référence l'attribue au
+           * premier enregistrement, l'écran la montre provisoire d'ici là. */
+          var p = DEPOT.ajoute("projets", Object.assign(DEPOT.referenceNeuve("MT"), {
             nom: champNom.value.trim(), nature: selN.value,
             cree_le: new Date().toISOString(), statut: "creation", equipe: [],
             sections: { identite: { clientId: selC.value || null, marqueIds: [] },
               brief: { verbatim: c.texte }, pistes: [] },
             perimetre: { supports: [], marches: [] },
             livrables: [], volets: [],
-          });
+          }));
           rattacher(c, p.id);
           PANNEAU.fermer();
           AVIS.fait("Dossier ouvert. La note d'origine est au brief, mot pour mot.");

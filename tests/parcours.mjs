@@ -1,8 +1,12 @@
 // Tests sur une base fictive, avec serveur et navigateur éphémères.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { readFile, mkdir } from 'node:fs/promises';
-import { extname, resolve, sep } from 'node:path';
+import { readFile, mkdir, mkdtemp, symlink, copyFile, writeFile, rm } from 'node:fs/promises';
+import { extname, resolve, sep, join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { createServer as reserver } from 'node:net';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -77,8 +81,12 @@ try {
   // décisions, et douze caractères tirés par crypto.
   const cree = await page.evaluate(() => {
     const p = DEPOT.liste('projets').find(x => x.nom === 'Projet de contrôle');
-    return { id: p.id, cree_le: p.cree_le, poste: localStorage.getItem('la-barre-poste') };
+    return { id: p.id, cree_le: p.cree_le, poste: localStorage.getItem('la-barre-poste'), ref: p.ref, demande: p.refDemandee || null };
   });
+  // Cette base n'a pas de base de référence servie (l'exemple, sans serveur) : le
+  // poste attribue lui-même la référence, avec la règle du serveur.
+  assert.equal(cree.ref, 'PRJ-0001');
+  assert.equal(cree.demande, null);
   assert.match(cree.id, /^PRO-[0-9a-z]{4}-[0-9a-z]{12}$/);
   assert.equal(cree.id.split('-')[1], cree.poste);
   assert.ok(!Number.isNaN(Date.parse(cree.cree_le)));
@@ -128,8 +136,51 @@ try {
   assert.ok(unicite.trace, 'le renommage est au journal');
   await page.evaluate(() => { DEPOT.reinitialiser(); location.hash = '#/bureau'; APP.rendre(); });
   await page.getByRole('button', { name:'Créer mon premier projet', exact:true }).waitFor();
+  // Avec une base de référence servie par servir.mjs : la référence d'un projet
+  // neuf est provisoire à l'écran, puis attribuée au premier enregistrement.
+  const racine = await mkdtemp(join(tmpdir(), 'la-barre-parcours-'));
+  let servi = null;
+  try {
+    for (const nom of ['index.html', 'app', 'styles']) await symlink(resolve(root, nom), join(racine, nom));
+    await copyFile(resolve(root, 'servir.mjs'), join(racine, 'servir.mjs'));
+    await mkdir(join(racine, 'depots'));
+    const base = JSON.parse(fixture); delete base.exemple; base.enregistre_le = '2026-11-12T08:00:00.000Z';
+    await writeFile(join(racine, 'depots', 'manifeste.json'), JSON.stringify({ reference: 'parcours.json' }));
+    await writeFile(join(racine, 'depots', 'parcours.json'), JSON.stringify(base));
+    const r = reserver(); r.listen(0, '127.0.0.1'); await once(r, 'listening');
+    const port = r.address().port; await new Promise(x => r.close(x));
+    servi = spawn(process.execPath, [join(racine, 'servir.mjs'), String(port)], { stdio: ['ignore', 'pipe', 'pipe'] });
+    await once(servi.stdout, 'data');
+    const pageServie = await browser.newPage({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce' });
+    pageServie.on('pageerror', e => { errors.push(e.message); console.error('Erreur navigateur (servie):', e.stack); });
+    pageServie.setDefaultTimeout(10000);
+    await pageServie.goto('http://127.0.0.1:' + port + '/#/projets', { waitUntil: 'networkidle' });
+    await pageServie.getByRole('button', { name: '+ Nouveau projet', exact: true }).click();
+    await pageServie.getByLabel('Client', { exact: true }).fill('Studio fictif');
+    await pageServie.getByLabel('Nom du projet', { exact: true }).fill('Projet servi');
+    await pageServie.getByRole('button', { name: 'Créer', exact: true }).click();
+    const attente = await pageServie.evaluate(() => {
+      const p = DEPOT.liste('projets').find(x => x.nom === 'Projet servi');
+      return { ref: p.ref, demande: p.refDemandee || null, attribuee: DEPOT.referenceAttribuee(p) };
+    });
+    assert.equal(attente.ref, 'PRJ-… (provisoire)');
+    assert.deepEqual(attente.demande, { prefixe: 'PRJ' });
+    assert.equal(attente.attribuee, null);
+    await pageServie.locator('.studio-date', { hasText: '(provisoire)' }).waitFor();
+    await pageServie.waitForFunction(() => DEPOT.referenceAttribuee(DEPOT.liste('projets').find(x => x.nom === 'Projet servi')) === 'PRJ-0001');
+    const lu = JSON.parse(await readFile(join(racine, 'depots', 'parcours.json'), 'utf8')).projets.find(p => p.nom === 'Projet servi');
+    assert.equal(lu.ref, 'PRJ-0001');
+    assert.equal('refDemandee' in lu, false);
+    await pageServie.reload({ waitUntil: 'networkidle' });
+    await pageServie.locator('.studio-date', { hasText: 'PRJ-0001' }).waitFor();
+    assert.equal(await pageServie.locator('.studio-date', { hasText: '(provisoire)' }).count(), 0);
+    await pageServie.close();
+  } finally {
+    if (servi && servi.exitCode === null) { servi.kill(); await once(servi, 'exit'); }
+    await rm(racine, { recursive: true, force: true });
+  }
   assert.deepEqual(errors, []);
-  console.log('PASS — revue, verdict persistant, retours distincts, recherche, création et identifiant du projet, 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
+  console.log('PASS — revue, verdict persistant, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
 } finally {
   if (browser) await browser.close();
   await new Promise(r => server.close(r));
