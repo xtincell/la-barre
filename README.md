@@ -371,6 +371,17 @@ client non tranché. L'origine dit qui le doit (`brief`, `plateforme`, `bigidea`
 `agence`, `donneur`). Décisions → Retours attendus range ces écarts par
 débiteur ; la file de décision les compte par origine.
 
+L'origine dit aussi qui paie la reprise : `facturable`, posé sur l'origine dans
+`ECARTS.ORIGINES` (`app/ecarts.js`), pas sur l'écart ni sur son type. Seul
+`donneur`, les desiderata du client, est facturable ; les quatre autres sont à la
+charge de l'agence. Décision du 12 novembre 2026 : ce champ se compte.
+`ECARTS.compteFacturable` range chaque écart ouvert parmi les reprises
+facturables au client, à la charge de l'agence, ou non qualifiées quand son
+origine ne dit pas, par un booléen, si elle se facture : le compte ne la range
+jamais chez l'agence par défaut. Un écart écarté n'est pas une reprise ; il se
+compte à part. On compte des reprises, jamais un montant. Le bilan de campagne
+porte ce compte (voir plus bas).
+
 Un écart peut ne pas en être un. « Écarter », sur sa ligne, le sort de ce qui
 m'est dû, motif exigé. Il n'est plus compté, mais il reste au relevé, marqué
 dans `ecartsEcartes[cle]` (motif, date, décision), et se lit sous « Voir les
@@ -462,7 +473,8 @@ une décision (`bilan-campagne`, portée `campagne`) qui fige une version dans
 `campagne.bilanVersions`. Une version porte une identité stable
 (`BIL-<campagne>`), son numéro, sa date (`arrete_le`, recopiée dans
 `campagne.bilan_le`), la campagne et ses marques telles qu'elles étaient, le
-texte, l'acteur, la décision, l'empreinte de la version précédente et la
+texte, les reprises du relevé à l'arrêt (voir plus bas), l'acteur, la décision,
+l'empreinte de la version précédente et la
 sienne : SHA-256 du JSON aux clés triées, sans les champs `empreinte` et
 `attestation`. Derrière La Fusée, la version reçoit l'attestation de la
 personne connectée à son enregistrement, hors de l'empreinte ; La Fusée vérifie
@@ -471,8 +483,29 @@ nouvelle version exige d'écrire ce qu'elle change ; les précédentes ne sont
 jamais réécrites. L'empreinte se calcule avec `crypto.subtle`, que le
 navigateur réserve aux contextes sécurisés (HTTPS, `localhost`) : sur une
 adresse HTTP du réseau, le bilan n'est pas arrêté.
-`tests/fixtures/bilan-campagne-v1.json` et `bilan-campagne-atteste-v1.json`
-sont les jeux communs avec La Fusée.
+`tests/fixtures/bilan-campagne-v1.json`, `bilan-campagne-atteste-v1.json` et
+`bilan-campagne-reprises-v1.json` sont les jeux communs avec La Fusée.
+
+*Les reprises du bilan.* L'écran du bilan montre les reprises du relevé des
+écarts de la campagne, aujourd'hui : chaque écart ouvert des projets de la
+campagne, clos compris, fusionnés exclus, est une reprise due, facturable au
+client ou à la charge de l'agence selon son origine. Une version arrêtée depuis
+le 12 novembre 2026 fige ce compte, sous son empreinte, dans `reprises` :
+`projets` (le nombre de projets relus), `facturables`, `chargeAgence`,
+`nonQualifiees`, `ecartes` (écarts écartés, hors des comptes) et `parOrigine`
+(pour chaque origine, `facturable` — `true`, `false` ou `null` — et `n`). Le
+dialogue d'arrêt montre ce compte ; si le relevé change avant l'arrêt, rien n'est
+arrêté. Sans le relevé des écarts, le bilan ne s'arrête pas. Ce compte est celui
+du relevé à l'arrêt : une reprise déjà faite (retour tranché, annotation traitée,
+KV corrigé) n'y figure plus, et un relevé qui bouge ensuite ne rouvre pas le
+bilan. Une version arrêtée avant ne porte pas `reprises` et ne se recalcule pas :
+son contenu et son empreinte restent ceux de son arrêt, et l'écran dit qu'elle a
+été arrêtée avant ce compte. La décision `bilan-campagne` ne change pas de forme.
+
+Le champ est additif ; `schemaVersion` reste 1. La Fusée relit la version
+entière et recalcule son empreinte : tant qu'elle n'admet pas `reprises`, elle
+refuse de recevoir une version qui le porte (« pas la forme attendue »), et les
+versions arrêtées avant se transmettent comme avant.
 
 **Dans le navigateur.** La base entière est copiée dans le `localStorage`, sous
 la clé `la-barre`. Sans fichier servi, c'est le seul endroit : chaque navigateur

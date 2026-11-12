@@ -82,7 +82,9 @@ async function bac() {
   const lire = chemin => readFile(join(RACINE, chemin), 'utf8');
   for (const f of ['app/maison-base.js', 'vitrine/demo/maison.js', 'app/outils.js', 'app/reconciliation.js', 'app/depot.js',
     'app/decision.js', 'app/acteur.js', 'app/version.js', 'app/kv-modele.js', 'app/ecarts-marche.js', 'app/production.js',
-    'app/campagne.js', 'app/cloture.js']) {
+    'app/campagne.js', 'app/cloture.js',
+    /* Le relevé des écarts et ce qu'il lit : le bilan de campagne s'arrête avec ses reprises. */
+    'app/regles.js', 'app/annotation.js', 'app/feedback.js', 'app/ecarts.js']) {
     vm.runInContext(await lire(f), ctx, { filename: f });
   }
   return { ctx, Date, refus };

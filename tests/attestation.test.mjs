@@ -126,6 +126,11 @@ async function atelier(statut) {
   const s = await bac(APP, 41);
   s.ctx.crypto = webcrypto; s.ctx.TextEncoder = TextEncoder;
   s.ctx.VAULT = { statutContexte: () => statut };
+  /* Le bilan se fige avec les reprises du relevé : le vrai module, sans écart ici. */
+  s.ctx.KV.conformite = () => [];
+  s.ctx.FEEDBACK = { ordre: () => [], nomAuteur: a => a };
+  s.ctx.ANNOT = { ouvertes: () => [] };
+  await s.charger('ecarts');
   await s.charger('campagne');
   await s.charger('jurisprudence');
   semer(s.ctx, { personnes: PERSONNES, marques: [{ id: 'MQ-r', nom: 'Marque de recette' }],

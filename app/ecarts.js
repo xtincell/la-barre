@@ -333,7 +333,46 @@ window.ECARTS = (function () {
     return tous(projetId).filter(function (x) { return !x.ecarte; }).length;
   }
 
+  /* ————————————————————— Qui paie la reprise —————————————————————
+   *
+   * `facturable` est posé sur l'origine, dans ORIGINES : un écart ne le porte
+   * pas lui-même, et son type ne le change pas. Décision du 12 novembre 2026 :
+   * il se compte. Chaque écart ouvert du relevé est une reprise due, facturable
+   * au client si son origine l'est, à la charge de l'agence sinon.
+   *
+   * Le compte lit la table sans repli : une origine qu'elle ne connaît pas, ou
+   * qui ne dit pas par un booléen si elle se facture, est non qualifiée. `def()`
+   * la rangerait chez l'agence ; ce serait décider à la place de quelqu'un. Un
+   * écart écarté n'est pas une reprise : il se compte à part, dans `ecartes`.
+   * On compte des reprises, jamais un montant. */
+
+  function facturable(origine) {
+    if (typeof origine !== "string" || !Object.prototype.hasOwnProperty.call(ORIGINES, origine)) return null;
+    var f = ORIGINES[origine].facturable;
+    return typeof f === "boolean" ? f : null;
+  }
+
+  function compteFacturable(releve) {
+    var out = { facturables: 0, chargeAgence: 0, nonQualifiees: 0, ecartes: 0, parOrigine: {} };
+    (releve || []).forEach(function (x) {
+      if (x.ecarte) { out.ecartes++; return; }
+      var f = facturable(x.origine);
+      if (f === true) out.facturables++;
+      else if (f === false) out.chargeAgence++;
+      else out.nonQualifiees++;
+      var cle = typeof x.origine === "string" && x.origine ? x.origine : "sans origine";
+      /* Une propriété propre, même pour une clé comme « __proto__ ». */
+      if (!Object.prototype.hasOwnProperty.call(out.parOrigine, cle)) {
+        Object.defineProperty(out.parOrigine, cle, { value: { facturable: f, n: 0 },
+          enumerable: true, writable: true, configurable: true });
+      }
+      out.parOrigine[cle].n++;
+    });
+    return out;
+  }
+
   return { ORIGINES: ORIGINES, def: def, depuisQuand: depuisQuand, tous: tous, compte: compte,
     compteParType: compteParType, total: total,
+    facturable: facturable, compteFacturable: compteFacturable,
     ecarterUn: ecarterUn, reprendre: reprendre };
 })();
