@@ -168,6 +168,45 @@ function json(reponse, statut, valeur, version) {
   }).end(JSON.stringify(valeur));
 }
 
+// ————— Un identifiant, une décision —————
+//
+// Plusieurs postes écrivent dans la même base, chacun tirant ses identifiants
+// de décision sans voir ceux des autres. Le client renomme, avant de
+// rapprocher, une décision dont l'identifiant est déjà pris dans la base relue
+// (app/decision.js). Ce contrôle est le dernier : une écriture qui ferait
+// porter un même identifiant à deux décisions, ou qui remplacerait une décision
+// enregistrée par une autre sous le même identifiant, est refusée (422), et la
+// base reste telle quelle. Radar reconnaît une décision à cet identifiant : la
+// première serait perdue pour lui sans qu'aucun écran ne le dise.
+//
+// Seul ce que l'écriture ajoute est refusé : une base qui porte déjà un doublon
+// reste inscriptible. Le contenu se compare sans `attestation` — La Fusée la
+// pose à l'enregistrement — et sans dépendre de l'ordre des clés. Un import qui
+// écrit le fichier directement, sans PUT, ne passe pas par ici.
+function contenuDecision(d) {
+  const { attestation: _attestation, ...reste } = d;
+  return canonique(reste);
+}
+function decisionsParId(base) {
+  const m = new Map();
+  const liste = base && typeof base === "object" && Array.isArray(base.decisions) ? base.decisions : [];
+  for (const d of liste) {
+    if (!d || typeof d !== "object" || Array.isArray(d) || typeof d.id !== "string" || !d.id.trim()) continue;
+    if (!m.has(d.id)) m.set(d.id, []);
+    m.get(d.id).push(contenuDecision(d));
+  }
+  return m;
+}
+function identifiantsEnConflit(actuel, neuf) {
+  const avant = decisionsParId(actuel), apres = decisionsParId(neuf), doubles = [], remplacees = [];
+  for (const [id, contenus] of apres) {
+    const anciens = avant.get(id) || [];
+    if (contenus.length > 1 && contenus.length > anciens.length) doubles.push(id);
+    else if (contenus.length === 1 && anciens.length === 1 && contenus[0] !== anciens[0]) remplacees.push(id);
+  }
+  return { doubles, remplacees };
+}
+
 // ————— Les décisions, lues par Radar —————
 //
 // SHK-0005, sens 1, arbitrage 5.5 du 11 novembre 2026 : Radar vient chercher
@@ -565,6 +604,17 @@ const serveur = createServer(async (requete, reponse) => {
           if (depasse) {
             json(reponse, 409, { ok: false, conflit: true, code: "REVISION_DEPASSEE",
               actuel: vA || null, revision: courante, quoi: "Une autre version a été enregistrée. Vos modifications doivent être rapprochées de cette version." }, courante);
+            return;
+          }
+          const { doubles, remplacees } = identifiantsEnConflit(actuel, neuf);
+          if (doubles.length) {
+            json(reponse, 422, { ok: false, code: "DECISION_EN_DOUBLE", identifiants: doubles,
+              quoi: "La base n'a pas été remplacée : deux décisions porteraient le même identifiant (" + doubles.join(", ") + ")." }, courante);
+            return;
+          }
+          if (remplacees.length) {
+            json(reponse, 422, { ok: false, code: "DECISION_REMPLACEE", identifiants: remplacees,
+              quoi: "La base n'a pas été remplacée : une décision enregistrée serait remplacée par une autre sous le même identifiant (" + remplacees.join(", ") + ")." }, courante);
             return;
           }
         }

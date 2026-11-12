@@ -11,7 +11,7 @@
     "test:manuel": "node --test tests/saisie-manuelle.test.mjs tests/acteur.test.mjs tests/formulaire.test.mjs tests/lecture-dependances.test.mjs",
     "test:marches": "node --test tests/marches.test.mjs tests/grille.test.mjs tests/ecarts-marche.test.mjs tests/hors-ecart.test.mjs",
     "test:provenances": "node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs",
-    "test:decisions": "node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs tests/attestation.test.mjs",
+    "test:decisions": "node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs tests/decisions-unicite.test.mjs tests/attestation.test.mjs",
     "test:bilan": "node --test tests/bilan-preuves.test.mjs tests/bilan-campagne.test.mjs",
     "test:radar": "node --test tests/radar-decisions.test.mjs",
     "test:vitrine": "node --test tests/vitrine.test.mjs",

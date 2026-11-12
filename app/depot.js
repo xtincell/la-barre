@@ -251,7 +251,27 @@ window.DEPOT = (function () {
   function conflits() {
     return conflitEnCours ? RECONCILIATION.reconcilier(conflitEnCours.base, etat, conflitEnCours.distant).conflits : [];
   }
+  /* Une décision de ce poste dont l'identifiant est pris, dans la base relue,
+   * par une autre décision, est renommée avant le rapprochement : ce sont
+   * deux décisions, pas deux versions d'une même (decision.js). Le renommage
+   * se trace et se dit. Ce qui ne peut pas être renommé reste un conflit à
+   * trancher, et se dit aussi. */
+  function departager(base, distant) {
+    if (!window.DECISION) return;
+    var r = DECISION.departager(base, etat, distant);
+    r.renommees.forEach(function (x) {
+      tracer("renommage", "decisions", x.vers, "identifiant " + x.de + " déjà pris dans la base de référence par une autre décision");
+      if (window.AVIS) AVIS.fait("Une décision de ce poste (« " + x.titre + " ») portait l’identifiant " + x.de
+        + ", déjà pris dans la base de référence par une autre décision : elle devient " + x.vers + ". Le journal le garde.");
+    });
+    r.bloquees.forEach(function (x) {
+      if (window.AVIS) AVIS.grave("La décision " + x.id + " de ce poste porte un identifiant déjà pris dans la base de référence, et ne peut pas être renommée ("
+        + x.raison + "). Exportez la base pour la garder, puis choisissez dans Réglages → Rapprocher les modifications : "
+        + "le serveur refuse qu’elle remplace la décision enregistrée.");
+    });
+  }
   function rapprocher(lu, version) {
+    departager(baseContenu, lu);
     var resultat = RECONCILIATION.reconcilier(baseContenu, etat, lu);
     if (resultat.conflits.length) {
       conflitEnCours = { base: RECONCILIATION.copie(baseContenu), distant: lu, revision: version };
@@ -267,6 +287,7 @@ window.DEPOT = (function () {
   }
   function resoudre(choix) {
     if (!conflitEnCours) return false;
+    departager(conflitEnCours.base, conflitEnCours.distant);
     var r = RECONCILIATION.reconcilier(conflitEnCours.base, etat, conflitEnCours.distant, choix);
     if (r.conflits.length) return false;
     poserBase(conflitEnCours.distant, conflitEnCours.revision);
@@ -628,9 +649,14 @@ window.DEPOT = (function () {
     return nom;
   }
 
+  /* Importer remplace la base par le fichier, sauf le registre des
+   * décisions : celles du fichier passent par la fabrique (DECISION.admettre)
+   * — mêmes gardes que le geste, même forme, aucune décision du registre
+   * retirée ni remplacée. Un refus de la fabrique n'écrit rien. Retourne ce
+   * que la fabrique a reçu, ajouté, retrouvé et renommé. */
   function importer(texte) {
     var lu = JSON.parse(texte);
-    if (!lu || typeof lu !== "object") throw new Error("Fichier illisible.");
+    if (!lu || typeof lu !== "object" || Array.isArray(lu)) throw new Error("Fichier illisible.");
     /* Un fichier plus ancien s'importe et se migre ; un fichier plus récent
      * ne s'invente pas — on refuse plutôt que de perdre ce qu'on ne sait pas
      * lire. */
@@ -639,10 +665,17 @@ window.DEPOT = (function () {
         + " contre " + VERSION_SCHEMA + ") : cette version de LA BARRE ne sait pas le lire "
         + "sans risquer d'en perdre une partie.");
     }
+    if (!window.DECISION) throw new Error("La fabrique des décisions n'est pas chargée : la base n'est pas importée.");
+    var admises = DECISION.admettre(lu, etat);
     etat = Object.assign(vide(), lu);
     migrer(etat);
+    admises.renommees.forEach(function (x) {
+      tracer("renommage", "decisions", x.vers, (x.de ? "identifiant " + x.de : "décision") + " : " + x.raison);
+    });
+    tracer("import", "depot", fichier, "décisions du fichier : " + admises.recues + " reçue(s), " + admises.ajoutees
+      + " ajoutée(s), " + admises.deja + " déjà au registre, " + admises.renommees.length + " renommée(s)");
     enregistrer();
-    return etat;
+    return { decisions: admises };
   }
 
   /* Les dépôts d'avant le modèle à trois niveaux n'ont pas de `niveau` sur
