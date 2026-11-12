@@ -10,7 +10,11 @@ async function atelier(ps = [projet('A', piste('a')), projet('B', piste('b'))]) 
   let sequence = 0, saves = 0;
   const data = { campagnes: [{ id: 'C-test', nom: 'Campagne de recette' }], projets: ps, decisions: [], journal: [] };
   const publications = [];
-  const ctx = vm.createContext({ Date, console, O: { el() {}, id: prefix => prefix + (++sequence), aleatoire: n => String(++sequence).padStart(n, '0') }, MAISON: { titulaire: 'creation' },
+  const ctx = vm.createContext({ Date, console, O: { el() {}, id: prefix => prefix + (++sequence), aleatoire: n => String(++sequence).padStart(n, '0'),
+    TIRAGES: 64, identifiantUnique(prefixe, pris) {
+      for (let i = 0; i < this.TIRAGES; i++) { const id = prefixe + '-test-' + this.aleatoire(12); if (!pris(id)) return id; }
+      return null;
+    } }, MAISON: { titulaire: 'creation' },
     ACTEUR: { trace: () => ({ personneId: 'P-recette', poste: 'creation' }) },
     DEPOT: { liste: key => data[key] || [], trouve: (key, id) => (data[key] || []).find(x => x.id === id),
       ajoute(key, value) { const row = { id: 'D-' + (++sequence), ...value }; data[key].push(row); publications.push(copy(data)); return row; },

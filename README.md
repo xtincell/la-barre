@@ -201,7 +201,10 @@ l'instance La Barre et `decision.id`, et aucune décision déjà enregistrée n'
 renommée, donc son `empreinte_contenu` ne bouge pas. Une décision renommée parce
 que son identifiant était pris ne l'a jamais été dans la base de référence :
 Radar ne l'a jamais lue sous l'ancien. Le champ `renommage` qui en garde la
-trace n'est pas servi.
+trace n'est pas servi. Un projet ou un livrable neuf porte la même forme
+(`PRO-…`, `L-…`, `KV-…`) : `projet` et `objet` restent des chaînes opaques, et
+un projet déjà enregistré garde son identifiant, donc la correspondance que
+Radar tient dans `barre_projets`.
 
 La route ne ferme qu'elle-même. Le reste de `servir.mjs` reste sans
 authentification : une installation qui l'ouvre à Radar n'expose que
@@ -363,6 +366,42 @@ rien ne se perd en silence :
 - *À l'écriture*, `servir.mjs` refuse une base qui ferait porter un même
   identifiant à deux décisions, ou remplacerait une décision enregistrée (voir
   « Dans un fichier »).
+
+**Un identifiant, un projet ; un identifiant, un livrable.** Le même
+mécanisme vaut pour les projets et les livrables. La Fusée et Radar
+reconnaissent un projet à son identifiant (`barre_projets` côté Radar), et un
+livrable se cite partout : décisions, retours, formats, écarts.
+
+- *À la création*, un projet neuf porte `PRO-<poste>-<douze caractères>`, un
+  livrable `L-…` ou, pour un KV, `KV-…`. Le code du poste est celui des
+  décisions. L'identifiant tiré est libre parmi les projets et les livrables de
+  la base. Le générateur est commun : `O.identifiantUnique` (`app/outils.js`),
+  appelé par `DEPOT.identifiant`. Un livrable neuf reçoit aussi sa date de
+  naissance, `cree_le`, comme un projet. Les identifiants déjà portés
+  (`PRJ-0020`, `PRO-` et six caractères…) ne sont jamais réécrits.
+- *Un même objet, ou deux.* Un projet change à chaque geste : son contenu ne dit
+  pas qui il est. Sa date de naissance, si. Deux copies d'un même projet (une
+  réponse du serveur perdue, puis d'autres gestes) portent la même ; deux
+  projets nés sur deux postes en portent deux. Un livrable est aussi celui de
+  son projet : sous le même identifiant dans un autre projet, c'est un autre
+  livrable.
+- *Au rapprochement*, un projet ou un livrable de ce poste, absent de la dernière
+  base reçue, dont l'identifiant est porté dans la base relue par un autre objet,
+  est renommé (`RECONCILIATION.departager`). Celui de la base de référence garde
+  le sien. Ce qui le cite dans ce poste le suit : décisions, retours, format qui
+  le décline, journal, et les clés composées — l'écart écarté
+  (`ecartsEcartes`, « projet|livrable|origine|quoi »), l'objet de sa décision, la
+  clé d'un blocage, qui garde ainsi sa date. L'objet porte `renommage` (`de`,
+  `le`, `raison`), le journal une ligne « renommage », l'écran le dit. Ne se
+  renomme pas un objet pris deux fois dans ce poste, cité par une entrée
+  attestée ou une version de bilan arrêtée, ou par une décision déjà dans la base
+  de référence (elle ne peut plus changer). L'écran le dit ; deux projets, ou deux
+  livrables d'un même projet, nés à deux instants ne se fondent jamais : l'un des
+  deux se choisit entier.
+- *À l'écriture*, `servir.mjs` refuse une base qui ferait porter un même
+  identifiant à deux projets, ou à deux livrables où qu'ils soient, ou qui
+  remplacerait un projet ou un livrable enregistré par un autre objet sous le
+  même identifiant (voir « Dans un fichier »).
 
 **Les écarts du relevé.** Ce qu'on me doit se calcule, il ne se saisit pas
 (`app/ecarts.js`) : un livrable qui ne tient pas le brief, une plateforme
@@ -531,6 +570,11 @@ une seconde après le dernier geste. Le `localStorage` reste un filet.
   La base reste telle quelle. Le contenu se compare sans l'`attestation` de La
   Fusée et sans dépendre de l'ordre des clés ; une base qui porte déjà un
   doublon reste inscriptible, seul ce que l'écriture ajoute est refusé.
+- De même pour les projets et les livrables : `PROJET_EN_DOUBLE`,
+  `PROJET_REMPLACE`, `LIVRABLE_EN_DOUBLE` (deux livrables, même dans deux
+  projets), `LIVRABLE_REMPLACE`. Un projet ou un livrable est remplacé quand sa
+  date de naissance (`cree_le`) change, ou quand un livrable change de projet.
+  Ses autres champs se modifient librement.
 - Cette garantie porte sur un seul processus serveur. Écrire le fichier
   directement, ou lancer plusieurs processus sur le même fichier, contourne ce
   protocole. `outils/ingerer-corpus.mjs --ecrire` écrit ainsi
@@ -617,7 +661,7 @@ Les scripts de `package.json` :
 |---|---|
 | `npm start` | `node servir.mjs` |
 | `npm test` | `node tests/parcours.mjs` |
-| `npm run test:persistance` | `node --test tests/persistance.test.mjs tests/reconciliation.test.mjs tests/depot-reprise.test.mjs` |
+| `npm run test:persistance` | `node --test tests/persistance.test.mjs tests/reconciliation.test.mjs tests/depot-reprise.test.mjs tests/identifiants-unicite.test.mjs` |
 | `npm run test:manuel` | `node --test tests/saisie-manuelle.test.mjs tests/acteur.test.mjs tests/formulaire.test.mjs tests/lecture-dependances.test.mjs` |
 | `npm run test:marches` | `node --test tests/marches.test.mjs tests/grille.test.mjs tests/ecarts-marche.test.mjs tests/hors-ecart.test.mjs` |
 | `npm run test:provenances` | `node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs` |
@@ -648,19 +692,46 @@ un navigateur installé). La CI ne le lance pas.
   vers Radar.
 - **Un registre des projets sans source dans le dépôt.** Le registre des
   projets se lit dans la base, mais aucun outil du dépôt ne le remplit.
-- **L'unicité ne vaut que pour les décisions.** Les autres objets (projets,
-  livrables, retours…) gardent un préfixe et six caractères tirés par
-  `Math.random`, sans contrôle entre postes ; le rapprochement les réunit par
-  identifiant. Un poste dont le navigateur efface ses données tire un nouveau
-  code, et deux postes peuvent tirer le même code : les douze caractères les
-  séparent encore. Un renommage ne réécrit qu'une citation mot pour mot :
+- **La référence humaine d'un projet peut encore se répéter entre postes.**
+  `ref` (`MT-0042`, `PRJ-0003`…) est tirée à la création par quatre écrans, sur
+  deux règles : le nombre de projets plus un (boîte d'entrée, ouverture depuis
+  une campagne, « Nouveau projet », avec `PRJ-` si la référence n'est pas
+  saisie) ou le plus grand numéro plus un, à partir de 42 (registre People).
+  Deux postes ouvrent donc le même `MT-…`, et le compte peut déjà retomber sur
+  une référence existante dans un seul poste. Le rapprochement départage
+  l'identifiant, pas la référence ; `tests/identifiants-unicite.test.mjs` garde
+  ce cas en attente (`todo`). La correction dépend d'un choix à faire, pas d'un
+  correctif : la référence est montrée au client (documents publiés, manifeste
+  de remise, noms de fichiers), La Fusée l'affiche comme code du projet, le
+  format d'échange `ecarts-marche` du Market Expansion System désigne le projet
+  par elle, et les codes `ndeg` de Radar ont la même forme (préfixe et
+  numéro) : le corpus recopie le `ndeg` comme référence. Renuméroter au
+  rapprochement, porter le code du poste dans la référence ou la faire attribuer
+  ailleurs sont trois réponses différentes. Le contrat de `GET /radar/decisions`
+  ne porte pas `ref`.
+- **L'unicité vaut pour les décisions, les projets et les livrables.** Les
+  autres objets (retours, annotations, attentes, pistes…) gardent un préfixe et
+  six caractères tirés par `Math.random`, sans contrôle entre postes ; le
+  rapprochement les réunit par identifiant. Un poste dont le navigateur efface
+  ses données tire un nouveau code, et deux postes peuvent tirer le même code :
+  les douze caractères les séparent encore. Un projet ou un livrable né avant ce
+  changement n'a pas toujours de date de naissance (un livrable, jamais) : deux
+  tels objets sous un même identifiant, nés hors de la base de référence, ne se
+  départagent pas et se rapprochent champ par champ, comme avant ; c'est aussi ce
+  qui garde la reprise d'un cache ancien, sans base. Un renommage ne réécrit
+  qu'une citation mot pour mot, ou un segment d'une clé composée « a|b|c » :
   `revisionSource`, l'état relu au moment d'une désignation de référence, garde
-  l'ancien identifiant dans son texte. Le refus du serveur ne couvre que les
-  écritures par `PUT` : un fichier écrit directement, comme le fait
-  `outils/ingerer-corpus.mjs --ecrire`, ne passe pas par lui. Une décision
+  l'ancien identifiant dans son texte, comme le chemin d'un fichier envoyé
+  (`assets/review/livrables/<livrable>-…`) et un lien de tirage d'approches déjà
+  ouvert. Le refus du serveur ne couvre que les écritures par `PUT` : un fichier
+  écrit directement, comme le fait `outils/ingerer-corpus.mjs --ecrire`, ne passe
+  pas par lui ; l'ingestion régénère ses propres dossiers `PRJ-XC-…` à chaque
+  passe, avec une nouvelle date de naissance. Une décision
   ancienne qui ne passerait pas la garde de la fabrique (verdict hors des
   quatre, date non ISO, motif absent d'un refus) fait refuser l'import de son
   fichier : elle se corrige dans le fichier, l'application ne la réécrit pas.
+  Importer un fichier dont un projet remplace, sous le même identifiant, un projet
+  né ailleurs fait refuser la sauvegarde qui suit (`PROJET_REMPLACE`).
 - **Un écart écarté ne se lit que dans Retours attendus.** La planche des KV
   et la route d'une piste lisent la conformité du KV directement : un
   manquement écarté y reste affiché comme manquement. Aucun écran ne montre le

@@ -73,6 +73,15 @@ try {
     return cree && location.hash === '#/projets/' + cree.id;
   });
   assert.ok(await page.evaluate(() => DEPOT.liste('projets').some(p => p.nom === 'Projet de contrôle')));
+  // Son identifiant est unique entre postes : le code de ce poste, celui de ses
+  // décisions, et douze caractères tirés par crypto.
+  const cree = await page.evaluate(() => {
+    const p = DEPOT.liste('projets').find(x => x.nom === 'Projet de contrôle');
+    return { id: p.id, cree_le: p.cree_le, poste: localStorage.getItem('la-barre-poste') };
+  });
+  assert.match(cree.id, /^PRO-[0-9a-z]{4}-[0-9a-z]{12}$/);
+  assert.equal(cree.id.split('-')[1], cree.poste);
+  assert.ok(!Number.isNaN(Date.parse(cree.cree_le)));
   // Aucun ancien lien ne doit provoquer d'erreur de rendu.
   for (const route of ['bureau','valider','planning','reporting','projets','projets/marques','referentiel','attentes','reglages']) {
     await page.goto(url + '/#/' + route);
@@ -120,7 +129,7 @@ try {
   await page.evaluate(() => { DEPOT.reinitialiser(); location.hash = '#/bureau'; APP.rendre(); });
   await page.getByRole('button', { name:'Créer mon premier projet', exact:true }).waitFor();
   assert.deepEqual(errors, []);
-  console.log('PASS — revue, verdict persistant, retours distincts, recherche, création, 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
+  console.log('PASS — revue, verdict persistant, retours distincts, recherche, création et identifiant du projet, 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
 } finally {
   if (browser) await browser.close();
   await new Promise(r => server.close(r));

@@ -344,7 +344,8 @@ window.VUE_PLANCHE = (function () {
             var points = {};
             MAISON.points.forEach(function (a) { points[a.cle] = "attente"; });
             p.livrables.push({
-              id: O.id("L"), niveau: "declinaison", voletId: maitre.voletId, support: sid, marche: marcheId,
+              id: DEPOT.identifiant("L"), cree_le: new Date().toISOString(),
+              niveau: "declinaison", voletId: maitre.voletId, support: sid, marche: marcheId,
               nom: (s ? s.nom : "format") + " · " + (DEPOT.trouve("marches", marcheId) || {}).code,
               responsable: maitre.responsable, origine: "prevu", pisteId: maitre.pisteId,
               maitre: maitre.id, versionMaitre: maitre.version || 1, version: 1, versions: [],

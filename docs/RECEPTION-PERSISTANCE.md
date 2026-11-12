@@ -83,3 +83,70 @@ Ces preuves sont locales, sur données fictives : ni CI distante, ni production.
   identifiant après un renommage.
 - Une décision ancienne qui ne passe pas la garde fait refuser l'import de son
   fichier.
+
+## Identifiants de projet et de livrable entre postes — 12 novembre 2026
+
+Suite du geste 4.9 du plan Shinkiro. La décision avait son identifiant unique
+entre postes (la-barre#26). Le projet et le livrable tiraient encore un préfixe
+et six caractères de `Math.random` (`DEPOT.ajoute`, `app/depot.js` ; `O.id("L")`
+et `O.id("KV")` dans `app/kv-modele.js`, `app/dispositif.js`,
+`app/vue-matrice.js`, `app/vue-planche.js`). Deux postes pouvaient tirer le
+même ; le rapprochement fondait alors deux projets, ou deux livrables, champ par
+champ ; le serveur acceptait une base qui en dupliquait un ou en remplaçait un.
+
+La correction réutilise le mécanisme de #26, sans nouveau module. Le code du
+poste et le tirage passent de `app/decision.js` à `app/outils.js`
+(`O.codePoste`, `O.identifiantUnique`) : la décision, le projet (`PRO-…`) et le
+livrable (`L-…`, `KV-…`) partagent le même générateur, appelé pour les projets
+et les livrables par `DEPOT.identifiant`. Un livrable neuf reçoit sa date de
+naissance (`cree_le`), qui dit, avec son projet, qui il est. Le parcours des
+citations passe de `app/decision.js` à `app/reconciliation.js`
+(`RECONCILIATION.citations`), où `departager` renomme avant le rapprochement le
+projet ou le livrable local absent de la dernière base reçue, dont l'identifiant
+est porté dans la base relue par un objet né ailleurs ; ce qui le cite suit,
+clés composées comprises. `reconcilier` ne fond plus deux projets, ou deux
+livrables d'un projet, nés à deux instants. `servir.mjs` refuse en 422
+`PROJET_EN_DOUBLE`, `PROJET_REMPLACE`, `LIVRABLE_EN_DOUBLE` et
+`LIVRABLE_REMPLACE`. Les identifiants existants ne changent pas ;
+`GET /radar/decisions` est inchangé.
+
+### Preuves
+
+- Tests écrits d'abord : `tests/identifiants-unicite.test.mjs`, 11 rouges sur 11
+  avant la correction — dont le rapprochement qui laissait deux conflits de champ
+  au lieu de départager, et le serveur qui acceptait un doublon (200 au lieu de
+  422) —, plus un douzième en attente (`todo`), la référence humaine.
+- Après correction, 285 tests Node verts sur les suites de la CI, dont 11
+  nouveaux, et le `todo` de la référence ; syntaxe, `distribuer-approches.mjs
+  --check` et `vitrine-base.mjs --check` à zéro.
+- Cinq bancs d'essai de tests existants simulaient `O` ou `DEPOT` sans le
+  générateur commun (`decisions.test.mjs`, `reference-campagne.test.mjs`,
+  `saisie-manuelle.test.mjs`, `marches.test.mjs`, `grille.test.mjs`) : ils le
+  reçoivent, et `decisions.test.mjs` exerce désormais le vrai tirage, nourri par
+  `crypto`.
+- Un premier essai fondait en un choix entier tout objet sans date de naissance
+  absent de la base : la reprise d'un cache ancien, sans base, le montrait
+  (`depot-reprise.test.mjs`). Un tel objet se rapproche désormais champ par champ,
+  comme avant.
+- Parcours Chromium (`npm test`) : le projet créé par « Nouveau projet » porte
+  `PRO-`, le code du poste et douze caractères.
+- Base fictive de la démonstration régénérée : ses KV et formats ont la forme
+  neuve et une date de naissance ; les identifiants de décision tirés après eux
+  ont changé.
+- Les assertions HTTP des jobs `image` et `image-entreprise` rejouées sur
+  `servir.mjs` lancé directement : le démon Docker n'était pas disponible, les
+  images ne sont pas construites ici.
+
+Ces preuves sont locales, sur données fictives : ni CI distante, ni production.
+
+### Limites
+
+- La référence humaine (`ref`) peut encore se répéter entre postes, et déjà dans
+  un seul poste : sa forme et son attribution sont à arbitrer (README, « Ce qui
+  manque »).
+- Un projet ou un livrable né avant ce changement sans date de naissance ne se
+  départage pas.
+- Un renommage ne réécrit ni un texte libre (`revisionSource`, journal) ni un
+  chemin de fichier.
+- Le refus du serveur ne couvre que les écritures par `PUT` ; l'ingestion du
+  corpus écrit son fichier directement.

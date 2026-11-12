@@ -849,7 +849,8 @@
    ],
    "livrables": [
     {
-     "id": "KV-zkfm92",
+     "id": "KV-c3ih-t7v7dr95ubil",
+     "cree_le": "2026-10-22T09:00:00.000Z",
      "niveau": "maitre",
      "voletId": null,
      "support": "S-kv",
@@ -913,7 +914,8 @@
      "echeance": "2026-10-29"
     },
     {
-     "id": "KV-ilzgdb",
+     "id": "KV-c3ih-ixcwreqlxu99",
+     "cree_le": "2026-11-02T09:00:00.000Z",
      "niveau": "adaptation",
      "voletId": null,
      "support": "S-kv",
@@ -922,7 +924,7 @@
      "responsable": "PE-ilan",
      "origine": "prevu",
      "pisteId": "PI-zeste",
-     "maitre": "KV-zkfm92",
+     "maitre": "KV-c3ih-t7v7dr95ubil",
      "versionMaitre": 2,
      "version": 1,
      "versions": [
@@ -968,9 +970,9 @@
       "lumiere": "Le premier rayon, avant sept heures"
      },
      "depart": {
-      "maitre": "KV-zkfm92",
+      "maitre": "KV-c3ih-t7v7dr95ubil",
       "versionMaitre": 2,
-      "le": "2026-11-02T09:00:00.000Z",
+      "le": "2026-11-02T09:00:01.000Z",
       "kv": {
        "marque": "Orvelle",
        "copy": "Le premier zeste du jour",
@@ -989,7 +991,8 @@
      "echeance": "2026-11-07"
     },
     {
-     "id": "KV-729t8y",
+     "id": "KV-c3ih-7lxze2v8lstu",
+     "cree_le": "2026-11-02T09:00:03.000Z",
      "niveau": "adaptation",
      "voletId": null,
      "support": "S-kv",
@@ -998,7 +1001,7 @@
      "responsable": "PE-ilan",
      "origine": "prevu",
      "pisteId": "PI-zeste",
-     "maitre": "KV-zkfm92",
+     "maitre": "KV-c3ih-t7v7dr95ubil",
      "versionMaitre": 2,
      "version": 1,
      "versions": [
@@ -1045,9 +1048,9 @@
       "lumiere": "Le premier rayon, avant sept heures"
      },
      "depart": {
-      "maitre": "KV-zkfm92",
+      "maitre": "KV-c3ih-t7v7dr95ubil",
       "versionMaitre": 2,
-      "le": "2026-11-02T09:00:02.000Z",
+      "le": "2026-11-02T09:00:04.000Z",
       "kv": {
        "marque": "Orvelle",
        "copy": "Le premier zeste du jour",
@@ -1066,7 +1069,8 @@
      "echeance": "2026-11-07"
     },
     {
-     "id": "KV-euc48r",
+     "id": "KV-c3ih-sv7u0cl4jb32",
+     "cree_le": "2026-11-02T09:00:06.000Z",
      "niveau": "adaptation",
      "voletId": null,
      "support": "S-kv",
@@ -1075,7 +1079,7 @@
      "responsable": "PE-ilan",
      "origine": "prevu",
      "pisteId": "PI-zeste",
-     "maitre": "KV-zkfm92",
+     "maitre": "KV-c3ih-t7v7dr95ubil",
      "versionMaitre": 2,
      "version": 1,
      "versions": [
@@ -1119,9 +1123,9 @@
       "lumiere": "Le premier rayon, avant sept heures"
      },
      "depart": {
-      "maitre": "KV-zkfm92",
+      "maitre": "KV-c3ih-t7v7dr95ubil",
       "versionMaitre": 2,
-      "le": "2026-11-02T09:00:04.000Z",
+      "le": "2026-11-02T09:00:07.000Z",
       "kv": {
        "marque": "Orvelle",
        "copy": "Le premier zeste du jour",
@@ -1140,7 +1144,8 @@
      "echeance": "2026-11-07"
     },
     {
-     "id": "L-cleraq",
+     "id": "L-c3ih-vqc344kl8jr9",
+     "cree_le": "2026-11-06T10:00:00.000Z",
      "niveau": "declinaison",
      "voletId": null,
      "support": "S-affiche",
@@ -1149,7 +1154,7 @@
      "responsable": "PE-yao",
      "origine": "prevu",
      "pisteId": "PI-zeste",
-     "maitre": "KV-ilzgdb",
+     "maitre": "KV-c3ih-ixcwreqlxu99",
      "versionMaitre": 1,
      "version": 1,
      "versions": [
@@ -1186,7 +1191,7 @@
      "vignette": "visuels/affiche-ci.svg",
      "fichiers": [
       {
-       "id": "F-w9utk5",
+       "id": "F-zkfm92",
        "type": "bat",
        "nom": "ORV-2027-01_affiche-4x3_CI_V1_BAT.pdf",
        "emplacement": "Dossier de production (fictif)",
@@ -1195,7 +1200,7 @@
        "version": 1
       },
       {
-       "id": "F-nv9cbb",
+       "id": "F-ilzgdb",
        "type": "asset",
        "nom": "ORV-2027-01_affiche-4x3_CI_V1.jpg",
        "emplacement": "Dossier de production (fictif)",
@@ -1206,7 +1211,8 @@
      ]
     },
     {
-     "id": "L-fpbfpd",
+     "id": "L-c3ih-5f7izv4jtqd4",
+     "cree_le": "2026-11-06T10:00:02.000Z",
      "niveau": "declinaison",
      "voletId": null,
      "support": "S-social",
@@ -1215,7 +1221,7 @@
      "responsable": "PE-yao",
      "origine": "prevu",
      "pisteId": "PI-zeste",
-     "maitre": "KV-ilzgdb",
+     "maitre": "KV-c3ih-ixcwreqlxu99",
      "versionMaitre": 1,
      "version": 1,
      "versions": [
@@ -1250,7 +1256,8 @@
      "vignette": "visuels/social-ci.svg"
     },
     {
-     "id": "L-tcj8oz",
+     "id": "L-c3ih-1eb7ymdcbd5q",
+     "cree_le": "2026-11-06T10:00:04.000Z",
      "niveau": "declinaison",
      "voletId": null,
      "support": "S-affiche",
@@ -1259,7 +1266,7 @@
      "responsable": "PE-yao",
      "origine": "prevu",
      "pisteId": "PI-zeste",
-     "maitre": "KV-729t8y",
+     "maitre": "KV-c3ih-7lxze2v8lstu",
      "versionMaitre": 1,
      "version": 1,
      "versions": [
@@ -1296,7 +1303,7 @@
      "vignette": "visuels/affiche-sn.svg",
      "fichiers": [
       {
-       "id": "F-zpmu3f",
+       "id": "F-729t8y",
        "type": "bat",
        "nom": "ORV-2027-01_affiche-4x3_SN_V1_BAT.pdf",
        "emplacement": "Dossier de production (fictif)",
@@ -1307,7 +1314,8 @@
      ]
     },
     {
-     "id": "L-n80pgf",
+     "id": "L-c3ih-9a330oi3mubp",
+     "cree_le": "2026-11-06T10:00:06.000Z",
      "niveau": "declinaison",
      "voletId": null,
      "support": "S-social",
@@ -1316,7 +1324,7 @@
      "responsable": "PE-yao",
      "origine": "prevu",
      "pisteId": "PI-zeste",
-     "maitre": "KV-euc48r",
+     "maitre": "KV-c3ih-sv7u0cl4jb32",
      "versionMaitre": 1,
      "version": 1,
      "versions": [],
@@ -1568,7 +1576,7 @@
    "cree_le": "2026-10-20T10:00:11.000Z"
   },
   {
-   "objet": "KV-zkfm92",
+   "objet": "KV-c3ih-t7v7dr95ubil",
    "type": "livrable",
    "projet": "PRJ-zeste",
    "verdict": "retour",
@@ -1576,11 +1584,11 @@
    "quand": "2026-10-26T09:00:00.000Z",
    "qui": "creation",
    "titre": "KV master commun · Orvelle",
-   "id": "DEC-c3ih-t7v7dr95ubil",
+   "id": "DEC-c3ih-gz8eh1d2gvvs",
    "cree_le": "2026-10-26T09:00:01.000Z"
   },
   {
-   "objet": "KV-zkfm92",
+   "objet": "KV-c3ih-t7v7dr95ubil",
    "type": "livrable",
    "projet": "PRJ-zeste",
    "verdict": "approuve",
@@ -1588,11 +1596,11 @@
    "quand": "2026-10-29T10:00:00.000Z",
    "qui": "creation",
    "titre": "KV master commun · Orvelle",
-   "id": "DEC-c3ih-gz8eh1d2gvvs",
+   "id": "DEC-c3ih-k9p98zw91h1x",
    "cree_le": "2026-10-29T10:00:01.000Z"
   },
   {
-   "objet": "KV-ilzgdb",
+   "objet": "KV-c3ih-ixcwreqlxu99",
    "type": "livrable",
    "projet": "PRJ-zeste",
    "verdict": "approuve",
@@ -1600,11 +1608,11 @@
    "quand": "2026-11-05T09:00:00.000Z",
    "qui": "creation",
    "titre": "KV · CI · Orvelle",
-   "id": "DEC-c3ih-k9p98zw91h1x",
+   "id": "DEC-c3ih-m4g185mdza6c",
    "cree_le": "2026-11-05T09:00:01.000Z"
   },
   {
-   "objet": "KV-729t8y",
+   "objet": "KV-c3ih-7lxze2v8lstu",
    "type": "livrable",
    "projet": "PRJ-zeste",
    "verdict": "approuve",
@@ -1612,11 +1620,11 @@
    "quand": "2026-11-05T09:10:00.000Z",
    "qui": "creation",
    "titre": "KV · SN · Orvelle",
-   "id": "DEC-c3ih-ixcwreqlxu99",
+   "id": "DEC-c3ih-ttjpf5oszthw",
    "cree_le": "2026-11-05T09:10:01.000Z"
   },
   {
-   "objet": "L-cleraq",
+   "objet": "L-c3ih-vqc344kl8jr9",
    "type": "livrable",
    "projet": "PRJ-zeste",
    "verdict": "approuve",
@@ -1624,11 +1632,11 @@
    "quand": "2026-11-08T09:00:00.000Z",
    "qui": "creation",
    "titre": "Affiche 4×3 · CI",
-   "id": "DEC-c3ih-7lxze2v8lstu",
+   "id": "DEC-c3ih-3t7wlfi10zu4",
    "cree_le": "2026-11-08T09:00:01.000Z"
   },
   {
-   "objet": "L-tcj8oz",
+   "objet": "L-c3ih-1eb7ymdcbd5q",
    "type": "livrable",
    "projet": "PRJ-zeste",
    "verdict": "approuve",
@@ -1636,7 +1644,7 @@
    "quand": "2026-11-10T09:00:00.000Z",
    "qui": "creation",
    "titre": "Affiche 4×3 · SN",
-   "id": "DEC-c3ih-sv7u0cl4jb32",
+   "id": "DEC-c3ih-uhh549ldr4fm",
    "cree_le": "2026-11-10T09:00:01.000Z"
   }
  ],
@@ -1969,7 +1977,7 @@
    "detail": "GH : Produit / SKU"
   },
   {
-   "quand": "2026-10-22T09:00:00.000Z",
+   "quand": "2026-10-22T09:00:01.000Z",
    "qui": "creation",
    "acteur": {
     "personneId": "PE-clemence",
@@ -2013,7 +2021,7 @@
    },
    "action": "création",
    "type": "decisions",
-   "id": "DEC-c3ih-t7v7dr95ubil",
+   "id": "DEC-c3ih-gz8eh1d2gvvs",
    "detail": "KV master commun · Orvelle"
   },
   {
@@ -2045,11 +2053,11 @@
    },
    "action": "création",
    "type": "decisions",
-   "id": "DEC-c3ih-gz8eh1d2gvvs",
+   "id": "DEC-c3ih-k9p98zw91h1x",
    "detail": "KV master commun · Orvelle"
   },
   {
-   "quand": "2026-11-02T09:00:01.000Z",
+   "quand": "2026-11-02T09:00:02.000Z",
    "qui": "creation",
    "acteur": {
     "personneId": "PE-clemence",
@@ -2065,7 +2073,7 @@
    "detail": "KV · CI"
   },
   {
-   "quand": "2026-11-02T09:00:03.000Z",
+   "quand": "2026-11-02T09:00:05.000Z",
    "qui": "creation",
    "acteur": {
     "personneId": "PE-clemence",
@@ -2081,7 +2089,7 @@
    "detail": "KV · SN"
   },
   {
-   "quand": "2026-11-02T09:00:05.000Z",
+   "quand": "2026-11-02T09:00:08.000Z",
    "qui": "creation",
    "acteur": {
     "personneId": "PE-clemence",
@@ -2141,7 +2149,7 @@
    },
    "action": "création",
    "type": "decisions",
-   "id": "DEC-c3ih-k9p98zw91h1x",
+   "id": "DEC-c3ih-m4g185mdza6c",
    "detail": "KV · CI · Orvelle"
   },
   {
@@ -2157,7 +2165,7 @@
    },
    "action": "création",
    "type": "decisions",
-   "id": "DEC-c3ih-ixcwreqlxu99",
+   "id": "DEC-c3ih-ttjpf5oszthw",
    "detail": "KV · SN · Orvelle"
   },
   {
@@ -2177,22 +2185,6 @@
    "detail": "KV · GH · Orvelle V1"
   },
   {
-   "quand": "2026-11-06T10:00:00.000Z",
-   "qui": "creation",
-   "acteur": {
-    "personneId": "PE-clemence",
-    "nom": "Clémence Ardoise",
-    "poste": "creation",
-    "postes": [
-     "creation"
-    ]
-   },
-   "action": "déclinaison",
-   "type": "kv",
-   "id": "PRJ-zeste",
-   "detail": "1 format depuis KV · CI · Orvelle"
-  },
-  {
    "quand": "2026-11-06T10:00:01.000Z",
    "qui": "creation",
    "acteur": {
@@ -2209,7 +2201,23 @@
    "detail": "1 format depuis KV · CI · Orvelle"
   },
   {
-   "quand": "2026-11-06T10:00:02.000Z",
+   "quand": "2026-11-06T10:00:03.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "déclinaison",
+   "type": "kv",
+   "id": "PRJ-zeste",
+   "detail": "1 format depuis KV · CI · Orvelle"
+  },
+  {
+   "quand": "2026-11-06T10:00:05.000Z",
    "qui": "creation",
    "acteur": {
     "personneId": "PE-clemence",
@@ -2225,7 +2233,7 @@
    "detail": "1 format depuis KV · SN · Orvelle"
   },
   {
-   "quand": "2026-11-06T10:00:03.000Z",
+   "quand": "2026-11-06T10:00:07.000Z",
    "qui": "creation",
    "acteur": {
     "personneId": "PE-clemence",
@@ -2269,7 +2277,7 @@
    },
    "action": "création",
    "type": "decisions",
-   "id": "DEC-c3ih-7lxze2v8lstu",
+   "id": "DEC-c3ih-3t7wlfi10zu4",
    "detail": "Affiche 4×3 · CI"
   },
   {
@@ -2317,7 +2325,7 @@
    },
    "action": "création",
    "type": "decisions",
-   "id": "DEC-c3ih-sv7u0cl4jb32",
+   "id": "DEC-c3ih-uhh549ldr4fm",
    "detail": "Affiche 4×3 · SN"
   },
   {

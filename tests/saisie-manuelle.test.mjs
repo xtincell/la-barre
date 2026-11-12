@@ -14,7 +14,8 @@ async function poste() {
   ] };
   const sb = { console, Date, Set, Map,
     MAISON:{ titulaire:'creation', criteresDe:()=>[], verdicts:[{cle:'approuve',nom:'Approuvé'}], postes:[{cle:'creation'},{cle:'clientele'},{cle:'planning'}] },
-    O:{ el, poste:p => ({ nom:p, court:p }), id:p => p+'-recette', aleatoire:n => 'r'.repeat(n) },
+    O:{ el, poste:p => ({ nom:p, court:p }), id:p => p+'-recette', aleatoire:n => 'r'.repeat(n),
+      TIRAGES:64, identifiantUnique:(prefixe, pris) => { const id = prefixe+'-rrrr-'+'r'.repeat(12); return pris(id) ? null : id; } },
     UI:{ banniere:(...x)=>el('div',{},...x), eti:(...x)=>el('span',{},...x) },
     AVIS:{ refus:message => { sb.erreur = message; } },
     CHAMPS:{ section:()=>def },

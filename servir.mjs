@@ -183,28 +183,66 @@ function json(reponse, statut, valeur, version) {
 // reste inscriptible. Le contenu se compare sans `attestation` — La Fusée la
 // pose à l'enregistrement — et sans dépendre de l'ordre des clés. Un import qui
 // écrit le fichier directement, sans PUT, ne passe pas par ici.
+//
+// Même garde pour les projets et les livrables (app/reconciliation.js,
+// `departager`) : un même identifiant porté par deux projets, ou par deux
+// livrables où qu'ils soient, est refusé (PROJET_EN_DOUBLE, LIVRABLE_EN_DOUBLE),
+// comme le remplacement d'un projet ou d'un livrable enregistré par un autre
+// objet sous le même identifiant (PROJET_REMPLACE, LIVRABLE_REMPLACE). Un
+// projet change à chaque geste : ce n'est pas son contenu qui dit qui il est,
+// c'est sa date de naissance, `cree_le`, posée à la création et jamais
+// réécrite. Un livrable est aussi celui de son projet : il n'en change jamais.
+// Un objet sans date de naissance des deux côtés ne se compare que par là.
+const objetLisible = (x) => x && typeof x === "object" && !Array.isArray(x) && typeof x.id === "string" && x.id.trim() !== "";
+const listeDe = (x, cle) => (x && typeof x === "object" && Array.isArray(x[cle]) ? x[cle] : []);
+const naissance = (x) => (typeof x.cree_le === "string" && x.cree_le.trim() ? x.cree_le : null);
 function contenuDecision(d) {
   const { attestation: _attestation, ...reste } = d;
   return canonique(reste);
 }
-function decisionsParId(base) {
+// identifiant → signature de chaque objet qui le porte
+function parIdentifiant(objets, signature) {
   const m = new Map();
-  const liste = base && typeof base === "object" && Array.isArray(base.decisions) ? base.decisions : [];
-  for (const d of liste) {
-    if (!d || typeof d !== "object" || Array.isArray(d) || typeof d.id !== "string" || !d.id.trim()) continue;
-    if (!m.has(d.id)) m.set(d.id, []);
-    m.get(d.id).push(contenuDecision(d));
+  for (const x of objets) {
+    if (!objetLisible(x)) continue;
+    if (!m.has(x.id)) m.set(x.id, []);
+    m.get(x.id).push(signature(x));
   }
   return m;
 }
-function identifiantsEnConflit(actuel, neuf) {
-  const avant = decisionsParId(actuel), apres = decisionsParId(neuf), doubles = [], remplacees = [];
-  for (const [id, contenus] of apres) {
-    const anciens = avant.get(id) || [];
-    if (contenus.length > 1 && contenus.length > anciens.length) doubles.push(id);
-    else if (contenus.length === 1 && anciens.length === 1 && contenus[0] !== anciens[0]) remplacees.push(id);
+function enConflit(avant, apres) {
+  const doubles = [], remplaces = [];
+  for (const [id, signatures] of apres) {
+    const anciennes = avant.get(id) || [];
+    if (signatures.length > 1 && signatures.length > anciennes.length) doubles.push(id);
+    else if (signatures.length === 1 && anciennes.length === 1 && signatures[0] !== anciennes[0]) remplaces.push(id);
   }
-  return { doubles, remplacees };
+  return { doubles, remplaces };
+}
+const REGISTRES = [
+  { objets: (b) => listeDe(b, "decisions"), signature: contenuDecision,
+    double: "DECISION_EN_DOUBLE", remplace: "DECISION_REMPLACEE",
+    quoiDouble: "deux décisions porteraient le même identifiant",
+    quoiRemplace: "une décision enregistrée serait remplacée par une autre sous le même identifiant" },
+  { objets: (b) => listeDe(b, "projets"), signature: (p) => JSON.stringify(naissance(p)),
+    double: "PROJET_EN_DOUBLE", remplace: "PROJET_REMPLACE",
+    quoiDouble: "deux projets porteraient le même identifiant",
+    quoiRemplace: "un projet enregistré serait remplacé par un autre projet sous le même identifiant" },
+  { objets: (b) => listeDe(b, "projets").flatMap((p) => (objetLisible(p) ? listeDe(p, "livrables").map((l) => ({ l, p: p.id })) : []))
+      .filter((x) => objetLisible(x.l)).map((x) => ({ id: x.l.id, l: x.l, p: x.p })),
+    signature: (x) => JSON.stringify([naissance(x.l), x.p]),
+    double: "LIVRABLE_EN_DOUBLE", remplace: "LIVRABLE_REMPLACE",
+    quoiDouble: "deux livrables porteraient le même identifiant",
+    quoiRemplace: "un livrable enregistré serait remplacé par un autre livrable sous le même identifiant" },
+];
+// Le premier refus, dans l'ordre des registres : décisions, projets, livrables.
+function identifiantsEnConflit(actuel, neuf) {
+  for (const r of REGISTRES) {
+    const { doubles, remplaces } = enConflit(parIdentifiant(r.objets(actuel), r.signature), parIdentifiant(r.objets(neuf), r.signature));
+    if (doubles.length) return { code: r.double, identifiants: doubles, quoi: r.quoiDouble };
+    if (remplaces.length) return { code: r.remplace, identifiants: remplaces, quoi: r.quoiRemplace };
+  }
+  return null;
 }
 
 // ————— Les décisions, lues par Radar —————
@@ -606,15 +644,10 @@ const serveur = createServer(async (requete, reponse) => {
               actuel: vA || null, revision: courante, quoi: "Une autre version a été enregistrée. Vos modifications doivent être rapprochées de cette version." }, courante);
             return;
           }
-          const { doubles, remplacees } = identifiantsEnConflit(actuel, neuf);
-          if (doubles.length) {
-            json(reponse, 422, { ok: false, code: "DECISION_EN_DOUBLE", identifiants: doubles,
-              quoi: "La base n'a pas été remplacée : deux décisions porteraient le même identifiant (" + doubles.join(", ") + ")." }, courante);
-            return;
-          }
-          if (remplacees.length) {
-            json(reponse, 422, { ok: false, code: "DECISION_REMPLACEE", identifiants: remplacees,
-              quoi: "La base n'a pas été remplacée : une décision enregistrée serait remplacée par une autre sous le même identifiant (" + remplacees.join(", ") + ")." }, courante);
+          const conflit = identifiantsEnConflit(actuel, neuf);
+          if (conflit) {
+            json(reponse, 422, { ok: false, code: conflit.code, identifiants: conflit.identifiants,
+              quoi: "La base n'a pas été remplacée : " + conflit.quoi + " (" + conflit.identifiants.join(", ") + ")." }, courante);
             return;
           }
         }
