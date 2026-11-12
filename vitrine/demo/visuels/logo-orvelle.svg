@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img" aria-label="Logo fictif Orvelle — démonstration">
+<rect width="240" height="240" rx="28" fill="#0F3B3A"/>
+<circle cx="120" cy="104" r="52" fill="#F2C14E"/>
+<circle cx="120" cy="104" r="34" fill="#FFFFFF" stroke="#E0A92E" stroke-width="4"/>
+<path d="M120 70 V138 M86 104 H154 M96 80 L144 128 M144 80 L96 128" stroke="#E0A92E" stroke-width="3"/>
+<text x="120" y="194" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="30" letter-spacing="4" fill="#F7F3E8">ORVELLE</text>
+<text x="120" y="222" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" letter-spacing="1" fill="#F2C14E">MARQUE FICTIVE</text>
+</svg>

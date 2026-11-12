@@ -3063,3 +3063,4 @@ ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; wid
 .fb-son { display: grid; gap: var(--e1); font-size: var(--t-meta); }
 .fb-son audio { width: 100%; max-width: 520px; }
 .fb-film.vertical { aspect-ratio: 9 / 16; width: auto; height: min(70vh, 640px); max-width: 100%; }
+.plc-hors.as-hors { width: 100%; margin: .8rem 0 0; }

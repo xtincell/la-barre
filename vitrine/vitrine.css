@@ -1,0 +1,81 @@
+/* La vitrine de La Barre : une page, qui raconte le brief-au-BAT et ouvre la
+ * démonstration. Elle ne charge ni l'application ni sa base : seulement les
+ * polices de l'application, et cette feuille. */
+
+:root {
+  --encre: #241C18;
+  --encre-douce: #4A413A;
+  --terne: #6E665E;
+  --papier: #FBFAF7;
+  --toile: #F2F0EB;
+  --trait: #D6CFC1;
+  --nuit: #13243A;
+  --nuit-2: #1D3552;
+  --or: #8A5D10;
+  --or-plein: #B07714;
+  --bleu: #2C5AA0;
+  --bleu-plein: #2453C6;
+  --affichage: "Asap", "Segoe UI", system-ui, sans-serif;
+  --lecture: "Source Serif 4", Georgia, serif;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--toile); color: var(--encre); font: 400 17px/1.6 var(--affichage); }
+img { max-width: 100%; display: block; }
+a { color: var(--bleu); }
+
+/* Le ruban : il reste en tête, toujours lisible. */
+.ruban { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: .15rem .6rem; align-items: baseline;
+  padding: .55rem 1.2rem; background: #F2C14E; color: #1F2A1E; font-size: .9rem; line-height: 1.45;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .08); }
+.ruban strong { font-weight: 700; }
+
+.tete { background: var(--nuit); color: #F5F3EE; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 2.5rem; align-items: center; padding: 4rem max(1.5rem, calc((100vw - 1180px) / 2)); }
+.sur { margin: 0 0 1rem; font-size: .85rem; letter-spacing: .08em; text-transform: uppercase; color: #C9D6E6; }
+.tete h1 { margin: 0; font: italic 500 clamp(2.1rem, 4.6vw, 3.6rem)/1.08 var(--lecture); letter-spacing: -.01em; }
+.chapo { margin: 1.3rem 0 0; max-width: 38rem; font-size: 1.08rem; color: #DCE4EE; }
+.gestes { display: flex; flex-wrap: wrap; gap: .8rem 1.4rem; align-items: center; margin-top: 2rem; }
+.bouton { display: inline-block; padding: .8rem 1.25rem; border-radius: 6px; background: var(--bleu-plein); color: #fff;
+  font-weight: 600; text-decoration: none; }
+.bouton:hover, .bouton:focus-visible { background: #1B43A8; }
+.tete .lien { color: #F5F3EE; }
+.planche { margin: 0; }
+.planche img { border-radius: 8px; box-shadow: 0 16px 48px rgba(0, 0, 0, .35); }
+.planche figcaption { margin-top: .7rem; font-size: .85rem; color: #C9D6E6; }
+
+main { max-width: 1180px; margin: 0 auto; padding: 3.5rem 1.5rem 2rem; }
+.intro { max-width: 46rem; }
+h2 { margin: 0 0 .8rem; font: italic 500 1.9rem/1.2 var(--lecture); }
+h3 { margin: 0 0 .5rem; font: 600 1.2rem/1.35 var(--affichage); }
+.intro p, .etape p, .cadre li { color: var(--encre-douce); }
+
+.etapes { list-style: none; margin: 2.5rem 0 0; padding: 0; display: grid; gap: 1rem; }
+.etape { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: 1rem; padding: 1.4rem 1.5rem;
+  background: var(--papier); border: 1px solid var(--trait); border-radius: 8px; }
+.etape .n { width: 2.4rem; height: 2.4rem; display: grid; place-items: center; border-radius: 50%;
+  background: var(--nuit); color: #fff; font-weight: 700; }
+.etape p { margin: 0 0 .7rem; max-width: 52rem; }
+.etape a { display: inline-block; margin-right: 1.2rem; font-weight: 600; text-decoration: none; }
+.etape a:hover, .etape a:focus-visible { text-decoration: underline; }
+.etape-forte { border-left: 4px solid var(--or-plein); }
+
+.variantes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .9rem; margin: 1rem 0 1.1rem; }
+.variantes figure { margin: 0; }
+.variantes img { border-radius: 6px; border: 1px solid var(--trait); }
+.variantes figcaption { margin-top: .4rem; font-size: .85rem; color: var(--terne); }
+.variantes .signal img { outline: 3px solid var(--or-plein); outline-offset: 2px; }
+.variantes .signal b { color: var(--or); }
+
+.cadre { margin-top: 3rem; padding: 1.8rem 1.6rem; background: var(--papier); border: 1px solid var(--trait); border-radius: 8px; }
+.cadre ul { margin: 0 0 1.5rem; padding-left: 1.2rem; display: grid; gap: .6rem; max-width: 52rem; }
+
+.pied { padding: 2rem 1.5rem 3rem; text-align: center; color: var(--terne); font-size: .9rem; }
+
+@media (max-width: 860px) {
+  .tete { grid-template-columns: minmax(0, 1fr); padding: 2.5rem 1.2rem; gap: 1.8rem; }
+  main { padding: 2.5rem 1rem 1.5rem; }
+  .etape { grid-template-columns: minmax(0, 1fr); padding: 1.2rem 1.1rem; }
+  .variantes { grid-template-columns: minmax(0, 1fr); }
+}

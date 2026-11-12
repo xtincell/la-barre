@@ -1,7 +1,45 @@
 # La Barre
 
-La Barre est le poste de travail du directeur de la création : du brief au
-livrable, et les talents qui les font.
+**Du brief au BAT, chaque arbitrage est situé.**
+
+Un brief arrive chez le directeur de la création. Il doit devenir une idée, des
+pistes, un visuel maître, des variantes par marché, puis des fichiers qui
+partent chez l'imprimeur. Entre chaque étape, quelqu'un tranche — et c'est là
+que le travail se perd : le brief compris de mémoire, la piste retenue sans
+motif, la V3 approuvée à la place de la V2, la variante d'un marché qui change
+ce que personne n'avait autorisé, le BAT signé sur une autre version que celle
+qu'on a montrée.
+
+La Barre est le poste de travail qui tient ce chemin, et les talents qui le
+font :
+
+1. **Le brief** s'accepte sur pièces : ses champs critiques, son décideur, le
+   bilan de la campagne précédente. Le brief-back part par écrit.
+2. **La big idea** porte ses critères d'acceptation, écrits avant le travail :
+   ce sont les seuls refus opposables.
+3. **Les pistes** disent ce qu'elles sacrifient. L'une est retenue sur un
+   argument, les autres sont écartées avec leur motif.
+4. **Le KV master** se juge version par version : une approbation ne vaut que
+   pour la version jugée.
+5. **Les variantes par marché** ne portent que l'écart que leur marché a
+   déclaré au cadrage. Celle qui change autre chose n'est pas bloquée : elle
+   est signalée « hors écart déclaré », et la revue tranche.
+6. **Le BAT** se pose et se signe sur une version précise ; la remise vérifie
+   le manifeste avant que le fichier parte.
+7. **Le bilan** de la campagne s'arrête en une version figée, que la campagne
+   suivante peut opposer.
+
+Chaque décision rejoint un seul registre — verdict, motif, date, personne — et
+ce qui reste à trancher remonte dans une seule file, triée par ce que ça coûte
+d'attendre.
+
+**Voir sans installer.** La vitrine, `vitrine/index.html`, raconte ce parcours
+sur une marque inventée, Orvelle Zeste, et ouvre une démonstration :
+l'application elle-même, sur une base fictive, qui ne lit ni n'écrit aucune
+base réelle. Voir [La vitrine](#la-vitrine) et
+[docs/VITRINE.md](docs/VITRINE.md).
+
+## L'application
 
 C'est une application web statique. `index.html` charge directement les scripts
 de `app/` et les feuilles de `styles/`, sans étape de compilation. Un petit
@@ -156,6 +194,31 @@ pas pour une décision retirée.
 La route ne ferme qu'elle-même. Le reste de `servir.mjs` reste sans
 authentification : une installation qui l'ouvre à Radar n'expose que
 `/radar/decisions` (La Fusée devant, ou une règle réseau), jamais tout le port.
+
+### La vitrine
+
+`vitrine/index.html` raconte le brief-au-BAT ; `vitrine/demo/index.html` est
+l'application en mode démonstration, sur la base fictive
+`vitrine/demo/base-fictive.json` (une marque, une agence, des personnes et des
+campagnes inventées). Avec `servir.mjs` : `http://localhost:5173/vitrine/index.html`
+(le serveur ne sert pas d'index de dossier).
+
+La page de démonstration charge les mêmes scripts que `index.html`, dans le
+même ordre, avec le profil d'une agence fictive et sans l'exemple de
+l'installation historique. Elle déclare `window.LA_BARRE_DEMO` avant tout
+module : le dépôt ne lit alors ni le cache du navigateur, ni un manifeste, ni
+un dépôt servi, et n'écrit nulle part ; la base vit en mémoire et se remet à
+zéro au rechargement. Le contexte de La Fusée n'est pas demandé, l'envoi de
+médias et la publication sont refusés. Chaque écran porte « Démonstration —
+données fictives ».
+
+La base fictive est rejouée par les modules de l'application
+(`node outils/vitrine-base.mjs`, vérifiée par `--check` en CI). La vitrine se
+publie comme une distribution statique extraite d'un commit
+(`node outils/distribuer-vitrine.mjs <nouveau-dossier> <commit>`), jamais en
+exposant `servir.mjs` ou l'image Docker, qui servent tout le dossier sans
+authentification. L'image Docker ne contient pas `vitrine/`. Déploiement et ce
+que la production demande encore : [docs/VITRINE.md](docs/VITRINE.md).
 
 ### Avec Docker
 
@@ -406,6 +469,8 @@ node outils/distribuer-approches.mjs --check
 node --test tests/approches.test.mjs
 node --test tests/entreprise.test.mjs
 npm run test:radar
+node outils/vitrine-base.mjs --check
+npm run test:vitrine
 ```
 
 S'il réussit, deux jobs construisent et exercent les images Docker :
@@ -433,9 +498,11 @@ Les scripts de `package.json` :
 | `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs tests/attestation.test.mjs` |
 | `npm run test:bilan` | `node --test tests/bilan-preuves.test.mjs tests/bilan-campagne.test.mjs` |
 | `npm run test:radar` | `node --test tests/radar-decisions.test.mjs` |
+| `npm run test:vitrine` | `node --test tests/vitrine.test.mjs` |
+| `npm run vitrine:base` | `node outils/vitrine-base.mjs` (réécrit la base fictive de la démonstration) |
 
 Les tests `node --test` n'ont besoin d'aucune dépendance npm ;
-`tests/entreprise.test.mjs` appelle aussi `git`. `npm test` lance un
+`tests/entreprise.test.mjs` et `tests/vitrine.test.mjs` appellent aussi `git`. `npm test` lance un
 parcours dans Chromium avec Playwright, sur un serveur éphémère et la base
 fictive `tests/fixtures/studio.json`. Il demande `npm install` et un Chromium
 pour Playwright (`npx playwright install chromium`, ou `BROWSER_CHANNEL` pour
@@ -501,6 +568,10 @@ un navigateur installé). La CI ne le lance pas.
   reste déclarée.
 - **Aucun envoi.** « Demander un retour » rédige le message et date l'attente.
   L'application n'envoie ni e-mail ni notification.
+- **Une vitrine prête, pas encore publiée.** La distribution statique de la
+  vitrine existe et se vérifie ; aucun hébergement, aucune adresse ni aucune
+  route publique de La Fusée n'est configuré. Voir
+  [docs/VITRINE.md](docs/VITRINE.md), « Ce que la production demande encore ».
 - **Des routes locales pensées pour macOS.** `/disque-ouvrir` appelle `open` ;
   `/partage-pdf` cherche Chrome à son chemin macOS, sauf si `LA_BARRE_CHROME`
   est défini.
@@ -516,6 +587,8 @@ dans `app/maison-base.js`. Les champs de saisie sont déclarés dans
 
 - [docs/INSTALLATION-ENTREPRISE.md](docs/INSTALLATION-ENTREPRISE.md) — image
   neutre pour une autre entreprise.
+- [docs/VITRINE.md](docs/VITRINE.md) — la vitrine publique et sa
+  démonstration sur données fictives : isolement, base, publication.
 - [docs/RECEPTION-PERSISTANCE.md](docs/RECEPTION-PERSISTANCE.md),
   [docs/RECEPTION-SAISIE.md](docs/RECEPTION-SAISIE.md),
   [docs/RECEPTION-MARCHES.md](docs/RECEPTION-MARCHES.md),

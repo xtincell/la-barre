@@ -271,7 +271,7 @@ window.VUE_PLANCHE = (function () {
     DEPOT.liste("marches").forEach(function (m) {
       selM.appendChild(el("option", { value: m.id }, m.nom + " · " + (m.langues || []).map(O.langue).join(", ")));
     });
-    var champMarque = el("input", { type: "text", placeholder: "Bonnet Rouge, Peak, Belle Hollandaise…" });
+    var champMarque = el("input", { type: "text", placeholder: "La marque que porte ce master" });
     var commun = el("div", {},
       UI.banniere("", "Le master porte les choix communs. Il ne confirme ni marché ni réception client."),
       el("div.champ", {}, el("label", {}, "Marque"), champMarque));

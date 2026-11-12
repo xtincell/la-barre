@@ -53,7 +53,16 @@ window.PARTAGE = (function () {
 
   function lien(x) { return x.portee === "document" ? location.origin + "/la-barre/partage/" + x.jeton + "/document" : EN_LIGNE + "#/partage/" + x.jeton; }
 
+  /* La démonstration ne publie rien : un lien mènerait à l'instance en ligne,
+   * où ce dossier fictif n'existe pas. */
+  function enDemonstration() {
+    if (!(window.DEPOT && DEPOT.estDemonstration && DEPOT.estDemonstration())) return false;
+    if (window.AVIS) AVIS.refus("La démonstration ne publie rien : ses documents sont fictifs et ne quittent pas cette page.");
+    return true;
+  }
+
   function partager(p, doc, bouton, rafraichir) {
+    if (enDemonstration()) return;
     if (!(window.VAULT && VAULT.statutContexte().partage)) {
       copier(lien(creer(p, doc)), "Le lien du document");
       if (rafraichir) rafraichir(); return;
@@ -139,6 +148,7 @@ window.PARTAGE = (function () {
   /* Le PDF se rend par Chrome sur cette machine, puis part en ligne avec les
    * liens : c'est le serveur local qui le fait, la page n'a qu'à demander. */
   function generer(p, bouton, rafraichir) {
+    if (enDemonstration()) return;
     if (!de(p, "presentation")) creer(p, "presentation");
     DOCS.forEach(function (d) { if (!de(p, d)) creer(p, d); });
     bouton.disabled = true; bouton.textContent = "Génération en cours…";

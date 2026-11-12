@@ -167,6 +167,8 @@ window.VAULT = (function () {
       contexte.actorAttestation, contexte.actor]);
   }
   function initialiser(apres) {
+    /* La démonstration ne demande rien à La Fusée : ni marques, ni personne. */
+    if (window.DEPOT && DEPOT.estDemonstration && DEPOT.estDemonstration()) return;
     if (location.pathname.indexOf("/la-barre/") !== 0) return;
     var avant = empreinteContexte(), etatAvant = etatContexte;
     /* Une relecture garde le contexte déjà reçu jusqu'à sa réponse : sans

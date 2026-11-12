@@ -31,6 +31,7 @@ window.VUE_ASSET = (function () {
   function rendre(p, l, apres) {
     return el("div.as", {},
       entete(p, l),
+      horsEcart(p, l, apres),
       bande(p, l, apres),
       UI.onglets(ONGLETS, onglet, function (c) { onglet = c; apres(); }),
       el("div", { style: { "margin-top": "1rem" } },
@@ -81,6 +82,19 @@ window.VUE_ASSET = (function () {
         ? [el("button.studio-lien", { type: "button", onclick: function () { DISQUE.ouvrir(d, false); } }, "Ouvrir"),
            el("button.studio-lien", { type: "button", onclick: function () { DISQUE.ouvrir(d, true); } }, "Dans le Finder")]
         : el("span", {}, "au disque de l'agence"));
+  }
+
+  /* Une adaptation hors de l'écart déclaré de son marché : elle se juge comme
+   * les autres — rien ne la bloque —, et le signal dit ce que la revue doit
+   * trancher à côté du verdict (ecarts-marche.js). */
+  function horsEcart(p, l, apres) {
+    var x = window.ECARTS_MARCHE ? ECARTS_MARCHE.etiquette(p, l) : null;
+    if (!x) return null;
+    return el("button.plc-hors.as-hors", { type: "button",
+      onclick: function () { ECARTS_MARCHE.revoir(p, l, apres); } },
+      el("span.plch-q", {}, x.texte),
+      el("span.plch-x", {}, x.revue ? "Retour décidé : l'adaptation revient à l'écart déclaré."
+        : "Corriger l'écart déclaré, ou corriger l'adaptation — ouvrir la revue."));
   }
 
   /* ————————————————————— La question ————————————————————— */

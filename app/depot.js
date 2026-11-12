@@ -19,6 +19,18 @@ window.DEPOT = (function () {
    * collection neuve serait sur le disque et invisible à l'écran. */
   var VERSION_SCHEMA = 5;
 
+  /* La démonstration publique (vitrine/demo/) : sa page déclare
+   * `window.LA_BARRE_DEMO` avant ce module. Elle ne lit ni le cache de ce
+   * navigateur, ni un dépôt servi, ni les brouillons de reprise, et n'écrit
+   * nulle part : sa base fictive vit en mémoire, et recharger la page la remet
+   * à zéro. Servie à la même origine que l'outil, elle ne voit donc ni ne
+   * touche la base de personne. */
+  var DEMO = (function () {
+    var d = window.LA_BARRE_DEMO;
+    return d && typeof d === "object" && !Array.isArray(d) ? d : null;
+  })();
+  var PAS_EN_DEMO = "la démonstration n'écrit nulle part : ses données sont fictives et restent dans cette page";
+
   var etat = vide();
   var ancienCache = null;
   var ecouteurs = [];
@@ -197,6 +209,7 @@ window.DEPOT = (function () {
    * Sans le second, un démarrage à moitié fait — dépôt local périmé, référence
    * pas encore arrivée — pousse son état sur un fichier plus récent que lui. */
   function peutEcrire() {
+    if (DEMO) return PAS_EN_DEMO;
     if (!fichier || location.protocol === "file:" || !window.fetch) return "pas de fichier";
     if (etat.exemple === true) return "l'exemple ne s'écrit pas sur la base de référence";
     if (!referenceLue) return "le fichier n'a pas encore été lu dans cette session";
@@ -262,6 +275,7 @@ window.DEPOT = (function () {
     enregistrer(); return true;
   }
   function lireServeur() {
+    if (DEMO) return Promise.reject(new Error(PAS_EN_DEMO));
     return fetch("depots/" + fichier, { cache: "no-store" }).then(function (r) {
       if (!r.ok) throw new Error("La base ne peut pas être relue");
       return r.json().then(function (data) { return { valeur: data, revision: r.headers.get("ETag") }; });
@@ -416,6 +430,7 @@ window.DEPOT = (function () {
   var ecritureKO = false;
 
   function ecrire() {
+    if (DEMO) return true; // La démonstration vit en mémoire : aucun cache n'est écrit.
     if (ancienCache && fichier) return false; // Le filet ancien attend sa copie de reprise.
     try {
       window.localStorage.setItem(CLE, JSON.stringify(etat));
@@ -458,6 +473,8 @@ window.DEPOT = (function () {
 
   /* Où est la vérité, en ce moment, dans ce navigateur. */
   function stockage() {
+    if (DEMO) return { cle: "demonstration", nom: "cette démonstration",
+      quoi: "données fictives, gardées en mémoire : rien ne s'enregistre, et recharger la page les remet à zéro" };
     if (location.protocol === "file:") return { cle: "fichier-impossible",
       nom: "ce navigateur seul",
       quoi: "ouvert par double-clic : le navigateur interdit d'écrire dans le fichier. "
@@ -490,6 +507,7 @@ window.DEPOT = (function () {
   }
 
   function charger() {
+    if (DEMO) return false; // Le cache de ce navigateur appartient à l'outil, pas à la démonstration.
     try {
       var brut = window.localStorage.getItem(CLE);
       if (brut) {
@@ -535,7 +553,7 @@ window.DEPOT = (function () {
   }
 
   function referenceDisponible(apres) {
-    if (!window.fetch || location.protocol === "file:") { apres(null); return; }
+    if (DEMO || !window.fetch || location.protocol === "file:") { apres(null); return; }
     fetch("depots/manifeste.json", { cache: "no-store" })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (m) { apres(m && m.reference ? m : null); })
@@ -585,6 +603,8 @@ window.DEPOT = (function () {
    * divergence entre deux navigateurs reste invisible jusqu'à ce qu'elle
    * coûte quelque chose. */
   function provenance() {
+    if (DEMO) return { cle: "demonstration", nom: "la démonstration",
+      quoi: "données fictives : aucune marque, aucune personne ni aucune campagne réelle" };
     if (etat.exemple === true) return { cle: "exemple", nom: "l'exemple d'amorce",
       quoi: "aucune base de référence n'a été trouvé — ce que vous voyez est le jeu de démonstration" };
     if (etat.reference) return { cle: "reference", nom: etat.reference,
@@ -829,6 +849,18 @@ window.DEPOT = (function () {
     d.schema = VERSION_SCHEMA;
   }
 
+  /* La base de la démonstration, lue à côté de sa page et posée en mémoire.
+   * Elle n'existe qu'en démonstration : ailleurs, rien ne passe par ici. */
+  function poserDemonstration(lu) {
+    if (!DEMO) throw new Error("Hors de la démonstration, la base vient du dépôt servi ou de ce navigateur.");
+    if (!lu || typeof lu !== "object" || Array.isArray(lu) || lu.schema > VERSION_SCHEMA) throw new Error("Base de démonstration illisible.");
+    etat = Object.assign(vide(), RECONCILIATION.copie(lu));
+    migrer(etat);
+    etat.demonstration = true;
+    notifier();
+    return etat;
+  }
+
   function reinitialiser() {
     etat = vide();
     enregistrer();
@@ -858,5 +890,8 @@ window.DEPOT = (function () {
     ecrireSurDisque: ecrireSurDisque, conflits: conflits, resoudre: resoudre,
     reprisesDisponibles: function () { return reprisesAutres.map(function (r) { return { cle: r.cle, quand: r.quand, ancien: !!r.ancien }; }); },
     reprendre: reprendre,
+    estDemonstration: function () { return !!DEMO; },
+    demonstration: function () { return DEMO ? RECONCILIATION.copie(DEMO) : null; },
+    poserDemonstration: poserDemonstration,
   };
 })();

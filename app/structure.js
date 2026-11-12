@@ -70,8 +70,18 @@ window.STRUCTURE = (function () {
 
   /* Le filtre de la liste des projets : il se souvient, par navigateur. */
   var CLE = "labarre.filtreStructure";
-  function filtre() { try { return localStorage.getItem(CLE) || "toutes"; } catch (e) { return "toutes"; } }
-  function choisir(v) { try { localStorage.setItem(CLE, v); } catch (e) {} }
+  /* La démonstration ne lit ni n'écrit ce navigateur : servie à la même
+   * origine, elle partagerait le filtre de l'outil. Elle le garde en mémoire. */
+  var memoire = null;
+  function demo() { return !!(window.DEPOT && DEPOT.estDemonstration && DEPOT.estDemonstration()); }
+  function filtre() {
+    if (demo()) return memoire || "toutes";
+    try { return localStorage.getItem(CLE) || "toutes"; } catch (e) { return "toutes"; }
+  }
+  function choisir(v) {
+    if (demo()) { memoire = v; return; }
+    try { localStorage.setItem(CLE, v); } catch (e) {}
+  }
   function garde(p) { var f = filtre(); return f === "toutes" || (p.structure || principale()) === f; }
 
   function puces(tous, quand) {

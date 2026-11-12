@@ -29,6 +29,10 @@ window.EXPORT_PPTX = (function () {
   var PT = 0.75;               /* points par pixel */
   var COTE_MAX = 2400;         /* une image ne dépasse pas 2 400 px de côté */
   var el = O.el;
+  /* Le dossier de ce script : la bibliothèque se trouve à côté de lui, que la
+   * page soit la racine ou la démonstration de vitrine/demo/. */
+  var ICI = typeof document !== "undefined" && document.currentScript && document.currentScript.src
+    ? document.currentScript.src.replace(/[^/]*$/, "") : "app/";
 
   /* La bibliothèque compresse le fichier par petits morceaux, chacun planifié
    * par `setImmediate`, qu'elle capture au chargement. Le navigateur de
@@ -46,7 +50,7 @@ window.EXPORT_PPTX = (function () {
     function rendre() { if (avant) window.setImmediate = avant; else delete window.setImmediate; }
     return new Promise(function (ok, ko) {
       var s = document.createElement("script");
-      s.src = "app/vendeur/pptxgen.bundle.js";
+      s.src = ICI + "vendeur/pptxgen.bundle.js";
       s.onload = function () { rendre(); ok(); };
       s.onerror = function () { rendre(); ko(new Error("la bibliothèque PowerPoint n'a pas chargé")); };
       document.head.appendChild(s);

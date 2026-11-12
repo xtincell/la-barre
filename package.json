@@ -13,7 +13,9 @@
     "test:provenances": "node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs",
     "test:decisions": "node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs tests/attestation.test.mjs",
     "test:bilan": "node --test tests/bilan-preuves.test.mjs tests/bilan-campagne.test.mjs",
-    "test:radar": "node --test tests/radar-decisions.test.mjs"
+    "test:radar": "node --test tests/radar-decisions.test.mjs",
+    "test:vitrine": "node --test tests/vitrine.test.mjs",
+    "vitrine:base": "node outils/vitrine-base.mjs"
   },
   "engines": {
     "node": ">=18"

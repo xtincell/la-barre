@@ -2,6 +2,10 @@
  * the project's pistes and decides their status. No model or second writer. */
 window.APPROCHES = (function () {
   var el = O.el, contract = APPROCHES_CONTEXT;
+  /* Le dossier de ce script : l'atelier se trouve à côté de lui, que la page
+   * soit la racine ou la démonstration de vitrine/demo/. */
+  var ICI = typeof document !== 'undefined' && document.currentScript && document.currentScript.src
+    ? document.currentScript.src.replace(/[^/]*$/, '') : 'app/';
   function texte(v) { return typeof v === 'string' ? v : ''; }
   function canonique(value) {
     if (Array.isArray(value)) return value.map(canonique);
@@ -34,7 +38,7 @@ window.APPROCHES = (function () {
     // The brief is a local fragment: never an HTTP query or a provider request.
     var hash = '#la-barre=' + encodeURIComponent(JSON.stringify(payload));
     contract.readLaunch(hash); // Same boundary as the standalone receiver.
-    return 'app/ateliers/approches/index.html' + hash;
+    return ICI + 'ateliers/approches/index.html' + hash;
   }
   async function lire(data, p) {
     if (!data || data.methodVersion !== 2 || !data.brief || typeof data.brief.seed !== 'string'
