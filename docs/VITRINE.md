@@ -104,15 +104,36 @@ quels, en lecture seule, avec les bons types (`.svg` en `image/svg+xml`,
 `.json`, `.woff2`). La démonstration n'envoie aucune requête d'écriture ; elle
 ne lit que ses propres fichiers.
 
-### Ce que la production demande encore
+### En production
 
-Rien de ceci n'est fait ; aucune configuration de production n'a été changée.
+Publiée le 12 novembre 2026 sur une origine distincte de l'outil :
+**https://la-barre-vitrine.powerupgraders.com**, en HTTPS.
 
-1. **Choisir l'hébergement et l'adresse.** Une origine distincte de l'outil
-   (un sous-domaine dédié, par exemple) est la plus simple : elle ne partage ni
-   cookies ni stockage avec l'outil. La démonstration ne touche pas le
-   stockage de l'outil, mais une origine distincte ne demande pas de le
-   vérifier.
+- La distribution est extraite du commit `adf4540` et vérifiée par
+  `--verifier` (155 fichiers, exacte).
+- Elle est poussée seule sur la branche `vitrine-distribution` : un commit
+  par publication, aucun développement sur cette branche.
+- Une application statique Coolify (nginx) sert cette branche, et elle seule.
+  Les fichiers du dépôt qui ne sont pas distribués (`servir.mjs`, `depots/`…)
+  répondent 404.
+- La vitrine et la démonstration chargent dans Chromium sans erreur ni
+  requête en échec.
+
+**Republier** après une nouvelle version :
+
+```bash
+node outils/distribuer-vitrine.mjs ../barre-vitrine "$(git rev-parse origin/main)"
+node outils/distribuer-vitrine.mjs --verifier ../barre-vitrine
+```
+
+Puis remplacer le contenu de la branche `vitrine-distribution` par ce
+dossier, en un commit qui nomme le commit source, et redéployer
+l'application Coolify `la-barre-vitrine`.
+
+### Ce qui reste ouvert
+
+1. ~~**Choisir l'hébergement et l'adresse.**~~ Fait : origine distincte,
+   ci-dessus.
 2. **Ou une route publique de La Fusée.** Si la vitrine doit vivre sous
    `/la-barre/vitrine/`, La Fusée doit servir ce seul préfixe sans session, en
    `GET` et `HEAD`, **depuis la distribution statique** — jamais en relayant le
@@ -121,13 +142,15 @@ Rien de ceci n'est fait ; aucune configuration de production n'a été changée.
    distribution doit donc être servie à une racine qui contient `vitrine/`,
    `app/` et `styles/` côte à côte.
 3. **HTTPS.** Clore un bilan de campagne dans la démonstration demande
-   `crypto.subtle`, que le navigateur réserve aux connexions sécurisées.
+   `crypto.subtle`, que le navigateur réserve aux connexions sécurisées. Fait :
+   l'adresse publiée est en HTTPS.
 4. **Décider de ce qui part avec `app/`.** Les commentaires du code nomment
    des clients de l'installation historique. Le dépôt étant public, la
    distribution n'en divulgue pas davantage ; aucun nom de l'installation
    historique ne s'affiche dans la démonstration.
 5. **Republier à chaque version.** La distribution porte son commit ; une
-   nouvelle version de l'application demande une nouvelle distribution.
+   nouvelle version de l'application demande une nouvelle distribution. Ce
+   geste est manuel : aucune automatisation ne republie la vitrine.
 
 ## Limites
 
