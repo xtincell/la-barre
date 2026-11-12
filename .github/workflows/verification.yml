@@ -28,6 +28,7 @@ jobs:
       - run: node outils/distribuer-approches.mjs --check
       - run: node --test tests/approches.test.mjs
       - run: node --test tests/entreprise.test.mjs
+      - run: npm run test:radar
   image-entreprise:
     needs: verification
     runs-on: ubuntu-latest

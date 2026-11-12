@@ -101,8 +101,61 @@ Le serveur :
 - réserve trois routes à la machine locale : `/disque/…` lit les exports,
   `/disque-ouvrir` les ouvre avec la commande `open` de macOS, `/partage-pdf`
   imprime la présentation en PDF avec Chrome puis l'envoie à l'instance en ligne ;
+- sert à Radar les seules décisions sur `GET /radar/decisions`, derrière un
+  jeton machine (voir plus bas) ;
 - ajoute à chaque réponse l'en-tête `X-La-Barre-Runtime`, empreinte de
   `index.html`, `app/` et `styles/`.
+
+#### `GET /radar/decisions` — les décisions que lit Radar
+
+SHK-0005, sens 1, arbitrage 5.5 du 11 novembre 2026 : Radar vient chercher les
+décisions ; La Barre ne lui envoie rien. La route lit le dépôt désigné par
+`depots/manifeste.json` et ne sert que sa collection `decisions` : ni les
+personnes, ni la facturation, ni le reste de la base.
+
+- **Jeton.** La machine présente `Authorization: Bearer <BARRE_RADAR_TOKEN>`,
+  comparé en temps constant. Sans jeton configuré, ou avec un jeton de moins de
+  32 caractères, la route répond `503 ROUTE_FERMEE` : elle n'est jamais ouverte
+  par défaut. Un jeton absent ou faux reçoit `401`, sans contenu.
+- **Lecture seule.** `GET` et `HEAD` ; toute autre méthode reçoit `405`.
+- **Empreinte.** La réponse porte un `ETag` calculé sur ce qui est servi. Avec
+  `If-None-Match`, des décisions inchangées répondent `304`, même si le reste
+  de la base a bougé.
+- **Base illisible.** Sans manifeste, avec un fichier absent ou illisible, ou
+  sans collection `decisions`, la route répond `503 BASE_INDISPONIBLE` et ne
+  sert rien : une base qu'on ne lit pas n'est pas une base sans décision.
+
+La réponse :
+
+```json
+{ "schema": 1, "maison": "…", "depot": "entreprise.json",
+  "decisions": [ { "id": "DEC-…", "projet": "P-…", "objet": "…", "type": "livrable",
+    "verdict": "approuve", "motif": null, "quand": "2026-11-01T08:00:00.000Z",
+    "qui": "direction-generale", "acteur": { "personneId": "…", "nom": "…", "poste": "…" },
+    "titre": "…", "cree_le": "…", "empreinte_contenu": "sha256:…" } ],
+  "ecartees": [ { "id": "DEC-…", "raison": "identifiant en double" } ] }
+```
+
+Chaque décision garde la forme de la fabrique (`app/decision.js`), réduite aux
+champs qui la datent et l'attribuent. `id`, `projet`, `objet`, `type`,
+`verdict`, `motif`, `quand`, `qui`, `acteur` et `titre` sont toujours présents
+(`null` s'ils manquent : une décision de campagne n'a pas de `projet`).
+`campagne`, `marque`, `version`, `portee`, `remplace`, `ecart`, `empreinte`,
+`revisionSource` et `cree_le` le sont quand la décision les porte. `quand` est
+la date de la décision, distincte de l'heure du transfert. `qui` et `acteur`
+sont l'auteur tel que déclaré ; `acteur` est réduit à `personneId`, `nom` et
+`poste`. Deux champs ne sortent pas : `contenuPiste`, le travail créatif que
+recopie la référence de campagne, et `attestation`, le sceau de session de La
+Fusée. `empreinte_contenu` est le SHA-256 du JSON canonique — clés triées à
+toutes les profondeurs, sans espace — de tous les autres champs servis.
+
+Une décision sans identifiant, ou dont l'identifiant est pris deux fois, n'est
+pas servie : elle est nommée dans `ecartees`, pour que le lecteur ne la prenne
+pas pour une décision retirée.
+
+La route ne ferme qu'elle-même. Le reste de `servir.mjs` reste sans
+authentification : une installation qui l'ouvre à Radar n'expose que
+`/radar/decisions` (La Fusée devant, ou une règle réseau), jamais tout le port.
 
 ### Avec Docker
 
@@ -133,6 +186,7 @@ tourne sous l'utilisateur `node` et crée au premier démarrage
 | `LA_BARRE_EXPORT_MATANGA`, `LA_BARRE_EXPORT_UPGRADERS` | Dossiers lus par `/disque/`. Défaut : les deux exports rangés dans `~/Downloads`. |
 | `LA_BARRE_CHROME` | Chrome utilisé par `/partage-pdf`. Défaut : le chemin de Google Chrome sous macOS. |
 | `LA_BARRE_EN_LIGNE` | Instance où `/partage-pdf` envoie le PDF et la base. Défaut : `https://labarre.powerupgraders.com/`. |
+| `BARRE_RADAR_TOKEN` | Jeton machine de `GET /radar/decisions`, au moins 32 caractères (par exemple `openssl rand -hex 32`). Absent ou trop court : la route reste fermée (`503`). Le même jeton se pose côté Radar. |
 
 ## Où vivent les données
 
@@ -318,6 +372,7 @@ node --test tests/bilan-delai.test.mjs tests/ecarts.test.mjs tests/registre-rada
 node outils/distribuer-approches.mjs --check
 node --test tests/approches.test.mjs
 node --test tests/entreprise.test.mjs
+npm run test:radar
 ```
 
 S'il réussit, deux jobs construisent et exercent les images Docker :
@@ -344,6 +399,7 @@ Les scripts de `package.json` :
 | `npm run test:provenances` | `node --test tests/provenances-plateformes.test.mjs tests/vault-contexte.test.mjs` |
 | `npm run test:decisions` | `node --test tests/reference-campagne.test.mjs tests/decisions.test.mjs tests/attestation.test.mjs` |
 | `npm run test:bilan` | `node --test tests/bilan-preuves.test.mjs tests/bilan-campagne.test.mjs` |
+| `npm run test:radar` | `node --test tests/radar-decisions.test.mjs` |
 
 Les tests `node --test` n'ont besoin d'aucune dépendance npm ;
 `tests/entreprise.test.mjs` appelle aussi `git`. `npm test` lance un
@@ -354,11 +410,16 @@ un navigateur installé). La CI ne le lance pas.
 
 ## Ce qui manque
 
-- **Aucun câblage vers Radar.** Le registre des briefs (Ressources) est un
-  relevé. `outils/ingerer-corpus.mjs` le lit dans un CSV d'un corpus situé hors
-  du dépôt (`../DOSSIER PROJETS — XTINCELL/00 DOCUMENTATION/RADAR — briefs releves.csv`)
-  et l'écrit dans la base. L'application ne lit pas Radar en direct et ne lui
-  envoie aucune décision ; La Fusée n'en reçoit pas non plus.
+- **Un câblage vers Radar en lecture seulement.** Radar lit les décisions sur
+  `GET /radar/decisions` (voir plus haut) ; La Barre n'envoie rien. Le
+  rattachement d'un projet à un dossier Radar se tient dans Radar, pas ici.
+  Le registre des briefs (Ressources) reste un relevé :
+  `outils/ingerer-corpus.mjs` le lit dans un CSV d'un corpus situé hors du
+  dépôt (`../DOSSIER PROJETS — XTINCELL/00 DOCUMENTATION/RADAR — briefs releves.csv`)
+  et l'écrit dans la base. L'application ne lit pas Radar en direct. La route
+  ne reçoit aucune mesure avant/après (arbitrage 5.6) ; l'accès machine à
+  travers La Fusée n'est pas décrit, et l'attestation de La Fusée ne part pas
+  vers Radar.
 - **Un registre des projets sans source dans le dépôt.** Le registre des
   projets se lit dans la base, mais aucun outil du dépôt ne le remplit.
 - **Des écarts qu'on ne peut pas écarter.** `ECARTS.ecarterUn` et
