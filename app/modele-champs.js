@@ -1,0 +1,357 @@
+/* modele-champs.js — les champs de chaque section.
+ *
+ * Un seul moteur de saisie et un seul moteur de lecture s'en servent.
+ * Ajouter un champ = une ligne ici. Le schéma est versionné : on n'en retire
+ * jamais un sans incrémenter, sinon les projets d'avant ne se lisent plus.
+ */
+
+window.CHAMPS = {
+  version: 1,
+
+  sections: [
+    {
+      cle: "identite",
+      nom: "Identité",
+      poste: "clientele",
+      champs: [
+        /* Le client et les marques se convoquent au vault. Recopiés à la main,
+         * ils ne se lient à rien : ni au socle, ni au catalogue de packs, ni
+         * aux décideurs — et « Bonnet Rouge & Peak » devient une chaîne que
+         * rien ne sait relire. */
+        { cle: "clientId", nom: "Client", type: "objet", source: "clients", requis: true,
+          vide: "— quel annonceur ? —" },
+        { cle: "marqueIds", nom: "Marques", type: "objets", requis: true,
+          aide: "Une campagne peut en porter plusieurs. Elles viennent de la bibliothèque de marque.",
+          source: function (v) {
+            var t = DEPOT.liste("marques");
+            return v.clientId ? t.filter(function (m) { return m.clientId === v.clientId; }) : t;
+          } },
+        { cle: "type", nom: "Type de projet", type: "texte", aide: "Film, campagne 360, KV, activation…" },
+        /* La durée managée a deux bornes, et le produit n'en avait qu'une.
+         *
+         * Sans début, on sait combien de jours restent — jamais combien on en
+         * a eu. Or les deux ne disent pas la même chose : « il reste deux
+         * semaines pour six semaines de travail » peut être du glissement ;
+         * « la charge dépassait la fenêtre dès le premier jour » est un défaut
+         * de cadrage, et il se reproche à un autre moment, à quelqu'un
+         * d'autre. C'est aussi ce qui rend une estimation comparable à la
+         * suivante : une durée sans début n'a pas de longueur. */
+        { cle: "debut", nom: "Ouvert le", type: "date", critique: true, poste: "clientele",
+          aide: "Le jour où le travail a été commandé. Avec l'échéance, il donne la durée "
+              + "accordée — et permet de dire si la charge y tenait dès le départ." },
+        { cle: "echeance", nom: "Échéance client", type: "date", requis: true },
+        { cle: "budget", nom: "Budget", type: "nombre", aide: "En FCFA. Absent est une information, pas un vide." },
+        { cle: "decideurId", nom: "Décideur final", type: "objet", source: function (v) {
+            var t = DEPOT.liste("contacts");
+            return v.clientId ? t.filter(function (c) { return c.clientId === v.clientId; }) : t;
+          }, libelle: function (c) { return c.nom + (c.role ? " · " + c.role : ""); },
+          requis: true, critique: true, poste: "clientele",
+          vide: "— qui décide ? —",
+          aide: "Un contact du client, pas un nom recopié : c'est lui qui porte le délai de retour." },
+        { cle: "tueur", nom: "Qui peut annuler une idée validée", type: "texte", requis: true, critique: true, aide: "Siège, comité de marque, actionnaire. Il y en a presque toujours un." },
+        { cle: "circuit", nom: "Circuit et délai de validation", type: "texte", critique: true, aide: "Nombre de passages, délai réel entre présentation et accord ferme." },
+        { cle: "fenetre", nom: "Fenêtre de diffusion", type: "texte", requis: true, critique: true },
+
+        /* ————— Ce qu'un brief détermine, et que le dossier diluait —————
+         *
+         * Le titulaire les nomme en une phrase : « une mission est gouvernée
+         * par son brief qui détermine l'objectif, sa durée managée, la mesure
+         * d'accomplissement et éventuellement son coût ». Les quatre existaient
+         * en miettes — l'objectif partagé entre deux champs du brief, la durée
+         * en texte libre, la mesure dans une liste de puces, le coût réduit à
+         * un nombre. Ce ne sont pas des métadonnées : c'est ce qui rend un
+         * projet finissable et jugeable. */
+        { cle: "objectif", nom: "Ce que ce projet doit changer", type: "long",
+          requis: true, critique: true, poste: "clientele",
+          aide: "Une phrase. Pas l'objectif de la campagne — celui de CE projet, "
+              + "et ce qui sera différent après lui." },
+        { cle: "mesure", nom: "À quoi on saura que c'est réussi", type: "puces",
+          critique: true, poste: "clientele",
+          aide: "Chacune avec sa source de mesure. Sans source, ce n'est pas une mesure, "
+              + "c'est un souhait." },
+
+        /* Le pilier de la marque sur lequel ce projet agit. Proposé par la
+         * nature, jamais imposé : c'est un jugement stratégique, et une même
+         * nature peut servir un autre pilier selon l'intention. */
+        { cle: "pilier", nom: "Le pilier de marque qu'il sert", type: "choix",
+          vide: "— proposé par la nature du projet —",
+          options: function () {
+            return ((window.MAISON && MAISON.piliers) || []).map(function (x) {
+              return { cle: x.cle, nom: x.nom + (x.figure ? " · " + x.figure : "") };
+            });
+          },
+          aide: "Le packaging promo sert la Valeur ; une promo choc, l'Engagement ; "
+              + "une refonte de site, la Distinction ; une consultance, l'Authenticité." },
+      ],
+    },
+    {
+      cle: "brief",
+      nom: "Brief",
+      poste: "clientele",
+      contributeur: "planning",
+      champs: [
+        { cle: "verbatim", nom: "Demande, mot pour mot", type: "long", critique: true, poste: "clientele", aide: "Les mots du client. Ne pas corriger, ne pas lisser." },
+        { cle: "probleme", nom: "Problème réel", type: "long", critique: true, poste: "planning", aide: "Distinct de la demande exprimée." },
+        { cle: "objectif_business", nom: "Objectif business", type: "long", critique: true, poste: "clientele" },
+        { cle: "objectif_com", nom: "Objectif de communication", type: "long", critique: true, poste: "clientele" },
+        /* Ce que les briefs FMCG portent toujours et que le modèle n'avait pas :
+         * faute de case, la stratégie du client, le job to be done, le
+         * changement de comportement et le message clé finissaient dilués dans
+         * l'objectif de communication ou la cible — donc introuvables. Ils ne
+         * sont pas critiques : un brief de demande simple ne les porte pas, et
+         * ils ne doivent pas lever de blocage sur les dossiers qui s'en passent. */
+        { cle: "strategie_client", nom: "Stratégie de marque du client", type: "long", poste: "clientele",
+          aide: "Ce que le client veut faire de sa marque au-delà de cette campagne. Elle cadre le travail ; elle ne se rediscute pas ici." },
+        { cle: "jtbd", nom: "Job to be done", type: "long", poste: "planning",
+          aide: "Le progrès que la cible cherche à faire, et ce que la marque doit lui permettre. Amener qui, à faire quoi, grâce à quoi." },
+        { cle: "comportement_actuel", nom: "Comportement actuel", type: "long", poste: "planning",
+          aide: "Ce que la cible fait et pense aujourd'hui, à la première personne." },
+        { cle: "comportement_vise", nom: "Comportement visé", type: "long", poste: "planning",
+          aide: "Ce qu'elle fera et pensera après la campagne. L'écart entre les deux est ce que la campagne doit produire." },
+        { cle: "message_cle", nom: "Message clé", type: "texte", poste: "planning",
+          aide: "Ce que la cible doit retenir, en une phrase. Pas une accroche : c'est la création qui la trouvera." },
+        /* Ce qu'un dossier de campagne globale apporte et que le brief d'une
+         * agence locale n'avait nulle part où ranger : la campagne dont on part,
+         * sa hiérarchie de messages, ses appels à l'action, son calendrier, le
+         * rôle de ses canaux, son plan de crise et les droits de ses éléments.
+         * Tous facultatifs : ils ne servent qu'aux dossiers qui les portent. */
+        { cle: "campagne_source", nom: "Campagne d'origine", type: "long", poste: "clientele",
+          aide: "Quand on adapte une campagne d'un autre marché : ce qu'elle est, où elle a tourné, comment elle est construite." },
+        { cle: "hierarchie_messages", nom: "Hiérarchie des messages", type: "puces", poste: "planning",
+          aide: "Du plus court au plus long : l'accroche, la tension, la vérité de marque, le récit." },
+        { cle: "ctas", nom: "Appels à l'action", type: "puces", poste: "clientele" },
+        { cle: "calendrier", nom: "Calendrier et jalons", type: "puces", poste: "clientele",
+          aide: "Une ligne par jalon, datée : ce qui part, quand, et qui le porte." },
+        { cle: "canaux", nom: "Rôle des canaux et indicateurs", type: "puces", poste: "clientele",
+          aide: "Par canal : sa contribution, son audience, son rôle, ses indicateurs." },
+        { cle: "risques", nom: "Risques de réputation", type: "puces", poste: "clientele",
+          aide: "Ce qui peut faire déraper la campagne dans l'opinion, et le garde-fou qui le prévient." },
+        { cle: "messages_reactifs", nom: "Messages réactifs", type: "puces", poste: "clientele",
+          aide: "Les réponses préparées si la campagne est attaquée — une par scénario." },
+        { cle: "droits_usage", nom: "Droits d'usage des éléments reçus", type: "puces", poste: "clientele",
+          aide: "Pour chaque élément : organique seulement, payant, en attente — et sur quelle zone." },
+        /* Un film se cadre aussi par ceux qui y jouent et par ce qui le fabrique :
+         * sans ces deux listes, le casting et le plateau vivaient dans des PDF à côté. */
+        { cle: "casting", nom: "Talents et casting", type: "puces", poste: "clientele",
+          aide: "Rôle, talent proposé ou retenu, ce que couvre son engagement (rôle, contenus, affichage, durée)." },
+        { cle: "production", nom: "Fabrication", type: "puces", poste: "clientele",
+          aide: "Lieu, équipe technique, matériel, décor, stylisme, post-production — ce que le plateau mobilise." },
+        { cle: "cible", nom: "Cible et tension", type: "long", critique: true, poste: "planning" },
+        { cle: "insight", nom: "Insight", type: "long", critique: true, poste: "planning" },
+        { cle: "promesse", nom: "Promesse", type: "texte", critique: true, poste: "planning" },
+        { cle: "rtb", nom: "Reason to believe", type: "puces", poste: "planning" },
+        { cle: "ton", nom: "Ton et interdits", type: "long", critique: true, poste: "planning" },
+        { cle: "contraintes", nom: "Contraintes de production", type: "long", critique: true, poste: "clientele" },
+        { cle: "mandatories", nom: "Mandatories", type: "puces", poste: "clientele" },
+        { cle: "livrables_attendus", nom: "Périmètre de livrables", type: "puces", critique: true, poste: "clientele" },
+        { cle: "kpis", nom: "Critères de succès mesurables", type: "puces", critique: true, poste: "clientele", aide: "Chacun avec sa source de mesure, sinon il n'est pas mesurable." },
+      ],
+    },
+    /* Le brief-back. Trois lignes, par écrit, avant le premier atelier.
+     *
+     * « Le document le moins coûteux et le plus protecteur du métier. » Il ne
+     * refuse pas le brief — refuser fait perdre le budget et laisse le problème
+     * entier. Il ne le dit pas non plus en réunion de restitution, où le client
+     * découvre en public qu'il s'est trompé et défend son brief au lieu
+     * d'écouter. Il pose la question par écrit, avant de commencer, et laisse
+     * le client y répondre lui-même.
+     *
+     * La quatrième ligne n'est pas dans la méthode : c'est le produit qui
+     * l'exige. Sans écart écrit, le désaccord n'existe nulle part — et c'est
+     * la création qu'on tiendra pour responsable. */
+    {
+      cle: "briefback",
+      nom: "Brief-back",
+      poste: "creation",
+      champs: [
+        { cle: "compris", nom: "Ce que nous avons compris", type: "long", requis: true,
+          critique: true,
+          aide: "Le problème reformulé dans nos mots, en une phrase. Si le client "
+            + "corrige, c'est déjà un gain." },
+        { cle: "couche", nom: "La couche où nous pensons qu'il vit", type: "choix",
+          requis: true, critique: true,
+          options: [{ cle: "consommateur", nom: "Consommateur — le message et le ton" },
+                    { cle: "culture", nom: "Culture — la big idea" },
+                    { cle: "categorie", nom: "Catégorie — le positionnement" },
+                    { cle: "entreprise", nom: "Entreprise — une correction de marque" }],
+          aide: "Sans jargon, dans la phrase : « le sujet nous semble être la place "
+            + "de la marque, plus que sa notoriété »." },
+        { cle: "propose", nom: "Ce que nous proposons de produire", type: "long",
+          requis: true, critique: true,
+          aide: "Le livrable, nommé." },
+        { cle: "ecart", nom: "L'écart avec ce qui est demandé", type: "long",
+          aide: "Si le livrable diffère de ce qui est demandé, c'est ici qu'on l'écrit "
+            + "— pas en fin de présentation. Une ligne suffit : elle protège le "
+            + "travail, et elle se cite six mois plus tard." },
+        { cle: "envoye_le", nom: "Envoyé le", type: "date" },
+        { cle: "reponse", nom: "Réponse du client", type: "long",
+          aide: "Ce qu'il a corrigé, confirmé ou ignoré." },
+        { cle: "repondu_le", nom: "Répondu le", type: "date" },
+      ],
+    },
+
+    {
+      cle: "socle",
+      nom: "Plateforme de marque",
+      poste: "creation",
+      partage: true,
+      champs: [
+        { cle: "positionnement", nom: "Positionnement", type: "long", requis: true },
+        { cle: "promesse", nom: "Promesse", type: "texte", requis: true },
+        { cle: "idee_directrice", nom: "Idée directrice", type: "texte", requis: true, aide: "Pluriannuelle. Les campagnes en sont des déclinaisons." },
+        { cle: "benefices", nom: "Bénéfices, dans l'ordre", type: "puces", aide: "L'ordre ne se réarrange pas." },
+        { cle: "preuves", nom: "Preuves tangibles", type: "puces" },
+        { cle: "ton", nom: "Personnalité et ton", type: "long" },
+        { cle: "jamais", nom: "La marque ne dit jamais", type: "puces" },
+        { cle: "symboles", nom: "Symboles", type: "puces" },
+        { cle: "ne_fera_pas", nom: "Ce que la plateforme de marque ne fera pas", type: "puces" },
+      ],
+    },
+    {
+      cle: "strategie",
+      nom: "Stratégie",
+      poste: "planning",
+      champs: [
+        { cle: "probleme_reel", nom: "Problème réel", type: "long", requis: true },
+        /* L'insight et le territoire ne sont plus des champs.
+         *
+         * Ils étaient deux paragraphes, et deux paragraphes ne portent ni
+         * couche, ni sources, ni test, ni identifiant — donc une piste ne
+         * pouvait remonter à rien. Ce sont maintenant des objets, dans
+         * p.insights et p.territoires, rendus par VUE_INSIGHT. Les anciennes
+         * clés restent au dépôt : on archive, on ne supprime pas.
+         *
+         * « tension » a rejoint le deuxième temps de l'insight : elle n'était
+         * pas un champ à côté, elle en était la moitié. */
+        { cle: "opportunite", nom: "Opportunité", type: "long" },
+        { cle: "gardefous", nom: "Garde-fous", type: "puces" },
+        /* Sharp : « une marque grandit en étant associée à plus de situations
+         * d'achat, pas à une seule mieux. » Une par ligne. */
+        { cle: "pointsEntree", nom: "Points d'entrée de catégorie", type: "puces",
+          aide: "Les situations d'achat auxquelles la marque est associée. Le petit "
+            + "déjeuner, la fin du mois, la rentrée, le déplacement." },
+        /* Adapter une campagne venue d'ailleurs, c'est trois décisions et pas
+         * une : ce qu'on garde, ce qu'on change, ce qu'on laisse. Les écrire
+         * évite de traduire ce qui ne voyage pas. */
+        { cle: "a_garder", nom: "Ce qu'on garde de la campagne d'origine", type: "puces" },
+        { cle: "a_adapter", nom: "Ce qu'on adapte au marché", type: "puces" },
+        { cle: "a_ecarter", nom: "Ce qu'on ne reprend pas", type: "puces",
+          aide: "Avec la raison : c'est elle qu'on opposera à qui demandera pourquoi." },
+      ],
+    },
+    {
+      cle: "bigidea",
+      nom: "Big idea",
+      poste: "creation",
+      champs: [
+        { cle: "idee", nom: "L'idée, en une phrase", type: "texte", requis: true, aide: "Au-delà d'une phrase, elle est refusable." },
+        { cle: "campagne", nom: "Nom de campagne", type: "texte", requis: true },
+        { cle: "auteur", nom: "Auteur de l'idée", type: "personne", requis: true, aide: "Constaté, pas attribué. Se saisit en séance, avant l'arbitrage." },
+        { cle: "mecanique", nom: "La mécanique", type: "long", requis: true, aide: "Lisible indépendamment du média. Test : la reformuler sans nommer le support." },
+        { cle: "rattachement", nom: "Rattachement à la plateforme de marque", type: "long", requis: true, aide: "Explicite, ou justifier l'écart." },
+        { cle: "signature", nom: "Signature de campagne", type: "texte" },
+        { cle: "ton_campagne", nom: "Ton", type: "texte" },
+        { cle: "phares", nom: "Éléments phares imposés", type: "puces", aide: "Leur absence est un motif de refus." },
+        { cle: "criteres", nom: "Critères d'acceptation", type: "puces", requis: true, aide: "Les seuls éléments opposables au travail du DA." },
+        { cle: "interdits", nom: "Directions interdites", type: "puces" },
+        { cle: "validite", nom: "Condition de validité", type: "long", requis: true },
+      ],
+    },
+  ],
+
+  /* Une piste créative. */
+  piste: [
+    { cle: "titre", nom: "Titre de la piste", type: "texte", requis: true },
+    /* La racine. C'est elle qui rend le test d'une minute possible : remonter
+     * chaque axe jusqu'à son insight, et voir s'ils en partagent un. Sans elle,
+     * trois pistes dans un deck peuvent traiter trois problèmes différents sans
+     * que rien ne le dise — et le client sortira trois signatures. */
+    { cle: "territoireId", nom: "Territoire", type: "territoire", requis: true,
+      aide: "L'espace dont cette piste est un concept. Il porte l'insight." },
+    { cle: "auteurDA", nom: "Auteur — Direction Artistique", type: "personne", requis: true },
+    { cle: "auteurCR", nom: "Auteur — Concepteur-rédacteur", type: "personne" },
+    { cle: "concept", nom: "Le concept", type: "long", requis: true },
+    { cle: "accroches", nom: "Accroches", type: "puces", aide: "Cinq mots maximum, sinon refusable." },
+    { cle: "visuel", nom: "Concept visuel", type: "long" },
+    { cle: "mecanique", nom: "Mécanique", type: "long", requis: true },
+    { cle: "executionCle", nom: "L'exécution clé", type: "long",
+      aide: "Celle qui rend la piste lisible avant qu'on l'explique." },
+    /* Le prix à payer a deux moitiés, et le produit n'en portait qu'une. Ce
+     * qu'une piste privilégie se lit rarement tout seul : c'est ce qui la rend
+     * défendable autrement que par le goût. « sacrifice » reste lu par les
+     * anciens écrans, et suit prix.sacrifie. */
+    { cle: "sacrifice", nom: "Ce qu'elle sacrifie", type: "long", requis: true },
+    { cle: "privilegie", nom: "Ce qu'elle privilégie", type: "long",
+      aide: "L'autre moitié du prix à payer." },
+    { cle: "argument", nom: "L'argument qui la soutient", type: "long", requis: true },
+    /* Les trois rôles. « Ne pas présenter trois pistes d'égale valeur : une
+     * piste à vendre, deux qui bornent le territoire. » N'a de sens que sur une
+     * reco en routes parallèles — ailleurs le champ reste vide sans coûter. */
+    { cle: "role", nom: "Rôle dans la reco", type: "choix",
+      options: [{ cle: "sage", nom: "La sage" },
+                { cle: "defendue", nom: "Celle qu'on défend" },
+                { cle: "radicale", nom: "La radicale" }],
+      aide: "La sage rassure et rend les autres lisibles ; la radicale borne le "
+        + "territoire par le haut et rend la défendue raisonnable." },
+    { cle: "integrite", nom: "Ce qui casse si on recompose", type: "long",
+      aide: "Ce qui se perd si le concept de cette piste est monté sur l'exécution "
+        + "d'une autre. Écrit ici, cité plus tard — sur un compte à comités en "
+        + "cascade, c'est la seule pièce écrite qui protège le travail." },
+    { cle: "raisons", nom: "Les trois raisons de la recommander", type: "puces",
+      aide: "Dans l'ordre : réponse au brief, potentiel de durée, capacité de la "
+        + "marque à la porter. Pas de superlatif." },
+    { cle: "porteurs", nom: "Porteurs de reconnaissance", type: "puces", aide: "Trois. Deux doivent survivre au montage." },
+    { cle: "production", nom: "Implications de production", type: "long" },
+  ],
+
+  /* Un livrable — une case de la matrice. */
+  livrable: [
+    { cle: "nom", nom: "Nom", type: "texte", requis: true },
+    { cle: "support", nom: "Support", type: "texte", requis: true },
+    { cle: "marche", nom: "Marché", type: "texte" },
+    { cle: "responsable", nom: "Responsable", type: "personne", requis: true },
+    { cle: "echeance", nom: "Échéance", type: "date" },
+    { cle: "remise", nom: "Remise du fichier", type: "date", aide: "Au fournisseur. Différente de la publication." },
+    { cle: "publication", nom: "Publication", type: "date" },
+    { cle: "estime", nom: "Estimé (jours)", type: "nombre" },
+    { cle: "reel", nom: "Réel (jours)", type: "nombre" },
+    { cle: "toursVendus", nom: "Allers-retours de révision vendus", type: "nombre" },
+    /* Ce que ce livrable fait, au sens du corpus d'efficacité. Sans lui, la
+     * répartition marque / activation du dossier se calculerait sur une poignée
+     * et s'afficherait comme un fait. Le champ n'est pas requis : un livrable
+     * qui ne se range dans aucune des deux se compte comme non classé, et le
+     * dossier le dit. */
+    { cle: "nature", nom: "Construction de marque ou activation", type: "choix",
+      options: [{ cle: "marque", nom: "Construction de marque — large, lente, cumulative" },
+                { cle: "activation", nom: "Activation — ciblée, immédiate, sans reste" }],
+      aide: "Binet & Field : environ 60 / 40. C'est une référence issue de données "
+        + "britanniques, pas un seuil local — l'écart se lit, il ne se corrige pas." },
+  ],
+
+  /* Utilitaires */
+  section: function (cle) {
+    var t = null;
+    CHAMPS.sections.forEach(function (s) { if (s.cle === cle) t = s; });
+    return t;
+  },
+
+  critiques: function (cleSection) {
+    var s = CHAMPS.section(cleSection);
+    return s ? s.champs.filter(function (c) { return c.critique; }) : [];
+  },
+
+  /* Complétude d'une section : renseignés sur total, et les critiques manquants. */
+  etat: function (cleSection, donnees) {
+    var s = CHAMPS.section(cleSection);
+    if (!s) return { fait: 0, total: 0, manquants: [] };
+    var d = donnees || {};
+    var fait = 0, manquants = [];
+    s.champs.forEach(function (c) {
+      var v = d[c.cle];
+      var rempli = Array.isArray(v) ? v.length > 0 : (v !== undefined && v !== null && String(v).trim() !== "");
+      if (rempli) fait++;
+      else if (c.critique || c.requis) manquants.push(c);
+    });
+    return { fait: fait, total: s.champs.length, manquants: manquants };
+  },
+};

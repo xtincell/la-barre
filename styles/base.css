@@ -1,0 +1,860 @@
+/* base.css — la coque sombre : barre latérale, contenu, rail droit.
+ *
+ * Trois colonnes. À gauche ce qui ne bouge jamais, au centre ce qu'on regarde,
+ * à droite ce qui attend. La mémoire du geste vaut plus que la souplesse.
+ */
+
+:root {
+  /* ═══════════ DESIGN SYSTEM 2.0 ═══════════
+   *
+   * 02 · COULEURS SÉMANTIQUES
+   *
+   * Cinq intentions, et rien d'autre. Une couleur ne décore pas : elle dit ce
+   * qu'on attend du lecteur. Et jamais seule — §14 : chaque état porte aussi
+   * un signe ou un mot, sinon il n'existe pas pour qui ne distingue pas les
+   * rouges des verts. */
+  --bloquant:  #B02118;   /* intervention immédiate — la marque : filet, pastille, fond */
+  --bloquant-txt: #B02118;/* la même, portée par du texte. En clair le rouge sombre
+                           * est lisible tel quel : 6,9:1 sur la toile. Il n'a plus
+                           * besoin d'une variante éclaircie comme en sombre. */
+  /* La v3 propose #B07714, #2E7D4F et #8A8178. Aucune des trois ne tient
+   * 4,5:1 sur la toile : 3,36 · 4,43 · 3,36. Or ces jetons servent d'abord de
+   * TEXTE — 141 usages en couleur contre 16 en fond pour le seul ambre — donc
+   * c'est la valeur lisible qui doit être la valeur de base.
+   *
+   * On garde la teinte et la saturation exactes de la v3, on descend la
+   * luminosité au minimum qui passe : à l'œil c'est la même couleur, à la
+   * mesure elle tient le plancher que le §14 impose depuis le premier jour. */
+  --arbitrage: #8A5D10;   /* demande un jugement — v3 #B07714, assombri de 4,53:1 */
+  --succes:    #2A7348;   /* validé, terminé — v3 #2E7D4F */
+  --info:      #2C5AA0;   /* à consulter */
+  --neutre:    #6E665E;   /* par défaut */
+
+  /* Les neutres, retournés. La famille n'est plus une ardoise froide mais une
+   * terre chaude : c'est elle qui donne au produit son grain de papier plutôt
+   * que son grain d'écran. N950 reste l'extrême — ici l'encre, pas la toile. */
+  --n950: #241C18;
+  --n900: #3B332C;
+  --n800: #6E665E;
+  --n700: #8A8178;
+  --n600: #A59B8E;
+  --n500: #C9C0B2;
+  --n400: #D6CFC1;
+  --n300: #E2DCCC;
+  --n200: #EAE6DC;
+  --n100: #F2F0EB;
+
+  /* La marque. L'ambre reste l'action première : c'est elle qui porte le geste,
+   * et elle n'est pas un état — on ne la lit pas, on la clique. La terracotta
+   * traverse les deux thèmes sans bouger : c'est le seul jeton qui n'a pas
+   * changé de valeur en passant du sombre au clair. */
+  --or: #8A5D10;
+  --accent: #AD451B;      /* v3 #C7501F : 4,01:1, trop court pour du texte */
+  --violet: #6A4FA8;
+
+  /* Les valeurs pleines de la v3, réservées à ce qui n'est PAS du texte :
+   * un aplat de bouton, une pastille, un filet. Sur un fond, le contraste se
+   * mesure sur ce qu'on écrit dessus, pas sur la couleur elle-même. */
+  --or-plein: #B07714;
+  --accent-plein: #C7501F;
+  --succes-plein: #2E7D4F;
+
+  /* 05 · SURFACES & ÉLÉVATION
+   *
+   * Quatre plans, et la règle s'inverse avec le thème. En sombre, ce qui flotte
+   * était plus clair. En clair, ce qui flotte est plus BLANC et ce qui est en
+   * retrait se teinte : une feuille posée sur la table attrape la lumière, un
+   * creux la perd. */
+  --surface-1: #FBFAF7;   /* élevée   — ce qui flotte : panneau, menu, modale */
+  --surface-2: #EAE6DC;   /* standard — la carte, le bloc */
+  --surface-3: #E8E4DA;   /* en retrait — le creux, le champ */
+  --surface-4: #F2F0EB;   /* la toile */
+
+  /* Les ombres aussi changent de nature. Sur du sombre, une ombre est une
+   * absence de lumière et peut être franche. Sur du papier, une ombre franche
+   * fait tache : elle se réduit à un halo tiède. */
+  --elev-0: none;
+  --elev-1: 0 1px 2px rgba(36,28,24,.06);
+  --elev-2: 0 2px 8px rgba(36,28,24,.08);
+  --elev-3: 0 8px 24px rgba(36,28,24,.10);
+  --elev-4: 0 16px 48px rgba(36,28,24,.14);
+
+  /* Les traits : deux seulement, et ils ne servent qu'à répondre à une
+   * question — jamais à border une carte que son fond sépare déjà.
+   *
+   * Les noms mentent maintenant d'un cran : « trait-clair » est le plus VISIBLE
+   * des deux, et sur du papier le plus visible est le plus sombre. On garde les
+   * noms — deux mille six cents usages en dépendent — et on mappe par rôle. */
+  --trait: #D6CFC1;        /* discret */
+  --trait-clair: #C9C0B2;  /* marqué */
+
+  /* Les encres. Même remarque : « clair » désigne l'encre principale, qui en
+   * thème clair est la plus sombre. Quatre niveaux là où le sombre en avait
+   * trois — la v3 sépare le texte de lecture de l'étiquette. */
+  --clair: #241C18;        /* l'encre : titres, texte fort */
+  --clair-doux: #3B332C;   /* la prose, ce qui se lit longtemps */
+  --clair-terne: #6E665E;  /* l'étiquette, la capitale espacée — 4,95:1 */
+  --encre-douce: #6E665E;  /* alias : la v3 les distinguait, la mesure les réunit */
+  --encre-pale: #8A8178;   /* la valeur v3, pour ce qui n'est pas lu : un filet,
+                            * une puce, un chiffre décoratif. Jamais du texte. */
+
+  /* Papier, pour les documents compilés — ils s'impriment. */
+  --papier: #F3F1EC;
+  --papier-encre: #1C2320;
+  /* Le gris atténué des fonds sombres tombe à 2,3:1 sur le papier crème. Une
+   * mention discrète reste une mention lisible : elle a sa propre encre. */
+  --papier-terne: #5A625C;
+
+  /* ═══════════ 03 · TYPOGRAPHIE ═══════════
+   *
+   * Satoshi Variable. Sept pas, chacun avec son interligne et son approche —
+   * une taille sans son interligne n'est pas un pas de gamme, c'est un chiffre.
+   *
+   * --t-micro prolonge la gamme d'un cran sous Caption : il ne porte jamais de
+   * texte à lire, seulement des libellés en capitales espacées, qui se lisent
+   * plus grands que leur taille. */
+  --t-display: 2.5rem;    --lh-display: 1.2;    --ls-display: -.02em;
+  --t-ecran:   2rem;      --lh-ecran:   1.25;   --ls-ecran:   -.01em;
+  --t-h2:      1.5rem;    --lh-h2:      1.333;  --ls-h2:      -.01em;
+  --t-titre:   1.25rem;   --lh-titre:   1.4;    --ls-titre:   0;
+  --t-lire:    1rem;      --lh-lire:    1.55;   --ls-lire:    0;
+  --t-meta:    .9375rem;  --lh-meta:    1.5;    --ls-meta:    .005em;
+  --t-eti:     .8125rem;  --lh-eti:     1.45;   --ls-eti:     .01em;
+  --t-micro:   .75rem;    --lh-micro:   1.4;    --ls-micro:   .04em;
+
+  /* Les grands chiffres se lisent de loin : ils prennent le pas Display. */
+  --t-nombre: var(--t-display); --lh-nombre: 1; --ls-nombre: -.02em;
+
+  /* ═══════════ 04 · ESPACEMENT & RAYONS ═══════════
+   *
+   * Base 4. Treize pas, pas quarante — un espacement hors gamme se voit. */
+  --e1: 4px;    --e2: 8px;    --e3: 12px;   --e4: 16px;
+  --e5: 20px;   --e6: 24px;   --e7: 32px;   --e8: 40px;
+  --e9: 48px;   --e10: 64px;  --e11: 80px;  --e12: 96px;  --e13: 128px;
+
+  --r-xs: 4px;   --r-s: 6px;   --r-m: 8px;
+  --r-l: 12px;   --r-xl: 24px; --r-pilule: 999px;
+
+  /* ═══════════ 13 · INTERACTIONS & MOUVEMENT ═══════════ */
+  --tr-rapide:   150ms;  /* changements d'état */
+  --tr-standard: 200ms;  /* la plupart des choses */
+  --tr-lente:    300ms;  /* les entrées et sorties */
+  --easing: cubic-bezier(0, 0, .2, 1);   /* ease-out */
+  --pressed: .98;
+
+  /* ═══════════ 14 · ACCESSIBILITÉ ═══════════ */
+  --cible: 44px;         /* la plus petite cible tactile */
+  --focus: 2px;          /* l'anneau */
+  --focus-offset: 2px;
+
+  /* ————— La mesure —————
+   *
+   * Une ligne de texte qui traverse un écran de deux mille pixels ne se lit
+   * pas : l'œil perd le début de la ligne suivante. On plafonne. */
+  --mesure: 72ch;        /* la prose */
+  --mesure-large: 96ch;  /* les listes et les tableaux */
+  --contenu: 1180px;     /* la colonne de travail, centrée au-delà */
+
+  /* Les trois voix. Elles sont chargées pour de bon depuis polices.css :
+   * auto-hébergées, variables, hors ligne. Les piles de repli restent
+   * derrière — si un fichier manque, l'écran ne casse pas, il change de
+   * coupe.
+   *
+   *   --affichage   le système qui parle : les états, les compteurs, les listes
+   *   --lecture     ce qu'on lit de près : les verbatims, les concepts, la prose
+   *   --ecrit       ce qu'un humain a écrit : l'idée, la règle, la promesse,
+   *                 la signature. C'est --lecture en italique.
+   *
+   * --ecrit remplace --main, qui appelait Bradley Hand et retombait en Comic
+   * Sans dès qu'on changeait de machine. La distinction — le système contre la
+   * personne — se dit maintenant par la coupe, et elle voyage. */
+  --affichage: "Asap", "Avenir Next Condensed", "Segoe UI", system-ui,
+    -apple-system, sans-serif;
+  --lecture: "Source Serif 4", Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --ecrit: var(--lecture);
+
+  /* L'ancien nom, tenu comme alias : soixante-cinq modules l'emploient, et un
+   * site oublié doit rester lisible plutôt que de retomber en cursive. */
+  --main: var(--ecrit);
+
+  --rail: 218px;
+  --droite: 320px;
+
+  /* ————— Les anciens noms, tenus comme alias —————
+   *
+   * Soixante-cinq modules les emploient. Les faire pointer sur la nouvelle
+   * gamme recolore tout le produit d'un coup, sans toucher une ligne de vue —
+   * et laisse le temps de migrer les noms sans jamais casser un écran. */
+  --nuit: var(--surface-4);
+  --nuit-panneau: var(--surface-3);
+  --nuit-carte: var(--surface-2);
+  --nuit-relief: var(--surface-1);
+  --alerte: var(--bloquant);
+  --attente: var(--arbitrage);
+  --vert: var(--succes);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Le grain donne sa matière à la toile — pas à la typographie.
+ *
+ * Posé au-dessus de tout, il se serait déposé sur le texte aussi, et aurait
+ * mangé du contraste sur chaque mot de l'application. Il passe DERRIÈRE le
+ * contenu : z-index négatif, devant le fond du corps, sous tout ce qui se
+ * lit. Le contraste mesuré ne bouge pas d'un centième. */
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  /* Sur du sombre le grain se devinait à 5 %. Sur du papier il salit à la
+   * moitié : il tombe à 1,8 %, juste assez pour que l'aplat ne soit pas mort. */
+  opacity: .018;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+html { -webkit-text-size-adjust: 100%; }
+
+/* La toile.
+ *
+ * Quatre niveaux de surface sont déclarés et rien ne les séparait à l'œil :
+ * mêmes bleus, trois points de luminosité d'écart, aucune lumière. Le fond
+ * reçoit une source haute et à gauche — très faible, deux pour cent — et un
+ * grain qui lui donne de la matière. Sur un écran qu'on regarde quatre-vingt-
+ * dix minutes d'affilée, un aplat parfait fatigue plus qu'il ne repose.
+ *
+ * Le grain est un SVG en ligne de moins de 400 octets : aucune requête,
+ * aucune image, et il disparaît à l'impression. */
+body {
+  /* La lumière vient de la même source, mais elle se pose au lieu d'éclairer :
+   * sur du papier une lueur se lit comme une tache d'humidité si on la pousse.
+   * Deux pour cent, et seulement la terracotta — l'ambre jaunissait le blanc. */
+  background:
+    radial-gradient(120% 80% at 12% -10%,
+      rgba(199, 80, 31, .022) 0%, rgba(199, 80, 31, 0) 58%),
+    var(--nuit);
+  background-attachment: fixed;
+  color: var(--clair);
+  font-family: var(--affichage);
+  font-size: 16px;
+  line-height: 1.55;
+  display: grid;
+  grid-template-columns: var(--rail) 1fr;
+  min-height: 100vh;
+}
+
+/* ————————————————————— Barre latérale ————————————————————— */
+
+.rail {
+  background: var(--nuit-panneau);
+  border-right: 1px solid var(--trait);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.rail-marque {
+  padding: 1.1rem 1rem .9rem;
+  border-bottom: 1px solid var(--trait);
+  text-align: center;
+}
+/* La couronne est le seul ornement du produit. Elle reste un caractère —
+ * mais elle cesse d'être un caractère parmi d'autres : elle porte l'or, et
+ * rien autour d'elle ne le porte. */
+.rail-marque .couronne { color: var(--or); font-size: var(--t-lire); letter-spacing: var(--ls-lire); line-height: 1; }
+/* Le logotype.
+ *
+ * Le plan prévoyait de le redessiner en SVG, pour qu'aucune police ne puisse
+ * plus le dégrader. Cette assurance ne sert plus à rien : Newsreader est
+ * auto-hébergée, elle voyage avec l'application. Un tracé bézier écrit à la
+ * main aurait été moins bon qu'une italique bien réglée — on le laisse en
+ * texte, et on le règle vraiment.
+ *
+ * Taille optique poussée au maximum : à 32 px, Newsreader durcit ses pleins
+ * et affine ses déliés, ce qui est exactement ce qu'on demande à un logotype.
+ * L'approche se resserre parce qu'une italique de titre respire déjà seule. */
+.rail-marque h1 {
+  font-family: var(--ecrit); font-style: italic;
+  font-size: var(--t-ecran); line-height: 1.05;
+  font-weight: 500;
+  font-variation-settings: "opsz" 40;
+  letter-spacing: -.012em;
+  margin-top: .15rem;
+}
+.rail-marque .os {
+  font-size: var(--t-micro); line-height: var(--lh-micro);
+  letter-spacing: 0;
+  color: var(--clair-terne);
+  margin-top: .15rem;
+}
+
+.rail-nav { padding: .6rem 0; }
+.rail-nav a {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  /* Une intention se vise au doigt comme au curseur : 38 px n'était pas une
+   * cible, c'était un pari. */
+  min-height: var(--cible);
+  padding: .48rem 1rem;
+  color: var(--clair-doux);
+  text-decoration: none;
+  font-size: var(--t-meta); line-height: var(--lh-meta);
+  letter-spacing: .04em;
+  border-left: 2px solid transparent;
+}
+.rail-nav a:hover { background: var(--nuit-carte); color: var(--clair); }
+.rail-nav a[aria-current] {
+  background: var(--nuit-carte);
+  color: var(--or);
+  border-left-color: var(--or);
+}
+.rail-nav a .ico { width: 1rem; text-align: center; opacity: .85; font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); }
+.rail-nav a .compte.alerte { background: var(--alerte); color: var(--clair); }
+.rail-nav a .compte.attente { background: var(--attente); color: var(--nuit); }
+.rail-nav a .compte {
+  margin-left: auto;
+  background: var(--alerte);
+  color: #fff;
+  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro);
+  padding: .05rem .32rem;
+  border-radius: 2px;
+}
+
+.rail-titre {
+  font-size: var(--t-micro); line-height: var(--lh-micro);
+  letter-spacing: 0;
+  color: var(--clair-terne);
+  padding: .9rem 1rem .35rem;
+}
+
+.rail-projets a { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: .34rem 1rem .34rem 1.1rem; }
+.rail-projets a .puce {
+  width: .5rem; height: .5rem; border-radius: 50%;
+  background: var(--or); flex: 0 0 auto;
+}
+/* ————————————————————— Le dossier ouvert ————————————————————— */
+
+.bloc-projets { padding: 0 .5rem .6rem; }
+.bloc-projets .rail-titre { display: flex; align-items: baseline; justify-content: space-between;
+  padding-left: .3rem; padding-right: .1rem; }
+.rd-changer { background: none; border: 0; color: var(--clair-terne); font: inherit;
+  font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: 0; cursor: pointer;
+  /* 17 px de haut n'est pas une cible : on garde la discrétion du texte et on
+   * rend la zone cliquable au doigt. */
+  min-height: var(--cible); padding: 0 .4rem; }
+.rd-changer:hover { color: var(--or); }
+
+.rd {
+  display: grid; gap: .12rem; text-decoration: none; color: inherit;
+  background: var(--nuit-carte); border: 1px solid var(--trait);
+  border-left: 2px solid var(--trait-clair); padding: 0 0 .45rem;
+}
+.rd:hover { border-color: var(--trait-clair); }
+.bloc-projets.ici .rd { border-left-color: var(--or); }
+
+.rd-vig { display: block; height: 68px; overflow: hidden; margin-bottom: .35rem; }
+.rd-vig .vignette { height: 68px; }
+.rd-vig .vignette img { height: 100%; object-fit: cover; }
+
+.rd-nom { font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.25; padding: 0 .5rem; }
+.rd-ref { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); padding: 0 .5rem; }
+.rd-etat { display: flex; gap: .3rem; flex-wrap: wrap; padding: .25rem .5rem 0; }
+.rde { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); padding: 0 .25rem; border: 1px solid currentColor; }
+.rde.alerte { color: var(--bloquant-txt); }
+.rde.attente { color: var(--attente); }
+.rde.vert { color: var(--vert); }
+.rd-ech { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); padding: .2rem .5rem 0; }
+.rd-ech.alerte { color: var(--bloquant-txt); }
+.rd-ech.attente { color: var(--attente); }
+
+/* Les sections : la couleur dit l'état, le clic emmène. Pas une liste de liens
+ * qui redouble les onglets — une jauge navigable. */
+
+.rdp {
+  flex: 1 1 auto; min-width: 10px; height: 14px; position: relative;
+  background: var(--trait); text-decoration: none; display: block;
+}
+.rdp span { position: absolute; left: -9999px; }
+.rdp.partiel { background: var(--attente); }
+.rdp.plein { background: var(--vert); }
+.rdp.vide { background: var(--trait); }
+.rdp:hover { outline: 1px solid var(--or); outline-offset: -1px; }
+.rdp.ici { box-shadow: inset 0 -3px 0 var(--or); }
+/* Une jauge navigable doit rester fine : 14 px, c'est son dessin. Mais 14 px
+ * n'est pas une cible. On étend la zone touchable sous le trait, sans rien
+ * changer à ce qu'on voit. */
+.rdp::after { content: ""; position: absolute; inset: -15px 0; }
+
+.rail-outils { padding: .2rem 0 .8rem; }
+.rail-outils button {
+  display: flex; align-items: center; gap: .6rem; width: 100%;
+  background: none; border: 0; color: var(--clair-doux);
+  font: inherit; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); padding: .38rem 1rem; cursor: pointer;
+  text-align: left;
+  /* Ces quatre gestes sont les plus fréquents du produit : ils se visent. */
+  min-height: var(--cible);
+}
+.rail-outils button:hover { background: var(--nuit-carte); color: var(--clair); }
+.rail-outils .touche {
+  margin-left: auto; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne);
+  border: 1px solid var(--trait-clair); padding: 0 .25rem; border-radius: 3px;
+}
+
+.rail-pied {
+  margin-top: auto;
+  padding: .9rem 1rem 1rem;
+  border-top: 1px solid var(--trait);
+}
+.rail-pied .qui { display: flex; align-items: center; gap: .55rem; }
+.rail-pied .portrait {
+  width: 2.1rem; height: 2.1rem; border-radius: 50%;
+  background: var(--nuit-relief); border: 1px solid var(--trait-clair);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--or); flex: 0 0 auto;
+}
+.rail-pied .nom { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
+.rail-pied .poste { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.rail-pied .poste.acteur-authentifie { color: var(--vert); }
+.rail-pied .version { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--clair-terne); margin-top: .6rem; }
+.rail-pied .sauvegarde { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); margin-top: .15rem; }
+.rail-pied .sauvegarde.ok { color: var(--vert); }
+.rail-pied .sauvegarde.alerte { color: var(--attente); }
+
+/* ————————————————————— Contenu ————————————————————— */
+
+.corps { display: flex; flex-direction: column; min-width: 0; }
+
+.chapeau {
+  display: flex; align-items: center; gap: 1rem;
+  padding: .7rem 1.4rem;
+  border-bottom: 1px solid var(--trait);
+  position: sticky; top: 0; z-index: 20;
+  background: var(--nuit);
+}
+.fil { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); }
+.fil a { color: var(--clair-terne); text-decoration: none; }
+.fil a:hover { color: var(--clair); }
+.fil b { color: var(--clair); font-weight: 400; }
+
+.chapeau-outils { margin-left: auto; display: flex; align-items: center; gap: .5rem; position: relative; }
+.chapeau-outils input {
+  font: inherit; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); background: var(--nuit-carte);
+  color: var(--clair); border: 1px solid var(--trait); padding: .32rem .6rem; width: 13rem;
+}
+.chapeau-outils input::placeholder { color: var(--clair-terne); }
+.chapeau-outils input:focus { outline: 1px solid var(--or); border-color: var(--or); }
+
+/* La zone de travail se centre au-delà de sa largeur utile. Étirer un écran
+ * jusqu'au bord parce qu'il y a de la place, c'est du responsive irresponsable :
+ * on gagne du vide et on perd la lecture. */
+.zone { padding: 1.6rem 1.6rem 4rem; display: grid; gap: 1.4rem;
+  width: 100%; max-width: calc(var(--contenu) + var(--droite) + 3.2rem); margin: 0 auto; }
+.zone:not(.avec-rail) { max-width: calc(var(--contenu) + 3.2rem); }
+.zone.avec-rail { grid-template-columns: minmax(0, 1fr) var(--droite); align-items: start; }
+/* Sans min-width: 0, une colonne de grille prend la largeur de son contenu le
+ * plus large : un rang d'onglets qui devait défiler fait défiler la page. */
+.zone > * { min-width: 0; }
+
+/* ————————————————————— Titres ————————————————————— */
+
+.titre-ecran { display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.titre-ecran h2 {
+  font-family: var(--lecture);
+  font-size: clamp(1.6rem, 3vw, 2.15rem);
+  font-weight: 400;
+  letter-spacing: .01em;
+  line-height: 1.1;
+}
+.titre-ecran .devise { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); color: var(--clair-terne); margin-top: .2rem; }
+.titre-ecran .actions { margin-left: auto; display: flex; gap: .45rem; align-items: center; }
+
+/* ————————————————————— Cartes de compteur ————————————————————— */
+
+.compteurs { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .55rem; }
+.kpi {
+ background: var(--nuit-carte); 
+ padding: .7rem .85rem .8rem; text-align: left;
+}
+.kpi b { display: block; font-size: var(--t-ecran); letter-spacing: var(--ls-ecran); line-height: 1; font-weight: 400; }
+.kpi span { display: block; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-top: .3rem; }
+.kpi.or b { color: var(--or); }
+.kpi.alerte b { color: var(--bloquant-txt); }
+.kpi.vert b { color: var(--vert); }
+.kpi.attente b { color: var(--attente); }
+
+/* ————————————————————— Boutons ————————————————————— */
+
+.b {
+  font: inherit; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); background: var(--nuit-relief); color: var(--clair);
+  border: 1px solid var(--trait-clair); padding: .38rem .7rem; cursor: pointer;
+  display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap;
+}
+.b:hover { border-color: var(--or); color: var(--or); }
+/* Le bouton plein passe à l'encre claire sur l'ambre sombre. La valeur pleine
+ * de la v3 (#B07714) ne donnait que 3,66:1 avec du blanc et 3:1 avec du noir :
+ * aucune des deux encres ne tenait dessus. C'est le fond qu'il fallait
+ * descendre, pas l'encre qu'il fallait choisir. */
+.b.or { background: var(--or); color: #FBFAF7; border-color: var(--or); font-weight: 600; }
+.b.or:hover { background: #8A5D10; color: #FBFAF7; }
+.b.vert { background: var(--succes); color: #FBFAF7; border-color: var(--succes); font-weight: 600; }
+.b.vert:hover { background: #2A7348; color: #FBFAF7; }
+.b.nu { background: none; border-color: transparent; color: var(--clair-terne); }
+.b.nu:hover { color: var(--clair); border-color: var(--trait); }
+.b:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Les puces (.chips, .chip) sont réécrites dans studio-vues.css, §2. */
+
+/* ————————————————————— Rail droit ————————————————————— */
+
+.aside { display: grid; gap: .8rem; align-content: start; }
+.panneau-lat {
+  background: var(--nuit-carte); border: 1px solid var(--trait); padding: .8rem .85rem .9rem;
+}
+.panneau-lat h3 {
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: 0; color: var(--clair-terne);
+  display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem;
+}
+.panneau-lat h3 .droite { margin-left: auto; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
+
+.regle {
+  background: #efe4c8; color: #2a2418; padding: 1rem .9rem 1.1rem;
+  border: 1px solid #d9c9a3;
+}
+.regle .t { font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: 0; color: #8a7a55; }
+.regle .texte { font-family: var(--ecrit); font-style: italic; font-size: var(--t-titre); letter-spacing: var(--ls-titre); line-height: 1.25; margin-top: .4rem; }
+.regle .signe { text-align: right; font-family: var(--ecrit); font-style: italic; font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); color: #8a7a55; margin-top: .4rem; }
+
+/* ————————————————————— Vignettes ————————————————————— */
+
+/* Un fichier tiré du Finder au-dessus d'une cible. Sans ce retour, personne ne
+ * devine que la carte accepte un dépôt — et un raccourci que rien n'annonce
+ * n'existe pas. */
+[data-depot] { position: relative; }
+.survol-depot { outline: 2px solid var(--or); outline-offset: -2px; }
+.survol-depot .vignette.vide.attente { border-style: solid; border-color: var(--or); }
+
+/* ————————————————————— Panneau modal ————————————————————— */
+
+.voile { position: fixed; inset: 0; background: rgba(0,0,0,.62); z-index: 50; }
+.panneau {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(700px, 100%);
+  background: var(--nuit-panneau); z-index: 51; display: flex; flex-direction: column;
+  border-left: 1px solid var(--trait);
+}
+.panneau-tete {
+  padding: .85rem 1rem; border-bottom: 1px solid var(--trait);
+  display: flex; align-items: center; gap: .7rem; background: var(--nuit-carte);
+}
+.panneau-tete h2 { font-size: var(--t-lire); letter-spacing: var(--ls-lire); font-weight: 400; line-height: 1.2; }
+.panneau-tete .etat { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--or); margin-left: auto; white-space: nowrap; }
+/* La croix était à 29 px de haut : sous la cible de 44. C'est le seul geste
+ * disponible sur une modale ouverte — il ne peut pas être le plus petit. */
+.panneau-fermer { min-width: var(--cible); min-height: var(--cible);
+  background: none; border: 1px solid var(--trait-clair); color: var(--clair-doux);
+  font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: .15rem .4rem; cursor: pointer; }
+.panneau-fermer:hover { background: var(--alerte); color: #fff; border-color: var(--alerte); }
+.panneau-corps { overflow-y: auto; padding: 1rem; }
+
+.ligne { display: grid; grid-template-columns: 8.5rem 1fr; gap: .6rem; padding: .4rem 0;
+  border-bottom: 1px solid var(--trait); font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
+.ligne .etiq { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+.ligne .val { line-height: 1.45; }
+.ligne .val.vide { color: var(--bloquant-txt); font-style: italic; }
+
+/* ————————————————————— Bannières ————————————————————— */
+
+.prix {
+  background: rgba(217, 154, 43, .1); border: 1px solid rgba(217, 154, 43, .35);
+  border-left: 3px solid var(--attente);
+  padding: .55rem .75rem; font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; color: #e5c88c;
+  display: flex; gap: .55rem; align-items: flex-start;
+}
+.prix .signe { color: var(--attente); flex: 0 0 auto; }
+.prix.rouge { background: rgba(217, 83, 74, .1); border-color: rgba(217, 83, 74, .35);
+  border-left-color: var(--bloquant-txt); color: #eaa9a3; }
+.prix.vert { background: rgba(63, 160, 106, .1); border-color: rgba(63, 160, 106, .3);
+  border-left-color: var(--vert); color: #9fd4b6; }
+
+.rien { color: var(--clair-terne); font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: .8rem 0; font-style: italic; }
+
+/* ————————————————————— Formulaires ————————————————————— */
+
+.form { display: grid; gap: .75rem; }
+.champ label { display: block; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-doux); margin-bottom: .2rem; }
+.champ .indice { font-size: var(--t-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); margin-bottom: .25rem; line-height: 1.35; }
+.champ input, .champ textarea, .champ select {
+  width: 100%; font: inherit; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); background: var(--nuit);
+  border: 1px solid var(--trait); color: var(--clair); padding: .4rem .55rem;
+}
+.champ textarea { min-height: 4.5rem; resize: vertical; }
+.champ input:focus, .champ textarea:focus, .champ select:focus { outline: 1px solid var(--or); border-color: var(--or); }
+.champ.critique label::after { content: " · critique"; color: var(--bloquant-txt); font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
+.form-actions { display: flex; gap: .45rem; margin-top: .7rem; flex-wrap: wrap; align-items: center; }
+
+.avertissement { border-left: 3px solid var(--alerte); background: rgba(217,83,74,.1);
+  color: #eaa9a3; padding: .5rem .7rem; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); margin: .4rem 0; }
+
+/* ————————————————————— Capture ————————————————————— */
+
+.capture-fond { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 60;
+  display: flex; align-items: flex-start; justify-content: center; padding-top: 16vh; }
+.capture-boite { background: var(--nuit-panneau); width: min(620px, 92%);
+  border: 1px solid var(--trait); border-top: 2px solid var(--or); }
+.capture-boite input { width: 100%; font: inherit; font-size: var(--t-lire); line-height: var(--lh-lire); letter-spacing: var(--ls-lire); background: none;
+  border: 0; color: var(--clair); padding: 1rem 1.1rem; }
+.capture-boite input:focus { outline: none; }
+.capture-pied { display: flex; justify-content: space-between; padding: .5rem .9rem;
+  border-top: 1px solid var(--trait); font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+
+/* ————————————————————— Recherche ————————————————————— */
+
+.resultats { position: absolute; top: 2.3rem; right: 0; width: min(440px, 92vw);
+  background: var(--nuit-panneau); border: 1px solid var(--trait); z-index: 45;
+  max-height: 60vh; overflow-y: auto; }
+.resultats button { display: block; width: 100%; text-align: left; font: inherit;
+  background: none; border: 0; border-bottom: 1px solid var(--trait);
+  padding: .5rem .7rem; cursor: pointer; color: var(--clair); }
+.resultats button:hover { background: var(--nuit-carte); }
+.resultats .quoi { font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); }
+.resultats .ou { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); }
+
+/* ————————————————————— Adaptations ————————————————————— */
+
+@media (max-width: 1280px) {
+  :root { --droite: 280px; }
+}
+
+@media (max-width: 1120px) {
+  /* minmax(0, …) : sans lui, la colonne prend la largeur de son contenu le plus
+   * large et c'est toute la page qui défile de côté. */
+  .zone.avec-rail { grid-template-columns: minmax(0, 1fr); }
+  .aside { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); display: grid; }
+}
+
+@media (max-width: 820px) {
+  body { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; height: auto; flex-direction: row; flex-wrap: wrap;
+    align-items: center; border-right: 0; border-bottom: 1px solid var(--trait); }
+  .rail-marque { border-bottom: 0; padding: .5rem .8rem; text-align: left; }
+  .rail-marque h1 { font-size: var(--t-titre); line-height: var(--lh-titre); letter-spacing: var(--ls-titre); }
+  .rail-marque .os, .rail-titre, .rail-pied { display: none; }
+  .rail .rail-projets, .rail .bloc-projets { display: none !important; }
+  .rail-nav a .compte { min-width: 15px; }
+  .rail-nav { display: flex; overflow-x: auto; padding: 0; flex: 1; }
+  .rail-nav a { border-left: 0; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .rail-nav a[aria-current] { border-left-color: transparent; border-bottom-color: var(--or); }
+  .rail-outils { display: none; }
+  .chapeau-outils input { width: 8rem; }
+  .panneau { top: 0; }
+  .ligne { grid-template-columns: 1fr; gap: .1rem; }
+}
+
+@media print {
+  /* Le grain et la lumière n'existent que pour l'écran : sur papier ils
+   * salissent le fond et coûtent de l'encre. */
+  body::before { display: none; }
+  body { background: #fff; }
+  body { grid-template-columns: 1fr; background: #fff; color: #111; }
+  .rail, .chapeau-outils, .b, .voile, .panneau { display: none !important; }
+  .kpi, .panneau-lat, .carte-livrable { border-color: #ccc; background: #fff; color: #111; }
+}
+
+/* ————————————————————— Barres de défilement, en sombre ————————————————————— */
+
+* { scrollbar-width: thin; scrollbar-color: var(--trait-clair) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--trait); border-radius: 4px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--trait-clair); }
+
+/* ═══════════════════ DESIGN SYSTEM 2.0 — LES COUCHES SYSTÉMATIQUES ═══════════════════
+ *
+ * Ce qui suit ne dessine aucun écran : ce sont les quatre règles que tout
+ * élément interactif suit, partout, sans exception. Les écrire une fois ici
+ * est la seule façon qu'elles tiennent sur soixante-cinq modules.
+ */
+
+/* ————————————————————— 04 · Rayons, par famille ————————————————————— */
+
+/* Un rayon dit la nature de l'objet : petit pour ce qui se clique, moyen pour
+ * ce qui se lit, grand pour ce qui flotte au-dessus du reste. */
+.b, .champ input, .champ select, .champ textarea,
+.chapeau-outils input, .ju-rech input,
+input[type="text"], input[type="search"], input[type="number"],
+input[type="date"], select, textarea { border-radius: var(--r-s); }
+
+.rde, .compte, .egc-bloc, .egc-ok, .eqpd, .juj,
+.badge, .chip { border-radius: var(--r-xs); }
+
+.kpi, .pi-k, .rv-kpi, .stat-c, .carte-n, .eg-c, .eq-p, .ju-cr, .ju-g, .ju-fc,
+.carte-projet, .piece, .piece-c, .obj, .reglage, .ref-carte, .bic,
+.dm-d, .as-c, .br-c, .mq-s, .cs-o, .rc-idee, .br-bloc, .br-verbatim, .pr-p, .col-msg, .ou-en, .attente-l, .cmd-ressources, .rv-piece,
+.carte-phrase, .pi-fb, .pi-au, .pr-apres, .pr-band,
+.mur-panneau, .co-doc { border-radius: var(--r-m); }
+
+.panneau, .resultats, .capture-boite, .panneau-lat { border-radius: var(--r-l); }
+
+.egc-barre, .egc-barre span, .eqdc-b, .eqdc-b i, .csl-b, .csl-b i,
+.b-charge, .cso-j, .cso-j i { border-radius: var(--r-pilule); }
+
+/* ————————————————————— 05 · Élévation ————————————————————— */
+
+/* Ce qui flotte porte son ombre ; ce qui est à plat n'en porte aucune. Une
+ * ombre sur un élément qui ne survole rien est une décoration. */
+.panneau { box-shadow: var(--elev-4); }
+.resultats, .capture-boite, .menu-contextuel { box-shadow: var(--elev-3); }
+.voile { backdrop-filter: blur(2px); }
+
+/* ————————————————————— 13 · Mouvement ————————————————————— */
+
+/* Rapide pour un changement d'état, standard pour tout le reste. Rien ne
+ * s'anime au chargement : une interface de décision ne fait pas de spectacle. */
+.b, .dcm, .jul, .fmb, .rail-i, .eqp-tete, .jucr-t, .cs-o, .bic, .dm-d,
+.eg-c, .eq-p, .ju-cr, .rt-c, .pil, .plc-visuel, .bic-v,
+button, a, input, select, textarea, summary {
+  transition: background-color var(--tr-rapide) var(--easing),
+              border-color var(--tr-rapide) var(--easing),
+              color var(--tr-rapide) var(--easing),
+              box-shadow var(--tr-standard) var(--easing),
+              opacity var(--tr-rapide) var(--easing),
+              transform var(--tr-rapide) var(--easing);
+}
+
+/* Hover : un cran d'élévation, et rien de plus — pas de saut, pas de zoom. */
+.eg-c:hover, .eq-p:hover, .ju-cr:hover, .dm-d:hover, .cs-o:hover {
+  box-shadow: var(--elev-2);
+}
+
+/* Pressed : la pression tactile, à l'échelle et à l'opacité. */
+.b:active, .cs-o:active, .eg-c:active, .dcm:active, .jul:active, .fmb:active,
+.eqp-tete:active, .jucr-t:active, .bic-v:active {
+  transform: scale(var(--pressed)); opacity: .8;
+}
+
+/* Qui préfère moins de mouvement n'en reçoit aucun. */
+/* ————————————————————— Le mouvement, et rien de plus —————————————————————
+ *
+ * Quatre animations, trois moments, tous liés à une décision. Le produit n'en
+ * avait aucune : rien n'accusait réception d'un verdict, et sur un outil où
+ * l'on tranche vingt-trois fois de suite, on finit par ne plus savoir si le
+ * clic a porté.
+ *
+ * Aucune ne dépasse 220 ms. Le bloc prefers-reduced-motion, plus bas, les
+ * ramène toutes à 1 ms — il était déjà écrit, il n'avait rien à garder. */
+
+@keyframes s-sort {
+  to { opacity: 0; transform: translateX(-14px); }
+}
+@keyframes s-arrive {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+/* Un blocage qui tombe ne s'efface pas : il se raye et se referme. On voit
+ * qu'il a existé, et qu'il n'existe plus. */
+@keyframes s-resolu {
+  0%   { opacity: 1; }
+  45%  { opacity: 1; filter: saturate(0); }
+  100% { opacity: 0; transform: scaleY(.85); }
+}
+
+.s-arrive { animation: s-arrive 200ms var(--easing) both; }
+/* La sortie passe après l'arrivée dans la feuille : si les deux classes se
+ * croisent une fraction de seconde, c'est la sortie qui l'emporte — on part
+ * toujours, on n'arrive pas deux fois. */
+.s-sort   { animation: s-sort 180ms var(--easing) forwards; }
+.s-resolu { animation: s-resolu 220ms var(--easing) forwards; transform-origin: top; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 1ms !important; animation-duration: 1ms !important;
+  }
+  .b:active, .cs-o:active, .eg-c:active { transform: none; }
+}
+
+/* ————————————————————— 13 · Focus, et 14 · Navigation clavier ————————————————————— */
+
+/* L'anneau ne se retire jamais. Un outil qui se tient au clavier — vingt
+ * secondes par geste — se perd dès qu'on ne voit plus où l'on est. */
+:focus-visible {
+  outline: var(--focus) solid var(--or);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--r-xs);
+}
+.champ input:focus-visible, .champ textarea:focus-visible, .champ select:focus-visible,
+.chapeau-outils input:focus-visible, .ju-rech input:focus-visible {
+  outline-offset: 0; border-color: var(--or);
+}
+/* La souris ne déclenche pas l'anneau ; le clavier, toujours. */
+:focus:not(:focus-visible) { outline: none; }
+
+/* ————————————————————— 14 · Cibles d'interaction ————————————————————— */
+
+/* Quarante-quatre pixels. Les vrais boutons les prennent en hauteur ; les
+ * boutons de texte en ligne, qui vivent dans des lignes denses, les prennent
+ * par une zone invisible — la cible grandit, la ligne non. */
+.b { min-height: var(--cible); }
+.b.nu, .b.petit, .pip-plus, .fil a, .pirc-n, .jul, .jucas-p, .rail-i,
+.smr-b, .pc-select, .cmd-b {
+  min-height: 0; position: relative;
+}
+.b.nu::after, .b.petit::after, .pip-plus::after, .fil a::after,
+.pirc-n::after, .jul::after, .jucas-p::after, .rail-i::after,
+.smr-b::after, .pc-select::after, .cmd-b::after {
+  content: ""; position: absolute;
+  /* La zone s'étend en hauteur, jamais en largeur.
+   *
+   * Elle a débordé de douze pixels de chaque côté le temps d'une passe, pour
+   * porter les boutons de deux mots à 44 px de large. Partout où un tel bouton
+   * touchait le bord de son conteneur, la page gagnait douze pixels de défilement
+   * horizontal — sur tous les écrans. Un bouton de texte en ligne prend sa cible
+   * en hauteur ; sa largeur est celle de son mot, et c'est le contrat. */
+  left: 0; right: 0;
+  top: 50%; transform: translateY(-50%);
+  min-height: var(--cible); height: 100%;
+}
+
+/* Les contrôles qui ont la place la prennent en vrai : c'est plus honnête
+ * qu'une zone invisible, et ça sert la lisibilité autant que l'accessibilité. */
+.rg-l, .res-proteger, .mat-manque, .chip, .eng, .fmb, .dcm, .jul {
+  min-height: var(--cible);
+}
+.res-proteger, .fmb, .chip { display: inline-flex; align-items: center; justify-content: center; }
+.mat-manque { align-items: center; }
+/* Et ceux qui vivent dans une ligne dense gardent leur zone invisible. */
+.pip-nom { min-height: 0; position: relative; }
+.pip-nom::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  transform: translateY(-50%); min-height: var(--cible); height: 100%;
+}
+
+/* ————————————————————— 14 · Jamais la couleur seule ————————————————————— */
+
+/* Un état encodé par la seule couleur n'existe pas pour qui ne la distingue
+ * pas. Chaque étiquette d'état porte donc un signe, avant son texte. */
+.rde.alerte::before, .rde.attente::before, .rde.vert::before {
+  margin-right: .3em; font-size: .9em;
+}
+.rde.alerte::before { content: "●"; }
+.rde.attente::before { content: "◐"; }
+.rde.vert::before { content: "✓"; }
+
+/* ————————————————————— La démonstration ————————————————————— */
+
+/* Servie depuis vitrine/demo/, La Barre tourne sur une base fictive. Chaque
+ * écran le dit, en tête, et le rail le répète : une capture d'écran ne doit
+ * jamais pouvoir passer pour un dossier réel. */
+.demo-bandeau { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem .6rem;
+  margin: 0 0 .9rem; padding: .55rem .8rem; border-left: 3px solid var(--or-plein); border-radius: 0 6px 6px 0;
+  background: var(--surface-1); box-shadow: var(--elev-1); font-size: var(--t-meta); line-height: var(--lh-meta); }
+.demo-bandeau strong { color: var(--or); font-weight: 650; }
+.demo-bandeau span { color: var(--clair-terne); flex: 1 1 24rem; }
+.demo-bandeau a { color: var(--info); white-space: nowrap; }
+.demo-marque { margin-top: .35rem; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti);
+  color: var(--or); font-weight: 600; }
+.demo-attente { margin: 2rem 0; color: var(--clair-terne); }
+@media (max-width: 820px) {
+  .demo-marque { margin: 0 .8rem 0 0; }
+}
+@media print { .demo-bandeau { box-shadow: none; } }

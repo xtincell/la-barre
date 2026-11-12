@@ -1,0 +1,2328 @@
+{
+ "schema": 5,
+ "maison": "Agence fictive",
+ "machine": "",
+ "enregistre_le": "2026-11-11T18:00:00.000Z",
+ "personnes": [
+  {
+   "id": "PE-clemence",
+   "nom": "Clémence Ardoise",
+   "poste": "creation",
+   "casquettes": [],
+   "seniorite": "senior"
+  },
+  {
+   "id": "PE-ilan",
+   "nom": "Ilan Corbeau",
+   "poste": "da",
+   "casquettes": [
+    {
+     "poste": "motion",
+     "part": 20
+    }
+   ],
+   "seniorite": "senior"
+  },
+  {
+   "id": "PE-nadia",
+   "nom": "Nadia Sablier",
+   "poste": "redacteur",
+   "casquettes": [],
+   "seniorite": "confirme"
+  },
+  {
+   "id": "PE-hugo",
+   "nom": "Hugo Lanterne",
+   "poste": "planning",
+   "casquettes": [],
+   "seniorite": "confirme"
+  },
+  {
+   "id": "PE-sacha",
+   "nom": "Sacha Mistral",
+   "poste": "clientele",
+   "casquettes": [],
+   "seniorite": "senior"
+  },
+  {
+   "id": "PE-yao",
+   "nom": "Yao Brisant",
+   "poste": "graphic",
+   "casquettes": [],
+   "seniorite": "junior"
+  }
+ ],
+ "clients": [
+  {
+   "id": "CL-orvelle",
+   "nom": "Sources d’Orvelle",
+   "interne": false,
+   "nommage": "{marque}_{campagne}_{marche}_{support}_{langue}_{version}"
+  }
+ ],
+ "marques": [
+  {
+   "id": "MQ-orvelle",
+   "clientId": "CL-orvelle",
+   "nom": "Orvelle",
+   "secteur": "Boissons",
+   "note": "Marque fictive, inventée pour la démonstration.",
+   "vault": {
+    "couleur": "#0F3B3A",
+    "vision": "Un monde où chacun reprend son souffle avant la journée.",
+    "mission": "Une eau pétillante de source, sans sucres ajoutés, pour les moments où l’on souffle.",
+    "valeurs": [
+     "Simplicité",
+     "Fraîcheur",
+     "Proximité"
+    ],
+    "positionnement": "Orvelle est l’eau pétillante qui accompagne les moments où l’on reprend son souffle.",
+    "promesse": "Reprendre son souffle.",
+    "idee_directrice": "Reprendre son souffle",
+    "ton": "Lumineux, simple, chaleureux.",
+    "jamais": [
+     "énergisant",
+     "boost",
+     "performance"
+    ],
+    "symboles": [
+     "La goutte",
+     "Le zeste",
+     "Le premier rayon"
+    ]
+   }
+  }
+ ],
+ "marches": [
+  {
+   "id": "M-ci",
+   "code": "CI",
+   "nom": "Côte d’Ivoire",
+   "langues": [
+    "fr"
+   ],
+   "zone": "UEMOA",
+   "sku": [
+    "Canette 33 cl",
+    "Bouteille 50 cl"
+   ],
+   "mentions": [
+    "À consommer de préférence avant le…"
+   ]
+  },
+  {
+   "id": "M-sn",
+   "code": "SN",
+   "nom": "Sénégal",
+   "langues": [
+    "fr"
+   ],
+   "zone": "UEMOA",
+   "sku": [
+    "Canette 33 cl"
+   ],
+   "mentions": [
+    "À consommer de préférence avant le…"
+   ]
+  },
+  {
+   "id": "M-gh",
+   "code": "GH",
+   "nom": "Ghana",
+   "langues": [
+    "en"
+   ],
+   "zone": "Afrique de l’Ouest",
+   "sku": [
+    "Can 33 cl",
+    "Can 50 cl"
+   ],
+   "mentions": [
+    "Best before end"
+   ]
+  }
+ ],
+ "supports": [
+  {
+   "id": "S-kv",
+   "code": "kv",
+   "nom": "Key visual",
+   "type": "kv"
+  },
+  {
+   "id": "S-affiche",
+   "code": "4x3",
+   "nom": "Affiche 4×3",
+   "type": "print"
+  },
+  {
+   "id": "S-social",
+   "code": "social",
+   "nom": "Post social 1:1",
+   "type": "social"
+  }
+ ],
+ "contacts": [
+  {
+   "id": "CT-margaux",
+   "clientId": "CL-orvelle",
+   "nom": "Margaux Tilleul",
+   "role": "Directrice marketing (fictive)"
+  }
+ ],
+ "feedbacks": [],
+ "sku": [],
+ "people": [],
+ "radar": [],
+ "radar_releve_le": null,
+ "campagnes": [
+  {
+   "id": "CMP-orvelle-source",
+   "nom": "Orvelle Source 2026",
+   "clientId": "CL-orvelle",
+   "marqueIds": [
+    "MQ-orvelle"
+   ],
+   "regime": "ponctuelle",
+   "occasion": "lancement",
+   "fenetre": {
+    "debut": "2026-03-01",
+    "fin": "2026-05-31"
+   },
+   "marches": [
+    "M-ci",
+    "M-sn"
+   ],
+   "bilan": "Ce qui a tenu : la source se reconnaît, la marque a été citée spontanément sur les deux marchés (relevé fictif).\nCe qui n’a pas tenu : la fraîcheur se montrait trop tard dans la journée, et les visuels sans produit ne se lisaient pas à trois mètres.\nPour la campagne suivante : montrer le produit, et chercher un moment de la journée que la marque n’occupe pas encore.",
+   "ecartes": {},
+   "cree_le": "2026-02-02T08:00:00.000Z",
+   "bilanVersions": [
+    {
+     "schema": "la-barre/bilan-campagne",
+     "schemaVersion": 1,
+     "id": "BIL-CMP-orvelle-source",
+     "version": 1,
+     "arrete_le": "2026-06-26T09:00:00.000Z",
+     "campagne": {
+      "id": "CMP-orvelle-source",
+      "nom": "Orvelle Source 2026",
+      "regime": "ponctuelle",
+      "occasion": "lancement",
+      "debut": "2026-03-01",
+      "fin": "2026-05-31"
+     },
+     "marques": [
+      {
+       "id": "MQ-orvelle",
+       "nom": "Orvelle"
+      }
+     ],
+     "contenu": "Ce qui a tenu : la source se reconnaît, la marque a été citée spontanément sur les deux marchés (relevé fictif).\nCe qui n’a pas tenu : la fraîcheur se montrait trop tard dans la journée, et les visuels sans produit ne se lisaient pas à trois mètres.\nPour la campagne suivante : montrer le produit, et chercher un moment de la journée que la marque n’occupe pas encore.",
+     "note": null,
+     "precedente": null,
+     "decision": "DEC-zkfm92",
+     "qui": "creation",
+     "acteur": {
+      "personneId": "PE-clemence",
+      "nom": "Clémence Ardoise",
+      "poste": "creation",
+      "postes": [
+       "creation"
+      ]
+     },
+     "empreinte": "d7eaf4bd8bd2db600c366558f9516758eb4ece74232679e48e9b65de78231c56"
+    }
+   ],
+   "bilan_le": "2026-06-26T09:00:00.000Z"
+  },
+  {
+   "id": "CMP-orvelle-zeste",
+   "nom": "Orvelle Zeste — lancement 2027",
+   "clientId": "CL-orvelle",
+   "marqueIds": [
+    "MQ-orvelle"
+   ],
+   "regime": "ponctuelle",
+   "occasion": "lancement",
+   "fenetre": {
+    "debut": "2027-02-01",
+    "fin": "2027-04-30"
+   },
+   "marches": [
+    "M-ci",
+    "M-sn",
+    "M-gh"
+   ],
+   "bilan": "",
+   "ecartes": {},
+   "cree_le": "2026-09-28T08:00:00.000Z"
+  }
+ ],
+ "inclassables": [],
+ "structures": [],
+ "factures": [],
+ "critiques": [],
+ "engagementsTenus": [],
+ "criteresAjoutes": {},
+ "assets": [
+  {
+   "id": "AS-logo-orvelle",
+   "nom": "Logo Orvelle",
+   "marque": "MQ-orvelle",
+   "role": "logo",
+   "vignette": "visuels/logo-orvelle.svg",
+   "cree_le": "2026-02-02T08:00:00.000Z"
+  }
+ ],
+ "projets": [
+  {
+   "id": "PRJ-source",
+   "ref": "ORV-2026-01",
+   "nom": "Orvelle Source — affichage 2026",
+   "nature": "campagne",
+   "gabarit": "campagne",
+   "campagneId": "CMP-orvelle-source",
+   "statut": "livre",
+   "cree_le": "2026-02-02T08:00:00.000Z",
+   "equipe": [
+    {
+     "personne": "PE-clemence",
+     "poste": "creation"
+    },
+    {
+     "personne": "PE-ilan",
+     "poste": "da"
+    }
+   ],
+   "perimetre": {
+    "supports": [
+     "S-affiche"
+    ],
+    "marches": [
+     "M-ci",
+     "M-sn"
+    ]
+   },
+   "volets": [],
+   "sections": {
+    "identite": {
+     "client": "Sources d’Orvelle",
+     "clientId": "CL-orvelle",
+     "marqueIds": [
+      "MQ-orvelle"
+     ],
+     "type": "Campagne d’affichage",
+     "echeance": "2026-02-27",
+     "decideurId": "CT-margaux",
+     "objectif": "Rappeler la source de la marque."
+    },
+    "brief": {
+     "probleme": "Rappeler d’où vient Orvelle.",
+     "promesse": "L’eau qui pétille d’ici."
+    },
+    "pistes": [
+     {
+      "id": "PI-source",
+      "titre": "L’eau qui pétille d’ici",
+      "statut": "retenue",
+      "auteurDA": "PE-ilan",
+      "version": 1,
+      "motif": "Elle porte la source sans la nommer.",
+      "arbitre_le": "2026-02-10T09:00:00.000Z"
+     }
+    ]
+   },
+   "livrables": [
+    {
+     "id": "L-source-kv",
+     "niveau": "maitre",
+     "nom": "KV master commun · Orvelle",
+     "support": "S-kv",
+     "marche": null,
+     "pisteId": "PI-source",
+     "maitre": null,
+     "versionMaitre": null,
+     "version": 1,
+     "responsable": "PE-ilan",
+     "estime": 3,
+     "reel": 4,
+     "remise": "2026-02-20",
+     "vignette": "visuels/kv-source-2026.svg",
+     "origine": "prevu",
+     "versions": [
+      {
+       "n": 1,
+       "soumis_le": "2026-02-18T09:00:00.000Z",
+       "verdict": "approuve",
+       "motif": "",
+       "juge_le": "2026-02-19T09:00:00.000Z"
+      }
+     ],
+     "kv": {
+      "marque": "Orvelle",
+      "copy": "L’eau qui pétille d’ici",
+      "langue": "fr",
+      "sku": [
+       "Bouteille 50 cl"
+      ],
+      "mentions": [],
+      "restrictions": []
+     },
+     "points": {
+      "concept": "pret",
+      "copy": "pret",
+      "asset": "pret",
+      "design": "pret",
+      "technique": "pret",
+      "droits": "pret",
+      "langue": "pret",
+      "central": "pret",
+      "local": "pret",
+      "final": "pret"
+     },
+     "assets": [],
+     "entrees": [],
+     "annotations": [],
+     "mockups": []
+    }
+   ],
+   "idees": [],
+   "resultat": [
+    {
+     "quoi": "Citation spontanée de la marque",
+     "valeur": "+6 points en trois mois (relevé fictif)",
+     "source": "Relevé fictif de la démonstration",
+     "niveau": "declaratif",
+     "date": "2026-06-15"
+    }
+   ],
+   "cloture": {
+    "le": "2026-06-20T16:00:00.000Z",
+    "bilan": "Campagne livrée sur les deux marchés. Le bilan de campagne fait foi.",
+    "releve": "décidé à la main",
+    "par": "creation"
+   }
+  },
+  {
+   "id": "PRJ-zeste",
+   "ref": "ORV-2027-01",
+   "nom": "Orvelle Zeste — lancement",
+   "nature": "campagne",
+   "gabarit": "campagne",
+   "campagneId": "CMP-orvelle-zeste",
+   "statut": "production",
+   "cree_le": "2026-10-01T08:00:00.000Z",
+   "equipe": [
+    {
+     "personne": "PE-clemence",
+     "poste": "creation"
+    },
+    {
+     "personne": "PE-ilan",
+     "poste": "da"
+    },
+    {
+     "personne": "PE-nadia",
+     "poste": "redacteur"
+    },
+    {
+     "personne": "PE-hugo",
+     "poste": "planning"
+    },
+    {
+     "personne": "PE-sacha",
+     "poste": "clientele"
+    },
+    {
+     "personne": "PE-yao",
+     "poste": "graphic"
+    }
+   ],
+   "perimetre": {
+    "supports": [
+     "S-kv",
+     "S-affiche",
+     "S-social"
+    ],
+    "marches": [
+     "M-ci",
+     "M-sn",
+     "M-gh"
+    ],
+    "ecarts": {
+     "M-ci": {
+      "types": [],
+      "detail": "Le master tel quel.",
+      "declare_le": "2026-10-21T09:00:00.000Z",
+      "acteur": {
+       "personneId": "PE-clemence",
+       "nom": "Clémence Ardoise",
+       "poste": "creation",
+       "postes": [
+        "creation"
+       ]
+      },
+      "source": "saisie"
+     },
+     "M-sn": {
+      "types": [
+       "reglementaire"
+      ],
+      "detail": "La mention « boisson aromatisée » est exigée sur les boissons au citron.",
+      "declare_le": "2026-10-21T09:00:03.000Z",
+      "acteur": {
+       "personneId": "PE-clemence",
+       "nom": "Clémence Ardoise",
+       "poste": "creation",
+       "postes": [
+        "creation"
+       ]
+      },
+      "source": "saisie"
+     },
+     "M-gh": {
+      "types": [
+       "produit"
+      ],
+      "detail": "La canette se vend sous sa référence locale, Can 33 cl.",
+      "declare_le": "2026-10-21T09:00:06.000Z",
+      "acteur": {
+       "personneId": "PE-clemence",
+       "nom": "Clémence Ardoise",
+       "poste": "creation",
+       "postes": [
+        "creation"
+       ]
+      },
+      "source": "saisie"
+     }
+    }
+   },
+   "volets": [],
+   "champsDA": [
+    {
+     "cle": "geste",
+     "nom": "Le geste",
+     "aide": "Ce que fait la main sur la canette."
+    },
+    {
+     "cle": "lumiere",
+     "nom": "La lumière",
+     "aide": "L’heure du jour que le visuel montre."
+    }
+   ],
+   "sections": {
+    "identite": {
+     "client": "Sources d’Orvelle",
+     "clientId": "CL-orvelle",
+     "marqueIds": [
+      "MQ-orvelle"
+     ],
+     "type": "Lancement de produit, trois marchés",
+     "debut": "2026-10-01",
+     "echeance": "2026-12-11",
+     "budget": 18000000,
+     "decideurId": "CT-margaux",
+     "decideur": "Margaux Tilleul, directrice marketing (fictive)",
+     "tueur": "La direction générale du client (fictive)",
+     "circuit": "Marketing, puis direction générale du client (fictif)",
+     "fenetre": "Février à avril 2027",
+     "objectif": "Faire d’Orvelle Zeste la boisson qui ouvre la journée.",
+     "mesure": [
+      "Notoriété assistée (mesure fictive)"
+     ],
+     "pilier": "E"
+    },
+    "brief": {
+     "verbatim": "Lancer Orvelle Zeste, notre eau pétillante au citron, sur trois marchés d’Afrique de l’Ouest. Il faut qu’on la prenne le matin, pas seulement au déjeuner.",
+     "probleme": "Orvelle est connue comme l’eau du déjeuner. Le citron l’emmène ailleurs : il faut lui trouver un moment à elle, sans renier la marque.",
+     "objectif_business": "Installer Zeste dans les références de la marque sur la saison de lancement (chiffres fictifs).",
+     "objectif_com": "Faire d’Orvelle Zeste la boisson qui ouvre la journée.",
+     "campagne_source": "Le bilan arrêté d’« Orvelle Source 2026 » : la fraîcheur se montrait trop tard dans la journée, et les visuels sans produit ne se reconnaissaient pas à trois mètres.",
+     "cible": "Les actifs urbains de 25 à 40 ans qui commencent tôt et cherchent un geste frais avant le premier rendez-vous.",
+     "insight": "Le premier moment calme de la journée est celui qu’on se donne avant que les autres ne le prennent.",
+     "promesse": "Le premier zeste du jour.",
+     "rtb": [
+      "Citron pressé, sans sucres ajoutés",
+      "Fines bulles",
+      "Canette refermable de 33 cl"
+     ],
+     "ton": "Lumineux, simple, matinal. Jamais énergisant ni sportif.",
+     "contraintes": "Une seule idée pour trois marchés. Le Ghana parle anglais ; le Sénégal impose une mention sur les boissons aromatisées.",
+     "mandatories": [
+      "Le logo Orvelle en haut",
+      "La canette lisible à trois mètres",
+      "La mention légale de chaque marché"
+     ],
+     "livrables_attendus": [
+      "KV master commun",
+      "KV par marché",
+      "Affiche 4×3",
+      "Post social 1:1"
+     ],
+     "kpis": [
+      "Notoriété assistée de Zeste après huit semaines (mesure fictive)",
+      "Présence en rayon des trois références"
+     ],
+     "canaux": [
+      "Affichage urbain",
+      "Réseaux sociaux"
+     ],
+     "calendrier": [
+      "Février 2027 : lancement CI et SN",
+      "Mars 2027 : lancement GH"
+     ],
+     "porteur": "Sacha Mistral",
+     "statut": "accepte",
+     "accepte_le": "2026-10-03T09:30:00.000Z",
+     "accepte_malgre": 0,
+     "validation": {
+      "verdict": "approuve",
+      "motif": null,
+      "quand": "2026-10-03T10:00:00.000Z",
+      "par": "creation",
+      "acteur": {
+       "personneId": "PE-clemence",
+       "nom": "Clémence Ardoise",
+       "poste": "creation",
+       "postes": [
+        "creation"
+       ]
+      },
+      "portee": "document",
+      "confirmationsEnAttente": [],
+      "version": 1
+     }
+    },
+    "briefback": {
+     "compris": "Vous nous demandez un moment de consommation pour Zeste, pas seulement un lancement de produit : le matin, sans renier « Reprendre son souffle ».",
+     "couche": "consommateur",
+     "propose": "Une seule idée pour les trois marchés, adaptée par marché sur ce que chacun déclare au cadrage.",
+     "ecart": "",
+     "envoye_le": "2026-10-08",
+     "reponse": "C’est bien ça. Le Ghana doit être prêt en mars.",
+     "repondu_le": "2026-10-09"
+    },
+    "socle": {
+     "positionnement": "Orvelle est l’eau pétillante qui accompagne les moments où l’on reprend son souffle.",
+     "promesse": "Le premier zeste du jour.",
+     "idee_directrice": "Reprendre son souffle",
+     "benefices": [
+      "Fraîcheur",
+      "Légèreté",
+      "Un moment à soi"
+     ],
+     "preuves": [
+      "Source unique",
+      "Citron pressé",
+      "Sans sucres ajoutés"
+     ],
+     "ton": "Lumineux, simple, chaleureux.",
+     "jamais": [
+      "énergisant",
+      "boost",
+      "performance"
+     ],
+     "symboles": [
+      "La goutte",
+      "Le zeste",
+      "Le premier rayon"
+     ],
+     "ne_fera_pas": [
+      "Parler de sport",
+      "Promettre de l’énergie"
+     ],
+     "validation": {
+      "verdict": "approuve",
+      "motif": null,
+      "quand": "2026-10-06T11:00:00.000Z",
+      "par": "creation",
+      "acteur": {
+       "personneId": "PE-clemence",
+       "nom": "Clémence Ardoise",
+       "poste": "creation",
+       "postes": [
+        "creation"
+       ]
+      },
+      "portee": "document",
+      "confirmationsEnAttente": [],
+      "version": 1
+     }
+    },
+    "strategie": {
+     "territoire": "Le matin, la minute qui précède la journée.",
+     "probleme_reel": "La marque n’a pas de moment à elle : le déjeuner appartient à tout le monde.",
+     "opportunite": "Le matin, avant le premier rendez-vous, n’est occupé par aucune boisson fraîche.",
+     "a_garder": [
+      "La source",
+      "La goutte"
+     ],
+     "a_adapter": [
+      "Le moment de consommation"
+     ],
+     "a_ecarter": [
+      "Le registre sportif"
+     ]
+    },
+    "bigidea": {
+     "idee": "Le premier zeste du jour",
+     "campagne": "Orvelle Zeste — lancement 2027",
+     "auteur": "PE-clemence",
+     "mecanique": "Chaque visuel saisit la minute qui précède la journée : la main qui ouvre la canette, la lumière qui arrive.",
+     "rattachement": "Elle prolonge « Reprendre son souffle » vers le matin, que le bilan de 2026 a montré inoccupé.",
+     "signature": "Orvelle. Reprendre son souffle.",
+     "ton_campagne": "Matinal et lumineux",
+     "phares": [
+      "La canette ouverte",
+      "Le rayon de soleil"
+     ],
+     "criteres": [
+      "La canette se lit à trois mètres",
+      "Une seule idée par visuel",
+      "Le matin se reconnaît sans texte"
+     ],
+     "interdits": [
+      "Montrer un effort physique"
+     ],
+     "validite": "Deux saisons au moins, sur les trois marchés.",
+     "validation": {
+      "verdict": "approuve",
+      "motif": "Elle tient la promesse et occupe le seul moment libre.",
+      "quand": "2026-10-14T15:00:00.000Z",
+      "par": "creation",
+      "acteur": {
+       "personneId": "PE-clemence",
+       "nom": "Clémence Ardoise",
+       "poste": "creation",
+       "postes": [
+        "creation"
+       ]
+      },
+      "portee": "document",
+      "confirmationsEnAttente": [],
+      "version": 1
+     }
+    },
+    "pistes": [
+     {
+      "id": "PI-zeste",
+      "titre": "Le premier zeste",
+      "auteurDA": "PE-ilan",
+      "auteurCR": "PE-nadia",
+      "territoireId": "TR-matin",
+      "concept": "Le geste qui ouvre la journée : la canette s’ouvre, le soleil se lève.",
+      "accroches": [
+       "Le premier zeste du jour",
+       "Ouvrir le jour"
+      ],
+      "visuel": "Une main, une canette, la première lumière.",
+      "sacrifice": "Le déjeuner, territoire historique de la marque",
+      "privilegie": "Le matin, que personne n’occupe",
+      "argument": "Le seul territoire que le bilan 2026 a montré libre.",
+      "statut": "retenue",
+      "version": 1,
+      "soumis_le": "2026-10-16T09:00:00.000Z",
+      "axe_directrice": "La minute avant la journée, saisie dans un geste.",
+      "axe_ton": "Lumineux, simple, matinal",
+      "axe_univers": "Vert profond et jaune citron, la canette au premier plan, la première lumière.",
+      "axe_valeurs": [
+       "Fraîcheur",
+       "Un moment à soi"
+      ],
+      "motif": "La seule qui occupe le matin, que le bilan 2026 a laissé libre.",
+      "arbitre_le": "2026-10-20T10:00:00.000Z"
+     },
+     {
+      "id": "PI-sieste",
+      "titre": "La sieste pétillante",
+      "auteurDA": "PE-ilan",
+      "auteurCR": "PE-nadia",
+      "concept": "La pause de l’après-midi, réveillée par le citron.",
+      "accroches": [
+       "Réveillez la sieste"
+      ],
+      "visuel": "Un hamac, une canette, un sourire.",
+      "sacrifice": "Le matin",
+      "argument": "La pause est déjà un rituel.",
+      "statut": "ecartee",
+      "version": 1,
+      "soumis_le": "2026-10-16T10:00:00.000Z",
+      "axe_directrice": "La pause de l’après-midi, réveillée.",
+      "axe_ton": "Joueur, détendu",
+      "axe_univers": "Couleurs chaudes, hamac, ombre.",
+      "axe_valeurs": [
+       "Détente"
+      ],
+      "motif": "L’après-midi appartient déjà aux sodas : la marque y serait suiveuse."
+     },
+     {
+      "id": "PI-minuit",
+      "titre": "Citron de minuit",
+      "auteurDA": "PE-yao",
+      "auteurCR": "PE-nadia",
+      "concept": "La fraîcheur des nuits de ville.",
+      "accroches": [
+       "La ville a soif"
+      ],
+      "visuel": "Des néons, une canette perlée.",
+      "sacrifice": "La lumière du jour",
+      "argument": "Un code plus jeune.",
+      "statut": "ecartee",
+      "version": 1,
+      "soumis_le": "2026-10-16T11:00:00.000Z",
+      "axe_directrice": "La fraîcheur des nuits de ville.",
+      "axe_ton": "Nocturne, électrique",
+      "axe_univers": "Néons, bleu nuit, perles d’eau.",
+      "axe_valeurs": [
+       "Liberté"
+      ],
+      "motif": "La nuit contredit « Reprendre son souffle » et vieillit la cible."
+     }
+    ],
+    "atelier": {
+     "tenue_le": "2026-10-12T09:00:00.000Z"
+    }
+   },
+   "insights": [
+    {
+     "id": "IN-matin",
+     "couche": "consommateur",
+     "auteur": "PE-hugo",
+     "ecrit_le": "2026-10-07T09:00:00.000Z",
+     "passes": {
+      "longue": "Avant le premier rendez-vous, chacun se cherche une minute à soi, que personne ne lui a encore prise.",
+      "temps": {
+       "situation": "Le matin, on part vite et on répond à tout le monde.",
+       "tension": "La seule minute calme de la journée est celle qu’on se donne avant les autres.",
+       "empeche": "Aucune boisson fraîche n’est associée à cette minute : on la passe sans geste."
+      },
+      "phrase": "Le premier moment calme de la journée est celui qu’on se donne avant que les autres ne le prennent."
+     },
+     "sources": [
+      {
+       "type": "terrain",
+       "quoi": "Six entretiens de rue à Abidjan et Dakar (fictifs)",
+       "quand": "2026-10-02"
+      },
+      {
+       "type": "premiere-ligne",
+       "quoi": "Les vendeurs de kiosque : la canette se vend surtout après midi (relevé fictif)",
+       "quand": "2026-10-03"
+      },
+      {
+       "type": "mur",
+       "quoi": "Le mur de catégorie : aucune boisson fraîche ne parle du matin",
+       "quand": "2026-10-04"
+      }
+     ],
+     "test": {
+      "contredit": true,
+      "gene": true,
+      "ouvre": true
+     }
+    }
+   ],
+   "territoires": [
+    {
+     "id": "TR-matin",
+     "nom": "Le matin",
+     "quoi": "La minute qui précède la journée.",
+     "insightId": "IN-matin",
+     "ecole": null,
+     "convention": null,
+     "reduction": null
+    }
+   ],
+   "livrables": [
+    {
+     "id": "KV-nv9cbb",
+     "niveau": "maitre",
+     "voletId": null,
+     "support": "S-kv",
+     "marche": null,
+     "nom": "KV master commun · Orvelle",
+     "responsable": "PE-ilan",
+     "origine": "prevu",
+     "pisteId": "PI-zeste",
+     "maitre": null,
+     "versionMaitre": null,
+     "version": 2,
+     "versions": [
+      {
+       "n": 1,
+       "soumis_le": "2026-10-24T17:00:00.000Z",
+       "verdict": "retour",
+       "motif": "La canette ne se lit pas à trois mètres : un critère écrit de la big idea.",
+       "juge_le": "2026-10-26T09:00:00.000Z"
+      },
+      {
+       "n": 2,
+       "soumis_le": "2026-10-28T17:00:00.000Z",
+       "verdict": "approuve",
+       "motif": "",
+       "juge_le": "2026-10-29T10:00:00.000Z"
+      }
+     ],
+     "estime": 4,
+     "reel": null,
+     "toursVendus": null,
+     "assets": [],
+     "entrees": [],
+     "annotations": [],
+     "mockups": [],
+     "points": {
+      "concept": "attente",
+      "copy": "attente",
+      "asset": "attente",
+      "design": "attente",
+      "technique": "attente",
+      "droits": "attente",
+      "langue": "attente",
+      "central": "pret",
+      "local": "attente",
+      "final": "attente"
+     },
+     "kv": {
+      "marque": "Orvelle",
+      "copy": "Le premier zeste du jour",
+      "langue": "fr",
+      "sku": [
+       "Canette 33 cl"
+      ],
+      "mentions": [],
+      "restrictions": [],
+      "geste": "La main ouvre la canette",
+      "lumiere": "Le premier rayon, avant sept heures"
+     },
+     "vignette": "visuels/kv-master.svg",
+     "remise": "2026-10-28",
+     "echeance": "2026-10-29"
+    },
+    {
+     "id": "KV-6m1bpg",
+     "niveau": "adaptation",
+     "voletId": null,
+     "support": "S-kv",
+     "marche": "M-ci",
+     "nom": "KV · CI · Orvelle",
+     "responsable": "PE-ilan",
+     "origine": "prevu",
+     "pisteId": "PI-zeste",
+     "maitre": "KV-nv9cbb",
+     "versionMaitre": 2,
+     "version": 1,
+     "versions": [
+      {
+       "n": 1,
+       "soumis_le": "2026-11-04T16:00:00.000Z",
+       "verdict": "approuve",
+       "motif": "",
+       "juge_le": "2026-11-05T09:00:00.000Z"
+      }
+     ],
+     "estime": 2,
+     "reel": null,
+     "toursVendus": null,
+     "assets": [],
+     "entrees": [],
+     "annotations": [],
+     "mockups": [],
+     "points": {
+      "concept": "attente",
+      "copy": "attente",
+      "asset": "attente",
+      "design": "attente",
+      "technique": "attente",
+      "droits": "attente",
+      "langue": "pret",
+      "central": "pret",
+      "local": "attente",
+      "final": "attente"
+     },
+     "kv": {
+      "marque": "Orvelle",
+      "copy": "Le premier zeste du jour",
+      "langue": "fr",
+      "sku": [
+       "Canette 33 cl"
+      ],
+      "mentions": [
+       "À consommer de préférence avant le…"
+      ],
+      "restrictions": [],
+      "geste": "La main ouvre la canette",
+      "lumiere": "Le premier rayon, avant sept heures"
+     },
+     "depart": {
+      "maitre": "KV-nv9cbb",
+      "versionMaitre": 2,
+      "le": "2026-11-02T09:00:00.000Z",
+      "kv": {
+       "marque": "Orvelle",
+       "copy": "Le premier zeste du jour",
+       "langue": "fr",
+       "sku": [
+        "Canette 33 cl"
+       ],
+       "mentions": [
+        "À consommer de préférence avant le…"
+       ],
+       "restrictions": []
+      }
+     },
+     "vignette": "visuels/kv-ci.svg",
+     "remise": "2026-11-06",
+     "echeance": "2026-11-07"
+    },
+    {
+     "id": "KV-nt6kut",
+     "niveau": "adaptation",
+     "voletId": null,
+     "support": "S-kv",
+     "marche": "M-sn",
+     "nom": "KV · SN · Orvelle",
+     "responsable": "PE-ilan",
+     "origine": "prevu",
+     "pisteId": "PI-zeste",
+     "maitre": "KV-nv9cbb",
+     "versionMaitre": 2,
+     "version": 1,
+     "versions": [
+      {
+       "n": 1,
+       "soumis_le": "2026-11-04T16:30:00.000Z",
+       "verdict": "approuve",
+       "motif": "",
+       "juge_le": "2026-11-05T09:10:00.000Z"
+      }
+     ],
+     "estime": 2,
+     "reel": null,
+     "toursVendus": null,
+     "assets": [],
+     "entrees": [],
+     "annotations": [],
+     "mockups": [],
+     "points": {
+      "concept": "attente",
+      "copy": "attente",
+      "asset": "attente",
+      "design": "attente",
+      "technique": "attente",
+      "droits": "attente",
+      "langue": "pret",
+      "central": "pret",
+      "local": "attente",
+      "final": "attente"
+     },
+     "kv": {
+      "marque": "Orvelle",
+      "copy": "Le premier zeste du jour",
+      "langue": "fr",
+      "sku": [
+       "Canette 33 cl"
+      ],
+      "mentions": [
+       "À consommer de préférence avant le…",
+       "Boisson aromatisée — sans sucres ajoutés"
+      ],
+      "restrictions": [],
+      "geste": "La main ouvre la canette",
+      "lumiere": "Le premier rayon, avant sept heures"
+     },
+     "depart": {
+      "maitre": "KV-nv9cbb",
+      "versionMaitre": 2,
+      "le": "2026-11-02T09:00:02.000Z",
+      "kv": {
+       "marque": "Orvelle",
+       "copy": "Le premier zeste du jour",
+       "langue": "fr",
+       "sku": [
+        "Canette 33 cl"
+       ],
+       "mentions": [
+        "À consommer de préférence avant le…"
+       ],
+       "restrictions": []
+      }
+     },
+     "vignette": "visuels/kv-sn.svg",
+     "remise": "2026-11-06",
+     "echeance": "2026-11-07"
+    },
+    {
+     "id": "KV-vpwgud",
+     "niveau": "adaptation",
+     "voletId": null,
+     "support": "S-kv",
+     "marche": "M-gh",
+     "nom": "KV · GH · Orvelle",
+     "responsable": "PE-ilan",
+     "origine": "prevu",
+     "pisteId": "PI-zeste",
+     "maitre": "KV-nv9cbb",
+     "versionMaitre": 2,
+     "version": 1,
+     "versions": [
+      {
+       "n": 1,
+       "soumis_le": "2026-11-06T16:00:00.000Z",
+       "verdict": null
+      }
+     ],
+     "estime": 2,
+     "reel": null,
+     "toursVendus": null,
+     "assets": [],
+     "entrees": [],
+     "annotations": [],
+     "mockups": [],
+     "points": {
+      "concept": "attente",
+      "copy": "attente",
+      "asset": "attente",
+      "design": "attente",
+      "technique": "attente",
+      "droits": "attente",
+      "langue": "pret",
+      "central": "attente",
+      "local": "attente",
+      "final": "attente"
+     },
+     "kv": {
+      "marque": "Orvelle",
+      "copy": "First zest of the day",
+      "langue": "en",
+      "sku": [
+       "Can 33 cl"
+      ],
+      "mentions": [
+       "Best before end"
+      ],
+      "restrictions": [],
+      "geste": "La main ouvre la canette",
+      "lumiere": "Le premier rayon, avant sept heures"
+     },
+     "depart": {
+      "maitre": "KV-nv9cbb",
+      "versionMaitre": 2,
+      "le": "2026-11-02T09:00:04.000Z",
+      "kv": {
+       "marque": "Orvelle",
+       "copy": "Le premier zeste du jour",
+       "langue": "en",
+       "sku": [
+        "Canette 33 cl"
+       ],
+       "mentions": [
+        "Best before end"
+       ],
+       "restrictions": []
+      }
+     },
+     "vignette": "visuels/kv-gh.svg",
+     "remise": "2026-11-06",
+     "echeance": "2026-11-07"
+    },
+    {
+     "id": "L-g7jexi",
+     "niveau": "declinaison",
+     "voletId": null,
+     "support": "S-affiche",
+     "marche": "M-ci",
+     "nom": "Affiche 4×3 · CI",
+     "responsable": "PE-yao",
+     "origine": "prevu",
+     "pisteId": "PI-zeste",
+     "maitre": "KV-6m1bpg",
+     "versionMaitre": 1,
+     "version": 1,
+     "versions": [
+      {
+       "n": 1,
+       "soumis_le": "2026-11-07T15:00:00.000Z",
+       "verdict": "approuve",
+       "motif": "",
+       "juge_le": "2026-11-08T09:00:00.000Z"
+      }
+     ],
+     "estime": 1,
+     "reel": null,
+     "toursVendus": 2,
+     "remise": "2026-11-09",
+     "echeance": "2026-11-10",
+     "publication": null,
+     "assets": [],
+     "entrees": [],
+     "annotations": [],
+     "mockups": [],
+     "points": {
+      "concept": "attente",
+      "copy": "attente",
+      "asset": "attente",
+      "design": "attente",
+      "technique": "attente",
+      "droits": "attente",
+      "langue": "attente",
+      "central": "pret",
+      "local": "attente",
+      "final": "attente"
+     },
+     "vignette": "visuels/affiche-ci.svg",
+     "fichiers": [
+      {
+       "id": "F-iwq3uq",
+       "type": "bat",
+       "nom": "ORV-2027-01_affiche-4x3_CI_V1_BAT.pdf",
+       "emplacement": "Dossier de production (fictif)",
+       "signataire": "Margaux Tilleul",
+       "quand": "2026-11-09T11:00:00.000Z",
+       "version": 1
+      },
+      {
+       "id": "F-nce1nw",
+       "type": "asset",
+       "nom": "ORV-2027-01_affiche-4x3_CI_V1.jpg",
+       "emplacement": "Dossier de production (fictif)",
+       "signataire": null,
+       "quand": "2026-11-09T11:00:01.000Z",
+       "version": 1
+      }
+     ]
+    },
+    {
+     "id": "L-me87yn",
+     "niveau": "declinaison",
+     "voletId": null,
+     "support": "S-social",
+     "marche": "M-ci",
+     "nom": "Post social 1:1 · CI",
+     "responsable": "PE-yao",
+     "origine": "prevu",
+     "pisteId": "PI-zeste",
+     "maitre": "KV-6m1bpg",
+     "versionMaitre": 1,
+     "version": 1,
+     "versions": [
+      {
+       "n": 1,
+       "soumis_le": "2026-11-11T15:00:00.000Z",
+       "verdict": null
+      }
+     ],
+     "estime": 1,
+     "reel": null,
+     "toursVendus": 2,
+     "remise": "2026-11-12",
+     "echeance": "2026-11-13",
+     "publication": null,
+     "assets": [],
+     "entrees": [],
+     "annotations": [],
+     "mockups": [],
+     "points": {
+      "concept": "attente",
+      "copy": "attente",
+      "asset": "attente",
+      "design": "attente",
+      "technique": "attente",
+      "droits": "attente",
+      "langue": "attente",
+      "central": "attente",
+      "local": "attente",
+      "final": "attente"
+     },
+     "vignette": "visuels/social-ci.svg"
+    },
+    {
+     "id": "L-8q98qc",
+     "niveau": "declinaison",
+     "voletId": null,
+     "support": "S-affiche",
+     "marche": "M-sn",
+     "nom": "Affiche 4×3 · SN",
+     "responsable": "PE-yao",
+     "origine": "prevu",
+     "pisteId": "PI-zeste",
+     "maitre": "KV-nt6kut",
+     "versionMaitre": 1,
+     "version": 1,
+     "versions": [
+      {
+       "n": 1,
+       "soumis_le": "2026-11-09T15:00:00.000Z",
+       "verdict": "approuve",
+       "motif": "",
+       "juge_le": "2026-11-10T09:00:00.000Z"
+      }
+     ],
+     "estime": 1,
+     "reel": null,
+     "toursVendus": 2,
+     "remise": "2026-11-10",
+     "echeance": "2026-11-11",
+     "publication": null,
+     "assets": [],
+     "entrees": [],
+     "annotations": [],
+     "mockups": [],
+     "points": {
+      "concept": "attente",
+      "copy": "attente",
+      "asset": "attente",
+      "design": "attente",
+      "technique": "attente",
+      "droits": "attente",
+      "langue": "attente",
+      "central": "pret",
+      "local": "attente",
+      "final": "attente"
+     },
+     "vignette": "visuels/affiche-sn.svg",
+     "fichiers": [
+      {
+       "id": "F-6wr839",
+       "type": "bat",
+       "nom": "ORV-2027-01_affiche-4x3_SN_V1_BAT.pdf",
+       "emplacement": "Dossier de production (fictif)",
+       "signataire": null,
+       "quand": "2026-11-10T14:00:00.000Z",
+       "version": 1
+      }
+     ]
+    },
+    {
+     "id": "L-3pshdo",
+     "niveau": "declinaison",
+     "voletId": null,
+     "support": "S-social",
+     "marche": "M-gh",
+     "nom": "Post social 1:1 · GH",
+     "responsable": "PE-yao",
+     "origine": "prevu",
+     "pisteId": "PI-zeste",
+     "maitre": "KV-vpwgud",
+     "versionMaitre": 1,
+     "version": 1,
+     "versions": [],
+     "estime": 1,
+     "reel": null,
+     "toursVendus": 2,
+     "remise": "2026-11-16",
+     "echeance": "2026-11-17",
+     "publication": null,
+     "assets": [],
+     "entrees": [],
+     "annotations": [],
+     "mockups": [],
+     "points": {
+      "concept": "attente",
+      "copy": "attente",
+      "asset": "attente",
+      "design": "attente",
+      "technique": "attente",
+      "droits": "attente",
+      "langue": "attente",
+      "central": "attente",
+      "local": "attente",
+      "final": "attente"
+     },
+     "vignette": "visuels/social-gh.svg"
+    }
+   ],
+   "demandes": [
+    {
+     "id": "DP-zeste",
+     "etat": "recue",
+     "cree_le": "2026-10-14T16:00:00.000Z",
+     "titre": "Proposition créative — lancement Orvelle Zeste",
+     "da": "PE-ilan",
+     "etage": 1,
+     "criteres": [
+      "La canette se lit à trois mètres",
+      "Une seule idée par visuel",
+      "Le matin se reconnaît sans texte"
+     ],
+     "interdits": [
+      "Montrer un effort physique",
+      "Parler d’énergie"
+     ],
+     "latitude": [
+      "Le cadrage et la lumière",
+      "Le casting",
+      "La place de la canette, tant qu’elle se lit à trois mètres"
+     ],
+     "entrees": [
+      "La plateforme de marque",
+      "Le bilan arrêté d’Orvelle Source 2026",
+      "Les packshots de la canette (fictifs)"
+     ],
+     "echeance": "2026-10-16",
+     "emise_le": "2026-10-14T16:05:00.000Z",
+     "recue_le": "2026-10-16T11:30:00.000Z"
+    }
+   ],
+   "idees": [
+    {
+     "id": "ID-geste",
+     "texte": "Le geste qui ouvre la journée : la canette, avant le premier rendez-vous.",
+     "auteur": "PE-nadia",
+     "statut": "retenue",
+     "quand": "2026-10-12T10:00:00.000Z",
+     "motif": "Elle occupe le matin, que la catégorie laisse libre.",
+     "arbitre_le": "2026-10-12T16:00:00.000Z"
+    }
+   ]
+  }
+ ],
+ "attentes": [],
+ "blocages": [],
+ "captures": [],
+ "decisions": [
+  {
+   "id": "DEC-zkfm92",
+   "type": "bilan-campagne",
+   "objet": "BIL-CMP-orvelle-source",
+   "campagne": "CMP-orvelle-source",
+   "verdict": "approuve",
+   "portee": "campagne",
+   "motif": null,
+   "quand": "2026-06-26T09:00:00.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "version": 1,
+   "titre": "Bilan de campagne — Orvelle Source 2026",
+   "empreinte": "d7eaf4bd8bd2db600c366558f9516758eb4ece74232679e48e9b65de78231c56",
+   "cree_le": "2026-06-26T09:00:01.000Z"
+  },
+  {
+   "objet": "brief",
+   "type": "recevabilite",
+   "projet": "PRJ-zeste",
+   "verdict": "approuve",
+   "motif": null,
+   "quand": "2026-10-03T09:30:00.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "titre": "le brief",
+   "id": "DEC-ilzgdb",
+   "cree_le": "2026-10-03T09:30:01.000Z"
+  },
+  {
+   "objet": "brief",
+   "type": "brief",
+   "projet": "PRJ-zeste",
+   "verdict": "approuve",
+   "motif": null,
+   "quand": "2026-10-03T10:00:00.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "version": 1,
+   "portee": "document",
+   "titre": "le brief",
+   "id": "DEC-729t8y",
+   "cree_le": "2026-10-03T10:00:01.000Z"
+  },
+  {
+   "objet": "socle",
+   "type": "socle",
+   "projet": "PRJ-zeste",
+   "verdict": "approuve",
+   "motif": null,
+   "quand": "2026-10-06T11:00:00.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "version": 1,
+   "portee": "document",
+   "titre": "la plateforme de marque",
+   "id": "DEC-euc48r",
+   "cree_le": "2026-10-06T11:00:01.000Z"
+  },
+  {
+   "objet": "ID-geste",
+   "type": "idee",
+   "projet": "PRJ-zeste",
+   "verdict": "approuve",
+   "motif": "Elle occupe le matin, que la catégorie laisse libre.",
+   "quand": "2026-10-12T16:00:00.000Z",
+   "qui": "creation",
+   "titre": "Le geste qui ouvre la journée : la canette, avant le premier rendez-vous.",
+   "id": "DEC-cleraq",
+   "cree_le": "2026-10-12T16:00:01.000Z"
+  },
+  {
+   "objet": "bigidea",
+   "type": "bigidea",
+   "projet": "PRJ-zeste",
+   "verdict": "approuve",
+   "motif": "Elle tient la promesse et occupe le seul moment libre.",
+   "quand": "2026-10-14T15:00:00.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "version": 1,
+   "portee": "document",
+   "titre": "la big idea",
+   "id": "DEC-fpbfpd",
+   "cree_le": "2026-10-14T15:00:01.000Z"
+  },
+  {
+   "objet": "PI-zeste",
+   "type": "piste",
+   "projet": "PRJ-zeste",
+   "verdict": "approuve",
+   "motif": "La seule qui occupe le matin, que le bilan 2026 a laissé libre.",
+   "quand": "2026-10-20T10:00:00.000Z",
+   "qui": "creation",
+   "titre": "Le premier zeste",
+   "id": "DEC-tcj8oz",
+   "cree_le": "2026-10-20T10:00:01.000Z"
+  },
+  {
+   "objet": "PI-sieste",
+   "type": "piste",
+   "projet": "PRJ-zeste",
+   "verdict": "hors",
+   "motif": "L’après-midi appartient déjà aux sodas : la marque y serait suiveuse.",
+   "quand": "2026-10-20T10:00:05.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "titre": "La sieste pétillante",
+   "id": "DEC-n80pgf",
+   "cree_le": "2026-10-20T10:00:06.000Z"
+  },
+  {
+   "objet": "PI-minuit",
+   "type": "piste",
+   "projet": "PRJ-zeste",
+   "verdict": "hors",
+   "motif": "La nuit contredit « Reprendre son souffle » et vieillit la cible.",
+   "quand": "2026-10-20T10:00:10.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "titre": "Citron de minuit",
+   "id": "DEC-w9utk5",
+   "cree_le": "2026-10-20T10:00:11.000Z"
+  },
+  {
+   "objet": "KV-nv9cbb",
+   "type": "livrable",
+   "projet": "PRJ-zeste",
+   "verdict": "retour",
+   "motif": "La canette ne se lit pas à trois mètres : un critère écrit de la big idea.",
+   "quand": "2026-10-26T09:00:00.000Z",
+   "qui": "creation",
+   "titre": "KV master commun · Orvelle",
+   "id": "DEC-zpmu3f",
+   "cree_le": "2026-10-26T09:00:01.000Z"
+  },
+  {
+   "objet": "KV-nv9cbb",
+   "type": "livrable",
+   "projet": "PRJ-zeste",
+   "verdict": "approuve",
+   "motif": "",
+   "quand": "2026-10-29T10:00:00.000Z",
+   "qui": "creation",
+   "titre": "KV master commun · Orvelle",
+   "id": "DEC-ebo6ee",
+   "cree_le": "2026-10-29T10:00:01.000Z"
+  },
+  {
+   "objet": "KV-6m1bpg",
+   "type": "livrable",
+   "projet": "PRJ-zeste",
+   "verdict": "approuve",
+   "motif": "",
+   "quand": "2026-11-05T09:00:00.000Z",
+   "qui": "creation",
+   "titre": "KV · CI · Orvelle",
+   "id": "DEC-ose928",
+   "cree_le": "2026-11-05T09:00:01.000Z"
+  },
+  {
+   "objet": "KV-nt6kut",
+   "type": "livrable",
+   "projet": "PRJ-zeste",
+   "verdict": "approuve",
+   "motif": "",
+   "quand": "2026-11-05T09:10:00.000Z",
+   "qui": "creation",
+   "titre": "KV · SN · Orvelle",
+   "id": "DEC-yedfha",
+   "cree_le": "2026-11-05T09:10:01.000Z"
+  },
+  {
+   "objet": "L-g7jexi",
+   "type": "livrable",
+   "projet": "PRJ-zeste",
+   "verdict": "approuve",
+   "motif": "",
+   "quand": "2026-11-08T09:00:00.000Z",
+   "qui": "creation",
+   "titre": "Affiche 4×3 · CI",
+   "id": "DEC-lykovx",
+   "cree_le": "2026-11-08T09:00:01.000Z"
+  },
+  {
+   "objet": "L-8q98qc",
+   "type": "livrable",
+   "projet": "PRJ-zeste",
+   "verdict": "approuve",
+   "motif": "",
+   "quand": "2026-11-10T09:00:00.000Z",
+   "qui": "creation",
+   "titre": "Affiche 4×3 · SN",
+   "id": "DEC-4rwb7w",
+   "cree_le": "2026-11-10T09:00:01.000Z"
+  }
+ ],
+ "lectures": [],
+ "journal": [
+  {
+   "quand": "2026-06-20T16:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "clôture",
+   "type": "projets",
+   "id": "PRJ-source",
+   "detail": "décidé à la main"
+  },
+  {
+   "quand": "2026-06-25T10:00:00.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "bilan écrit",
+   "type": "campagnes",
+   "id": "CMP-orvelle-source",
+   "detail": "Ce qui a tenu : la source se reconnaît, la marque a été citée spontanément sur l",
+   "marques": [
+    "MQ-orvelle"
+   ]
+  },
+  {
+   "quand": "2026-06-26T09:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-zkfm92",
+   "detail": "Bilan de campagne — Orvelle Source 2026"
+  },
+  {
+   "quand": "2026-06-26T09:00:04.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "bilan arrêté",
+   "type": "campagnes",
+   "id": "CMP-orvelle-source",
+   "detail": "version 1 · d7eaf4bd8bd2",
+   "marques": [
+    "MQ-orvelle"
+   ]
+  },
+  {
+   "quand": "2026-10-01T08:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "projets",
+   "id": "PRJ-zeste",
+   "detail": "Orvelle Zeste — lancement"
+  },
+  {
+   "quand": "2026-10-03T09:30:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-ilzgdb",
+   "detail": "le brief"
+  },
+  {
+   "quand": "2026-10-03T09:30:04.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "acceptation",
+   "type": "projets",
+   "id": "PRJ-zeste",
+   "detail": "brief accepté"
+  },
+  {
+   "quand": "2026-10-03T10:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-729t8y",
+   "detail": "le brief"
+  },
+  {
+   "quand": "2026-10-06T11:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-euc48r",
+   "detail": "la plateforme de marque"
+  },
+  {
+   "quand": "2026-10-12T16:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-cleraq",
+   "detail": "Le geste qui ouvre la journée : la canette, avant le premier rendez-vous."
+  },
+  {
+   "quand": "2026-10-14T15:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-fpbfpd",
+   "detail": "la big idea"
+  },
+  {
+   "quand": "2026-10-20T10:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-tcj8oz",
+   "detail": "Le premier zeste"
+  },
+  {
+   "quand": "2026-10-20T10:00:04.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "piste retenue",
+   "type": "pistes",
+   "id": "PRJ-zeste",
+   "detail": "Le premier zeste"
+  },
+  {
+   "quand": "2026-10-20T10:00:07.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-n80pgf",
+   "detail": "La sieste pétillante"
+  },
+  {
+   "quand": "2026-10-20T10:00:09.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "piste écartée",
+   "type": "pistes",
+   "id": "PRJ-zeste",
+   "detail": "La sieste pétillante"
+  },
+  {
+   "quand": "2026-10-20T10:00:12.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-w9utk5",
+   "detail": "Citron de minuit"
+  },
+  {
+   "quand": "2026-10-20T10:00:14.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "piste écartée",
+   "type": "pistes",
+   "id": "PRJ-zeste",
+   "detail": "Citron de minuit"
+  },
+  {
+   "quand": "2026-10-21T09:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "écart de marché déclaré",
+   "type": "projets",
+   "id": "PRJ-zeste",
+   "detail": "CI : aucun écart"
+  },
+  {
+   "quand": "2026-10-21T09:00:04.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "écart de marché déclaré",
+   "type": "projets",
+   "id": "PRJ-zeste",
+   "detail": "SN : Réglementaire"
+  },
+  {
+   "quand": "2026-10-21T09:00:07.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "écart de marché déclaré",
+   "type": "projets",
+   "id": "PRJ-zeste",
+   "detail": "GH : Produit / SKU"
+  },
+  {
+   "quand": "2026-10-22T09:00:00.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "kv",
+   "id": "PRJ-zeste",
+   "detail": "KV master commun"
+  },
+  {
+   "quand": "2026-10-24T17:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "soumission",
+   "type": "livrables",
+   "id": "PRJ-zeste",
+   "detail": "KV master commun · Orvelle V1"
+  },
+  {
+   "quand": "2026-10-26T09:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-zpmu3f",
+   "detail": "KV master commun · Orvelle"
+  },
+  {
+   "quand": "2026-10-28T17:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "soumission",
+   "type": "livrables",
+   "id": "PRJ-zeste",
+   "detail": "KV master commun · Orvelle V2"
+  },
+  {
+   "quand": "2026-10-29T10:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-ebo6ee",
+   "detail": "KV master commun · Orvelle"
+  },
+  {
+   "quand": "2026-11-02T09:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "kv",
+   "id": "PRJ-zeste",
+   "detail": "KV · CI"
+  },
+  {
+   "quand": "2026-11-02T09:00:03.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "kv",
+   "id": "PRJ-zeste",
+   "detail": "KV · SN"
+  },
+  {
+   "quand": "2026-11-02T09:00:05.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "kv",
+   "id": "PRJ-zeste",
+   "detail": "KV · GH"
+  },
+  {
+   "quand": "2026-11-04T16:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "soumission",
+   "type": "livrables",
+   "id": "PRJ-zeste",
+   "detail": "KV · CI · Orvelle V1"
+  },
+  {
+   "quand": "2026-11-04T16:30:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "soumission",
+   "type": "livrables",
+   "id": "PRJ-zeste",
+   "detail": "KV · SN · Orvelle V1"
+  },
+  {
+   "quand": "2026-11-05T09:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-ose928",
+   "detail": "KV · CI · Orvelle"
+  },
+  {
+   "quand": "2026-11-05T09:10:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-yedfha",
+   "detail": "KV · SN · Orvelle"
+  },
+  {
+   "quand": "2026-11-06T16:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "soumission",
+   "type": "livrables",
+   "id": "PRJ-zeste",
+   "detail": "KV · GH · Orvelle V1"
+  },
+  {
+   "quand": "2026-11-06T10:00:00.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "déclinaison",
+   "type": "kv",
+   "id": "PRJ-zeste",
+   "detail": "1 format depuis KV · CI · Orvelle"
+  },
+  {
+   "quand": "2026-11-06T10:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "déclinaison",
+   "type": "kv",
+   "id": "PRJ-zeste",
+   "detail": "1 format depuis KV · CI · Orvelle"
+  },
+  {
+   "quand": "2026-11-06T10:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "déclinaison",
+   "type": "kv",
+   "id": "PRJ-zeste",
+   "detail": "1 format depuis KV · SN · Orvelle"
+  },
+  {
+   "quand": "2026-11-06T10:00:03.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "déclinaison",
+   "type": "kv",
+   "id": "PRJ-zeste",
+   "detail": "1 format depuis KV · GH · Orvelle"
+  },
+  {
+   "quand": "2026-11-07T15:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "soumission",
+   "type": "livrables",
+   "id": "PRJ-zeste",
+   "detail": "Affiche 4×3 · CI V1"
+  },
+  {
+   "quand": "2026-11-08T09:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-lykovx",
+   "detail": "Affiche 4×3 · CI"
+  },
+  {
+   "quand": "2026-11-09T11:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "BAT signé",
+   "type": "livrables",
+   "id": "PRJ-zeste",
+   "detail": "Affiche 4×3 · CI V1"
+  },
+  {
+   "quand": "2026-11-09T15:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "soumission",
+   "type": "livrables",
+   "id": "PRJ-zeste",
+   "detail": "Affiche 4×3 · SN V1"
+  },
+  {
+   "quand": "2026-11-10T09:00:02.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "decisions",
+   "id": "DEC-4rwb7w",
+   "detail": "Affiche 4×3 · SN"
+  },
+  {
+   "quand": "2026-11-11T15:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "soumission",
+   "type": "livrables",
+   "id": "PRJ-zeste",
+   "detail": "Post social 1:1 · CI V1"
+  }
+ ],
+ "rattachement2": true
+}

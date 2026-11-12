@@ -1,0 +1,235 @@
+/* cadrage.css — le document de cadrage, lu comme on prépare une séance.
+ *
+ * Une page de papier sur la toile, pas un panneau latéral : la largeur d'une
+ * feuille, deux colonnes de rubriques, une seule chose soulevée — la question
+ * de la séance, celle qu'on écrit au mur. */
+
+body.cds-actif { overflow: hidden; }
+
+.cds {
+  position: fixed; inset: 0; z-index: 900;
+  overflow-y: auto; overscroll-behavior: contain;
+  background: var(--surface-4);
+  color: var(--clair-doux);
+}
+
+/* La barre : où l'on est, où l'on va, ce qu'on fait du document. */
+.cds-barre {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; align-items: center; gap: var(--e4); flex-wrap: wrap;
+  padding: var(--e3) max(16px, calc((100% - 1120px) / 2));
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--trait);
+}
+.cds-barre-t { font-size: var(--t-meta); font-weight: 600; color: var(--clair); }
+.cds-som { display: flex; gap: var(--e1); flex: 1 1 auto; flex-wrap: wrap; }
+.cds-som a {
+  font-size: var(--t-meta); color: var(--clair); text-decoration: none;
+  padding: var(--e2) var(--e3); border-radius: var(--r-pilule); min-height: 44px; display: inline-flex; align-items: center;
+}
+.cds-som a:hover, .cds-som a:focus-visible { background: var(--surface-3); }
+.cds-barre-g { display: flex; gap: var(--e2); flex-wrap: wrap; }
+
+.cds-page {
+  max-width: 1120px; margin: var(--e7) auto var(--e12);
+  padding: var(--e8) var(--e9);
+  background: var(--surface-1);
+  border: 1px solid var(--trait); border-radius: var(--r-l);
+  display: grid; gap: var(--e9);
+}
+
+/* L'en-tête : qui, quoi, où en est le document. */
+.cds-tete { display: grid; gap: var(--e2); }
+.cds-logos { display: flex; gap: var(--e4); align-items: center; min-height: 0; }
+.cds-logos img { height: 44px; width: auto; max-width: 140px; object-fit: contain; }
+.cds-ref { font-size: var(--t-eti); letter-spacing: var(--ls-eti); color: var(--clair-terne); font-variant-numeric: tabular-nums; }
+.cds-tete h1 {
+  font-family: var(--affichage); font-size: var(--t-display); line-height: var(--lh-display);
+  letter-spacing: var(--ls-display); color: var(--clair); margin: 0; text-wrap: balance;
+}
+.cds-etat { font-size: var(--t-meta); line-height: var(--lh-meta); margin: 0; max-width: 72ch; }
+.cds-etat.cds-att { color: var(--arbitrage); }
+.cds-etat.cds-ok { color: var(--succes); }
+
+/* ——— Refonte du 07/10/2026 : on lit en descendant une colonne. ———
+ * Une rubrique est une ligne — son nom à gauche, son contenu à droite — et son
+ * contenu s'ouvre sur sa première phrase, en grand. Plus de cartes égales, plus
+ * d'étiquettes en capitales : la hiérarchie se dit par la taille et l'air. */
+
+.cds-partie { display: grid; gap: var(--e7); scroll-margin-top: 88px; }
+.cds-ph { display: grid; gap: var(--e1); padding-bottom: var(--e3); border-bottom: 2px solid var(--clair); }
+.cds-ph h2 { font-family: var(--affichage); font-size: var(--t-h2); line-height: var(--lh-h2); color: var(--clair); margin: 0; }
+.cds-pq { margin: 0; font-size: var(--t-meta); color: var(--clair-terne); }
+
+/* La question au mur — la seule chose soulevée du document. */
+.cds-mur {
+  padding: var(--e8) var(--e8) var(--e6);
+  background: var(--papier); color: var(--papier-encre);
+  border-radius: var(--r-m);
+  display: grid; gap: var(--e4);
+}
+.cds-q {
+  font-family: var(--ecrit); font-style: italic; font-weight: 500;
+  font-size: clamp(1.8rem, 1.2rem + 2.2vw, 3rem); line-height: 1.15; letter-spacing: -0.01em;
+  margin: 0; max-width: 28ch; text-wrap: balance; color: var(--papier-encre);
+}
+.cds-q.cds-q-m { font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem); max-width: 34ch; color: var(--clair); }
+.cds-mur-l { margin: 0; font-size: var(--t-meta); color: var(--papier-terne); }
+.cds-mur.cds-manque { background: transparent; border: 1px dashed var(--trait-clair); }
+.cds-but { margin: 0; font-size: var(--t-lire); line-height: var(--lh-lire); color: var(--clair); max-width: 72ch; }
+.cds-but b { font-weight: 600; }
+.cds-but.cds-manque { color: var(--arbitrage); }
+
+/* Les rubriques : une ligne chacune. */
+.cds-rubriques { display: grid; }
+.cds-r {
+  display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); gap: var(--e3) var(--e7);
+  padding: var(--e5) 0; border-top: 1px solid var(--trait);
+}
+.cds-rubriques > .cds-r:last-child, .cds-partie > .cds-r:last-child { border-bottom: 1px solid var(--trait); }
+.cds-rt {
+  margin: 0; font-family: var(--affichage); font-size: var(--t-meta); line-height: var(--lh-meta);
+  font-weight: 600; color: var(--clair); display: flex; flex-direction: column; gap: var(--e1); align-items: flex-start;
+}
+.cds-rs { font-weight: 400; font-size: var(--t-eti); color: var(--clair-terne); }
+.cds-rc { min-width: 0; display: grid; gap: var(--e3); }
+.cds-r-manque .cds-rt { color: var(--clair-terne); }
+
+.cds-lede { display: grid; gap: var(--e2); max-width: 68ch; }
+.cds-lead {
+  margin: 0; font-family: var(--lecture); font-size: var(--t-titre); line-height: var(--lh-titre);
+  color: var(--clair); text-wrap: pretty;
+}
+.cds-lede.cds-ecrit .cds-lead, .cds-ecrit-l {
+  font-family: var(--ecrit); font-style: italic; font-size: clamp(1.2rem, 1rem + .8vw, 1.6rem); line-height: 1.3;
+}
+.cds-r-fort .cds-lead { color: var(--clair); }
+.cds-p {
+  margin: 0; font-family: var(--lecture); font-size: var(--t-lire); line-height: var(--lh-lire);
+  color: var(--clair-doux); max-width: 68ch; overflow-wrap: anywhere;
+}
+.cds-suite > summary {
+  cursor: pointer; list-style: none; display: inline-flex; align-items: center; min-height: 44px;
+  font-size: var(--t-meta); color: var(--info); text-decoration: underline; text-underline-offset: 3px;
+}
+.cds-suite > summary::-webkit-details-marker { display: none; }
+.cds-suite[open] > summary { display: none; }
+
+.cds-inf {
+  font-size: var(--t-micro); font-weight: 400; color: var(--arbitrage);
+  border: 1px solid currentColor; border-radius: var(--r-pilule); padding: 0 var(--e2);
+}
+.cds-vide { margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--arbitrage); max-width: 64ch; }
+.cds-src { margin: 0; font-size: var(--t-eti); line-height: var(--lh-eti); color: var(--clair-terne); }
+.cds-src a { color: var(--info); }
+
+/* Deux listes qui se répondent. */
+.cds-paire { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--e5) var(--e8); }
+.cds-paire.cds-trois { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.cds-col { display: grid; gap: var(--e3); align-content: start; padding-top: var(--e3); border-top: 2px solid var(--trait); min-width: 0; }
+.cds-col.cds-oui { border-top-color: var(--succes); }
+.cds-col.cds-non { border-top-color: var(--bloquant-txt); }
+.cds-ct { margin: 0; font-family: var(--affichage); font-size: var(--t-meta); font-weight: 600; color: var(--clair); }
+
+.cds-l { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--e2); }
+.cds-l li {
+  position: relative; padding-left: var(--e5);
+  font-size: var(--t-lire); line-height: var(--lh-lire); overflow-wrap: anywhere; color: var(--clair-doux);
+}
+.cds-l li::before { content: ""; position: absolute; left: 2px; top: .7em; width: 6px; height: 6px; border-radius: 50%; background: var(--clair-terne); }
+.cds-l.cds-ok li::before { background: var(--succes); }
+.cds-l.cds-non li::before { width: 8px; height: 2px; border-radius: 0; top: .8em; background: var(--bloquant-txt); }
+.cds-l.cds-tl { counter-reset: t; }
+.cds-l.cds-tl li { padding-left: var(--e7); }
+.cds-l.cds-tl li::before { counter-increment: t; content: counter(t); width: auto; height: auto; background: none; top: 0; left: 0;
+  font-family: var(--affichage); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--accent); }
+
+.cds-bande {
+  display: flex; flex-wrap: wrap; gap: var(--e3) var(--e8); margin: 0;
+  padding-top: var(--e4); border-top: 1px solid var(--trait);
+}
+.cds-bande dt { font-size: var(--t-eti); color: var(--clair-terne); }
+.cds-bande dd { margin: 0; font-size: var(--t-meta); color: var(--clair); font-weight: 500; }
+
+/* La campagne : une ligne sous le titre. */
+.cds-cmp { display: grid; gap: var(--e1); }
+.cds-cmp-n { margin: 0; font-size: var(--t-meta); color: var(--clair-terne); }
+.cds-cmp-n a { color: var(--clair); font-weight: 600; }
+
+/* La matière. */
+.cds-idee { display: grid; gap: var(--e3); padding: var(--e6) 0; border-top: 1px solid var(--trait); }
+.cds-items { display: grid; gap: var(--e5); }
+.cds-item { display: grid; gap: var(--e2); min-width: 0; padding-bottom: var(--e5); border-bottom: 1px dashed var(--trait); }
+.cds-item:last-child { border-bottom: 0; padding-bottom: 0; }
+.cds-item.cds-ret .cds-item-t { color: var(--succes); }
+.cds-item-t { margin: 0; font-family: var(--affichage); font-size: var(--t-meta); font-weight: 600; color: var(--clair); }
+.cds-temps { display: grid; grid-template-columns: auto 1fr; gap: var(--e1) var(--e4); margin: 0; font-size: var(--t-meta); line-height: var(--lh-meta); max-width: 70ch; }
+.cds-temps dt { color: var(--clair-terne); }
+.cds-temps dd { margin: 0; color: var(--clair-doux); }
+
+.cds-mood { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--e4); }
+.cds-img { margin: 0; display: grid; gap: var(--e2); }
+.cds-img img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-s); background: var(--surface-3); }
+.cds-img.cds-non img { filter: grayscale(1); opacity: .7; }
+.cds-img figcaption { font-size: var(--t-eti); line-height: var(--lh-eti); color: var(--clair-doux); }
+
+/* La marque : les marques côte à côte, leur idée directrice en tête. */
+.cds-marques { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--e6); }
+.cds-marque { display: grid; gap: var(--e4); align-content: start; min-width: 0; padding-top: var(--e4); border-top: 2px solid var(--clair); }
+.cds-marque header { display: flex; gap: var(--e3); align-items: center; min-height: 44px; }
+.cds-marque h3 { margin: 0; font-family: var(--affichage); font-size: var(--t-titre); color: var(--clair); }
+.cds-logo { height: 40px; width: auto; max-width: 96px; object-fit: contain; }
+.cds-marque-i { margin: 0; font-family: var(--ecrit); font-style: italic; font-size: var(--t-titre); line-height: var(--lh-titre); color: var(--clair); }
+.cds-marque dl { margin: 0; display: grid; gap: var(--e4); }
+.cds-mc dt { font-size: var(--t-eti); font-weight: 600; color: var(--clair-terne); }
+.cds-mc dd { margin: var(--e1) 0 0; font-size: var(--t-meta); line-height: var(--lh-meta); color: var(--clair-doux); overflow-wrap: anywhere; }
+.cds-mc .cds-lead { font-size: var(--t-lire); line-height: var(--lh-lire); }
+.cds-chips { display: flex; flex-wrap: wrap; gap: var(--e2); }
+.cds-chips span { font-size: var(--t-eti); padding: var(--e1) var(--e3); border-radius: var(--r-pilule); background: var(--surface-3); color: var(--clair); }
+
+/* Le dossier intégral : une rubrique par ligne, repliée. */
+.cds-dossier { display: grid; }
+.cds-d { border-top: 1px solid var(--trait); }
+.cds-d:last-child { border-bottom: 1px solid var(--trait); }
+.cds-d > summary {
+  cursor: pointer; list-style: none; min-height: 44px; display: flex; align-items: center;
+  font-size: var(--t-meta); color: var(--clair); padding: var(--e2) 0;
+}
+.cds-d > summary::-webkit-details-marker { display: none; }
+.cds-d > summary::before { content: "+"; width: var(--e5); color: var(--clair-terne); }
+.cds-d[open] > summary::before { content: "−"; }
+.cds-d > .co-b { padding: 0 0 var(--e5) var(--e5); }
+.cds-d > .co-b > .cob-t { display: none; }
+
+@media (max-width: 720px) {
+  .cds-page { margin: 0 0 var(--e10); padding: var(--e6) 16px; border-radius: 0; border-left: 0; border-right: 0; gap: var(--e8); }
+  .cds-tete h1 { font-size: var(--t-ecran); line-height: var(--lh-ecran); }
+  .cds-mur { padding: var(--e5); }
+  .cds-q { font-size: var(--t-h2); line-height: var(--lh-h2); }
+  .cds-r { grid-template-columns: 1fr; gap: var(--e2); }
+  .cds-paire, .cds-paire.cds-trois, .cds-marques { grid-template-columns: 1fr; }
+  .cds-mur { padding: var(--e6) var(--e5) var(--e5); }
+  .cds-barre-t { display: none; }
+  /* Sur téléphone, la barre tient en deux lignes courtes : on n'imprime ni ne copie depuis un téléphone. */
+  .cds-barre { gap: var(--e2); padding-block: var(--e2); }
+  .cds-barre-g { order: 1; margin-left: auto; }
+  .cds-barre-g .b.nu { display: none; }
+  .cds-som { order: 2; flex: 1 0 100%; flex-wrap: nowrap; overflow-x: auto; }
+  .cds-som a { white-space: nowrap; }
+}
+
+@media print {
+  body.cds-actif > *:not(.cds) { display: none !important; }
+  body.cds-actif { overflow: visible; background: #fff; }
+  .cds { position: static; overflow: visible; background: #fff; }
+  .cds-barre { display: none; }
+  .cds-page { margin: 0; padding: 0; border: 0; max-width: none; gap: 24pt; }
+  .cds-partie { break-before: page; }
+  .cds-partie:first-of-type { break-before: auto; }
+  .cds-r, .cds-col, .cds-marque, .cds-img, .cds-item { break-inside: avoid; }
+  .cds-suite > summary { display: none; }
+  .cds-suite > p { display: block; }
+  .cds-d > summary::before { content: ""; }
+  .cds-d > .co-b > .cob-t { display: block; }
+  .cds-d > summary { display: none; }
+}

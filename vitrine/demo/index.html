@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>La Barre — démonstration, données fictives</title>
+    <meta name="description" content="Démonstration de La Barre sur une marque inventée : du brief au BAT. Données fictives, rien ne s'enregistre." />
+    <!-- La couronne du rail, en SVG : aucune requête, et l'onglet cesse de
+         réclamer un favicon.ico qui n'a jamais existé. -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23080C14'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='%23FFB020'%3E%E2%99%9B%3C/text%3E%3C/svg%3E" />
+    <link rel="preload" href="../../styles/polices/asap-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="../../styles/polices/sourceserif-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="../../styles/polices.css" />
+    <link rel="stylesheet" href="../../styles/base.css" />
+    <link rel="stylesheet" href="../../styles/systeme.css" />
+    <link rel="stylesheet" href="../../styles/ecrans.css" />
+    <link rel="stylesheet" href="../../styles/commande.css" />
+    <link rel="stylesheet" href="../../styles/planche.css" />
+    <link rel="stylesheet" href="../../styles/studio.css" />
+    <link rel="stylesheet" href="../../styles/studio-vues.css" />
+    <link rel="stylesheet" href="../../styles/cadrage.css" />
+  </head>
+  <body>
+    <a class="aller-contenu" href="#contenu">Aller au contenu</a>
+    <main id="corps" class="corps"></main>
+
+    <!-- La démonstration : déclarée avant tout module. Base fictive, en mémoire ;
+         rien n'est lu ni écrit ailleurs (app/depot.js). -->
+    <script src="demonstration.js"></script>
+
+    <!-- La maison : une agence fictive, sur le profil neutre. -->
+    <script src="../../app/maison-base.js"></script>
+    <script src="maison.js"></script>
+
+    <!-- Le socle -->
+    <script src="../../app/outils.js"></script>
+    <script src="../../app/avis.js"></script>
+    <script src="../../app/reconciliation.js"></script>
+    <script src="../../app/reprises.js"></script>
+    <script src="../../app/depot.js"></script>
+    <script src="../../app/decision.js"></script>
+    <script src="../../app/disque.js"></script>
+    <script src="../../app/concepts.js"></script>
+    <script src="../../app/fabrique.js"></script>
+    <script src="../../app/acteur.js"></script>
+    <script src="../../app/structure.js"></script>
+    <script src="../../app/apparier.js"></script>
+    <script src="../../app/image.js"></script>
+    <script src="../../app/ui.js"></script>
+    <script src="../../app/nature.js"></script>
+    <script src="../../app/campagne.js"></script>
+    <script src="../../app/modele-champs.js"></script>
+    <script src="../../app/inference.js"></script>
+    <script src="../../app/version.js"></script>
+    <script src="../../app/regles.js"></script>
+    <script src="../../app/plateau-modele.js"></script>
+    <script src="../../app/objectifs.js"></script>
+    <script src="../../app/verdict-cout.js"></script>
+    <script src="../../app/marque.js"></script>
+    <script src="../../app/vault.js"></script>
+    <script src="../../app/briefs.js"></script>
+    <script src="../../app/kv-modele.js"></script>
+    <script src="../../app/axe.js"></script>
+    <script src="../../app/trace.js"></script>
+    <script src="../../app/insight.js"></script>
+    <script src="../../app/territoire.js"></script>
+    <script src="../../app/ecoles.js"></script>
+    <script src="../../app/efficacite.js"></script>
+    <script src="../../app/reco.js"></script>
+    <script src="../../app/vue-insight.js"></script>
+    <script src="../../app/registre-people.js"></script>
+    <script src="../../app/registre-radar.js"></script>
+    <script src="../../app/vie-marque.js"></script>
+    <script src="../../app/intake.js"></script>
+    <script src="../../app/annotation.js"></script>
+    <script src="../../app/mockup.js"></script>
+    <script src="../../app/presentation-modele.js"></script>
+    <script src="../../app/production.js"></script>
+    <script src="../../app/feedback.js"></script>
+    <script src="../../app/dispositif.js"></script>
+    <script src="../../app/demande.js"></script>
+    <script src="../../app/retroplanning.js"></script>
+    <script src="../../app/priorite.js"></script>
+    <script src="../../app/etats.js"></script>
+    <script src="amorce.js"></script>
+
+    <!-- Les gestes -->
+    <script src="../../app/panneau.js"></script>
+    <script src="../../app/geste.js"></script>
+    <script src="../../app/formulaire.js"></script>
+    <script src="../../app/renvoi.js"></script>
+    <script src="../../app/cloture.js"></script>
+    <script src="../../app/chiffrage.js"></script>
+    <script src="../../app/remise.js"></script>
+    <script src="../../app/boucles.js"></script>
+    <script src="../../app/validation.js"></script>
+    <script src="../../app/ingesteur.js"></script>
+    <script src="../../app/ecarts.js"></script>
+    <script src="../../app/ecarts-marche.js"></script>
+    <script src="../../app/chaine-brief.js"></script>
+    <script src="../../app/equipe.js"></script>
+    <script src="../../app/file-action.js"></script>
+    <script src="../../app/compilateur.js"></script>
+    <script src="../../app/bilan.js"></script>
+    <script src="../../app/jurisprudence.js"></script>
+    <script src="../../app/importeur-fil.js"></script>
+
+    <!-- Les écrans de détail -->
+    <script src="../../app/vue-brief.js"></script>
+    <script src="../../app/bigidea-ecoles.js"></script>
+    <script src="../../app/vue-bigidea.js"></script>
+    <script src="../../app/vue-socle.js"></script>
+    <script src="../../app/brief-production.js"></script>
+    <script src="../../app/demande-version.js"></script>
+    <script src="../../app/vue-cycle.js"></script>
+    <script src="../../app/vue-livrable.js"></script>
+    <script src="../../app/vue-planche.js"></script>
+    <script src="../../app/etude.js"></script>
+    <script src="../../app/vue-presentation.js"></script>
+    <script src="../../app/partage.js"></script>
+    <script src="../../app/export-pptx.js"></script>
+
+    <!-- Les écrans -->
+    <script src="../../app/ateliers/approches/raccord.js"></script>
+    <script src="../../app/approches.js"></script>
+    <script src="../../app/vue-pistes.js"></script>
+    <script src="../../app/vue-route.js"></script>
+    <script src="../../app/preparation.js"></script>
+    <script src="../../app/cadrage-seance.js"></script>
+    <script src="../../app/couverture.js"></script>
+    <script src="../../app/vue-galerie.js"></script>
+    <script src="../../app/vue-atelier.js"></script>
+    <script src="../../app/vue-asset.js"></script>
+    <script src="../../app/vue-matrice.js"></script>
+    <script src="../../app/vue-direction.js"></script>
+    <script src="../../app/vue-revue.js"></script>
+    <script src="../../app/vue-projets.js"></script>
+    <script src="../../app/vue-attentes.js"></script>
+    <script src="../../app/vue-vault.js"></script>
+    <script src="../../app/vue-referentiel.js"></script>
+    <script src="../../app/vue-reglages.js"></script>
+    <script src="../../app/vue-pipeline.js"></script>
+
+    <script src="../../app/vue-decider.js"></script>
+    <script src="../../app/vue-livraison.js"></script>
+    <script src="../../app/vue-livraisons.js"></script>
+    <script src="../../app/vue-placer.js"></script>
+    <script src="../../app/vue-equipe.js"></script>
+    <script src="../../app/vue-findemois.js"></script>
+    <script src="../../app/vue-jurisprudence.js"></script>
+    <script src="../../app/vue-constater.js"></script>
+    <script src="../../app/vue-doctrine.js"></script>
+    <script src="../../app/vue-maison.js"></script>
+
+    <script src="../../app/vue-studio.js"></script>
+    <script src="../../app/application.js"></script>
+  </body>
+</html>

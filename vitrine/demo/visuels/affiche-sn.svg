@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-label="Le premier zeste — visuel fictif">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0F3B3A"/><stop offset="1" stop-color="#1D5C55"/></linearGradient></defs>
+<rect width="1200" height="900" fill="url(#g)"/>
+<circle cx="960.0" cy="180.0" r="288.0" fill="#F2C14E" opacity=".16"/>
+<rect x="0" y="0" width="1200" height="46.0" fill="#F2C14E"/>
+<text x="36.0" y="31.0" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="20.0" letter-spacing="1.5" fill="#0F3B3A">DÉMONSTRATION — DONNÉES FICTIVES</text>
+<text x="1164.0" y="31.0" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="20.0" fill="#0F3B3A">SN · 4×3</text>
+<text x="84.00000000000001" y="360.0" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="78.0" fill="#FFFFFF">Le premier zeste</text>
+<text x="84.00000000000001" y="446.0" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="78.0" fill="#FFFFFF">du jour</text>
+<text x="84.00000000000001" y="542.0" font-family="Helvetica, Arial, sans-serif" font-size="26.0" fill="#F2C14E">Affiche 4×3 · Dakar</text>
+<text x="84.00000000000001" y="774.0" font-family="Helvetica, Arial, sans-serif" font-size="20.0" fill="#CFE3DF">Boisson aromatisée — sans sucres ajoutés</text>
+<g transform="translate(840.0,270.0)">
+  <rect x="0" y="0" width="232.5" height="418.5" rx="34.1" fill="#F7F3E8"/>
+  <rect x="0" y="125.55" width="232.5" height="175.76999999999998" fill="#F2C14E"/>
+  <circle cx="116.25" cy="213.435" r="60.45" fill="#FFFFFF" stroke="#E0A92E" stroke-width="6.2"/>
+  <path d="M116.25 152.985 V273.885 M55.8 213.435 H176.7 M74.4 171.585 L158.1 255.285 M158.1 171.585 L74.4 255.285" stroke="#E0A92E" stroke-width="4.65"/>
+  <text x="116.25" y="83.7" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="34.1" letter-spacing="4.65" fill="#0F3B3A">ORVELLE</text>
+  <text x="116.25" y="368.28000000000003" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="21.7" fill="#0F3B3A">Canette 33 cl</text>
+</g>
+</svg>
