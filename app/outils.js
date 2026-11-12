@@ -165,11 +165,11 @@ window.O = (function () {
   }
 
   /* Des caractères tirés au hasard, en base 36 — pour un identifiant qui doit
-   * rester unique entre postes (decision.js). Le hasard vient de crypto, que
-   * tout navigateur fournit, même hors connexion sécurisée ; Math.random n'est
-   * pris qu'à défaut. Un octet au-delà de 251 est rejeté : 252 = 7 × 36, et
-   * chaque caractère garde la même chance. On ne tire que ce qui manque : aucun
-   * octet accepté n'est jeté. */
+   * rester unique entre postes (identifiantUnique). Le hasard vient de crypto,
+   * que tout navigateur fournit, même hors connexion sécurisée ; Math.random
+   * n'est pris qu'à défaut. Un octet au-delà de 251 est rejeté : 252 = 7 × 36,
+   * et chaque caractère garde la même chance. On ne tire que ce qui manque :
+   * aucun octet accepté n'est jeté. */
   function aleatoire(n) {
     var c = window.crypto, sur = !!c && typeof c.getRandomValues === "function", s = "";
     while (s.length < n) {
@@ -179,6 +179,46 @@ window.O = (function () {
       for (var j = 0; j < octets.length; j++) if (octets[j] < 252) s += (octets[j] % 36).toString(36);
     }
     return s;
+  }
+
+  /* ————— Un identifiant unique entre postes —————
+   *
+   * Plusieurs postes écrivent dans la même base de référence, chacun sans voir
+   * ce que les autres tirent. Un objet dont l'identifiant doit tenir entre
+   * postes — une décision, un projet, un livrable — porte donc le code du poste
+   * qui l'a tiré et douze caractères au hasard : PRO-k3f9-0a1b2c3d4e5f. Deux
+   * postes ne se rencontrent que si leurs codes et leurs douze caractères
+   * (36¹², environ 4,7 × 10¹⁸) tombent ensemble.
+   *
+   * Le code du poste est tiré une fois et gardé dans ce navigateur, sous
+   * `la-barre-poste`. Deux onglets du même navigateur le partagent ; leurs douze
+   * caractères les séparent. La démonstration n'écrit rien dans le navigateur :
+   * son code vit le temps de la page. */
+  var CLE_POSTE = "la-barre-poste", CODE_POSTE = 4, ALEA = 12, codeDuPoste = null;
+
+  /* Au-delà de ce nombre de tirages pris, quelque chose d'autre est cassé — le
+   * hasard ou la base — et on rend la main plutôt que d'écraser. */
+  var TIRAGES = 64;
+
+  function codePoste() {
+    if (codeDuPoste) return codeDuPoste;
+    var demo = !!(window.DEPOT && typeof DEPOT.estDemonstration === "function" && DEPOT.estDemonstration()), lu = null;
+    if (!demo) { try { lu = window.localStorage.getItem(CLE_POSTE); } catch (e) { lu = null; } }
+    if (typeof lu === "string" && /^[0-9a-z]{4}$/.test(lu)) return (codeDuPoste = lu);
+    codeDuPoste = aleatoire(CODE_POSTE);
+    if (!demo) { try { window.localStorage.setItem(CLE_POSTE, codeDuPoste); } catch (e) { /* gardé en mémoire */ } }
+    return codeDuPoste;
+  }
+
+  /* Le préfixe de l'objet, le code de ce poste, douze caractères ; `pris` dit
+   * si un identifiant est déjà porté. Rend null après TIRAGES tirages pris :
+   * à l'appelant de refuser dans ses mots. */
+  function identifiantUnique(prefixe, pris) {
+    for (var i = 0; i < TIRAGES; i++) {
+      var id = prefixe + "-" + codePoste() + "-" + aleatoire(ALEA);
+      if (!pris || !pris(id)) return id;
+    }
+    return null;
   }
 
   function poste(cle) {
@@ -224,7 +264,8 @@ window.O = (function () {
     el: el, vider: vider, sortir: sortir, arrive: arrive,
     resoudrePartout: resoudrePartout, jour: jour, joli: joli, jolieHeure: jolieHeure,
     depuis: depuis, ancien: ancien, semaine: semaine, auj: auj, jourCourt: jourCourt,
-    id: id, aleatoire: aleatoire, poste: poste, jeton: jeton, normalise: normalise, contient: contient,
+    id: id, aleatoire: aleatoire, codePoste: codePoste, identifiantUnique: identifiantUnique, TIRAGES: TIRAGES,
+    poste: poste, jeton: jeton, normalise: normalise, contient: contient,
     milliers: milliers, decimal: decimal,
     langue: langue,
   };

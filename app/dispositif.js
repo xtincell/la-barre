@@ -278,7 +278,8 @@ window.DISPOSITIF = (function () {
         return !l.annule && l.pisteId === pi.id && KV.estMaitre(l); })[0];
 
       p.livrables.push({
-        id: O.id("L"), niveau: "declinaison", nom: x.support.nom + " · " + x.marche.code,
+        id: DEPOT.identifiant("L"), cree_le: new Date().toISOString(),
+        niveau: "declinaison", nom: x.support.nom + " · " + x.marche.code,
         support: x.support.id, marche: x.marche.id, voletId: "V-formats",
         pisteId: pi.id, maitre: parent ? parent.id : null,
         versionMaitre: parent ? (parent.version || 1) : null,

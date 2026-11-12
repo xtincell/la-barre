@@ -103,18 +103,12 @@ window.DECISION = (function () {
   var PREFIXE = "DEC";
 
   /* DEC, le code du poste, douze caractères : DEC-k3f9-0a1b2c3d4e5f. Le code
-   * est tiré une fois et gardé dans ce navigateur ; les douze caractères
-   * (36¹², environ 4,7 × 10¹⁸) le sont à chaque décision. Deux postes ne se
-   * rencontrent que si leurs codes et leurs douze caractères tombent
-   * ensemble. Les identifiants de l'ancienne forme, DEC et six caractères,
-   * ne sont jamais réécrits : c'est sous eux que Radar les a reçus. */
-  var CODE_POSTE = 4, ALEA = 12;
+   * est tiré une fois et gardé dans ce navigateur ; les douze caractères le
+   * sont à chaque décision (O.identifiantUnique, app/outils.js : la même forme
+   * sert aux projets et aux livrables). Les identifiants de l'ancienne forme,
+   * DEC et six caractères, ne sont jamais réécrits : c'est sous eux que Radar
+   * les a reçus. */
   var FORME = /^DEC-[0-9a-z]{4}-[0-9a-z]{12}$/;
-  var CLE_POSTE = "la-barre-poste";
-
-  /* Au-delà de ce nombre de tirages pris, quelque chose d'autre est cassé —
-   * le hasard ou la base — et on refuse plutôt que d'écraser. */
-  var TIRAGES = 64;
 
   /* Une décision se rattache à au moins un de ces objets du dépôt. Le projet
    * reste le rattachement ordinaire : c'est lui que nomme le message. */
@@ -155,34 +149,15 @@ window.DECISION = (function () {
     return DEPOT.liste("decisions").some(function (d) { return d && d.id === id; });
   }
 
-  /* Le code de ce poste : lu dans ce navigateur, sinon tiré une fois et
-   * gardé. Deux onglets du même navigateur partagent le code ; leurs douze
-   * caractères les séparent. La démonstration n'écrit rien dans le
-   * navigateur : son code vit le temps de la page. */
-  var codePoste = null;
-  function demonstration() {
-    return !!(window.DEPOT && typeof DEPOT.estDemonstration === "function" && DEPOT.estDemonstration());
-  }
-  function poste() {
-    if (codePoste) return codePoste;
-    var demo = demonstration(), lu = null;
-    if (!demo) { try { lu = window.localStorage.getItem(CLE_POSTE); } catch (e) { lu = null; } }
-    if (typeof lu === "string" && /^[0-9a-z]{4}$/.test(lu)) return (codePoste = lu);
-    codePoste = O.aleatoire(CODE_POSTE);
-    if (!demo) { try { window.localStorage.setItem(CLE_POSTE, codePoste); } catch (e) { /* gardé en mémoire */ } }
-    return codePoste;
-  }
-
-  function tirer() { return PREFIXE + "-" + poste() + "-" + O.aleatoire(ALEA); }
+  /* Le code de ce poste, celui que portent aussi ses projets et ses livrables. */
+  function poste() { return O.codePoste(); }
 
   /* Un identifiant que la base locale ne porte pas encore — ni aucun de ceux
    * de `pris`, quand on départage deux bases. */
   function identifiant(pris) {
-    for (var i = 0; i < TIRAGES; i++) {
-      var id = tirer();
-      if (!existe(id) && !(pris && pris.has(id))) return id;
-    }
-    throw refus("Aucun identifiant de décision libre après " + TIRAGES + " tirages.");
+    var id = O.identifiantUnique(PREFIXE, function (x) { return existe(x) || !!(pris && pris.has(x)); });
+    if (!id) throw refus("Aucun identifiant de décision libre après " + O.TIRAGES + " tirages.");
+    return id;
   }
 
   function nomme(v) { return v !== undefined && v !== null; }
@@ -355,30 +330,14 @@ window.DECISION = (function () {
   }
   function copie(v) { return JSON.parse(JSON.stringify(v)); }
 
-  /* Les endroits scellés, où une citation ne se réécrit pas : une entrée
-   * attestée par La Fusée, dont le sceau couvre le contenu, et les versions
-   * arrêtées d'un bilan avec leurs accusés, que leur empreinte couvre. */
-  var SCELLES = ["bilanVersions", "bilanRecus"];
-
-  /* Où un identifiant est cité, mot pour mot, sous les entrées données
-   * ({ conteneur, cle }). Seules les valeurs comptent : une clé d'objet n'est
-   * pas une citation, et un texte qui contient l'identifiant non plus — ainsi
-   * `revisionSource`, l'état relu au moment d'une désignation de référence,
-   * qui date ce geste et ne se réécrit pas. */
-  function citations(entrees, cible) {
-    var libres = [], scellees = [];
-    function marcher(v, scelle) {
-      if (Array.isArray(v)) { v.forEach(function (x, i) { visiter(v, i, scelle); }); return; }
-      if (objet(v)) Object.keys(v).forEach(function (k) { visiter(v, k, scelle || SCELLES.indexOf(k) !== -1); });
-    }
-    function visiter(conteneur, cle, scelle) {
-      var x = conteneur[cle];
-      if (x === cible) { (scelle ? scellees : libres).push({ conteneur: conteneur, cle: cle }); return; }
-      if (x && typeof x === "object") marcher(x, scelle || (objet(x) && x.attestation != null));
-    }
-    entrees.forEach(function (e) { visiter(e.conteneur, e.cle, SCELLES.indexOf(e.cle) !== -1); });
-    return { libres: libres, scellees: scellees };
-  }
+  /* Où un identifiant de décision est cité : mot pour mot, en valeur
+   * seulement (RECONCILIATION.citations, qui sert aussi aux projets et aux
+   * livrables). Une clé d'objet n'est pas une citation, et un texte qui
+   * contient l'identifiant non plus — ainsi `revisionSource`, l'état relu au
+   * moment d'une désignation de référence, qui date ce geste et ne se réécrit
+   * pas. Les endroits scellés (entrée attestée, version de bilan arrêtée) sont
+   * rendus à part. */
+  function citations(entrees, cible) { return RECONCILIATION.citations(entrees, cible); }
   function entreesDe(b, sauf) {
     return Object.keys(b).filter(function (k) { return k !== sauf; }).map(function (k) { return { conteneur: b, cle: k }; });
   }
@@ -424,7 +383,7 @@ window.DECISION = (function () {
       }
       var nouveau = identifiant(pris);
       pris.add(nouveau);
-      cites.libres.forEach(function (c) { c.conteneur[c.cle] = nouveau; });
+      cites.libres.forEach(function (c) { RECONCILIATION.reecrire(c, ancien, nouveau); });
       d.renommage = { de: ancien, le: maintenant(), raison: RAISONS.base };
       renommees.push({ de: ancien, vers: nouveau, titre: texte(d.titre) ? d.titre : d.objet });
     });
@@ -502,7 +461,7 @@ window.DECISION = (function () {
     prevus.forEach(function (p) {
       var nouveau = identifiant(pris);
       pris.add(nouveau);
-      if (p.citee) p.citations.libres.forEach(function (c) { c.conteneur[c.cle] = nouveau; });
+      if (p.citee) p.citations.libres.forEach(function (c) { RECONCILIATION.reecrire(c, p.de, nouveau); });
       else p.d.id = nouveau;
       p.d.renommage = { de: p.de, le: maintenant(), raison: p.raison };
       rapport.renommees.push({ de: p.de, vers: nouveau, raison: p.raison });

@@ -104,8 +104,26 @@ window.DEPOT = (function () {
     return r;
   }
 
+  /* Un projet et un livrable ont un identifiant unique entre postes : le
+   * préfixe de l'objet (PRO, L, KV), le code de ce poste et douze caractères
+   * (O.identifiantUnique), libre parmi les projets et les livrables de cette
+   * base — et parmi `pris`, quand on départage deux bases. Les identifiants
+   * déjà portés, de l'ancienne forme comme PRJ-0020 ou PRO- et six caractères,
+   * ne sont jamais réécrits : La Fusée et Radar les connaissent sous ce nom.
+   * Les autres objets gardent leur préfixe et six caractères (O.id). */
+  function porte(id) {
+    return liste("projets").some(function (p) {
+      return !!p && (p.id === id || (p.livrables || []).some(function (l) { return !!l && l.id === id; }));
+    });
+  }
+  function identifiant(prefixe, pris) {
+    var id = O.identifiantUnique(prefixe, function (x) { return porte(x) || !!(pris && pris.has(x)); });
+    if (!id) throw new Error("Aucun identifiant libre après " + O.TIRAGES + " tirages : rien n'est créé.");
+    return id;
+  }
+
   function ajoute(type, objet) {
-    if (!objet.id) objet.id = O.id(type.slice(0, 3).toUpperCase());
+    if (!objet.id) objet.id = type === "projets" ? identifiant("PRO") : O.id(type.slice(0, 3).toUpperCase());
     objet.cree_le = objet.cree_le || new Date().toISOString();
     etat[type].push(objet);
     tracer("création", type, objet.id, objet.nom || objet.quoi || objet.titre || "");
@@ -253,21 +271,40 @@ window.DEPOT = (function () {
   }
   /* Une décision de ce poste dont l'identifiant est pris, dans la base relue,
    * par une autre décision, est renommée avant le rapprochement : ce sont
-   * deux décisions, pas deux versions d'une même (decision.js). Le renommage
-   * se trace et se dit. Ce qui ne peut pas être renommé reste un conflit à
-   * trancher, et se dit aussi. */
+   * deux décisions, pas deux versions d'une même (decision.js). De même pour
+   * un projet ou un livrable de ce poste dont l'identifiant est porté là-bas
+   * par un autre objet (RECONCILIATION.departager). Les décisions passent
+   * d'abord : une décision locale renommée n'est plus prise pour une décision
+   * déjà lue par la base de référence, et ne bloque pas le renommage du projet
+   * qu'elle cite. Le renommage se trace et se dit. Ce qui ne peut pas être
+   * renommé reste un conflit à trancher, et se dit aussi. */
+  var NOMS = { projets: ["le projet", "un autre projet"], livrables: ["le livrable", "un autre livrable"] };
   function departager(base, distant) {
-    if (!window.DECISION) return;
-    var r = DECISION.departager(base, etat, distant);
-    r.renommees.forEach(function (x) {
-      tracer("renommage", "decisions", x.vers, "identifiant " + x.de + " déjà pris dans la base de référence par une autre décision");
-      if (window.AVIS) AVIS.fait("Une décision de ce poste (« " + x.titre + " ») portait l’identifiant " + x.de
-        + ", déjà pris dans la base de référence par une autre décision : elle devient " + x.vers + ". Le journal le garde.");
+    if (window.DECISION) {
+      var r = DECISION.departager(base, etat, distant);
+      r.renommees.forEach(function (x) {
+        tracer("renommage", "decisions", x.vers, "identifiant " + x.de + " déjà pris dans la base de référence par une autre décision");
+        if (window.AVIS) AVIS.fait("Une décision de ce poste (« " + x.titre + " ») portait l’identifiant " + x.de
+          + ", déjà pris dans la base de référence par une autre décision : elle devient " + x.vers + ". Le journal le garde.");
+      });
+      r.bloquees.forEach(function (x) {
+        if (window.AVIS) AVIS.grave("La décision " + x.id + " de ce poste porte un identifiant déjà pris dans la base de référence, et ne peut pas être renommée ("
+          + x.raison + "). Exportez la base pour la garder, puis choisissez dans Réglages → Rapprocher les modifications : "
+          + "le serveur refuse qu’elle remplace la décision enregistrée.");
+      });
+    }
+    var o = RECONCILIATION.departager(base, etat, distant, identifiant);
+    o.renommes.forEach(function (x) {
+      var n = NOMS[x.type];
+      tracer("renommage", x.type, x.vers, "identifiant " + x.de + " déjà pris dans la base de référence par " + n[1]);
+      if (window.AVIS) AVIS.fait("Dans ce poste, " + n[0] + " « " + x.nom + " » portait l’identifiant " + x.de
+        + ", déjà pris dans la base de référence par " + n[1] + " : il devient " + x.vers + ", et ce qui le cite le suit. Le journal le garde.");
     });
-    r.bloquees.forEach(function (x) {
-      if (window.AVIS) AVIS.grave("La décision " + x.id + " de ce poste porte un identifiant déjà pris dans la base de référence, et ne peut pas être renommée ("
-        + x.raison + "). Exportez la base pour la garder, puis choisissez dans Réglages → Rapprocher les modifications : "
-        + "le serveur refuse qu’elle remplace la décision enregistrée.");
+    o.bloques.forEach(function (x) {
+      var n = NOMS[x.type];
+      if (window.AVIS) AVIS.grave("Dans ce poste, " + n[0] + " " + x.id + " porte un identifiant déjà pris dans la base de référence par " + n[1]
+        + ", et ne peut pas être renommé (" + x.raison + "). Exportez la base pour le garder : le serveur refuse qu’il double "
+        + "ou remplace celui qui est enregistré. S’ils sont au même endroit, Réglages → Rapprocher les modifications propose de choisir l’un des deux, entier.");
     });
   }
   function rapprocher(lu, version) {
@@ -912,7 +949,7 @@ window.DEPOT = (function () {
   }
 
   return {
-    tout: tout, liste: liste, trouve: trouve, ajoute: ajoute, modifie: modifie, retire: retire,
+    tout: tout, liste: liste, trouve: trouve, ajoute: ajoute, modifie: modifie, retire: retire, identifiant: identifiant,
     tracer: tracer, journal: journal, lu: lu, lectures: lectures,
     charger: charger, enregistrer: enregistrer, exporter: exporter, importer: importer,
     reinitialiser: reinitialiser, surChangement: surChangement,
