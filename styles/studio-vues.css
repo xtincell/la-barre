@@ -460,6 +460,12 @@ button.critere-l { width: 100%; text-align: left; background: none; border-left:
   border-bottom: 1px solid var(--trait); font-size: 13px; }
 .du-rev-j { color: var(--succes); white-space: nowrap; }
 .du-revenues-rien { padding: 20px 24px; font-size: 13px; color: var(--clair-terne); }
+/* Réclamer ou écarter : les deux gestes d'une ligne, côte à côte. */
+.dul-gestes { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0 4px; }
+.du-bascules { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0 12px; }
+/* Les écarts écartés restent au relevé, avec leur motif et le geste qui les rouvre. */
+.du-ec { align-items: center; }
+.du-ec .studio-lien { flex-shrink: 0; }
 
 @media (max-width: 1200px) {
   .dx .studio-table, .du .studio-table { grid-template-columns: 190px minmax(0, 1fr); }

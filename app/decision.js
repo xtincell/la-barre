@@ -26,15 +26,17 @@
  * désormais par ici : écarter une piste depuis sa route ou une proposition de
  * big idea, écarter un concept de la réserve d'une marque, accepter ou
  * retourner un brief, écarter une case de la composition d'une campagne,
- * déclarer l'écart d'un projet à la référence commune, et trancher une
+ * déclarer l'écart d'un projet à la référence commune, trancher une
  * adaptation hors de l'écart déclaré de son marché — corriger l'écart déclaré
  * (`ecart-marche`, une déviation de portée projet) ou corriger l'adaptation
- * (`hors-ecart`, un retour motivé sur le livrable). Leur forme suit celle
- * des huit premiers, avec `acteur`. Clore le bilan d'une campagne en est un
- * aussi : la décision `bilan-campagne` désigne la version arrêtée (`objet`,
- * l'identité du bilan ; `version` ; `empreinte`). Une décision se rattache
- * donc à un projet, à une campagne ou à une marque ; `projet` n'est plus
- * exigé seul :
+ * (`hors-ecart`, un retour motivé sur le livrable) —, et écarter un écart du
+ * relevé (`ecart`, verdict « hors », motif exigé) ou le reprendre (`ecart`,
+ * verdict « approuve », `remplace` nommant la décision qui l'avait écarté ;
+ * ecarts.js). Leur forme suit celle des huit premiers, avec `acteur`. Clore
+ * le bilan d'une campagne en est un aussi : la décision `bilan-campagne`
+ * désigne la version arrêtée (`objet`, l'identité du bilan ; `version` ;
+ * `empreinte`). Une décision se rattache donc à un projet, à une campagne ou
+ * à une marque ; `projet` n'est plus exigé seul :
  *
  *   projet       tous les gestes sur un dossier
  *   campagne     case de composition écartée (sans projet), écart à la

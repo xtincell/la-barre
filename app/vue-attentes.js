@@ -8,18 +8,27 @@
  * âge : on lit le retard avant de lire le texte. Et le groupement se fait par
  * DÉBITEUR, pas par type — savoir chez qui ça dort vaut mieux que savoir de
  * quelle catégorie ça relève.
+ *
+ * Un écart constaté peut ne pas en être un : « Écarter » le sort de ce qui
+ * m'est dû, motif exigé, et « Reprendre » l'y remet. Les deux gestes sont des
+ * décisions de la fabrique (ECARTS.ecarterUn, ECARTS.reprendre). Un écart
+ * écarté reste visible, avec son motif, sa date et qui l'a dit.
  */
 
 window.VUE_ATTENTES = (function () {
   var el = O.el;
   var montrerResolues = false;
+  var montrerEcartes = false;
+  /* Ce que l'écran qui m'accueille veut relire après un geste : son en-tête
+   * compte ce qui m'est dû, et il doit suivre. */
+  var relireHote = null;
 
   /* ————————————————————— Le relevé, par débiteur ————————————————————— */
 
   /* Tout ce qui m'est dû, d'où que ça vienne, rapporté à une personne ou à un
    * poste. Un écart n'a pas toujours de destinataire nommé : il a toujours un
    * poste souverain, et c'est déjà chez quelqu'un. */
-  function dettes() {
+  function dettes(releve) {
     var par = {};
     function chez(cle, nom, poste, personne) {
       if (!par[cle]) par[cle] = { cle: cle, nom: nom, poste: poste, personne: personne, l: [] };
@@ -34,7 +43,7 @@ window.VUE_ATTENTES = (function () {
         source: "renvoi formulé", attente: a });
     });
 
-    ECARTS.tous().filter(function (x) { return !x.ecarte; }).forEach(function (x) {
+    releve.filter(function (x) { return !x.ecarte; }).forEach(function (x) {
       var d = ECARTS.def(x.origine);
       var pe = x.responsable ? DEPOT.trouve("personnes", x.responsable) : null;
       var cle = pe ? pe.id : "poste:" + x.origine;
@@ -73,9 +82,12 @@ window.VUE_ATTENTES = (function () {
 
   function ton(age) { return age >= 15 ? "alerte" : age >= 7 ? "attente" : "calme"; }
 
-  function rendre(hote) {
+  function rendre(hote, apres) {
+    if (arguments.length > 1) relireHote = typeof apres === "function" ? apres : null;
     O.vider(hote);
-    var groupes = dettes();
+    var releve = ECARTS.tous();
+    var ecartes = releve.filter(function (x) { return x.ecarte; });
+    var groupes = dettes(releve);
     var total = groupes.reduce(function (n, g) { return n + g.l.length; }, 0);
     var pire = groupes.reduce(function (n, g) { return Math.max(n, g.pire); }, 0);
     var echelle = Math.max(5, Math.ceil(pire / 5) * 5);
@@ -86,7 +98,9 @@ window.VUE_ATTENTES = (function () {
         el("h3", {}, "Rien ne m'est dû."),
         el("p", {}, "Les livrables tiennent le brief, la plateforme et les critères, "
           + "et aucun renvoi n'attend de retour."),
+        ecartesBouton(hote, ecartes.length),
         resoluesBouton(hote))));
+      if (montrerEcartes && ecartes.length) hote.appendChild(listeEcartes(ecartes, hote));
       if (montrerResolues) hote.appendChild(resolues());
       return;
     }
@@ -100,7 +114,7 @@ window.VUE_ATTENTES = (function () {
     hote.appendChild(el("section.studio-revue.du", { "aria-label": "Ce qui m'est dû" },
       el("div.studio-section-tete", {},
         el("h2", {}, "Chez qui ça dort", el("span.studio-compte", {}, String(groupes.length))),
-        resoluesBouton(hote)),
+        el("span.du-bascules", {}, ecartesBouton(hote, ecartes.length), resoluesBouton(hote))),
       el("div.studio-table.du-table", {},
         el("div.studio-file", { "aria-label": "Débiteurs" }, groupes.map(function (d) {
           return el("button.studio-piece.du-debiteur" + (d.cle === g.cle ? ".active" : "") + ".f-" + ton(d.pire), {
@@ -113,7 +127,20 @@ window.VUE_ATTENTES = (function () {
         })),
         scene(g, echelle, hote, neuve),
         contexte(g)),
+      montrerEcartes && ecartes.length ? listeEcartes(ecartes, hote) : null,
       montrerResolues ? resolues() : null));
+  }
+
+  /* Après un geste : l'écran qui m'accueille se relit, sinon moi seule. */
+  function relire(hote) {
+    if (relireHote) relireHote(); else rendre(hote);
+  }
+
+  function ecartesBouton(hote, n) {
+    if (!n) return null;
+    return el("button.studio-lien", { type: "button",
+      onclick: function () { montrerEcartes = !montrerEcartes; rendre(hote); } },
+      montrerEcartes ? "Masquer les écarts écartés" : "Voir les écarts écartés (" + n + ")");
   }
 
   function resoluesBouton(hote) {
@@ -149,8 +176,11 @@ window.VUE_ATTENTES = (function () {
           el("div.dul-age", {},
             el("span.dul-j", {}, r.age + " j"),
             el("span.dul-barre", { "aria-hidden": "true" }, el("i", { style: { width: part + "%" } }))),
-          el("button.studio-lien", { type: "button", onclick: function () { agir(x, hote, r.l.length); } },
-            x.attente ? "Voir le message" : "Réclamer"));
+          el("span.dul-gestes", {},
+            el("button.studio-lien", { type: "button", onclick: function () { agir(x, hote, r.l.length); } },
+              x.attente ? "Voir le message" : "Réclamer"),
+            x.attente ? null : el("button.studio-lien", { type: "button",
+              onclick: function () { ecarter(r, hote); } }, "Écarter")));
         return neuve && x.id === neuve ? O.arrive(li) : li;
       })));
   }
@@ -204,6 +234,93 @@ window.VUE_ATTENTES = (function () {
         } }, "C'est revenu"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Fermer"))
     ));
+  }
+
+  /* ————————————————————— « Ce n'en est pas un » ————————————————————— */
+
+  /* Où vit un écart : son dossier, et son livrable s'il en a un. */
+  function lieu(x) {
+    return (x.projet.ref || x.projet.id) + (x.livrable ? " — " + (x.livrable.nom || x.livrable.id) : "");
+  }
+
+  /* Écarter : ce que le contrôle réclame ne l'est pas ici. Une ligne regroupe
+   * la même cause sur plusieurs livrables ; le geste les écarte toutes, d'une
+   * décision chacune, pour que chacune puisse être reprise seule. Le motif est
+   * exigé par la fabrique : sans lui, rien n'est écrit. */
+  function ecarter(r, hote) {
+    var vus = {}, ecarts = [];
+    r.l.forEach(function (y) {
+      if (y.ecart && !vus[y.ecart.cle]) { vus[y.ecart.cle] = 1; ecarts.push(y.ecart); }
+    });
+    if (!ecarts.length) return;
+    var x = ecarts[0], d = ECARTS.def(x.origine);
+    var zone = el("textarea", { id: "du-motif-ecart", rows: 3 });
+    function faire() {
+      var faits = 0, refus = [];
+      ecarts.forEach(function (e) {
+        var res = ECARTS.ecarterUn(e.cle, zone.value);
+        if (res.ok) faits++; else refus.push(res.erreur);
+      });
+      if (!faits) { AVIS.refus(refus[0]); return; }
+      PANNEAU.fermer();
+      AVIS.fait(faits > 1 ? faits + " écarts écartés : ils restent visibles, avec leur motif."
+        : "Écart écarté : il reste visible, avec son motif.");
+      if (refus.length) AVIS.refus(refus.length + (refus.length > 1 ? " écarts n'ont pas été écartés : " : " écart n'a pas été écarté : ") + refus[0]);
+      relire(hote);
+    }
+    PANNEAU.ouvrir("Écarter un écart", d.nom, el("div", {},
+      el("p.meta", {}, "Ce que le contrôle réclame ne l'est pas ici. L'écart sort de ce qui m'est dû ; "
+        + "il reste visible avec son motif, et se reprend à tout moment."),
+      el("div.form", {},
+        PANNEAU.ligne("Constaté", x.quoi),
+        PANNEAU.ligne("D'où ça vient", d.nom + " — dû par " + d.qui),
+        PANNEAU.ligne("Ce qu'il réclame", x.cout || d.quoi),
+        PANNEAU.ligne(ecarts.length > 1 ? ecarts.length + " écarts" : "L'écart",
+          ecarts.map(lieu).join(" · ")),
+        el("div.champ", {}, el("label", { "for": "du-motif-ecart" }, "Pourquoi ce n'en est pas un"), zone)),
+      el("div.form-actions", {},
+        el("button.b.or", { type: "button", onclick: faire }, "Écarter"),
+        el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); } }, "Annuler"))));
+  }
+
+  /* Reprendre : l'écart redevient dû. Le motif est facultatif ; écrit, il
+   * rejoint le registre des arbitrages. */
+  function reprendre(x, hote) {
+    var zone = el("textarea", { id: "du-motif-reprise", rows: 2 });
+    PANNEAU.ouvrir("Reprendre un écart", ECARTS.def(x.origine).nom, el("div", {},
+      el("p.meta", {}, "L'écart redevient dû : il revient dans ce qui m'est dû, chez son débiteur."),
+      el("div.form", {},
+        PANNEAU.ligne("Constaté", x.quoi),
+        PANNEAU.ligne("Où", lieu(x)),
+        PANNEAU.ligne("Écarté le", O.joli(x.ecarte.quand) + " — " + x.ecarte.motif),
+        el("div.champ", {}, el("label", { "for": "du-motif-reprise" }, "Pourquoi (facultatif)"), zone)),
+      el("div.form-actions", {},
+        el("button.b.or", { type: "button", onclick: function () {
+          var res = ECARTS.reprendre(x.cle, zone.value);
+          if (!res.ok) { AVIS.refus(res.erreur); return; }
+          PANNEAU.fermer();
+          AVIS.fait("Écart repris : il est de nouveau dû.");
+          relire(hote);
+        } }, "Reprendre"),
+        el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); } }, "Annuler"))));
+  }
+
+  /* Les écarts écartés restent au relevé : ce qu'ils disaient, où, le motif,
+   * la date, qui l'a dit — et le geste qui les rouvre. */
+  function listeEcartes(liste, hote) {
+    return el("div.du-revenues.du-ecartes", {},
+      el("h3", {}, "Écartés", el("span.studio-compte", {}, String(liste.length))),
+      liste.map(function (x) {
+        var dec = x.ecarte.decision ? DEPOT.trouve("decisions", x.ecarte.decision) : null;
+        var qui = dec && window.ACTEUR ? ACTEUR.attribution(dec).texte : null;
+        return el("div.du-rev.du-ec", {},
+          el("div.dul-texte", {},
+            el("span.dul-cat", {}, ECARTS.def(x.origine).nom + " · " + lieu(x)),
+            el("strong", {}, x.quoi),
+            el("span.dul-meta", {}, "Écarté le " + O.joli(x.ecarte.quand) + " — " + x.ecarte.motif
+              + (qui ? " · " + qui : ""))),
+          el("button.studio-lien", { type: "button", onclick: function () { reprendre(x, hote); } }, "Reprendre"));
+      }));
   }
 
   function resolues() {

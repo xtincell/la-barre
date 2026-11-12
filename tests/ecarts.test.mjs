@@ -11,27 +11,34 @@ import { readFile } from 'node:fs/promises';
 const copie = value => JSON.parse(JSON.stringify(value));
 
 async function atelier({ projets = [], conformite = {}, perimes = [], retours = {}, annotations = {},
-  nomsRetires = [], ecartsEcartes } = {}) {
+  nomsRetires = [], ecartsEcartes, decisions = [] } = {}) {
   let saves = 0;
-  const data = { projets, personnes: [{ id: 'PE-1', nom: 'Awa Recette' }] };
+  const data = { projets, personnes: [{ id: 'PE-1', nom: 'Awa Recette' }], decisions: copie(decisions), journal: [] };
   if (ecartsEcartes) data.ecartsEcartes = ecartsEcartes;
+  /* Écarter et reprendre passent par la vraie fabrique (decision.js) : le
+   * dépôt simulé tient ce qu'elle lui demande, ajouter, tracer, enregistrer. */
   const ctx = vm.createContext({ Date, console,
-    MAISON: { nomsRetires, postes: [] },
+    MAISON: { nomsRetires, postes: [], titulaire: 'creation' },
     DEPOT: { liste: k => data[k] || [], trouve: (k, id) => (data[k] || []).find(x => x.id === id) || null,
-      tout: () => data, enregistrer() { saves++; } },
+      tout: () => data, enregistrer() { saves++; },
+      ajoute(k, o) { (data[k] ||= []).push(o); o.cree_le = o.cree_le || new Date().toISOString();
+        data.journal.push({ action: 'création', type: k, id: o.id }); saves++; return o; },
+      tracer(action, type, id, detail) { data.journal.push({ action, type, id, detail }); } },
     KV: { tous: p => (p.livrables || []).filter(l => l.kv && !l.annule), conformite: (p, l) => conformite[l.id] || [] },
     REGLES: { maitrePerime: (p, l) => perimes.includes(l.id) },
     FEEDBACK: { ordre: id => retours[id] || [], nomAuteur: a => 'Auteur ' + a },
     ANNOT: { ouvertes: l => annotations[l.id] || [] },
   });
   ctx.window = ctx;
-  for (const name of ['outils', 'cloture', 'ecarts']) {
+  for (const name of ['outils', 'cloture', 'decision', 'ecarts']) {
     vm.runInContext(await readFile(new URL('../app/' + name + '.js', import.meta.url), 'utf8'), ctx);
   }
   /* Le relevé est relu comme une copie persistée : les tableaux du contexte vm
    * n'ont pas le prototype de ce fichier, et un écart se lit en données. */
   const E = Object.create(ctx.ECARTS);
   E.tous = projetId => copie(ctx.ECARTS.tous(projetId));
+  E.ecarterUn = (cle, motif) => copie(ctx.ECARTS.ecarterUn(cle, motif));
+  E.reprendre = (cle, motif) => copie(ctx.ECARTS.reprendre(cle, motif));
   return { E, data, get saves() { return saves; } };
 }
 
@@ -170,32 +177,117 @@ test('l’ordre des origines, les dossiers clos et les comptes', async () => {
   assert.equal(s.E.total(), 3); assert.equal(s.E.total('P-clos'), 1);
 });
 
-test('un écart écarté sort des comptes avec son motif, et repris il y revient', async () => {
-  const projets = [dossier({ sections: sections({ brief: { livrables_attendus: ['Kakémono', 'Affiche'] } }) })];
+/* ————— « Ce n'en est pas un » : écarter un écart, et le reprendre —————
+ *
+ * Les deux gestes passent par la fabrique (decision.js), dans le type que la
+ * jurisprudence range déjà : `ecart`. Écarter est un verdict « hors » motivé ;
+ * reprendre rouvre l'écart, d'une décision qui remplace l'écartement. */
+
+const KAKEMONO = 'P-1|-|brief|« Kakémono » promis au brief, absent du dossier';
+const promis = () => [dossier({ sections: sections({ brief: { livrables_attendus: ['Kakémono', 'Affiche'] } }) })];
+
+test('écarter un écart passe par la fabrique, motif exigé ; il reste au relevé, marqué, hors des comptes', async () => {
+  const projets = promis();
   const s = await atelier({ projets });
-  const cle = 'P-1|-|brief|« Kakémono » promis au brief, absent du dossier';
   assert.equal(s.E.total(), 2);
 
-  s.E.ecarterUn(cle, 'Retiré du périmètre par avenant');
-  assert.equal(s.saves, 1);
-  assert.equal(s.data.ecartsEcartes[cle].motif, 'Retiré du périmètre par avenant');
-  assert.ok(!Number.isNaN(Date.parse(s.data.ecartsEcartes[cle].quand)));
-  const ecarte = s.E.tous().find(x => x.cle === cle);
+  for (const motif of [undefined, null, '', '   ']) {
+    const r = s.E.ecarterUn(KAKEMONO, motif);
+    assert.equal(r.ok, false, String(motif));
+    assert.match(r.erreur, /exige un motif/);
+  }
+  assert.equal(s.saves, 0); assert.equal(s.data.ecartsEcartes, undefined); assert.deepEqual(s.data.decisions, []);
+
+  const r = s.E.ecarterUn(KAKEMONO, '  Retiré du périmètre par avenant  ');
+  assert.equal(r.ok, true);
+  assert.equal(s.data.decisions.length, 1);
+  const d = copie(s.data.decisions[0]);
+  assert.deepEqual(r.decision, d);
+  assert.deepEqual([d.type, d.objet, d.projet, d.verdict, d.motif, d.titre, d.origine, d.livrable],
+    ['ecart', KAKEMONO, 'P-1', 'hors', 'Retiré du périmètre par avenant',
+      '« Kakémono » promis au brief, absent du dossier', 'brief', null]);
+  assert.equal(d.qui, 'creation');
+  assert.ok(typeof d.id === 'string' && d.id.startsWith('DEC'));
+  assert.equal('ecart' in d, false, 'écarter un écart du relevé n’est pas une déviation : rien n’est déclaré');
+  assert.deepEqual(copie(s.data.ecartsEcartes[KAKEMONO]), { motif: d.motif, quand: d.quand, decision: d.id });
+  assert.ok(s.saves >= 1, 'la base est sauvegardée');
+  assert.ok(s.data.journal.some(e => e.type === 'decisions' && e.id === d.id), 'la décision entre au journal');
+  assert.ok(s.data.journal.some(e => e.type === 'projets' && e.id === 'P-1' && /écarté/.test(e.action)),
+    'le dossier garde la trace du geste');
+
+  const ecarte = s.E.tous().find(x => x.cle === KAKEMONO);
   assert.equal(ecarte.ecarte.motif, 'Retiré du périmètre par avenant', 'il reste au relevé, marqué');
+  assert.equal(ecarte.ecarte.decision, d.id);
   assert.equal(s.E.total(), 1); assert.deepEqual(copie(s.E.compte()), { brief: 1 });
 
-  const relu = await atelier({ projets: copie(projets), ecartsEcartes: copie(s.data.ecartsEcartes) });
-  assert.equal(relu.E.total(), 1, 'l’écart écarté survit à la sauvegarde');
+  /* Déjà écarté, ou absent du relevé : rien n'est écrit. */
+  const saves = s.saves;
+  assert.match(s.E.ecarterUn(KAKEMONO, 'Une seconde fois').erreur, /déjà écarté/);
+  assert.equal(s.E.ecarterUn('P-1|-|brief|Un écart inventé', 'Un motif').ok, false);
+  assert.equal(s.E.ecarterUn('P-absent|-|brief|x', 'Un motif').ok, false);
+  assert.equal(s.data.decisions.length, 1); assert.equal(s.saves, saves);
 
-  s.E.reprendre(cle);
-  assert.equal(s.saves, 2);
-  assert.equal(cle in s.data.ecartsEcartes, false);
-  assert.equal(s.E.tous().find(x => x.cle === cle).ecarte, null);
-  assert.equal(s.E.total(), 2);
+  const relu = await atelier({ projets: copie(projets), ecartsEcartes: copie(s.data.ecartsEcartes),
+    decisions: copie(s.data.decisions) });
+  assert.equal(relu.E.total(), 1, 'l’écart écarté survit à la sauvegarde');
+});
+
+test('reprendre un écart écarté passe par la fabrique et le rouvre ; la reprise remplace l’écartement', async () => {
+  const projets = promis();
+  const s = await atelier({ projets });
+  s.E.ecarterUn(KAKEMONO, 'Retiré du périmètre par avenant');
+  const ecartement = copie(s.data.decisions[0]);
+
+  const r = s.E.reprendre(KAKEMONO);
+  assert.equal(r.ok, true);
+  assert.equal(s.data.decisions.length, 2, 'l’écartement reste au registre : la reprise ne l’efface pas');
+  const d = copie(s.data.decisions[1]);
+  assert.deepEqual(r.decision, d);
+  assert.deepEqual([d.type, d.objet, d.projet, d.verdict, d.motif, d.remplace, d.origine, d.titre],
+    ['ecart', KAKEMONO, 'P-1', 'approuve', null, ecartement.id, 'brief', ecartement.titre]);
+  assert.equal('ecart' in d, false);
+  assert.equal(KAKEMONO in s.data.ecartsEcartes, false);
+  assert.equal(s.E.tous().find(x => x.cle === KAKEMONO).ecarte, null);
+  assert.equal(s.E.total(), 2); assert.deepEqual(copie(s.E.compte()), { brief: 2 });
+  assert.ok(s.data.journal.some(e => e.type === 'projets' && e.id === 'P-1' && /repris/.test(e.action)));
+
+  /* Le motif d'une reprise est facultatif ; écrit, il est gardé. */
+  assert.equal(s.E.ecarterUn(KAKEMONO, 'Encore hors avenant').ok, true);
+  assert.equal(s.E.reprendre(KAKEMONO, '  Le client réintègre le kakémono ').ok, true);
+  const motivee = copie(s.data.decisions[3]);
+  assert.deepEqual([motivee.verdict, motivee.motif, motivee.remplace],
+    ['approuve', 'Le client réintègre le kakémono', s.data.decisions[2].id]);
+
+  /* Ce qui n'est pas écarté ne se reprend pas : rien n'est écrit. */
+  const saves = s.saves;
+  assert.match(s.E.reprendre(KAKEMONO).erreur, /n'est pas écarté/);
+  assert.equal(s.data.decisions.length, 4); assert.equal(s.saves, saves);
 
   const vierge = await atelier({ projets: copie(projets) });
-  vierge.E.reprendre(cle);
-  assert.equal(vierge.saves, 1); assert.equal(vierge.data.ecartsEcartes, undefined);
+  assert.equal(vierge.E.reprendre(KAKEMONO).ok, false);
+  assert.equal(vierge.saves, 0); assert.equal(vierge.data.ecartsEcartes, undefined);
+  assert.deepEqual(vierge.data.decisions, []);
+});
+
+test('un écart écarté avant la fabrique reste écarté, et se reprend par elle', async () => {
+  const s = await atelier({ projets: promis(),
+    ecartsEcartes: { [KAKEMONO]: { motif: 'Retiré à la main', quand: '2026-10-01T08:00:00.000Z' } } });
+  assert.equal(s.E.total(), 1, 'l’écartement ancien, sans décision, est lu tel quel');
+  assert.equal(s.E.reprendre(KAKEMONO).ok, true);
+  const d = copie(s.data.decisions[0]);
+  assert.deepEqual([d.type, d.verdict, d.remplace], ['ecart', 'approuve', null],
+    'aucune décision à remplacer : la reprise ne s’en invente pas une');
+  assert.equal(s.E.total(), 2);
+});
+
+test('un écart d’un dossier clos s’écarte depuis le dossier, et sort de ses comptes', async () => {
+  const clos = dossier({ id: 'P-clos', cloture: { le: '2026-09-30' },
+    sections: sections({ brief: { livrables_attendus: ['Affiche'] } }) });
+  const s = await atelier({ projets: [clos] });
+  const cle = 'P-clos|-|brief|« Affiche » promis au brief, absent du dossier';
+  assert.equal(s.E.ecarterUn(cle, 'Livrée hors outil').ok, true);
+  assert.equal(s.E.total('P-clos'), 0);
+  assert.equal(copie(s.data.decisions[0]).projet, 'P-clos');
 });
 
 test('les origines déclarées et la date d’un écart calculé', async () => {

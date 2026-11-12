@@ -284,8 +284,9 @@ par lui : la big idea, la piste ou l'idée retenue ou écartée, la référence
 commune d'une campagne, le verdict sur un document, un livrable ou une pièce
 en revue, le concept écarté de la réserve d'une marque, le brief accepté ou
 retourné, la case écartée de la composition d'une campagne, l'écart d'un
-projet à la référence commune, l'arrêt du bilan d'une campagne, et la revue
-d'une adaptation hors de l'écart déclaré de son marché. Chaque
+projet à la référence commune, l'arrêt du bilan d'une campagne, la revue
+d'une adaptation hors de l'écart déclaré de son marché, et l'écart du relevé
+écarté ou repris. Chaque
 décision ajoute une ligne au journal, qui porte l'acteur. Toutes portent
 `qui`, le poste titulaire. La référence de
 campagne, le verdict sur un document et les gestes de choix ajoutés au
@@ -304,6 +305,30 @@ l'objet visé, relu dans la base ; sinon la décision est refusée et rien n'est
 écrit. L'écart d'un projet de campagne se déclare depuis l'écran de la
 campagne, sous la référence commune ; il fait taire le contrôle « piste propre
 alors que … gouverne la campagne » pour ce seul projet.
+
+**Les écarts du relevé.** Ce qu'on me doit se calcule, il ne se saisit pas
+(`app/ecarts.js`) : un livrable qui ne tient pas le brief, une plateforme
+contredite, un critère d'acceptation non tenu, une annotation ouverte, un retour
+client non tranché. L'origine dit qui le doit (`brief`, `plateforme`, `bigidea`,
+`agence`, `donneur`). Décisions → Retours attendus range ces écarts par
+débiteur ; la file de décision les compte par origine.
+
+Un écart peut ne pas en être un. « Écarter », sur sa ligne, le sort de ce qui
+m'est dû, motif exigé. Il n'est plus compté, mais il reste au relevé, marqué
+dans `ecartsEcartes[cle]` (motif, date, décision), et se lit sous « Voir les
+écarts écartés », avec qui l'a écarté. « Reprendre » le rouvre ; le motif y est
+facultatif. Les deux gestes sont des décisions de la fabrique, du type que le
+recueil des arbitrages range déjà, `ecart` : `objet` est la clé de l'écart,
+`titre` ce qu'il dit, `origine` qui le doit, `livrable` le livrable visé.
+Écarter rend le verdict `hors` ; reprendre rend le verdict `approuve` (l'écart
+est fondé), et `remplace` nomme la décision qui l'avait écarté. Ce n'est pas une
+déviation : rien n'est déclaré. Une ligne qui regroupe la même cause sur
+plusieurs livrables s'écarte d'un geste, d'une décision par écart, et chacun se
+reprend seul. Un écart écarté avant la fabrique, sans décision, se lit tel quel
+et se reprend comme les autres ; le recueil des arbitrages le garde, et ne
+compte qu'une fois celui que la fabrique a écarté. Le signal « hors écart
+déclaré » d'une adaptation n'est pas un écart du relevé : il se tranche en revue
+(voir plus bas).
 
 **Les écarts de marché déclarés.** Ce que chaque marché a le droit de changer
 du master se déclare au cadrage, sur le couple projet × marché, depuis la grille
@@ -522,11 +547,13 @@ un navigateur installé). La CI ne le lance pas.
   vers Radar.
 - **Un registre des projets sans source dans le dépôt.** Le registre des
   projets se lit dans la base, mais aucun outil du dépôt ne le remplit.
-- **Des écarts qu'on ne peut pas écarter.** `ECARTS.ecarterUn` et
-  `ECARTS.reprendre` (`app/ecarts.js`) n'ont aucun appelant. Depuis
-  l'interface, un écart ne peut être ni écarté ni repris. Les écarts déjà
-  écartés dans une base (`ecartsEcartes`) restent lus, notamment par les
-  arbitrages.
+- **Un écart écarté ne se lit que dans Retours attendus.** La planche des KV
+  et la route d'une piste lisent la conformité du KV directement : un
+  manquement écarté y reste affiché comme manquement. Aucun écran ne montre le
+  relevé d'un seul dossier : Retours attendus ignore les dossiers clos, et un
+  écart d'un dossier clos ne s'écarte que par `ECARTS.ecarterUn`. Le marquage
+  d'un écart dont la cause a disparu reste dans `ecartsEcartes`, sans être
+  montré.
 - **Une déclaration d'écart ne juge que les adaptations.** Une adaptation hors
   de son écart déclaré est signalée et tranchée en revue ; elle ne produit pas
   d'écart calculé dans `app/ecarts.js`, faute d'origine : rien ne dit qui a
