@@ -1,0 +1,294 @@
+/* Charte UPgraders : jetons copiés tels quels depuis xtincell/ADVE-project,
+   docs/design-system/upgraders/tokens/ (palette, semantic, typography, spacing, effects),
+   commit c5811c9. Ne pas modifier ici : corriger la charte, puis recopier.
+   Polices : Clash Display et Satoshi servies par l’API Fontshare (licence ITF FFL). */
+
+/* ═══════════════════════════════════════════════════════════════
+   UPgraders — Palette (Tier 0 · raw reference values)
+   "La Passion pour Propulseur" — panda noir + rouge fusée + or.
+
+   These are immutable brand pigments. They do NOT flip between
+   themes — semantic.css maps them to light/dark roles.
+   Theme : Rouge 20% · Blanc 40% · Noir/Gris pour le texte.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Rouge Fusée — signature accent (~20% surface budget) ─── */
+  --up-red:          #e56458;  /* default — CTA, accent, brand (coral rouge) */
+  --up-red-hover:    #ef7d71;  /* lighter on hover */
+  --up-red-active:   #c8473c;  /* pressed / deep */
+  --up-red-ember:    #ff6b3d;  /* warm secondary, rocket flame */
+  --up-red-soft:     rgba(229, 100, 88, 0.14); /* tinted fills */
+
+  /* ─── Or / Gold — niveau, récompense, ICONE (homeopathic) ─── */
+  --up-gold:         #facc15;  /* level-up badge, reward, trophy */
+  --up-gold-deep:    #d4a24c;  /* engraved / patrimoine */
+
+  /* ─── Panda noir — surfaces sombres (neutral, warm 60° hue) ─── */
+  --up-ink-0:        #0a0a0a;  /* deepest page bg */
+  --up-ink-1:        #0d0d0d;  /* primary dark surface (mockup) */
+  --up-ink-2:        #151515;  /* raised card */
+  --up-ink-3:        #1f1f1f;  /* elevated card (mockup) */
+  --up-ink-4:        #2e2e2e;  /* overlay / strong border (mockup) */
+  --up-line:         #262626;  /* hairline border on dark */
+  --up-line-soft:    #1a1a1a;  /* subtle border on dark */
+
+  /* ─── Bone / Blanc — surfaces claires (~40% budget) ─── */
+  --up-white:        #ffffff;  /* pure white card */
+  --up-bone:         #f5f4f1;  /* warm off-white page */
+  --up-bone-2:       #ece9e3;  /* sunken / muted light */
+  --up-cloud:        #f5fff5;  /* mockup mint-white tint */
+
+  /* ─── Gris texte — neutres chauds ─── */
+  --up-slate-900:    #141414;  /* text on light */
+  --up-slate-700:    #3a3a3a;  /* strong secondary on light */
+  --up-slate-500:    #6b6b6b;  /* muted text */
+  --up-slate-400:    #9a9a9a;  /* faint / placeholder */
+  --up-slate-300:    #c9c3b6;  /* secondary text on dark (bone-3) */
+  --up-slate-200:    #e8e2d6;  /* brightened fg on dark */
+
+  /* ─── Couleurs complémentaires — charts, portails, stickers ─── */
+  --up-green:        #10b981;  /* success, growth ▲ */
+  --up-blue:         #3b82f6;  /* info, web portal */
+  --up-violet:       #8b5cf6;  /* creator portal, design */
+  --up-orange:       #f59e0b;  /* warning, agency portal */
+
+  /* ─── Portal accents (sélecteur de portail) ─── */
+  --up-portal-client:    var(--up-red);
+  --up-portal-creator:   var(--up-violet);
+  --up-portal-agency:    var(--up-orange);
+  --up-portal-console:   var(--up-green);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UPgraders — Semantic colors (Tier 1 · role-based, theme-aware)
+
+   :root              → DARK is the default ("panda" mode, the hero look)
+   [data-theme="light"] → LIGHT mode ("bone" mode, editorial sections)
+
+   Components must consume THESE tokens, never raw --up-* pigments,
+   so a single data-theme flip re-skins everything.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Surfaces ─── */
+  --surface-page:      var(--up-ink-1);   /* app / page background */
+  --surface-sunken:    var(--up-ink-0);   /* wells, insets */
+  --surface-card:      var(--up-ink-2);   /* default card */
+  --surface-raised:    var(--up-ink-3);   /* elevated / hovered card */
+  --surface-overlay:   var(--up-ink-4);   /* popovers, menus */
+  --surface-inverse:   var(--up-white);   /* light card on dark page */
+
+  /* ─── Translucent / glass (layering, depth) ─── */
+  --glass-fill:        rgba(255, 255, 255, 0.04);
+  --glass-stroke:      rgba(255, 255, 255, 0.08);
+  --scrim:             rgba(10, 10, 10, 0.72);
+
+  /* ─── Text ─── */
+  --text-primary:      var(--up-bone);     /* headings, primary copy */
+  --text-secondary:    var(--up-slate-300);/* supporting copy */
+  --text-muted:        var(--up-slate-500);/* meta, captions */
+  --text-on-accent:    var(--up-white);    /* text on red */
+  --text-inverse:      var(--up-ink-1);    /* text on light surfaces */
+
+  /* ─── Borders ─── */
+  --border:            var(--up-line);
+  --border-subtle:     var(--up-line-soft);
+  --border-strong:     var(--up-ink-4);
+  --border-accent:     var(--up-red);
+
+  /* ─── Accent (rouge fusée) ─── */
+  --accent:            var(--up-red);
+  --accent-hover:      var(--up-red-hover);
+  --accent-active:     var(--up-red-active);
+  --accent-fill:       var(--up-red-soft);
+  --accent-text:       var(--up-red);
+
+  /* ─── Status ─── */
+  --success:           var(--up-green);
+  --success-fill:      rgba(16, 185, 129, 0.14);
+  --warning:           var(--up-orange);
+  --warning-fill:      rgba(245, 158, 11, 0.15);
+  --danger:            var(--up-red);
+  --danger-fill:       var(--up-red-soft);
+  --info:              var(--up-blue);
+  --info-fill:         rgba(59, 130, 246, 0.14);
+  --level:             var(--up-gold);
+  --level-fill:        rgba(250, 204, 21, 0.15);
+
+  /* ─── Focus ─── */
+  --ring:              var(--up-red);
+
+  /* ─── Chart series ─── */
+  --chart-1: var(--up-red);
+  --chart-2: var(--up-green);
+  --chart-3: var(--up-blue);
+  --chart-4: var(--up-violet);
+  --chart-5: var(--up-orange);
+}
+
+/* ════════════════════════ LIGHT MODE ════════════════════════ */
+[data-theme="light"] {
+  --surface-page:      var(--up-bone);
+  --surface-sunken:    var(--up-bone-2);
+  --surface-card:      var(--up-white);
+  --surface-raised:    var(--up-white);
+  --surface-overlay:   var(--up-white);
+  --surface-inverse:   var(--up-ink-1);
+
+  --glass-fill:        rgba(13, 13, 13, 0.03);
+  --glass-stroke:      rgba(13, 13, 13, 0.07);
+  --scrim:             rgba(13, 13, 13, 0.45);
+
+  --text-primary:      var(--up-slate-900);
+  --text-secondary:    var(--up-slate-700);
+  --text-muted:        var(--up-slate-500);
+  --text-on-accent:    var(--up-white);
+  --text-inverse:      var(--up-bone);
+
+  --border:            rgba(13, 13, 13, 0.12);
+  --border-subtle:     rgba(13, 13, 13, 0.07);
+  --border-strong:     rgba(13, 13, 13, 0.24);
+  --border-accent:     var(--up-red);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UPgraders — Typography (Tier 1)
+   Display Clash Display · Text Satoshi · Mono JetBrains Mono
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Families ─── */
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-sans:    "Satoshi", system-ui, -apple-system, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* ─── Fluid type scale (clamp-based) ─── */
+  --text-2xs:     11px;
+  --text-xs:      12px;
+  --text-sm:      14px;
+  --text-base:    16px;
+  --text-lg:      clamp(17px, 1.3vw, 19px);
+  --text-xl:      clamp(20px, 1.7vw, 24px);
+  --text-2xl:     clamp(24px, 2.1vw, 30px);
+  --text-3xl:     clamp(30px, 2.9vw, 40px);
+  --text-4xl:     clamp(38px, 4vw, 56px);
+  --text-5xl:     clamp(48px, 5.6vw, 80px);
+  --text-hero:    clamp(56px, 7vw, 120px);
+
+  /* ─── Weights ─── */
+  --fw-light:     300;  /* @kind font */
+  --fw-regular:   400;  /* @kind font */
+  --fw-medium:    500;  /* @kind font */
+  --fw-semibold:  600;  /* @kind font */  /* Clash semibold */
+  --fw-bold:      700;  /* @kind font */
+  --fw-black:     900;  /* @kind font */  /* Satoshi black, Clash bold */
+
+  /* ─── Line-height ─── */
+  --leading-none:    1;      /* @kind other */
+  --leading-tight:   1.08;   /* @kind other */
+  --leading-snug:    1.25;   /* @kind other */
+  --leading-normal:  1.5;    /* @kind other */
+  --leading-relaxed: 1.7;    /* @kind other */
+
+  /* ─── Letter-spacing ─── */
+  --tracking-tighter: -0.04em;  /* @kind other */
+  --tracking-tight:   -0.02em;  /* @kind other */
+  --tracking-normal:  0;        /* @kind other */
+  --tracking-wide:    0.04em;   /* @kind other */
+  --tracking-wider:   0.12em;   /* @kind other */
+  --tracking-widest:  0.2em;    /* @kind other */
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UPgraders — Spacing, radii & layout (Tier 1)
+   4px base grid. Shapes range "cercle → arrondi → cube".
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Spacing scale (4px base) ─── */
+  --space-0:   0;
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+  --space-24:  96px;
+  --space-32:  128px;
+
+  /* ─── Radii — "du cube au cercle" ─── */
+  --radius-xs:   6px;    /* tags, small chips */
+  --radius-sm:   10px;   /* inputs, small buttons */
+  --radius-md:   14px;   /* buttons, list rows */
+  --radius-lg:   20px;   /* cards (mockup default) */
+  --radius-xl:   28px;   /* hero panels, big bento cells */
+  --radius-2xl:  36px;   /* feature surfaces */
+  --radius-pill: 9999px; /* pills, avatars, FAB */
+
+  /* ─── Layout ─── */
+  --container:        1280px;
+  --container-wide:   1440px;
+  --prose:            68ch;
+  --sidebar:          264px;
+  --sidebar-rail:     76px;
+  --topbar-h:         72px;
+  --tabbar-h:         72px;
+  --gutter:           clamp(20px, 4vw, 56px);   /* @kind spacing */
+  --bento-gap:        clamp(12px, 1.2vw, 20px); /* @kind spacing */
+
+  /* ─── Z-index ─── */
+  --z-base:     0;   /* @kind other */
+  --z-raised:   10;  /* @kind other */
+  --z-sticky:   60;  /* @kind other */
+  --z-nav:      80;  /* @kind other */
+  --z-popover:  90;  /* @kind other */
+  --z-scrim:    95;  /* @kind other */
+  --z-modal:    100; /* @kind other */
+  --z-toast:    130; /* @kind other */
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UPgraders — Effects: elevation, glow, blur, motion (Tier 1)
+   Dark UI → soft black shadows + accent glow on CTAs.
+   Layering & translucency create reading depth ("profondeur").
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Elevation (dark surfaces) ─── */
+  --shadow-xs:   0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm:   0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md:   0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg:   0 18px 48px rgba(0, 0, 0, 0.55);
+  --shadow-xl:   0 32px 80px rgba(0, 0, 0, 0.6);
+
+  /* ─── Elevation (light surfaces — softer, cooler) ─── */
+  --shadow-light-sm: 0 2px 8px rgba(20, 20, 20, 0.06);
+  --shadow-light-md: 0 12px 32px rgba(20, 20, 20, 0.10);
+  --shadow-light-lg: 0 28px 64px rgba(20, 20, 20, 0.14);
+
+  /* ─── Accent glow — signature CTA halo ─── */
+  --glow-red:    0 8px 28px rgba(229, 100, 88, 0.40);
+  --glow-red-sm: 0 4px 16px rgba(229, 100, 88, 0.32);
+  --glow-gold:   0 6px 26px rgba(250, 204, 21, 0.34);
+  --glow-green:  0 6px 22px rgba(16, 185, 129, 0.30);
+
+  /* ─── Blur (glass / translucent overlays) ─── */
+  --blur-sm:     8px;   /* @kind other */
+  --blur-md:     16px;  /* @kind other */
+  --blur-lg:     28px;  /* @kind other */
+
+  /* ─── Motion — easing & duration ─── */
+  --ease-out:     cubic-bezier(0.22, 1, 0.36, 1);    /* @kind other */
+  --ease-in-out:  cubic-bezier(0.65, 0, 0.35, 1);    /* @kind other */
+  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1); /* @kind other */
+  --dur-fast:     130ms;  /* @kind other */
+  --dur-base:     220ms;  /* @kind other */
+  --dur-slow:     380ms;  /* @kind other */
+  --dur-flip:     560ms;  /* @kind other */
+}
