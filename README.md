@@ -62,7 +62,7 @@ d'un clic, et dit au survol ce qu'on trouve à l'arrivée.
 | Bureau | `#/bureau` | Les créations à regarder et les projets en cours. Un livrable à examiner s'ouvre en panneau. | `vue-studio.js`, `vue-revue.js`, `vue-asset.js` |
 | Décisions | `#/valider` | À traiter · Retours attendus | `vue-decider.js`, `file-action.js`, `vue-attentes.js` |
 | Planning | `#/planning` | Priorités · Plan de charge · Équipe · Livraisons | `vue-placer.js`, `vue-pipeline.js`, `vue-direction.js`, `vue-livraisons.js` |
-| Bilan | `#/reporting` | Indicateurs · Reprises · Évaluation · Bilan mensuel · Arbitrages | `vue-constater.js`, `bilan.js`, `vue-equipe.js`, `vue-findemois.js`, `vue-jurisprudence.js` |
+| Bilan | `#/reporting` | Indicateurs · Reprises · Bilan mensuel · Arbitrages. L'ancienne adresse de l'évaluation d'équipe (`#/reporting/equipe`) mène aux indicateurs : `vue-equipe.js` reste, hors de la navigation. | `vue-constater.js`, `bilan.js`, `vue-findemois.js`, `vue-jurisprudence.js` |
 | Projets | `#/projets` | La liste des projets, leur lecture par marque, l'écran d'une marque ou d'une campagne (avec son bilan), puis le dossier d'un projet. | `vue-projets.js`, `vue-studio.js` |
 | Galerie (vue de Projets) | `#/projets/galerie` | Les campagnes et leur structure, en images, par année. | `vue-galerie.js` |
 | Ressources | `#/referentiel` | Marques · Marchés et supports · Registre des projets · Registre des briefs · Boîte d'entrée · Le disque · Doctrine · Paramètres | `vue-maison.js`, `vue-vault.js`, `vue-referentiel.js`, `registre-people.js`, `registre-radar.js`, `intake.js`, `disque.js`, `vue-doctrine.js`, `vue-reglages.js` |

@@ -319,6 +319,11 @@ try {
   }, kvCI);
   assert.deepEqual(repere, [22, true, true, true, true], 'Cible d’un repère d’annotation');
   await page.keyboard.press('Escape');
+  // L'évaluation d'équipe n'est plus une vue du Bilan ; son adresse mène aux indicateurs.
+  await page.goto(url + '/#/reporting/equipe');
+  await page.getByRole('heading', { level:1, name:'Indicateurs' }).waitFor();
+  assert.equal(await page.evaluate(() => location.hash), '#/reporting/indicateurs');
+  assert.equal(await page.getByRole('group', { name:'Vues du bilan' }).getByText('Évaluation').count(), 0);
   // Aucun ancien lien ne doit provoquer d'erreur de rendu.
   for (const route of ['bureau','valider','planning','reporting','projets','projets/marques','referentiel','attentes','reglages']) {
     await page.goto(url + '/#/' + route);
