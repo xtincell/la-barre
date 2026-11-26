@@ -211,6 +211,11 @@ test('chaque visuel de la démonstration est déclaré fictif à son manifeste, 
   const master = JSON.parse(base).projets.find(p => p.id === 'PRJ-zeste').livrables.find(l => l.niveau === 'maitre');
   assert.equal(master.vignette, 'visuels/kv-master.jpg');
   assert.equal(master.versions[0].etat.vignette, 'visuels/kv-master-v1.jpg', 'la V1 garde son visuel, celui que le retour vise');
+  /* La seconde photographie sert une demande simple : sa story attend sa décision. */
+  const noro = JSON.parse(base).projets.find(p => p.id === 'PRJ-noro');
+  assert.equal(noro.nature, 'demande');
+  assert.deepEqual(noro.livrables.map(l => [l.vignette, l.versions.map(v => v.verdict)]), [['visuels/noro-story.jpg', [null]]]);
+  assert.equal(manifeste.visuels['noro-story.jpg'].format, '9:16');
 });
 
 test('les liens de la vitrine ouvrent des écrans et des dossiers qui existent dans la démonstration', async () => {

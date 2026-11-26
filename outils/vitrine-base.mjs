@@ -110,12 +110,14 @@ const MARCHES = [
     sku: ['Canette 33 cl'], mentions: ['À consommer de préférence avant le…'] },
   { id: 'M-gh', code: 'GH', nom: 'Ghana', langues: ['en'], zone: 'Afrique de l’Ouest',
     sku: ['Can 33 cl', 'Can 50 cl'], mentions: ['Best before end'] },
+  { id: 'M-cm', code: 'CM', nom: 'Cameroun', langues: ['fr'], zone: 'CEMAC', sku: [], mentions: [] },
 ];
 
 const SUPPORTS = [
   { id: 'S-kv', code: 'kv', nom: 'Key visual', type: 'kv' },
   { id: 'S-affiche', code: '4x3', nom: 'Affiche 4×3', type: 'print' },
   { id: 'S-social', code: 'social', nom: 'Post social 1:1', type: 'social' },
+  { id: 'S-story', code: 'story', nom: 'Story 9:16', type: 'social' },
 ];
 
 const DA = [
@@ -235,13 +237,13 @@ function points(ctx, etat) {
 
 /* Soumettre une version, puis la juger : les deux gestes de la matrice et du
  * panneau du livrable (vue-matrice.js, vue-livrable.js). */
-function soumettre(c, l, quand) {
+function soumettre(c, l, quand, projet = 'PRJ-zeste') {
   c.Date.aller(quand);
   l.versions = l.versions || [];
   const n = l.versions.length + 1;
   l.versions.push({ n, soumis_le: new c.Date().toISOString(), verdict: null });
   l.version = n;
-  c.ctx.DEPOT.tracer('soumission', 'livrables', 'PRJ-zeste', l.nom + ' V' + n);
+  c.ctx.DEPOT.tracer('soumission', 'livrables', projet, l.nom + ' V' + n);
 }
 
 /* Une nouvelle version remplace le visuel de la pièce ; l'ancien reste sur sa
@@ -288,7 +290,8 @@ export async function construire() {
     schema: 5, maison: MAISON.nom, rattachement2: true,
     personnes: PERSONNES, marches: MARCHES, supports: SUPPORTS,
     clients: [{ id: 'CL-orvelle', nom: 'Sources d’Orvelle', interne: false,
-      nommage: '{marque}_{campagne}_{marche}_{support}_{langue}_{version}' }],
+      nommage: '{marque}_{campagne}_{marche}_{support}_{langue}_{version}' },
+      { id: 'CL-noro', nom: 'Atelier Noro', interne: false }],
     contacts: [{ id: 'CT-margaux', clientId: 'CL-orvelle', nom: 'Margaux Tilleul', role: 'Directrice marketing (fictive)' }],
     marques: [{ id: 'MQ-orvelle', clientId: 'CL-orvelle', nom: 'Orvelle', secteur: 'Boissons',
       note: 'Marque fictive, inventée pour la démonstration.',
@@ -296,9 +299,13 @@ export async function construire() {
         mission: 'Une eau pétillante de source, sans sucres ajoutés, pour les moments où l’on souffle.',
         valeurs: ['Simplicité', 'Fraîcheur', 'Proximité'], positionnement: SOCLE.positionnement,
         promesse: 'Reprendre son souffle.', idee_directrice: SOCLE.idee_directrice, ton: SOCLE.ton,
-        jamais: SOCLE.jamais.slice(), symboles: SOCLE.symboles.slice() } }],
+        jamais: SOCLE.jamais.slice(), symboles: SOCLE.symboles.slice() } },
+      { id: 'MQ-noro', clientId: 'CL-noro', nom: 'Atelier Noro', secteur: 'Design et objets',
+        note: 'Marque fictive, inventée pour la démonstration.', vault: { couleur: '#E8563A' } }],
     assets: [{ id: 'AS-logo-orvelle', nom: 'Logo Orvelle', marque: 'MQ-orvelle', role: 'logo',
-      vignette: 'visuels/logo-orvelle.svg', cree_le: '2026-02-02T08:00:00.000Z' }],
+      vignette: 'visuels/logo-orvelle.svg', cree_le: '2026-02-02T08:00:00.000Z' },
+      { id: 'AS-noro-invitation', nom: 'Invitation Atelier Noro, telle qu’imprimée', marque: 'MQ-noro', role: 'reference',
+        vignette: 'visuels/noro-invitation.jpg', cree_le: '2026-11-02T08:00:00.000Z' }],
     campagnes: [
       { id: 'CMP-orvelle-source', nom: 'Orvelle Source 2026', clientId: 'CL-orvelle', marqueIds: ['MQ-orvelle'],
         regime: 'ponctuelle', occasion: 'lancement', fenetre: { debut: '2026-03-01', fin: '2026-05-31' },
@@ -498,6 +505,33 @@ export async function construire() {
   juger(c, p, afficheSn, 'approuve', '', '2026-11-10T09:00:00.000Z');
   Date.aller('2026-11-10T14:00:00.000Z');
   PRODUCTION.poser(afficheSn, 'bat', 'ORV-2027-01_affiche-4x3_SN_V1_BAT.pdf', 'Dossier de production (fictif)');
+
+  /* ——— Une demande simple, à côté : décliner une invitation en story. ——— */
+  Date.aller('2026-11-10T15:00:00.000Z');
+  const noro = {
+    id: 'PRJ-noro', ref: 'NOR-2026-01', nom: 'Atelier Noro — invitation en story', nature: 'demande', gabarit: 'demande',
+    statut: 'production', cree_le: new Date().toISOString(),
+    equipe: [{ personne: 'PE-ilan', poste: 'da' }, { personne: 'PE-yao', poste: 'graphic' }],
+    perimetre: { supports: ['S-story'], marches: ['M-cm'] }, volets: [],
+    sections: { identite: { client: 'Atelier Noro', clientId: 'CL-noro', marqueIds: ['MQ-noro'], type: 'Demande simple',
+      debut: '2026-11-10', echeance: '2026-12-08',
+      objectif: 'Décliner l’invitation imprimée en story, pour annoncer le vernissage du 10 décembre (fictif).' } },
+    livrables: [], idees: [],
+  };
+  projets.push(noro);
+  DEPOT.tracer('création', 'projets', noro.id, noro.nom);
+  const story = {
+    id: DEPOT.identifiant('L'), cree_le: new Date().toISOString(),
+    niveau: 'declinaison', voletId: null, support: 'S-story', marche: 'M-cm',
+    nom: 'Invitation · story · CM', responsable: 'PE-yao', origine: 'prevu', pisteId: null,
+    maitre: null, versionMaitre: null, version: 1, versions: [],
+    estime: 1, reel: null, toursVendus: 1, remise: '2026-12-04', echeance: '2026-12-05', publication: null,
+    assets: ['AS-noro-invitation'], entrees: [], annotations: [], mockups: [], points: points(ctx, 'attente'),
+    vignette: 'visuels/noro-story.jpg',
+  };
+  noro.livrables.push(story);
+  DEPOT.tracer('création', 'livrables', noro.id, story.nom);
+  soumettre(c, story, '2026-11-10T16:00:00.000Z', noro.id);
 
   soumettre(c, socialCi, '2026-11-11T15:00:00.000Z');
 

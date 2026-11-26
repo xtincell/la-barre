@@ -22,8 +22,11 @@ Le dossier « Orvelle Zeste — lancement » (ORV-2027-01) suit un lancement sur
 trois marchés : brief accepté et brief-back écrit, plateforme de marque et big
 idea validées, idée d'atelier retenue, trois pistes arbitrées par écrit, KV
 master revenu en V1 (la canette ne s'y lit pas) puis approuvé en V2,
-adaptations par marché, formats, un BAT signé et un BAT sans signataire. La campagne précédente, close, porte son
-bilan arrêté (version figée, empreinte) que cite le brief. Sa version compte les
+adaptations par marché, formats, un BAT signé et un BAT sans signataire. À
+côté, une demande simple (« Atelier Noro — invitation en story »,
+NOR-2026-01) attend la décision sur sa première version. La campagne
+précédente, close, porte son bilan arrêté (version figée, empreinte) que cite
+le brief. Sa version compte les
 reprises du relevé à l'arrêt : aucune facturable au client, une à la charge de
 l'agence (son dossier n'a déclaré aucun axe de direction artistique, ce que le
 contrôle du KV relève).

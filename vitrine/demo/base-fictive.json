@@ -58,6 +58,11 @@
    "nom": "Sources d’Orvelle",
    "interne": false,
    "nommage": "{marque}_{campagne}_{marche}_{support}_{langue}_{version}"
+  },
+  {
+   "id": "CL-noro",
+   "nom": "Atelier Noro",
+   "interne": false
   }
  ],
  "marques": [
@@ -90,6 +95,16 @@
      "Le zeste",
      "Le premier rayon"
     ]
+   }
+  },
+  {
+   "id": "MQ-noro",
+   "clientId": "CL-noro",
+   "nom": "Atelier Noro",
+   "secteur": "Design et objets",
+   "note": "Marque fictive, inventée pour la démonstration.",
+   "vault": {
+    "couleur": "#E8563A"
    }
   }
  ],
@@ -140,6 +155,17 @@
    "mentions": [
     "Best before end"
    ]
+  },
+  {
+   "id": "M-cm",
+   "code": "CM",
+   "nom": "Cameroun",
+   "langues": [
+    "fr"
+   ],
+   "zone": "CEMAC",
+   "sku": [],
+   "mentions": []
   }
  ],
  "supports": [
@@ -159,6 +185,12 @@
    "id": "S-social",
    "code": "social",
    "nom": "Post social 1:1",
+   "type": "social"
+  },
+  {
+   "id": "S-story",
+   "code": "story",
+   "nom": "Story 9:16",
    "type": "social"
   }
  ],
@@ -285,6 +317,14 @@
    "role": "logo",
    "vignette": "visuels/logo-orvelle.svg",
    "cree_le": "2026-02-02T08:00:00.000Z"
+  },
+  {
+   "id": "AS-noro-invitation",
+   "nom": "Invitation Atelier Noro, telle qu’imprimée",
+   "marque": "MQ-noro",
+   "role": "reference",
+   "vignette": "visuels/noro-invitation.jpg",
+   "cree_le": "2026-11-02T08:00:00.000Z"
   }
  ],
  "projets": [
@@ -1399,6 +1439,97 @@
      "arbitre_le": "2026-10-12T16:00:00.000Z"
     }
    ]
+  },
+  {
+   "id": "PRJ-noro",
+   "ref": "NOR-2026-01",
+   "nom": "Atelier Noro — invitation en story",
+   "nature": "demande",
+   "gabarit": "demande",
+   "statut": "production",
+   "cree_le": "2026-11-10T15:00:00.000Z",
+   "equipe": [
+    {
+     "personne": "PE-ilan",
+     "poste": "da"
+    },
+    {
+     "personne": "PE-yao",
+     "poste": "graphic"
+    }
+   ],
+   "perimetre": {
+    "supports": [
+     "S-story"
+    ],
+    "marches": [
+     "M-cm"
+    ]
+   },
+   "volets": [],
+   "sections": {
+    "identite": {
+     "client": "Atelier Noro",
+     "clientId": "CL-noro",
+     "marqueIds": [
+      "MQ-noro"
+     ],
+     "type": "Demande simple",
+     "debut": "2026-11-10",
+     "echeance": "2026-12-08",
+     "objectif": "Décliner l’invitation imprimée en story, pour annoncer le vernissage du 10 décembre (fictif)."
+    }
+   },
+   "livrables": [
+    {
+     "id": "L-c3ih-e1wujxrutku5",
+     "cree_le": "2026-11-10T15:00:02.000Z",
+     "niveau": "declinaison",
+     "voletId": null,
+     "support": "S-story",
+     "marche": "M-cm",
+     "nom": "Invitation · story · CM",
+     "responsable": "PE-yao",
+     "origine": "prevu",
+     "pisteId": null,
+     "maitre": null,
+     "versionMaitre": null,
+     "version": 1,
+     "versions": [
+      {
+       "n": 1,
+       "soumis_le": "2026-11-10T16:00:00.000Z",
+       "verdict": null
+      }
+     ],
+     "estime": 1,
+     "reel": null,
+     "toursVendus": 1,
+     "remise": "2026-12-04",
+     "echeance": "2026-12-05",
+     "publication": null,
+     "assets": [
+      "AS-noro-invitation"
+     ],
+     "entrees": [],
+     "annotations": [],
+     "mockups": [],
+     "points": {
+      "concept": "attente",
+      "copy": "attente",
+      "asset": "attente",
+      "design": "attente",
+      "technique": "attente",
+      "droits": "attente",
+      "langue": "attente",
+      "central": "attente",
+      "local": "attente",
+      "final": "attente"
+     },
+     "vignette": "visuels/noro-story.jpg"
+    }
+   ],
+   "idees": []
   }
  ],
  "attentes": [],
@@ -2330,6 +2461,54 @@
    "type": "decisions",
    "id": "DEC-c3ih-uhh549ldr4fm",
    "detail": "Affiche 4×3 · SN"
+  },
+  {
+   "quand": "2026-11-10T15:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "projets",
+   "id": "PRJ-noro",
+   "detail": "Atelier Noro — invitation en story"
+  },
+  {
+   "quand": "2026-11-10T15:00:03.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "livrables",
+   "id": "PRJ-noro",
+   "detail": "Invitation · story · CM"
+  },
+  {
+   "quand": "2026-11-10T16:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "soumission",
+   "type": "livrables",
+   "id": "PRJ-noro",
+   "detail": "Invitation · story · CM V1"
   },
   {
    "quand": "2026-11-11T15:00:01.000Z",
