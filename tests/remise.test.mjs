@@ -666,6 +666,34 @@ test('« Poser le BAT » range la photo à l’étage du BAT, sans remplacer le 
   assert.equal(ci.vignette, visuel.emplacement);
 });
 
+test('le PDF posé à l’étage du BAT monte sur le serveur comme celui joint à la livraison ; un .ai n’entre que par son nom, et le suivi le dit', async () => {
+  const x = await televersement();
+  const { IMAGE, REMISE } = x.s.ctx;
+  const dits = [];
+  x.s.ctx.AVIS.fait = m => dits.push(m);
+  const { ci, p } = x;
+  const pdf = await new Promise(r => IMAGE.accueillir(ci, { name: 'BAT-imprimeur.pdf', size: 4096, donnee: 'data:application/octet-stream;base64,JVBERi0xLjQK' }, r, false, 'bat'));
+  assert.deepEqual([pdf.type, pdf.nom, pdf.signataire], ['bat', 'BAT-imprimeur.pdf', null]);
+  assert.match(pdf.emplacement, /^assets\/review\/preuves\/preuve-[a-z0-9]+\.pdf$/);
+  assert.deepEqual([x.envois.at(-1).url, x.envois.at(-1).corps], [pdf.emplacement, 'data:application/pdf;base64,JVBERi0xLjQK']);
+  assert.ok(REMISE.fichierServi(pdf.emplacement), 'il s’ouvre depuis le suivi');
+  assert.match(dits.at(-1), /se range à côté de la pièce/);
+  /* Un .ai ne se regarde pas : rien ne part au serveur, seul son nom entre. */
+  const envois = x.envois.length;
+  const ai = await new Promise(r => IMAGE.accueillir(ci, { name: 'BAT-imprimeur.ai', size: 4096, donnee: 'data:application/octet-stream;base64,AAAA' }, r, false, 'bat'));
+  assert.equal(x.envois.length, envois);
+  assert.equal(ai.emplacement, '');
+  assert.match(dits.at(-1), /seul son nom entre à la base\.$/);
+  assert.doesNotMatch(dits.at(-1), /chemin/);
+  /* Accordé, le BAT .ai dit qu'il n'est noté que par son nom, pas « sans pièce jointe ». */
+  ci.fichiers = [Object.assign(ai, { signataire: 'Imprimerie', signe_le: '2026-11-09', version: 2,
+    preuve: { type: 'declaration', texte: '', contact: 'Imprimerie', date: '2026-11-09' } })];
+  const suivi = REMISE.suiviPiece(p, ci, () => {});
+  assert.match(suivi.textContent, /BAT accordé · V2.*BAT-imprimeur\.ai · Imprimerie/);
+  assert.match(suivi.textContent, /Fichier noté par son nom : il n’est pas déposé ici/);
+  assert.doesNotMatch(suivi.textContent, /sans pièce jointe/);
+});
+
 test('des fichiers remis déclarés disent par où ils sont partis, « Autre » compris', async () => {
   const { R } = await installation();
   assert.equal(R.envoi('WeTransfer'), 'Fichiers envoyés par WeTransfer');

@@ -811,6 +811,10 @@ window.REMISE = (function () {
     /* « Signé » quand une pièce le montre ; un accord oral ou par message est
      * un BAT accordé. */
     var batPiece = !!ouvrirBat || !!texte(bat && bat.emplacement);
+    /* Un fichier posé à l'étage du BAT sans pouvoir être servi (un .ai, un
+     * .psd) n'y entre que par son nom : on le dit, au lieu de « sans pièce
+     * jointe ». */
+    var nomSeul = !!bat && !batPiece && /\.[a-z0-9]{2,5}$/i.test(texte(bat.nom));
     return el("section.remise-suivi", { "aria-label": "BAT et remise" },
       el("header.remise-tete", {}, el("h3", {}, "BAT et remise"),
         UI.eti(recu ? "Remise justifiée" : etat.nom, recu ? "vert" : "attente")),
@@ -820,7 +824,8 @@ window.REMISE = (function () {
           + (bat.signe_le ? " · " + O.joli(bat.signe_le) : "")),
         ouvrirBat,
         motJoint(preuveBat),
-        preuveBat && preuveBat.type === "declaration" && (preuveBat.texte || !ouvrirBat) ? lienPreuve(preuveBat) : null) : null,
+        preuveBat && preuveBat.type === "declaration" && (preuveBat.texte || (!ouvrirBat && !nomSeul)) ? lienPreuve(preuveBat) : null,
+        nomSeul ? el("span", {}, "Fichier noté par son nom : il n’est pas déposé ici") : null) : null,
       recu ? cartePreuve(recu) : null,
       recu ? sauvegarde() : null,
       etat.fichiers ? el("details", {}, el("summary", {}, recu ? "Fichiers remis" : "Fichiers à remettre"),

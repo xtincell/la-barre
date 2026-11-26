@@ -289,10 +289,22 @@ window.IMAGE = (function () {
         AVIS.fait("« " + f.name + " » est au dossier de " + l.nom + "."
           + (visuel ? "  Il se regarde depuis la carte."
             : regardable ? "  Il se range à côté de la pièce, sans remplacer son visuel."
-            : "  Le fichier reste où il est : seul son nom et son chemin entrent à la base.")
+            : "  Le fichier reste où il est : seul son nom entre à la base.")
           + ecart);
       }
       if (apres) apres(fich || true);
+    }
+
+    /* Le PDF d'un BAT est la pièce elle-même, comme la photo d'un bon
+     * signé : il monte avec les preuves (deposerPreuve) et s'ouvre depuis le
+     * suivi, au lieu d'entrer par son seul nom. Trop lourd, en démonstration
+     * ou hors ligne, il entre par son nom, comme avant. */
+    if (etage === "bat" && ext === "pdf" && f.size <= PLAFOND_MO * 1024 * 1024 && !demonstration()
+        && location.protocol !== "file:" && window.fetch) {
+      deposerPreuve(f, function (chemin) {
+        if (chemin) inscrire(chemin, true); else if (apres) apres(false);
+      });
+      return;
     }
 
     /* Ce qui ne se regarde pas n'a rien à faire sur ce disque. */
