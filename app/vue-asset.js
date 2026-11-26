@@ -594,6 +594,8 @@ window.VUE_ASSET = (function () {
     var h = VERSION.historique(l);
     if (!h.length) return null;
     var d = h[h.length - 1];
+    /* Une version reçue sans motif de clôture (une simple soumission) n'a pas
+     * d'origine : on n'écrit pas « Fermée par : undefined », on se tait. */
     var o = VERSION.ORIGINES[d.origine] || { nom: d.origine };
 
     return el("div.as-bloc", {},
@@ -603,9 +605,9 @@ window.VUE_ASSET = (function () {
           ? el("div.asp-v", {}, el("span", {}, "Le visuel de la V" + d.n + " n'est pas conservé — seul le dernier l'est."))
           : null,
         el("div.asp-c", {},
-          el("div.aspc-o", {}, "Fermée par : " + o.nom),
-          el("div.aspc-m", {}, d.motif),
-          el("div.aspc-q", {}, O.joli(d.close_le)),
+          o.nom ? el("div.aspc-o", {}, "Fermée par : " + o.nom) : null,
+          d.motif ? el("div.aspc-m", {}, d.motif) : null,
+          d.close_le ? el("div.aspc-q", {}, O.joli(d.close_le)) : null,
           d.etat && d.etat.kv && d.etat.kv.copy
             ? el("div.aspc-d", {}, "Accroche d'alors : « " + d.etat.kv.copy + " »")
             : null)

@@ -767,3 +767,14 @@ test('« Ce que le client en a dit » compte « 1 retour », « 2 retours », et
   assert.equal(trouver(b2, n => /asb-t/.test(n.className)).textContent, 'Ce que le client en a dit3 retours');
   assert.ok(trouver(b2, n => n.tagName === 'BUTTON' && n.textContent === '1 point posé sur le visuel →'));
 });
+
+test('la version précédente ne dit pas « Fermée par : undefined » quand elle n’a pas d’origine', async () => {
+  const s = await bacDecisions(APP, 98);
+  await s.charger('vue-asset', ['precedente']);
+  s.ctx.VERSION.fil = () => null;
+  const l = livrable('L-pr', { versions: [{ n: 1, soumis_le: '2026-11-03T08:00:00.000Z', verdict: 'approuve' }] });
+  const t = texteDe(s.interne['vue-asset'].precedente(projet('PR'), l));
+  assert.doesNotMatch(t, /undefined|Fermée par/, t);
+  const close = livrable('L-cl', { versions: [{ n: 1, origine: 'client', motif: 'Le logo plus grand', close_le: '2026-11-03T08:00:00.000Z' }] });
+  assert.match(texteDe(s.interne['vue-asset'].precedente(projet('PR'), close)), /Fermée par : Retour client\|Le logo plus grand\|3 nov\./);
+});
