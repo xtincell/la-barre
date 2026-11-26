@@ -82,9 +82,13 @@ window.VUE_ATTENTES = (function () {
 
   function ton(age) { return age >= 15 ? "alerte" : age >= 7 ? "attente" : "calme"; }
 
-  function rendre(hote, apres) {
+  function rendre(hote, apres, idAttente) {
     if (arguments.length > 1) relireHote = typeof apres === "function" ? apres : null;
     O.vider(hote);
+    if (idAttente) {
+      hote.appendChild(detail(DEPOT.trouve("attentes", idAttente), hote));
+      return;
+    }
     var releve = ECARTS.tous();
     var ecartes = releve.filter(function (x) { return x.ecarte; });
     var groupes = dettes(releve);
@@ -113,7 +117,7 @@ window.VUE_ATTENTES = (function () {
      * ça dort vaut mieux que savoir de quelle catégorie ça relève. */
     hote.appendChild(el("section.studio-revue.du", { "aria-label": "Ce qui m'est dû" },
       el("div.studio-section-tete", {},
-        el("h2", {}, "Chez qui ça dort", el("span.studio-compte", {}, String(groupes.length))),
+        el("h2", {}, "Par destinataire", el("span.studio-compte", {}, String(groupes.length))),
         el("span.du-bascules", {}, ecartesBouton(hote, ecartes.length), resoluesBouton(hote))),
       el("div.studio-table.du-table", {},
         el("div.studio-file", { "aria-label": "Débiteurs" }, groupes.map(function (d) {
@@ -178,12 +182,45 @@ window.VUE_ATTENTES = (function () {
             el("span.dul-j", {}, r.age + " j"),
             el("span.dul-barre", { "aria-hidden": "true" }, el("i", { style: { width: part + "%" } }))),
           el("span.dul-gestes", {},
-            el("button.studio-lien", { type: "button", onclick: function () { agir(x, hote, r.l.length); } },
-              x.attente ? "Voir le message" : "Réclamer"),
+            x.attente ? el("a.studio-lien", { href: lienAttente(x.attente) }, "Voir le message")
+              : el("button.studio-lien", { type: "button", onclick: function () { agir(x, r.l.length); } }, "Réclamer"),
             x.attente ? null : el("button.studio-lien", { type: "button",
               onclick: function () { ecarter(r, hote); } }, "Écarter")));
         return neuve && x.id === neuve ? O.arrive(li) : li;
       })));
+  }
+
+  function lienAttente(a) { return "#/valider/du/" + encodeURIComponent(a.id); }
+
+  function detail(a, hote) {
+    var retour = el("a.b.nu", { href: "#/valider/du" }, "Tous les retours attendus");
+    if (!a) return el("section.studio-revue.remise-suivi", {}, retour,
+      el("h2", {}, "Retour introuvable"));
+    var destinataire = a.destinataire ? DEPOT.trouve("personnes", a.destinataire) : null;
+    var projet = a.projetId ? DEPOT.trouve("projets", a.projetId) : null;
+    return el("section.studio-revue.remise-suivi", { "aria-label": "Retour attendu" },
+      retour,
+      el("header.remise-tete", {},
+        el("h2", {}, a.quoi || "Message de retour"),
+        UI.eti(a.resolu_le ? "Reçu" : "En attente", a.resolu_le ? "vert" : "attente")),
+      el("dl", {},
+        el("dt", {}, "Destinataire"), el("dd", {}, destinataire ? destinataire.nom : "Non nommé"),
+        projet ? [el("dt", {}, "Dossier"), el("dd", {}, projet.nom)] : null,
+        a.echeance ? [el("dt", {}, "Échéance"), el("dd", {}, O.joli(a.echeance))] : null,
+        a.resolu_le ? [el("dt", {}, "Retour reçu le"), el("dd", {}, O.joli(a.resolu_le))] : null),
+      a.attendu ? el("p", {}, a.attendu) : null,
+      a.message ? el("details", {}, el("summary", {}, "Message d’origine"), el("p.retour-message", {}, a.message),
+        el("button.b.nu", { type: "button", onclick: function () {
+          if (!navigator.clipboard) { AVIS.refus("Sélectionnez le texte pour le copier."); return; }
+          navigator.clipboard.writeText(a.message).then(function () { AVIS.fait("Message copié."); })
+            .catch(function () { AVIS.refus("Sélectionnez le texte pour le copier."); });
+        } }, "Copier le message")) : null,
+      a.resolu_le ? null : el("button.b.or", { type: "button", onclick: function () {
+        RENVOI.resoudre(a.id);
+        relire(hote);
+        var titre = document.querySelector("[aria-label='Retour attendu'] h2");
+        if (titre) { titre.tabIndex = -1; titre.focus(); }
+      } }, "Marquer reçu"));
   }
 
   function contexte(g) {
@@ -203,38 +240,11 @@ window.VUE_ATTENTES = (function () {
   }
 
   /* Le geste : réclamer. L'outil n'envoie rien — il écrit. */
-  function agir(x, hote, n) {
-    if (x.attente) { messagePret(x.attente, hote); return; }
+  function agir(x, n) {
     var e = x.ecart;
     RENVOI.ouvrir({ quoi: (e.cout || e.quoi) + (n > 1 ? " — " + n + " livrables" : ""),
       projet: e.projet.ref, projetId: e.projet.id,
       objet: n > 1 ? null : e.livrable ? e.livrable.id : null, motif: e.quoi });
-  }
-
-  /* Le message part rédigé : l'outil n'envoie rien, il écrit. C'est le geste
-   * central du poste, et il n'a jamais eu de place à lui. */
-  function messagePret(a, hote) {
-    var pe = a.destinataire ? DEPOT.trouve("personnes", a.destinataire) : null;
-    var zone = el("textarea", { rows: 12 });
-    zone.value = a.message || "";
-    PANNEAU.ouvrir(pe ? pe.nom : "Le destinataire",
-      "dû depuis " + O.depuis(a.envoye_le) + " j", el("div", {},
-      UI.banniere("", "L'outil n'envoie rien. Il écrit — et il rappelle tant que ce n'est pas revenu."),
-      a.critere ? PANNEAU.ligne("Le critère opposé", a.critere) : null,
-      a.attendu ? PANNEAU.ligne("Ce qui est attendu", a.attendu) : null,
-      a.echeance ? PANNEAU.ligne("Pour le", O.joli(a.echeance)) : null,
-      el("div.form", {}, el("div.champ", {}, el("label", {}, "Le message"), zone)),
-      el("div.form-actions", {},
-        el("button.b.or", { type: "button", onclick: function () {
-          zone.select();
-          try { document.execCommand("copy"); } catch (e) { /* presse-papier fermé */ }
-          AVIS.fait("Message copié. À porter par ton canal.");
-        } }, "Copier le message"),
-        el("button.b.vert", { type: "button", onclick: function () {
-          RENVOI.resoudre(a.id); PANNEAU.fermer(); rendre(hote);
-        } }, "C'est revenu"),
-        el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Fermer"))
-    ));
   }
 
   /* ————————————————————— « Ce n'en est pas un » ————————————————————— */
@@ -332,7 +342,7 @@ window.VUE_ATTENTES = (function () {
       r.map(function (a) {
         var j = Math.max(0, Math.round((new Date(a.resolu_le) - new Date(a.envoye_le)) / 86400000));
         return el("div.du-rev", {},
-          el("span", {}, a.quoi),
+          el("a", { href: lienAttente(a) }, a.quoi),
           el("span.du-rev-j", {}, "rendue en " + j + (j > 1 ? " jours" : " jour")));
       }));
   }

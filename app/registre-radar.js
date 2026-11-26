@@ -129,8 +129,7 @@ window.REGISTRE_RADAR = (function () {
     O.vider(hote);
 
     if (!b.total) {
-      hote.appendChild(el("p.rien", {},
-        "Aucun relevé. Le registre se remplit par outils/ingerer-corpus.mjs."));
+      hote.appendChild(el("p.rien", {}, "Aucun relevé de briefs importé."));
       return;
     }
 
@@ -142,11 +141,9 @@ window.REGISTRE_RADAR = (function () {
 
     hote.appendChild(el("div.reg", {},
       el("div.reg-t", {},
-        el("h2.regt-l", {}, MAISON.registres.radar),
-        el("span.regt-d", {}, age === null ? "Date de relevé inconnue"
-          : age <= 0 ? "Relevé aujourd'hui"
-          : "Relevé il y a " + age + (age > 1 ? " jours" : " jour")
-            + (age > 30 ? " — un registre de cet âge se lit comme une photo, pas comme un état" : ""))),
+        el("h2.regt-l", {}, "Relevé des briefs"),
+        el("span.regt-d", {}, !releve ? "Date inconnue" :
+          ["Du ", el("time", { datetime: releve }, O.joli(releve)), age > 30 ? " · relevé ancien" : null])),
 
       el("div.reg-c", {},
         compte(String(b.suivis), "Suivis ici", "leur dossier existe", "vert"),
@@ -155,15 +152,6 @@ window.REGISTRE_RADAR = (function () {
         compte(String(b.hors), "Donnés pour finis", "rien à suivre", "terne"),
         b.doublons ? compte(String(b.doublons), "Doublons", "marqués par le Radar", "terne") : null,
         b.malformes ? compte(String(b.malformes), "Malformés", "à reprendre à la source", "alerte") : null),
-
-      el("div.reg-n", {},
-        el("b", {}, "Ce que ce registre dit, et lui seul : "),
-        b.total + " briefs au Radar, " + b.maitres + " maîtres et " + b.taches + " tâches, "
-        + "contre " + DEPOT.liste("projets").filter(function (p) {
-            return (p.releve || {}).source; }).length + " campagnes documentées. "
-        + "L'écart n'est pas une erreur de comptage : un brief est une demande, "
-        + "une campagne est un corps de travail. " + b.siens + " briefs étaient sous "
-        + "sa responsabilité directe."),
 
       el("div.reg-l", {}, vifs.map(function (r) {
         return bloc(r, a.enfants, 0, rafraichir);
@@ -176,12 +164,18 @@ window.REGISTRE_RADAR = (function () {
       calmes.length
         ? el("details.reg-plus", {},
             el("summary", {},
-              el("b", {}, calmes.length + (calmes.length > 1 ? " grappes sans geste" : " grappe sans geste")),
+              el("b", {}, calmes.length + (calmes.length > 1 ? " groupes de briefs classés" : " groupe de briefs classé")),
               el("span.dl-clos-q", {}, "suivies ici, données pour finies, ou marquées doublon")),
             el("div.reg-l", {}, calmes.map(function (r) {
               return bloc(r, a.enfants, 0, rafraichir);
             })))
-        : null
+        : null,
+      el("details.pilotage-contexte", {},
+        el("summary", {}, "Périmètre du relevé"),
+        el("p", {}, b.total + " briefs, dont " + b.maitres + " briefs maîtres et " + b.taches + " tâches. "
+          + b.siens + " étaient sous responsabilité directe. "
+          + DEPOT.liste("projets").filter(function (p) { return (p.releve || {}).source; }).length
+          + " campagnes documentées dans La Barre."))
     ));
   }
 

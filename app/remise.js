@@ -21,6 +21,148 @@
 window.REMISE = (function () {
   var el = O.el;
 
+  function texte(v) { return typeof v === "string" ? v.trim() : ""; }
+
+  /* Le document reste dans son système d'origine, avec les mêmes droits. */
+  function urlPreuve(v) {
+    var s = texte(v);
+    if (!s || /[\u0000-\u001f\u007f]/.test(s)) return null;
+    try {
+      var u = new URL(s);
+      return u.protocol === "https:" && !u.username && !u.password ? u.href : null;
+    } catch (e) { return null; }
+  }
+
+  function versionCourante(l) {
+    var vs = l.versions || [];
+    var v = vs[vs.length - 1];
+    var n = Number(v && (v.n || v.numero));
+    return Number.isSafeInteger(n) && n > 0 && !v.close_le && Number(l.version || n) === n
+      ? { numero: n, objet: v } : null;
+  }
+
+  function batRequis(l) {
+    return PRODUCTION.exiges(l, 1).indexOf("bat") !== -1;
+  }
+
+  function fichierDeVersion(f, n) { return Number(f.version || 1) === n; }
+
+  function batSigne(l, n) {
+    return (l.fichiers || []).slice().reverse().find(function (f) {
+      return f.type === "bat" && fichierDeVersion(f, n) && texte(f.nom)
+        && texte(f.signataire) && texte(f.emplacement);
+    }) || null;
+  }
+
+  function fichiersSortie(l, n) {
+    return (l.fichiers || []).filter(function (f) {
+      var lieu = texte(f.emplacement);
+      return f.type === "asset" && fichierDeVersion(f, n) && texte(f.nom) && lieu
+        && (f.role === "sortie" || !/(^|\/)assets\/review\//i.test(lieu));
+    });
+  }
+
+  function etatPiece(l) {
+    var version = versionCourante(l);
+    if (!version || version.objet.verdict !== "approuve")
+      return { cle: "validation", nom: "Approbation attendue", version: version && version.numero };
+    var bat = batSigne(l, version.numero);
+    if (batRequis(l) && !bat)
+      return { cle: "bat", nom: "BAT signé à joindre", version: version.numero };
+    var fichiers = fichiersSortie(l, version.numero);
+    if (!fichiers.length)
+      return { cle: "sortie", nom: "Fichier à remettre à rattacher", version: version.numero, bat: bat };
+    return { cle: "preuve", nom: "Preuve de remise à joindre", version: version.numero, bat: bat, fichiers: fichiers };
+  }
+
+  /* Une preuve décrit un instantané. Une autre version, un autre marché, un
+   * autre signataire ou des fichiers remplacés ne réutilisent pas le reçu. */
+  function empreintePiece(l, etat) {
+    var v = versionCourante(l).objet;
+    var fichiers = etat.fichiers.map(function (f) { return { id: f.id, nom: f.nom }; });
+    var identiteFichiers = etat.fichiers.map(function (f) { return JSON.stringify([f.id, f.nom, f.emplacement]); }).sort();
+    var bat = etat.bat ? [etat.bat.id, etat.bat.nom, etat.bat.signataire, etat.bat.emplacement, etat.bat.signe_le] : null;
+    return {
+      id: l.id, version: etat.version, marche: l.marche || null, support: l.support || null,
+      empreinte: JSON.stringify([v.soumis_le, v.juge_le, bat, identiteFichiers]),
+      nom: l.nom, fichiers: fichiers,
+    };
+  }
+
+  function identique(a, b) {
+    return !!a && !!b && a.id === b.id && a.version === b.version && a.marche === b.marche
+      && a.support === b.support && a.empreinte === b.empreinte;
+  }
+
+  function preuves(p) { return Array.isArray(p.preuvesRemise) ? p.preuvesRemise : []; }
+
+  function preuveCourante(p, l) {
+    if (!p || !l || l.annule) return null;
+    var e = etatPiece(l);
+    if (e.cle !== "preuve") return null;
+    var cible = empreintePiece(l, e);
+    return preuves(p).slice().reverse().find(function (r) {
+      return r && r.preuve && urlPreuve(r.preuve.url) && Array.isArray(r.pieces)
+        && r.pieces.some(function (x) { return identique(x, cible); });
+    }) || null;
+  }
+
+  function enregistrementPermis() {
+    return !(window.DEPOT.estDemonstration && DEPOT.estDemonstration());
+  }
+
+  function dater(s) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+    var d = new Date(s + "T00:00:00Z");
+    return !isNaN(d) && d.toISOString().slice(0, 10) === s && s <= O.jour() ? s : null;
+  }
+
+  function relirePieces(projetId, cibles) {
+    var p = DEPOT.trouve("projets", projetId);
+    if (!p || p.fusionne || (window.CLOTURE && CLOTURE.est(p))) return null;
+    var ls = cibles.map(function (cible) {
+      var l = (p.livrables || []).find(function (x) { return x.id === cible.id && !x.annule; });
+      if (!l) return null;
+      var etat = etatPiece(l);
+      return etat.cle === "preuve" && identique(empreintePiece(l, etat), cible) ? l : null;
+    });
+    return ls.every(Boolean) ? p : null;
+  }
+
+  function consigner(projetId, cibles, saisie) {
+    if (!enregistrementPermis()) return { erreur: "La vitrine ne consigne pas de remise." };
+    if (!Array.isArray(cibles) || !cibles.length
+        || new Set(cibles.filter(Boolean).map(function (x) { return x.id; })).size !== cibles.length)
+      return { erreur: "Choisissez au moins une version à remettre, une seule fois par livrable." };
+    var p = relirePieces(projetId, cibles);
+    if (!p) return { erreur: "La sélection a changé. Relisez les versions et leurs BAT avant de continuer." };
+    if (p.refDemandee) return { erreur: "La référence du projet est encore provisoire." };
+    var url = urlPreuve(saisie.url);
+    var nom = texte(saisie.nom);
+    var personne = texte(saisie.destinataire);
+    var quand = dater(texte(saisie.quand));
+    if (!url || !nom || !personne || !quand)
+      return { erreur: "Indiquez le nom de la preuve, son lien HTTPS, le destinataire et une date de remise passée ou du jour." };
+    var doublon = preuves(p).find(function (r) {
+      return r && r.preuve && r.preuve.url === url && r.destinataire === personne && r.remis_le === quand
+        && Array.isArray(r.pieces) && r.pieces.length === cibles.length
+        && cibles.every(function (x) { return r.pieces.some(function (y) { return identique(x, y); }); });
+    });
+    if (doublon) return { recu: doublon, deja: true };
+
+    var id = O.identifiantUnique("REM", function (x) {
+      return preuves(p).some(function (r) { return r.id === x; });
+    });
+    if (!id) return { erreur: "Impossible d’attribuer une référence à la remise. Réessayez." };
+    var recu = { id: id, remis_le: quand, destinataire: personne, preuve: { nom: nom, url: url },
+      pieces: cibles.map(function (x) { return Object.assign({}, x); }),
+      quand: new Date().toISOString(), acteur: window.ACTEUR ? ACTEUR.trace() : null };
+    p.preuvesRemise = preuves(p).concat(recu);
+    DEPOT.tracer("preuve de remise", "projets", p.id, recu.id + " · " + cibles.length + " version(s)");
+    DEPOT.enregistrer();
+    return { recu: recu, deja: false };
+  }
+
   /* La convention de nommage vit chez le client : chaque DAM a la sienne, et
    * la deviner est la meilleure façon de faire rejeter un lot entier. */
   function convention(clientId) {
@@ -115,6 +257,9 @@ window.REMISE = (function () {
     if (!l.support) manques.push("support non déclaré");
     var dr = droits(p, l);
     var me = mentions(p, l);
+    var suivi = etatPiece(l);
+    var physique = suivi.cle === "preuve";
+    var conformite = !manques.length && !dr.length && !me.length;
 
     return {
       livrable: l,
@@ -124,7 +269,7 @@ window.REMISE = (function () {
       marche: ma ? ma.nom : null,
       support: su ? su.nom : null,
       langue: (l.kv && l.kv.langue) || (ma && (ma.langues || [])[0]) || null,
-      version: l.version || 1,
+      version: suivi.version || l.version || 1,
       droits: (l.assets || []).map(function (aid) {
         var a = DEPOT.trouve("assets", aid);
         if (!a) return null;
@@ -133,7 +278,8 @@ window.REMISE = (function () {
           cession: d.cession || null };
       }).filter(Boolean),
       manques: manques, alertesDroits: dr, mentionsManquantes: me,
-      pret: !manques.length && !dr.length && !me.length,
+      physique: physique, conformite: conformite, suivi: suivi.nom,
+      pret: physique && conformite,
     };
   }
 
@@ -142,14 +288,14 @@ window.REMISE = (function () {
    * envoyer au client ce qu'on n'a pas encore accepté soi-même. */
   function lot(p) {
     var livrables = (p.livrables || []).filter(function (l) {
-      if (l.annule) return false;
-      var v = (l.versions || [])[(l.versions || []).length - 1];
-      return v ? v.verdict === "approuve" : !!l.remise;
+      return !l.annule && etatPiece(l).cle !== "validation";
     });
     var pieces = livrables.map(function (l) { return piece(p, l); });
     return {
       pieces: pieces,
       prets: pieces.filter(function (x) { return x.pret; }).length,
+      physiques: pieces.filter(function (x) { return x.physique; }).length,
+      conformes: pieces.filter(function (x) { return x.conformite; }).length,
       total: pieces.length,
       convention: convention(((p.sections || {}).identite || {}).clientId),
     };
@@ -161,6 +307,8 @@ window.REMISE = (function () {
       return { cle: "rien", nom: "rien à remettre", ton: "terne",
         quoi: "Aucun livrable approuvé. La remise vient après le verdict, pas avant." };
     }
+    if (L.physiques !== L.total) return { cle: "incomplet", nom: L.physiques + " / " + L.total + " fichiers prêts",
+      ton: "attente", quoi: "Vérifiez le BAT et le fichier final de chaque version avant la remise." };
     if (!L.convention) {
       return { cle: "sansconv", nom: L.total + " prêts à nommer", ton: "attente",
         quoi: "Le client n'a pas de convention de nommage au référentiel. Chaque DAM a "
@@ -179,6 +327,210 @@ window.REMISE = (function () {
       quoi: "Le lot porte ses droits, ses mentions et son nommage." };
   }
 
+  function lienExterne(url, libelle) {
+    var href = urlPreuve(url);
+    return href ? el("a.b", { href: href, target: "_blank", rel: "noopener noreferrer" }, libelle) : null;
+  }
+
+  function champ(form, cle, titre, type, valeur) {
+    var id = form + "-" + cle;
+    var entree = el("input", { id: id, name: cle, type: type || "text", required: true,
+      value: valeur || "", max: type === "date" ? O.jour() : null });
+    return el("div.champ", {}, el("label", { for: id }, titre), entree);
+  }
+
+  function formulaire(titre, sous, enfants, valider, apres) {
+    var avecPanneau = !!document.querySelector(".panneau[role='dialog']");
+    var fermer = avecPanneau ? PANNEAU.fermerSur : PANNEAU.fermer;
+    var statut = el("p.remise-erreur", { role: "alert" }, "");
+    var form = el("form.form.remise-form", { onsubmit: function (e) {
+      e.preventDefault();
+      var res = valider(new FormData(form), form);
+      if (res.erreur) { statut.textContent = res.erreur; return; }
+      fermer();
+      if (apres) apres();
+      suiviSauvegarde(res.deja ? "Cette preuve est déjà consignée." : "Justificatif consigné.");
+    } }, enfants, statut,
+      el("div.form-actions", {},
+        el("button.b.or", { type: "submit" }, "Confirmer l’enregistrement"),
+        el("button.b.nu", { type: "button", onclick: fermer }, "Annuler")));
+    (avecPanneau ? PANNEAU.sur : PANNEAU.ouvrir)(titre, sous, form);
+  }
+
+  function suiviSauvegarde(message) {
+    if (DEPOT.peutEcrire()) {
+      AVIS.fait(message + " Dans ce navigateur.");
+      return;
+    }
+    DEPOT.ecrireSurDisque(function (ok) {
+      if (ok) {
+        document.querySelectorAll(".remise-ecriture").forEach(function (ligne) { ligne.remove(); });
+        AVIS.fait(message + " Sauvegarde reçue.");
+      }
+      else AVIS.refus("La preuve reste dans le brouillon. Réessayez depuis l’état de la sauvegarde.");
+    });
+  }
+
+  function ajouterBat(p, l, apres) {
+    if (!enregistrementPermis()) return;
+    var v = versionCourante(l);
+    if (!v || etatPiece(l).cle !== "bat") return;
+    var note = el("p", {}, "Liez le bon à tirer signé pour la V" + v.numero + ".");
+    formulaire("Joindre un BAT signé", l.nom + " · V" + v.numero, [note,
+      champ("bat", "nom", "Nom du document"),
+      champ("bat", "url", "Lien HTTPS du BAT signé", "url"),
+      champ("bat", "signataire", "Signataire"),
+      champ("bat", "date", "Date de signature", "date", O.jour())
+    ], function (data) {
+      var projet = DEPOT.trouve("projets", p.id);
+      var courant = projet && !projet.fusionne && !(window.CLOTURE && CLOTURE.est(projet))
+        ? (projet.livrables || []).find(function (x) { return x.id === l.id && !x.annule; }) : null;
+      var vc = courant && versionCourante(courant);
+      if (!enregistrementPermis() || !vc || vc.numero !== v.numero || vc.objet !== v.objet
+          || etatPiece(courant).cle !== "bat")
+        return { erreur: "La version ou son BAT a changé. Rouvrez le livrable." };
+      var url = urlPreuve(data.get("url")), nom = texte(data.get("nom"));
+      var auteur = texte(data.get("signataire")), date = dater(texte(data.get("date")));
+      if (!url || !nom || !auteur || !date)
+        return { erreur: "Indiquez le document, son lien HTTPS, le signataire et la date de signature." };
+      var f = PRODUCTION.poser(courant, "bat", nom, url, auteur);
+      f.version = vc.numero;
+      f.signe_le = date;
+      DEPOT.tracer("BAT signé", "livrables", courant.id, projet.id + " · V" + f.version + " · " + f.id);
+      DEPOT.enregistrer();
+      return { ok: true };
+    }, apres);
+  }
+
+  function ajouterSortie(p, l, apres) {
+    if (!enregistrementPermis()) return;
+    var v = versionCourante(l);
+    if (!v || etatPiece(l).cle !== "sortie") return;
+    formulaire("Rattacher le fichier à remettre", l.nom + " · V" + v.numero, [
+      el("p", {}, "Liez le fichier final dans son espace d’origine, avec les droits existants."),
+      champ("sortie", "nom", "Nom du fichier"),
+      champ("sortie", "url", "Lien HTTPS du fichier final", "url"),
+    ], function (data) {
+      var projet = DEPOT.trouve("projets", p.id);
+      var courant = projet && !projet.fusionne && !(window.CLOTURE && CLOTURE.est(projet))
+        ? (projet.livrables || []).find(function (x) { return x.id === l.id && !x.annule; }) : null;
+      var vc = courant && versionCourante(courant);
+      if (!enregistrementPermis() || !vc || vc.numero !== v.numero || vc.objet !== v.objet
+          || etatPiece(courant).cle !== "sortie")
+        return { erreur: "La version ou ses fichiers ont changé. Rouvrez le livrable." };
+      var url = urlPreuve(data.get("url")), nom = texte(data.get("nom"));
+      if (!url || !nom) return { erreur: "Indiquez le nom du fichier final et son lien HTTPS." };
+      var f = PRODUCTION.poser(courant, "asset", nom, url);
+      f.version = vc.numero;
+      f.role = "sortie";
+      DEPOT.tracer("fichier à remettre", "livrables", courant.id, projet.id + " · V" + f.version + " · " + f.id);
+      DEPOT.enregistrer();
+      return { ok: true };
+    }, apres);
+  }
+
+  function ouvrirPreuve(p, livrables, apres) {
+    if (!enregistrementPermis()) return;
+    if (!DEPOT.exigerReference(p, "Le reçu de remise")) return;
+    var cibles = [];
+    livrables.forEach(function (l) {
+      var e = etatPiece(l);
+      if (!l.annule && e.cle === "preuve") cibles.push(empreintePiece(l, e));
+    });
+    if (!cibles.length) return;
+    var choix = cibles.map(function (x, i) {
+      var m = x.marche && DEPOT.trouve("marches", x.marche);
+      return el("label.remise-choix", {},
+        el("input", { name: "pieces", type: "checkbox", value: i,
+          checked: cibles.length === 1 ? true : null }),
+        el("span", {}, x.nom + " · V" + x.version + (m ? " · " + m.nom : ""),
+          el("small", {}, x.fichiers.map(function (f) { return f.nom; }).join(", "))));
+    });
+    formulaire("Consigner une remise", p.ref || p.nom, [
+      el("fieldset", {}, el("legend", {}, "Versions couvertes par la preuve"), choix),
+      champ("preuve", "nom", "Nom du justificatif"),
+      champ("preuve", "url", "Lien HTTPS du justificatif", "url"),
+      champ("preuve", "destinataire", "Destinataire"),
+      champ("preuve", "date", "Date de remise", "date", O.jour())
+    ], function (data) {
+      var selection = data.getAll("pieces").map(function (i) { return cibles[Number(i)]; }).filter(Boolean);
+      return consigner(p.id, selection, { nom: data.get("nom"), url: data.get("url"),
+        destinataire: data.get("destinataire"), quand: data.get("date") });
+    }, apres);
+  }
+
+  function cartePreuve(r) {
+    return el("div.remise-preuve", {},
+      el("strong", {}, r.preuve.nom),
+      el("span", {}, [r.id, O.joli(r.remis_le), r.destinataire].filter(Boolean).join(" · ")),
+      lienExterne(r.preuve.url, "Ouvrir le justificatif"));
+  }
+
+  function sauvegarde() {
+    var pds = DEPOT.poids();
+    return pds.fichier && !pds.surDisque ? el("div.remise-ecriture", {},
+      el("p", { role: "status" }, "Sauvegarde du dépôt en attente"),
+      el("button.b.nu", { type: "button", onclick: function () { suiviSauvegarde("Sauvegarde du dépôt."); } }, "Réessayer"))
+      : null;
+  }
+
+  function suiviPiece(p, l, apres) {
+    var etat = etatPiece(l);
+    var recu = preuveCourante(p, l);
+    var anciens = preuves(p).filter(function (r) {
+      return r && r !== recu && r.preuve && Array.isArray(r.pieces)
+        && r.pieces.some(function (x) { return x.id === l.id; });
+    });
+    var ouvert = enregistrementPermis() && !l.annule && !p.fusionne && !(window.CLOTURE && CLOTURE.est(p));
+    return el("section.remise-suivi", { "aria-label": "BAT et remise" },
+      el("header.remise-tete", {}, el("h3", {}, "BAT et remise"),
+        UI.eti(recu ? "Remise justifiée" : etat.nom, recu ? "vert" : "attente")),
+      etat.bat ? el("div.remise-preuve", {},
+        el("strong", {}, "BAT signé · V" + etat.version),
+        el("span", {}, etat.bat.nom + " · " + etat.bat.signataire
+          + (etat.bat.signe_le ? " · " + O.joli(etat.bat.signe_le) : "")),
+        lienExterne(etat.bat.emplacement, "Ouvrir le BAT")) : null,
+      recu ? cartePreuve(recu) : null,
+      recu ? sauvegarde() : null,
+      etat.fichiers ? el("details", {}, el("summary", {}, "Fichiers à remettre"),
+        etat.fichiers.map(function (f) {
+          return el("div.remise-preuve", {}, el("strong", {}, f.nom),
+            lienExterne(f.emplacement, "Ouvrir le fichier") || el("span", {}, f.emplacement));
+        })) : null,
+      ouvert && !recu && etat.cle === "bat"
+        ? el("button.b.or", { type: "button", onclick: function () { ajouterBat(p, l, apres); } }, "Joindre le BAT signé")
+        : ouvert && !recu && etat.cle === "sortie"
+          ? el("button.b.or", { type: "button", onclick: function () { ajouterSortie(p, l, apres); } }, "Rattacher le fichier final")
+        : ouvert && !recu && etat.cle === "preuve"
+          ? el("button.b.or", { type: "button", onclick: function () { ouvrirPreuve(p, [l], apres); } }, "Consigner la remise")
+          : null,
+      anciens.length ? el("details", {},
+        el("summary", {}, "Preuves des versions ou périmètres précédents"),
+        anciens.map(cartePreuve)) : null);
+  }
+
+  function suiviLot(p, ls, apres) {
+    var candidats = ls.filter(function (l) { return etatPiece(l).cle === "preuve" && !preuveCourante(p, l); });
+    var livres = ls.filter(function (l) { return preuveCourante(p, l); }).length;
+    var permis = enregistrementPermis() && !p.fusionne && !(window.CLOTURE && CLOTURE.est(p));
+    return el("section.remise-suivi", { "aria-label": "Suivi de la remise" },
+      el("header.remise-tete", {}, el("h3", {}, "Suivi de la remise"),
+        UI.eti(livres + " / " + ls.length + " avec preuve", livres && livres === ls.length ? "vert" : "terne")),
+      permis && candidats.length ? el("button.b.or", { type: "button",
+        onclick: function () { ouvrirPreuve(p, candidats, apres); } }, "Consigner un lot") : null,
+      livres ? sauvegarde() : null,
+      preuves(p).length ? el("details", {}, el("summary", {}, "Justificatifs consignés"),
+        preuves(p).slice().reverse().filter(function (r) { return r && r.preuve && Array.isArray(r.pieces); }).map(function (r) {
+          return el("div", {}, cartePreuve(r), el("ul", {}, r.pieces.map(function (x) {
+            var l = ls.find(function (y) { return y.id === x.id; });
+            var m = x.marche && DEPOT.trouve("marches", x.marche);
+            return el("li", {}, x.nom + " · V" + x.version + (m ? " · " + m.nom : "")
+              + (l && preuveCourante(p, l) === r ? "" : " · preuve historique"),
+              x.fichiers && x.fichiers.length ? el("small", {}, x.fichiers.map(function (f) { return f.nom; }).join(", ")) : null);
+          })));
+        })) : null);
+  }
+
   /* ————————————————————— Le manifeste, à l'écran ————————————————————— */
 
   function ouvrir(p) {
@@ -189,10 +541,8 @@ window.REMISE = (function () {
 
     PANNEAU.ouvrir("Le paquet de remise", p.ref || p.nom, el("div", {},
       UI.banniere(L.prets === L.total ? "vert" : "",
-        L.prets === L.total
-          ? "Les " + L.total + " pièces portent leurs droits, leurs mentions et leur nommage."
-          : (L.total - L.prets) + " pièces sur " + L.total + " partiraient incomplètes. "
-            + "Le produit n'empêche rien : il dit ce que ça coûtera."),
+        L.physiques + " / " + L.total + " versions avec BAT requis et fichier final. "
+        + L.conformes + " / " + L.total + " sans écart relevé sur les métadonnées."),
 
       L.convention
         ? null
@@ -215,6 +565,7 @@ window.REMISE = (function () {
               }))
             : null,
           x.manques.length ? el("div.rmsp-x", {}, "manque : " + x.manques.join(", ")) : null,
+          !x.physique ? el("div.rmsp-x", {}, x.suivi) : null,
           x.alertesDroits.length ? el("div.rmsp-x", {}, x.alertesDroits.join("  ·  ")) : null,
           x.mentionsManquantes.length
             ? el("div.rmsp-x", {}, "mentions absentes : " + x.mentionsManquantes.join(", ")) : null);
@@ -243,11 +594,10 @@ window.REMISE = (function () {
           + (d.expire ? " · expire le " + O.jourCourt(d.expire) : "")
           + (d.cession ? " · " + d.cession : ""));
       });
-      if (!x.pret) {
-        lignes.push("  ⚠ " + x.manques.concat(x.alertesDroits)
-          .concat(x.mentionsManquantes.length ? ["mentions absentes : " + x.mentionsManquantes.join(", ")] : [])
-          .join(" · "));
-      }
+      if (!x.physique) lignes.push("  ⚠ " + x.suivi);
+      if (!x.conformite) lignes.push("  ⚠ " + x.manques.concat(x.alertesDroits)
+        .concat(x.mentionsManquantes.length ? ["mentions absentes : " + x.mentionsManquantes.join(", ")] : [])
+        .join(" · "));
       lignes.push("");
     });
     var t = lignes.join("\n");
@@ -258,5 +608,7 @@ window.REMISE = (function () {
   }
 
   return { convention: convention, nomAttendu: nomAttendu, piece: piece, lot: lot,
-    etat: etat, ouvrir: ouvrir, droits: droits, mentions: mentions };
+    etat: etat, ouvrir: ouvrir, droits: droits, mentions: mentions, etatPiece: etatPiece,
+    empreintePiece: empreintePiece, preuveCourante: preuveCourante, consigner: consigner,
+    suiviPiece: suiviPiece, suiviLot: suiviLot, versionCourante: versionCourante };
 })();

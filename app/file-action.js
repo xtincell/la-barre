@@ -49,27 +49,15 @@ window.FILE = (function () {
     });
 
     /* 1 · Ce qui attend mon verdict. Rien ne coûte plus cher que ça. */
-    var pieces = VUE_REVUE.pieces();
-    if (pieces.length) {
-      var vieille = pieces.reduce(function (n, x) {
-        return Math.max(n, x.depuis ? O.depuis(x.depuis) : 0); }, 0);
-      out.push(item("trancher", pieces.length + (pieces.length > 1 ? " livrables attendent mon verdict" : " livrable attend mon verdict"),
-        "Chaque jour sans verdict est un jour où l'équipe ne peut ni corriger ni continuer.",
-        100 + pieces.length * 5, "#/revue",
-        pieces.slice(0, 4).map(function (x) { return x.objet || x; }),
-        { chiffre: pieces.length + (pieces.length > 1 ? " livrables suspendus" : " livrable suspendu"),
-          depuis: vieille,
-          trancher: "Approuver, renvoyer dans le périmètre, ou refuser sur critère. Tant que ce n'est pas dit, rien ne repart.",
-          court: "attendent mon verdict",
-          gestes: [{ nom: "Juger la première →", fort: true, quand: function () {
-            var pr = pieces[0];
-            if (pr && pr.type === "livrable" && window.VUE_ASSET) {
-              VUE_ASSET.ouvrir(pr.projet, pr.objet, function () { location.reload(); });
-            } else if (pr) {
-              GESTE.ouvrir("pistes", { p: pr.projet });
-            }
-          } }] }));
-    }
+    VUE_REVUE.pieces().forEach(function (p) {
+      var lien = VUE_REVUE.lienPiece(p);
+      var libelle = p.type === "livrable" ? "Examiner et décider" : "Examiner la piste";
+      out.push(item("trancher", p.contexte, "Un verdict est attendu.", 105, lien,
+        p.objet && p.objet.vignette ? [p.objet] : [],
+        { chiffre: p.titre, depuis: p.depuis ? O.depuis(p.depuis) : 0,
+          trancher: "Ouvrir les critères de la pièce avant de trancher.",
+          court: libelle, direct: true, gestes: [{ nom: libelle, href: lien, fort: true }] }));
+    });
 
     /* 1 bis · Les adaptations hors de l'écart déclaré de leur marché. Elles ne
      * sont pas bloquées : la revue tranche — corriger l'écart déclaré, ou
@@ -234,7 +222,8 @@ window.FILE = (function () {
      * la table en trois colonnes — la file, la scène, le contexte. Décider et
      * regarder sont le même geste ; ils ne doivent pas avoir deux dessins. */
     var filtre = el("select", { id: "file-famille", onchange: function (e) {
-      famille = e.target.value; courant = 0; rafraichir(); } },
+      famille = e.target.value; courant = 0; rafraichir();
+      document.getElementById("file-famille").focus(); } },
       el("option", { value: "" }, "Tous les gestes"),
       Object.keys(FAMILLES).map(function (key) { return el("option", { value: key }, FAMILLES[key].nom); }));
     filtre.value = famille;
@@ -272,7 +261,9 @@ window.FILE = (function () {
       return el("button.studio-piece.dx-i" + (n === courant ? ".active" : "")
         + (f.ton ? ".f-" + f.ton : ""), { type: "button",
         "aria-pressed": n === courant ? "true" : "false",
-        onclick: function () { courant = n; rafraichir(); } },
+        onclick: function () { courant = n; rafraichir();
+          var actif = document.querySelector(".dx-i[aria-pressed='true']");
+          if (actif) actif.focus(); } },
         el("span.studio-piece-ref", {}, f.nom || x.famille),
         el("strong", {}, x.chiffre),
         age(x) ? el("small.dx-age", {}, age(x)) : null);
@@ -308,6 +299,7 @@ window.FILE = (function () {
          * seule chose qui dit que le clic a porté. Si l'animation n'a pas
          * lieu, le geste part quand même — O.sortir le garantit. */
         (x.gestes || []).map(function (g) {
+          if (g.href) return el("a.b.or", { href: g.href }, g.nom);
           return el(g.fort ? "button.b.or" : "button.studio-lien", { type: "button",
             onclick: function () {
               var carte = document.querySelector(".dx-scene");
@@ -318,16 +310,16 @@ window.FILE = (function () {
          * c'est l'écran où l'assistant passe sa journée, et il envoyait
          * ailleurs sans dire quoi y faire. L'item sait déjà ce qui attend et
          * ce que ça coûte — la modale se monte avec. */
-        GESTE.lien(x.ou,
+        x.direct ? null : GESTE.lien(x.ou,
           (x.gestes || []).length ? "Ouvrir le dossier" : d.nom || "Ouvrir",
           (x.gestes || []).length ? "studio-lien" : "b.or",
           { quoi: x.quoi, cout: x.trancher || x.cout }),
-        el("button.studio-lien", { type: "button", onclick: function () {
+        total > 1 ? el("button.studio-lien", { type: "button", onclick: function () {
           var carte = document.querySelector(".dx-scene");
           O.sortir(carte, function () {
             courant = (courant + 1) % total; rafraichir();
           });
-        } }, "Sujet suivant →")));
+        } }, "Sujet suivant") : null));
   }
 
   /* Ce qu'il faut avoir sous les yeux pour trancher — et rien de plus. Le

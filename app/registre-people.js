@@ -133,31 +133,25 @@ window.REGISTRE = (function () {
 
     var releve = rs[0].releve_le;
     var age = releve ? Math.round((new Date(O.jour()) - new Date(releve)) / 86400000) : null;
+    var manquants = rs.filter(function (r) { return etat(r, par[r.ref]).cle === "aveugle"; });
+    var autres = rs.filter(function (r) { return etat(r, par[r.ref]).cle !== "aveugle"; });
 
     hote.appendChild(el("div.reg", {},
       el("div.reg-t", {},
-        el("h2.regt-l", {}, MAISON.registres.people),
-        el("span.regt-d", {}, age === null ? "Date de relevé inconnue"
-          : age <= 0 ? "Relevé aujourd'hui"
-          : "Relevé il y a " + age + (age > 1 ? " jours" : " jour")
-            + (age > 14 ? " — un registre de cet âge se lit comme une photo, pas comme un état" : ""))),
+        el("h2.regt-l", {}, "Relevé des projets"),
+        el("span.regt-d", {}, !releve ? "Date inconnue" :
+          ["Du ", el("time", { datetime: releve }, O.joli(releve)), age > 14 ? " · relevé ancien" : null])),
 
       el("div.reg-c", {},
-        compte(String(b.suivis), "Suivis ici", "leur exécution se voit", "vert"),
+        compte(String(b.suivis), "Dossiers liés", "", "vert"),
         b.aveugles ? compte(String(b.aveugles), "Sans dossier ici",
-          "leur exécution ne se voit nulle part", b.critiques.length ? "alerte" : "attente") : null,
-        b.hors ? compte(String(b.hors), "Clôturés ou en pause", "rien à suivre", "terne") : null),
+          "Dossier à ouvrir ou à rapprocher", b.critiques.length ? "alerte" : "attente") : null,
+        b.hors ? compte(String(b.hors), "Clôturés ou en pause", "", "terne") : null),
 
-      /* La conséquence, une fois. Elle vaut pour toutes les lignes marquées
-       * « aucun dossier ici » — la répéter trente-quatre fois ne la rendait
-       * pas plus vraie, seulement invisible. */
-      b.aveugles
-        ? el("div.reg-n", {}, el("b", {}, "« Aucun dossier ici » — ce que ça veut dire : "),
-            "l'exécution ne se voit nulle part dans LA BARRE, rien n'y est relançable, "
-            + "et cette absence ne se signale pas d'elle-même.")
-        : null,
-
-      el("div.reg-l", {}, rs.map(function (r) { return ligne(r, par[r.ref], rafraichir); }))
+      el("div.reg-l", {}, manquants.map(function (r) { return ligne(r, par[r.ref], rafraichir); })),
+      autres.length ? el("details.reg-plus", {},
+        el("summary", {}, "Dossiers suivis, clôturés ou en pause · " + autres.length),
+        el("div.reg-l", {}, autres.map(function (r) { return ligne(r, par[r.ref], rafraichir); }))) : null
     ));
   }
 

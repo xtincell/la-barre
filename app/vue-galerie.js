@@ -107,7 +107,6 @@ window.VUE_GALERIE = (function () {
     hote.className = "zone studio galerie";
     O.vider(hote);
     var toutes = DEPOT.liste("campagnes").map(fiche).filter(function (x) { return x.ps.length; });
-    var projetsTotal = toutes.reduce(function (s, x) { return s + x.ps.length; }, 0);
     var ans = {}; toutes.forEach(function (x) { ans[x.annee] = (ans[x.annee] || 0) + 1; });
     var listeAns = Object.keys(ans).sort().reverse();
     var parStruct = {}; toutes.forEach(function (x) { parStruct[x.structure] = (parStruct[x.structure] || 0) + 1; });
@@ -146,20 +145,17 @@ window.VUE_GALERIE = (function () {
     function tout() { rendre(hote); }
     champ.addEventListener("input", function () { etat.q = champ.value; garder(); filtrer(); });
 
-    hote.appendChild(el("header.studio-entete", {},
-      el("div", {},
-        el("p.studio-date", {}, "Le travail, en images"),
-        el("h1", {}, "La galerie."),
-        el("p.studio-intro", {}, toutes.length + " campagnes, " + projetsTotal + " projets, de "
-          + listeAns[listeAns.length - 1] + " à " + listeAns[0] + " — " + STRUCTURE.liste().map(function (s) { return s.court; }).join(", ") + ". "
-          + "Chaque carte ouvre sa campagne et ses projets."))));
-
-    hote.appendChild(el("div.gal-filtres", {},
+    hote.appendChild(APP.retour("#/projets"));
+    hote.appendChild(el("header.studio-entete", {}, el("h1", {}, "Galerie")));
+    var filtres = el("details.lb-filtres-galerie", {}, el("summary", {}, "Filtres"),
+      el("div.gal-filtres", {},
       puces("Structure", [{ v: "toutes", nom: "Toutes", n: toutes.length }].concat(STRUCTURE.liste()
         .filter(function (s) { return parStruct[s.id]; }).map(function (s) { return { v: s.id, nom: s.court, n: parStruct[s.id] }; })), "structure", tout),
       puces("Année", [{ v: "toutes", nom: "Toutes" }].concat(listeAns.map(function (a) { return { v: a, nom: a, n: ans[a] }; })), "annee", tout),
       puces("Régime", [{ v: "tous", nom: "Tout" }, { v: "temps", nom: "Temps forts" }, { v: "fil", nom: "Fils de l'année" }], "regime", tout),
       champ));
+    filtres.open = etat.structure !== "toutes" || etat.regime !== "tous" || etat.annee !== "toutes" || !!etat.q;
+    hote.appendChild(filtres);
     hote.appendChild(compte);
     hote.appendChild(zone);
     filtrer();

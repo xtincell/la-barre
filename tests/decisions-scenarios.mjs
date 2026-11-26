@@ -75,6 +75,11 @@ export function saisie(racine) {
   return c;
 }
 export function cliquer(n) { for (const f of n.ecouteurs.click || []) f.call(n, { preventDefault() {}, target: n }); }
+export function soumettre(racine) {
+  const f = parcourir(racine, n => n.tagName === 'FORM')[0];
+  if (!f) throw new Error('Formulaire introuvable');
+  for (const traiter of f.ecouteurs.submit || []) traiter.call(f, { preventDefault() {}, target: f });
+}
 
 /* ————— L'horloge et le hasard figés ————— */
 
@@ -123,7 +128,7 @@ export async function bac(app, graine) {
   const panneaux = [], demandes = [], refus = [];
   const document = {
     createElement: t => new Noeud(t), createTextNode: t => new Texte(String(t)),
-    querySelectorAll: () => [], getElementById: () => null, body: new Noeud('body'),
+    querySelector: () => null, querySelectorAll: () => [], getElementById: () => null, body: new Noeud('body'),
   };
   const ui = new Proxy({}, { get: () => () => new Noeud('div') });
   const sandbox = {
@@ -158,7 +163,7 @@ export async function bac(app, graine) {
   vm.runInContext(await readFile(join(app, '..', 'profils', 'entreprise', 'maison.js'), 'utf8'), ctx);
   for (const nom of ['outils', 'reconciliation', 'depot']) vm.runInContext(await lire(nom), ctx);
   if (existsSync(join(app, 'decision.js'))) vm.runInContext(await lire('decision'), ctx);
-  for (const nom of ['acteur', 'version']) vm.runInContext(await lire(nom), ctx);
+  for (const nom of ['acteur', 'version', 'remise']) vm.runInContext(await lire(nom), ctx);
   const interne = {};
   const charger = async (nom, noms = []) => {
     vm.runInContext(noms.length ? exposer(await lire(nom), noms) : await lire(nom), ctx);
@@ -270,8 +275,14 @@ export const ECRIVAINS = {
     const pr = s.ctx.DEPOT.trouve('projets', 'LI');
     const verdict = cle => s.ctx.MAISON.verdicts.find(v => v.cle === cle);
     s.interne['vue-livrable'].juger(pr, pr.livrables[0], verdict('approuve'), () => {});
+    const confirmation = s.dernier();
+    if (parcourir(confirmation, n => n.tagName === 'FORM').length) soumettre(confirmation);
     s.interne['vue-livrable'].juger(pr, pr.livrables[1], verdict('retour'), () => {});
-    s.demandes.pop()('Le logo est sous la taille minimale');
+    if (s.demandes.length) s.demandes.pop()('Le logo est sous la taille minimale');
+    else {
+      saisie(s.dernier()).value = 'Le logo est sous la taille minimale';
+      soumettre(s.dernier());
+    }
   },
 
   /* vue-revue.js — la revue : une piste approuvée, un livrable hors périmètre,

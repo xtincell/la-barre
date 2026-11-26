@@ -20,21 +20,40 @@ window.VUE_BRIEF = (function () {
           editer: function (k) { VUE_PROJETS.editerChamp(p, "brief", k, rafraichir); } }));
   }
 
-  function rendre(p, rafraichir) {
-    /* Un dossier n'a pas UN brief : il en a autant que de demandes qu'il fonde.
-     * Le brief de campagne reste ici, en tête — c'est celui qu'on reçoit — et
-     * les autres se déclarent sous lui, chacun avec ce qu'il fonde et ce qu'il
-     * pilote. Deux gabarits sur trois n'en avaient aucun. */
-    var g = (NATURE.de(p) || {}).cle || "campagne";
-    var types = BRIEFS.pourGabarit(g);
-    var campagne = types.filter(function (t) { return t.cle === "campagne"; })[0];
-    var autres = types.filter(function (t) { return t.cle !== "campagne"; });
+  function estContextuel(p) {
+    return ["demande", "pitch"].indexOf((NATURE.de(p) || {}).cle) !== -1;
+  }
 
-    return el("div.bf", {},
-      bandeBriefs(p, types),
-      campagne ? corpsCampagne(p, rafraichir) : premierBrief(p, g, types, rafraichir),
-      lesAutres(p, autres, rafraichir),
-      champsEditables(p, rafraichir));
+  function reception(p) {
+    var d = p.sections.brief || {};
+    var avecSource = !!String(p.briefSource || "").trim();
+    var version = VERSION.num(d);
+    var decision = d.statut === "accepte" && d.accepte_le && DEPOT.liste("decisions").find(function (x) {
+      return x.type === "recevabilite" && x.projet === p.id && x.quand === d.accepte_le;
+    });
+    return {
+      existe: avecSource || CHAMPS.etat("brief", d).fait > 0,
+      statut: decision && decision.version && decision.version !== version ? null : d.statut || null,
+      version: version,
+    };
+  }
+
+  function rendre(p, rafraichir) {
+    var nature = NATURE.de(p);
+    var types = BRIEFS.pourNature(nature.cle);
+    var campagne = window.CAMPAGNE && CAMPAGNE.de(p.campagneId);
+    var contextuel = estContextuel(p);
+    return el("div.bf.recevoir-brief", {},
+      campagne ? el("p.bf-campagne", {},
+        "Cadre partagé dans la campagne ",
+        el("a", { href: "#/projets/" + campagne.id }, campagne.nom)) : null,
+      nature.cle !== "pitch" || reception(p).existe ? corpsReception(p, rafraichir, contextuel) : null,
+      types.length ? el("details.bf-options",
+        nature.cle === "pitch" && !reception(p).existe ? { open: true } : {},
+        el("summary", {}, "Briefs de travail"),
+        bandeBriefs(p, types),
+        lesAutres(p, types, rafraichir)) : null
+    );
   }
 
   /* La question de l'écran : ce dossier est-il fondé ? */
@@ -54,23 +73,6 @@ window.VUE_BRIEF = (function () {
         : "Aucun brief posé. Ce dossier avance sur ce qui s'est dit, et ce qui s'est "
           + "dit ne se relit pas.",
       []);
-  }
-
-  /* Le premier brief d'une nature qui n'en avait aucun. */
-  function premierBrief(p, g, types, rafraichir) {
-    var n = NATURE.de(p) || { nom: g, quoi: "" };
-    /* Le brief de campagne n'est pas absent : il vit un étage plus haut, sur la
-     * campagne qu'il fonde. La phrase disait « il n'a pas de brief de campagne,
-     * et c'est normal » sur un projet de nature campagne — vrai, et trompeur. */
-    var c = window.CAMPAGNE ? CAMPAGNE.de(p.campagneId) : null;
-    return el("div.bf-vide", {},
-      el("p", {}, "Ce dossier est un projet de nature « " + n.nom.toLowerCase() + " »"
-        + (n.quoi ? " — " + n.quoi.charAt(0).toLowerCase() + n.quoi.slice(1) : "")),
-      el("p", {}, c
-        ? ["Le brief de campagne se pose sur la campagne ",
-           el("a", { href: "#/projets/" + c.id }, "« " + c.nom + " »"),
-           " : c'est elle qu'il fonde. Ici, ce sont les " + types.length + " types ci-dessous."]
-        : "Ce sont les " + types.length + " types ci-dessous qui le fondent."));
   }
 
   /* ————————————————————— Les autres briefs ————————————————————— */
@@ -136,34 +138,50 @@ window.VUE_BRIEF = (function () {
     ));
   }
 
-  function corpsCampagne(p, rafraichir) {
+  function corpsReception(p, rafraichir, contextuel) {
     var d = p.sections.brief || {};
     var ident = p.sections.identite || {};
+    var accueil = reception(p);
+    var source = p.briefSource;
     var r = recevabilite(p, d, ident);
-
-    var vide = !CHAMPS.etat("brief", d).fait;
+    var ouvert = !CLOTURE.est(p) && !p.fusionne;
 
     return el("div.br", {},
-      INGESTEUR.bande(p, rafraichir),
-      bandeAccueil(p, d, ident, r, rafraichir),
+      bandeAccueil(p, d, r, accueil, ouvert, rafraichir),
+      accueil.existe && (d.verbatim || source) ? el("details.bf-options", { open: contextuel },
+        el("summary", {}, "Demande d’origine"),
+        el("blockquote.bf-source", {}, d.verbatim || source),
+        d.verbatim && source && String(d.verbatim).trim() !== String(source).trim() ? el("details",
+          el("summary", {}, "Source complète"),
+          el("blockquote.bf-source", {}, source)) : null) : null,
 
-      /* Le brief n'arrive jamais au format. C'est le geste le plus fréquent du
-       * poste : le mettre en forme moi-même, puis faire contresigner. */
-      el("div.br-ing", {},
-        el("button.b" + (vide ? ".or" : ""), { type: "button",
-          onclick: function () { INGESTEUR.ouvrir(p, rafraichir); } },
-          vide ? "Ingérer un brief reçu" : "Reprendre la mise en forme"),
-        p.briefSource
-          ? el("span.bri-s", {}, "Source conservée · "
-              + Math.round(p.briefSource.length / 100) / 10 + " k caractères")
-          : el("span.bri-s.vide", {}, "Aucune source conservée — les champs n'ont pas de citation d'origine.")),
-
-      corps(p, d, ident, rafraichir));
+      ouvert && accueil.existe ? el("details.bf-options",
+        el("summary", {}, "Saisie et mise en forme"),
+        el("div.br-ing",
+          el("button.b", { type: "button", onclick: function () { INGESTEUR.ouvrir(p, rafraichir); } },
+            source ? "Reprendre la mise en forme" : "Coller un brief reçu"),
+          el("button.b.nu", { type: "button", onclick: function () {
+            VUE_PROJETS.editerSection(p, "brief", rafraichir);
+          } }, "Modifier les champs")),
+        INGESTEUR.bande(p, rafraichir),
+        champsEditables(p, rafraichir)) : null,
+      !contextuel ? el("details.bf-options",
+        el("summary", {}, "Repères du brief"),
+        corps(p, d, ident, rafraichir)) : null
+    );
   }
 
   /* ————————————————————— La question : est-ce que je l'accepte ? ————————————————————— */
 
   function recevabilite(p, d, ident) {
+    if ((NATURE.de(p) || {}).cle === "demande") {
+      var controlesDemande = [
+        { quoi: "Demande d’origine", ok: !!String(d.verbatim || p.briefSource || "").trim(), poids: 5 },
+        { quoi: "Client renseigné", ok: !!(ident.clientId || ident.client), poids: 3 },
+      ];
+      return { controles: controlesDemande, recevable: controlesDemande.every(function (c) { return c.ok; }) };
+    }
+
     var eb = CHAMPS.etat("brief", d);
     var ei = CHAMPS.etat("identite", ident);
     var manquants = ei.manquants.concat(eb.manquants);
@@ -173,7 +191,7 @@ window.VUE_BRIEF = (function () {
     var concept = detecterConcept(d);
 
     var controles = [
-      { quoi: "Décideur nommé", ok: !!ident.decideur, poids: 5, cout: REGLES.prix("decideur-absent") },
+      { quoi: "Décideur nommé", ok: !!(ident.decideurId || ident.decideur), poids: 5, cout: REGLES.prix("decideur-absent") },
       { quoi: "Fenêtre et dates", ok: !!ident.fenetre, poids: 4, cout: REGLES.prix("fenetre-absente") },
       { quoi: "Qui peut annuler", ok: !!ident.tueur, poids: 3, cout: REGLES.prix("tueur-absent") },
       { quoi: "Champs critiques", ok: manquants.length === 0, poids: 2,
@@ -205,43 +223,62 @@ window.VUE_BRIEF = (function () {
     return trouve;
   }
 
-  function bandeAccueil(p, d, ident, r, rafraichir) {
-    var statut = d.statut || null;
-    var prix = null;
+  function bandeAccueil(p, d, r, accueil, ouvert, rafraichir) {
+    var statut = accueil.statut;
+    var simple = (NATURE.de(p) || {}).cle === "demande";
+    var revision = revisionLue(p);
+    var titre = statut === "accepte" ? "Brief accepté" : statut === "sous_reserve" ? "Brief retourné sous réserve"
+      : accueil.existe ? "Brief reçu" : "Demande à consigner";
 
-    if (!r.recevable) {
-      var pires = r.controles.filter(function (c) { return !c.ok && c.cout; })
-        .sort(function (a, b) { return (b.poids || 0) - (a.poids || 0); });
-      prix = "L'accepter en l'état : " + (pires[0] ? pires[0].cout.toLowerCase() : "des champs critiques resteront vides")
-        + (pires.length > 1 ? " · et " + (pires.length - 1) + (pires.length > 2 ? " autres conséquences" : " autre conséquence") : "");
-    }
-
-    var gestes = [];
-    if (statut === "accepte") {
-      gestes.push({ nom: "Rouvrir", doux: true, quand: function () {
-        d.statut = null; DEPOT.enregistrer(); rafraichir(); } });
-    } else {
-      gestes.push({ nom: "Accepter le brief", fort: true, quand: function () { accepter(p, d, r, rafraichir); } });
-      gestes.push({ nom: "Retourner sous réserve", quand: function () { retourner(p, d, r, rafraichir); } });
-    }
-    gestes.push({ nom: "Mettre en forme", doux: true, quand: function () {
-      VUE_PROJETS.editerSection(p, "brief", rafraichir); } });
-
-    return el("div", {},
-      UI.recevabilite(
-        statut === "accepte" ? "Brief accepté" :
-        statut === "sous_reserve" ? "Brief retourné sous réserve" : "Est-ce que j'accepte ce brief ?",
-        r.controles, prix, gestes
-      ),
-      statut === "sous_reserve" && d.reserve
-        ? UI.banniere("", "Retourné le " + O.joli(d.reserve.quand) + " — " + d.reserve.motif
-            + ". Mon horloge est à l'arrêt jusqu'à sa levée.")
-        : null,
-      statut === "accepte"
-        ? UI.banniere("vert", "Accepté le " + O.joli(d.accepte_le)
-            + (d.accepte_malgre ? " malgré " + d.accepte_malgre + " conditions non remplies." : "."))
-        : null
+    return el("section.bf-reception",
+      el("div.bf-reception-tete",
+        el("h2", {}, titre), el("span.studio-compte", {}, "V" + accueil.version)),
+      statut === "sous_reserve" && d.reserve ? el("p", {},
+        "Retourné le " + O.joli(d.reserve.quand) + ". Motif : " + d.reserve.motif) : null,
+      statut === "accepte" && d.accepte_le ? el("p", {},
+        "Accepté le " + O.joli(d.accepte_le) + (d.accepte_malgre
+          ? " avec " + d.accepte_malgre + (d.accepte_malgre === 1 ? " condition ouverte." : " conditions ouvertes.") : ".")) : null,
+      accueil.existe ? el("details.bf-controles",
+        el("summary", {}, r.recevable ? "Conditions remplies" : "Conditions à vérifier"),
+        el("ul", {}, r.controles.map(function (c) {
+          return el("li", {}, (c.ok ? "✓ " : "○ ") + c.quoi, !c.ok && c.cout ? " · " + c.cout : null);
+        }))) : null,
+      ouvert ? el("div.form-actions",
+        !accueil.existe ? el("button.b.or", { type: "button", onclick: function () {
+          if (simple) VUE_PROJETS.editerChamp(p, "brief", "verbatim", rafraichir);
+          else INGESTEUR.ouvrir(p, rafraichir);
+        } }, simple ? "Saisir la demande" : "Coller un brief reçu") : null,
+        accueil.existe && statut !== "accepte" ? [
+          el("button.b.or", { type: "button", onclick: function () { accepter(p, d, r, rafraichir); } }, "Accepter le brief"),
+          el("button.b", { type: "button", onclick: function () { retourner(p, d, r, rafraichir); } }, "Retourner sous réserve")
+        ] : null,
+        statut === "accepte" ? el("button.b.nu", { type: "button", onclick: function () {
+          if (!briefCourant(p, d, revision)) return;
+          d.statut = null;
+          DEPOT.tracer("réouverture", "projets", p.id, "réception du brief");
+          DEPOT.enregistrer(); rafraichir();
+        } }, "Rouvrir la réception") : null) : null
     );
+  }
+
+  function revisionLue(p) {
+    return JSON.stringify([p.sections.brief, p.sections.identite, p.briefSource]);
+  }
+
+  function briefCourant(p, d, revision) {
+    if (DEPOT.trouve("projets", p.id) === p && !CLOTURE.est(p) && !p.fusionne
+        && revisionLue(p) === revision && (!p.sections.brief || p.sections.brief === d)) return true;
+    AVIS.refus("Le dossier a changé. Relisez la demande avant de décider.");
+    return false;
+  }
+
+  /* Une modification de la demande ouvre une nouvelle version de réception.
+   * L'ancien état reste dans l'historique et dans le registre des décisions. */
+  function preparerRevision(p) {
+    var d = p.sections.brief;
+    if (!d || reception(p).statut !== "accepte") return;
+    VERSION.ouvrir(d, "interne", "Demande modifiée après sa réception", MAISON.titulaire, { complet: true });
+    d.statut = null;
   }
 
   /* Accepter ou retourner le brief est une décision sur sa recevabilité, au
@@ -249,56 +286,62 @@ window.VUE_BRIEF = (function () {
    * malgré des conditions non remplies s'écarte du processus : c'est une
    * déviation, motivée, de portée projet. Rend la décision, ou rien si elle
    * est refusée. */
-  function trancher(p, verdict, motif, ecart, appliquer) {
+  function trancher(p, d, revision, verdict, motif, ecart, appliquer) {
+    if (!briefCourant(p, d, revision)) return null;
     var champs = { objet: "brief", type: "recevabilite", projet: p.id, verdict: verdict, motif: motif,
-      quand: new Date().toISOString(), qui: MAISON.titulaire, acteur: DECISION.acteur(), titre: "le brief" };
+      version: VERSION.num(d), qui: MAISON.titulaire, acteur: DECISION.acteur(), titre: "le brief" };
     if (ecart) { champs.portee = "projet"; champs.ecart = ecart; }
     var decision;
     try { decision = DECISION.construire(champs); }
     catch (e) { if (DECISION.estRefus(e)) { AVIS.refus(e.message); return null; } throw e; }
+    var avant = { section: p.sections.brief, champs: Object.assign({}, d) };
+    p.sections.brief = d;
     appliquer(decision);
-    return DECISION.ajouter(decision);
+    try { return DECISION.ajouter(decision); }
+    catch (e) {
+      Object.keys(d).forEach(function (k) { if (!(k in avant.champs)) delete d[k]; });
+      Object.assign(d, avant.champs);
+      if (!avant.section) delete p.sections.brief;
+      if (DECISION.estRefus(e)) { AVIS.refus(e.message); return null; }
+      throw e;
+    }
   }
 
   function accepter(p, d, r, rafraichir) {
-    if (r.recevable) {
-      if (!trancher(p, "approuve", null, null, function (x) {
-        d.statut = "accepte"; d.accepte_le = x.quand; d.accepte_malgre = 0; })) return;
-      DEPOT.tracer("acceptation", "projets", p.id, "brief accepté");
-      DEPOT.enregistrer(); rafraichir();
-      return;
-    }
-
+    var revision = revisionLue(p);
     var manques = r.controles.filter(function (c) { return !c.ok; });
-    var motif = el("textarea", { id: "br-malgre", rows: 2, placeholder: "Le client a confirmé la cible par écrit, le délai démarre quand même…" });
-    PANNEAU.ouvrir("Avant d'accepter", "ce que ça engage", el("div", {},
-      UI.banniere("rouge", manques.length + " conditions ne sont pas remplies. Accepter, c'est renoncer à les opposer plus tard."),
-      el("div.sousbloc", {}, el("h3", {}, "Ce que ça coûte"),
-        el("div", {}, manques.map(function (c) {
-          return el("div.oc-l", {}, el("span.puce"), el("span", {},
-            c.quoi + (c.cout ? " — " + c.cout : "")));
-        }))),
-      el("div.sousbloc", {}, el("h3", {}, "Ce que ça débloque"),
-        el("div.oc-l.gagne", {}, UI.icone("revue", 13),
-          el("span", {}, "La plateforme créative peut être écrite, et le délai de réponse démarre."))),
-      el("div.form", {}, el("div.champ", {},
-        el("label", { "for": "br-malgre" }, "Pourquoi l'accepter quand même"),
-        el("div.indice", {}, "Un écart au processus, pour ce projet seulement. Il reste au dossier avec son motif."),
-        motif)),
-      el("div.form-actions", { style: { "margin-top": "1.2rem" } },
+    var motif = el("textarea", { id: "br-malgre", rows: 3 });
+    PANNEAU.ouvrir("Accepter le brief", p.ref + " · V" + VERSION.num(d), el("div", {},
+      el("p", {}, "La décision sera consignée pour ce dossier. Le go final de la Clientèle se consigne séparément."),
+      manques.length ? el("div.sousbloc",
+        el("h3", {}, "Conditions encore ouvertes"),
+        el("ul", {}, manques.map(function (c) { return el("li", {}, c.quoi, c.cout ? " · " + c.cout : null); })),
+        el("div.form", {}, el("div.champ", {},
+          el("label", { "for": "br-malgre" }, "Motif de l’acceptation malgré ces conditions"), motif))) : null,
+      el("div.form-actions",
         el("button.b.or", { type: "button", onclick: function () {
-          if (!motif.value.trim()) { AVIS.refus("Accepter malgré les manques sans dire pourquoi, c'est y renoncer par goût."); return; }
-          if (!trancher(p, "approuve", motif.value.trim(),
-            { de: "recevabilite", ref: null, conditions: manques.map(function (c) { return c.quoi; }) },
-            function (x) { d.statut = "accepte"; d.accepte_le = x.quand; d.accepte_malgre = manques.length; })) return;
-          DEPOT.tracer("acceptation", "projets", p.id, "brief accepté malgré " + manques.length + " manques");
+          var raison = manques.length ? motif.value.trim() : null;
+          if (manques.length && !raison) {
+            AVIS.refus("Indiquez le motif de l’acceptation malgré les conditions ouvertes.");
+            motif.focus(); return;
+          }
+          var ecart = manqueEcart(manques);
+          if (!trancher(p, d, revision, "approuve", raison, ecart, function (x) {
+            d.statut = "accepte"; d.accepte_le = x.quand; d.accepte_malgre = manques.length;
+          })) return;
+          DEPOT.tracer("acceptation", "projets", p.id, "brief accepté" + (manques.length ? " malgré " + manques.length + " manques" : ""));
           DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
-        } }, "Accepter quand même"),
-        el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Revenir"))
+        } }, manques.length ? "Accepter quand même" : "Confirmer l’acceptation"),
+        el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
     ));
   }
 
+  function manqueEcart(manques) {
+    return manques.length ? { de: "recevabilite", ref: null, conditions: manques.map(function (c) { return c.quoi; }) } : null;
+  }
+
   function retourner(p, d, r, rafraichir) {
+    var revision = revisionLue(p);
     var manques = r.controles.filter(function (c) { return !c.ok; });
     var choisi = null;
     var boite = el("div.oc-motifs");
@@ -310,20 +353,21 @@ window.VUE_BRIEF = (function () {
       } }, c.quoi + (c.cout ? " — " + c.cout : "")));
     });
     if (!manques.length) boite.appendChild(el("p.rien", {}, "Aucune condition manquante : le retour ne peut être que motivé à la main."));
-    var libre = el("input", { type: "text", placeholder: "ou un motif écrit à la main" });
+    var libre = el("input", { id: "bf-motif-retour", type: "text" });
 
-    PANNEAU.ouvrir("Retourner sous réserve", "l'horloge s'arrête", el("div", {},
+    PANNEAU.ouvrir("Retourner sous réserve", p.ref + " · V" + VERSION.num(d), el("div", {},
       UI.banniere("", "Le délai de réponse créative est suspendu tant que la réserve n'est pas levée. C'est la règle la moins intuitive du processus, et la plus importante."),
-      el("div.sousbloc", {}, el("h3", {}, "Le motif — une condition manquante d'abord"), boite, libre),
+      el("div.sousbloc", {}, el("h3", {}, "Conditions ouvertes"), boite,
+        el("div.form", {}, el("div.champ", {}, el("label", { for: "bf-motif-retour" }, "Motif du retour"), libre))),
       el("div.form-actions", { style: { "margin-top": "1rem" } },
         el("button.b.or", { type: "button", onclick: function () {
           var motif = choisi || libre.value.trim();
           if (!motif) { AVIS.refus("Un retour sans motif n'est pas un retour."); return; }
-          if (!trancher(p, "reserve", motif, null, function (x) {
+          if (!trancher(p, d, revision, "reserve", motif, null, function (x) {
             d.statut = "sous_reserve"; d.reserve = { quand: x.quand, motif: motif }; })) return;
           DEPOT.tracer("retour sous réserve", "projets", p.id, motif);
           DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
-          RENVOI.ouvrir({ quoi: "Brief — " + p.ref, projet: p.ref, projetId: p.id, objet: "brief" });
+          RENVOI.ouvrir({ quoi: "Brief — " + p.ref, projet: p.ref, projetId: p.id, objet: "brief", motif: motif });
         } }, "Retourner"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Revenir"))
     ));
@@ -424,5 +468,5 @@ window.VUE_BRIEF = (function () {
     ];
   }
 
-  return { rendre: rendre };
+  return { rendre: rendre, reception: reception, estContextuel: estContextuel, preparerRevision: preparerRevision };
 })();

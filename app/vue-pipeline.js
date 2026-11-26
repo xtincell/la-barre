@@ -12,15 +12,6 @@ window.VUE_PIPELINE = (function () {
   var el = O.el;
   var vue = "ordre";
 
-  /* Deux modes seulement. « Les retours » disait la même chose que les
-   * modifications dues dans Décider ; « qui bouscule » regarde le trimestre et
-   * appartient donc à Constater. Deux vérités sur le même fait, c'est une de
-   * trop. */
-  var VUES = [
-    { cle: "ordre", nom: "L'ordre" },
-    { cle: "charge", nom: "La charge" },
-  ];
-
   /* Le pipeline n'est plus une destination : c'est le corps de deux modes de
    * Placer. Il ne porte donc plus ni titre d'écran ni onglets — ceux-ci
    * appartiennent à l'intention qui l'appelle. */
@@ -31,9 +22,10 @@ window.VUE_PIPELINE = (function () {
 
     var pieces = PRODUCTION.toutesLesPieces();
     hote.appendChild(el("div", {},
-      bandeHaute(pieces),
-      el("div", { style: { "margin-top": "1rem" } },
-        vue === "charge" ? charge(pieces, hote) : ordre(hote))
+      vue === "charge" ? charge(pieces, hote) : ordre(hote),
+      el("details.pilotage-contexte.pilotage-synthese", {},
+        el("summary", {}, "Chiffres de production"),
+        bandeHaute(pieces))
     ));
   }
 
@@ -57,16 +49,16 @@ window.VUE_PIPELINE = (function () {
     });
 
     return el("section.pp-k", {},
-      kpi(String(pieces.length), "assets en cours",
+      kpi(String(pieces.length), "livrables en cours",
         Object.keys(parProjet).length + " dossiers", ""),
       kpi(fermes + " / " + pieces.length, "engagés ou fermes",
         specu + " spéculatifs", fermes ? "vert" : "attente"),
       kpi(pretes + " / " + pieces.length, "prêts à produire",
         pretes === pieces.length ? "tout peut partir" : (pieces.length - pretes) + " bloqués", pretes < pieces.length ? "alerte" : "vert"),
       kpi(String(fbOuverts.length), fbOuverts.length > 1 ? "retours non tranchés" : "retour non tranché",
-        touchees + (touchees > 1 ? " livrables suspendus" : " livrable suspendu"), fbOuverts.length ? "alerte" : "vert"),
+        touchees + (touchees > 1 ? " impacts comptés par retour" : " impact compté par retour"), fbOuverts.length ? "alerte" : "vert"),
       kpi(String(sansResp), "sans responsable",
-        sansResp ? "personne en défaut le jour où ça n'avance pas" : "tous affectés", sansResp ? "attente" : "vert")
+        sansResp ? "responsable à attribuer" : "tous affectés", sansResp ? "attente" : "vert")
     );
   }
 
@@ -119,13 +111,10 @@ window.VUE_PIPELINE = (function () {
     return el("div.pp", {},
       el("div.pp-titre", {},
         el("h2", {}, parie.n && !vendu.n
-          ? parie.n + " livrables se fabriquent, aucune n'est vendue"
+          ? parie.n + (parie.n > 1 ? " livrables sans engagement" : " livrable sans engagement")
           : vendu.n && parie.n
-            ? Math.round(parie.j) + " j pariés contre " + Math.round(vendu.j) + " j vendus"
-            : "Tout ce qui se produit est vendu"),
-        el("p", {}, parie.n && !vendu.n
-          ? "Rien n'est validé ni payé. Le jour où un autre client signe, ces jours-là seront déjà pris."
-          : "Ce qui est payé passe avant ce qui espère l'être. Aucun client ne doit souffrir.")),
+            ? Math.round(vendu.j) + " j engagés · " + Math.round(parie.j) + " j sans engagement"
+            : vendu.n ? "Livrables engagés" : "Aucun livrable à prioriser")),
 
       /* Les deux plateaux, de part et d'autre d'un axe. */
       el("section.pp-bal", {},
@@ -308,7 +297,7 @@ window.VUE_PIPELINE = (function () {
     }).sort(function (a, b) { return b.r.pts - a.r.pts; });
 
     if (!tout.length) {
-      return el("p.rien", {}, "Aucun livrable en production. Le mur se remplit quand une piste est retenue.");
+      return el("p.rien", {}, "Aucun livrable en production.");
     }
 
     /* La ligne de partage : au-delà, la semaine tient. */
@@ -316,30 +305,20 @@ window.VUE_PIPELINE = (function () {
     var calme = tout.filter(function (x) { return x.r.pts < 30; });
 
     return el("div.pp", {},
-      el("div.pp-titre", {},
-        el("h2", {}, chaud.length
-          ? chaud.length + (chaud.length > 1 ? " livrables vont manquer leur date" : " livrable va manquer sa date")
-          : tout.length + (tout.length > 1 ? " livrables, aucune en risque" : " livrable, aucune en risque")),
-        el("p", {}, "Classées par ce qui va tomber, pas par volet. Un livrable sans estimation "
-          + "est invisible dans la semaine — le mur arrive sans prévenir.")),
+      el("h2", {}, tout.length + (tout.length > 1 ? " livrables suivis" : " livrable suivi")),
+      groupeCharge("À surveiller", chaud, 8, hote, true),
+      groupeCharge("Autres livrables", calme, 12, hote, false));
+  }
 
-      chaud.length
-        ? el("section.pp-mur", {},
-            el("h3.ppm-t", {}, el("span.pp-signe.t-alerte", { "aria-hidden": "true" }, "● "), "Ce qui va tomber"),
-            el("div.ppm-l.chaud", {}, chaud.slice(0, 8).map(function (x) { return piece(x, hote, true); })))
-        : null,
-
-      calme.length
-        ? el("section.pp-mur", {},
-            el("h3.ppm-t", {}, "Ce qui tient",
-              el("span", {}, "Au-delà de cette ligne, la semaine tient")),
-            el("div.ppm-l.calme", {}, calme.slice(0, 12).map(function (x) { return piece(x, hote, false); })))
-        : null,
-
-      tout.length > 20
-        ? el("a.studio-lien", { href: "#/projets/" + tout[0].p.id + "/livrables" },
-            "Les " + tout.length + " livrables →")
-        : null);
+  function groupeCharge(titre, liste, limite, hote, chaud) {
+    if (!liste.length) return null;
+    var classes = "div.ppm-l." + (chaud ? "chaud" : "calme");
+    return el("section.pp-mur", {},
+      el("h3.ppm-t", {}, titre, " · ", liste.length),
+      el(classes, {}, liste.slice(0, limite).map(function (x) { return piece(x, hote, chaud); })),
+      liste.length > limite ? el("details.pilotage-contexte", {},
+        el("summary", {}, (liste.length - limite) + " de plus"),
+        el(classes, {}, liste.slice(limite).map(function (x) { return piece(x, hote, chaud); }))) : null);
   }
 
   function piece(x, hote, chaud) {
@@ -352,7 +331,7 @@ window.VUE_PIPELINE = (function () {
       el("span.ppmp-c", {}, chaud ? el("span.pp-signe", { "aria-hidden": "true" }, "● ") : null,
         cap(x.r.causes.length ? x.r.causes.slice(0, 2).join(" · ")
           : x.r.jours !== null ? "remise dans " + x.r.jours + " j" : "prête")),
-      el("span.ppmp-q", {}, pe ? pe.nom.split(" ")[0] : "Personne"));
+      el("span.ppmp-q", {}, [x.p.ref || x.p.nom, pe ? pe.nom : "Sans responsable"].filter(Boolean).join(" · ")));
   }
 
   function cap(t) { return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;

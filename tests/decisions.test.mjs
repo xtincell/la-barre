@@ -5,7 +5,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { ECRIVAINS, CAPTURE, rejouer, extraire, commit, bac, semer, projet, livrable, piste, PERSONNES,
-  bouton, saisie, cliquer } from './decisions-scenarios.mjs';
+  bouton, saisie, cliquer, soumettre } from './decisions-scenarios.mjs';
 
 const APP = fileURLToPath(new URL('../app/', import.meta.url));
 const capture = JSON.parse(await readFile(CAPTURE, 'utf8'));
@@ -137,8 +137,9 @@ test('un verdict inconnu passé par un vrai écrivain n’atteint ni la base ni 
   await s.charger('vue-livrable', ['juger']);
   semer(s.ctx, { personnes: PERSONNES, projets: [projet('LI', { livrables: [livrable('L-1')] })] });
   const p = s.ctx.DEPOT.trouve('projets', 'LI');
-  assert.throws(() => s.interne['vue-livrable'].juger(p, p.livrables[0], { cle: 'valide', nom: 'Validé', motifRequis: false }, () => {}),
-    { name: 'DecisionRefusee', message: /Verdict inconnu : « valide »/ });
+  s.interne['vue-livrable'].juger(p, p.livrables[0], { cle: 'valide', nom: 'Validé', motifRequis: false }, () => {});
+  soumettre(s.dernier());
+  assert.match(s.dernier().textContent, /Verdict inconnu : « valide »/);
   assert.equal(s.ctx.DEPOT.liste('decisions').length, 0);
   assert.equal(s.ctx.DEPOT.tout().enregistre_le, null);
   assert.equal(s.ctx.localStorage.getItem('la-barre'), null);
@@ -450,6 +451,8 @@ test('accepter ou retourner le brief passe par la fabrique ; l’accepter malgr�
     { ok: false, quoi: 'Aucune cible nommée', cout: 'la cible se devinera' }, { ok: false, quoi: 'Pas de date', cout: 'aucun délai' }] };
 
   s.interne['vue-brief'].accepter(s.ctx.DEPOT.trouve('projets', 'BR'), brief('BR'), { recevable: true, controles: [] }, () => {});
+  assert.equal(s.ctx.DEPOT.liste('decisions').length, 0);
+  cliquer(bouton(s.dernier(), 'Confirmer l’acceptation'));
   let d = derniere(s);
   memeGeste(s, d, { type: 'recevabilite', objet: 'brief', projet: 'BR', verdict: 'approuve', motif: null });
   assert.equal('portee' in d, false); assert.equal('ecart' in d, false);

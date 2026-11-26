@@ -111,7 +111,7 @@ window.VUE_PISTES = (function () {
     var decl = window.VUE_ROUTE ? VUE_ROUTE.declinaisons(p, pi) : [];
     var sb = f.storyboard || null, cond = f.conducteur || null, mus = f.musique || null;
     var anim = (f.animatiques || []).slice(-1)[0] || null;
-    function ouvrir() { ouverte = pi.id; rafraichir(); window.scrollTo(0, 0); }
+    function ouvrir() { VUE_ROUTE.ouvrir(p, pi); }
     function tuile(src, legende, o) {
       o = o || {};
       return el("figure.pp-t" + (o.cls ? "." + o.cls : ""), { title: legende },
@@ -207,7 +207,7 @@ window.VUE_PISTES = (function () {
   function cellule(p, pi, cle, rafraichir) {
     if (cle === "visuel") {
       return el("button.cmp-c.visuel", { type: "button",
-        onclick: function () { ouverte = pi.id; rafraichir(); },
+        onclick: function () { VUE_ROUTE.ouvrir(p, pi); },
         title: "Ouvrir « " + (pi.titre || "cette piste") + " »" },
         IMAGE.vignette(pi, "grande"));
     }

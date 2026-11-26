@@ -16,8 +16,8 @@ window.VUE_EQUIPE = (function () {
   function rendre(hote, rafraichir) {
     var gens = EQUIPE.encadres();
     if (!gens.length) {
-      return el("p.rien", {}, "Personne à encadrer à la base. Les postes rattachés à la "
-        + "Direction de la Création s'ajoutent dans La maison › Les réglages › L'équipe.");
+      return el("div", {}, el("p.rien", {}, "Aucune personne rattachée à la direction de la création."),
+        el("a.b", { href: "#/referentiel/parametres" }, "Ouvrir les paramètres de l’équipe"));
     }
 
     var bilans = gens.map(function (p) { return EQUIPE.bilan(p.id); }).filter(Boolean);
@@ -36,8 +36,10 @@ window.VUE_EQUIPE = (function () {
     });
 
     return el("div.eq", {},
-      bande(bilans, sansPiste, enRetard, cumulsKO),
-      tableau(bilans, rafraichir)
+      tableau(bilans, rafraichir),
+      el("details.pilotage-contexte", {},
+        el("summary", {}, "Critères d’évaluation"),
+        bande(bilans, sansPiste, enRetard, cumulsKO))
     );
   }
 

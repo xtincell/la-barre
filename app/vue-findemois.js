@@ -20,8 +20,10 @@ window.VUE_FINDEMOIS = (function () {
     if (!d) { qui = null; d = BILAN.compiler(periode); }
 
     return el("div.fm", {},
-      bande(d),
       barre(hote, rafraichir),
+      el("details.pilotage-contexte", {},
+        el("summary", {}, "Bilan provisoire · vérifier les mesures"),
+        bande(d)),
       COMPILATEUR.document(d)
     );
   }

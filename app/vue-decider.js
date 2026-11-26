@@ -21,7 +21,6 @@
 
 window.VUE_DECIDER = (function () {
   var el = O.el;
-  var mode = "file";
 
   var MODES = [
     { cle: "file", nom: "À traiter", quoi: "arbitrages, retours client et engagements" },
@@ -38,74 +37,36 @@ window.VUE_DECIDER = (function () {
     return FILE.tout().length;
   }
 
-  function rendre(hote, arg) {
+  function rendre(hote, arg, sous) {
     if (arg && ABSORBEES[arg]) arg = ABSORBEES[arg];
-    if (arg && MODES.some(function (m) { return m.cle === arg; })) mode = arg;
+    var mode = MODES.some(function (m) { return m.cle === arg; }) ? arg : "file";
+    function rafraichir() { rendre(hote, mode, sous); }
 
-    hote.className = "zone";
+    hote.className = "zone decisions-travail";
     O.vider(hote);
 
     var n = combien();
     var du = ECARTS.total() + RENVOI.ouvertes().length;
-    var p = mode === "du" ? pireDu(du) : pireFile(n);
 
     /* L'en-tête d'écran du Studio : le titre dit l'état du mode, le chapô sa
      * conséquence ; le sélecteur vient dessous. Seul le compteur du mode
      * actif porte l'alerte : si tous sont rouges, la priorité cesse d'être rare. */
     hote.appendChild(el("div.dc", {},
       el("header.studio-entete.dc-tete", {},
-        el("div", {},
-          el("h1", {}, p.t),
-          el("p.studio-intro", {}, p.q))),
-      UI.modes(MODES, mode, function (cle) { mode = cle; rendre(hote); }, {
+        el("h1", {}, "Décisions")),
+      UI.modes(MODES, mode, function (cle) { location.hash = "#/valider/" + cle; }, {
+        route: "valider",
         titre: "Modes de Décisions",
         compte: function (m) { return m.cle === "du" ? du : n; },
         alerte: function (m) { return m.cle === mode; } }),
       el("div.dc-corps", {},
-        mode === "file" ? FILE.salle(function () { rendre(hote); }) : du_(hote))
+        mode === "file" ? FILE.salle(rafraichir) : du_(rafraichir, sous))
     ));
   }
 
-  /* ————————————————————— Le titre suit le mode ————————————————————— */
-
-  /* La file annonçait « Rien n'avance sans ces N décisions » jusque sur
-   * l'écran de ce qu'on me doit — où rien de ce N n'est de mon ressort. */
-  function pireFile(n) {
-    return n
-      ? { t: n + (n > 1 ? " sujets à faire avancer" : " sujet à faire avancer"),
-          q: "Choisissez un sujet. Son contexte et l’action à mener restent ensemble." }
-      : { t: "Rien n'attend",
-          q: "Aucun verdict en suspens, aucune modification due, aucun conflit d'ordre." };
-  }
-
-  /* Ce que d'autres me doivent. Ici le retard n'est pas le mien : ce qui
-   * compte est depuis quand il court, et chez qui. */
-  function pireDu(du) {
-    if (!du) {
-      return { t: "On ne me doit rien",
-        q: "Aucun renvoi ouvert, aucune modification attendue. Ce qui n'est pas à moi "
-          + "est reparti chez son propriétaire, et en est revenu." };
-    }
-    var ouvertes = RENVOI.ouvertes();
-    var vieille = ouvertes[0] || null;
-    var jours = vieille && vieille.envoye_le
-      ? Math.round((new Date(O.jour()) - new Date(vieille.envoye_le)) / 86400000) : null;
-
-    return { t: du + (du > 1 ? " choses me sont dues" : " chose m'est due"),
-      q: jours !== null && jours > 0
-        ? "La plus ancienne attend depuis " + jours + " jours. Mon horloge est arrêtée "
-          + "dessus — c'est la seule trace de ce qui n'avance pas à cause d'un autre."
-        : "Mon horloge est arrêtée dessus. C'est la seule trace de ce qui n'avance pas "
-          + "à cause d'un autre, sans avoir à le déranger." };
-  }
-
-  /* ————————————————————— Ce qu'on me doit ————————————————————— */
-
-  /* Écarter ou reprendre un écart change ce qui m'est dû : l'en-tête le
-   * compte, il se relit avec la liste. */
-  function du_(hote) {
+  function du_(rafraichir, sous) {
     var zone = el("div");
-    VUE_ATTENTES.rendre(zone, function () { rendre(hote); });
+    VUE_ATTENTES.rendre(zone, rafraichir, sous);
     return zone;
   }
 

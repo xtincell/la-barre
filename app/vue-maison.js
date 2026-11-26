@@ -10,35 +10,34 @@
 
 window.VUE_MAISON = (function () {
   var el = O.el;
-  var mode = "marches";
-  var enteteActive = null;
-  DEPOT.surChangement(function () {
-    if (!enteteActive || !enteteActive.titre.isConnected || mode !== "parametres") return;
-    var p = pireReglages({ w: DEPOT.poids(), age: DEPOT.ageSauvegarde() });
-    enteteActive.titre.textContent = p.t; enteteActive.texte.textContent = p.q;
-  });
+  var mode = "marques";
+  var cible = null;
+  var registres = MAISON.registres || {};
 
   var MODES = [
     /* Le vault vit ici, hors des campagnes : ce qui définit une marque ne
      * change pas d'une saison à l'autre, et n'a rien à faire dans le dossier
      * qui l'a écrit en premier. */
-    { cle: "marques", nom: "Marques", quoi: "plateforme, catalogue, marchés — la bibliothèque de marque" },
-    { cle: "marches", nom: "Marchés et supports", quoi: "marchés, supports, gabarits, éléments de marque" },
+    { cle: "marques", nom: "Marques" },
+    { cle: "marches", nom: "Marchés et supports" },
     /* Le registre de l'autre outil. Il n'a pas sa place dans les projets : ce
      * n'est pas du travail, c'est ce qui dit lequel manque. */
-    { cle: "people", nom: ((MAISON.registres || {}).people || "Registre des projets"), quoi: "ce qui existe là-bas, et n'existe pas ici" },
-    { cle: "radar", nom: ((MAISON.registres || {}).radar || "Registre des briefs"), quoi: "les briefs du registre, et lesquels ont un dossier ici" },
-    { cle: "intake", nom: "Boîte d'entrée", quoi: "ce qui est tombé au vol, et qu'il reste à ranger" },
+    { cle: "people", nom: registres.people === "Matanga People" ? "Registre People" : (registres.people || "Registre des projets") },
+    { cle: "radar", nom: registres.radar === "Radar Matanga" ? "Registre Radar" : (registres.radar || "Registre des briefs") },
+    { cle: "intake", nom: "Boîte d’entrée" },
     /* Les vidéos et les EXE des exports : lus depuis le disque, en local. */
-    { cle: "disque", nom: "Le disque", quoi: "les vidéos et les EXE des exports, rattachés ou non" },
+    { cle: "disque", nom: "Le disque" },
     /* La doctrine : d'où viennent les règles que le produit applique. Elle vit
      * ici parce que ce n'est pas du travail — c'est ce qui le rend jugeable. */
-    { cle: "doctrine", nom: "Doctrine", quoi: "les couches, les écoles, les structures — et ce que la maison en a réglé" },
-    { cle: "parametres", nom: "Paramètres", quoi: "base, règles, équipe, journal" },
+    { cle: "doctrine", nom: "Doctrine" },
+    { cle: "parametres", nom: "Paramètres" },
   ];
 
-  function rendre(hote, arg) {
-    if (arg && MODES.some(function (m) { return m.cle === arg; })) mode = arg;
+  function rendre(hote, arg, sous, id) {
+    if (arguments.length > 1) {
+      mode = MODES.some(function (m) { return m.cle === arg; }) ? arg : MODES[0].cle;
+      cible = mode === "marches" && sous ? { type: sous, id: id } : null;
+    }
 
     hote.className = "zone studio";
     O.vider(hote);
@@ -51,18 +50,16 @@ window.VUE_MAISON = (function () {
     var w = DEPOT.poids();
     var age = DEPOT.ageSauvegarde();
     var vides = vaultsVides();
-    var p = pire(mode, { trous: trous, w: w, age: age, vides: vides });
-    var titre = el("h1", {}, p.t), texte = el("p.studio-intro", {}, p.q);
-    enteteActive = { titre: titre, texte: texte };
+    var p = mode === "parametres" ? null : pire(mode, { trous: trous, vides: vides });
+    var courant = MODES.find(function (m) { return m.cle === mode; });
 
-    /* Le même en-tête que les autres intentions : le titre dit l'état de ce
-     * qu'on regarde, le sélecteur vient dessous. */
-    hote.appendChild(el("div.dc", {},
+    hote.appendChild(el("div.dc.pilotage", {},
       el("header.studio-entete.dc-tete", {},
         el("div", {},
-          titre, texte)),
+          el("p.pilotage-parent", {}, "Ressources"),
+          el("h1", {}, courant.nom))),
       UI.modes(MODES, mode, function (cle) { location.hash = "#/referentiel/" + cle; }, {
-        titre: "Modes des Ressources",
+        titre: "Vues des ressources", route: "referentiel",
         compte: function (m) {
           if (m.cle === "doctrine") return 0;
           return m.cle === "marques" ? vides + VAULT.orphelins().length
@@ -74,14 +71,18 @@ window.VUE_MAISON = (function () {
             : (w.grave || (!w.surDisque && (age === null || age > 2))) ? "!" : 0; },
         alerte: function (m) { return m.cle === mode; } }),
 
-      el("div.dc-corps", {}, corps(hote))
+      el("div.dc-corps", {},
+        p && !cible ? el("details.pilotage-contexte", {},
+          el("summary", {}, p.t),
+          el("p", {}, p.q)) : null,
+        corps(hote))
     ));
   }
 
   function corps(hote) {
     var z = el("div");
     if (mode === "marques") VUE_VAULT.rendre(z);
-    else if (mode === "marches") VUE_REFERENTIEL.rendre(z);
+    else if (mode === "marches") VUE_REFERENTIEL.rendre(z, cible);
     else if (mode === "people") REGISTRE.rendre(z, function () { rendre(hote); });
     else if (mode === "radar") REGISTRE_RADAR.rendre(z, function () { rendre(hote); });
     else if (mode === "intake") INTAKE.rendre(z, function () { rendre(hote); });
@@ -104,46 +105,12 @@ window.VUE_MAISON = (function () {
         q: nd + " documents font foi. Chaque contrôle du produit renvoie à la page qui "
           + "l'explique — un refus sans critère est ce que la doctrine reproche aux agences." };
     }
-    if (mode === "parametres") return pireReglages(e);
     if (mode === "marques") return pireMarques(e);
     if (mode === "people") return REGISTRE.pire();
     if (mode === "radar") return REGISTRE_RADAR.pire();
     if (mode === "intake") return INTAKE.pire();
     if (mode === "disque") return DISQUE.pire();
     return pireReferentiel(e);
-  }
-
-  /* Le dépôt d'abord : c'est la seule perte irréversible du produit. */
-  function pireReglages(e) {
-    if (e.w.fichier) return { t: e.w.surDisque ? "Sauvegarde reçue" : "Sauvegarde en attente",
-      q: e.w.surDisque ? "Le fichier partagé a reçu votre travail. L’export permet d’en emporter une copie."
-        : "Vos modifications attendent leur réception. Leur reprise et les éventuels choix à faire sont indiqués ci-dessous." };
-    if (e.w.grave) {
-      return { t: "Le cache est plein",
-        q: "Plus rien ne s'enregistre localement. Exporte maintenant, sinon la séance est perdue." };
-    }
-    if (!e.w.surDisque && e.age === null) {
-      return { t: "La base n'est pas à l'abri",
-        q: "Jamais exporté. Le navigateur ne garde qu'un cache : vider les données du "
-          + "site effacerait tout." };
-    }
-    if (!e.w.surDisque && e.age > 2) {
-      return { t: "La base n'est pas à l'abri",
-        q: "Exporté il y a " + e.age + " jours. Le fichier sur ton Drive est la base "
-          + "de référence." };
-    }
-    /* Ce qui reste d'images dans le dépôt : elles y pesaient 93 %. */
-    var v = window.IMAGE ? IMAGE.poids() : { restantes: 0, ko: 0 };
-    if (v.restantes) {
-      return { t: v.restantes + (v.restantes > 1 ? " vignettes pèsent sur la base" : " vignette pèse sur la base"),
-        q: O.milliers(v.ko) + " Ko d'images rangées dans le fichier au lieu du disque. "
-          + "La base se réécrit en entier à chaque frappe : ce poids se paie à chaque geste." };
-    }
-    return { t: e.w.surDisque ? "La base s'écrit dans son fichier" : "La base est à jour",
-      q: e.w.surDisque
-        ? "Tous les navigateurs voient la même chose, et les vignettes vivent sur le "
-          + "disque à côté des packshots — le fichier ne porte que des liens."
-        : "Exporté récemment. Le fichier sur ton Drive fait foi." };
   }
 
   /* Le vault. Une marque sans socle est une marque que chaque campagne
