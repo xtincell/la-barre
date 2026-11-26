@@ -30,8 +30,10 @@ fond-langage-1, friction-parcours-5. -->
 <!-- outils/recette-captures.mjs --avant sur la branche de base du lot (main,
 ou adoption/00-mesurer tant que ce lot n'est pas fusionné), puis --apres sur
 la branche, avec la même version de l'outil (documents/FINI.md, section 2),
-à 320, 390 et 1440 px. Joindre les captures des espaces touchés ; jamais
-celles d'une vraie base. -->
+à 320, 390 et 1440 px, page entière (le réglage par défaut). Recopier
+« Écrans touchés » de la planche, avec ses précisions (sous le premier écran,
+texte seulement). Joindre les captures des espaces touchés ; jamais celles
+d'une vraie base. -->
 
 - Commande, horloge et commit de la passe avant : 
 - Espaces touchés : 

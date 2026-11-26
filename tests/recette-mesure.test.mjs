@@ -15,11 +15,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, readFile, rm, cp } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, rm, cp } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { mesurerDansLaPage, depouiller, ecartDePixels, aLOeil, versionMesure, stabiliser, apaiserLaPage } from '../outils/recette-captures.mjs';
+import { mesurerDansLaPage, depouiller, ecartDePixels, aLOeil, versionMesure, stabiliser, apaiserLaPage, deplierLaPage, replierLaPage } from '../outils/recette-captures.mjs';
 
 const OUTIL = fileURLToPath(new URL('../outils/recette-captures.mjs', import.meta.url));
 const executer = promisify(execFile);
@@ -217,6 +217,70 @@ test('une page assombrie de 8 %, une bordure ou un texte d’un ton plus pâle s
   const [v] = await classer('img{filter:brightness(.97)}');
   assert.equal(v, 'à l’œil');
   await p.close();
+});
+
+test('la page entière pose sur la page ce qui est fixé à l’écran, puis remet tout en place', sauter, async () => {
+  const p = await page(`<!doctype html><html lang="fr"><body style="margin:0;font:16px sans-serif">
+    <div style="display:grid;grid-template-columns:200px 1fr">
+      <nav id="rail" style="position:sticky;top:0;height:100vh;overflow-y:auto;background:#eee">Rail</nav>
+      <main id="contenu"><h1>Page</h1><div style="height:2000px">long</div><p>Fin de page</p></main>
+    </div>
+    <nav id="onglets" style="position:fixed;left:0;right:0;bottom:0;height:50px;background:#c7501f">Onglets</nav>
+    <div id="voile" style="position:fixed;inset:0;background:rgba(0,0,0,.5)"></div>
+    <aside id="panneau" style="position:fixed;top:0;right:0;bottom:0;width:300px;display:flex;flex-direction:column;background:#fff">
+      <h2 style="margin:0;height:60px">Panneau</h2><div id="corps" style="overflow-y:auto"><div style="height:3000px">contenu</div><p>Fin du panneau</p></div>
+    </aside></body></html>`, 600);
+  const styles = () => p.evaluate(() => ['rail', 'onglets', 'voile', 'panneau'].map(id => document.getElementById(id).getAttribute('style')));
+  const avant = await styles();
+  const { hauteur, poses } = await p.evaluate(deplierLaPage);
+  const r = await p.evaluate(() => Object.fromEntries(['rail', 'onglets', 'voile', 'panneau', 'corps'].map(id => {
+    const b = document.getElementById(id).getBoundingClientRect(); return [id, [Math.round(b.top), Math.round(b.bottom)]]; })));
+  // Le panneau déroule tout ce qu'il faisait défiler : la page s'allonge jusqu'à sa fin.
+  assert.ok(hauteur >= 3060, String(hauteur));
+  assert.equal(poses, 4);
+  assert.equal(await p.evaluate(() => { const c = document.getElementById('corps'); return c.scrollHeight <= c.clientHeight + 1; }), true);
+  // La colonne, le voile et le panneau descendent jusqu'au bas de la page ; la barre d'onglets y est posée.
+  assert.deepEqual([r.rail, r.voile, r.panneau], [[0, hauteur], [0, hauteur], [0, hauteur]]);
+  assert.deepEqual(r.onglets, [hauteur - 50, hauteur]);
+  const photo = await p.screenshot({ fullPage: true });
+  assert.equal(photo.readUInt32BE(20), hauteur);
+  // Tout est remis comme avant : styles, positions, feuille ôtée.
+  assert.equal(await p.evaluate(replierLaPage), 4);
+  assert.deepEqual(await styles(), avant);
+  assert.equal(await p.evaluate(() => document.querySelectorAll('style[data-recette]').length), 0);
+  assert.deepEqual(await p.evaluate(() => { const b = document.getElementById('onglets').getBoundingClientRect(); return [b.top, b.bottom]; }), [650, 700]);
+  await p.close();
+});
+
+test('la ligne de commande prévient : pas de passe « avant », horloge reprise, autre version, autre filtre', { ...sauter, timeout: 240000 }, async () => {
+  const dossier = await mkdtemp(join(tmpdir(), 'recette-avertissements-'));
+  const base = ['--sortie', dossier, '--routes', '^plus$', '--largeurs', '1440'];
+  const lancer = (...x) => executer(process.execPath, [OUTIL, ...x], { env: { ...process.env }, timeout: 120000 });
+  try {
+    // --apres sans passe « avant » : la planche se fait, sans comparaison, et le dit.
+    let r = await lancer('--apres', ...base);
+    assert.match(r.stderr, /Attention : aucune passe « avant » dans .* : la planche est faite sans comparaison/);
+    // L'avant fige son horloge ; l'après, sans --horloge, la reprend et le dit.
+    await lancer('--avant', ...base, '--horloge', '2026-11-26T09:00:00');
+    r = await lancer('--apres', ...base);
+    assert.match(r.stderr, /Horloge reprise de la passe « avant » : 2026-11-26T09:00:00\./);
+    assert.doesNotMatch(r.stderr, /Attention/);
+    let j = JSON.parse(await readFile(join(dossier, 'apres', 'captures.json'), 'utf8'));
+    assert.deepEqual([j.horloge, j.horlogeReprise, j.comparaison.mesure.identique, j.pleinePage], ['2026-11-26T09:00:00', true, true, true]);
+    // Un avant pris par une autre version de l'outil : la version est citée, pas le poste.
+    const fichier = join(dossier, 'avant', 'captures.json');
+    const av = JSON.parse(await readFile(fichier, 'utf8'));
+    await writeFile(fichier, JSON.stringify({ ...av, mesure: { ...av.mesure, version: 'v-ancienne' } }));
+    r = await lancer('--apres', ...base);
+    assert.match(r.stderr, new RegExp('n’a pas été prise dans les mêmes conditions : une autre version de l’outil \\(la v-ancienne ; celle-ci est la ' + versionMesure() + '\\)\\. Refaites la passe « avant »'));
+    assert.doesNotMatch(r.stderr, /poste|horloge/);
+    // Un autre filtre --routes que l'avant : la sortie d'erreur prévient.
+    await writeFile(fichier, JSON.stringify(av));
+    r = await lancer('--apres', '--sortie', dossier, '--routes', '^(plus|bureau)$', '--largeurs', '1440');
+    assert.match(r.stderr, /a été prise avec --routes \^plus\$, celle-ci avec --routes \^\(plus\|bureau\)\$/);
+    j = JSON.parse(await readFile(join(dossier, 'apres', 'captures.json'), 'utf8'));
+    assert.match(await readFile(join(dossier, 'apres', 'index.html'), 'utf8'), /Les deux passes n’ont pas le même filtre/);
+  } finally { await rm(dossier, { recursive: true, force: true }); }
 });
 
 /* La largeur d'un PNG, lue dans son en-tête. */

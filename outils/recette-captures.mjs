@@ -222,9 +222,11 @@ const AIDE = `Usage : BROWSER_CHANNEL=chrome node outils/recette-captures.mjs [o
   --largeurs 320,390,1440   largeurs en px (3200 en option)
   --routes <expression> ne capture que les routes dont l'identifiant correspond ;
                         avec --apres, la comparaison ne porte que sur elles
-  --horloge <date ISO>  fige l'heure de la page, pour comparer deux jours différents
+  --horloge <date ISO>  fige l'heure de la page (défaut : avec --apres, celle de la passe
+                        « avant » ; sinon, l'heure du début de la passe)
   --cibles <dossier>    planches cibles de la conception, montrées en tête de chaque espace
-  --pleine-page         capture la page entière, pas seulement le premier écran
+  --premier-ecran       ne photographie que le premier écran (défaut : la page entière ;
+                        --pleine-page le dit explicitement)
   --strict              sort en erreur s'il y a une exception, un débordement, une valeur
                         technique affichée ou un terme interdit, visible ou replié`;
 
@@ -236,6 +238,12 @@ function git(...args) {
 }
 function commit() { return git('rev-parse', '--short', 'HEAD'); }
 
+/* L'heure du poste, à la minute, au format de --horloge. */
+export function heureDuPoste(d = new Date()) {
+  const z = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + 'T' + z(d.getHours()) + ':' + z(d.getMinutes()) + ':00';
+}
+
 /* La sortie par défaut : un dossier par branche, à côté du dépôt. Deux lots
  * qui lancent la recette en même temps n'écrasent pas leurs passes. */
 export function sortieParDefaut(branche = git('rev-parse', '--abbrev-ref', 'HEAD'), sha = commit()) {
@@ -245,7 +253,7 @@ export function sortieParDefaut(branche = git('rev-parse', '--abbrev-ref', 'HEAD
 
 export function lireArguments(args) {
   const o = { sortie: null, temps: null, base: join(RACINE, 'vitrine', 'demo', 'base-fictive.json'), commit: null,
-    medias: null, largeurs: LARGEURS.slice(), routes: null, filtre: null, horloge: null, cibles: null, pleinePage: false, strict: false, aide: false, ou: false };
+    medias: null, largeurs: LARGEURS.slice(), routes: null, filtre: null, horloge: null, cibles: null, pleinePage: true, strict: false, aide: false, ou: false };
   const valeur = (i, nom) => { const v = args[i + 1]; if (v === undefined || v.startsWith('--')) throw new Error(nom + ' attend une valeur.'); return v; };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -277,6 +285,7 @@ export function lireArguments(args) {
     }
     else if (a === '--cibles') o.cibles = resolve(valeur(i++, a));
     else if (a === '--pleine-page') o.pleinePage = true;
+    else if (a === '--premier-ecran') o.pleinePage = false;
     else if (a === '--strict') o.strict = true;
     else throw new Error('Option inconnue : ' + a);
   }
@@ -374,17 +383,37 @@ function sortesDAlertes(regarder) {
   return Object.keys(SORTES).filter(k => vues.has(k)).map(k => SORTES[k]);
 }
 
+/* Le texte de la page a-t-il changé entre deux passes ? Sans empreinte d'un
+ * côté (une passe d'une version plus ancienne), on ne sait pas : non. */
+function texteChange(c, a) { return !!(c && a && c.empreinteTexte && a.empreinteTexte && c.empreinteTexte !== a.empreinteTexte); }
+
 /* L'état d'une capture par rapport à la passe « avant ». Une capture qui
- * diffère d'une passe mesurée par une autre version de l'outil n'est pas
- * « modifiée » : elle n'est pas comparée. */
+ * diffère d'une passe prise dans d'autres conditions (autre version de
+ * l'outil, autre poste, autre horloge) n'est pas « modifiée » : elle n'est pas
+ * comparée. Une photo identique dont le texte change (dans un bloc replié, ou
+ * hors de la photo) est modifiée. */
 function etat(c, a, memeMesure = true) {
   if (!a) return 'nouvelle';
   if (!a.empreinte || !c.empreinte) return 'inconnue';
-  if (a.empreinte === c.empreinte) return 'identique';
+  const texte = texteChange(c, a);
+  if (a.empreinte === c.empreinte && !texte) return 'identique';
   if (!memeMesure) return 'inconnue';
+  if (texte) return 'modifiee';
   return aLOeil(c.ecart) ? 'quasi' : 'modifiee';
 }
 const ETATS = { nouvelle: 'nouvelle', inconnue: 'non comparée', identique: 'identique', quasi: 'identique à l’œil', modifiee: 'modifiée' };
+
+/* Où le changement se voit, dans une photo de la page entière : le
+ * rectangle des pixels changés, rapporté à la hauteur de l'écran. */
+export function ouChange(c) {
+  const x = c && c.ecart;
+  if (!x || !x.cadre || !c.hauteurPhoto) return '';
+  const h = c.hauteurEcran || HAUTEURS[c.largeur] || 900;
+  if (x.cadre[1] >= h) return 'sous le premier écran';
+  if (x.cadre[3] <= h) return 'dans le premier écran';
+  return 'dès le premier écran';
+}
+
 /* « nuance 1/255 sur 52 pixels, hors des images ». Les pixels sont ceux de
  * l'image : deux par px CSS au téléphone. */
 export function decrireNuance(x) {
@@ -393,44 +422,100 @@ export function decrireNuance(x) {
   return [hors.pixels ? une(hors, 'hors des images') : '', images.pixels ? une(images, 'dans une image') : ''].filter(Boolean).join(' ; ');
 }
 
-function libelleEtat(e, c) {
+function libelleEtat(e, c, a) {
   const x = c.ecart;
-  if (e === 'modifiee' && x && x.pixels) return 'modifiée · ' + pluriel(x.pixels, 'pixel').replace(/^\d+/, x.pixels.toLocaleString('fr-FR')) + (x.part ? ' (' + pourcent(x.part) + ')' : '');
+  if (e === 'modifiee') {
+    if (x && x.pixels) return ['modifiée · ' + pluriel(x.pixels, 'pixel').replace(/^\d+/, x.pixels.toLocaleString('fr-FR')) + (x.part ? ' (' + pourcent(x.part) + ')' : ''), ouChange(c)].filter(Boolean).join(', ');
+    if (x && x.pixels === null && x.taille) {
+      const d = c.densite || 1, h0 = Math.round(x.taille[1] / d), h1 = Math.round(x.taille[3] / d);
+      return h0 === h1 ? 'modifiée · autre largeur' : 'modifiée · la page passe de ' + h0.toLocaleString('fr-FR') + ' à ' + h1.toLocaleString('fr-FR') + ' px de haut';
+    }
+    if (texteChange(c, a)) return 'modifiée · texte seulement (replié ou hors de la photo)';
+    return 'modifiée';
+  }
   if (e === 'quasi' && x && x.max) return 'identique à l’œil · ' + decrireNuance(x);
   return ETATS[e];
+}
+
+/* Pourquoi deux passes ne se comparent pas, en clair : la version de l'outil,
+ * le poste de capture, l'horloge, ou plusieurs d'entre eux. */
+export function causes(cmp) {
+  const m = (cmp && cmp.mesure) || {}, t = [];
+  if (m.version === false) t.push(m.avant ? 'une autre version de l’outil (la ' + m.avant + ' ; celle-ci est la ' + m.apres + ')'
+    : 'une version de l’outil qui ne notait pas encore la sienne');
+  if (m.contexte === false && m.avant) t.push(m.poste === 'cadrage' ? 'un autre cadrage (page entière d’un côté, premier écran de l’autre)'
+    : 'un autre poste de capture (taille, densité ou réglages du navigateur)');
+  if (m.horloge === false) {
+    const h = (cmp.horloge || {});
+    t.push('une autre horloge (' + (h.avant ? dateLisible(h.avant) : 'l’heure réelle') + ' ; celle-ci : ' + (h.apres ? dateLisible(h.apres) : 'l’heure réelle') + ')');
+  }
+  return t;
+}
+/* Ce qu'il faut faire, selon la cause. */
+function remede(cmp) {
+  const m = cmp.mesure || {};
+  const t = [];
+  if (m.version === false || m.contexte === false) t.push('refaites la passe « avant » avec cet outil et les mêmes réglages (documents/FINI.md, section 2)');
+  if (m.horloge === false) t.push('relancez la passe « après » sans --horloge : elle reprend celle de l’avant');
+  return t.join(', ou ');
 }
 
 /* L'avertissement de tête : l'avant ne se compare pas à cette passe. */
 function alerteVersion(cmp) {
   if (!cmp || !cmp.mesure || cmp.mesure.identique) return '';
-  const pourquoi = !cmp.mesure.avant ? 'une version qui ne notait pas encore la sienne'
-    : !cmp.mesure.contexte ? 'un autre poste de capture' : 'la version ' + cmp.mesure.avant + ', celle-ci est la ' + cmp.mesure.apres;
-  return `<p class="alerte-version"><b>La passe « avant » a été prise avec une autre version de l’outil (${echapper(pourquoi)}) : refaites-la avec celle-ci</b> (documents/FINI.md, section 2). En attendant, une capture qui diffère n’est pas comptée comme modifiée mais « non comparée », et les alertes « nouvelles » ne sont pas sûres : l’ancienne version ne les mesurait peut-être pas.</p>`;
+  const r = remede(cmp);
+  return `<p class="alerte-version"><b>La passe « avant » n’a pas été prise dans les mêmes conditions : ${echapper(enumerer(causes(cmp)))}.</b> ${r ? echapper(r.charAt(0).toUpperCase() + r.slice(1)) + '. ' : ''}En attendant, une capture qui diffère n’est pas comptée comme modifiée mais « non comparée », aucun écran n’est donné pour touché, et les alertes « nouvelles » ne sont pas sûres : l’autre passe ne les mesurait peut-être pas de la même façon.</p>`;
 }
 
-function blocComparaison(cmp, noms) {
+/* Le filtre --routes des deux passes : l'état en mémoire de l'application
+ * dépend des routes visitées avant (un brouillon de présentation se crée à
+ * l'ouverture d'un onglet), donc deux passes filtrées différemment peuvent
+ * différer sans que le code ait changé. */
+export function filtresDifferents(cmp) { return !!(cmp && cmp.filtres && (cmp.filtres.avant || null) !== (cmp.filtres.apres || null)); }
+
+function blocComparaison(cmp, noms, captures, pleinePage) {
   const nom = id => noms.get(id) || id;
   const ecran = id => `<a href="#${echapper(id)}" title="${echapper(id)}">${echapper(nom(id))}</a>`;
   const routes = t => (t.length ? t.map(ecran).join(', ') : 'aucun');
-  const captures = (t, aucun = 'aucun') => (t === null ? 'non mesuré avant' : t.length
-    ? t.map(k => { const [id, l] = k.split('@'); return ecran(id) + ' à ' + l + ' px'; }).join(', ') : aucun);
+  const captureDe = k => { const [id, l] = k.split('@'); return ecran(id) + ' à ' + l + ' px'; };
+  const listeCaptures = (t, aucun = 'aucun') => (t === null ? 'non mesuré avant' : t.length ? t.map(captureDe).join(', ') : aucun);
   const avantApres = x => (x.avant === null || x.avant === undefined ? 'non mesuré avant → ' + x.apres : x.avant + ' → ' + x.apres);
-  const modifiees = [...new Set(cmp.modifiees.map(k => k.split('@')[0]))].filter(id => noms.has(id));
-  const sur = cmp.mesure && !cmp.mesure.identique ? ' <i>(à refaire : l’avant a été mesuré par une autre version)</i>' : '';
-  const nuancees = (cmp.nuancees || []).map(x => { const [id, l] = x.capture.split('@'); return ecran(id) + ' à ' + l + ' px (' + decrireNuance(x) + ')'; });
+  const parCle = new Map((captures || []).map(c => [c.id + '@' + c.largeur, c]));
+  const comparable = !cmp.mesure || cmp.mesure.identique;
+  /* Les écrans touchés, et pour chacun, si tout ce qui change est plus bas
+   * que le premier écran ou dans le texte seulement. */
+  const touches = new Map();
+  for (const k of cmp.modifiees) {
+    const id = k.split('@')[0];
+    if (!noms.has(id)) continue;
+    const c = parCle.get(k);
+    const ou = c ? (c.ecart && c.ecart.pixels ? ouChange(c) || 'photo' : 'texte') : 'photo';
+    if (!touches.has(id)) touches.set(id, new Set());
+    touches.get(id).add(ou);
+  }
+  const ecransTouches = [...touches].map(([id, ou]) => ecran(id) + (ou.size === 1 && ou.has('sous le premier écran') ? ' (sous le premier écran)'
+    : ou.size === 1 && ou.has('texte') ? ' (texte seulement)' : '')).join(', ');
+  const sur = comparable ? '' : ' <i>(à refaire : l’avant n’a pas été pris dans les mêmes conditions)</i>';
+  const nuancees = (cmp.nuancees || []).map(x => captureDe(x.capture) + ' (' + decrireNuance(x) + ')');
+  const textes = (cmp.textes || []).slice(0, 12).map(x => captureDe(x.capture) + ' : '
+    + (x.ajoute ? '<q>' + echapper(x.ajoute) + '</q>' : 'une ligne en moins') + (x.retire ? ' au lieu de <q>' + echapper(x.retire) + '</q>' : ''));
   const seuils = `le lissage d’une image (jusqu’à ${ECART.image}/255, dans les images) et le crénelage de quelques bords (au plus ${ECART.bruit}/255, sur moins de ${pourcent(ECART.partBruit).replace('moins de ', '')} de la photo, hors des images)`;
+  const filtres = cmp.filtres && (cmp.filtres.avant || cmp.filtres.apres)
+    ? `<p class="meta">Comparaison limitée aux routes ${[['avant', cmp.filtres.avant], ['après', cmp.filtres.apres]].filter(x => x[1]).map(([t, f]) => '<code>' + echapper(f) + '</code> (' + t + ')').join(' et ')}.${filtresDifferents(cmp)
+      ? ' <b>Les deux passes n’ont pas le même filtre</b> : l’état en mémoire de l’application dépend des routes visitées avant (un brouillon se crée à l’ouverture d’un onglet), une capture peut donc changer sans que le code ait changé. Relancez-les avec le même --routes, ou toutes deux complètes.' : ''}</p>` : '';
   return `<section class="comparaison"><h2>Ce qui a changé depuis la passe « avant »</h2>
+<p class="meta">On compare ${pleinePage ? 'la page entière, de haut en bas' : 'le premier écran seulement'}, au pixel, et tout le texte de la page, blocs repliés et bulles d’aide compris${pleinePage ? '' : ' : un changement plus bas qui ne touche pas le texte ne se voit pas'}.</p>
 <ul>
-<li><b>${pluriel(cmp.modifiees.length, 'capture modifiée', 'captures modifiées')}</b>, ${pluriel(cmp.identiques + cmp.identiquesALOeil, 'identique', 'identiques')}${cmp.identiquesALOeil ? ' (dont ' + cmp.identiquesALOeil + ' à l’œil seulement : le lissage d’une image ou le crénelage de quelques bords, listées ci-dessous)' : ''}${cmp.nonComparees ? ', ' + pluriel(cmp.nonComparees, 'non comparée', 'non comparées') : ''}. Écrans touchés : ${modifiees.length ? modifiees.map(ecran).join(', ') : 'aucun'}.</li>
+<li><b>${pluriel(cmp.modifiees.length, 'capture modifiée', 'captures modifiées')}</b>, ${pluriel(cmp.identiques + cmp.identiquesALOeil, 'identique', 'identiques')}${cmp.identiquesALOeil ? ' (dont ' + cmp.identiquesALOeil + ' à l’œil seulement : le lissage d’une image ou le crénelage de quelques bords, listées ci-dessous)' : ''}${cmp.nonComparees ? ', ' + pluriel(cmp.nonComparees, 'non comparée', 'non comparées') : ''}. Écrans touchés : ${comparable ? ecransTouches || 'aucun' : 'non comparés (voir l’avertissement en tête)'}.</li>
 ${nuancees.length ? `<li>Identiques à l’œil, à vérifier d’un regard : ${nuancees.join(', ')}. Seuls sont pardonnés ${seuils} ; tout autre écart rend la capture « modifiée ».</li>` : ''}
+${textes.length ? `<li>Textes changés : ${textes.join(' ; ')}${(cmp.textes || []).length > textes.length ? ' ; et ' + ((cmp.textes || []).length - textes.length) + ' autres' : ''}.</li>` : ''}
 <li>Écrans nouveaux : ${routes(cmp.routesNouvelles)}. Écrans disparus : ${cmp.routesDisparues.length ? cmp.routesDisparues.map(id => echapper(nom(id))).join(', ') : 'aucun'}.</li>
 <li>Termes interdits visibles : ${avantApres(cmp.termes)} ; dans un bloc replié ou une bulle : ${avantApres(cmp.termesReplies)}${sur}.</li>
-<li>Exceptions nouvelles : ${captures(cmp.exceptionsNouvelles, 'aucune')}. Débordements nouveaux : ${captures(cmp.debordementsNouveaux)}.</li>
-<li>Textes coupés nouveaux : ${captures(cmp.coupesNouvelles)}. Contrôles hors écran nouveaux : ${captures(cmp.horsEcranNouveaux)}. Valeurs techniques nouvelles : ${captures(cmp.valeursNouvelles, 'aucune')}.</li>
+<li>Exceptions nouvelles : ${listeCaptures(cmp.exceptionsNouvelles, 'aucune')}. Débordements nouveaux : ${listeCaptures(cmp.debordementsNouveaux)}.</li>
+<li>Textes coupés nouveaux : ${listeCaptures(cmp.coupesNouvelles)}. Contrôles hors écran nouveaux : ${listeCaptures(cmp.horsEcranNouveaux)}. Valeurs techniques nouvelles : ${listeCaptures(cmp.valeursNouvelles, 'aucune')}.</li>
 ${cmp.base === false ? '<li>La base n’est pas la même que celle de la passe « avant » : une partie des écarts vient d’elle.</li>' : ''}
-${cmp.horloge && cmp.horloge.avant !== cmp.horloge.apres ? '<li>L’horloge n’est pas figée à la même date que pour la passe « avant » : les dates affichées diffèrent.</li>' : ''}
 </ul>
-${cmp.filtres && (cmp.filtres.avant || cmp.filtres.apres) ? `<p class="meta">Comparaison limitée aux routes ${[cmp.filtres.avant, cmp.filtres.apres].filter(Boolean).map(f => '<code>' + echapper(f) + '</code>').join(' et ')}.</p>` : ''}
+${filtres}
 <label class="filtre"><input type="checkbox" id="seulement"> N’afficher que les captures à regarder : modifiées, nouvelles, nuancées ou non comparées</label>
 <p class="rien">Aucune capture modifiée, nouvelle ou nuancée depuis la passe « avant ».</p>
 </section>`;
@@ -465,7 +550,7 @@ export function planche(r, { dossier, avant = null, avantDossier = null, cibles 
         const contenu = avant
           ? `<div class="paire"><div><small>Avant</small>${a ? image('Avant', a.fichier, avantDossier) : '<p class="absent">absente</p>'}</div><div><small>Après</small>${image('Après', c.fichier, dossier)}</div></div>`
           : image(c.nom + ' à ' + c.largeur + ' px', c.fichier, dossier);
-        return `<figure class="${e || ''}"><figcaption><b>${c.largeur} px</b>${e ? ` <span class="badge etat ${e}">${echapper(libelleEtat(e, c))}</span>` : ''} ${badge(c)}</figcaption>${contenu}</figure>`;
+        return `<figure class="${e || ''}"><figcaption><b>${c.largeur} px</b>${e ? ` <span class="badge etat ${e}">${echapper(libelleEtat(e, c, a))}</span>` : ''} ${badge(c)}</figcaption>${contenu}</figure>`;
       }).join('');
       const c0 = cs[0];
       /* Une colonne par largeur, proportionnée sans écraser le téléphone. */
@@ -477,7 +562,7 @@ export function planche(r, { dossier, avant = null, avantDossier = null, cibles 
   const regarder = aRegarder(r.captures);
   const liste = [...regarder].map(([id, x]) => `<li><a href="#${echapper(id)}" title="${echapper(id)}">${echapper(x.nom)}</a><ul>${[...x.alertes].map(([k, a]) =>
     `<li><span class="badge ${k}">${echapper(a.libelle)}</span> à ${enumerer(a.largeurs.map(String))} px${a.extrait ? ` : <q>${echapper(a.extrait)}</q>` : ''}${a.detail ? `<br><small class="tech" title="Où le trouver dans la page">${echapper(a.detail)}</small>` : ''}</li>`).join('')}</ul></li>`).join('');
-  const horloge = r.horloge ? ' · horloge figée au ' + echapper(dateLisible(r.horloge)) : '';
+  const horloge = r.horloge ? ' · horloge figée au ' + echapper(dateLisible(r.horloge)) + (r.horlogeReprise ? ' (reprise de la passe « avant »)' : '') : '';
   const telephone = r.largeurs.some(l => l < TELEPHONE) ? ` (sous ${TELEPHONE} px, vue de téléphone tactile)` : '';
   const version = r.mesure && r.mesure.version ? ' · version de la mesure ' + echapper(r.mesure.version) : '';
   const corps = `<h1>Recette des captures${temps}</h1>
@@ -485,9 +570,10 @@ ${alerteVersion(cmp)}
 <p class="meta">Le ${echapper(dateLisible(r.quand))} · commit ${echapper(r.commit || 'inconnu')} · ${echapper(nomBase(r.base.fichier))}, ${pluriel(r.base.projets, 'projet')} et ${pluriel(r.base.livrables, 'pièce')} · largeurs ${enumerer(r.largeurs.map(String))} px${telephone}${horloge}${version}</p>
 <div class="chiffres"><span>${pluriel(s.routes, 'écran')}</span><span>${pluriel(s.captures, 'capture')}</span><span>${pluriel(s.exceptions, 'exception')}</span><span>${pluriel(s.debordements, 'capture qui déborde', 'captures qui débordent')}</span><span>${pluriel(s.horsEcran || 0, 'capture avec un contrôle hors écran', 'captures avec un contrôle hors écran')}</span><span>${pluriel(s.coupes || 0, 'capture avec un texte coupé', 'captures avec un texte coupé')}</span><span>${pluriel(s.valeurs || 0, 'capture avec une valeur technique', 'captures avec une valeur technique')}</span><span>${pluriel(s.termes, 'capture avec un terme interdit visible', 'captures avec un terme interdit visible')}</span><span>${pluriel(s.termesReplies || 0, 'capture avec un terme dans un bloc replié', 'captures avec un terme dans un bloc replié')}</span><span>${pluriel(s.introuvables, 'page introuvable', 'pages introuvables')}</span><span>${pluriel(s.imagesCassees, 'image cassée', 'images cassées')}</span></div>
 ${r.filtre ? `<p class="meta">Routes limitées à <code>${echapper(r.filtre)}</code>.</p>` : ''}
+<p class="meta">${r.pleinePage ? 'Photos de la page entière, de haut en bas : ce qui est fixé à l’écran (barre d’onglets, colonne latérale, panneau ouvert) y est posé sur la page. Les vignettes en montrent le haut ; un clic ouvre la page entière.' : 'Photos du premier écran seulement (--premier-ecran) : ce qui est plus bas n’y est pas.'}</p>
 ${r.manquantes.length ? `<p class="meta">Absentes de cette base, donc non capturées : ${r.manquantes.map(echapper).join(', ')}.</p>` : ''}
 ${avant ? `<p class="meta">Comparaison avec <a href="${echapper(lien(dossier, join(avantDossier, 'index.html')))}">la passe « avant »</a> du ${echapper(dateLisible(avant.quand))}, commit ${echapper(avant.commit || 'inconnu')}.</p>` : ''}
-${cmp ? blocComparaison(cmp, noms) : ''}
+${cmp ? blocComparaison(cmp, noms, r.captures, !!r.pleinePage) : ''}
 ${liste ? `<details><summary>Alertes, écran par écran : ${pluriel(regarder.size, 'écran')} (${enumerer(sortesDAlertes(regarder))})</summary><ul>${liste}</ul></details>` : '<p>Aucune exception, aucun débordement, aucun texte coupé, aucune valeur technique, aucun terme interdit.</p>'}
 ${sections}`;
   return `<!doctype html>
@@ -526,16 +612,19 @@ ${typographie(corps)}
 `;
 }
 
-/* Ce qui a changé entre deux recettes : routes, images, exceptions,
+/* Ce qui a changé entre deux recettes : routes, images, texte, exceptions,
  * débordements, textes coupés, contrôles hors écran, valeurs techniques et
  * termes interdits. Les deux passes doivent porter sur les mêmes routes :
  * filtrez-les avant (voir `principal`, option --routes).
  *
- * Elles doivent aussi avoir la même version de la mesure (`mesure.version`)
- * et le même poste de capture (`mesure.contexte`). Sinon, une capture qui
- * diffère n'est pas comptée comme modifiée (l'outil a pu changer, pas
- * l'écran), et `mesure.identique` vaut false. Un champ que la passe « avant »
- * ne mesurait pas encore vaut null, « non mesuré avant », jamais zéro. */
+ * Elles doivent aussi être prises dans les mêmes conditions : la même version
+ * de la mesure (`mesure.version`), le même poste de capture
+ * (`mesure.contexte`, cadrage compris) et la même horloge. Sinon, une capture
+ * qui diffère n'est pas comptée comme modifiée (l'outil, le poste ou la date
+ * ont pu changer, pas l'écran), `mesure.identique` vaut false et
+ * `mesure.version`, `mesure.contexte`, `mesure.horloge` disent laquelle des
+ * conditions manque. Un champ que la passe « avant » ne mesurait pas encore
+ * vaut null, « non mesuré avant », jamais zéro. */
 export function comparer(avant, apres) {
   const cle = c => c.id + '@' + c.largeur;
   const a = new Map(avant.captures.map(c => [cle(c), c]));
@@ -547,27 +636,41 @@ export function comparer(avant, apres) {
   const total = (x, champ) => (x.captures.some(c => Array.isArray(c[champ])) ? x.captures.reduce((n, c) => n + occurrences(c[champ]), 0) : null);
   const version = x => (x.mesure && x.mesure.version) || null;
   const contexte = x => (x.mesure && x.mesure.contexte ? JSON.stringify(x.mesure.contexte) : null);
+  const cadrage = x => !!(x.mesure && x.mesure.contexte && x.mesure.contexte.pleinePage);
+  const memeVersion = version(avant) !== null && version(avant) === version(apres);
   const memeContexte = contexte(avant) !== null && contexte(avant) === contexte(apres);
-  const memeMesure = version(avant) !== null && version(avant) === version(apres) && memeContexte;
+  const memeHorloge = (avant.horloge || null) === (apres.horloge || null);
+  const memeMesure = memeVersion && memeContexte && memeHorloge;
   const communes = [...b].filter(([k]) => a.has(k));
   const comparables = communes.filter(([k, c]) => c.empreinte && a.get(k).empreinte);
-  const differentes = comparables.filter(([k, c]) => c.empreinte !== a.get(k).empreinte);
-  /* Une empreinte qui change sans un pixel visiblement différent hors des
-   * images (le lissage d'une image) n'est pas une capture modifiée. */
-  const nuancees = memeMesure ? differentes.filter(([, c]) => aLOeil(c.ecart)) : [];
+  const differentes = comparables.filter(([k, c]) => c.empreinte !== a.get(k).empreinte || texteChange(c, a.get(k)));
+  /* Une photo qui change sans un pixel visiblement différent hors des
+   * images (le lissage d'une image), et dont le texte ne change pas, n'est
+   * pas une capture modifiée. */
+  const nuance = ([k, c]) => !texteChange(c, a.get(k)) && aLOeil(c.ecart);
+  const nuancees = memeMesure ? differentes.filter(nuance) : [];
+  const modifiees = memeMesure ? differentes.filter(x => !nuance(x)) : [];
+  /* Pour chaque capture dont le texte change : la première ligne apparue et
+   * la première disparue. */
+  const textes = modifiees.filter(([k, c]) => texteChange(c, a.get(k)) && Array.isArray(c.lignes) && Array.isArray(a.get(k).lignes)).map(([k, c]) => {
+    const av = new Set(a.get(k).lignes), ap = new Set(c.lignes);
+    return { capture: k, ajoute: c.lignes.find(l => !av.has(l)) || null, retire: a.get(k).lignes.find(l => !ap.has(l)) || null };
+  });
   const empreinteBase = x => (x.base && x.base.empreinte) || null;
   const zone = z => (z ? { pixels: z.pixels, max: z.max } : { pixels: 0, max: 0 });
   return {
-    mesure: { avant: version(avant), apres: version(apres), identique: memeMesure, contexte: memeContexte },
+    mesure: { avant: version(avant), apres: version(apres), identique: memeMesure, version: memeVersion, contexte: memeContexte,
+      ...(memeContexte || contexte(avant) === null ? {} : { poste: cadrage(avant) !== cadrage(apres) ? 'cadrage' : 'navigateur' }), horloge: memeHorloge },
     base: empreinteBase(avant) && empreinteBase(apres) ? empreinteBase(avant) === empreinteBase(apres) : null,
     horloge: { avant: avant.horloge || null, apres: apres.horloge || null },
     routesNouvelles: ids(apres).filter(id => !ids(avant).includes(id)),
     routesDisparues: ids(avant).filter(id => !ids(apres).includes(id)),
-    modifiees: memeMesure ? differentes.filter(([, c]) => !aLOeil(c.ecart)).map(([k]) => k) : [],
+    modifiees: modifiees.map(([k]) => k),
     identiques: comparables.length - differentes.length,
     identiquesALOeil: nuancees.length,
     nuancees: nuancees.map(([k, c]) => ({ capture: k, max: c.ecart.max, pixels: c.ecart.pixels,
       hors: zone(c.ecart.hors || { pixels: c.ecart.pixels, max: c.ecart.max }), images: zone(c.ecart.images) })),
+    textes,
     nonComparees: communes.length - comparables.length + (memeMesure ? 0 : differentes.length),
     exceptionsNouvelles: nouveaux('exceptions', c => c.exceptions.length > 0),
     debordementsNouveaux: nouveaux('debordement', c => c.debordement > 0),
@@ -699,6 +802,95 @@ async function ouvrirRecherche(page, texte) {
   }
   if (!(await ouverte())) throw new Error('La recherche ne s’ouvre ni par son bouton ni au clavier.');
   await page.locator('dialog[open] input[type=search]').fill(texte);
+}
+
+/* La page entière, pour la photo. Ce qui est fixé à l'écran ne se peindrait
+ * qu'au premier écran : la barre d'onglets du téléphone au milieu de la page,
+ * sur une ligne de texte ; la colonne latérale, le voile et un panneau ouvert
+ * arrêtés à la hauteur de l'écran. Le temps de la photo, chacun est posé sur
+ * la page :
+ *   - ce qui tient toute la hauteur de l'écran (colonne latérale, voile,
+ *     panneau) descend jusqu'au bas de la page, et un panneau déroule ce qu'il
+ *     faisait défiler ;
+ *   - ce qui est collé au bas de l'écran (la barre d'onglets) passe au bas de
+ *     la page ;
+ *   - le fond d'une fenêtre modale (::backdrop) et le grain du fond couvrent
+ *     toute la page.
+ * Une fenêtre modale (<dialog>) reste où elle est, au premier écran.
+ * Exécuté dans le navigateur, page à son début ; `replierLaPage` remet chaque
+ * style comme il était. Renvoie la hauteur de la page à photographier. */
+export function deplierLaPage() {
+  const H = innerHeight;
+  const touches = [];
+  const poser = (e, regles) => {
+    touches.push([e, e.getAttribute('style')]);
+    for (const [k, v] of Object.entries(regles)) e.style.setProperty(k, v, 'important');
+  };
+  /* Posé en absolu, un élément se place par rapport à son bloc conteneur :
+   * on corrige l'écart pour qu'il reste à la même hauteur dans la page. */
+  const recaler = (e, haut) => { const d = haut - e.getBoundingClientRect().top; if (Math.abs(d) > 0.5) e.style.setProperty('top', (parseFloat(e.style.top) + d) + 'px', 'important'); };
+  const enHaut = e => e.matches('dialog[open]') || e.matches(':modal') || e.matches(':popover-open');
+  const tous = [...document.body.querySelectorAll('*')].filter(e => {
+    if (!e.getClientRects().length || enHaut(e) || e.closest('dialog[open]')) return false;
+    const p = getComputedStyle(e).position;
+    return p === 'fixed' || (p === 'sticky' && e.getBoundingClientRect().height >= H - 1);
+  });
+  const fixes = tous.filter(e => !tous.some(x => x !== e && x.contains(e)))
+    .map(e => ({ e, r: e.getBoundingClientRect(), colle: getComputedStyle(e).position === 'sticky' }));
+  const hauts = fixes.filter(x => x.r.top <= 1 && x.r.bottom >= H - 1);
+  const bas = fixes.filter(x => !hauts.includes(x) && x.r.bottom >= H - 1 && x.r.top > H / 2);
+  /* Ce qu'un élément, ou une liste en lui, fait encore défiler. */
+  const reste = e => {
+    let n = 0;
+    for (const d of [e, ...e.querySelectorAll('*')]) {
+      const oy = getComputedStyle(d).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && d.scrollHeight > d.clientHeight + 1) n = Math.max(n, d.scrollHeight - d.clientHeight);
+    }
+    return n;
+  };
+  /* 1. Ce qui tient la hauteur de l'écran, déroulé de ce qu'il fait défiler. */
+  for (const { e, r, colle } of hauts) {
+    const n = reste(e);
+    if (colle) poser(e, { height: (r.height + n) + 'px', 'max-height': 'none' });
+    else {
+      poser(e, { position: 'absolute', top: r.top + 'px', left: r.left + 'px', width: r.width + 'px', right: 'auto', bottom: 'auto',
+        height: (r.height + n) + 'px', 'max-height': 'none' });
+      recaler(e, r.top);
+    }
+    /* Un panneau en colonne flexible partage la hauteur gagnée avec son
+     * en-tête, qui rétrécit moins : on rallonge tant qu'il reste à dérouler. */
+    for (let i = 0, m; i < 4 && (m = reste(e)) > 1; i++) e.style.setProperty('height', (e.getBoundingClientRect().height + m) + 'px', 'important');
+  }
+  /* 2. Puis jusqu'au bas de la page, qu'un panneau déroulé a pu allonger. */
+  const hauteur = () => Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+  const total = hauteur();
+  for (const { e, r } of hauts) if (e.getBoundingClientRect().height < total - r.top) e.style.setProperty('height', (total - r.top) + 'px', 'important');
+  /* 3. Ce qui est collé au bas de l'écran, au bas de la page. */
+  for (const { e, r } of bas) {
+    const haut = total - r.height;
+    poser(e, { position: 'absolute', top: haut + 'px', left: r.left + 'px', width: r.width + 'px', right: 'auto', bottom: 'auto' });
+    recaler(e, haut);
+  }
+  /* 4. Les fonds qui n'ont pas d'élément à poser : ::backdrop, et le grain du corps. */
+  const regles = ['dialog::backdrop{position:absolute!important;inset:0 0 auto 0!important;height:' + total + 'px!important}'];
+  for (const p of ['::before', '::after']) if (getComputedStyle(document.body, p).position === 'fixed')
+    regles.push('body' + p + '{position:absolute!important;inset:0 0 auto 0!important;height:' + total + 'px!important}');
+  const feuille = document.createElement('style');
+  feuille.setAttribute('data-recette', 'page-entiere');
+  feuille.textContent = regles.join('\n');
+  document.head.append(feuille);
+  window.__recettePageEntiere = { touches, feuille };
+  return { hauteur: hauteur(), poses: touches.length };
+}
+
+/* Remet la page comme `deplierLaPage` l'a trouvée. Exécuté dans le navigateur. */
+export function replierLaPage() {
+  const x = window.__recettePageEntiere;
+  if (!x) return 0;
+  for (const [e, style] of x.touches.reverse()) { if (style === null) e.removeAttribute('style'); else e.setAttribute('style', style); }
+  x.feuille.remove();
+  delete window.__recettePageEntiere;
+  return x.touches.length;
 }
 
 /* Ce que l'écran montre, mesuré dans la page. Exécutée dans le navigateur :
@@ -870,7 +1062,7 @@ export async function ecartDePixels({ a, b, zones = [], densite = 1 }) {
  * (jusqu'à 5/255, quelques dizaines de pixels). Tout le reste est un vrai
  * changement : hors des images, un pixel qui bouge de plus de `bruit`/255
  * (une bordure #deded8 → #e8e8e2 bouge de 10, une page assombrie de 8 % de
- * 20), ou plus d'une part `partBruit` de l'écran qui bouge, même d'un point ;
+ * 20), ou plus d'une part `partBruit` de la photo qui bouge, même d'un point ;
  * dans une image, plus de `image`/255 (une autre image). */
 export const ECART = { bruit: 8, partBruit: 0.001, image: 32 };
 export function aLOeil(e) {
@@ -881,9 +1073,27 @@ export function aLOeil(e) {
   return hors.max <= ECART.bruit && hors.pixels <= ECART.partBruit * (e.total || 0) && images.max <= ECART.image;
 }
 
+/* Le texte de toute la page : ce qui est visible, de haut en bas (pas le
+ * seul premier écran), le texte d'exemple des champs vides, les blocs repliés
+ * et les bulles d'aide. Deux passes du même code le donnent à l'identique ; il
+ * change dès qu'un mot change, même hors de la photo : dans un bloc replié,
+ * dans une liste qui défile à l'intérieur d'une fenêtre. `lignes` le garde
+ * ligne à ligne, sans doublon, pour montrer ce qui a changé. */
+export function texteDeLaPage(m) {
+  const tout = String(m.texte || '') + '\n' + String(m.texteReplie || '');
+  const lignes = [], vues = new Set();
+  for (const brute of tout.split('\n')) {
+    const l = brute.replace(/\s+/g, ' ').trim();
+    if (l && !vues.has(l) && lignes.length < 800) { vues.add(l); lignes.push(l.slice(0, 200)); }
+  }
+  const normal = tout.split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
+  return { empreinteTexte: createHash('sha256').update(normal).digest('hex').slice(0, 16), lignes };
+}
+
 /* La mesure brute, rangée comme `captures.json` la garde. */
 export function depouiller(m) {
   return {
+    ...texteDeLaPage(m),
     titre: m.titre, contenu: m.contenu, debordement: m.debordement, hauteurPage: m.hauteurPage, images: m.images,
     coupes: m.coupes, horsEcran: m.horsEcran, blocsReplies: m.blocsReplies, zonesImages: m.zonesImages || [], densite: m.densite || 1,
     introuvable: /introuvable|ne mène à rien/i.test(m.titre), vide: m.contenu < 10,
@@ -959,12 +1169,26 @@ async function principal() {
     process.stderr.write('Attention : aucune passe « avant » dans ' + avantDossier + ' : la planche est faite sans comparaison. '
       + 'Lancez --avant sur la branche de base du lot, avec le même --sortie (documents/FINI.md, section 2).\n');
   }
-  const memeMesure = !!avant && !!avant.mesure && avant.mesure.version === mesure.version
-    && JSON.stringify(avant.mesure.contexte) === JSON.stringify(mesure.contexte);
-  if (avant && !memeMesure)
-    process.stderr.write('Attention : la passe « avant » (' + avantDossier + ') a été prise avec une autre version de l’outil'
-      + (avant.mesure ? ' (' + avant.mesure.version + ', celle-ci est ' + mesure.version + ')' : '')
-      + ' : refaites-la avec celle-ci. Les captures qui diffèrent ne sont pas comparées (documents/FINI.md, section 2).\n');
+  /* L'horloge de la page : celle qu'on donne ; à défaut, avec --apres, celle
+   * de la passe « avant », pour que les dates affichées soient les mêmes ; à
+   * défaut encore, l'heure du début de la passe, figée pour toute la passe. */
+  let horlogeReprise = false;
+  if (!o.horloge && avant && avant.horloge) { o.horloge = avant.horloge; horlogeReprise = true; }
+  if (!o.horloge) o.horloge = heureDuPoste();
+  if (horlogeReprise) process.stderr.write('Horloge reprise de la passe « avant » : ' + o.horloge + '.\n');
+  let memeMesure = false;
+  if (avant) {
+    const conditions = comparer({ ...avant, captures: [] }, { mesure, horloge: o.horloge, captures: [] });
+    memeMesure = conditions.mesure.identique;
+    if (!memeMesure)
+      process.stderr.write('Attention : la passe « avant » (' + avantDossier + ') n’a pas été prise dans les mêmes conditions : '
+        + enumerer(causes(conditions)) + '. ' + remede(conditions).replace(/^./, x => x.toUpperCase())
+        + '. Les captures qui diffèrent ne sont pas comparées.\n');
+    if ((avant.filtre || null) !== (o.filtre || null))
+      process.stderr.write('Attention : la passe « avant » a été prise avec ' + (avant.filtre ? '--routes ' + avant.filtre : 'toutes les routes')
+        + ', celle-ci avec ' + (o.filtre ? '--routes ' + o.filtre : 'toutes les routes') + '. L’état en mémoire de l’application dépend des routes '
+        + 'visitées avant : une capture peut changer sans que le code ait changé. Relancez les deux passes avec le même --routes (documents/FINI.md, section 2).\n');
+  }
 
   const { chromium } = await import('playwright');
   const srv = serveur([RACINE, o.medias]);
@@ -972,7 +1196,7 @@ async function principal() {
   const url = 'http://127.0.0.1:' + srv.address().port;
   let navigateur;
   const r = { outil: OUTIL, temps: o.temps, quand: new Date().toISOString(), commit: o.commit || commit(), mesure,
-    horloge: o.horloge, largeurs: o.largeurs, pleinePage: o.pleinePage, filtre: o.filtre,
+    horloge: o.horloge, ...(horlogeReprise ? { horlogeReprise } : {}), largeurs: o.largeurs, pleinePage: o.pleinePage, filtre: o.filtre,
     base: { fichier: basename(o.base), empreinte: createHash('sha256').update(texte).digest('hex').slice(0, 12) },
     manquantes: [], horsCapture: [], captures: [] };
   try {
@@ -985,7 +1209,7 @@ async function principal() {
       const contexte = await navigateur.newContext(telephone ? POSTES.telephone : POSTES.bureau);
       const page = await contexte.newPage();
       page.setDefaultTimeout(15000);
-      if (o.horloge) await page.clock.setFixedTime(new Date(o.horloge));
+      await page.clock.setFixedTime(new Date(o.horloge));
       page.on('pageerror', e => (courant ? courant.exceptions : r.horsCapture).push(String((e && e.message) || e)));
       await page.goto(url + '/#/bureau', { waitUntil: 'networkidle' });
       await page.waitForFunction(() => window.APP && window.DEPOT && window.DECISION);
@@ -1028,7 +1252,16 @@ async function principal() {
             await stabiliser(page);
             await page.evaluate(apaiserLaPage);
             const m = await page.evaluate(mesurerDansLaPage);
-            const tampon = await page.screenshot({ path: join(o.dossier, c.fichier), fullPage: o.pleinePage, animations: 'disabled', caret: 'hide' });
+            let tampon;
+            if (o.pleinePage) {
+              /* La page entière : ce qui est fixé à l'écran est posé sur la page le temps de la photo.
+               * Elle garde la largeur de l'écran : un panneau plus large que le téléphone,
+               * posé sur la page, ne l'élargit pas ; ce qui en dépasse ne se voyait pas. */
+              c.hauteurPhoto = (await page.evaluate(deplierLaPage)).hauteur;
+              try { tampon = await page.screenshot({ path: join(o.dossier, c.fichier), fullPage: true, clip: { x: 0, y: 0, width: largeur, height: c.hauteurPhoto },
+                animations: 'disabled', caret: 'hide' }); }
+              finally { await page.evaluate(replierLaPage); }
+            } else tampon = await page.screenshot({ path: join(o.dossier, c.fichier), animations: 'disabled', caret: 'hide' });
             Object.assign(c, depouiller(m), { empreinte: empreinte(tampon) });
           } catch (e) {
             c.exceptions.push('Recette : ' + ((e && e.message) || e));
@@ -1118,9 +1351,9 @@ async function principal() {
   await writeFile(join(o.dossier, 'captures.json'), JSON.stringify(r, null, 1));
   await writeFile(join(o.dossier, 'index.html'), planche(r, { dossier: o.dossier, avant, avantDossier, cibles }));
   const { termesParMot, termesRepliesParMot, valeursParMot, ...court } = r.resume;
-  const { modifiees, nuancees, seuils, ...cmp } = r.comparaison || {};
+  const { modifiees, nuancees, textes, seuils, ...cmp } = r.comparaison || {};
   process.stdout.write(JSON.stringify({ sortie: o.dossier, planche: join(o.dossier, 'index.html'), ...court,
-    manquantes: r.manquantes, ...(r.comparaison ? { comparaison: { ...cmp, modifiees: modifiees.length, nuancees: nuancees.length } } : {}) }, null, 2) + '\n');
+    manquantes: r.manquantes, ...(r.comparaison ? { comparaison: { ...cmp, modifiees: modifiees.length, nuancees: nuancees.length, textes: textes.length } } : {}) }, null, 2) + '\n');
   if (o.strict && (r.resume.exceptions || r.resume.debordements || r.resume.valeurs || r.resume.termes || r.resume.termesReplies)) process.exitCode = 1;
 }
 

@@ -762,9 +762,12 @@ Trois outils encadrent désormais chaque changement d'interface :
   un dossier par branche (`../recette-adoption/<branche>`), une
   planche-contact et un relevé JSON : exceptions, débordements, textes coupés,
   contrôles hors écran, valeurs techniques affichées, termes interdits visibles
-  ou dans un bloc replié, et, après, les captures modifiées. Deux passes ne se
-  comparent que si elles ont la même version de la mesure. Il demande
-  Playwright et un navigateur (`BROWSER_CHANNEL=chrome`).
+  ou dans un bloc replié, et, après, les captures modifiées. Chaque photo
+  prend la page entière, et la comparaison porte aussi sur tout le texte de la
+  page, blocs repliés compris. Deux passes ne se comparent que prises dans les
+  mêmes conditions : même version de la mesure, même poste, même horloge (une
+  passe « après » reprend celle de l'avant). Il demande Playwright et un
+  navigateur (`BROWSER_CHANNEL=chrome`).
 
 La définition de « fini » d'une PR d'interface est dans
 [`documents/FINI.md`](documents/FINI.md), et le gabarit de PR la reprend.

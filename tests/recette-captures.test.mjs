@@ -9,8 +9,14 @@ import { mkdtemp, mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promis
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { routesDe, lireArguments, planche, comparer, restreindre, problemes, preparerSortie, pluriel, dateLisible,
-  sortieParDefaut, typographie, aLOeil, versionMesure, decrireNuance, MODES_ATTENDUS, LARGEURS, MARQUE, OUTIL, ECART, ONGLETS_PIECE } from '../outils/recette-captures.mjs';
+  sortieParDefaut, typographie, aLOeil, versionMesure, causes, heureDuPoste, texteDeLaPage, ouChange, decrireNuance,
+  MODES_ATTENDUS, LARGEURS, MARQUE, OUTIL, ECART, ONGLETS_PIECE } from '../outils/recette-captures.mjs';
 import { relever, extrait, VALEURS_TECHNIQUES } from '../outils/termes-interdits.mjs';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const executer = promisify(execFile);
+const OUTIL_CHEMIN = fileURLToPath(new URL('../outils/recette-captures.mjs', import.meta.url));
 
 const RACINE = fileURLToPath(new URL('../', import.meta.url));
 
@@ -110,6 +116,13 @@ test('la sortie par défaut est propre à la branche, et une passe faite depuis 
   assert.throws(() => lireArguments(['--commit', 'main; rm']), /--commit/);
   assert.match(lireArguments([]).sortie, /recette-adoption[\\/][^\\/]+$/);
   assert.equal(lireArguments(['--ou']).ou, true);
+  // La page entière par défaut ; le premier écran seulement sur demande.
+  assert.equal(lireArguments([]).pleinePage, true);
+  assert.equal(lireArguments(['--premier-ecran']).pleinePage, false);
+  assert.equal(lireArguments(['--pleine-page']).pleinePage, true);
+  // L'horloge par défaut : l'heure du poste, à la minute, au format de --horloge.
+  assert.equal(heureDuPoste(new Date(2026, 10, 26, 9, 5, 42)), '2026-11-26T09:05:00');
+  assert.equal(lireArguments([]).horloge, null, 'fixée au lancement : celle de l’avant, ou l’heure du poste');
 });
 
 test('la sortie doit rester hors du dépôt', () => {
@@ -229,22 +242,101 @@ test('une passe « avant » d’une version plus ancienne : ce qu’elle ne mesu
   assert.equal(c.termesReplies.avant, null);
   assert.deepEqual(c.exceptionsNouvelles, [], 'les exceptions étaient déjà mesurées');
   // La version diffère : la capture qui a changé n'est pas « modifiée », elle n'est pas comparée.
-  assert.deepEqual(c.mesure, { avant: null, apres: 'v-test', identique: false, contexte: false });
+  assert.deepEqual(c.mesure, { avant: null, apres: 'v-test', identique: false, version: false, contexte: false, horloge: true });
   assert.deepEqual(c.modifiees, []);
   assert.equal(c.identiques, 1);
   assert.equal(c.nonComparees, 1);
   assert.deepEqual(c.termes, { avant: 1, apres: 3 });
   const html = planche(apres, { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' });
-  assert.match(html, /La passe «\u00a0avant\u00a0» a été prise avec une autre version de l’outil \(une version qui ne notait pas encore la sienne\)/);
+  assert.match(html, /La passe «\u00a0avant\u00a0» n’a pas été prise dans les mêmes conditions\u00a0: une version de l’outil qui ne notait pas encore la sienne\.<\/b> Refaites la passe/);
+  assert.match(html, /Écrans touchés\u00a0: non comparés/);
   assert.match(html, /Textes coupés nouveaux\u00a0: non mesuré avant\. Contrôles hors écran nouveaux\u00a0: non mesuré avant\. Valeurs techniques nouvelles\u00a0: non mesuré avant\./);
   assert.match(html, /badge etat inconnue">non comparée/);
   assert.match(html, /1 → 3\u202f; dans un bloc replié ou une bulle\u00a0: non mesuré avant → 0 <i>\(à refaire/);
   // Une autre version notée, ou un autre poste de capture : même refus.
   const autre = comparer({ ...avant, mesure: { ...MESURE, version: 'v-ancienne' } }, apres);
-  assert.deepEqual(autre.mesure, { avant: 'v-ancienne', apres: 'v-test', identique: false, contexte: true });
+  assert.deepEqual(autre.mesure, { avant: 'v-ancienne', apres: 'v-test', identique: false, version: false, contexte: true, horloge: true });
+  assert.deepEqual(causes(autre), ['une autre version de l’outil (la v-ancienne ; celle-ci est la v-test)']);
   const poste = comparer({ ...avant, mesure: { ...MESURE, contexte: { ...MESURE.contexte, pleinePage: true } } }, apres);
   assert.equal(poste.mesure.identique, false);
   assert.equal(poste.mesure.contexte, false);
+});
+
+test('une passe « avant » prise autrement : la planche dit laquelle des conditions manque, et une seule fois chacune', () => {
+  const avant = { quand: '2026-11-26', commit: 'aaa', mesure: MESURE, horloge: '2026-11-26T09:00:00', captures: [capture('bureau', 320)] };
+  const apres = { quand: '2026-11-26', commit: 'bbb', temps: 'apres', mesure: MESURE, horloge: '2026-11-26T09:00:00', largeurs: [320],
+    base: { fichier: 'b.json', projets: 1, livrables: 1 }, manquantes: [], captures: [capture('bureau', 320, { empreinte: 'autre', ecart: ecart({ pixels: 900, max: 200 }) })],
+    resume: { routes: 1, captures: 1, exceptions: 0, debordements: 0, termes: 0, introuvables: 0, imagesCassees: 0 } };
+  const voir = av => planche(apres, { dossier: '/tmp/r/apres', avant: av, avantDossier: '/tmp/r/avant' });
+  // Même version, autre poste (la page entière d'un côté) : le poste seul est cité, pas la version.
+  const cadrage = { ...avant, mesure: { ...MESURE, contexte: { ...MESURE.contexte, pleinePage: true } } };
+  assert.deepEqual(causes(comparer(cadrage, apres)), ['un autre cadrage (page entière d’un côté, premier écran de l’autre)']);
+  let html = voir(cadrage);
+  assert.match(html, /dans les mêmes conditions\u00a0: un autre cadrage \(page entière d’un côté, premier écran de l’autre\)\.<\/b>/);
+  assert.doesNotMatch(html, /autre version/);
+  // Même version, autre densité d'écran : un autre poste de capture.
+  const densite = { ...avant, mesure: { ...MESURE, contexte: { ...MESURE.contexte, postes: { telephone: { deviceScaleFactor: 3 } } } } };
+  assert.deepEqual(causes(comparer(densite, apres)), ['un autre poste de capture (taille, densité ou réglages du navigateur)']);
+  // La version et le poste : les deux sont cités.
+  const lesDeux = { ...cadrage, mesure: { ...cadrage.mesure, version: 'v-ancienne' } };
+  html = voir(lesDeux);
+  assert.match(html, /une autre version de l’outil \(la v-ancienne\u202f; celle-ci est la v-test\) et un autre cadrage/);
+  // Une autre horloge : pas de capture modifiée, aucun écran touché, et le remède dit quoi relancer.
+  const horloge = { ...avant, horloge: '2026-11-25T09:00:00' };
+  const c = comparer(horloge, apres);
+  assert.deepEqual([c.mesure.identique, c.mesure.horloge, c.modifiees, c.nonComparees], [false, false, [], 1]);
+  html = voir(horloge);
+  assert.match(html, /une autre horloge \(25 novembre 2026 à 09:00 [^;]*\u202f; celle-ci\u00a0: 26 novembre 2026 à 09:00[^)]*\)/);
+  assert.match(html, /Relancez la passe «\u00a0après\u00a0» sans --horloge/);
+  assert.doesNotMatch(html, /Refaites la passe «\u00a0avant\u00a0»/);
+  assert.match(html, /badge etat inconnue">non comparée/);
+  // Les mêmes conditions : aucun avertissement.
+  assert.doesNotMatch(voir(avant), /alerte-version">/);
+});
+
+test('une photo identique dont le texte change, ou un changement sous le premier écran, est « modifiée », et la planche dit où', () => {
+  const lignesAvant = ['Bilan mensuel', 'aucune critique écrite sur la période', 'Ilan Corbeau'];
+  const lignesApres = ['Bilan mensuel', 'AUCUNE CRITIQUE ÉCRITE', 'Ilan Corbeau'];
+  const t = l => texteDeLaPage({ texte: l.join('\n'), texteReplie: '' });
+  const avant = { quand: '2026-11-26', mesure: MESURE, captures: [
+    capture('reporting/bilan', 320, t(lignesAvant)), capture('bureau', 1440, t(['Bureau'])), capture('plus', 390, { ...t(['Plus']), empreinte: 'p' })] };
+  const apres = { quand: '2026-11-26', temps: 'apres', mesure: MESURE, largeurs: [320, 390, 1440], pleinePage: true,
+    base: { fichier: 'b.json', projets: 1, livrables: 1 }, manquantes: [], resume: { routes: 3, captures: 3, exceptions: 0, debordements: 0, termes: 0, introuvables: 0, imagesCassees: 0 },
+    captures: [
+      // La photo n'a pas changé (le texte est replié, ou dans une liste qui défile) : modifiée par le texte.
+      capture('reporting/bilan', 320, { nom: 'Bilan · Bilan mensuel', ...t(lignesApres) }),
+      // Un changement à 1 000 px de haut, sur un écran de 900 : sous le premier écran.
+      capture('bureau', 1440, { nom: 'Bureau', ...t(['Bureau']), empreinte: 'autre', hauteurEcran: 900, hauteurPhoto: 2000,
+        ecart: { ...ecart({ pixels: 400, max: 120 }), cadre: [10, 1000, 200, 1030] } }),
+      // Une page qui s'allonge : la photo n'a plus la même taille.
+      capture('plus', 390, { nom: 'Plus', ...t(['Plus']), empreinte: 'q', densite: 2, hauteurEcran: 844, hauteurPhoto: 2850,
+        ecart: { pixels: null, taille: [780, 5656, 780, 5700] } })] };
+  const c = comparer(avant, apres);
+  assert.deepEqual(c.modifiees, ['reporting/bilan@320', 'bureau@1440', 'plus@390']);
+  assert.deepEqual(c.textes, [{ capture: 'reporting/bilan@320', ajoute: 'AUCUNE CRITIQUE ÉCRITE', retire: 'aucune critique écrite sur la période' }]);
+  assert.equal(ouChange(apres.captures[1]), 'sous le premier écran');
+  assert.equal(ouChange({ ...apres.captures[1], ecart: { ...apres.captures[1].ecart, cadre: [0, 850, 10, 950] } }), 'dès le premier écran');
+  assert.equal(ouChange({ ...apres.captures[1], hauteurPhoto: undefined }), '', 'au premier écran seulement, la question ne se pose pas');
+  const html = planche(apres, { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' });
+  assert.match(html, /On compare la page entière, de haut en bas, au pixel, et tout le texte de la page, blocs repliés et bulles d’aide compris\./);
+  assert.match(html, /Photos de la page entière/);
+  assert.match(html, /badge etat modifiee">modifiée · texte seulement \(replié ou hors de la photo\)/);
+  assert.match(html, /badge etat modifiee">modifiée · 400\u00a0pixels \(moins de 0,1\u202f%\), sous le premier écran/);
+  assert.match(html, /badge etat modifiee">modifiée · la page passe de 2\u202f828 à 2\u202f850\u00a0px de haut/);
+  assert.match(html, /Écrans touchés\u00a0: <a href="#reporting\/bilan" title="reporting\/bilan">Bilan · Bilan mensuel<\/a> \(texte seulement\), <a href="#bureau" title="bureau">Bureau<\/a> \(sous le premier écran\), <a href="#plus"/);
+  assert.match(html, /Textes changés\u00a0: <a href="#reporting\/bilan" title="reporting\/bilan">Bilan · Bilan mensuel<\/a> à 320\u00a0px\u00a0: <q>AUCUNE CRITIQUE ÉCRITE<\/q> au lieu de <q>aucune critique écrite sur la période<\/q>/);
+  // Au premier écran seulement, la planche le dit.
+  assert.match(planche({ ...apres, pleinePage: false }, { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' }),
+    /On compare le premier écran seulement, au pixel, et tout le texte de la page, blocs repliés et bulles d’aide compris\u00a0: un changement plus bas qui ne touche pas le texte ne se voit pas\./);
+});
+
+test('deux passes filtrées différemment : la planche prévient', () => {
+  const avant = { quand: '2026-11-26', mesure: MESURE, filtre: '^(bureau|recherche|referentiel/doctrine)$', captures: [capture('bureau', 320)] };
+  const apres = { quand: '2026-11-26', temps: 'apres', mesure: MESURE, largeurs: [320], filtre: '^bureau$', base: { fichier: 'b.json', projets: 1, livrables: 1 }, manquantes: [],
+    resume: { routes: 1, captures: 1, exceptions: 0, debordements: 0, termes: 0, introuvables: 0, imagesCassees: 0 }, captures: [capture('bureau', 320)] };
+  const html = planche({ ...apres, comparaison: { filtres: { avant: avant.filtre, apres: apres.filtre }, ...comparer(avant, apres) } },
+    { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' });
+  assert.match(html, /Comparaison limitée aux routes <code>\^\(bureau\|recherche\|referentiel\/doctrine\)\$<\/code> \(avant\) et <code>\^bureau\$<\/code> \(après\)\. <b>Les deux passes n’ont pas le même filtre<\/b>/);
 });
 
 test('avec --routes, la comparaison ne confronte que les routes filtrées', () => {
@@ -377,6 +469,27 @@ test('la planche montre la planche cible assez grande, et les pluriels justes', 
   assert.match(html, /base copie\.json, 1 projet et 3 pièces/);
   assert.match(html, /vue de téléphone tactile/);
   assert.match(html, /Aucune exception, aucun débordement/);
+});
+
+test('la ligne de commande refuse un dossier de sortie qui ne vient pas d’une recette, avant d’ouvrir un navigateur', async () => {
+  const d = await mkdtemp(join(tmpdir(), 'recette-refus-'));
+  try {
+    await writeFile(join(d, 'index.html'), '<p>Mon site</p>');
+    const r = await executer(process.execPath, [OUTIL_CHEMIN, '--sortie', d, '--largeurs', '1440'], { env: { ...process.env, BROWSER_CHANNEL: '' } })
+      .then(() => ({ code: 0 }), e => e);
+    assert.equal(r.code, 2);
+    assert.match(r.stderr, /contient déjà index\.html, qui ne vient pas d’une recette/);
+    assert.equal(await readFile(join(d, 'index.html'), 'utf8'), '<p>Mon site</p>');
+  } finally { await rm(d, { recursive: true, force: true }); }
+});
+
+test('le texte de la page a une empreinte stable, et ses lignes sans doublon', () => {
+  const a = texteDeLaPage({ texte: 'Bureau\n  Valider la V2 \nValider la V2\n', texteReplie: 'Critères' });
+  const b = texteDeLaPage({ texte: 'Bureau\nValider   la V2\nValider la V2', texteReplie: 'Critères\n' });
+  assert.equal(a.empreinteTexte, b.empreinteTexte, 'les blancs ne comptent pas');
+  assert.deepEqual(a.lignes, ['Bureau', 'Valider la V2', 'Critères']);
+  // Une occurrence de plus change l'empreinte, même si les lignes sans doublon sont les mêmes.
+  assert.notEqual(texteDeLaPage({ texte: 'Bureau\nValider la V2', texteReplie: 'Critères' }).empreinteTexte, a.empreinteTexte);
 });
 
 test('une nuance dit où elle est : hors des images ou dans une image', () => {

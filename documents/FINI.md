@@ -41,6 +41,16 @@ projet ouvert ; la demande de proposition ouverte ; la page partagée. Sous
 768 px, la page est vue comme sur un téléphone : écran tactile, densité 2,
 `(hover: none)` et `(pointer: coarse)` vrais.
 
+Chaque photo prend **la page entière**, de haut en bas, pas seulement le
+premier écran (`--premier-ecran` pour celui-ci seul). Le temps de la photo, ce
+qui est fixé à l'écran est posé sur la page : la barre d'onglets du téléphone
+passe au bas de la page au lieu de cacher une ligne en son milieu, la colonne
+latérale et un panneau ouvert descendent jusqu'en bas, et un panneau déroule ce
+qu'il faisait défiler. La photo garde la largeur de l'écran. L'outil compare
+aussi **tout le texte de la page**, blocs repliés et bulles d'aide compris : un
+mot qui change sous le premier écran, dans un bloc replié ou dans une liste qui
+défile, rend la capture « modifiée ».
+
 La passe « avant » se fait **sur la branche de base du lot** : `main`, ou
 `adoption/00-mesurer` tant que ce lot n'est pas fusionné (les gains rapides
 s'empilent dessus). La passe « après » se fait sur la branche du lot, **avec
@@ -50,9 +60,14 @@ la même version de l'outil**.
 # 1. Au début du lot, avant le premier changement (la branche est encore
 #    au commit de base) :
 BROWSER_CHANNEL=chrome npm run recette:captures -- --avant --horloge 2026-11-26T09:00:00
-# 2. À la fin du lot :
-BROWSER_CHANNEL=chrome npm run recette:captures -- --apres --horloge 2026-11-26T09:00:00
+# 2. À la fin du lot (l'horloge de l'avant est reprise) :
+BROWSER_CHANNEL=chrome npm run recette:captures -- --apres
 ```
+
+L'horloge de la page est toujours figée : à la date de `--horloge`, ou, sans
+elle, à l'heure du début de la passe. Une passe « après » sans `--horloge`
+reprend celle de la passe « avant », et le dit sur la sortie d'erreur : les
+« depuis 14 jours » affichés sont les mêmes des deux côtés.
 
 Si le lot a déjà commencé, ou s'il modifie `outils/recette-captures.mjs` ou
 `outils/termes-interdits.mjs`, refaites l'avant depuis un export du commit de
@@ -75,23 +90,45 @@ BROWSER_CHANNEL=chrome node "$copie/outils/recette-captures.mjs" --avant \
   script refuse d'écrire dans le dépôt, et ne vide ni n'écrase jamais un
   dossier qui ne vient pas d'une recette.
 - `captures.json` porte la **version de la mesure** (`mesure.version`,
-  l'empreinte de l'outil et de la liste des termes) et le poste de capture
-  (`mesure.contexte`). Si l'avant a été pris par une autre version, la
-  planche le dit en tête (« refaites-la »), aucune capture n'est comptée comme
-  modifiée et `comparaison.mesure.identique` vaut `false` : la comparaison ne
-  vaut rien, refaites l'avant. Avec `--apres` sans passe avant, l'outil
-  prévient sur la sortie d'erreur.
+  l'empreinte de l'outil et de la liste des termes), le poste de capture
+  (`mesure.contexte` : tailles, densité, page entière ou premier écran) et
+  l'horloge. Deux passes ne se comparent que prises dans les mêmes
+  conditions. Si l'une manque (autre version, autre poste ou autre cadrage,
+  autre horloge), la planche dit laquelle en tête, la sortie d'erreur aussi,
+  et ce qu'il faut faire : refaire l'avant, ou relancer l'après sans
+  `--horloge`. En attendant, aucune capture n'est comptée comme modifiée
+  (elles sont « non comparées »), aucun écran n'est donné pour touché, et
+  `comparaison.mesure.identique` vaut `false` (`comparaison.mesure.version`,
+  `.contexte` et `.horloge` disent laquelle des conditions manque). Avec
+  `--apres` sans passe avant, l'outil prévient sur la sortie d'erreur.
 - Ouvrez `apres/index.html` : la planche-contact montre chaque écran, avant et
-  après, à chaque largeur, avec ses alertes. Elle s'ouvre sur ce qui a changé :
-  chaque capture porte « modifiée », « identique » ou « identique à l'œil »,
-  et la case « N'afficher que les captures à regarder » ne garde que les
-  modifiées, nouvelles, nuancées ou non comparées (ou dit qu'il n'y en a
-  aucune). « Identique à l'œil » ne pardonne que le lissage des images
-  (jusqu'à 32/255, dans les rectangles des images seulement) et le crénelage
-  de quelques bords (au plus 8/255, sur moins de 0,1 % de l'écran) : une
-  couleur de fond, de bordure ou de texte qui change, même d'un ton, rend la
-  capture « modifiée ». Les captures nuancées sont listées, avec leur nuance,
-  dans « Ce qui a changé ».
+  après, à chaque largeur, avec ses alertes. Elle dit en tête ce qui est
+  comparé (la page entière ou le premier écran), puis s'ouvre sur ce qui a
+  changé :
+  - chaque capture porte « modifiée », « identique » ou « identique à
+    l'œil ». Une capture modifiée dit combien de pixels changent (ceux de
+    l'image : deux par px CSS au téléphone) et où : « dans le premier
+    écran », « dès le premier écran » ou « sous le premier écran » ; ou bien
+    « texte seulement », quand la photo est la même mais qu'un mot replié ou
+    hors de la photo a changé ;
+  - « Écrans touchés » nomme chaque écran modifié, avec « (sous le premier
+    écran) » ou « (texte seulement) » quand c'est tout ce qui change, et
+    « Textes changés » montre, capture par capture, la première ligne
+    apparue et celle qu'elle remplace ;
+  - la case « N'afficher que les captures à regarder » ne garde que les
+    modifiées, nouvelles, nuancées ou non comparées (ou dit qu'il n'y en a
+    aucune). Le bloc replié « Alertes, écran par écran » est autre chose : les
+    termes, textes coupés, contrôles hors écran et valeurs de chaque écran,
+    qu'il ait changé ou non.
+
+  « Identique à l'œil » ne pardonne que le lissage des images (jusqu'à
+  32/255, dans les rectangles des images seulement) et le crénelage de
+  quelques bords (au plus 8/255, sur moins de 0,1 % de la photo, hors des
+  images), et seulement si le texte de la page n'a pas changé : une couleur de
+  fond, de bordure ou de texte qui change, même d'un ton, rend la capture
+  « modifiée ». Les captures nuancées sont listées dans « Ce qui a changé »,
+  avec leur nuance et sa place (« nuance 1/255 sur 52 pixels, hors des
+  images »).
 - `apres/captures.json` ne contient **ni exception, ni débordement
   horizontal**. Sa section `comparaison` liste les captures modifiées et
   nuancées, les routes apparues ou disparues, les exceptions, débordements,
@@ -105,7 +142,12 @@ BROWSER_CHANNEL=chrome node "$copie/outils/recette-captures.mjs" --avant \
   « [object Object] » à l'écran) sont vides. Sur les écrans touchés, celles qui
   existaient déjà sont corrigées, ou la PR dit pourquoi elles restent. Une
   liste à `null` (« non mesuré avant ») ne prouve rien : refaites l'avant.
-- La comparaison se fait sur une passe complète. Avec `--routes`, elle ne porte
+- Comparez deux passes complètes, ou deux passes lancées avec **le même
+  `--routes`**. L'état en mémoire de l'application dépend des routes visitées
+  avant : un brouillon de présentation, par exemple, se crée à l'ouverture
+  d'un onglet. Un avant complet et un après filtré (ou deux filtres
+  différents) peuvent donc différer sans que le code ait changé ; la planche
+  et la sortie d'erreur le signalent. Avec `--routes`, la comparaison ne porte
   que sur les routes filtrées, et la planche le dit.
 - Joignez à la PR les captures des espaces touchés, aux trois largeurs.
 - La base par défaut est la base fictive de la vitrine. Une passe sur une copie
