@@ -285,6 +285,19 @@ try {
   assert.ok(carteKV.lignes <= 2, 'Le titre de la carte tient en deux lignes : ' + carteKV.lignes);
   delete carteKV.lignes;
   assert.deepEqual(carteKV, { titre: 'Key visual — Côte d’Ivoire · Orvelle', metas: ['V1'] }, 'Carte « À valider » du Bureau');
+  // Un repère d'annotation fait 22 px sur l'image, mais se touche au doigt :
+  // à 20 px de son centre, dans les quatre directions, on le touche encore.
+  const repere = await page.evaluate(id => {
+    const p = DEPOT.trouve('projets', 'PRJ-demo'), l = p.livrables.find(x => x.id === id);
+    ANNOT.poser(l, 50, 50, 'Agrandir le logo', null);
+    ANNOT.ouvrir(p, l, () => {});
+    const r = document.querySelector('.an-point').getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    return [Math.round(r.width), ...[[20, 0], [0, -20], [-20, 0], [0, 20]].map(([dx, dy]) => {
+      const e = document.elementFromPoint(cx + dx, cy + dy); return !!e && !!e.closest('.an-point');
+    })];
+  }, kvCI);
+  assert.deepEqual(repere, [22, true, true, true, true], 'Cible d’un repère d’annotation');
+  await page.keyboard.press('Escape');
   // Aucun ancien lien ne doit provoquer d'erreur de rendu.
   for (const route of ['bureau','valider','planning','reporting','projets','projets/marques','referentiel','attentes','reglages']) {
     await page.goto(url + '/#/' + route);
