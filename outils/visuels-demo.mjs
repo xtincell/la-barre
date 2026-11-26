@@ -104,6 +104,7 @@ const LEGAL = {
 const PLEIN = { x: 0, y: 0, l: 1200, h: 800 };
 const QUATRE_TIERS = { x: 124, y: 0, l: 1066.67, h: 800 };
 const CARRE = { x: 140, y: 0, l: 800, h: 800 };
+const STORY = { x: 436, y: 0, l: 450, h: 800 };
 
 export const DECLINAISONS = [
   { fichier: 'kv-source-2026.jpg', source: 'orvelle', format: '3:2', largeur: 1200, hauteur: 800, cadre: PLEIN, mise: 'cote',
@@ -133,6 +134,10 @@ export const DECLINAISONS = [
     langue: 'fr', marche: 'CI', textes: { ...CARRE_FR, legal: LEGAL.CI }, quoi: 'Post social 1:1, Côte d’Ivoire' },
   { fichier: 'social-gh.jpg', source: 'orvelle', format: '1:1', largeur: 800, hauteur: 800, cadre: CARRE, mise: 'cote',
     langue: 'en', marche: 'GH', textes: { ...CARRE_EN, legal: LEGAL.GH }, quoi: 'Post social 1:1, Ghana' },
+  /* La story recadre la photographie autour de la canette (x = 535 à 787) :
+   * la titraille au-dessus, la signature et la mention dessous. */
+  { fichier: 'story-gh.jpg', source: 'orvelle', format: '9:16', largeur: 540, hauteur: 960, cadre: STORY, mise: 'story-kv',
+    langue: 'en', marche: 'GH', textes: { ...EN, legal: LEGAL.GH }, quoi: 'Story 9:16, Ghana' },
   /* La photographie telle quelle, recopiée à l'octet : la distribution
    * publique ne porte pas vitrine/demo/sources/, et la démo montre
    * l'invitation à décliner. Le manifeste le dit, --check le vérifie. */
@@ -207,6 +212,41 @@ async function composerDansLaPage({ donnees, v }) {
     ctx.fillText(t.haut, W / 2, marge + 22);
     const s = ajuster(t.bas, '600 {t}px "Asap"', 26, W - 2 * marge, 14);
     t.bas.forEach((l, i) => ctx.fillText(l, W / 2, H - marge - (t.bas.length - 1 - i) * s * 1.35));
+    return c.toDataURL('image/jpeg', 0.84);
+  }
+
+  /* La story d'un KV : la canette tient le milieu de la hauteur, la
+   * titraille au-dessus, la signature et la mention dessous, centrées, sur
+   * un voile en haut et en bas. */
+  if (v.mise === 'story-kv') {
+    const voileHaut = ctx.createLinearGradient(0, 0, 0, H * 0.3);
+    voileHaut.addColorStop(0, 'rgba(3, 8, 38, .6)');
+    voileHaut.addColorStop(1, 'rgba(3, 8, 38, 0)');
+    ctx.fillStyle = voileHaut;
+    ctx.fillRect(0, 0, W, H * 0.3);
+    const voileBas = ctx.createLinearGradient(0, H * 0.72, 0, H);
+    voileBas.addColorStop(0, 'rgba(3, 8, 38, 0)');
+    voileBas.addColorStop(1, 'rgba(3, 8, 38, .7)');
+    ctx.fillStyle = voileBas;
+    ctx.fillRect(0, H * 0.72, W, H * 0.28);
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0, 0, 0, .35)';
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = '#FFFFFF';
+    const st = ajuster(t.titre, 'italic 600 {t}px "Source Serif 4"', Math.round(W * 0.085), W - 2 * marge, 22);
+    let y = marge + st * 0.8;
+    t.titre.forEach(l => { ctx.fillText(l, W / 2, y); y += st * 1.05; });
+    ctx.shadowBlur = 6;
+    const pied = H - marge * 0.8;
+    ctx.fillStyle = 'rgba(255, 255, 255, .8)';
+    const sl = ajuster([t.legal], '500 {t}px "Asap"', 13, W - 2 * marge, 9);
+    ctx.fillText(t.legal, W / 2, pied);
+    ctx.fillStyle = 'rgba(255, 255, 255, .92)';
+    const sg = ajuster([t.signature], 'italic 500 {t}px "Source Serif 4"', 20, W - 2 * marge, 11);
+    ctx.fillText(t.signature, W / 2, pied - sl * 1.9);
+    ctx.fillStyle = '#DDF26B';
+    ajuster([t.sous], '600 {t}px "Asap"', 17, W - 2 * marge, 11);
+    ctx.fillText(t.sous, W / 2, pied - sl * 1.9 - sg * 1.6);
     return c.toDataURL('image/jpeg', 0.84);
   }
 

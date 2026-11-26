@@ -361,7 +361,7 @@ export async function construire() {
     equipe: [{ personne: 'PE-clemence', poste: 'creation' }, { personne: 'PE-ilan', poste: 'da' },
       { personne: 'PE-nadia', poste: 'redacteur' }, { personne: 'PE-hugo', poste: 'planning' },
       { personne: 'PE-sacha', poste: 'clientele' }, { personne: 'PE-yao', poste: 'graphic' }],
-    perimetre: { supports: ['S-kv', 'S-affiche', 'S-social'], marches: ['M-ci', 'M-sn', 'M-gh'] }, volets: [],
+    perimetre: { supports: ['S-kv', 'S-affiche', 'S-social', 'S-story'], marches: ['M-ci', 'M-sn', 'M-gh'] }, volets: [],
     champsDA: DA,
     sections: {
       identite: { client: 'Sources d’Orvelle', clientId: 'CL-orvelle', marqueIds: ['MQ-orvelle'], type: 'Lancement de produit, trois marchés',
@@ -547,6 +547,10 @@ export async function construire() {
   soumettre(c, story, '2026-11-10T16:00:00.000Z', noro.id);
 
   soumettre(c, socialCi, '2026-11-11T15:00:00.000Z');
+
+  /* La story du Ghana, en anglais comme son KV : la décli 9:16 d'Orvelle,
+   * posée, pas encore soumise. */
+  format(c, p, gh, 'S-story', 'Story 9:16', { vignette: 'visuels/story-gh.jpg', remise: '2026-12-02', echeance: '2026-12-03' });
 
   Date.aller('2026-11-11T18:00:00.000Z');
   DEPOT.enregistrer();

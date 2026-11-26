@@ -142,6 +142,16 @@
    "langue": "en",
    "marche": "GH",
    "quoi": "Post social 1:1, Ghana"
+  },
+  "story-gh.jpg": {
+   "fictif": true,
+   "source": "orvelle.jpg",
+   "format": "9:16",
+   "largeur": 540,
+   "hauteur": 960,
+   "langue": "en",
+   "marche": "GH",
+   "quoi": "Story 9:16, Ghana"
   }
  }
 }

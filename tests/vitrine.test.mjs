@@ -208,7 +208,18 @@ test('chaque visuel de la démonstration est déclaré fictif à son manifeste, 
   for (const f of ['3:2', '4:3', '1:1', '9:16']) assert.ok(formats.has(f), f);
   assert.equal(manifeste.visuels['kv-gh.jpg'].langue, 'en');
   assert.equal(manifeste.visuels['kv-ci.jpg'].langue, 'fr');
-  const master = JSON.parse(base).projets.find(p => p.id === 'PRJ-zeste').livrables.find(l => l.niveau === 'maitre');
+  /* Orvelle se décline aux trois formats de la demande : 4×3 et 1:1 en
+   * français pour la Côte d'Ivoire et le Sénégal, 1:1 et 9:16 en anglais
+   * pour le Ghana. */
+  const orvelle = (format, langue) => Object.values(manifeste.visuels)
+    .filter(v => v.source === 'orvelle.jpg' && v.format === format && v.langue === langue).map(v => v.marche);
+  assert.deepEqual(orvelle('4:3', 'fr'), ['CI', 'SN']);
+  assert.deepEqual(orvelle('1:1', 'fr'), ['CI']);
+  assert.deepEqual(orvelle('1:1', 'en'), ['GH']);
+  assert.deepEqual(orvelle('9:16', 'en'), ['GH']);
+  const zeste = JSON.parse(base).projets.find(p => p.id === 'PRJ-zeste');
+  assert.deepEqual(zeste.livrables.filter(l => l.support === 'S-story').map(l => [l.marche, l.vignette]), [['M-gh', 'visuels/story-gh.jpg']]);
+  const master = zeste.livrables.find(l => l.niveau === 'maitre');
   assert.equal(master.vignette, 'visuels/kv-master.jpg');
   assert.equal(master.versions[0].etat.vignette, 'visuels/kv-master-v1.jpg', 'la V1 garde son visuel, celui que le retour vise');
   /* La seconde photographie sert une demande simple : sa story attend sa décision. */

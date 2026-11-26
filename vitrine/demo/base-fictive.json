@@ -501,7 +501,8 @@
     "supports": [
      "S-kv",
      "S-affiche",
-     "S-social"
+     "S-social",
+     "S-story"
     ],
     "marches": [
      "M-ci",
@@ -1400,6 +1401,45 @@
       "final": "attente"
      },
      "vignette": "visuels/social-gh.jpg"
+    },
+    {
+     "id": "L-c3ih-sqpu5q7k0aep",
+     "cree_le": "2026-11-11T15:00:02.000Z",
+     "niveau": "declinaison",
+     "voletId": null,
+     "support": "S-story",
+     "marche": "M-gh",
+     "nom": "Story 9:16 · GH",
+     "responsable": "PE-yao",
+     "origine": "prevu",
+     "pisteId": "PI-zeste",
+     "maitre": "KV-c3ih-sv7u0cl4jb32",
+     "versionMaitre": 1,
+     "version": 1,
+     "versions": [],
+     "estime": 1,
+     "reel": null,
+     "toursVendus": 2,
+     "remise": "2026-12-02",
+     "echeance": "2026-12-03",
+     "publication": null,
+     "assets": [],
+     "entrees": [],
+     "annotations": [],
+     "mockups": [],
+     "points": {
+      "concept": "attente",
+      "copy": "attente",
+      "asset": "attente",
+      "design": "attente",
+      "technique": "attente",
+      "droits": "attente",
+      "langue": "attente",
+      "central": "attente",
+      "local": "attente",
+      "final": "attente"
+     },
+     "vignette": "visuels/story-gh.jpg"
     }
    ],
    "demandes": [
@@ -2560,6 +2600,22 @@
    "type": "livrables",
    "id": "PRJ-zeste",
    "detail": "Post social 1:1 · CI V1"
+  },
+  {
+   "quand": "2026-11-11T15:00:03.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "déclinaison",
+   "type": "kv",
+   "id": "PRJ-zeste",
+   "detail": "1 format depuis KV · GH · Orvelle"
   }
  ],
  "rattachement2": true
