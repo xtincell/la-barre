@@ -105,9 +105,11 @@ body[data-vue=partage]{display:block}
 .lb-bureau .studio-date {margin: 0 0 8px; font-size: .9375rem}
 .lb-bureau .lb-piece {
   background: #193347; color: #fff; border: 0; border-radius: 14px;
-  grid-template-columns: minmax(0,.9fr) minmax(0,1.1fr);
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
 }
-.lb-bureau .lb-piece h2 {color: #fff; font-size: clamp(1.65rem, 3vw, 3.4rem); line-height: 1.06}
+/* « Key visual — Côte d'Ivoire · Orvelle » tient en deux lignes de 1024 à
+ * 2560 px : à trois, la carte grandissait et le visuel gagnait deux bandes. */
+.lb-bureau .lb-piece h2 {color: #fff; font-size: clamp(1.65rem, 2.5vw, 3rem); line-height: 1.06}
 .lb-piece-texte {padding: clamp(22px, 2.7vw, 50px)}
 .lb-piece .lb-etat {color: #f6dec1; border: 0; padding: 0; font-weight: 550}
 .lb-piece .lb-etat span {color: #ffd292}
@@ -118,8 +120,10 @@ body[data-vue=partage]{display:block}
 }
 .lb-piece :focus-visible {outline-color: #aaceff}
 .lb-piece.sans-visuel {grid-template-columns: 1fr}
-.lb-piece-image {background: #e7edf0; min-height: clamp(240px, 25vw, 425px)}
-.lb-piece-image > .vignette {position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 0}
+/* Le visuel se montre entier : le recadrer coupait l'accroche (« Drvelle
+ * Zest »). Il repose sur le fond de la carte, sans bandes grises autour. */
+.lb-piece-image {background: transparent; min-height: clamp(240px, 25vw, 425px)}
+.lb-piece-image > .vignette {position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 0; background: transparent}
 .lb-piece-image > .vignette img {height: 100%; width: 100%; object-fit: contain}
 .lb-intention.studio-intention {color: #193347; background: #d9e9f0}
 .lb-file {margin: 6px 0 0}

@@ -270,6 +270,19 @@ try {
     await page.keyboard.press('Escape');
   }
   await page.setViewportSize({width:1440,height:1050});
+  // Sur le Bureau, la carte « À valider » de ce KV tient son titre en deux
+  // lignes et ne redit ni son code ni son marché.
+  await page.goto(url + '/#/bureau');
+  await page.locator('.lb-file summary').click();
+  await page.locator('.studio-piece').filter({ hasText: 'Côte d’Ivoire' }).first().click();
+  const carteKV = await page.locator('.lb-piece').evaluate(c => {
+    const h2 = c.querySelector('h2');
+    return { titre: h2.textContent.replace(/\u00a0/g, ' '), lignes: Math.round(h2.getBoundingClientRect().height / parseFloat(getComputedStyle(h2).lineHeight)),
+      metas: [...c.querySelectorAll('.lb-piece-meta')].map(x => x.textContent) };
+  });
+  assert.ok(carteKV.lignes <= 2, 'Le titre de la carte tient en deux lignes : ' + carteKV.lignes);
+  delete carteKV.lignes;
+  assert.deepEqual(carteKV, { titre: 'Key visual — Côte d’Ivoire · Orvelle', metas: ['V1'] }, 'Carte « À valider » du Bureau');
   // Aucun ancien lien ne doit provoquer d'erreur de rendu.
   for (const route of ['bureau','valider','planning','reporting','projets','projets/marques','referentiel','attentes','reglages']) {
     await page.goto(url + '/#/' + route);
