@@ -66,6 +66,8 @@
 .rvp-meta { color: var(--clair-doux); font-weight: 600; }
 .rvp-critere { font-size: 16px; line-height: 1.34; }
 .rvp-action { min-height: 44px; max-width: 100%; white-space: normal; text-align: center; }
+.rvp-decision, .rvp-gestes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rvp-autre summary { padding-block: 12px; cursor: pointer; }
 .rvp-annexes { display: grid; gap: 0; margin-top: 16px; }
 .rvp-annexes > details { border-top: 1px solid var(--trait); }
 .rvp-annexes summary, .rvp-archive summary { min-height: 44px; padding: 11px 0; cursor: pointer; }
@@ -108,7 +110,7 @@
 .remise-erreur:not(:empty) { color: var(--alerte); }
 .retour-message { white-space: pre-wrap; margin-bottom: 10px; }
 body:has(.asset-page, .remise-suivi) .avis-pile .avis { pointer-events: none; }
-body:has(.asset-page, .remise-suivi) .avis-pile .avis-x { pointer-events: auto; }
+body:has(.asset-page, .remise-suivi) .avis-pile :is(.avis-x, .avis-a) { pointer-events: auto; }
 
 @media (max-width: 640px) {
   .decisions-file-tete, .decisions-ligne { padding-inline: 13px; }

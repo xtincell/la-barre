@@ -699,6 +699,9 @@
 .avis-x { background: none; border: 0; color: var(--clair-terne); font: inherit;
   font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); cursor: pointer; padding: 0 .2rem; }
 .avis-x:hover { color: var(--clair); }
+.avis-a { background: none; border: 1px solid var(--trait-clair); color: var(--clair); font: inherit;
+  font-size: var(--t-meta); font-weight: 600; min-height: 32px; padding: 0 .7rem; cursor: pointer; }
+.avis-a:hover { border-color: var(--clair); }
 
 .rail-plein { display: block; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--attente);
   text-decoration: none; margin-top: .2rem; }

@@ -153,9 +153,10 @@ test('un verdict inconnu passé par un vrai écrivain n’atteint ni la base ni 
   await s.charger('vue-livrable', ['juger']);
   semer(s.ctx, { personnes: PERSONNES, projets: [projet('LI', { livrables: [livrable('L-1')] })] });
   const p = s.ctx.DEPOT.trouve('projets', 'LI');
+  /* Sans motif à écrire, la décision se pose d'un geste : le refus de la
+   * fabrique arrive en avis, et rien n'est écrit. */
   s.interne['vue-livrable'].juger(p, p.livrables[0], { cle: 'valide', nom: 'Validé', motifRequis: false }, () => {});
-  soumettre(s.dernier());
-  assert.match(s.dernier().textContent, /Verdict inconnu : « valide »/);
+  assert.match(s.refus.join(' '), /Verdict inconnu : « valide »/);
   assert.equal(s.ctx.DEPOT.liste('decisions').length, 0);
   assert.equal(s.ctx.DEPOT.tout().enregistre_le, null);
   assert.equal(s.ctx.localStorage.getItem('la-barre'), null);

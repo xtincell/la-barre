@@ -23,12 +23,27 @@ window.AVIS = (function () {
   function poser(texte, ton, duree) {
     var n = el("div.avis." + (ton || "neutre"), {},
       el("span.avis-t", {}, texte),
-      el("button.avis-x", { type: "button", onclick: function () { retirer(n); } }, "✕"));
+      el("button.avis-x", { type: "button", "aria-label": "Fermer", onclick: function () { retirer(n); } }, "✕"));
+    return empiler(n, duree || 5200);
+  }
+
+  function empiler(n, duree) {
     zone().appendChild(n);
     /* Une pile qui s'allonge indéfiniment devient un mur : trois au plus. */
     while (zone().children.length > 3) zone().removeChild(zone().firstChild);
-    if (duree !== 0) setTimeout(function () { retirer(n); }, duree || 5200);
+    if (duree !== 0) setTimeout(function () { retirer(n); }, duree);
     return n;
+  }
+
+  /* Un geste qu'on peut encore reprendre : le texte, et un bouton (« Annuler »)
+   * qui appelle `quand`. L'avis reste le temps donné, celui pendant lequel le
+   * geste peut se reprendre ; le fermer ne reprend rien. */
+  function action(texte, libelle, quand, duree) {
+    var n = el("div.avis.action", { role: "status" },
+      el("span.avis-t", {}, texte),
+      el("button.avis-a", { type: "button", onclick: function () { retirer(n); if (quand) quand(); } }, libelle || "Annuler"),
+      el("button.avis-x", { type: "button", "aria-label": "Fermer", onclick: function () { retirer(n); } }, "✕"));
+    return empiler(n, duree === 0 ? 0 : duree || 8000);
   }
 
   function retirer(n) {
@@ -39,5 +54,5 @@ window.AVIS = (function () {
   function fait(texte) { return poser(texte, "fait"); }
   function grave(texte) { return poser(texte, "grave", 0); }
 
-  return { poser: poser, refus: refus, fait: fait, grave: grave, retirer: retirer };
+  return { poser: poser, action: action, refus: refus, fait: fait, grave: grave, retirer: retirer };
 })();

@@ -28,6 +28,9 @@ try {
   const errors = [];
   page.on('pageerror', e => { errors.push(e.message); console.error('Erreur navigateur:', e.stack); });
   page.setDefaultTimeout(10000);
+  // L'horloge de la page est celle de Playwright : le délai d'annulation d'une
+  // validation se rejoue sans attendre huit vraies secondes.
+  await page.clock.install();
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.evaluate(data => { DEPOT.importer(data); APP.rendre(); }, fixture);
   await page.getByRole('heading', { name: "Sur la table" }).waitFor();
@@ -55,40 +58,67 @@ try {
   await page.getByRole('link', { name: 'Examiner la V1', exact: true }).click();
   await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo/juger/1');
   await page.setViewportSize({ width: 390, height: 650 });
-  const rendreVerdict = page.getByRole('button', { name:'Rendre un verdict', exact:true });
+  const valider = page.getByRole('button', { name:'Valider la V1', exact:true });
+  const modifs = page.getByRole('button', { name:'Demander des modifs', exact:true });
   const critere = page.locator('.rvp-critere');
-  await rendreVerdict.waitFor();
+  await valider.waitFor();
   assert.match(await critere.innerText(), /Un seul objet au centre/);
   await page.evaluate(async () => {
     await document.fonts.ready;
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   });
-  const positions = await rendreVerdict.evaluate(n => ({
-    verdict: n.getBoundingClientRect().bottom + window.scrollY,
+  const positions = await page.evaluate(() => ({
+    valider: document.querySelector('[data-geste="valider"]').getBoundingClientRect().bottom + window.scrollY,
+    modifs: document.querySelector('[data-geste="modifs"]').getBoundingClientRect().bottom + window.scrollY,
     navigation: document.querySelector('.lb-mobile').getBoundingClientRect().top,
     largeur: innerWidth, hauteur: innerHeight,
   }));
   assert.equal(positions.largeur, 390);
   assert.equal(positions.hauteur, 650);
-  assert.ok(positions.verdict <= positions.navigation,
-    `Le critère et le verdict précèdent la navigation à 390×650 (${JSON.stringify(positions)})`);
-  await rendreVerdict.click();
-  const choix = page.getByRole('dialog', { name:'Rendre un verdict' });
-  await choix.locator('.rc-v.approuve').click();
-  const confirmation = page.getByRole('dialog', { name:'Confirmer le verdict' });
-  await confirmation.waitFor();
-  assert.equal(await page.evaluate(() => !!DEPOT.trouve('projets','PRJ-demo').livrables[0].versions[0].verdict), false);
-  await confirmation.getByRole('button').first().focus();
+  assert.ok(Math.max(positions.valider, positions.modifs) <= positions.navigation,
+    `Le critère et les deux décisions précèdent la navigation à 390×650 (${JSON.stringify(positions)})`);
+  const verdictDemo = () => page.evaluate(() => DEPOT.trouve('projets','PRJ-demo').livrables[0].versions[0].verdict || null);
+  // Demander des modifs : un seul panneau, « Ce qu'il faut changer » est exigé
+  // et prérempli par les retours posés sur l'image.
+  await page.evaluate(() => ANNOT.poser(DEPOT.trouve('projets','PRJ-demo').livrables[0], 40, 30, 'Agrandir le logo', null));
+  await modifs.click();
+  const demande = page.getByRole('dialog', { name:'Demander des modifs' });
+  await demande.waitFor();
+  const aChanger = demande.getByLabel("Ce qu'il faut changer", { exact: true });
+  assert.equal(await aChanger.inputValue(), '1. Agrandir le logo', 'Les retours posés sur l’image préremplissent la demande');
+  await aChanger.fill('');
+  await demande.getByRole('button', { name:'Envoyer la demande', exact:true }).click();
+  await demande.getByText("Dites ce qu'il faut changer avant d'envoyer la demande.").waitFor();
+  assert.equal(await verdictDemo(), null, 'Une demande vide n’écrit rien');
+  await demande.getByRole('button').first().focus();
   await page.keyboard.press('Shift+Tab');
-  assert.ok(await confirmation.evaluate(d => d.contains(document.activeElement)), 'Le focus reste dans la confirmation');
+  assert.ok(await demande.evaluate(d => d.contains(document.activeElement)), 'Le focus reste dans la demande');
   await page.keyboard.press('Escape');
-  assert.equal(await confirmation.count(), 0);
-  assert.ok(await choix.locator('.rc-v.approuve').evaluate(n => n === document.activeElement), 'Retour au choix après Échap');
-  await choix.locator('.rc-v.approuve').click();
-  await confirmation.getByRole('button', { name:'Confirmer le verdict', exact:true }).click();
-  assert.equal(await page.evaluate(() => DEPOT.trouve('projets','PRJ-demo').livrables[0].versions[0].verdict), 'approuve');
+  assert.equal(await demande.count(), 0);
+  assert.ok(await modifs.evaluate(n => n === document.activeElement), 'Retour à « Demander des modifs » après Échap');
+  await page.evaluate(() => { delete DEPOT.trouve('projets','PRJ-demo').livrables[0].annotations; });
+  // Valider : un clic, puis huit secondes pour se reprendre. Rien ne s'écrit
+  // avant l'échéance, donc Radar ne lit jamais une validation annulée.
+  await page.clock.pauseAt(await page.evaluate(() => Date.now()) + 1000);
+  await valider.click();
+  const avis = page.locator('.avis-pile .avis.action');
+  await avis.getByText('V1 validée.').waitFor();
+  await page.getByRole('button', { name:'Annuler la validation', exact:true }).waitFor();
+  assert.equal(await verdictDemo(), null, 'Rien n’est écrit pendant le délai d’annulation');
+  await avis.getByRole('button', { name:'Annuler', exact:true }).click();
+  await valider.waitFor();
+  await page.clock.runFor(10000);
+  assert.equal(await verdictDemo(), null, 'Une validation annulée ne laisse aucune décision');
+  assert.equal(await page.evaluate(() => DEPOT.liste('decisions').length), 0);
+  await valider.click();
+  await page.clock.runFor(7000);
+  assert.equal(await verdictDemo(), null, 'La validation attend son échéance');
+  await page.clock.runFor(1000);
+  assert.equal(await verdictDemo(), 'approuve', 'À l’échéance, la validation s’écrit');
+  await page.clock.resume();
   await page.getByRole('link', { name:'Suivre le BAT et la remise' }).waitFor();
-  assert.equal(await rendreVerdict.count(), 0, 'Le verdict consigné reste en lecture seule');
+  assert.equal(await valider.count(), 0, 'La décision enregistrée reste en lecture seule');
+  assert.equal(await avis.count(), 0, 'L’avis d’annulation part avec l’échéance');
   await page.goBack();
   await page.setViewportSize({ width:1440, height:1050 });
   await page.getByRole('heading', {name:'Sur la table'}).waitFor();
@@ -102,7 +132,7 @@ try {
     await page.goto(url + '/#/projets/PRJ-demo/livrables/L-demo/' + onglet + '/1');
     await page.getByRole('heading',{name:'Version 1 · historique'}).waitFor();
     assert.equal(await page.locator('.rvp-archive button').count(), 0, 'Une version historique ne permet aucune écriture');
-    assert.equal(await rendreVerdict.count(), 0);
+    assert.equal(await valider.count(), 0);
     await page.locator('.rvp-archive').getByText('Validé', { exact: true }).waitFor();
   }
   await page.goto(url+'/#/bureau');
@@ -227,6 +257,25 @@ try {
   assert.equal(unicite.r.deja, 1); assert.equal(unicite.r.renommees.length, 1);
   assert.deepEqual(unicite.apres, [unicite.avant[0], unicite.r.renommees[0].vers]);
   assert.ok(unicite.trace, 'le renommage est au journal');
+  // Une page qui se ferme pendant le délai n'attend pas l'échéance : la
+  // validation engagée s'écrit à pagehide, et se relit après rechargement.
+  const fermee = await browser.newPage({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce' });
+  fermee.on('pageerror', e => { errors.push(e.message); console.error('Erreur navigateur (fermée):', e.stack); });
+  fermee.setDefaultTimeout(10000);
+  await fermee.clock.install();
+  await fermee.goto(url, { waitUntil: 'networkidle' });
+  await fermee.evaluate(data => { DEPOT.importer(data); APP.rendre(); }, fixture);
+  await fermee.goto(url + '/#/projets/PRJ-demo/livrables/L-demo/juger/1');
+  await fermee.clock.pauseAt(await fermee.evaluate(() => Date.now()) + 1000);
+  await fermee.getByRole('button', { name:'Valider la V1', exact:true }).click();
+  await fermee.locator('.avis-pile .avis.action').waitFor();
+  assert.equal(await fermee.evaluate(() => DEPOT.trouve('projets','PRJ-demo').livrables[0].versions[0].verdict || null), null);
+  await fermee.reload({ waitUntil: 'networkidle' });
+  await fermee.clock.resume();
+  assert.equal(await fermee.evaluate(() => DEPOT.trouve('projets','PRJ-demo').livrables[0].versions[0].verdict), 'approuve',
+    'La validation engagée s’écrit quand la page se ferme');
+  assert.equal(await fermee.evaluate(() => DEPOT.liste('decisions').filter(d => d.objet === 'L-demo').length), 1);
+  await fermee.close();
   await page.evaluate(() => { DEPOT.reinitialiser(); location.hash = '#/bureau'; APP.rendre(); });
   await page.getByRole('button', { name:'Créer mon premier projet', exact:true }).waitFor();
   // Avec une base de référence servie par servir.mjs : la référence d'un projet
@@ -273,7 +322,7 @@ try {
     await rm(racine, { recursive: true, force: true });
   }
   assert.deepEqual(errors, []);
-  console.log('PASS — revue, verdict persistant, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
+  console.log('PASS — revue, validation en un clic avec annulation (échéance et pagehide), demande de modifs, décision persistante, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
 } finally {
   if (browser) await browser.close();
   await new Promise(r => server.close(r));

@@ -22,7 +22,7 @@ window.VUE_ASSET = (function () {
   /* Les vues d’un livrable séparent la création, son verdict et sa remise. */
   var ONGLETS = [
     { cle: "poser", nom: "Visuels et fichiers" },
-    { cle: "juger", nom: "Critères et verdict" },
+    { cle: "juger", nom: "Critères et décision" },
     { cle: "origine", nom: "Versions et dépendances" },
     { cle: "remise", nom: "BAT et remise" },
   ];
@@ -71,7 +71,8 @@ window.VUE_ASSET = (function () {
     } }, nom);
   }
 
-  function etatVerdict(v) {
+  function etatVerdict(v, enCours) {
+    if (enCours) return UI.eti("Validation en cours", "vert");
     var def = v && MAISON.verdicts.find(function (x) { return x.cle === v.verdict; });
     var ton = v && v.verdict === "approuve" ? "vert" : "attente";
     return def ? UI.eti(def.nom, ton) : v && v.verdict ? UI.eti("Décision enregistrée", "terne") : UI.eti("À examiner", "attente");
@@ -127,7 +128,7 @@ window.VUE_ASSET = (function () {
       el("h2", {}, "Version " + numero + " · historique"),
       el("div.rvp-plan", {},
         el("figure.rvp-toile", {}, mediaRevue(media, l.nom + " — V" + numero)),
-        el("div.rvp-pupitre", {}, ancienne.verdict ? etatVerdict(ancienne) : el("p", {}, "Aucun verdict consigné."),
+        el("div.rvp-pupitre", {}, ancienne.verdict ? etatVerdict(ancienne) : el("p", {}, "Aucune décision enregistrée."),
           ancienne.juge_le ? el("p.rvp-meta", {}, O.joli(ancienne.juge_le)) : null,
           ancienne.motif ? el("p", {}, ancienne.motif) : null,
           ouverture)),
@@ -147,8 +148,8 @@ window.VUE_ASSET = (function () {
     var marche = l.marche && DEPOT.trouve("marches", l.marche);
     var b = p.sections.bigidea || {};
     var critere = (b.criteres || []).find(Boolean) || (REGLES.grille("livrable", l)[0] || {}).texte;
-    var action = !lecture && !verdict ? el("button.b.or.rvp-action", { type: "button",
-      onclick: function () { VUE_LIVRABLE.choisirVerdict(p, l, apres); } }, "Rendre un verdict")
+    var enCours = !lecture && !verdict && VUE_LIVRABLE.validationEnCours(l);
+    var action = !lecture && !verdict ? VUE_LIVRABLE.decider(p, l, apres)
       : !lecture && verdict === "approuve" ? ongletLien(lien, "remise", "b.or.rvp-action", "Suivre le BAT et la remise") : null;
     var historique = Array.from(new Set((l.versions || []).map(function (ancienne) { return ancienne.n || ancienne.numero; })))
       .filter(function (n) { return n && Number(n) !== numero; }).reverse();
@@ -162,7 +163,7 @@ window.VUE_ASSET = (function () {
         el("div.rvp-pupitre", {},
           el("div.rvp-portee", {},
             el("p.rvp-meta", {}, (marche ? marche.nom : "Marché non renseigné") + " · V" + numero),
-            el("div.rvp-etat", { tabindex: "-1" }, verdict || !lecture ? etatVerdict(v)
+            el("div.rvp-etat", { tabindex: "-1" }, verdict || !lecture ? etatVerdict(v, enCours)
               : UI.eti(v ? "Consultation" : "Version à soumettre", "terne"))),
           !verdict && critere ? el("p.rvp-critere", {}, critere) : null,
           action,
@@ -184,7 +185,7 @@ window.VUE_ASSET = (function () {
   function remise(p, l, lien, apres) {
     return el("div.rvp.rvp-remise", {}, REMISE.suiviPiece(p, l, apres),
       el("nav.rvp-liens", { "aria-label": "Autres vues du livrable" },
-        ongletLien(lien, "juger", "b.nu", "Revoir le verdict"),
+        ongletLien(lien, "juger", "b.nu", "Revoir la décision"),
         ongletLien(lien, "poser", "b.nu", "Visuels et fichiers")));
   }
 

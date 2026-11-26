@@ -394,6 +394,9 @@ window.VUE_LIVRABLE = (function () {
       el("h3", {}, "Grille de refus"), boite);
   }
 
+  /* ————————————————————— Décider ————————————————————— */
+
+  /* Les quatre décisions, chacune avec ce qu'elle entraîne. */
   function choixVerdicts(p, l, choisir) {
     var piece = { type: "livrable", objet: l, projet: p, titre: l.nom,
       semaine: PLATEAU.semaineDe(PLATEAU.echeanceDe(p, l)) };
@@ -402,20 +405,42 @@ window.VUE_LIVRABLE = (function () {
       var resume = c.alertes[0] || (c.jours ? "+" + c.jours + " j" : c.gagne[0] || c.effets[0] || "");
       return el("button.rc-v." + v.cle, { type: "button", onclick: function () { choisir(v); } },
         el("span.v-signe", { "aria-hidden": "true" }, v.signe),
-        el("span.v-nom", {}, v.nom),
+        el("span.v-nom", {}, v.geste || v.nom),
         el("span.v-cout" + (c.alertes.length ? ".alerte" : ""), {}, resume));
     }));
   }
 
-  function choisirVerdict(p, l, apres) {
+  function verdictDe(cle) {
+    return MAISON.verdicts.filter(function (v) { return v.cle === cle; })[0] || null;
+  }
+
+  /* Ce que la pièce propose à qui la regarde : valider la version, ou demander
+   * des modifs. Les réserves et le refus hors brief restent à un clic, sous
+   * « Autre décision » : eux demandent d'écrire pourquoi. Pendant qu'une
+   * validation peut encore s'annuler, la pièce le dit et propose de l'annuler. */
+  function decider(p, l, apres) {
     var version = REMISE.versionCourante(l);
-    if (!version || version.objet.verdict) { AVIS.refus("La version ne peut plus recevoir de verdict ici."); return; }
+    if (!version) return null;
+    var attente = validationEnCours(l);
+    if (attente) {
+      return el("div.rvp-decision", {},
+        el("p.rvp-meta", { role: "status" }, "V" + attente.numero + " validée. Elle s'enregistre dans quelques secondes."),
+        el("button.b.rvp-action", { type: "button", "data-geste": "annuler-validation",
+          onclick: function () { annuler(attente); } }, "Annuler la validation"));
+    }
     var contexte = etatPourVerdict(l, version.objet);
-    var marche = l.marche && DEPOT.trouve("marches", l.marche);
-    PANNEAU.ouvrir("Rendre un verdict", "V" + version.numero + " · " + (marche ? marche.nom : "Marché non renseigné"),
-      el("div.revue-choix", {}, choixVerdicts(p, l, function (verdict) {
-        juger(p, l, verdict, function () { PANNEAU.fermer(); if (apres) apres(); }, contexte);
-      })));
+    function geste(cle) { return function () { juger(p, l, verdictDe(cle), apres, contexte); }; }
+    var autres = MAISON.verdicts.filter(function (v) { return v.cle === "reserve" || v.cle === "hors"; });
+    return el("div.rvp-decision", {},
+      el("div.rvp-gestes", {},
+        el("button.b.or.rvp-action", { type: "button", "data-geste": "valider", onclick: geste("approuve") },
+          "Valider la V" + version.numero),
+        el("button.b.rvp-action", { type: "button", "data-geste": "modifs", onclick: geste("retour") },
+          "Demander des modifs")),
+      autres.length ? el("details.rvp-autre", {}, el("summary", {}, "Autre décision"),
+        el("div.rvp-gestes", {}, autres.map(function (v) {
+          return el("button.b.nu", { type: "button", "data-geste": v.cle, onclick: geste(v.cle) }, v.geste || v.nom);
+        }))) : null);
   }
 
   function criteres(p, l, apres, compact) {
@@ -424,47 +449,133 @@ window.VUE_LIVRABLE = (function () {
     return el("div.revue-criteres", {},
       compact && b.criteres && b.criteres[0] ? el("p.revue-premier-critere", {}, b.criteres[0]) : null,
       !compact ? grille : null,
-      el("div.sousbloc", {}, el("h3", {}, "Verdict — chacun porte son coût"),
+      el("div.sousbloc", {}, el("h3", {}, "Votre décision sur la V" + (l.version || 1)),
         choixVerdicts(p, l, function (v) { juger(p, l, v, apres); })),
       compact ? el("details", {}, el("summary", {}, "Voir tous les critères"), grille) : null
     );
   }
 
+  /* Ce que chaque décision écrite demande d'écrire. */
+  var DEMANDES = {
+    retour: { champ: "Ce qu'il faut changer", bouton: "Envoyer la demande",
+      vide: "Dites ce qu'il faut changer avant d'envoyer la demande." },
+    reserve: { champ: "Vos réserves", bouton: "Valider avec réserves",
+      vide: "Dites quelles réserves vous posez." },
+    hors: { champ: "Ce qui sort du brief", bouton: "Refuser : hors brief",
+      vide: "Dites ce qui sort du brief." },
+  };
+
+  /* Les retours encore ouverts sur l'image de cette version : ils disent déjà
+   * ce qu'il faut changer, on ne les fait pas récrire. */
+  function annotationsOuvertes(l, numero) {
+    if (!window.ANNOT || !ANNOT.liste) return "";
+    return ANNOT.liste(l, numero).map(function (a, i) { return { a: a, n: i + 1 }; })
+      .filter(function (x) { return x.a.statut === "aTraiter" && x.a.texte; })
+      .map(function (x) { return x.n + ". " + x.a.texte; }).join("\n");
+  }
+
+  /* Sans rien à écrire, la décision se pose d'un geste, comme avant la
+   * confirmation ajoutée le 26 novembre. Sinon un seul panneau demande ce qu'il
+   * faut changer, prérempli par les retours posés sur l'image. Dans les deux cas,
+   * la version est celle qu'on regardait : si elle a changé, rien ne s'écrit. */
   function juger(p, l, verdict, apres, attendu) {
     var version = REMISE.versionCourante(l);
-    if (!version) { AVIS.refus("Soumettez la version en cours avant de la juger."); return; }
+    if (!version) { AVIS.refus("Soumettez la version en cours avant de décider."); return; }
     var v = version.objet;
     var contexte = etatPourVerdict(l, v);
     if (attendu && (attendu !== contexte || v.verdict)) { AVIS.refus("La version a changé. Relisez la pièce avant de décider."); return; }
+    if (!verdict.motifRequis) { engager(p, l, contexte, verdict, version.numero, apres); return; }
+    var demande = DEMANDES[verdict.cle] || { champ: "Pourquoi", bouton: verdict.geste || verdict.nom, vide: "Dites pourquoi." };
     var marche = l.marche ? DEPOT.trouve("marches", l.marche) : null;
     var g = REGLES.grille("livrable", l);
     var etat = l.grille || {};
     var vides = g.filter(function (c) { return etat[c.cle] !== true; }).map(function (c) { return c.texte; });
     var enDessus = !!document.querySelector(".panneau[role='dialog']");
     var fermer = enDessus ? PANNEAU.fermerSur : PANNEAU.fermer;
-    var champ = el("textarea", { id: "revue-motif", rows: 3, required: verdict.motifRequis ? true : null });
+    var champ = el("textarea", { id: "revue-motif", rows: 4, "aria-required": "true" });
+    champ.value = annotationsOuvertes(l, version.numero);
     var statut = el("p.remise-erreur", { role: "alert" }, "");
     var formulaire = el("form.form", { onsubmit: function (e) {
       e.preventDefault();
-      var motif = verdict.motifRequis ? champ.value.trim() : "";
-      if (verdict.motifRequis && !motif) { statut.textContent = "Un retour exige un motif."; champ.focus(); return; }
+      var motif = champ.value.trim();
+      if (!motif) { statut.textContent = demande.vide; champ.focus(); return; }
       var erreur = poser(p.id, l.id, contexte, verdict, motif);
       if (erreur) { statut.textContent = erreur; return; }
       fermer();
       if (apres) apres();
-    } }, el("p", {}, verdict.nom + " · V" + version.numero + " · " + (marche ? marche.nom : "Marché non renseigné")),
-      v.verdict ? el("p", {}, "Le verdict de cette version est déjà consigné. Un changement ajoute une décision à son historique.") : null,
-      verdict.motifRequis ? el("div.champ", {},
-        el("label", { for: "revue-motif" }, "Motif du verdict"), champ,
-        vides.length ? el("details", {}, el("summary", {}, "Choisir un critère non tenu"),
+    } }, el("p", {}, "Votre décision sur la V" + version.numero + " · " + (marche ? marche.nom : "Marché non renseigné")),
+      v.verdict ? el("p", {}, "Cette version a déjà une décision. La nouvelle s'ajoute à son historique.") : null,
+      el("div.champ", {},
+        el("label", { for: "revue-motif" }, demande.champ), champ,
+        vides.length ? el("details", {}, el("summary", {}, "Reprendre un critère non tenu"),
           el("div.form-actions", {}, vides.map(function (critere) {
-            return el("button.motif", { type: "button", onclick: function () { champ.value = critere; champ.focus(); } }, critere);
-          }))) : null) : null,
+            return el("button.motif", { type: "button", onclick: function () {
+              champ.value = (champ.value.trim() ? champ.value.trim() + "\n" : "") + critere; champ.focus();
+            } }, critere);
+          }))) : null),
       statut,
       el("div.form-actions", {},
-        el("button.b.or", { type: "submit" }, "Confirmer le verdict"),
+        el("button.b.or", { type: "submit" }, demande.bouton),
         el("button.b.nu", { type: "button", onclick: fermer }, "Annuler")));
-    (enDessus ? PANNEAU.sur : PANNEAU.ouvrir)("Confirmer le verdict", l.nom, formulaire);
+    (enDessus ? PANNEAU.sur : PANNEAU.ouvrir)(verdict.geste || verdict.nom, l.nom, formulaire);
+  }
+
+  /* ————— Valider, avec le temps de se reprendre —————
+   *
+   * Une validation ne s'écrit pas tout de suite. Pendant huit secondes,
+   * « Annuler » la reprend sans qu'aucune décision ait existé : Radar ne lit
+   * donc jamais une validation qu'on retire. À l'échéance, ou plus tôt si la
+   * page se ferme (pagehide), elle s'écrit comme les autres, avec la même garde
+   * de version. */
+  var DELAI_ANNULATION = 8000;
+  var engagements = [];
+
+  function validationEnCours(l) {
+    return engagements.filter(function (e) { return e.livrableId === l.id; })[0] || null;
+  }
+
+  function engager(p, l, contexte, verdict, numero, apres) {
+    var e = { projetId: p.id, livrableId: l.id, contexte: contexte, verdict: verdict, numero: numero, apres: apres };
+    /* Sans pile d'avis (un rejeu, le compilateur), rien à annuler : elle se pose. */
+    if (!window.AVIS || !AVIS.action) { conclure(e); return; }
+    if (validationEnCours(l)) return;
+    engagements.push(e);
+    ecouterFermeture();
+    e.minuterie = setTimeout(function () { conclure(e); }, DELAI_ANNULATION);
+    e.avis = AVIS.action("V" + numero + " validée.", "Annuler", function () { annuler(e); }, DELAI_ANNULATION);
+    if (apres) apres();
+  }
+
+  function desengager(e) {
+    var i = engagements.indexOf(e);
+    if (i === -1) return false;
+    engagements.splice(i, 1);
+    clearTimeout(e.minuterie);
+    if (e.avis && window.AVIS) AVIS.retirer(e.avis);
+    return true;
+  }
+
+  function conclure(e, sansSuite) {
+    desengager(e);
+    var erreur = poser(e.projetId, e.livrableId, e.contexte, e.verdict, "");
+    if (erreur && window.AVIS) AVIS.refus(erreur);
+    if (!sansSuite && e.apres) e.apres();
+  }
+
+  function annuler(e) {
+    if (!desengager(e)) return;
+    AVIS.fait("Validation annulée : rien n'a été enregistré.");
+    if (e.apres) e.apres();
+  }
+
+  /* Une page qui se ferme n'attend pas l'échéance : ce qui est engagé s'écrit. */
+  var fermetureEcoutee = false;
+  function ecouterFermeture() {
+    if (fermetureEcoutee || !window.addEventListener) return;
+    fermetureEcoutee = true;
+    window.addEventListener("pagehide", function () {
+      engagements.slice().forEach(function (e) { conclure(e, true); });
+    });
   }
 
   function etatPourVerdict(l, v) {
@@ -478,7 +589,7 @@ window.VUE_LIVRABLE = (function () {
     });
     var version = l && REMISE.versionCourante(l);
     if (!version || etatPourVerdict(l, version.objet) !== contexte)
-      return "Le livrable a changé depuis l’ouverture du verdict. Rouvrez sa version en cours.";
+      return "La pièce a changé pendant votre décision : rien n'est enregistré. Rouvrez sa version en cours.";
     var v = version.objet;
     if (v.verdict === verdict.cle && (v.motif || "") === motif) return null;
     var quand = new Date().toISOString();
@@ -608,5 +719,6 @@ window.VUE_LIVRABLE = (function () {
   }
 
   return { ouvrir: ouvrir, ouvrirFiche: ouvrirFiche,
-    criteres: criteres, controles: controles, choisirVerdict: choisirVerdict, dependances: dependances };
+    criteres: criteres, controles: controles, decider: decider, juger: juger,
+    validationEnCours: validationEnCours, dependances: dependances };
 })();
