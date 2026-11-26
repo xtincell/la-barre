@@ -124,3 +124,16 @@ test('ce qu’un lien dit au survol ne contient aucun terme interdit', async () 
     assert.deepEqual(relever(L.geste + ' ' + L.quoi), [], cle);
   }
 });
+
+test('le Bureau coupe l’extrait du brief à la fin d’un mot, vers 160 caractères', async () => {
+  const { ctx } = await bac();
+  vm.runInContext(await lire('vue-studio'), ctx, { filename: 'vue-studio.js' });
+  const { extrait } = ctx.VUE_STUDIO;
+  assert.equal(extrait('  Une   phrase courte. ', 160), 'Une phrase courte.');
+  const long = 'Orvelle est connue comme l’eau du déjeuner. Le citron l’emmène ailleurs : il faut lui trouver un moment à elle, sans renier la marque, ni son public, ni ses prix.';
+  const court = extrait(long, 160);
+  assert.ok(court.length <= 161 && court.endsWith('…'), court);
+  assert.ok(long.startsWith(court.slice(0, -1)), 'l’extrait reprend le début du texte');
+  assert.ok(/\p{L}…$/u.test(court), 'coupé après un mot, sans ponctuation pendante');
+  assert.equal(extrait(null, 160), '');
+});

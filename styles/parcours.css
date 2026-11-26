@@ -15,7 +15,7 @@
 .lb-rail .lb-nav a[aria-current],.lb-rail .lb-nav a:hover { background:var(--studio-bleu-pale); color:var(--studio-bleu); box-shadow:none; }
 .lb-rail :focus-visible,.lb-recherche :focus-visible {outline:3px solid var(--studio-bleu);outline-offset:2px}
 .lb-commande { margin-top:auto; color:var(--clair-terne); border-top:1px solid var(--trait); }
-.lb-commande summary,.lb-outils-mobile summary,.lb-file summary { min-height:44px; align-content:center; cursor:pointer; font:550 14px/1.35 var(--affichage); }
+.lb-commande summary,.lb-outils-mobile summary { min-height:44px; align-content:center; cursor:pointer; font:550 14px/1.35 var(--affichage); }
 .lb-commande summary {display:flex;align-items:center;gap:10px;padding:0 8px}
 .lb-commande summary:after{content:"⌄";margin-left:auto}.lb-commande[open] summary:after{content:"⌃"}
 .lb-outils { display:grid; padding:3px 6px; gap:1px; }
@@ -48,7 +48,7 @@
 .lb-piece-projet a{display:inline-flex;align-items:center;min-height:44px;color:var(--clair-terne);font:550 16px/1.3 var(--affichage);text-decoration:none}
 /* « Key visual — Côte d'Ivoire · Orvelle » tient en deux lignes de 1024 à
    2560 px : à trois, la carte grandissait et le visuel gagnait deux bandes. */
-.lb-piece h2{font:580 clamp(1.65rem,2.5vw,3rem)/1.06 var(--affichage);letter-spacing:-.045em;overflow-wrap:anywhere;color:var(--studio-encre)}
+.lb-piece h2{font:580 clamp(1.65rem,2.5vw,2.75rem)/1.06 var(--affichage);letter-spacing:-.045em;overflow-wrap:anywhere;color:var(--studio-encre)}
 .lb-piece-meta{color:var(--clair-terne);font-size:15px;margin:8px 0 0}.lb-piece .b{margin-top:18px;text-decoration:none}
 /* Le visuel occupe tout son cadre, sur le blanc de la carte : plus de bande
    grise autour d'une création (constats forme-visuel-1 et -11). Il n'est pas
@@ -57,9 +57,27 @@
 .lb-piece-image>.vignette{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:0;background:white}
 .lb-piece-image img,.lb-piece-image video{width:100%;height:100%;position:absolute;inset:0;object-fit:contain;max-height:none}
 .lb-intention.studio-intention{justify-content:center;margin:0;padding:clamp(20px,4vw,60px);font:500 clamp(22px,2.4vw,38px)/1.25 var(--affichage);overflow-wrap:anywhere}
-.lb-file{margin:8px 0 16px;padding:0 2px}.lb-file summary{color:var(--clair-terne)}.lb-file summary .studio-compte{margin-left:8px}
-.lb-file-lignes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(190px,100%),1fr));gap:4px;margin:8px 0}
+/* Ce qu'il faut pour juger sans ouvrir le dossier : qui, pour quand, le brief, le critère. */
+.lb-contexte{display:grid;grid-template-columns:repeat(2,minmax(0,max-content));gap:12px 32px;margin:18px 0 0;font-size:14px;line-height:1.45}
+.lb-contexte>div{min-width:0}.lb-contexte-large{grid-column:1/-1;max-width:62ch}
+.lb-contexte dt{font:550 12px/1.3 var(--affichage);color:var(--clair-terne);margin:0 0 3px}
+.lb-contexte dd{margin:0;color:var(--studio-encre);overflow-wrap:anywhere}
+.lb-contexte q{quotes:"« " " »" "“" "”"}
+.lb-contexte dd a{color:var(--studio-bleu);font-weight:550;text-decoration:none;white-space:nowrap}
+.lb-contexte dd a:hover{text-decoration:underline}
+/* La file de revue, dépliée : une vignette d'au moins 160 px par pièce. */
+.lb-file{margin:clamp(20px,2.2vw,32px) 0 0;min-width:0}
+.lb-file-tete{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-bottom:12px}
+.lb-file-tete h2{display:flex;align-items:center;gap:9px;margin:0;font:570 clamp(1.1rem,1.6vw,1.5rem)/1.25 var(--affichage);color:var(--studio-encre)}
+.lb-file .studio-filtre{display:flex;align-items:center;gap:8px;min-width:0}
 .lb-file .studio-filtre select{min-height:44px;max-width:100%}
+.lb-file-lignes{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(160px,100%),1fr));gap:12px}
+.lb-file-lignes .studio-piece{display:grid;align-content:start;gap:3px;width:auto;min-width:0;min-height:48px;margin:0;padding:0 0 10px;border:1px solid var(--trait);border-radius:8px;background:white;overflow:hidden}
+.lb-file-lignes .studio-piece>strong,.lb-file-lignes .studio-piece>span:last-child{padding:0 10px;overflow-wrap:anywhere}
+.lb-file-lignes .studio-piece[aria-pressed="true"]{border-color:var(--studio-bleu);box-shadow:0 0 0 1px var(--studio-bleu)}
+.lb-file-visuel{display:block;aspect-ratio:4/3;margin-bottom:6px;overflow:hidden;background:var(--surface-3)}
+.lb-file-visuel>.vignette{width:100%;height:100%;border-radius:0}
+.lb-file-texte{display:flex;align-items:flex-end;padding:10px;font:500 14px/1.3 var(--affichage);color:var(--studio-encre);background:var(--studio-intention)}
 .lb-dossiers{padding:0 22px 12px}.lb-dossiers .studio-dossier{display:flex;align-items:center;gap:12px;border:0;border-radius:0;box-shadow:none;padding:8px 0;min-height:64px;background:transparent}
 .lb-dossiers .studio-dossier+.studio-dossier{border-top:1px solid var(--trait)}
 .lb-dossiers .studio-couverture{width:56px;height:46px;min-height:0;flex:none;overflow:hidden;aspect-ratio:auto}.lb-dossiers .studio-couverture>*{height:100%}
@@ -84,7 +102,7 @@ body[data-vue=partage]{display:block}
  .lb-piece-texte{padding:16px 16px 18px}.lb-etat{font-size:13px}.lb-piece-projet{margin:6px 0 0}.lb-piece-projet a{font-size:14px}
  .lb-piece h2{font-size:clamp(23px,5.7vw,30px)}.lb-piece-meta{margin:5px 0;font-size:14px}.lb-piece .b{margin-top:8px;min-height:44px}
  .lb-piece-image{order:-1;min-height:0;aspect-ratio:4/3}.lb-intention.studio-intention{order:-1;font-size:17px;padding:16px;max-height:180px;overflow:auto}
- .lb-file .studio-filtre{flex-wrap:wrap}.lb-dossiers{padding:0 14px 8px}.lb-dossiers .studio-couverture{width:42px;height:40px}
+ .lb-dossiers{padding:0 14px 8px}.lb-dossiers .studio-couverture{width:42px;height:40px}
  .studio-index-outils .lb-vues-projets{gap:0}.studio-index-outils .lb-vues-projets a{padding:6px 8px}
  .lb-detail-piece{padding:12px}.lb-bureau .studio-section-tete{padding:12px 14px;gap:8px}.lb-bureau .studio-section-tete h2{font-size:18px}
  .st-modes .studio-statuts{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
@@ -113,15 +131,9 @@ body[data-vue=partage]{display:block}
 .lb-travail {display: grid; align-items: start; gap: clamp(16px, 2vw, 32px)}
 .lb-bureau .studio-entete {padding: 0; margin-bottom: clamp(18px, 2vw, 30px)}
 .lb-bureau .studio-date {margin: 0 0 8px; font-size: .9375rem}
-.lb-file {margin: 6px 0 0}
-.lb-file summary {display: flex; align-items: center; gap: 9px; min-height: 48px; width: fit-content}
-.lb-file summary::after, .lb-filtre-structure summary::after, .rt-volet > summary::after {content: "⌄"; margin-left: auto}
-.lb-file[open] > summary::after, .lb-filtre-structure[open] > summary::after, .rt-volet[open] > summary::after {content: "⌃"}
-.lb-file .studio-filtre {border-bottom: 1px solid var(--trait); padding-block: 10px}
-.lb-file-lignes {grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%),1fr))}
-.lb-file-lignes .studio-piece {border: 1px solid var(--trait); border-radius: 6px; padding: 12px; min-height: 48px}
-.lb-file-lignes .studio-piece[aria-pressed="true"] {box-shadow: inset 3px 0 var(--studio-bleu); background: var(--studio-bleu-pale)}
-.lb-bureau .studio-dossiers {margin: 0; border: 0; background: transparent; border-radius: 0}
+.lb-filtre-structure summary::after, .rt-volet > summary::after {content: "⌄"; margin-left: auto}
+.lb-filtre-structure[open] > summary::after, .rt-volet[open] > summary::after {content: "⌃"}
+.lb-bureau .studio-dossiers {margin: 0; padding: 16px clamp(16px,2vw,24px) 6px}
 .lb-bureau .studio-dossiers .studio-section-tete {
   margin: 0; padding: 0 0 10px; display: flex; align-items: center; justify-content: space-between;
 }
@@ -155,9 +167,11 @@ body[data-vue=partage]{display:block}
 .rt-volet {min-width: 0; border-top: 1px solid var(--trait)}
 .rt-volet > summary {display: flex; align-items: center; justify-content: space-between; min-height: 48px; gap: 10px; font-weight: 550; cursor: pointer}
 .rt-volet[open] > :not(summary) {margin-block: 8px}
-@media(min-width:1250px) {
+/* Une colonne, comme le prototype ; les dossiers passent à côté quand l'écran
+   laisse à la pièce et à sa file toute la largeur d'un portable. */
+@media(min-width:1700px) {
   .lb-travail {grid-template-columns: minmax(0, 2.25fr) minmax(268px, .85fr)}
-  .lb-bureau .studio-dossiers {border-left: 1px solid var(--trait); padding-left: clamp(16px,2vw,36px)}
+  .lb-bureau .studio-dossiers {border: 0; border-left: 1px solid var(--trait); border-radius: 0; background: transparent; padding: 0 0 0 clamp(16px,2vw,36px)}
 }
 @media(min-width:801px) {
   #corps > #contenu {padding-inline: clamp(26px, 2.8vw, 64px); padding-top: clamp(25px, 2.2vw, 48px)}

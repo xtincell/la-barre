@@ -30,6 +30,11 @@ window.VUE_STUDIO = (function () {
     }));
   }
 
+  /* Le Bureau du matin : la pièce à regarder d'abord, avec de quoi la juger
+   * sans ouvrir le dossier (qui en répond, pour quand, ce que dit le brief, ce
+   * qu'il faut vérifier) ; puis toute la file, dépliée. Elle était repliée
+   * sous « File de revue » et le DC ignorait ce qui l'attendait (constats
+   * ia-navigation-5, friction-parcours-9). */
   function rendre(hote) {
     hote.className = "zone studio lb-bureau";
     O.vider(hote);
@@ -41,12 +46,13 @@ window.VUE_STUDIO = (function () {
     selection = active ? cle(active) : null;
     var choix = el("select", { id:"studio-projet", onchange:function () {
       projet = choix.value; selection = null; rendre(hote);
-      var menu = hote.querySelector(".lb-file"); menu.open = true; menu.querySelector("select").focus();
+      var filtre = hote.querySelector("#studio-projet"); if (filtre) filtre.focus();
     } }, el("option", {value:""}, "Tous les projets"), projets.map(function (p) { return el("option", {value:p.id}, p.nom); }));
     choix.value = projet;
     hote.appendChild(el("header.studio-entete", {}, el("div", {},
       el("p.studio-date", {}, new Intl.DateTimeFormat("fr-FR", {weekday:"long",day:"numeric",month:"long"}).format(new Date())),
-      el("h1", {}, "Sur la table"))));
+      el("h1", {}, "À valider aujourd’hui")),
+      el("button.b", { type:"button", onclick:VUE_PROJETS.nouveau }, "+ Nouveau projet")));
     if (DEPOT.provenance().cle === "exemple") hote.appendChild(el("div.studio-demo", {role:"status"},
       el("span", {}, "Données d’exemple"), el("a", {href:"#/referentiel/parametres"}, "Importer mon travail")));
     var travail = el("div.lb-travail");
@@ -72,6 +78,7 @@ window.VUE_STUDIO = (function () {
           el("p.lb-piece-projet", {}, el("a", {href:APP.adresse("projets",p.id)}, p.nom)),
           el("h2", {}, titre),
           meta ? el("p.lb-piece-meta",{}, meta) : null,
+          contexte(active),
           el("a.b.or", {href:chemin}, piste ? "Examiner cette piste" : version ? "Examiner la V" + version : "Examiner la pièce")),
         o.vignette ? el("div.lb-piece-image", {}, IMAGE.vignette(o,"planche")) : intention ?
           el("blockquote.studio-intention.lb-intention",{}, intention) : null));
@@ -83,14 +90,15 @@ window.VUE_STUDIO = (function () {
         sujet ? el("a.b.or",{href:"#/valider/file"},"Ouvrir les décisions") :
         el("a.b",{href:projet ? APP.adresse("projets",projet) : "#/projets"},projet ? "Ouvrir le dossier" : "Voir les projets")));
     }
-    var file = el("details.lb-file", {}, el("summary", {}, "File de revue", el("span.studio-compte",{},String(pieces.length))),
-      el("div.studio-filtre",{},el("label",{for:"studio-projet"},"Projet"),choix),
+    if (pieces.length || projet) table.appendChild(el("section.lb-file", { "aria-labelledby":"lb-file-titre" },
+      el("div.lb-file-tete", {},
+        el("h2", { id:"lb-file-titre" }, "File de revue", el("span.studio-compte",{},String(pieces.length))),
+        el("div.studio-filtre",{},el("label",{for:"studio-projet"},"Projet"),choix)),
       el("div.lb-file-lignes", {}, pieces.map(function (x) {
         return el("button.studio-piece" + (active === x ? ".active":""), {type:"button","aria-pressed":String(active === x),onclick:function () {
-          selection = cle(x); rendre(hote); var lien = hote.querySelector(".lb-piece .b"); if (lien) lien.focus();
-        }}, el("strong",{},x.titre),el("span",{},x.projet.nom));
-      })));
-    table.appendChild(file);
+          selection = cle(x); rendre(hote); var lien = hote.querySelector(".lb-piece .b.or"); if (lien) lien.focus();
+        }}, apercu(x), el("strong",{},x.titre), el("span",{},x.projet.nom));
+      }))));
     var reprise = rubriqueRecente(projets);
     var proches = projets.slice().sort(function (a,b) {
       if (reprise && a.id !== b.id) {
@@ -105,6 +113,41 @@ window.VUE_STUDIO = (function () {
         return dossier(p, reprise && p.id === reprise.projet ? reprise.rubrique : null);
       })) :
         el("div.studio-vide",{},el("button.b.or",{type:"button",onclick:VUE_PROJETS.nouveau},"Créer mon premier projet"))));
+  }
+
+  /* Ce qu'il faut pour juger sans ouvrir le dossier. Le critère est celui que
+   * la page de la pièce affiche à côté des décisions (vue-asset.js). */
+  function contexte(piece) {
+    var p = piece.projet, o = piece.objet, s = p.sections || {};
+    var brief = s.brief || {};
+    var qui = piece.auteur && DEPOT.trouve("personnes", piece.auteur);
+    var echeance = piece.type === "livrable" ? PLATEAU.echeanceDe(p, o) : (s.identite || {}).echeance;
+    var criteres = ((s.bigidea || {}).criteres || []).filter(Boolean);
+    var critere = criteres[0] || (piece.type === "livrable" ? (REGLES.grille("livrable", o)[0] || {}).texte : null);
+    var demande = extrait(brief.probleme || brief.objectif_com || brief.objectif, 160);
+    var lireBrief = NATURE.aSection(p, "brief") ? el("a", { href:APP.adresse("projets", p.id, "brief") }, "Lire le brief") : null;
+    return el("dl.lb-contexte", {},
+      el("div", {}, el("dt", {}, "Responsable"), el("dd", {}, qui ? qui.nom : "À attribuer")),
+      el("div", {}, el("dt", {}, "Échéance"), el("dd", {}, echeance ? O.joli(echeance) : "À définir")),
+      demande || lireBrief ? el("div.lb-contexte-large", {}, el("dt", {}, "Le brief"), el("dd", {}, demande ? [el("q", {}, demande), " "] : null, lireBrief)) : null,
+      critere ? el("div.lb-contexte-large", {}, el("dt", {}, "À vérifier"), el("dd", {}, critere)) : null);
+  }
+
+  /* Un extrait d'environ n caractères, coupé à la fin d'un mot. */
+  function extrait(texte, n) {
+    texte = String(texte || "").replace(/\s+/g, " ").trim();
+    if (texte.length <= n) return texte;
+    var coupe = texte.slice(0, n + 1);
+    var espace = coupe.lastIndexOf(" ");
+    return (espace > n * 0.6 ? coupe.slice(0, espace) : texte.slice(0, n)).replace(/[\s,;:.—–-]+$/, "") + "…";
+  }
+
+  /* La vignette d'une pièce dans la file : son visuel, ou son intention. */
+  function apercu(x) {
+    var o = x.objet;
+    if (o.vignette) return el("span.lb-file-visuel", { "aria-hidden":"true" }, IMAGE.vignette(o, "planche"));
+    var mot = o.concept || o.signature || o.titre || o.nom || "";
+    return el("span.lb-file-visuel.lb-file-texte", { "aria-hidden":"true" }, extrait(mot, 90));
   }
 
   function dossier(p, rubrique) {
@@ -174,5 +217,5 @@ window.VUE_STUDIO = (function () {
     hote.appendChild(liste);
     filtrer();
   }
-  return { rendre: rendre, projets: projets, navProjets: navProjets, noterRubrique: noterRubrique };
+  return { rendre: rendre, projets: projets, navProjets: navProjets, noterRubrique: noterRubrique, extrait: extrait };
 })();

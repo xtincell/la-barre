@@ -33,7 +33,7 @@ try {
   await page.clock.install();
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.evaluate(data => { DEPOT.importer(data); APP.rendre(); }, fixture);
-  await page.getByRole('heading', { name: "Sur la table" }).waitFor();
+  await page.getByRole('heading', { name: "À valider aujourd’hui" }).waitFor();
   // Un écran de studio très large doit commencer au même endroit que sur un portable.
   await page.setViewportSize({width: 3200, height: 1694});
   const bureau = await page.locator('#contenu h1').boundingBox();
@@ -44,17 +44,26 @@ try {
   assert.ok(dossiersBureau.x >= pieceBureau.x + pieceBureau.width && dossiersBureau.y < pieceBureau.y + 10,
     'Les dossiers sont accessibles à côté de la pièce sur un grand écran');
   await page.setViewportSize({width: 1440, height: 1050});
+  // La file de revue est dépliée : chaque pièce se voit sans un clic, en
+  // vignette d'au moins 160 px. « + Nouveau projet » est sur le Bureau.
   assert.equal(await page.locator('.studio-piece').count(), 3);
-  const listeRevue = page.locator('.lb-file');
-  await listeRevue.locator('summary').click();
+  assert.equal(await page.locator('.lb-file summary, details.lb-file').count(), 0, 'La file n’est plus repliée');
+  const vignettes = await page.locator('.lb-file-lignes .studio-piece').evaluateAll(ns => ns.map(n => n.getBoundingClientRect().width));
+  assert.ok(vignettes.every(l => l >= 160) && await page.locator('.studio-piece').first().isVisible(), `Vignettes de la file : ${vignettes}`);
+  await page.getByRole('button', { name: '+ Nouveau projet', exact: true }).waitFor();
   await page.locator('.studio-piece').nth(1).click();
   assert.match(await page.locator('.studio-intention').innerText(), /Plus d’attachement/);
   assert.equal(await page.locator('.studio-piece[aria-pressed="true"]').count(), 1);
-  await listeRevue.locator('summary').click();
   await page.getByLabel('Projet', { exact: true }).selectOption('PRJ-demo-2');
   await page.getByText("Rien à valider dans ce projet.").waitFor();
   await page.getByLabel('Projet', { exact: true }).selectOption('');
   await page.locator('.studio-piece').filter({ hasText: 'Affiche de lancement' }).click();
+  // De quoi juger sans ouvrir le dossier : qui en répond, pour quand, le
+  // brief en extrait et le critère principal.
+  const contexte = await page.locator('.lb-piece .lb-contexte').innerText();
+  for (const attendu of ['Responsable', 'Sacha Martin', 'Échéance', '15 oct.', 'Une maison d’objets', 'Un seul objet au centre de la composition'])
+    assert.ok(contexte.includes(attendu), `Le Bureau dit « ${attendu} » : ${contexte}`);
+  await page.locator('.lb-piece').getByRole('link', { name: 'Lire le brief' }).waitFor();
   await page.getByRole('link', { name: 'Examiner la V1', exact: true }).click();
   await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo/juger/1');
   await page.setViewportSize({ width: 390, height: 650 });
@@ -162,7 +171,7 @@ try {
     decalage: '', annuler: 44 });
   await page.goBack();
   await page.setViewportSize({ width:1440, height:1050 });
-  await page.getByRole('heading', {name:'Sur la table'}).waitFor();
+  await page.getByRole('heading', {name:'À valider aujourd’hui'}).waitFor();
   assert.equal(await page.locator('.studio-piece').count(), 2, 'La pièce validée sort de la revue');
   // Un lien de décision partagé continue à viser la même version après une nouvelle soumission.
   await page.evaluate(() => {
@@ -328,7 +337,6 @@ try {
   // Sur le Bureau, la carte « À valider » de ce KV tient son titre en deux
   // lignes et ne redit ni son code ni son marché.
   await page.goto(url + '/#/bureau');
-  await page.locator('.lb-file summary').click();
   await page.locator('.studio-piece').filter({ hasText: 'Côte d’Ivoire' }).first().click();
   const carteKV = await page.locator('.lb-piece').evaluate(c => {
     const h2 = c.querySelector('h2');
@@ -365,7 +373,6 @@ try {
   // Captures reproductibles de la refonte : uniquement la fixture fictive.
   await page.evaluate(data => { DEPOT.importer(data); }, fixture);
   await page.goto(url + '/#/bureau');
-  await page.locator('.lb-file summary').click();
   await page.getByLabel('Projet', { exact:true }).selectOption('');
   await page.locator('.studio-piece').first().click();
   if (process.env.SCREENSHOT_DIR) {
