@@ -671,8 +671,9 @@ de ces requêtes.
 ## Lancer les tests
 
 La CI (`.github/workflows/verification.yml`) tourne sous Node 22, à chaque push
-et à chaque pull request vers `main`. Le job `verification` exécute d'abord,
-sans `npm install` :
+sur `main` et à chaque pull request vers `main` ou vers une branche
+`adoption/…` (les lots d'adoption s'empilent). Le job `verification` exécute
+d'abord, sans `npm install` :
 
 ```bash
 node --check servir.mjs
@@ -690,12 +691,14 @@ node --test tests/entreprise.test.mjs
 npm run test:radar
 node outils/vitrine-base.mjs --check
 npm run test:vitrine
-npm run test:recette
 ```
 
 Puis il installe les dépendances (`npm ci`) et lance, avec Google Chrome s'il
 est installé, sinon avec le Chromium de Playwright, le parcours (`npm test`) et
-la mesure des captures (`node --test tests/recette-mesure.test.mjs`).
+la recette des captures (`npm run test:recette`, avec
+`RECETTE_NAVIGATEUR=exige` : sans Playwright ni navigateur, ses tests échouent
+au lieu d'être sautés). Si la recette échoue, ses deux passes sont jointes à
+l'exécution (`recette-temoin`).
 
 S'il réussit, deux jobs construisent et exercent les images Docker :
 
@@ -729,8 +732,8 @@ Les scripts de `package.json` :
 | `npm run recette:captures` | `node outils/recette-captures.mjs` (captures de tous les espaces, hors du dépôt) |
 
 Les tests `node --test` n'ont besoin d'aucune dépendance npm, sauf
-`tests/recette-mesure.test.mjs`, qui demande Playwright et un navigateur et se
-saute sans eux hors de la CI ; `tests/entreprise.test.mjs` et
+`tests/recette-mesure.test.mjs`, qui demande Playwright et un navigateur : sans
+eux, il se saute, sauf avec `RECETTE_NAVIGATEUR=exige`, que la CI pose ; `tests/entreprise.test.mjs` et
 `tests/vitrine.test.mjs` appellent aussi `git`. `npm test` lance un
 parcours dans Chromium avec Playwright, sur un serveur éphémère et la base
 fictive `tests/fixtures/studio.json`. Il demande `npm install` et un Chromium

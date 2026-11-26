@@ -4,10 +4,13 @@
 // et l'outil entier tourne sur la base fictive, du bureau au téléphone.
 //
 // Demande Playwright et un navigateur (BROWSER_CHANNEL=chrome pour Google
-// Chrome). Sans eux, le test est sauté, sauf en CI où il doit tourner.
+// Chrome). Sans eux, ces tests sont sautés, sauf si RECETTE_NAVIGATEUR=exige :
+// la CI pose cette variable sur `npm run test:recette`, lancé après `npm ci`,
+// pour qu'un navigateur absent fasse échouer la vérification au lieu de la
+// laisser verte sans le test de bout en bout.
 //
 // Si RECETTE_TEMOIN nomme un dossier, les passes du test de bout en bout y
-// sont gardées quand il échoue.
+// sont gardées quand il échoue (la CI les joint à l'exécution).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
@@ -20,12 +23,14 @@ import { mesurerDansLaPage, depouiller, ecartDePixels, aLOeil, versionMesure, st
 
 const OUTIL = fileURLToPath(new URL('../outils/recette-captures.mjs', import.meta.url));
 const executer = promisify(execFile);
+const EXIGE = process.env.RECETTE_NAVIGATEUR === 'exige';
 
 let chromium = null, navigateur = null, raison = null;
-try { ({ chromium } = await import('playwright')); } catch { raison = 'Playwright absent : npm ci'; }
+try { ({ chromium } = await import('playwright')); }
+catch (e) { if (EXIGE) throw new Error('RECETTE_NAVIGATEUR=exige, mais Playwright est absent : lancez npm ci.', { cause: e }); raison = 'Playwright absent : npm ci'; }
 if (chromium) {
   try { navigateur = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) }); }
-  catch (e) { if (process.env.CI) throw e; raison = 'aucun navigateur pour Playwright : essayez BROWSER_CHANNEL=chrome'; }
+  catch (e) { if (EXIGE) throw e; raison = 'aucun navigateur pour Playwright : essayez BROWSER_CHANNEL=chrome'; }
 }
 const sauter = raison ? { skip: raison } : {};
 test.after(async () => { if (navigateur) await navigateur.close(); });

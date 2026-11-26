@@ -3,7 +3,9 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    # Les lots d'adoption s'empilent (adoption/11-… sur adoption/00-…) : leurs
+    # PR visent une autre branche adoption/ et doivent être vérifiées aussi.
+    branches: [main, 'adoption/**']
 permissions:
   contents: read
 jobs:
@@ -31,8 +33,13 @@ jobs:
       - run: npm run test:radar
       - run: node outils/vitrine-base.mjs --check
       - run: npm run test:vitrine
-      - run: npm run test:recette
-      - name: Parcours du poste sur une base fictive
+      - name: Parcours du poste et recette des captures sur une base fictive
+        # La recette tourne après npm ci, avec Playwright : RECETTE_NAVIGATEUR=exige
+        # fait échouer ses tests navigateur s'ils ne trouvent ni Playwright ni
+        # navigateur, au lieu de les sauter.
+        env:
+          RECETTE_NAVIGATEUR: exige
+          RECETTE_TEMOIN: ${{ runner.temp }}/recette-temoin
         run: |
           npm ci --no-audit --no-fund
           if command -v google-chrome >/dev/null; then
@@ -41,7 +48,15 @@ jobs:
             npx playwright install --with-deps chromium
           fi
           npm test
-          node --test tests/recette-mesure.test.mjs
+          npm run test:recette
+      - name: Joindre les passes de la recette si elle échoue
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recette-temoin
+          path: ${{ runner.temp }}/recette-temoin
+          if-no-files-found: ignore
+          retention-days: 7
   image-entreprise:
     needs: verification
     runs-on: ubuntu-latest
