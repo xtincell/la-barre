@@ -10,7 +10,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { routesDe, lireArguments, planche, comparer, restreindre, problemes, preparerSortie, pluriel, dateLisible,
   sortieParDefaut, typographie, aLOeil, versionMesure, causes, heureDuPoste, texteDeLaPage, ouChange, decrireNuance,
-  MODES_ATTENDUS, LARGEURS, MARQUE, OUTIL, ECART, ONGLETS_PIECE } from '../outils/recette-captures.mjs';
+  MODES_ATTENDUS, LARGEURS, MARQUE, OUTIL, ECART, ONGLETS_PIECE, lancement } from '../outils/recette-captures.mjs';
 import { relever, extrait, VALEURS_TECHNIQUES } from '../outils/termes-interdits.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -123,6 +123,9 @@ test('la sortie par défaut est propre à la branche, et une passe faite depuis 
   // L'horloge par défaut : l'heure du poste, à la minute, au format de --horloge.
   assert.equal(heureDuPoste(new Date(2026, 10, 26, 9, 5, 42)), '2026-11-26T09:05:00');
   assert.equal(lireArguments([]).horloge, null, 'fixée au lancement : celle de l’avant, ou l’heure du poste');
+  // Le navigateur peint sans carte graphique, avec le canal demandé.
+  assert.deepEqual(lancement('chrome'), { headless: true, args: ['--disable-gpu'], channel: 'chrome' });
+  assert.deepEqual(lancement(''), { headless: true, args: ['--disable-gpu'] });
 });
 
 test('la sortie doit rester hors du dépôt', () => {

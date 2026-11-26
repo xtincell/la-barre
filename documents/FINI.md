@@ -51,6 +51,11 @@ aussi **tout le texte de la page**, blocs repliés et bulles d'aide compris : un
 mot qui change sous le premier écran, dans un bloc replié ou dans une liste qui
 défile, rend la capture « modifiée ».
 
+Le navigateur peint sans carte graphique (`--disable-gpu`), comme en CI :
+peints par la carte, les bords d'un cercle (puce, pastille, avatar)
+changeaient parfois d'une passe à l'autre, selon ce qu'elle avait peint avant.
+Deux passes du même code donnent ainsi la même photo, au pixel près.
+
 La passe « avant » se fait **sur la branche de base du lot** : `main`, ou
 `adoption/00-mesurer` tant que ce lot n'est pas fusionné (les gains rapides
 s'empilent dessus). La passe « après » se fait sur la branche du lot, **avec

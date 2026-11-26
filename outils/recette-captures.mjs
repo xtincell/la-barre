@@ -55,6 +55,14 @@ export const POSTES = {
   bureau: { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, reducedMotion: 'reduce' },
   telephone: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, reducedMotion: 'reduce' },
 };
+/* Le navigateur peint sans carte graphique. Rastérisés par la carte (Metal,
+ * Skia Graphite), les bords d'un cercle (puce, pastille, avatar) changent
+ * parfois de 18/255 d'une passe à l'autre, selon ce que la carte a peint
+ * avant : la photo dépendrait de l'ordre des routes et de la charge du poste.
+ * Peinte par le processeur, comme en CI, elle ne dépend que de la page. Fait
+ * partie du poste de capture. */
+export const RENDU = { args: ['--disable-gpu'] };
+export function lancement(canal = process.env.BROWSER_CHANNEL) { return { headless: true, ...RENDU, ...(canal ? { channel: canal } : {}) }; }
 
 /* La version de la mesure : l'empreinte de ce script et de la liste des
  * termes. Deux passes mesurées par des versions différentes ne se comparent
@@ -1055,14 +1063,17 @@ export async function ecartDePixels({ a, b, zones = [], densite = 1 }) {
   return { pixels, total: w * h, part: pixels / (w * h), max: Math.max(hors.max, images.max), cadre: cadre(tout), hors: net(hors), images: net(images) };
 }
 
-/* Quand un écart reste « identique à l'œil ». Deux passes du même code
- * diffèrent de deux façons, toujours les mêmes : le lissage des images
- * redimensionnées (jusqu'à 16 à 21/255, dans les images seulement) et le
- * crénelage de quelques bords, coins arrondis ou bout de soulignement
- * (jusqu'à 5/255, quelques dizaines de pixels). Tout le reste est un vrai
- * changement : hors des images, un pixel qui bouge de plus de `bruit`/255
- * (une bordure #deded8 → #e8e8e2 bouge de 10, une page assombrie de 8 % de
- * 20), ou plus d'une part `partBruit` de la photo qui bouge, même d'un point ;
+/* Quand un écart reste « identique à l'œil ». Peintes sans carte graphique
+ * (`RENDU`), deux passes du même code sont identiques au pixel. Peintes par
+ * la carte, elles différaient de deux façons, toujours les mêmes : le
+ * lissage des images redimensionnées (jusqu'à 16 à 21/255, dans les images
+ * seulement) et le crénelage de quelques bords, coins arrondis ou bout de
+ * soulignement (jusqu'à 5/255, quelques dizaines de pixels ; 18/255, rarement,
+ * sur un cercle). Ces seuils restent pour un poste qui peindrait autrement.
+ * Tout le reste est un vrai changement : hors des images, un pixel qui bouge
+ * de plus de `bruit`/255 (une bordure #deded8 → #e8e8e2 bouge de 10, une
+ * page assombrie de 8 % de 20), ou plus d'une part `partBruit` de la photo
+ * qui bouge, même d'un point ;
  * dans une image, plus de `image`/255 (une autre image). */
 export const ECART = { bruit: 8, partBruit: 0.001, image: 32 };
 export function aLOeil(e) {
@@ -1156,7 +1167,7 @@ async function principal() {
   const texte = await readFile(o.base, 'utf8');
   try { await preparerSortie(o.dossier); }
   catch (e) { process.stderr.write(e.message + '\n'); process.exitCode = 2; return; }
-  const mesure = { version: versionMesure(), contexte: { postes: POSTES, sous: TELEPHONE, pleinePage: o.pleinePage } };
+  const mesure = { version: versionMesure(), contexte: { postes: POSTES, sous: TELEPHONE, pleinePage: o.pleinePage, rendu: RENDU.args } };
   let avant = null;
   const avantDossier = o.temps === 'apres' ? join(o.sortie, 'avant') : null;
   if (avantDossier && existsSync(join(avantDossier, 'captures.json'))) {
@@ -1200,7 +1211,7 @@ async function principal() {
     base: { fichier: basename(o.base), empreinte: createHash('sha256').update(texte).digest('hex').slice(0, 12) },
     manquantes: [], horsCapture: [], captures: [] };
   try {
-    navigateur = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
+    navigateur = await chromium.launch(lancement());
     let courant = null;
 
     /* Un poste de bureau, et un téléphone (tactile, densité 2) pour les

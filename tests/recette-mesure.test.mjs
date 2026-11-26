@@ -19,7 +19,7 @@ import { mkdtemp, readFile, writeFile, rm, cp } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { mesurerDansLaPage, depouiller, ecartDePixels, aLOeil, versionMesure, stabiliser, apaiserLaPage, deplierLaPage, replierLaPage } from '../outils/recette-captures.mjs';
+import { mesurerDansLaPage, depouiller, ecartDePixels, aLOeil, versionMesure, stabiliser, apaiserLaPage, deplierLaPage, replierLaPage, lancement } from '../outils/recette-captures.mjs';
 
 const OUTIL = fileURLToPath(new URL('../outils/recette-captures.mjs', import.meta.url));
 const executer = promisify(execFile);
@@ -29,7 +29,7 @@ let chromium = null, navigateur = null, raison = null;
 try { ({ chromium } = await import('playwright')); }
 catch (e) { if (EXIGE) throw new Error('RECETTE_NAVIGATEUR=exige, mais Playwright est absent : lancez npm ci.', { cause: e }); raison = 'Playwright absent : npm ci'; }
 if (chromium) {
-  try { navigateur = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) }); }
+  try { navigateur = await chromium.launch(lancement()); }
   catch (e) { if (EXIGE) throw e; raison = 'aucun navigateur pour Playwright : essayez BROWSER_CHANNEL=chrome'; }
 }
 const sauter = raison ? { skip: raison } : {};
@@ -304,6 +304,8 @@ test('l’outil entier tourne sur la base fictive : bureau, recherche, nouveau p
     assert.equal(r.captures.length, 10);
     assert.equal(r.commit, 'abc1234');
     assert.equal(r.mesure.version, versionMesure());
+    // Peinte par le processeur, pas par la carte graphique : le poste de capture le dit.
+    assert.deepEqual(r.mesure.contexte.rendu, ['--disable-gpu']);
     // Le formulaire, la recherche et Nouveau projet sont bien ouverts.
     const titre = id => r.captures.find(c => c.id === id && c.largeur === 1440).titre;
     assert.notEqual(titre('recherche'), titre('bureau'));
