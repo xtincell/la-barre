@@ -15,9 +15,10 @@
     "test:bilan": "node --test tests/bilan-preuves.test.mjs tests/bilan-campagne.test.mjs",
     "test:radar": "node --test tests/radar-decisions.test.mjs",
     "test:vitrine": "node --test tests/vitrine.test.mjs",
-    "test:recette": "node --test tests/usage-reel.test.mjs",
+    "test:recette": "node --test tests/usage-reel.test.mjs tests/recette-captures.test.mjs",
     "vitrine:base": "node outils/vitrine-base.mjs",
-    "usage:reel": "node outils/usage-reel.mjs"
+    "usage:reel": "node outils/usage-reel.mjs",
+    "recette:captures": "node outils/recette-captures.mjs"
   },
   "engines": {
     "node": ">=18"
