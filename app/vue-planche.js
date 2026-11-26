@@ -139,7 +139,7 @@ window.VUE_PLANCHE = (function () {
         ),
 
         el("span.plc-bas", {},
-          el("span.plc-copy" + (k.copy ? "" : ".vide"), {}, k.copy || "Accroche non écrite"),
+          el("span.plc-copy" + (k.copy ? "" : ".vide"), {}, k.copy || "Accroche à écrire"),
           el("span.plc-sous", {}, [
             KV.estMaitre(l) && l.nom ? l.nom : KV.NIVEAUX[KV.niveau(l)].nom.toLowerCase(),
             O.langue(k.langue) || "langue ?",
@@ -149,15 +149,13 @@ window.VUE_PLANCHE = (function () {
         )
       ),
 
-      /* Un « 3 » en pastille ne dit pas ce qui ne va pas. Les manquements se
-       * nomment, et chacun dit combien de déclinaisons héritent de l'erreur —
-       * c'est ce nombre-là qui décide si on corrige maintenant ou jamais. */
+      /* Un « 3 » en pastille ne dit pas ce qui ne va pas. Les points à régler
+       * se nomment, et la case dit combien de déclinaisons en héritent — c'est
+       * ce nombre-là qui décide si on corrige maintenant ou plus tard. */
       ecarts.length
         ? el("div.plc-m", {},
-            el("div.plcm-t", {}, ecarts.length
-              + (ecarts.length > 1 ? " manquements" : " manquement")
-              + (decl ? " · " + decl + (decl > 1 ? " formats en héritent" : " format en hérite")
-                      : " · aucun format n'en hérite encore")),
+            el("div.plcm-t", {}, O.pluriel(ecarts.length, "point à régler", "points à régler")
+              + (decl ? " · " + O.pluriel(decl, "format en hérite", "formats en héritent") : "")),
             el("div.plcm-l", {}, ecarts.slice(0, 4).map(function (c) {
               return el("button.plcm", { type: "button", title: c.cout,
                 onclick: function () { detail(p, l, rafraichir); } },

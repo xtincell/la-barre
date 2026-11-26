@@ -640,3 +640,30 @@ test('le journal nomme un master neuf avec sa marque dès la création', async (
   const sans = s.ctx.KV.creer(p, null, null, 'maitre');
   assert.equal(sans.nom, 'Key visual master', 'sans marque saisie, le nom n’en invente pas');
 });
+
+/* ————— Un KV sans fichier dit ce qui reste à faire —————
+ *
+ * Au début d'une campagne, c'est le cas normal : la case ne lit pas un
+ * procès-verbal (« Nom de fichier non arrêté », « Accroche non écrite »,
+ * « 2 manquements · aucun format n'en hérite encore »). */
+
+function texteDe(n) { return n && typeof n === 'object' ? (n.childNodes || []).map(texteDe).join('|') + (n.data ? n.data : '') : ''; }
+
+test('la case d’un KV sans fichier dit ce qui reste à faire, pas un procès-verbal', async () => {
+  const s = await bacDecisions(APP, 93);
+  for (const nom of ['kv-modele', 'apparier', 'image', 'trace', 'annotation', 'vue-planche']) await s.charger(nom);
+  semer(s.ctx, { personnes: PERSONNES, ...REFERENTIEL, projets: [projet('OR')] });
+  const p = s.ctx.DEPOT.trouve('projets', 'OR');
+  const master = s.ctx.KV.creer(p, null, null, 'maitre', { marque: 'Orvelle' });
+  const gh = s.ctx.KV.creer(p, 'M-gh', master, 'adaptation');
+  for (const l of [master, gh]) {
+    const t = texteDe(s.ctx.VUE_PLANCHE.caseKV(p, l, () => {}));
+    assert.match(t, /Fichier à nommer/);
+    assert.match(t, /visuel à déposer/);
+    assert.match(t, /Accroche à écrire/);
+    assert.match(t, /\d points? à régler/);
+    assert.doesNotMatch(t, /non arrêté|non écrite|manquement|jamais regardé|aucun format n’en hérite|aucun format n'en hérite|aucune version/, t);
+  }
+  gh.versions = [{ n: 1, soumis_le: '2026-11-03T08:00:00.000Z' }];
+  assert.equal(s.ctx.TRACE.attendu(gh).quoi, 'pas encore vu');
+});

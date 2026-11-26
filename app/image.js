@@ -187,7 +187,7 @@ window.IMAGE = (function () {
     }
     return O.el("div." + classe.replace(/ /g, ".") + ".vide.attente", {},
       O.el("span.va-f" + (a.nomme ? "" : ".sans"), { title: a.fichier || "" },
-        a.fichier || "Nom de fichier non arrêté"),
+        a.fichier || "Fichier à nommer"),
       a.quoi ? O.el("span.va-q", { title: a.quoi }, a.quoi) : null);
   }
 
