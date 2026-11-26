@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
-import { bac, semer, projet, livrable, PERSONNES, saisie, soumettre } from './decisions-scenarios.mjs';
+import { bac, semer, projet, livrable, PERSONNES, saisie, soumettre, bouton, cliquer } from './decisions-scenarios.mjs';
 
 const app = fileURLToPath(new URL('../app/', import.meta.url));
 const saisiePreuve = {
@@ -300,13 +300,18 @@ class FormulaireLu {
     if (c.getAttribute('type') === 'file') return c.fichier || { name: '', size: 0 };
     return c.value !== '' ? c.value : (c.getAttribute('value') || '');
   }
-  getAll(k) { return champs(this.form).filter(x => x.getAttribute('name') === k && x.checked).map(x => x.getAttribute('value')); }
+  /* Une case cochée d'office porte l'attribut, comme dans le navigateur. */
+  getAll(k) {
+    return champs(this.form).filter(x => x.getAttribute('name') === k && (x.checked || x.getAttribute('checked') !== null))
+      .map(x => x.getAttribute('value'));
+  }
 }
 const laisserFiler = () => new Promise(r => setImmediate(r));
 function envoyer(racine) {
   const f = noeuds(racine, n => n.tagName === 'FORM')[0];
   for (const traiter of f.ecouteurs.submit || []) traiter.call(f, { preventDefault() {}, target: f });
 }
+const erreur = form => noeuds(form, n => n.className === 'remise-erreur')[0].textContent;
 
 async function geste() {
   const x = await installation();
@@ -425,6 +430,69 @@ test('« Enregistrer seulement le BAT » pose le BAT sans marquer la pièce livr
   assert.equal(R.etatPiece(ci).cle, 'sortie');
   assert.equal(R.preuveCourante(p, ci), null);
   assert.equal(p.preuvesRemise, undefined);
+});
+
+/* ————— Le même geste pour un lot (l'ancien « Consigner une remise ») ————— */
+
+test('« Marquer le lot comme livré » : deux champs requis, les pièces cochées, un seul reçu pour le lot', async () => {
+  const { s, p, ci, sn, R } = await geste();
+  preparer(ci, 'CI'); preparer(sn, 'SN');
+  cliquer(bouton(R.suiviLot(p, p.livrables, () => {}), 'Marquer le lot comme livré'));
+  const form = s.dernier();
+  assert.deepEqual(champs(form).filter(c => c.getAttribute('required') !== null).map(c => c.getAttribute('name')),
+    ['destinataire', 'remis-le']);
+  const cases = champs(form).filter(c => c.getAttribute('name') === 'pieces');
+  assert.equal(cases.length, 2, 'les deux pièces prêtes ; la story sans fichier n’est pas proposée');
+  assert.ok(cases.every(c => c.getAttribute('checked') === null), 'à deux pièces, rien n’est coché d’office');
+  /* Rien de coché : refus, rien d'écrit. */
+  remplir(form, { destinataire: 'Chargée de production' });
+  envoyer(form);
+  await laisserFiler();
+  assert.match(erreur(form), /Choisissez au moins une pièce/);
+  assert.equal(p.preuvesRemise, undefined);
+  /* Coché, mais sans dire à qui : refus, rien d'écrit. */
+  for (const c of cases) c.checked = true;
+  remplir(form, { destinataire: '' });
+  envoyer(form);
+  await laisserFiler();
+  assert.match(erreur(form), /à qui le lot a été remis/);
+  assert.equal(p.preuvesRemise, undefined);
+  remplir(form, { destinataire: 'Chargée de production' });
+  envoyer(form);
+  await laisserFiler();
+  assert.equal(p.preuvesRemise.length, 1, 'un seul reçu couvre le lot');
+  const recu = p.preuvesRemise[0];
+  assert.deepEqual([recu.destinataire, recu.remis_le, recu.preuve.type, recu.preuve.contact, recu.preuve.date],
+    ['Chargée de production', '2026-11-10', 'declaration', 'Chargée de production', '2026-11-10']);
+  assert.deepEqual(recu.pieces.map(x => [x.id, x.version]), [['L-ci', 2], ['L-sn', 2]]);
+  assert.equal(recu.acteur.personneId, 'P-recette', 'le reçu porte celui qui l’écrit');
+  assert.equal(R.preuveCourante(p, ci), recu);
+  assert.equal(R.preuveCourante(p, sn), recu);
+  assert.equal(s.ctx.DEPOT.journal().filter(x => x.action === 'preuve de remise').length, 1);
+  /* Le suivi du lot liste la livraison et ses pièces, et ne repropose plus le geste. */
+  const apres = R.suiviLot(p, p.livrables, () => {});
+  assert.match(apres.textContent, /Livraisons enregistrées.*Remise déclarée.*Livrable L-ci · V2 · Côte d’Ivoire.*Livrable L-sn · V2 · Sénégal/);
+  assert.doesNotMatch(apres.textContent, /preuve historique/);
+  assert.throws(() => bouton(apres, 'Marquer le lot comme livré'), /introuvable/);
+});
+
+test('« Marquer le lot comme livré » joint le bon de livraison : la preuve est le fichier déposé', async () => {
+  const { s, p, ci, sn, R, depots } = await geste();
+  preparer(ci, 'CI');
+  cliquer(bouton(R.suiviLot(p, p.livrables, () => {}), 'Marquer le lot comme livré'));
+  const form = s.dernier();
+  const cases = champs(form).filter(c => c.getAttribute('name') === 'pieces');
+  assert.equal(cases.length, 1);
+  assert.notEqual(cases[0].getAttribute('checked'), null, 'une seule pièce : elle est cochée d’office');
+  remplir(form, { destinataire: 'Imprimerie', 'remise-fichier': { name: 'bon-de-livraison.pdf', size: 4096 } });
+  envoyer(form);
+  await laisserFiler();
+  assert.deepEqual(depots, ['bon-de-livraison.pdf']);
+  const recu = R.preuveCourante(p, ci);
+  assert.ok(recu, 'la pièce est livrée');
+  assert.deepEqual([recu.preuve.nom, recu.preuve.type, recu.preuve.chemin],
+    ['bon-de-livraison.pdf', 'fichier', 'assets/review/preuves/preuve-1.jpg']);
+  assert.equal(R.preuveCourante(p, sn), null);
 });
 
 /* ————— Le dépôt d'une pièce jointe (IMAGE.deposerPreuve) et l'étage imposé
