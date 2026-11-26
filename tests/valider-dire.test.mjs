@@ -260,6 +260,8 @@ test('une note jamais marquée (onglet tué sans pagehide) se rejoue passé 128 
   assert.equal(ancienne.s.ctx.VUE_LIVRABLE.reprendreValidations(), 1);
   assert.equal(ancienne.l.versions[0].verdict, 'approuve');
   assert.equal(ancienne.s.ctx.DEPOT.liste('decisions').length, 1);
+  assert.equal(ancienne.l.versions[0].juge_le, '2026-11-10T08:57:08.000Z', 'datée du clic et du délai d’annulation, pas du rejeu');
+  assert.equal(ancienne.s.ctx.DEPOT.liste('decisions')[0].quand, '2026-11-10T08:57:08.000Z', 'la date que lit Radar est la même');
   assert.deepEqual(ancienne.notes(), [], 'rejouée, la note est retirée');
   assert.equal(ancienne.s.ctx.VUE_LIVRABLE.reprendreValidations(), 0, 'une note ne se rejoue qu’une fois');
   assert.equal(ancienne.s.ctx.DEPOT.liste('decisions').length, 1);

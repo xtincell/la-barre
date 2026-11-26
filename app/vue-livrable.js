@@ -744,7 +744,12 @@ window.VUE_LIVRABLE = (function () {
         + "Relisez-la, et validez-la de nouveau si c'est toujours votre décision.");
       return;
     }
-    var erreur = poser(x.projetId, x.livrableId, contexte, verdict, "");
+    /* Datée du moment où elle se serait écrite (le clic, plus le délai
+     * d'annulation), pas de son rejeu : le délai de décision du Bilan et la date
+     * que lit Radar restent ceux du geste. */
+    var clic = Date.parse(x.quand);
+    var quand = isFinite(clic) ? new Date(Math.min(clic + DELAI_ANNULATION, Date.now())).toISOString() : null;
+    var erreur = poser(x.projetId, x.livrableId, contexte, verdict, "", quand);
     if (window.AVIS) {
       if (erreur) AVIS.grave("La validation de " + nom + " n'a pas été enregistrée. " + erreur);
       else AVIS.fait("Validation de " + nom + " enregistrée.");
@@ -755,7 +760,8 @@ window.VUE_LIVRABLE = (function () {
     return JSON.stringify([l.version, l.marche, l.support, l.vignette, l.review, l.fichiers, l.grille, v]);
   }
 
-  function poser(projetId, livrableId, contexte, verdict, motif) {
+  /* `quand`, facultatif, date la décision ; sans lui, c'est maintenant. */
+  function poser(projetId, livrableId, contexte, verdict, motif, quand) {
     var p = DEPOT.trouve("projets", projetId);
     var l = p && !p.fusionne && !(window.CLOTURE && CLOTURE.est(p)) && (p.livrables || []).find(function (x) {
       return x.id === livrableId && !x.annule;
@@ -765,7 +771,7 @@ window.VUE_LIVRABLE = (function () {
       return "La pièce a changé pendant votre décision : rien n'est enregistré. Rouvrez sa version en cours.";
     var v = version.objet;
     if (v.verdict === verdict.cle && (v.motif || "") === motif) return null;
-    var quand = new Date().toISOString();
+    quand = quand || new Date().toISOString();
     var decision;
     try {
       decision = DECISION.construire({ objet: l.id, type: "livrable", projet: p.id, verdict: verdict.cle,
