@@ -103,7 +103,7 @@ try {
     await page.getByRole('heading',{name:'Version 1 · historique'}).waitFor();
     assert.equal(await page.locator('.rvp-archive button').count(), 0, 'Une version historique ne permet aucune écriture');
     assert.equal(await rendreVerdict.count(), 0);
-    await page.locator('.rvp-archive').getByText('Approuvé', { exact: true }).waitFor();
+    await page.locator('.rvp-archive').getByText('Validé', { exact: true }).waitFor();
   }
   await page.goto(url+'/#/bureau');
   await page.reload({ waitUntil: 'networkidle' });

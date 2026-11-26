@@ -36,6 +36,22 @@ function parRang(r) {
     ? rangs.reduce((t, [id, rang]) => t.split(id).join(rang), v) : v)));
 }
 
+/* Les quatre décisions ont reçu des noms d'agence (« Validé », « Modifs
+ * demandées »…) ; leurs clés n'ont pas bougé, Radar les lit. Seule la ligne de
+ * journal d'une validation de document recopie le nom affiché au moment du
+ * geste : on lit la capture avec les noms d'aujourd'hui, et rien d'autre. */
+const NOMS_RENOMMES = [['Approuvé sous réserve', 'Validé avec réserves'], ['Retour dans le périmètre', 'Modifs demandées'],
+  ['Hors périmètre', 'Refusé : hors brief'], ['Approuvé', 'Validé']];
+function nomsActuels(r) {
+  const c = copie(r);
+  for (const e of c.base.journal || []) {
+    if (e.action !== 'verdict' || typeof e.detail !== 'string') continue;
+    const n = NOMS_RENOMMES.find(([ancien]) => e.detail === ancien || e.detail.startsWith(ancien + ' — '));
+    if (n) e.detail = n[1] + e.detail.slice(n[0].length);
+  }
+  return c;
+}
+
 for (const nom of Object.keys(ECRIVAINS)) {
   test(`${nom} : la décision est celle d'avant la fabrique, champ pour champ et dans le même ordre`, async () => {
     const avant = capture.ecrivains[nom], apres = await rejouer(APP, nom);
@@ -44,7 +60,7 @@ for (const nom of Object.keys(ECRIVAINS)) {
     for (const d of apres.decisions) assert.match(d.id, NEUVE);
     /* La chaîne JSON compare aussi l'ordre des champs : c'est ce qui part
      * dans le fichier, et ce qu'un relevé lirait. */
-    const a = parRang(apres), b = parRang(avant);
+    const a = parRang(apres), b = parRang(nomsActuels(avant));
     assert.equal(JSON.stringify(a.decisions), JSON.stringify(b.decisions));
     /* Et le reste de la base n'a pas bougé : journal, pièce jugée, sauvegarde. */
     assert.equal(JSON.stringify(a.base), JSON.stringify(b.base));

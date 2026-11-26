@@ -74,7 +74,7 @@ window.VUE_ASSET = (function () {
   function etatVerdict(v) {
     var def = v && MAISON.verdicts.find(function (x) { return x.cle === v.verdict; });
     var ton = v && v.verdict === "approuve" ? "vert" : "attente";
-    return def ? UI.eti(def.nom, ton) : v && v.verdict ? UI.eti("Verdict consigné", "terne") : UI.eti("À examiner", "attente");
+    return def ? UI.eti(def.nom, ton) : v && v.verdict ? UI.eti("Décision enregistrée", "terne") : UI.eti("À examiner", "attente");
   }
 
   function mediaRevue(objet, nom) {
