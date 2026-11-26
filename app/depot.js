@@ -608,9 +608,9 @@ window.DEPOT = (function () {
               + "s'écrit dans " + fichier + ", et c'est lui qui fait foi. Le cache ne "
               + "servait qu'à rouvrir plus vite.");
           } else {
-            AVIS.grave("Le cache du navigateur est plein : plus rien ne s'enregistre. "
-              + "Aucun fichier de base n'est servie à côté de l'application, donc ce "
-              + "cache était le seul endroit. Exporte maintenant (Réglages → Exporter).");
+            AVIS.grave("Ce navigateur est plein : vos gestes ne s'enregistrent plus, et il était "
+              + "le seul endroit où ils vivaient. Exportez la base maintenant (Paramètres → "
+              + "« Exporter la base »), puis prévenez la personne qui gère La Barre.");
           }
         }
       }
@@ -632,8 +632,9 @@ window.DEPOT = (function () {
       quoi: "données fictives, gardées en mémoire : rien ne s'enregistre, et recharger la page les remet à zéro" };
     if (location.protocol === "file:") return { cle: "fichier-impossible",
       nom: "ce navigateur seul",
-      quoi: "ouvert par double-clic : le navigateur interdit d'écrire dans le fichier. "
-        + "Lance le serveur (node servir.mjs) pour que tous les navigateurs partagent la base." };
+      quoi: "ouvert depuis un fichier : ce qui est fait ici reste dans ce navigateur. "
+        + "Ouvrez La Barre par son adresse habituelle pour partager la base ; si vous ne la "
+        + "connaissez pas, demandez-la à la personne qui gère La Barre." };
     if (surDisque === true) return { cle: "disque", nom: fichier,
       quoi: "écrit dans son fichier — tous les navigateurs voient la même chose" };
     if (surDisque === false) return { cle: "navigateur", nom: "ce navigateur seul",

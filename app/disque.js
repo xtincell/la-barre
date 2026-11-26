@@ -48,8 +48,8 @@ window.DISQUE = (function () {
       if (!r.ok) throw new Error(r.status);
       if (window.AVIS) AVIS.fait(reveler ? "Le fichier est montré dans le Finder." : "Le fichier s'ouvre dans son logiciel.");
     }).catch(function () {
-      if (window.AVIS) AVIS.refus("Le fichier n'a pas pu s'ouvrir : vérifie que « node servir.mjs » tourne "
-        + "sur cette machine et que le fichier est toujours dans l'export.");
+      if (window.AVIS) AVIS.refus("Le fichier n'a pas pu s'ouvrir. Vérifiez qu'il est toujours dans l'export "
+        + "du disque, puis réessayez ; si cela persiste, prévenez la personne qui gère La Barre.");
     });
   }
 
@@ -154,7 +154,7 @@ window.DISQUE = (function () {
   function pire() {
     var n = (DEPOT.tout().disque_sans_place || []).length;
     var tot = porteurs().reduce(function (s, r) { return s + r.xs.length; }, 0) + n;
-    if (!tot) return { t: "Rien n'est relevé au disque", q: "Lance outils/disque-2026.py pour relever les vidéos et les EXE des exports." };
+    if (!tot) return { t: "Rien n'est relevé au disque", q: "Les vidéos et les EXE des exports apparaîtront ici après le prochain relevé du disque. Pour l'avancer, demandez-le à la personne qui gère La Barre." };
     return { t: tot + " vidéos, sons et EXE au disque",
       q: (local ? "Ils se regardent et s'ouvrent depuis cette machine. " : "En ligne, seuls leurs aperçus se voient : les fichiers restent au disque. ")
         + (n ? n + " n'ont pas de campagne ni de marque au dépôt : ils restent lisibles ici." : "Tous sont rattachés à une campagne ou à une marque.") };

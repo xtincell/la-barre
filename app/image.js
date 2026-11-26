@@ -22,6 +22,12 @@ window.IMAGE = (function () {
 
   /* La démonstration n'envoie aucun fichier : elle n'a pas de disque. */
   var DEMO_REFUS = "la démonstration n'enregistre aucun fichier : ses visuels sont fictifs et rien ne part au serveur";
+
+  /* Quand un fichier ne s'écrit pas, la personne lit ce qu'elle peut faire —
+   * réessayer, ou prévenir —, jamais la commande qui démarre le serveur. */
+  var HORS_LIGNE = "La Barre est ouverte depuis un fichier, sans son serveur : rien ne peut s'enregistrer. "
+    + "Ouvrez-la par son adresse habituelle ; si vous ne la connaissez pas, demandez-la à " + "la personne qui gère La Barre" + ".";
+  var REFUSE = "Réessayez dans un instant ; si cela persiste, prévenez " + "la personne qui gère La Barre" + ".";
   function demonstration() { return !!(window.DEPOT && DEPOT.estDemonstration && DEPOT.estDemonstration()); }
 
   /* Ouvre le sélecteur, redimensionne, rend une donnée compacte. Cette donnée
@@ -74,8 +80,7 @@ window.IMAGE = (function () {
 
     if (demonstration()) { apres(null, DEMO_REFUS); return; }
     if (location.protocol === "file:" || !window.fetch) {
-      apres(null, "l'application est ouverte par double-clic : elle ne peut rien "
-        + "écrire sur le disque. Sers-la par « node servir.mjs » pour poser un visuel.");
+      apres(null, "Ce visuel n'a pas été posé. " + HORS_LIGNE);
       return;
     }
 
@@ -87,8 +92,7 @@ window.IMAGE = (function () {
         apres(chemin, null);
       })
       .catch(function () {
-        apres(null, "le serveur n'a pas accepté l'image. Vérifie que « node servir.mjs » "
-          + "tourne — sans lui, rien ne s'écrit sur le disque.");
+        apres(null, "Ce visuel n'a pas été enregistré. " + REFUSE);
       });
   }
 
@@ -98,7 +102,7 @@ window.IMAGE = (function () {
     choisir(function (donnee, ko) {
       if (!donnee) { AVIS.refus("Image illisible."); return; }
       if (ko > 900) {
-        AVIS.refus("Vignette trop lourde (" + ko + " Ko). Réduis l'image avant de la poser.");
+        AVIS.refus("Vignette trop lourde (" + ko + " Ko). Réduisez l'image avant de la poser.");
         return;
       }
       ranger(donnee, function (chemin, refus) {
@@ -267,7 +271,7 @@ window.IMAGE = (function () {
     var annonce = (l.releve || {}).fichier || null;
     var ecart = annonce && !proche(f.name, annonce)
       ? "  Le tableau annonçait « " + annonce + " » : les deux noms ne se ressemblent pas — "
-        + "vérifie que c'est bien le même livrable."
+        + "vérifiez que c'est bien le même livrable."
       : "";
 
     function inscrire(chemin, visuel) {
@@ -290,7 +294,7 @@ window.IMAGE = (function () {
 
     if (f.size > PLAFOND_MO * 1024 * 1024) {
       AVIS.refus("« " + f.name + " » pèse " + Math.round(f.size / 1048576) + " Mo. "
-        + "Au-delà de " + PLAFOND_MO + " Mo on ne monte pas le fichier : dépose un rendu "
+        + "Au-delà de " + PLAFOND_MO + " Mo, le fichier ne se dépose pas ici : déposez un rendu "
         + "de revue plus léger, le master reste sur le Drive.");
       if (apres) apres(false);
       return;
@@ -317,8 +321,7 @@ window.IMAGE = (function () {
   function monter(chemin, donnee, apres, siRefus) {
     if (demonstration()) { AVIS.refus(DEMO_REFUS.charAt(0).toUpperCase() + DEMO_REFUS.slice(1) + "."); if (siRefus) siRefus(false); return; }
     if (location.protocol === "file:" || !window.fetch) {
-      AVIS.refus("L'application est ouverte par double-clic : elle ne peut rien écrire "
-        + "sur le disque. Sers-la par « node servir.mjs » pour importer un fichier.");
+      AVIS.refus("Ce fichier n'a pas été déposé. " + HORS_LIGNE);
       if (siRefus) siRefus(false);
       return;
     }
@@ -329,8 +332,7 @@ window.IMAGE = (function () {
         apres(chemin, true);
       })
       .catch(function () {
-        AVIS.refus("Le serveur n'a pas accepté le fichier. Vérifie que "
-          + "« node servir.mjs » tourne — sans lui, rien ne s'écrit sur le disque.");
+        AVIS.refus("Ce fichier n'a pas été enregistré. " + REFUSE);
         if (siRefus) siRefus(false);
       });
   }
