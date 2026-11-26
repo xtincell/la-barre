@@ -251,7 +251,8 @@ window.FEEDBACK = (function () {
     var crit = ((p.sections.bigidea || {}).criteres || []).length;
     if (crit) {
       out.push({ cle: "critere", quoi: "Il peut contredire un critère écrit",
-        detail: crit + " critères d'acceptation ont été posés avant : à confronter au retour",
+        detail: (crit > 1 ? crit + " critères d'acceptation ont été posés" : "1 critère d'acceptation a été posé")
+          + " avant : à confronter au retour",
         force: 3 });
     }
 

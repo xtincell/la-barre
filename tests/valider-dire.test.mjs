@@ -715,3 +715,55 @@ test('sur la planche, un master ancien et un master neuf se lisent de la même f
   const menu = trouver(s.dernier(), n => n.tagName === 'SELECT' && n.getAttribute('aria-label') === 'Master de référence');
   assert.deepEqual(menu.childNodes.map(o => o.textContent.replace(/ /g, ' ')), ['Key visual master · Orvelle · V1', 'Key visual master · Peak · V1']);
 });
+
+/* ————— Les retours client : chaque compte s'accorde ————— */
+
+async function retoursDe(cibles, extra = {}) {
+  const s = await bacDecisions(APP, 97);
+  await s.charger('kv-modele');
+  await s.charger('feedback');
+  await s.charger('annotation');
+  await s.charger('vue-asset', ['retoursClient']);
+  s.ctx.PRODUCTION.ouverte = () => false;
+  s.ctx.PRODUCTION.de = () => [];
+  const el = s.ctx.O.el;
+  s.ctx.UI = new Proxy({ banniere: (ton, t) => el('div', {}, t), stat: (a, b, c) => el('div', {}, a, ' ', b, ' ', c),
+    eti: t => el('span', {}, t) }, { get: (t, k) => t[k] || (() => el('div')) });
+  const valide = { versions: [{ n: 1, soumis_le: '2026-11-03T08:00:00.000Z', verdict: 'approuve' }], origine: 'prevu' };
+  const p = projet('RC', { livrables: [livrable('L-1', valide), livrable('L-2', valide)], ...extra });
+  const fbs = cibles.map((c, i) => ({ id: 'FB-' + i, projet: 'RC', niveau: 'declinaison', cibles: c, texte: 'Le logo plus grand',
+    auteur: 'P-recette', quand: '2026-11-04', issue: 'ouvert', canal: 'whatsapp' }));
+  semer(s.ctx, { personnes: PERSONNES, projets: [p], feedbacks: fbs });
+  return { s, p: s.ctx.DEPOT.trouve('projets', 'RC'), fbs: s.ctx.DEPOT.liste('feedbacks') };
+}
+
+test('le motif d’un retour arrivé après validation s’accorde à un et à deux livrables validés', async () => {
+  const un = await retoursDe([['L-1']], { sections: { bigidea: { criteres: ['Un seul objet au centre'] }, pistes: [] } });
+  const motifs = [...un.s.ctx.FEEDBACK.motifsDeRefus(un.fbs[0])].map(m => m.detail);
+  assert.ok(motifs.includes('1 livrable avait été validé : ce n\'est pas une correction, c\'est une reprise'), motifs.join('\n'));
+  assert.ok(motifs.includes('1 critère d\'acceptation a été posé avant : à confronter au retour'), motifs.join('\n'));
+  const deux = await retoursDe([['L-1', 'L-2']]);
+  assert.ok([...deux.s.ctx.FEEDBACK.motifsDeRefus(deux.fbs[0])].some(m => m.detail === '2 livrables avaient été validés : ce n\'est pas une correction, c\'est une reprise'));
+});
+
+test('« Décider de ce retour » compte ses motifs : « 1 motif », « 2 motifs »', async () => {
+  for (const [extra, attendu] of [[{}, '1 motif'], [{ sections: { bigidea: { criteres: ['Un seul objet au centre'] }, pistes: [] } }, '2 motifs']]) {
+    const r = await retoursDe([['L-1']], extra);
+    r.s.ctx.FEEDBACK.trancher(r.fbs[0], () => {});
+    const h3 = trouver(r.s.dernier(), n => n.tagName === 'H3' && /Ce qui permet de discuter ce retour/.test(n.textContent));
+    assert.equal(h3.textContent, 'Ce qui permet de discuter ce retour' + attendu);
+  }
+});
+
+test('« Ce que le client en a dit » compte « 1 retour », « 2 retours », et « 1 point posé sur le visuel »', async () => {
+  const un = await retoursDe([['L-1']]);
+  const l1 = un.p.livrables[0];
+  const bloc = un.s.interne['vue-asset'].retoursClient(un.p, l1, () => {});
+  assert.equal(trouver(bloc, n => /asb-t/.test(n.className)).textContent, 'Ce que le client en a dit1 retour');
+  const deux = await retoursDe([['L-1'], ['L-1', 'L-2']]);
+  const l = deux.p.livrables[0];
+  deux.s.ctx.ANNOT.poser(l, 40, 30, 'Agrandir le logo', null);
+  const b2 = deux.s.interne['vue-asset'].retoursClient(deux.p, l, () => {});
+  assert.equal(trouver(b2, n => /asb-t/.test(n.className)).textContent, 'Ce que le client en a dit3 retours');
+  assert.ok(trouver(b2, n => n.tagName === 'BUTTON' && n.textContent === '1 point posé sur le visuel →'));
+});

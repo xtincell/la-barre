@@ -583,7 +583,7 @@ window.VUE_ASSET = (function () {
 
       annots.length && !lecture
         ? el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); ANNOT.ouvrir(p, l, apres, numero); } },
-            annots.length + " points posés sur le visuel →")
+            O.pluriel(annots.length, "point posé", "points posés") + " sur le visuel →")
         : null
     );
   }
