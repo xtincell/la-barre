@@ -178,10 +178,10 @@ window.KV = (function () {
     return false;
   }
 
-  /* Le tiret ne reste jamais pendu en fin de ligne (« Key visual — » /
-   * « Ghana ») : une espace insécable le tient au mot qui le suit, et la ligne
-   * se coupe avant lui. */
-  function tenir(t) { return String(t).replace(/ — /g, " —\u00a0"); }
+  /* Le tiret et le point médian ne restent jamais pendus en fin de ligne
+   * (« Key visual — » / « Ghana », « Ghana · » / « Orvelle ») : une espace
+   * insécable les tient au mot qui les suit, et la ligne se coupe avant eux. */
+  function tenir(t) { return String(t).replace(/ — /g, " —\u00a0").replace(/ · /g, " ·\u00a0"); }
 
   function titre(l) {
     if (!l) return "";

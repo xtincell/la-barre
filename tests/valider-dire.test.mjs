@@ -56,15 +56,15 @@ async function kvSeul() {
 test('KV.titre dit la pièce en clair et garde le code en surtitre, sans toucher au nom', async () => {
   const KV = await kvSeul();
   const cas = [
-    [{ nom: 'KV · GH · Orvelle', support: 'S-kv', marche: 'M-gh' }, 'Key visual —\u00a0Ghana · Orvelle', 'KV · GH · Orvelle'],
+    [{ nom: 'KV · GH · Orvelle', support: 'S-kv', marche: 'M-gh' }, 'Key visual —\u00a0Ghana ·\u00a0Orvelle', 'KV · GH · Orvelle'],
     [{ nom: 'KV · GH', support: 'S-kv', marche: 'M-gh' }, 'Key visual —\u00a0Ghana', 'KV · GH'],
-    [{ nom: 'KV · GH', support: 'S-kv', marche: 'M-gh', kv: { marque: 'Peak' } }, 'Key visual —\u00a0Ghana · Peak', 'KV · GH'],
-    [{ nom: 'KV master commun · Orvelle', support: 'S-kv', niveau: 'maitre' }, 'Key visual master · Orvelle', 'KV master commun · Orvelle'],
+    [{ nom: 'KV · GH', support: 'S-kv', marche: 'M-gh', kv: { marque: 'Peak' } }, 'Key visual —\u00a0Ghana ·\u00a0Peak', 'KV · GH'],
+    [{ nom: 'KV master commun · Orvelle', support: 'S-kv', niveau: 'maitre' }, 'Key visual master ·\u00a0Orvelle', 'KV master commun · Orvelle'],
     [{ nom: 'KV master commun', support: 'S-kv', niveau: 'maitre' }, 'Key visual master', 'KV master commun'],
     [{ nom: 'Post social 1:1 · CI', support: 'S-social', marche: 'M-ci' }, 'Post social 1:1 —\u00a0Côte d’Ivoire', 'Post social 1:1 · CI'],
     [{ nom: 'Key visual — Ghana', support: 'S-kv', marche: 'M-gh' }, 'Key visual —\u00a0Ghana', null],
     [{ nom: 'Affiche de lancement', support: 'S-kv', marche: 'M-gh' }, 'Affiche de lancement', null],
-    [{ nom: 'KV · CI · Orvelle', support: 'S-kv', marche: 'M-gh' }, 'KV · CI · Orvelle', null],
+    [{ nom: 'KV · CI · Orvelle', support: 'S-kv', marche: 'M-gh' }, 'KV ·\u00a0CI ·\u00a0Orvelle', null],
   ];
   for (const [l, titre, surtitre] of cas) {
     const avant = JSON.stringify(l);
@@ -78,7 +78,7 @@ test('deux KV du même marché pour deux marques ont deux titres', async () => {
   const KV = await kvSeul();
   const titres = ['KV · GH · Peak', 'KV · GH · Cowbell', 'KV · GH · Bonnet Rouge']
     .map(nom => KV.titre({ nom, support: 'S-kv', marche: 'M-gh' }));
-  assert.deepEqual(titres, ['Key visual —\u00a0Ghana · Peak', 'Key visual —\u00a0Ghana · Cowbell', 'Key visual —\u00a0Ghana · Bonnet Rouge']);
+  assert.deepEqual(titres, ['Key visual —\u00a0Ghana ·\u00a0Peak', 'Key visual —\u00a0Ghana ·\u00a0Cowbell', 'Key visual —\u00a0Ghana ·\u00a0Bonnet Rouge']);
   const masters = ['KV master commun · Orvelle', 'KV master commun · Lumen']
     .map(nom => KV.titre({ nom, support: 'S-kv', niveau: 'maitre' }));
   assert.equal(new Set(masters).size, 2, masters.join(' | '));
@@ -497,7 +497,7 @@ test('un retour WhatsApp s’enregistre sans bannière rouge, étiquettes relié
     assert.equal(tous(panneau, n => n.getAttribute && n.getAttribute('id') === cible).length, 1, cible);
   }
   const puce = tous(panneau, n => n.tagName === 'BUTTON' && /chip/.test(n.className))[0];
-  assert.equal(puce.textContent, 'Key visual —\u00a0Ghana · Orvelle');
+  assert.equal(puce.textContent, 'Key visual —\u00a0Ghana ·\u00a0Orvelle');
   assert.equal(puce.getAttribute('title'), 'KV · GH · Orvelle', 'le code reste en info-bulle');
 
   cliquer(bouton(panneau, 'Enregistrer'));
@@ -530,7 +530,7 @@ test('un retour enregistré le dit, avec la pièce, et mène au bloc des retours
   tous(panneau, n => n.getAttribute && n.getAttribute('id') === 'fb-auteur')[0].value = 'P:P-recette';
   cliquer(bouton(panneau, 'Enregistrer'));
   assert.equal(s.ctx.DEPOT.liste('feedbacks').length, 1);
-  assert.deepEqual(avis, [['action', 'Retour enregistré sur « Key visual —\u00a0Ghana · Orvelle ».', 'Voir les retours']]);
+  assert.deepEqual(avis, [['action', 'Retour enregistré sur « Key visual —\u00a0Ghana ·\u00a0Orvelle ».', 'Voir les retours']]);
   assert.equal(vu, 1, '« Voir les retours » mène au bloc des retours de la pièce');
 });
 
