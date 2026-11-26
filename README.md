@@ -48,9 +48,10 @@ n'utilise que les modules natifs de Node.
 
 ## Les vues
 
-La navigation (`app/application.js`) compte sept entrées. Chaque mode a sa
-propre adresse, par exemple `#/referentiel/parametres`. Les anciennes adresses
-(`#/reglages`, `#/attentes`, `#/decider`…) mènent au mode correspondant.
+La navigation (`app/application.js`) compte six entrées : Bureau, Projets,
+Décisions, Planning, Bilan et Ressources. Chaque mode a sa propre adresse, par
+exemple `#/referentiel/parametres`. Les anciennes adresses (`#/reglages`,
+`#/attentes`, `#/decider`, `#/galerie`…) mènent au mode correspondant.
 
 | Entrée | Adresse | Ce qu'on y trouve | Fichiers de `app/` |
 |---|---|---|---|
@@ -59,7 +60,7 @@ propre adresse, par exemple `#/referentiel/parametres`. Les anciennes adresses
 | Planning | `#/planning` | Priorités · Plan de charge · Équipe · Livraisons | `vue-placer.js`, `vue-pipeline.js`, `vue-direction.js`, `vue-livraisons.js` |
 | Bilan | `#/reporting` | Indicateurs · Reprises · Évaluation · Bilan mensuel · Arbitrages | `vue-constater.js`, `bilan.js`, `vue-equipe.js`, `vue-findemois.js`, `vue-jurisprudence.js` |
 | Projets | `#/projets` | La liste des projets, leur lecture par marque, l'écran d'une marque ou d'une campagne (avec son bilan), puis le dossier d'un projet. | `vue-projets.js`, `vue-studio.js` |
-| Galerie | `#/galerie` | Les campagnes et leur structure, en images, par année. | `vue-galerie.js` |
+| Galerie (vue de Projets) | `#/projets/galerie` | Les campagnes et leur structure, en images, par année. | `vue-galerie.js` |
 | Ressources | `#/referentiel` | Marques · Marchés et supports · Registre des projets · Registre des briefs · Boîte d'entrée · Le disque · Doctrine · Paramètres | `vue-maison.js`, `vue-vault.js`, `vue-referentiel.js`, `registre-people.js`, `registre-radar.js`, `intake.js`, `disque.js`, `vue-doctrine.js`, `vue-reglages.js` |
 
 Les noms des deux registres viennent du profil de l'installation
@@ -689,6 +690,7 @@ node --test tests/entreprise.test.mjs
 npm run test:radar
 node outils/vitrine-base.mjs --check
 npm run test:vitrine
+npm run test:recette
 ```
 
 S'il réussit, deux jobs construisent et exercent les images Docker :
@@ -718,6 +720,9 @@ Les scripts de `package.json` :
 | `npm run test:radar` | `node --test tests/radar-decisions.test.mjs` |
 | `npm run test:vitrine` | `node --test tests/vitrine.test.mjs` |
 | `npm run vitrine:base` | `node outils/vitrine-base.mjs` (réécrit la base fictive de la démonstration) |
+| `npm run test:recette` | `node --test tests/usage-reel.test.mjs tests/recette-captures.test.mjs` |
+| `npm run usage:reel` | `node outils/usage-reel.mjs` (relevé d'usage sur une copie de la base, en lecture seule) |
+| `npm run recette:captures` | `node outils/recette-captures.mjs` (captures de tous les espaces, hors du dépôt) |
 
 Les tests `node --test` n'ont besoin d'aucune dépendance npm ;
 `tests/entreprise.test.mjs` et `tests/vitrine.test.mjs` appellent aussi `git`. `npm test` lance un
@@ -725,6 +730,30 @@ parcours dans Chromium avec Playwright, sur un serveur éphémère et la base
 fictive `tests/fixtures/studio.json`. Il demande `npm install` et un Chromium
 pour Playwright (`npx playwright install chromium`, ou `BROWSER_CHANNEL` pour
 un navigateur installé). La CI ne le lance pas.
+
+## Mesurer avant de changer
+
+L'audit d'adoption du 26/11/2026
+([`docs/audits/2026-11-26-adoption.md`](docs/audits/2026-11-26-adoption.md))
+a montré que l'outil n'avait jamais été observé avec ceux qui s'en servent.
+Trois outils encadrent désormais chaque changement d'interface :
+
+- **Observer.** [`documents/observation/`](documents/observation/PROTOCOLE.md)
+  porte le protocole des séances, les tâches par rôle, la grille, la semaine
+  témoin et le modèle de synthèse. Ce sont des gabarits : les grilles remplies
+  et les verbatims restent hors du dépôt.
+- **Compter.** `outils/usage-reel.mjs` compte, sur une copie de la base, les
+  décisions, versions, délais, retours, annotations, fichiers, projets, liens,
+  remises et personnes actives. Il ne fait que lire et écrit sur la sortie
+  standard (`--format md|csv`, `--depuis AAAA-MM-JJ`, `--anonyme`).
+- **Regarder.** `outils/recette-captures.mjs` photographie tous les espaces à
+  320, 390 et 1440 px, avant (`--avant`) et après (`--apres`) un changement,
+  et écrit hors du dépôt une planche-contact et un relevé JSON (exceptions,
+  débordements, termes interdits). Il demande Playwright et un navigateur
+  (`BROWSER_CHANNEL=chrome`).
+
+La définition de « fini » d'une PR d'interface est dans
+[`documents/FINI.md`](documents/FINI.md), et le gabarit de PR la reprend.
 
 ## Ce qui manque
 
@@ -847,6 +876,12 @@ dans `app/maison-base.js`. Les champs de saisie sont déclarés dans
   [docs/RECEPTION-MARCHES.md](docs/RECEPTION-MARCHES.md),
   [docs/RECEPTION-APPROCHES.md](docs/RECEPTION-APPROCHES.md) — notes de
   réception de ces chantiers.
+- [docs/audits/2026-11-26-adoption.md](docs/audits/2026-11-26-adoption.md) —
+  l'audit d'adoption : pourquoi l'équipe ne s'en sert pas, et dans quel ordre
+  corriger.
+- [documents/FINI.md](documents/FINI.md) et
+  [documents/observation/](documents/observation/PROTOCOLE.md) — la définition
+  de « fini » et le kit d'observation.
 - `documents/` et `sources/` — documents de travail de l'installation
   historique : fiches, processus, doctrine, modèles.
 
