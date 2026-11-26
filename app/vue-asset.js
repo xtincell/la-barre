@@ -262,9 +262,9 @@ window.VUE_ASSET = (function () {
         : el("span", {}, "au disque de l'agence"));
   }
 
-  /* Une adaptation hors de l'écart déclaré de son marché : elle se juge comme
-   * les autres — rien ne la bloque —, et le signal dit ce que la revue doit
-   * trancher à côté du verdict (ecarts-marche.js). */
+  /* Une adaptation qui change ce que son marché n'a pas prévu : elle se valide
+   * comme les autres — rien ne la bloque —, et la question est posée en clair à
+   * côté (ecarts-marche.js) : autoriser pour ce marché, ou faire corriger. */
   function horsEcart(p, l, apres, lecture) {
     var x = window.ECARTS_MARCHE ? ECARTS_MARCHE.etiquette(p, l) : null;
     if (!x) return null;
@@ -272,8 +272,8 @@ window.VUE_ASSET = (function () {
     return el("button.plc-hors.as-hors", { type: "button",
       onclick: function () { ECARTS_MARCHE.revoir(p, l, apres); } },
       el("span.plch-q", {}, x.texte),
-      el("span.plch-x", {}, x.revue ? "Retour décidé : l'adaptation revient à l'écart déclaré."
-        : "Corriger l'écart déclaré, ou corriger l'adaptation — ouvrir la revue."));
+      el("span.plch-x", {}, x.revue ? "Correction demandée : la décli revient à ce qui était prévu."
+        : x.question));
   }
 
   /* ————————————————————— La question ————————————————————— */

@@ -443,7 +443,7 @@ window.VUE_MATRICE = (function () {
                   + " · " + bloc.groupes.length + " KV"
                   + (sansVisuel ? " · " + sansVisuel + " sans visuel" : "")
                   + (bloques ? " · " + bloques + (bloques > 1 ? " bloquées" : " bloquée") : "")
-                  + (horsMq ? " · " + horsMq + " hors écart déclaré" : "")),
+                  + (horsMq ? " · " + horsMq + (horsMq > 1 ? " changements non prévus" : " changement non prévu") : "")),
                 el("span.mrmqt-x", {}, mqOuvert ? "−" : "+"))
             : null,
 
@@ -465,7 +465,7 @@ window.VUE_MATRICE = (function () {
               : KV.estMaitre(g.kv) ? "les formats naissent des adaptations" : "rien à imprimer")
               + (mu ? " · " + mu + " sans visuel" : "")
               + (bl ? " · " + bl + (bl > 1 ? " bloquées" : " bloquée") : "")
-              + (ho ? " · " + ho + " hors écart déclaré" : "")),
+              + (ho ? " · " + ho + (ho > 1 ? " changements non prévus" : " changement non prévu") : "")),
             el("span.mrg-x", {}, kvOuvert ? "−" : "+")),
 
           kvOuvert ? el("div.rt-mur", {},

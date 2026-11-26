@@ -192,18 +192,19 @@ test('la revue tranche depuis un panneau : motif exigé, puis l’un des deux ge
   a.kv.copy = 'The day rises here';
   let rafraichi = 0;
   E.revoir(p, a, () => { rafraichi += 1; });
-  assert.match(texte(s.dernier()), /Hors écart déclaré/);
-  assert.match(texte(s.dernier()), /Langue/);
-  cliquer(bouton(s.dernier(), 'Corriger l\'écart déclaré'));
+  assert.match(texte(s.dernier()), /Ghana : la langue a changé sans que ce soit prévu\./);
+  assert.match(texte(s.dernier()), /Non prévu.*Langue/);
+  assert.doesNotMatch(texte(s.dernier()), /écart déclaré|Market Expansion/);
+  cliquer(bouton(s.dernier(), 'Autoriser pour le Ghana'));
   assert.equal(decisions(s).length, 0, 'sans motif, rien');
   assert.ok(s.refus.length);
   saisie(s.dernier()).value = 'Le distributeur exige l’anglais';
-  cliquer(bouton(s.dernier(), 'Corriger l\'écart déclaré'));
+  cliquer(bouton(s.dernier(), 'Autoriser pour le Ghana'));
   assert.equal(decisions(s).length, 1); assert.equal(rafraichi, 1);
   a.kv.sku = ['Tin 400 g']; a.kv.marque = 'Lumen Ghana Ltd';
   E.revoir(p, a, () => { rafraichi += 1; });
   saisie(s.dernier()).value = 'La marque reste Lumen sur tous les marchés';
-  cliquer(bouton(s.dernier(), 'Corriger l\'adaptation'));
+  cliquer(bouton(s.dernier(), 'Faire corriger la décli'));
   assert.deepEqual(decisions(s).map(d => d.type), ['ecart-marche', 'hors-ecart']);
   assert.equal(rafraichi, 2);
 });
@@ -228,6 +229,17 @@ test('la reprise d’un master modifié renouvelle le point de départ d’une a
   assert.equal(ancienne.depart, undefined, 'une reprise n’invente pas le départ d’une adaptation qui n’en avait pas');
 });
 
+test('le changement se dit en clair, avec l’article du marché', async () => {
+  const { E } = await atelier(13);
+  const pour = nom => E.pourLe(nom ? { nom } : { code: 'GH' });
+  assert.deepEqual(['Ghana', 'Côte d’Ivoire', 'Sénégal', 'Égypte', 'Guinée équatoriale', 'Madagascar', 'États-Unis',
+    'Mozambique', 'RDC', null].map(pour), ['pour le Ghana', 'pour la Côte d’Ivoire', 'pour le Sénégal', 'pour l’Égypte',
+    'pour la Guinée équatoriale', 'pour Madagascar', 'pour les États-Unis', 'pour le Mozambique', 'pour la RDC', 'pour GH']);
+  assert.equal(E.enClair(['langue']), 'la langue a changé');
+  assert.equal(E.enClair(['reglementaire']), 'les mentions réglementaires ont changé');
+  assert.equal(E.enClair(['marque', 'langue', 'produit']), 'la langue, la marque et le produit (SKU) ont changé');
+});
+
 test('la grille, la planche et la file de décision montrent le signal ; un dossier clos ne réclame rien', async () => {
   const { s, p, KV, E } = await atelier(11);
   E.declarer(p, 'M-GH', ['produit']);
@@ -237,18 +249,21 @@ test('la grille, la planche et la file de décision montrent le signal ; un doss
     marche: 'M-CI', nom: 'KV · CI', kv: { copy: 'Le jour' } });
 
   const bloc = texte(E.bloc(p, () => {}));
-  assert.match(bloc, /1 adaptation hors écart déclaré/);
-  assert.match(bloc, /GH[^]*hors écart déclaré : Langue/);
+  assert.match(bloc, /1 changement non prévu/);
+  assert.match(bloc, /GH[^]*changement non prévu \(langue\) · à décider/);
+  assert.doesNotMatch(bloc, /hors écart déclaré|Market Expansion/);
   assert.match(bloc, /1 adaptation non évaluée/);
 
   await s.charger('vue-planche');
   const carte = texte(s.ctx.VUE_PLANCHE.caseKV(p, a, () => {}));
-  assert.match(carte, /Hors écart déclaré · Langue/);
-  assert.doesNotMatch(texte(s.ctx.VUE_PLANCHE.caseKV(p, p.livrables[2], () => {})), /écart déclaré/);
+  assert.match(carte, /Ghana : la langue a changé sans que ce soit prévu\./);
+  assert.doesNotMatch(texte(s.ctx.VUE_PLANCHE.caseKV(p, p.livrables[2], () => {})), /non prévu/);
 
   let items = copie(E.aTrancher());
   assert.equal(items.length, 1);
   assert.deepEqual([items[0].projet, items[0].livrable, items[0].hors, items[0].etat], ['P-1', a.id, ['langue'], 'a-trancher']);
+  assert.equal(items[0].texte, 'Ghana : la langue a changé sans que ce soit prévu.');
+  assert.equal(items[0].question, 'Autoriser pour le Ghana, ou faire corriger la décli ?');
   E.corrigerAdaptation(p, a, 'La titraille reste celle du master');
   items = copie(E.aTrancher());
   assert.equal(items[0].etat, 'renvoyee', 'tranché : l’adaptation est due par son auteur, plus à trancher');

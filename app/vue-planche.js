@@ -171,7 +171,7 @@ window.VUE_PLANCHE = (function () {
               : null)
         : null,
 
-      hors ? el("button.plc-hors", { type: "button", title: "Revoir ce que cette adaptation change hors de l'écart déclaré",
+      hors ? el("button.plc-hors", { type: "button", title: hors.question,
         onclick: function () { ECARTS_MARCHE.revoir(p, l, rafraichir); } },
         el("span.plch-q", {}, hors.texte), el("span.plch-x", {}, hors.suite)) : null,
 
