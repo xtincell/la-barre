@@ -174,7 +174,7 @@ window.VUE_LIVRABLE = (function () {
   function etiquetteEtat(l) {
     var v = (l.versions || [])[l.versions.length - 1];
     if (!v) return "pas encore soumis";
-    if (!v.verdict) return "en attente de verdict";
+    if (!v.verdict) return "en attente de décision";
     var nom = "";
     MAISON.verdicts.forEach(function (x) { if (x.cle === v.verdict) nom = x.nom; });
     return nom;
@@ -858,7 +858,7 @@ window.VUE_LIVRABLE = (function () {
       return el("div.ligne", {},
         el("span.etiq", {}, "V" + v.n + " · " + O.joli(v.soumis_le)),
         el("span.val", { style: vd ? { color: vd.couleur } : {} },
-          vd ? vd.signe + " " + vd.nom + (v.motif ? " — " + v.motif : "") : "en attente de verdict"));
+          vd ? vd.signe + " " + vd.nom + (v.motif ? " — " + v.motif : "") : "en attente de décision"));
     }));
   }
 

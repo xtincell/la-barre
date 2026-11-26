@@ -44,7 +44,7 @@ window.COUT = (function () {
     }
 
     if (cle === "hors") {
-      out.alertes.push("Hors périmètre : c'est un nouveau brief, donc un chiffrage et un calendrier revus");
+      out.alertes.push("Hors brief : c'est un nouveau brief, donc un chiffrage et un calendrier revus");
       if (estime) out.gagne.push(estime + " j rendus à l'équipe si le travail s'arrête");
       return out;
     }
@@ -79,12 +79,12 @@ window.COUT = (function () {
       if (apres > c.capacite) {
         var pers = DEPOT.trouve("personnes", l.responsable);
         out.alertes.push((pers ? pers.nom : "le responsable") + " passerait à "
-          + Math.round((apres / c.capacite) * 100) + " % cette semaine-là");
+          + Math.round((apres / c.capacite) * 100) + "\u00a0% cette semaine-là");
       }
     }
 
     if (cle === "reserve") {
-      out.gagne.push("L'étage suivant s'engage quand même — les réserves se traitent dedans");
+      out.gagne.push("Le niveau suivant s'engage quand même : les réserves se traitent dedans");
     }
 
     return out;

@@ -96,7 +96,7 @@ window.ETAT = (function () {
     }
     if (d.etat === "recue") {
       return { nom: "proposition reçue", ton: "vert",
-        quoi: "l'horloge est passée de son côté au mien — elle attend mon verdict" };
+        quoi: "l'horloge est passée de son côté au mien — elle attend ma décision" };
     }
     return { nom: "close", ton: "terne", quoi: "close — elle ne demande plus rien" };
   }

@@ -937,7 +937,7 @@ window.VUE_MATRICE = (function () {
         MAISON.verdicts.forEach(function (x) { if (x.cle === v.verdict) vd = x; });
         return el("div.ligne", {},
           el("span.etiq", {}, "V" + v.n + " · " + O.joli(v.soumis_le)),
-          el("span.val", {}, vd ? vd.signe + " " + vd.nom + (v.motif ? " — " + v.motif : "") : "en attente de verdict")
+          el("span.val", {}, vd ? vd.signe + " " + vd.nom + (v.motif ? " — " + v.motif : "") : "en attente de décision")
         );
       }),
       l.toursVendus
