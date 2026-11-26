@@ -84,7 +84,7 @@ window.APP = (function () {
     var champ = el("input", { type: "search", placeholder: "Nom, référence ou marché", "aria-label": "Rechercher dans La Barre", autocomplete: "off" });
     var liste = el("div.lb-resultats");
     var retour = el("p", { role: "status", "aria-live": "polite" });
-    var boite = el("dialog.lb-recherche", { "aria-labelledby": "lb-recherche-titre" },
+    var boite = el("dialog.lb-recherche", { "aria-labelledby": "lb-recherche-titre", "data-route":location.hash },
       el("header", {}, el("h2", { id: "lb-recherche-titre" }, "Rechercher"),
         el("button", { type: "button", "aria-label": "Fermer la recherche", onclick: function () { boite.close(); } }, "×")),
       champ, retour, liste);
@@ -279,7 +279,7 @@ window.APP = (function () {
     }, true);
     window.addEventListener("hashchange", function (e) {
       PANNEAU.fermer(); PANNEAU.fermerSur();
-      document.querySelectorAll("dialog[open]").forEach(function (d) { d.close(); });
+      document.querySelectorAll("dialog[open]").forEach(function (d) { if (d.dataset.route !== location.hash) d.close(); });
       if (!history.state && e.oldURL) history.replaceState({barreDepuis:new URL(e.oldURL).hash || "#/bureau"}, "");
       rendre();
     });
@@ -366,7 +366,7 @@ window.CAPTURE = (function () {
     var origine = document.activeElement;
     var champ = el("input", { id: "lb-note", type: "text", required: true, autocomplete: "off" });
     var pile = DEPOT.liste("captures").filter(function (c) { return !c.range; });
-    var boite = el("dialog.lb-recherche.lb-capture", { "aria-labelledby":"lb-note-titre" },
+    var boite = el("dialog.lb-recherche.lb-capture", { "aria-labelledby":"lb-note-titre", "data-route":location.hash },
       el("header", {}, el("h2", {id:"lb-note-titre"}, "Prendre une note"),
         el("button", {type:"button", onclick:fermer, "aria-label":"Fermer la note"}, "×")),
       el("form", {onsubmit:function (e) {

@@ -104,6 +104,7 @@ try {
   assert.match(cree.id, /^PRO-[0-9a-z]{4}-[0-9a-z]{12}$/);
   assert.equal(cree.id.split('-')[1], cree.poste);
   assert.ok(!Number.isNaN(Date.parse(cree.cree_le)));
+  await page.getByRole('heading', {level:1,name:'Projet de contrôle'}).waitFor();
   // La recherche conserve le résultat au clavier et ouvre le livrable identifié.
   await page.keyboard.press('Control+f');
   const rechercheGlobale = page.getByRole('dialog', { name:'Rechercher' });
@@ -113,6 +114,7 @@ try {
   assert.ok(await page.evaluate(() => document.activeElement.matches('.lb-resultats a')));
   await page.keyboard.press('Enter');
   await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo');
+  await page.getByRole('heading',{level:1,name:'Affiche de lancement'}).waitFor();
   await page.keyboard.press('Control+f');
   await saisie.fill('support');
   await saisie.press('Escape');
