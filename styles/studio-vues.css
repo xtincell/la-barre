@@ -2929,6 +2929,10 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .gal-carte:focus-visible { outline: 2px solid var(--info); outline-offset: 4px; }
 .gal-visuel { aspect-ratio: 4 / 3; border-radius: var(--r-m); overflow: hidden; background: var(--surface-3); }
 .gal-visuel .vignette { width: 100%; height: 100%; border: 0; border-radius: 0; }
+/* Une création se montre entière à la Galerie : recadrée, elle perdait sa
+ * titraille et sa signature. La mosaïque d'un cycle et le logo gardent leur
+ * mise. */
+.gal-visuel .vignette.couv:not(.couv-mos, .couv-mq) > img { object-fit: contain; }
 .gal-carte:hover .gal-visuel { box-shadow: var(--elev-2); }
 @media (prefers-reduced-motion: no-preference) {
   .gal-visuel { transition: box-shadow var(--tr-standard) var(--easing, ease); }
