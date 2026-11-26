@@ -835,3 +835,33 @@ test('une page passée à l’arrière-plan avant l’échéance dit que la vali
   v.minuteries[0]();
   assert.equal(v.l.versions[0].verdict, 'approuve', 'revenue à temps, la page l’écrit à l’échéance');
 });
+
+/* ————— Les étiquettes des formulaires désignent leur champ —————
+ *
+ * Toucher « Nom » place le curseur dans le champ, et le lecteur d'écran le
+ * nomme : chaque étiquette porte un for qui désigne un champ du panneau. */
+
+function etiquettesReliees(panneau, attendues) {
+  const tous = (n, f, out = []) => { if (n && typeof n === 'object') { if (f(n)) out.push(n); (n.childNodes || []).forEach(c => tous(c, f, out)); } return out; };
+  const labels = tous(panneau, n => n.tagName === 'LABEL');
+  assert.deepEqual(labels.map(l => l.textContent), attendues);
+  for (const l of labels) {
+    const cible = l.getAttribute('for');
+    assert.ok(cible, 'l’étiquette « ' + l.textContent + ' » a un for');
+    const champs = tous(panneau, n => n.getAttribute && n.getAttribute('id') === cible);
+    assert.equal(champs.length, 1, cible);
+    assert.match(champs[0].tagName, /^(INPUT|SELECT|TEXTAREA)$/, cible);
+  }
+}
+
+test('« Demander un retour » relie ses étiquettes', async () => {
+  const s = await bacDecisions(APP, 101);
+  for (const nom of ['kv-modele', 'apparier', 'image', 'trace', 'annotation', 'vue-planche', 'renvoi', 'production']) await s.charger(nom);
+  s.ctx.PANNEAU.sousbloc = (t, c) => c;
+  s.ctx.O.jeton = () => null;
+  semer(s.ctx, { personnes: PERSONNES, ...REFERENTIEL, projets: [projet('ET')] });
+  const p = s.ctx.DEPOT.trouve('projets', 'ET');
+
+  s.ctx.RENVOI.ouvrir({ quoi: 'Brief — REF-ET', projet: 'REF-ET', projetId: 'ET', objet: 'brief' });
+  etiquettesReliees(s.dernier(), ['Sur quel critère', 'À qui', 'Ce que j\'attends', 'Pour quand', 'Si « autre motif »']);
+});

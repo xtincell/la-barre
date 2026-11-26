@@ -49,12 +49,12 @@ window.RENVOI = (function () {
     var echeance = "";
     var apercu = el("div.attente-ligne");
 
-    var selMotif = el("select", {});
+    var selMotif = el("select", { id: "renvoi-motif" });
     motifs().forEach(function (m) {
       selMotif.appendChild(el("option", { value: m.cle }, m.critere || "Autre motif, à écrire"));
     });
 
-    var selQui = el("select", {});
+    var selQui = el("select", { id: "renvoi-qui" });
     function remplirQui(postePropose) {
       O.vider(selQui);
       selQui.appendChild(el("option", { value: "" }, "— destinataire —"));
@@ -66,9 +66,9 @@ window.RENVOI = (function () {
     }
     remplirQui(SOUVERAINETES[choix].poste);
 
-    var champAttendu = el("textarea", { rows: 2, placeholder: "Ce que j'attends en retour" });
-    var champEcheance = el("input", { type: "date" });
-    var champLibre = el("textarea", { rows: 2, placeholder: "Motif, si « autre »" });
+    var champAttendu = el("textarea", { id: "renvoi-attendu", rows: 2, placeholder: "Ce que j'attends en retour" });
+    var champEcheance = el("input", { id: "renvoi-echeance", type: "date" });
+    var champLibre = el("textarea", { id: "renvoi-libre", rows: 2, placeholder: "Motif, si « autre »" });
 
     function rafraichir() {
       var s = SOUVERAINETES[choix];
@@ -121,11 +121,11 @@ window.RENVOI = (function () {
 
     var corps = el("div", {},
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Sur quel critère"), selMotif),
-        el("div.champ", {}, el("label", {}, "À qui"), el("div.indice", {}, "Proposé par la table des souverainetés. Une personne, jamais une direction."), selQui),
-        el("div.champ", {}, el("label", {}, "Ce que j'attends"), champAttendu),
-        el("div.champ", {}, el("label", {}, "Pour quand"), champEcheance),
-        el("div.champ", {}, el("label", {}, "Si « autre motif »"), champLibre)
+        el("div.champ", {}, el("label", { for: "renvoi-motif" }, "Sur quel critère"), selMotif),
+        el("div.champ", {}, el("label", { for: "renvoi-qui" }, "À qui"), el("div.indice", {}, "Proposé par la table des souverainetés. Une personne, jamais une direction."), selQui),
+        el("div.champ", {}, el("label", { for: "renvoi-attendu" }, "Ce que j'attends"), champAttendu),
+        el("div.champ", {}, el("label", { for: "renvoi-echeance" }, "Pour quand"), champEcheance),
+        el("div.champ", {}, el("label", { for: "renvoi-libre" }, "Si « autre motif »"), champLibre)
       ),
       PANNEAU.sousbloc("Le message, prêt à porter", apercu),
       el("div.form-actions", {},
