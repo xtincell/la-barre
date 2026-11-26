@@ -301,10 +301,10 @@ window.VUE_PLANCHE = (function () {
           if (selType.value === "adaptation" && (!base || base.annule || !DEPOT.trouve("marches", selM.value))) {
             AVIS.refus("Choisir un master commun et un marché renseigné. Les anciens KV restent conservés."); return;
           }
-          var l = KV.creer(p, selType.value === "adaptation" ? selM.value : null, base, selType.value);
+          var l = KV.creer(p, selType.value === "adaptation" ? selM.value : null, base, selType.value,
+            { marque: champMarque.value });
           if (piste) { l.pisteId = piste.id; if (l.niveau === "maitre") l.responsable = piste.auteurDA || null; }
           else if (l.niveau === "maitre") l.pisteId = selPiste.value || null;
-          if (l.niveau === "maitre") { l.kv.marque = champMarque.value.trim(); l.nom = KV.nomDeTravail(l); }
           DEPOT.enregistrer(); fermer(); rafraichir();
         } }, "Créer"),
         el("button.b.nu", { type: "button", onclick: fermer }, "Annuler"))

@@ -214,7 +214,10 @@ window.KV = (function () {
     return tete + (suite ? " · " + suite : "");
   }
 
-  function creer(p, marcheId, base, niveauVoulu) {
+  /* `options.marque` : la marque d'un master neuf. Elle est posée avant le nom
+   * et avant le journal, pour que l'un et l'autre la disent dès la création ;
+   * une adaptation hérite celle de son master. */
+  function creer(p, marcheId, base, niveauVoulu, options) {
     var cible = niveauVoulu || (marcheId ? "adaptation" : "maitre");
     if (cible !== "maitre" && cible !== "adaptation") throw new Error("Niveau de KV inconnu.");
     var m = DEPOT.trouve("marches", marcheId);
@@ -257,6 +260,7 @@ window.KV = (function () {
     champsDA(p).forEach(function (a) {
       l.kv[a.cle] = base && base.kv ? (base.kv[a.cle] || "") : "";
     });
+    if (cible === "maitre" && options && typeof options.marque === "string") l.kv.marque = options.marque.trim();
     if (cible === "adaptation") l.depart = pointDeDepart(base, l.kv);
     l.nom = nomDeTravail(l);
     if (!p.livrables) p.livrables = [];

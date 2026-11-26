@@ -439,7 +439,7 @@ export async function construire() {
 
   /* Le KV master : un retour, puis la validation du master. */
   Date.aller('2026-10-22T09:00:00.000Z');
-  const master = KV.creer(p, null, null, 'maitre');
+  const master = KV.creer(p, null, null, 'maitre', { marque: 'Orvelle' });
   master.pisteId = zeste.id; master.responsable = 'PE-ilan';
   Object.assign(master.kv, { marque: 'Orvelle', copy: 'Le premier zeste du jour', langue: 'fr', sku: ['Canette 33 cl'],
     restrictions: [], geste: 'La main ouvre la canette', lumiere: 'Le premier rayon, avant sept heures' });

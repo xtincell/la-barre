@@ -552,8 +552,7 @@ test('« KV GH » trouve un KV né avec un nom en clair, et lui seul', async () 
   await s.charger('application');
   semer(s.ctx, { personnes: PERSONNES, ...REFERENTIEL, projets: [projet('OR')] });
   const p = s.ctx.DEPOT.trouve('projets', 'OR');
-  const master = s.ctx.KV.creer(p, null, null, 'maitre');
-  master.kv.marque = 'Orvelle'; master.nom = s.ctx.KV.nomDeTravail(master);
+  const master = s.ctx.KV.creer(p, null, null, 'maitre', { marque: 'Orvelle' });
   s.ctx.KV.creer(p, 'M-gh', master, 'adaptation');
   s.ctx.KV.creer(p, 'M-ci', master, 'adaptation');
   p.livrables.push({ id: 'F-so', nom: 'Post social 1:1 · CI', support: 'S-social', marche: 'M-ci' });
@@ -581,8 +580,7 @@ async function dossierDeRendus(nommer) {
       { id: 'S-so', code: 'social', nom: 'Post social 1:1' }] });
   const { KV, DEPOT } = s.ctx;
   const p = DEPOT.trouve('projets', 'OR');
-  const master = KV.creer(p, null, null, 'maitre');
-  master.kv.marque = 'Orvelle'; master.nom = KV.nomDeTravail(master);   // comme la planche
+  const master = KV.creer(p, null, null, 'maitre', { marque: 'Orvelle' });
   const kvs = ['M-gh', 'M-ci', 'M-sn'].map(m => KV.creer(p, m, master, 'adaptation'));
   if (nommer) nommer([master, ...kvs]);
   p.livrables.push({ id: 'F-aff', nom: 'Affiche 4×3 · GH', support: 'S-aff', marche: 'M-gh', maitre: kvs[0].id, niveau: 'declinaison' });
@@ -627,4 +625,18 @@ test('les KV nommés par code, d’avant ce lot, se rapprochent comme avant', as
   });
   const lot = d.apparier(['KV_GH_Orvelle_V3.jpg', 'KV_CI_Orvelle_V3.jpg', 'KV_SN_Orvelle_V3.jpg', 'KV-GH-Orvelle.png']);
   assert.deepEqual(lot.slice(0, 3).map(r => [r.etat, r.l && r.l.id, r.score]), d.kvs.map(l => ['sur', l.id, 1]));
+});
+
+test('le journal nomme un master neuf avec sa marque dès la création', async () => {
+  const s = await bacDecisions(APP, 92);
+  await s.charger('kv-modele');
+  semer(s.ctx, { personnes: PERSONNES, ...REFERENTIEL, projets: [projet('OR')] });
+  const p = s.ctx.DEPOT.trouve('projets', 'OR');
+  const master = s.ctx.KV.creer(p, null, null, 'maitre', { marque: ' Orvelle ' });
+  s.ctx.KV.creer(p, 'M-gh', master, 'adaptation');
+  assert.equal(master.kv.marque, 'Orvelle');
+  const creations = [...s.ctx.DEPOT.liste('journal')].filter(j => j.action === 'création' && j.type === 'kv').map(j => j.detail);
+  assert.deepEqual([...creations], ['Key visual master · Orvelle', 'Key visual — Ghana · Orvelle']);
+  const sans = s.ctx.KV.creer(p, null, null, 'maitre');
+  assert.equal(sans.nom, 'Key visual master', 'sans marque saisie, le nom n’en invente pas');
 });
