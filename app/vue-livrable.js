@@ -413,6 +413,13 @@ window.VUE_LIVRABLE = (function () {
         el("p.rvp-meta", { role: "status" }, "V" + attente.numero + " validée. Elle s'enregistre dans quelques secondes."),
         el("button.b.rvp-action", { type: "button", "data-geste": "annuler-validation",
           onclick: function () { annuler(attente); } }, "Annuler la validation"));
+    } else if (ecriteAilleurs(l, version.numero)) {
+      /* La base de cette page ne l'a pas : reproposer « Valider » écrirait une
+       * seconde décision. */
+      bloc = el("div.rvp-decision", { "data-livrable": l.id },
+        el("p.rvp-meta", { role: "status" }, "V" + version.numero + " validée depuis un autre onglet. Rechargez la page pour la voir."),
+        el("button.b.rvp-action", { type: "button", "data-geste": "recharger",
+          onclick: function () { location.reload(); } }, "Recharger la page"));
     } else {
       var contexte = etatPourVerdict(l, version.objet);
       var geste = function (cle) { return function () { juger(p, l, verdictDe(cle), apres, contexte); }; };
@@ -500,6 +507,10 @@ window.VUE_LIVRABLE = (function () {
     var v = version.objet;
     var contexte = etatPourVerdict(l, v);
     if (attendu && (attendu !== contexte || v.verdict)) { AVIS.refus("La version a changé. Relisez la pièce avant de décider."); return; }
+    if (!v.verdict && ecriteAilleurs(l, version.numero)) {
+      AVIS.refus("La V" + version.numero + " a déjà été validée depuis un autre onglet. Rechargez la page avant de décider.");
+      return;
+    }
     if (!verdict.motifRequis && !v.verdict) { engager(p, l, contexte, verdict, version.numero, apres); return; }
     /* Une validation sur une version déjà décidée passe par ce panneau : il dit
      * qu'elle s'ajoute à l'historique, et un mot y reste facultatif. */
@@ -564,6 +575,12 @@ window.VUE_LIVRABLE = (function () {
   var CLE_NOTES = "la-barre-validations";
   var engagements = [];
   var notesCreees = 0;
+  /* Les validations qu'un autre onglet a écrites pendant le délai de celle-ci
+   * (echeance, « ailleurs ») : la base de cette page ne les a pas encore. */
+  var ecritesAilleurs = [];
+  function ecriteAilleurs(l, numero) {
+    return ecritesAilleurs.some(function (x) { return x.livrableId === l.id && String(x.numero) === String(numero); });
+  }
 
   function validationEnCours(l) {
     return engagements.filter(function (e) { return e.livrableId === l.id; })[0] || null;
@@ -674,6 +691,7 @@ window.VUE_LIVRABLE = (function () {
     /* La note a déjà été prise : un autre onglet a écrit cette validation. */
     if (e.note && !prendre(e.id)) {
       e.issue = "ailleurs";
+      ecritesAilleurs.push({ livrableId: e.livrableId, numero: e.numero });
       if (window.AVIS) AVIS.fait("La V" + e.numero + " a été enregistrée depuis un autre onglet. Rechargez la page pour la voir.");
       redessiner(e);
       return;

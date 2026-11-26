@@ -206,6 +206,13 @@ test('une note déjà prise par un autre onglet ne s’écrit pas une seconde fo
   assert.equal(v.l.versions[0].verdict, undefined);
   assert.equal(v.s.ctx.DEPOT.liste('decisions').length, 0);
   assert.match(v.avis[v.avis.length - 1][1], /enregistrée depuis un autre onglet/);
+  const redessine = v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {});
+  assert.ok(!boutons(redessine).includes('Valider la V1'), 'la base de cet onglet est en retard : la validation ne se repropose pas');
+  assert.match(textes(redessine), /V1 validée depuis un autre onglet\. Rechargez la page pour la voir\./);
+  assert.ok(boutons(redessine).includes('Recharger la page'));
+  v.s.ctx.VUE_LIVRABLE.juger(v.p, v.l, v.s.ctx.MAISON.verdicts.find(x => x.cle === 'approuve'), () => {});
+  assert.equal(v.minuteries.length, 1, 'aucune seconde validation engagée');
+  assert.equal(v.s.ctx.DEPOT.liste('decisions').length, 0);
 });
 
 test('annulée à temps, la validation ne laisse ni décision ni note', async () => {
