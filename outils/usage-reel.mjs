@@ -34,17 +34,17 @@ export const RESULTATS = {
 };
 
 const CANAUX = {
-  seance: 'en séance', ecrit: 'par écrit', message: 'par messagerie', oral: "à l'oral",
+  seance: 'en séance', ecrit: 'par écrit', message: 'par messagerie', oral: 'à l’oral',
   people: 'relevé du registre des projets', lien: 'lien de revue',
 };
 
 /* Les types de décision, en mots d'agence. La clé reste dans le CSV. */
 export const TYPES_DECISION = {
-  livrable: 'livrable', piece: 'pièce en revue', piste: 'piste créative', idee: "idée tranchée à l'atelier",
+  livrable: 'livrable', piece: 'pièce en revue', piste: 'piste créative', idee: 'idée choisie à l’atelier',
   bigidea: 'big idea', socle: 'plateforme de marque', strategie: 'stratégie', brief: 'brief',
-  recevabilite: 'recevabilité du brief', 'bilan-campagne': 'bilan de campagne',
+  recevabilite: 'feu vert sur le brief', 'bilan-campagne': 'bilan de campagne',
   'reference-campagne': 'référence de campagne', 'ecart-campagne': 'écart à la référence commune',
-  ecart: 'écart du relevé', 'ecart-marche': "écart d'un marché", 'hors-ecart': "adaptation hors de l'écart d'un marché",
+  ecart: 'écart du relevé', 'ecart-marche': 'écart d’un marché', 'hors-ecart': 'adaptation hors de l’écart d’un marché',
   concept: 'concept de la réserve', composition: 'case de composition',
 };
 
@@ -142,7 +142,7 @@ function compteur() {
 /* Mesure une base. `depuis` (AAAA-MM-JJ) écarte ce qui est daté avant ; ce qui
  * n'a pas de date est compté à part, jamais attribué à un mois. */
 export function mesurer(base, { depuis = null, anonyme = false } = {}) {
-  if (!base || typeof base !== 'object' || Array.isArray(base)) throw new Error("Ce fichier n'est pas une base de La Barre.");
+  if (!base || typeof base !== 'object' || Array.isArray(base)) throw new Error('Ce fichier n’est pas une base de La Barre.');
   if (depuis !== null && !dateValide(depuis)) throw new Error('--depuis attend une date AAAA-MM-JJ.');
   const ecartees = { avant: 0, sansDate: 0 };
   function retenir(date) {
@@ -395,9 +395,9 @@ export function enMarkdown(r, meta = {}) {
       : `${t.versionsJugeesSansDate} versions portent un résultat sans date de décision : elles ne sont pas dans les délais.`;
   out.push(
     `- \`lectures[].qui\` vaut toujours le poste titulaire (\`app/depot.js\`, fonction \`lu\`) : ${lectures}`,
-    '- `qui` sur une décision ou une ligne de journal est le poste titulaire de l\'installation, pas une personne. Seule l\'attestation de La Fusée identifie la personne connectée ; `acteur` est déclaré.',
+    '- `qui` sur une décision ou une ligne de journal est le poste titulaire de l’installation, pas une personne. Seule l’attestation de La Fusée identifie la personne connectée ; `acteur` est déclaré.',
     '- Le journal est tronqué au-delà de 2 000 lignes (il en garde environ 1 500) : les mois anciens sont sous-comptés.',
-    '- Un projet relevé par ingestion porte la date de l\'ingestion (`cree_le`), pas celle du travail.',
+    '- Un projet relevé par ingestion porte la date de l’ingestion (`cree_le`), pas celle du travail.',
     '- Les échanges qui ne passent pas par La Barre (WhatsApp, Drive, mail, oral) ne laissent ici aucune trace : la semaine témoin les compte (`documents/observation/SEMAINE-TEMOIN.md`).',
     `- ${sansDate}`,
     '- Les pièces en attente sont un état du jour, pas un geste daté : `--depuis` ne les filtre pas.',
@@ -448,7 +448,7 @@ export function lireArguments(args) {
     else if (a === '--depuis') o.depuis = args[++i] ?? '';
     else if (a.startsWith('--depuis=')) o.depuis = a.slice(9);
     else if (/^(-o|--sortie|--ecrire|--output|--out)(=|$)/.test(a))
-      throw new Error("usage-reel ne fait que lire : il n'écrit aucun fichier. Redirigez la sortie standard vers un fichier hors du dépôt.");
+      throw new Error('usage-reel ne fait que lire : il n’écrit aucun fichier. Redirigez la sortie standard vers un fichier hors du dépôt.');
     else if (a.startsWith('-')) throw new Error('Option inconnue : ' + a);
     else if (o.fichier) throw new Error('Une seule copie de base à la fois.');
     else o.fichier = a;

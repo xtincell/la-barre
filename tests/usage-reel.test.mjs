@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { mesurer, enMarkdown, enCsv, lireArguments, auteur, mediane } from '../outils/usage-reel.mjs';
+import { mesurer, enMarkdown, enCsv, lireArguments, auteur, mediane, TYPES_DECISION } from '../outils/usage-reel.mjs';
 
 const RACINE = fileURLToPath(new URL('../', import.meta.url));
 const OUTIL = join(RACINE, 'outils', 'usage-reel.mjs');
@@ -203,7 +203,7 @@ test('le relevé parle la langue de l’agence et accorde ses pluriels', () => {
   const r = mesurer(base);
   const md = enMarkdown(r);
   assert.match(md, /\| big idea \|/);
-  assert.match(md, /\| recevabilité du brief \|/);
+  assert.match(md, /\| feu vert sur le brief \|/);
   assert.match(md, /\| bilan de campagne \|/);
   assert.match(md, /\| BAT \| 1 \|/);
   // Des mots d'agence, pas des clés de programme : les clés restent dans le CSV.
@@ -222,6 +222,10 @@ test('le relevé parle la langue de l’agence et accorde ses pluriels', () => {
   assert.match(md, /la lecture enregistrée ne dit pas qui a regardé\. Elle n’est pas comptée\./);
   const vide = enMarkdown(mesurer({ schema: 5, projets: [] }));
   assert.match(vide, /Cette copie n’en contient aucune\./);
+  // Ce que le relevé écrit lui-même : une seule apostrophe, la typographique, et aucun mot de tribunal.
+  assert.doesNotMatch(md + vide, /[A-Za-zÀ-ÿ]'[A-Za-zÀ-ÿ]/);
+  assert.doesNotMatch(md, /recevab|tranch/i);
+  assert.equal(TYPES_DECISION.idee, 'idée choisie à l’atelier');
   assert.match(vide, /Tous les éléments sont datés\./);
   assert.doesNotMatch(vide, /\b0 (version porte|lectures enregistrées)/);
   assert.doesNotMatch(md, /\(s\)/);
@@ -262,8 +266,8 @@ test('auteur : attestation, puis acteur déclaré, puis poste seul', () => {
 });
 
 test('la ligne de commande refuse d’écrire et laisse la copie intacte', async () => {
-  assert.throws(() => lireArguments(['base.json', '--sortie', 'x.md']), /n'écrit aucun fichier/);
-  assert.throws(() => lireArguments(['base.json', '-o', 'x.md']), /n'écrit aucun fichier/);
+  assert.throws(() => lireArguments(['base.json', '--sortie', 'x.md']), /n’écrit aucun fichier/);
+  assert.throws(() => lireArguments(['base.json', '-o', 'x.md']), /n’écrit aucun fichier/);
   assert.throws(() => lireArguments(['base.json', '--format', 'xlsx']), /md ou csv/);
   assert.throws(() => lireArguments(['base.json', '--inconnue']), /Option inconnue/);
   const dossier = await mkdtemp(join(tmpdir(), 'usage-reel-'));
@@ -281,7 +285,7 @@ test('la ligne de commande refuse d’écrire et laisse la copie intacte', async
     const apres = await stat(copie);
     assert.equal(apres.mtimeMs, avant.mtimeMs);
     assert.equal(createHash('sha256').update(await readFile(copie)).digest('hex'), createHash('sha256').update(texte).digest('hex'));
-    await assert.rejects(executer(process.execPath, [OUTIL, copie, '--ecrire']), e => e.code === 2 && /n'écrit aucun fichier/.test(e.stderr));
+    await assert.rejects(executer(process.execPath, [OUTIL, copie, '--ecrire']), e => e.code === 2 && /n’écrit aucun fichier/.test(e.stderr));
   } finally { await rm(dossier, { recursive: true, force: true }); }
 });
 
