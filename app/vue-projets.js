@@ -1079,7 +1079,7 @@ window.VUE_PROJETS = (function () {
       el("div.champ", {}, el("label", { for: "nouveau-projet-nature" }, "Gabarit"),
         el("div.indice", {}, "Une demande simple n'a pas huit sections. Le gabarit se choisit maintenant et ne change plus."), selG),
       f.noeud,
-      el("div.champ", {}, el("label", { htmlFor: "nouveau-projet-marque" }, "Marque"), selMarque),
+      el("div.champ", {}, el("label", { for: "nouveau-projet-marque" }, "Marque"), selMarque),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           var d = f.valeurs();

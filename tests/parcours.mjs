@@ -193,6 +193,8 @@ try {
   await page.getByRole('button', { name: '+ Nouveau projet', exact: true }).click();
   await page.getByLabel('Client', { exact: true }).fill('Studio fictif');
   await page.getByLabel('Nom du projet', { exact: true }).fill('Projet de contrôle');
+  // L'étiquette « Marque » désigne son menu (elle portait un htmlFor inerte).
+  assert.equal(await page.getByLabel('Marque', { exact: true }).evaluate(n => n.id), 'nouveau-projet-marque');
   await page.getByRole('button', { name:'Créer', exact:true }).click();
   // Le projet créé s'ouvre sur sa propre route. Le préfixe de l'identifiant
   // vient du dépôt (DEPOT.ajoute) : on vérifie la route du projet réellement
