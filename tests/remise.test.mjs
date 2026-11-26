@@ -426,3 +426,83 @@ test('« Enregistrer seulement le BAT » pose le BAT sans marquer la pièce livr
   assert.equal(R.preuveCourante(p, ci), null);
   assert.equal(p.preuvesRemise, undefined);
 });
+
+/* ————— Le dépôt d'une pièce jointe (IMAGE.deposerPreuve) et l'étage imposé
+ * (IMAGE.accueillir) : le vrai module, avec le lecteur de fichiers, l'image,
+ * le canevas et le réseau simulés. ————— */
+
+async function televersement() {
+  const x = await installation();
+  const { ctx } = x.s;
+  x.envois = []; x.toiles = []; x.largeur = 2400;
+  ctx.fetch = (url, o) => {
+    x.envois.push({ url, methode: o.method, corps: o.body });
+    return Promise.resolve(x.reponse || { ok: true, json: () => Promise.resolve({ ok: true }) });
+  };
+  ctx.FileReader = class { readAsDataURL(f) { setImmediate(() => { this.result = f.donnee; this.onload(); }); } };
+  ctx.Image = class { set src(v) { this.width = x.largeur; this.height = x.largeur * 2 / 3; setImmediate(() => this.onload()); } };
+  const creer = ctx.document.createElement;
+  ctx.document.createElement = t => {
+    if (t !== 'canvas') return creer(t);
+    const toile = { width: 0, height: 0, getContext: () => ({ drawImage() {} }), toDataURL: type => 'data:' + type + ';base64,UkVEVUlU' };
+    x.toiles.push(toile);
+    return toile;
+  };
+  await x.s.charger('image');
+  return x;
+}
+const deposer = (IMAGE, f) => new Promise(r => IMAGE.deposerPreuve(f, r));
+
+test('une pièce jointe se dépose : la photo réduite à 1800 px, le PDF tel quel, sous un chemin reconnu comme preuve', async () => {
+  const x = await televersement();
+  const { IMAGE, REMISE } = x.s.ctx;
+  const pdf = await deposer(IMAGE, { name: 'bon-de-livraison.pdf', size: 4096, donnee: 'data:application/octet-stream;base64,JVBERi0xLjQK' });
+  assert.match(pdf, /^assets\/review\/preuves\/preuve-[a-z0-9]+\.pdf$/);
+  assert.deepEqual(x.envois[0], { url: pdf, methode: 'PUT', corps: 'data:application/pdf;base64,JVBERi0xLjQK' },
+    'le PDF part tel quel, déclaré application/pdf pour le serveur');
+  assert.equal(x.toiles.length, 0, 'un PDF ne passe pas par le canevas');
+  assert.ok(REMISE.preuveValide({ type: 'fichier', chemin: pdf }));
+  const photo = await deposer(IMAGE, { name: 'BON-SIGNE.PNG', size: 2 * 1048576, donnee: 'data:image/png;base64,iVBORw0K' });
+  assert.match(photo, /^assets\/review\/preuves\/preuve-[a-z0-9]+\.jpg$/);
+  assert.deepEqual([x.toiles[0].width, x.toiles[0].height], [1800, 1200], 'une photo de 2400 px est réduite à 1800 px');
+  assert.deepEqual([x.envois[1].url, x.envois[1].corps], [photo, 'data:image/jpeg;base64,UkVEVUlU']);
+  assert.ok(REMISE.preuveValide({ type: 'fichier', chemin: photo }));
+  assert.deepEqual(x.s.refus, []);
+});
+
+test('une pièce jointe est refusée : extension inconnue, plus de 16 Mo, refus du serveur, vitrine', async () => {
+  const x = await televersement();
+  const { IMAGE, DEPOT } = x.s.ctx;
+  assert.equal(await deposer(IMAGE, { name: 'bon.heic', size: 1000, donnee: 'data:image/heic;base64,AAAA' }), null);
+  assert.match(x.s.refus.at(-1), /photo, une capture ou un PDF/);
+  assert.equal(await deposer(IMAGE, { name: 'bon.pdf', size: 17 * 1048576, donnee: 'data:application/pdf;base64,JVBE' }), null);
+  assert.match(x.s.refus.at(-1), /pèse 17 Mo\. Au-delà de 16 Mo/);
+  assert.equal(x.envois.length, 0, 'rien ne part au serveur');
+  x.reponse = { ok: false, json: () => Promise.resolve({ ok: false }) };
+  assert.equal(await deposer(IMAGE, { name: 'bon.pdf', size: 10, donnee: 'data:application/pdf;base64,JVBE' }), null);
+  assert.match(x.s.refus.at(-1), /pas été enregistré/);
+  x.reponse = null;
+  DEPOT.estDemonstration = () => true;
+  const envois = x.envois.length;
+  assert.equal(await deposer(IMAGE, { name: 'bon.pdf', size: 10, donnee: 'data:application/pdf;base64,JVBE' }), null);
+  assert.match(x.s.refus.at(-1), /démonstration/);
+  assert.equal(x.envois.length, envois, 'la vitrine n’envoie rien');
+});
+
+test('« Poser le BAT » range la photo à l’étage du BAT, sans remplacer le visuel de la pièce', async () => {
+  const x = await televersement();
+  const { IMAGE } = x.s.ctx;
+  x.largeur = 1200;
+  const { ci } = x;
+  ci.vignette = 'assets/review/vignettes/kv.jpg';
+  const bat = await new Promise(r => IMAGE.accueillir(ci, { name: 'bon-signe.jpg', size: 3000, donnee: 'data:image/jpeg;base64,/9j/' }, r, false, 'bat'));
+  assert.equal(ci.vignette, 'assets/review/vignettes/kv.jpg', 'le visuel de la pièce ne change pas');
+  assert.deepEqual([bat.type, bat.nom, bat.signataire], ['bat', 'bon-signe.jpg', null]);
+  assert.match(bat.emplacement, /^assets\/review\/livrables\/L-ci-f-[a-z0-9]+\.jpg$/);
+  assert.equal(x.envois.at(-1).url, bat.emplacement);
+  assert.equal(x.s.ctx.REMISE.etatPiece(ci).cle, 'bat', 'posé sans signataire, le BAT reste à accorder');
+  /* Sans étage imposé, une image devient le visuel de la pièce. */
+  const visuel = await new Promise(r => IMAGE.accueillir(ci, { name: 'kv-v2.jpg', size: 3000, donnee: 'data:image/jpeg;base64,/9j/' }, r, false));
+  assert.equal(visuel.type, 'asset');
+  assert.equal(ci.vignette, visuel.emplacement);
+});
