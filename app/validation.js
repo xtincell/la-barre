@@ -143,7 +143,7 @@ window.VALIDATION = (function () {
         ? el("div", {},
             criteres.length
               ? el("div.sousbloc", {}, el("h3", {}, "Le motif, d'abord dans les critères écrits"), liste)
-              : UI.banniere("", "Aucun critère écrit pour ce document : le refus ne pourra s'appuyer que sur du texte libre. C'est exactement la dérive que le §8 nomme."),
+              : UI.banniere("", "Aucun critère écrit pour ce document : le refus ne pourra s'appuyer que sur du texte libre. Écrivez d'abord les critères pour que la décision se fonde sur eux."),
             el("div.form", {}, el("div.champ", {},
               el("label", {}, criteres.length ? "Ou en toutes lettres" : "Le motif"), libre)))
         : UI.banniere(enAttente.length ? "" : "vert", enAttente.length

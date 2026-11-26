@@ -335,7 +335,7 @@ window.VUE_ASSET = (function () {
        * fabrication, donc que rien n'est irréversible. */
       horsSujet.length
         ? el("p.pt-hs", {}, et.filter(function (e) { return e.exige; }).length === 1
-            ? "Un seul étage sur ce support : rien ne part en fabrication, "
+            ? "Une seule étape sur ce support : rien ne part en fabrication, "
               + "donc rien ne devient irréversible."
             : horsSujet.length === 1
               ? "Ce support ne demande pas de " + nu(horsSujet[0].def.nom) + "."
@@ -352,12 +352,11 @@ window.VUE_ASSET = (function () {
     var faits = exiges.filter(function (e) { return e.ok; }).length;
 
     return el("div.pt-c" + (retenue ? "" : ".hors"), {},
-      el("div.ptc-t", {}, "La porte"),
+      el("div.ptc-t", {}, "Avant le départ"),
       el("div.ptc-n", {}, faits + " sur " + exiges.length,
         el("span", {}, faits === exiges.length
-          ? "la porte est franchie : le livrable peut partir"
-          : exiges.length - faits === 1 ? "un étage reste à franchir"
-          : (exiges.length - faits) + " étages restent à franchir")),
+          ? "tout est prêt : le livrable peut partir"
+          : O.pluriel(exiges.length - faits, "étape reste à faire", "étapes restent à faire"))),
       retenue
         ? el("div.ptc-r", {}, "Sur la piste « " + piste.titre + " », arbitrée et retenue.")
         : el("div.ptc-r", {}, piste

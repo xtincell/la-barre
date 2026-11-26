@@ -462,10 +462,10 @@ window.ECARTS_MARCHE = (function () {
       d = DECISION.poser({ objet: l.id, type: "hors-ecart", projet: p.id, verdict: "retour",
         motif: typeof motif === "string" ? motif.trim() : "", quand: new Date().toISOString(),
         qui: MAISON.titulaire, acteur: DECISION.acteur(),
-        titre: (l.nom || "Adaptation") + " : hors écart déclaré (" + libelle(x.hors) + ")",
+        titre: (l.nom || "Adaptation") + " : changement non prévu à corriger (" + libelle(x.hors) + ")",
         marche: l.marche, types: x.hors.slice() });
     } catch (e) { return refusDe(e); }
-    DEPOT.tracer("adaptation renvoyée hors écart déclaré", "livrables", p.id, (l.nom || l.id) + " : " + libelle(x.hors));
+    DEPOT.tracer("correction de décli demandée", "livrables", p.id, (l.nom || l.id) + " : " + libelle(x.hors));
     DEPOT.enregistrer();
     return { ok: true, decision: d };
   }

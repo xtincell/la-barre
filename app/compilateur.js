@@ -122,7 +122,7 @@ window.COMPILATEUR = (function () {
       { quoi: "Le territoire", ok: !!st.territoire || (p.territoires || []).length > 0, poids: 4,
         cout: "aucun cadre : toutes les idées se vaudront, et aucune ne sera arbitrable" },
       { quoi: "L'idée directrice de la plateforme de marque", ok: !!s.idee_directrice, poids: 4,
-        cout: "la campagne pourra être refusée en revue sans recours" },
+        cout: "la campagne pourra être refusée en revue sans qu'on puisse la défendre" },
       { quoi: "Le ton et les interdits", ok: !!(b.ton || s.ton || (s.jamais || []).length), poids: 3,
         cout: "on découvrira les interdits en présentation, quand il sera trop tard" },
       { quoi: "Le périmètre de livrables", ok: (b.livrables_attendus || []).length > 0, poids: 4,

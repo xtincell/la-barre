@@ -29,7 +29,7 @@ window.ECARTS = (function () {
       quoi: "le livrable ne tient pas ce que le brief demandait. La reprise est pour nous." },
     plateforme: { nom: "Non-respect de la plateforme", ton: "alerte", rang: 1,
       qui: "l'exécutant", facturable: false,
-      quoi: "elle contredit la plateforme de marque. Refusable en revue sans recours." },
+      quoi: "elle contredit la plateforme de marque : elle pourra être refusée en revue sans qu'on puisse la défendre." },
     bigidea: { nom: "Critère d'acceptation non tenu", ton: "alerte", rang: 2,
       qui: "l'exécutant", facturable: false,
       quoi: "un critère écrit avant le travail n'est pas tenu. C'est le seul refus opposable." },
@@ -137,7 +137,7 @@ window.ECARTS = (function () {
       (s.jamais || []).forEach(function (mot) {
         if (O.contient(textes, mot)) {
           pousser(out, p, l, "plateforme", "« " + mot + " » — la marque ne le dit jamais",
-            "le livrable contredit la plateforme de marque : refusable en revue sans recours", "redacteur");
+            "le livrable contredit la plateforme de marque : il pourra être refusé en revue sans qu'on puisse le défendre", "redacteur");
         }
       });
       MAISON.nomsRetires.forEach(function (nom) {
@@ -149,7 +149,7 @@ window.ECARTS = (function () {
     });
     if ((p.sections.bigidea || {}).idee && !s.idee_directrice) {
       pousser(out, p, null, "plateforme", "Big idea ouverte sans plateforme de marque active",
-        "la campagne pourra être refusée en revue sans recours", "creation");
+        "la campagne pourra être refusée en revue sans qu'on puisse la défendre", "creation");
     }
     return out;
   }
@@ -164,7 +164,7 @@ window.ECARTS = (function () {
       if (pi.statut === "ecartee") return;
       if (!pi.sacrifice) pousser(out, p, null, "bigidea",
         "« " + (pi.titre || "piste") + " » sans sacrifice écrit",
-        "la piste n'est pas arbitrable — refusable au §8", "da");
+        "la piste ne dit pas ce qu'elle sacrifie : impossible de la choisir en connaissance de cause", "da");
       if (!pi.argument) pousser(out, p, null, "bigidea",
         "« " + (pi.titre || "piste") + " » sans argument écrit",
         "elle ne se défend que par le goût", "da");

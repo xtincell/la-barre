@@ -14,7 +14,7 @@ window.KV = (function () {
    * la marque, ce qui est écrit, dans quelle langue, ce qui est montré. */
   var CHAMPS_KV = [
     { cle: "marque", nom: "Marque", type: "texte" },
-    { cle: "copy", nom: "Accroche", type: "texte", aide: "Cinq mots maximum — critère du §8." },
+    { cle: "copy", nom: "Accroche", type: "texte", aide: "Cinq mots maximum." },
     { cle: "langue", nom: "Langue", type: "texte", aide: "Héritée du marché, surchargeable." },
     { cle: "sku", nom: "SKU montrés", type: "puces", aide: "Un par ligne. Un SKU non distribué sur ce marché est une erreur qui fait rappeler la campagne." },
     { cle: "mentions", nom: "Mentions portées", type: "puces" },
@@ -308,7 +308,7 @@ window.KV = (function () {
 
     var mots = k.copy ? k.copy.trim().split(/\s+/).length : 0;
     out.push({ quoi: "Accroche ≤ 5 mots", ok: !!k.copy && mots <= 5, poids: 4,
-      cout: !k.copy ? "aucune accroche" : "« " + k.copy + " » fait " + mots + " mots — refusable au §8" });
+      cout: !k.copy ? "aucune accroche" : "« " + k.copy + " » fait " + mots + " mots : cinq au plus" });
 
     var skuHorsMarche = skuNonDistribues(m, k);
     var distributionConnue = !!(m && (m.sku || []).length);

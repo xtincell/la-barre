@@ -115,7 +115,7 @@ window.VUE_ROUTE = (function () {
 
     var controles = [
       { quoi: "Sacrifice écrit", ok: !!pi.sacrifice, poids: 5,
-        cout: "une piste sans sacrifice n'est pas arbitrable — refusable au §8" },
+        cout: "une piste sans sacrifice ne se choisit pas en connaissance de cause : écrivez-le" },
       { quoi: "Argument écrit", ok: !!pi.argument, poids: 5,
         cout: "elle ne se défend que par le goût" },
       { quoi: "Auteur nommé", ok: !!pi.auteurDA, poids: 4,

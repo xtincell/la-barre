@@ -225,13 +225,13 @@ window.VUE_PISTES = (function () {
     if (cle === "sacrifice") {
       return el("div.cmp-c", {}, pi.sacrifice
         ? el("p.cmpc-p", {}, pi.sacrifice)
-        : vide("Sacrifice non écrit — ", "refusable au §8 : une piste qui ne renonce à rien n'a pas choisi."));
+        : vide("Sacrifice non écrit — ", "une piste qui ne renonce à rien n'a pas choisi."));
     }
 
     if (cle === "argument") {
       return el("div.cmp-c", {}, pi.argument
         ? el("p.cmpc-p", {}, pi.argument)
-        : vide("Argument non écrit — ", "refusable au §8 : elle ne se défendra que par le goût."));
+        : vide("Argument non écrit — ", "elle ne se défendra que par le goût."));
     }
 
     if (cle === "porteurs") {
@@ -244,7 +244,7 @@ window.VUE_PISTES = (function () {
          * au §8, et c'est le contrôle que personne ne fait à l'œil. */
         ps.length < 3
           ? el("span.cmp-al", {}, ps.length + " porteur" + (ps.length > 1 ? "s" : "")
-              + " sur 3 seulement — refusable au §8")
+              + " sur 3 seulement : à compléter")
           : null);
     }
 
@@ -323,7 +323,7 @@ window.VUE_PISTES = (function () {
      * deux portes : ce formulaire complet, et le panneau guidé de l'axe. */
     var f = FORM.rendre(CHAMPS.piste.concat(AXE.CHAMPS), pi || {});
     PANNEAU.ouvrir(pi ? "Modifier la piste" : "Nouvelle piste", p.ref, el("div", {},
-      el("div.prix", {}, el("span.signe", {}, "⚠"), "Une piste sans son sacrifice ni son argument est refusable — critère écrit du §8."),
+      el("div.prix", {}, el("span.signe", {}, "⚠"), "Une piste sans son sacrifice ni son argument sera refusée : écrivez les deux."),
       f.noeud,
       el("div.form-actions", {},
         el("button.b.or", {
@@ -363,7 +363,7 @@ window.VUE_PISTES = (function () {
           )
         ));
       });
-      if (!idees.length) liste.appendChild(el("p.rien", {}, "Aucune idée posée. La porte A est ouverte : n'importe qui pose une idée, y compris et surtout le DA."));
+      if (!idees.length) liste.appendChild(el("p.rien", {}, "Aucune idée posée. Tout le monde peut en poser une, y compris et surtout le DA."));
     }
     dessiner();
 
@@ -374,7 +374,7 @@ window.VUE_PISTES = (function () {
       selAuteur.appendChild(el("option", { value: x.id }, x.nom + " · " + O.poste(x.poste).court));
     });
 
-    PANNEAU.ouvrir("Séance de concept — porte A", "45 minutes", el("div", {},
+    PANNEAU.ouvrir("Séance de concept", "45 minutes", el("div", {},
       el("div.prix", {}, el("span.signe", {}, "⚠"), "Les idées se saisissent avec leur auteur, avant l'arbitrage. C'est ce qui rend l'indicateur « idées retenues émanant de juniors » calculable."),
       el("div.form", {},
         el("div.champ", {}, el("label", {}, "L'idée"), champIdee),
