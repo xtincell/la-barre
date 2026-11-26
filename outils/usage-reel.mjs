@@ -23,12 +23,14 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const RACINE = fileURLToPath(new URL('../', import.meta.url));
 
-/* Les clés que Radar lit (C-5). Les libellés ne servent qu'à la lecture. */
+/* Les clés que Radar lit (C-5). Les libellés ne servent qu'au Markdown ; le
+ * CSV garde les clés, pour les recoupements. */
 export const RESULTATS = {
-  approuve: 'validé',
-  reserve: 'validé avec réserves',
-  retour: 'modifs demandées',
-  hors: 'refusé, hors brief',
+  approuve: 'Validé',
+  reserve: 'Validé avec réserves',
+  retour: 'Modifs demandées',
+  hors: 'Refusé (hors brief)',
+  'sans résultat': 'Sans résultat',
 };
 
 const CANAUX = {
@@ -46,8 +48,19 @@ export const TYPES_DECISION = {
   concept: 'concept de la réserve', composition: 'case de composition',
 };
 
-/* Les types de fichier posé (app/production.js). */
-export const TYPES_FICHIER = { asset: 'asset', bat: 'BAT', simulation: 'simulation', storyboard: 'storyboard', ouvert: 'sources' };
+/* Les types de fichier posé (app/production.js), en mots d'agence. */
+export const TYPES_FICHIER = { asset: 'visuel', bat: 'BAT', simulation: 'simulation', situation: 'mise en situation',
+  storyboard: 'storyboard', ouvert: 'fichiers sources' };
+
+/* Les postes titulaires d'une installation (`qui`). Une clé inconnue est
+ * remise en clair : « direction-generale » devient « Direction generale ». */
+export const POSTES = { creation: 'Création', 'direction-generale': 'Direction générale', clientele: 'Clientèle', da: 'Direction artistique',
+  redacteur: 'Rédaction', production: 'Production', strategie: 'Stratégie', graphic: 'Graphisme', motion: 'Motion' };
+export function nomPoste(cle) {
+  if (!cle || cle === 'inconnu') return 'inconnu';
+  return POSTES[cle] || (cle.charAt(0).toUpperCase() + cle.slice(1)).replace(/[-_]+/g, ' ');
+}
+const IDENTITES = { 'attestée': 'attestée', 'déclarée': 'déclarée', poste: 'non identifiée' };
 
 /* « 0 élément », « 1 élément », « 2 éléments ». */
 export function accorder(n, un, plusieurs = un + 's') { return n + ' ' + (n > 1 ? plusieurs : un); }
@@ -93,8 +106,12 @@ export function auteur(e) {
   const id = typeof d.personneId === 'string' && d.personneId ? d.personneId : null;
   const nom = typeof d.nom === 'string' && d.nom.trim() ? d.nom.trim() : null;
   if (id || nom) return { cle: 'declaree:' + (id || nom), nom: nom || id, identite: 'déclarée' };
-  return { cle: 'poste:' + (e.qui || 'inconnu'), nom: 'poste ' + (e.qui || 'inconnu'), identite: 'poste' };
+  return { cle: 'poste:' + (e.qui || 'inconnu'), nom: 'poste ' + (e.qui || 'inconnu'), identite: 'poste', poste: e.qui || 'inconnu' };
 }
+
+/* Un auteur en clair, pour le Markdown : « Poste Création (titulaire de
+ * l'installation) » plutôt que la clé « poste creation ». */
+function nomAuteur(x) { return x.identite === 'poste' ? 'Poste ' + nomPoste(x.poste) + ' (titulaire de l’installation)' : x.auteur; }
 
 /* ————— Le relevé ————— */
 
@@ -142,7 +159,7 @@ export function mesurer(base, { depuis = null, anonyme = false } = {}) {
   const projets = tous.filter(p => !p.fusionne);
   const m = {
     decisions: compteur(), decisionsParAuteur: new Map(),
-    soumises: compteur(), jugees: compteur(), delais: new Map(), enAttente: 0, jugeesSansDate: 0,
+    soumises: compteur(), jugees: compteur(), delais: new Map(), enAttente: 0, enAttenteParStructure: new Map(), jugeesSansDate: 0,
     retours: compteur(), annotations: compteur(), fichiers: compteur(), projets: compteur(),
     liens: compteur(), remises: compteur(), journal: compteur(), actions: new Map(),
     personnes: new Map(), actifsParMois: new Map(),
@@ -212,12 +229,19 @@ export function mesurer(base, { depuis = null, anonyme = false } = {}) {
           }
         } else if (v.verdict) m.jugeesSansDate++;
       }
-      /* L'attente se compte comme le Bilan et la revue la montrent
-       * (app/bilan.js) : la dernière version, soumise et pas encore jugée,
-       * hors livrable annulé et hors dossier clos. Une version dépassée sans
-       * décision n'attend plus rien. */
+      /* L'attente se compte pièce par pièce comme le Bilan (app/bilan.js) :
+       * la dernière version, soumise et pas encore jugée, hors livrable annulé
+       * et hors dossier clos. Une version dépassée sans décision n'attend plus
+       * rien. Mais le Bilan ne garde que les dossiers de la structure
+       * principale de l'installation (STRUCTURE.agence), que la base ne nomme
+       * pas : le profil la porte. Le relevé compte donc toutes les structures,
+       * et les détaille ; un dossier sans structure est de la principale. */
       const derniere = liste(l.versions).slice(-1)[0];
-      if (derniere && !derniere.verdict && instant(derniere.soumis_le) !== null && !l.annule && !clos) m.enAttente++;
+      if (derniere && !derniere.verdict && instant(derniere.soumis_le) !== null && !l.annule && !clos) {
+        m.enAttente++;
+        const st = typeof p.structure === 'string' && p.structure ? p.structure : null;
+        m.enAttenteParStructure.set(st, (m.enAttenteParStructure.get(st) || 0) + 1);
+      }
       for (const a of liste(l.annotations)) { const mo = retenir(a.quand); if (mo) m.annotations.ajouter(mo); }
       for (const f of liste(l.fichiers)) { const mo = retenir(f.quand); if (mo) m.fichiers.ajouter(mo, f.type || 'sans type'); }
     }
@@ -278,7 +302,10 @@ export function mesurer(base, { depuis = null, anonyme = false } = {}) {
       const [type, resultat] = cle.split('/');
       return { mois: mo, type, resultat, nombre: n };
     })).sort((a, b) => a.mois.localeCompare(b.mois) || a.type.localeCompare(b.type) || a.resultat.localeCompare(b.resultat)),
-    decisionsParAuteur: [...m.decisionsParAuteur.values()].map(p => ({ auteur: nommer(p), identite: p.identite, nombre: p.nombre }))
+    enAttenteParStructure: [...m.enAttenteParStructure].map(([structure, nombre]) => ({ structure, nombre }))
+      .sort((a, b) => (a.structure === null) - (b.structure === null) || b.nombre - a.nombre || String(a.structure).localeCompare(String(b.structure))),
+    structures: [...new Set(projets.map(p => (typeof p.structure === 'string' && p.structure ? p.structure : null)))].length,
+    decisionsParAuteur: [...m.decisionsParAuteur.values()].map(p => ({ auteur: nommer(p), identite: p.identite, nombre: p.nombre, ...(p.poste ? { poste: p.poste } : {}) }))
       .sort((a, b) => b.nombre - a.nombre || a.auteur.localeCompare(b.auteur)),
     retoursParCanal: m.retours.cles().map(c => ({ canal: c, libelle: CANAUX[c] || c, nombre: m.retours.total(c) }))
       .sort((a, b) => b.nombre - a.nombre),
@@ -311,8 +338,8 @@ export function enMarkdown(r, meta = {}) {
   out.push(`- Relevé fait le ${meta.le || new Date().toISOString().slice(0, 10)}, en lecture seule (aucune écriture, aucun appel réseau).`);
   out.push(r.depuis
     ? `- Période : depuis le ${r.depuis}. Écartés : ${accorder(r.ecartees.avant, 'élément plus ancien', 'éléments plus anciens')} et ${accorder(r.ecartees.sansDate, 'élément sans date', 'éléments sans date')}.`
-    : `- Période : toute la base. ${r.ecartees.sansDate > 1 ? r.ecartees.sansDate + ' éléments sans date sont comptés' : r.ecartees.sansDate + ' élément sans date est compté'} à part (« sans date »).`);
-  out.push(`- Volume : ${accorder(v.projets, 'projet')} (dont ${accorder(v.projetsReleves, 'relevé', 'relevés')} par ingestion), ${accorder(v.livrables, 'livrable')}, ${accorder(v.versions, 'version')}, ${accorder(v.decisions, 'décision')}, ${accorder(v.journal, 'ligne', 'lignes')} de journal.`
+    : `- Période : toute la base. ${r.ecartees.sansDate === 0 ? 'Tous les éléments sont datés.' : (r.ecartees.sansDate > 1 ? r.ecartees.sansDate + ' éléments sans date sont comptés' : '1 élément sans date est compté') + ' à part (« sans date »).'}`);
+  out.push(`- Volume : ${accorder(v.projets, 'projet')} (${v.projetsReleves ? 'dont ' + accorder(v.projetsReleves, 'relevé', 'relevés') : 'aucun relevé'} par ingestion), ${accorder(v.livrables, 'livrable')}, ${accorder(v.versions, 'version')}, ${accorder(v.decisions, 'décision')}, ${accorder(v.journal, 'ligne', 'lignes')} de journal.`
     + (v.projetsFusionnes ? ` ${v.projetsFusionnes > 1 ? v.projetsFusionnes + ' projets fusionnés dans un autre dossier sont écartés' : '1 projet fusionné dans un autre dossier est écarté'} : leurs livrables sont comptés dans le dossier gardé.` : ''));
   if (r.anonyme) out.push('- Les noms sont remplacés par « Personne n ».');
   out.push('', '## En bref', '');
@@ -321,7 +348,7 @@ export function enMarkdown(r, meta = {}) {
     ['Versions soumises', t.versionsSoumises],
     ['Versions jugées (datées)', t.versionsJugees],
     ['Délai médian entre dépôt et décision', heures(t.delaiMedianHeures)],
-    ['Pièces en attente de décision (dernière version, dossiers ouverts)', t.versionsEnAttente],
+    ['Pièces en attente de décision (dernière version, dossiers ouverts, toutes structures)', t.versionsEnAttente],
     ['Retours enregistrés', t.retours],
     ['Annotations posées sur une image', t.annotations],
     ['Fichiers posés (BAT, simulations, situations…)', t.fichiers],
@@ -332,6 +359,12 @@ export function enMarkdown(r, meta = {}) {
     ['Personnes actives attestées par La Fusée', t.personnesAttestees],
     ['Personnes déclarées sur le poste', t.personnesDeclarees],
   ]));
+  const parStructure = r.structures > 1 || r.enAttenteParStructure.some(x => x.structure !== null);
+  if (parStructure) {
+    out.push('## Pièces en attente, par structure', '');
+    out.push(tableau(['Structure', 'Pièces en attente'], r.enAttenteParStructure.map(x =>
+      [x.structure === null ? 'sans structure (la structure principale de l’installation)' : x.structure, x.nombre])));
+  }
   out.push('## Par mois', '');
   out.push(tableau(['Mois', 'Décisions', 'Versions soumises', 'Versions jugées', 'Délai médian', 'Retours', 'Annotations', 'Fichiers',
     'Projets', 'Liens', 'Remises', 'Journal', 'Personnes attestées', 'Personnes déclarées'],
@@ -339,9 +372,9 @@ export function enMarkdown(r, meta = {}) {
     x.annotations, x.fichiers, x.projets, x.liens, x.remises, x.gestesJournal, x.personnesAttestees, x.personnesDeclarees])));
   out.push('## Décisions par mois, type et résultat', '');
   out.push(tableau(['Mois', 'Type', 'Résultat', 'Nombre'],
-    r.decisionsParMoisEtType.map(x => [x.mois, TYPES_DECISION[x.type] || x.type, RESULTATS[x.resultat] ? `${x.resultat} (${RESULTATS[x.resultat]})` : x.resultat, x.nombre])));
+    r.decisionsParMoisEtType.map(x => [x.mois, TYPES_DECISION[x.type] || x.type, RESULTATS[x.resultat] || x.resultat, x.nombre])));
   out.push('## Décisions par auteur', '');
-  out.push(tableau(['Auteur', 'Identité', 'Décisions'], r.decisionsParAuteur.map(x => [x.auteur, x.identite, x.nombre])));
+  out.push(tableau(['Auteur', 'Identité', 'Décisions'], r.decisionsParAuteur.map(x => [nomAuteur(x), IDENTITES[x.identite] || x.identite, x.nombre])));
   out.push('## Retours par canal', '');
   out.push(tableau(['Canal', 'Retours'], r.retoursParCanal.map(x => [x.libelle, x.nombre])));
   out.push('## Fichiers posés par type', '');
@@ -350,18 +383,27 @@ export function enMarkdown(r, meta = {}) {
   out.push(tableau(['Document', 'Liens'], r.liensParDocument.map(x => [x.document, x.nombre])));
   out.push('## Personnes actives', '');
   out.push(tableau(['Personne', 'Identité', 'Décisions', 'Lignes de journal', 'Premier geste', 'Dernier geste'],
-    r.personnes.map(x => [x.nom, x.identite, x.decisions, x.journal, x.premier, x.dernier])));
+    r.personnes.map(x => [x.nom, IDENTITES[x.identite] || x.identite, x.decisions, x.journal, x.premier, x.dernier])));
   out.push('## Gestes les plus fréquents au journal', '');
   out.push(tableau(['Action', 'Nombre'], r.actions.map(x => [x.action, x.nombre])));
   out.push('## Ce que ces chiffres ne disent pas', '');
+  const lectures = v.lectures === 0 ? 'une lecture enregistrée ne dirait pas qui a regardé. Cette copie n’en contient aucune.'
+    : v.lectures === 1 ? 'la lecture enregistrée ne dit pas qui a regardé. Elle n’est pas comptée.'
+      : `les ${v.lectures} lectures enregistrées ne disent pas qui a regardé. Elles ne sont pas comptées.`;
+  const sansDate = t.versionsJugeesSansDate === 0 ? 'Aucune version jugée n’est sans date de décision.'
+    : t.versionsJugeesSansDate === 1 ? '1 version porte un résultat sans date de décision : elle n’est pas dans les délais.'
+      : `${t.versionsJugeesSansDate} versions portent un résultat sans date de décision : elles ne sont pas dans les délais.`;
   out.push(
-    `- \`lectures[].qui\` vaut toujours le poste titulaire (\`app/depot.js\`, fonction \`lu\`) : les ${v.lectures} lectures enregistrées ne disent pas qui a regardé. Elles ne sont pas comptées.`,
+    `- \`lectures[].qui\` vaut toujours le poste titulaire (\`app/depot.js\`, fonction \`lu\`) : ${lectures}`,
     '- `qui` sur une décision ou une ligne de journal est le poste titulaire de l\'installation, pas une personne. Seule l\'attestation de La Fusée identifie la personne connectée ; `acteur` est déclaré.',
     '- Le journal est tronqué au-delà de 2 000 lignes (il en garde environ 1 500) : les mois anciens sont sous-comptés.',
     '- Un projet relevé par ingestion porte la date de l\'ingestion (`cree_le`), pas celle du travail.',
     '- Les échanges qui ne passent pas par La Barre (WhatsApp, Drive, mail, oral) ne laissent ici aucune trace : la semaine témoin les compte (`documents/observation/SEMAINE-TEMOIN.md`).',
-    `- ${t.versionsJugeesSansDate > 1 ? t.versionsJugeesSansDate + ' versions portent' : t.versionsJugeesSansDate + ' version porte'} un résultat sans date de décision : ${t.versionsJugeesSansDate > 1 ? 'elles ne sont' : 'elle n\'est'} pas dans les délais.`,
+    `- ${sansDate}`,
     '- Les pièces en attente sont un état du jour, pas un geste daté : `--depuis` ne les filtre pas.',
+    parStructure
+      ? '- Le relevé compte toutes les structures de la base. Le Bilan, lui, ne compte que la structure principale de l’installation (`STRUCTURE.agence()`, `app/structure.js`), que seul le profil nomme : pour retrouver son chiffre des pièces en attente, additionnez la ligne « sans structure » et celle de la structure principale.'
+      : '- Aucun dossier de cette base ne nomme sa structure : tous sont de la structure principale, et les pièces en attente sont celles que le Bilan compte.',
     '- « Gestes au journal » compte toutes les lignes du journal, poste compris ; la liste des personnes ne garde que les gestes rattachés à une personne (attestée ou déclarée).',
     '');
   return out.join('\n');
@@ -378,6 +420,7 @@ export function enCsv(r) {
     pousser(k, x.mois, '', val === null ? '' : (typeof val === 'number' && !Number.isInteger(val) ? val.toFixed(2) : val));
   for (const x of r.decisionsParMoisEtType) pousser('decisions_par_type', x.mois, x.type + '/' + x.resultat, x.nombre);
   for (const x of r.decisionsParAuteur) pousser('decisions_par_auteur', 'tout', x.auteur + ' (' + x.identite + ')', x.nombre);
+  for (const x of r.enAttenteParStructure) pousser('en_attente_par_structure', 'tout', x.structure === null ? 'sans-structure' : x.structure, x.nombre);
   for (const x of r.retoursParCanal) pousser('retours_par_canal', 'tout', x.canal, x.nombre);
   for (const x of r.fichiersParType) pousser('fichiers_par_type', 'tout', x.type, x.nombre);
   for (const x of r.liensParDocument) pousser('liens_par_document', 'tout', x.document, x.nombre);

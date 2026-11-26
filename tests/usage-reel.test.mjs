@@ -42,7 +42,8 @@ test('decisions-avant.json : décisions par type et résultat, délai médian, a
   // Soumises le 3 novembre à 8 h, jugées le 10 à 9 h (et 9 h 00 min 05 s).
   assert.ok(Math.abs(r.totaux.delaiMedianHeures - 169) < 0.01, String(r.totaux.delaiMedianHeures));
   // Ces décisions ne portent que `qui` : le poste titulaire, qui ne désigne personne.
-  assert.deepEqual(r.decisionsParAuteur, [{ auteur: 'poste direction-generale', identite: 'poste', nombre: 2 }]);
+  assert.deepEqual(r.decisionsParAuteur, [{ auteur: 'poste direction-generale', identite: 'poste', nombre: 2, poste: 'direction-generale' }]);
+  assert.match(enMarkdown(r), /\| Poste Direction générale \(titulaire de l’installation\) \| non identifiée \| 2 \|/);
   // Le journal, lui, déclare la personne du poste : elle est active, mais non attestée.
   assert.equal(r.totaux.personnesDeclarees, 1);
   assert.equal(r.totaux.personnesAttestees, 0);
@@ -163,7 +164,34 @@ test('l’attente se compte comme le Bilan : dernière version, hors annulé et 
   const r = mesurer(base);
   assert.equal(r.totaux.versionsEnAttente, 1);
   assert.equal(r.totaux.versionsSoumises, 6);
-  assert.match(enMarkdown(r), /Pièces en attente de décision \(dernière version, dossiers ouverts\) \| 1 \|/);
+  assert.match(enMarkdown(r), /Pièces en attente de décision \(dernière version, dossiers ouverts, toutes structures\) \| 1 \|/);
+  // Une seule structure : pas de détail par structure.
+  assert.doesNotMatch(enMarkdown(r), /par structure/);
+});
+
+test('l’attente est comptée dans toutes les structures, et détaillée pour retrouver le chiffre du Bilan', () => {
+  const v = { n: 1, soumis_le: '2026-10-01T08:00:00.000Z' };
+  const piece = id => ({ id, versions: [{ ...v }] });
+  const base = { schema: 5, projets: [
+    // Sans structure : la structure principale de l'installation, que le Bilan compte.
+    { id: 'PRO-a', cree_le: '2026-10-01', livrables: [piece('L-1'), piece('L-2')] },
+    // La structure principale nommée : le Bilan la compte aussi.
+    { id: 'PRO-b', cree_le: '2026-10-01', structure: 'agence', livrables: [piece('L-3')] },
+    // Une autre structure : le Bilan ne la compte pas, le relevé si.
+    { id: 'PRO-c', cree_le: '2026-10-01', structure: 'studio-partenaire', livrables: [piece('L-4'), piece('L-5'), piece('L-6')] },
+    // Fusionné : écarté partout.
+    { id: 'PRO-d', cree_le: '2026-10-01', structure: 'studio-partenaire', fusionne: { dans: 'PRO-c' }, livrables: [piece('L-7')] },
+  ] };
+  const r = mesurer(base);
+  assert.equal(r.totaux.versionsEnAttente, 6);
+  assert.deepEqual(r.enAttenteParStructure, [
+    { structure: 'studio-partenaire', nombre: 3 }, { structure: 'agence', nombre: 1 }, { structure: null, nombre: 2 }]);
+  const md = enMarkdown(r);
+  assert.match(md, /## Pièces en attente, par structure/);
+  assert.match(md, /\| sans structure \(la structure principale de l’installation\) \| 2 \|/);
+  assert.match(md, /\| studio-partenaire \| 3 \|/);
+  assert.match(md, /Le Bilan, lui, ne compte que la structure principale/);
+  assert.match(enCsv(r), /\nen_attente_par_structure,tout,sans-structure,2\n/);
 });
 
 test('le relevé parle la langue de l’agence et accorde ses pluriels', () => {
@@ -178,6 +206,24 @@ test('le relevé parle la langue de l’agence et accorde ses pluriels', () => {
   assert.match(md, /\| recevabilité du brief \|/);
   assert.match(md, /\| bilan de campagne \|/);
   assert.match(md, /\| BAT \| 1 \|/);
+  // Des mots d'agence, pas des clés de programme : les clés restent dans le CSV.
+  assert.match(md, /\| visuel \| 1 \|/);
+  assert.doesNotMatch(md, /\| asset \|/);
+  assert.match(md, /\| 2026-10 \| big idea \| Validé \| 1 \|/);
+  assert.match(md, /\| Modifs demandées \|/);
+  assert.match(md, /\| 2026-08 \| piste créative \| Refusé \(hors brief\) \| 1 \|/);
+  assert.doesNotMatch(md, /\| (approuve|retour|hors) /);
+  assert.match(md, /\| Poste Création \(titulaire de l’installation\) \| non identifiée \| /);
+  assert.doesNotMatch(md, /poste creation/);
+  assert.match(enCsv(r), /decisions_par_auteur,tout,poste creation \(poste\),/);
+  assert.match(enCsv(r), /decisions_par_type,2026-08,piste\/hors,1/);
+  // Un zéro se dit en clair.
+  assert.match(md, /Aucune version jugée n’est sans date de décision/);
+  assert.match(md, /la lecture enregistrée ne dit pas qui a regardé\. Elle n’est pas comptée\./);
+  const vide = enMarkdown(mesurer({ schema: 5, projets: [] }));
+  assert.match(vide, /Cette copie n’en contient aucune\./);
+  assert.match(vide, /Tous les éléments sont datés\./);
+  assert.doesNotMatch(vide, /\b0 (version porte|lectures enregistrées)/);
   assert.doesNotMatch(md, /\(s\)/);
   // Décisions et journal en deux colonnes : leur somme ne se lit plus comme un seul nombre.
   assert.match(md, /\| Personne \| Identité \| Décisions \| Lignes de journal \|/);
