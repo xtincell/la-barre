@@ -136,9 +136,10 @@ window.KV = (function () {
     });
   }
 
-  /* Le tiret ne reste jamais seul en fin de ligne : une espace insécable le
-   * tient au mot qui le précède (« Key visual — » / « Ghana »). */
-  function tenir(t) { return String(t).replace(/ — /g, "\u00a0— "); }
+  /* Le tiret ne reste jamais pendu en fin de ligne (« Key visual — » /
+   * « Ghana ») : une espace insécable le tient au mot qui le suit, et la ligne
+   * se coupe avant lui. */
+  function tenir(t) { return String(t).replace(/ — /g, " —\u00a0"); }
 
   function titre(l) {
     if (!l) return "";
