@@ -140,10 +140,12 @@ window.APP = (function () {
           t.push({ quoi: pi.titre, ou: p.ref + " · piste", lien: adresse("projets", p.id, "pistes", pi.id) });
       });
     });
-    ["marches", "supports", "assets"].forEach(function (type) {
+    /* Le référentiel se dit en mots : « Ghana — Marché », pas la clé « marche ». */
+    var TYPES = { marches: "Marché", supports: "Support", assets: "Visuel de marque" };
+    Object.keys(TYPES).forEach(function (type) {
       DEPOT.liste(type).forEach(function (x) {
         if (O.contient(x.nom + " " + (x.code || "") + " " + (x.source || ""), q))
-          t.push({ quoi: x.nom, ou: type.slice(0, -1), lien: adresse("referentiel", "marches", type.slice(0, -1), x.id) });
+          t.push({ quoi: x.nom, ou: TYPES[type], lien: adresse("referentiel", "marches", type.slice(0, -1), x.id) });
       });
     });
     DEPOT.liste("attentes").forEach(function (a) {

@@ -533,3 +533,14 @@ test('un retour enregistré le dit, avec la pièce, et mène au bloc des retours
   assert.deepEqual(avis, [['action', 'Retour enregistré sur « Key visual —\u00a0Ghana · Orvelle ».', 'Voir les retours']]);
   assert.equal(vu, 1, '« Voir les retours » mène au bloc des retours de la pièce');
 });
+
+test('la recherche dit le référentiel en mots, pas par sa clé', async () => {
+  const s = await bacDecisions(APP, 73);
+  s.ctx.document.addEventListener = () => {};
+  await s.charger('kv-modele');
+  await s.charger('application');
+  semer(s.ctx, { personnes: PERSONNES, ...REFERENTIEL, assets: [{ id: 'A-logo', nom: 'Logo Ghana' }], projets: [] });
+  const ou = [...s.ctx.APP.chercher('Ghana')].map(r => r.quoi + ' — ' + r.ou);
+  assert.deepEqual(ou, ['Ghana — Marché', 'Logo Ghana — Visuel de marque']);
+  assert.deepEqual([...s.ctx.APP.chercher('Post social')].map(r => r.ou), ['Support']);
+});
