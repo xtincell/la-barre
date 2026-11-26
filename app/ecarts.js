@@ -265,7 +265,7 @@ window.ECARTS = (function () {
   function ecarterUn(cle, motif) {
     var x = trouver(cle);
     if (!x) return { ok: false, erreur: "Cet écart n'est pas au relevé : il n'y a rien à écarter." };
-    if (x.ecarte) return { ok: false, erreur: "Cet écart est déjà écarté depuis le " + O.joli(x.ecarte.quand) + "." };
+    if (x.ecarte) return { ok: false, erreur: O.finir("Cet écart est déjà écarté depuis le " + O.joli(x.ecarte.quand)) };
     var d;
     try {
       d = DECISION.construire({ objet: cle, type: "ecart", projet: x.projet.id, verdict: "hors",

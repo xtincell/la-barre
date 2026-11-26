@@ -100,7 +100,7 @@ window.RENVOI = (function () {
       if (s.critere) l.push("Ce qui bloque : " + s.critere.charAt(0).toLowerCase() + s.critere.slice(1) + ".");
       if (choix === "autre" && champLibre.value) l.push("Motif : " + ponctuer(champLibre.value));
       if (champAttendu.value) l.push("Ce que j'attends : " + ponctuer(champAttendu.value));
-      if (echeance) l.push("Pour le " + O.joli(echeance) + ".");
+      if (echeance) l.push(O.finir("Pour le " + O.joli(echeance)));
       l.push("");
       l.push("Je reprends ce point dès qu'il me revient.");
       return l.join("\n");

@@ -41,7 +41,7 @@ window.VALIDATION = (function () {
     retour: "Choisissez un critère ou écrivez ce qu'il faut changer.",
     hors: "Choisissez un critère ou écrivez pourquoi vous refusez.",
   };
-  function finir(t) { return /[.!?…]$/.test(t) ? t : t + "."; }
+  var finir = O.finir;
 
   function etat(objet) {
     var d = objet && objet.validation;

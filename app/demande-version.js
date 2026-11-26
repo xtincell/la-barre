@@ -84,7 +84,7 @@ window.DEMANDE_VERSION = (function () {
           el("div.champ", {}, el("label", {}, "Pour quand"), pour,
             el("div.indice", {}, l.publication
               ? "La parution est le " + O.joli(l.publication)
-                + (l.remise ? " ; la remise est posée au " + O.joli(l.remise) + "." : ".")
+                + (l.remise ? " ; la remise est posée au " + O.finir(O.joli(l.remise)) : ".")
               : "Aucune date de parution sur ce livrable."))),
 
         el("div.form-actions", {},

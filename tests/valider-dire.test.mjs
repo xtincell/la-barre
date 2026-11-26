@@ -28,6 +28,13 @@ test('O.pluriel accorde au singulier jusqu’à un, au pluriel à partir de deux
   assert.equal(O.pluriel(undefined, 'marché'), '0 marché');
 });
 
+test('O.finir clôt une phrase sans doubler le point d’une date abrégée', async () => {
+  const { O } = await bac();
+  assert.equal(O.finir('Accepté le ' + O.joli('2026-10-03T10:00:00')), 'Accepté le 3 oct.');
+  assert.equal(O.finir('Accepté le 3 mai'), 'Accepté le 3 mai.');
+  assert.equal(O.finir('Prêt !'), 'Prêt !');
+});
+
 function depot(donnees) {
   return { trouve: (k, id) => (donnees[k] || []).find(x => x.id === id) || null, liste: k => donnees[k] || [] };
 }
