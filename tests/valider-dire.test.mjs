@@ -854,7 +854,7 @@ function etiquettesReliees(panneau, attendues) {
   }
 }
 
-test('« Demander un retour » relie ses étiquettes', async () => {
+test('« Demander un retour » et « Décrire un fichier » relient leurs étiquettes', async () => {
   const s = await bacDecisions(APP, 101);
   for (const nom of ['kv-modele', 'apparier', 'image', 'trace', 'annotation', 'vue-planche', 'renvoi', 'production']) await s.charger(nom);
   s.ctx.PANNEAU.sousbloc = (t, c) => c;
@@ -864,4 +864,9 @@ test('« Demander un retour » relie ses étiquettes', async () => {
 
   s.ctx.RENVOI.ouvrir({ quoi: 'Brief — REF-ET', projet: 'REF-ET', projetId: 'ET', objet: 'brief' });
   etiquettesReliees(s.dernier(), ['Sur quel critère', 'À qui', 'Ce que j\'attends', 'Pour quand', 'Si « autre motif »']);
+
+  const l = livrable('L-et', { mockups: [{ id: 'MK-1', contexte: 'Abribus' }] });
+  p.livrables.push(l);
+  s.ctx.PRODUCTION.ajouter(p, l, () => {});
+  etiquettesReliees(s.dernier(), ['Type', 'Nom', 'Où il est', 'Signataire', 'Lier à une mise en situation']);
 });

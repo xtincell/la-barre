@@ -299,7 +299,7 @@ window.PRODUCTION = (function () {
   }
 
   function ajouter(p, l, rafraichir) {
-    var selT = el("select", {});
+    var selT = el("select", { id: "fichier-type" });
     Object.keys(TYPES).forEach(function (k) {
       selT.appendChild(el("option", { value: k }, TYPES[k].nom));
     });
@@ -307,10 +307,10 @@ window.PRODUCTION = (function () {
     var aide = el("div.indice", {}, defDe(selT.value).quoi);
     selT.addEventListener("change", function () { aide.textContent = defDe(selT.value).quoi; });
 
-    var champNom = el("input", { type: "text", placeholder: "Nom du fichier, conventionné" });
-    var champLieu = el("input", { type: "text", placeholder: "Chemin sur le Drive, ou lien" });
-    var champSig = el("input", { type: "text", placeholder: "Qui a signé — pour un BAT" });
-    var selMk = el("select", {});
+    var champNom = el("input", { id: "fichier-nom", type: "text", placeholder: "Nom du fichier, conventionné" });
+    var champLieu = el("input", { id: "fichier-lieu", type: "text", placeholder: "Chemin sur le Drive, ou lien" });
+    var champSig = el("input", { id: "fichier-signataire", type: "text", placeholder: "Qui a signé — pour un BAT" });
+    var selMk = el("select", { id: "fichier-mockup" });
     selMk.appendChild(el("option", { value: "" }, "— ne lier à aucune mise en situation —"));
     (l.mockups || []).forEach(function (m) {
       selMk.appendChild(el("option", { value: m.id }, m.contexte || "mockup sans contexte"));
@@ -324,13 +324,13 @@ window.PRODUCTION = (function () {
         } }, "Choisir le fichier plutôt que le décrire")),
       UI.banniere("", "Le fichier est rattaché à la version en cours. Le jour où le livrable repart en V" + ((l.version || 1) + 1) + ", il apparaîtra comme périmé — c'est ce qui évite d'envoyer à l'imprimeur ce qui a été corrigé."),
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Type"), selT, aide),
-        el("div.champ", {}, el("label", {}, "Nom"), champNom),
-        el("div.champ", {}, el("label", {}, "Où il est"),
+        el("div.champ", {}, el("label", { for: "fichier-type" }, "Type"), selT, aide),
+        el("div.champ", {}, el("label", { for: "fichier-nom" }, "Nom"), champNom),
+        el("div.champ", {}, el("label", { for: "fichier-lieu" }, "Où il est"),
           el("div.indice", {}, "La base locale ne porte jamais un fichier de production : on garde le chemin."), champLieu),
-        el("div.champ", {}, el("label", {}, "Signataire"), champSig),
+        el("div.champ", {}, el("label", { for: "fichier-signataire" }, "Signataire"), champSig),
         (l.mockups || []).length
-          ? el("div.champ", {}, el("label", {}, "Lier à une mise en situation"),
+          ? el("div.champ", {}, el("label", { for: "fichier-mockup" }, "Lier à une mise en situation"),
               el("div.indice", {}, "Un mockup lié à son fichier montre ce qui partira réellement."), selMk)
           : null),
       el("div.form-actions", {},
