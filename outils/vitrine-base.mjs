@@ -525,6 +525,8 @@ export async function construire() {
       bigidea: { criteres: ['Le nom de l’atelier tient dans la zone sûre de la story'] },
       pistes: [{ id: 'PI-noro', titre: 'L’invitation telle qu’imprimée', statut: 'retenue', auteurDA: 'PE-ilan', version: 1,
         motif: 'La story reprend l’invitation imprimée : rien à réinventer.', arbitre_le: '2026-11-10T15:00:00.000Z',
+        sacrifice: 'Une animation pensée pour la story : l’invitation reste fixe.',
+        argument: 'Les invités reconnaissent dans la story le carton qu’ils ont reçu.',
         axe_directrice: 'L’invitation imprimée, remise à la verticale.', axe_ton: 'Chaleureux, artisanal',
         axe_univers: 'Le corail de l’enveloppe, le carton crème, le nom tracé à la main.', axe_valeurs: ['Savoir-faire', 'Accueil'] }] },
     livrables: [], idees: [],
