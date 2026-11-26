@@ -122,13 +122,20 @@ window.VUE_ASSET = (function () {
     } }, mediaRevue(objet, nom));
   }
 
+  /* Un document de la version : il s'ouvre s'il a une adresse (un lien
+   * https, une photo ou un PDF que La Barre sert), et une déclaration dit ses
+   * mots. Les anciens chemins locaux restent lisibles, sans lien. */
   function dossier(f) {
-    try {
-      var u = new URL(f.emplacement);
-      if (u.protocol === "https:" && !u.username && !u.password)
-        return el("a", { href: u.href, target: "_blank", rel: "noopener noreferrer" }, f.nom || "Document");
-    } catch (e) { /* Les anciens chemins locaux restent lisibles dans le dossier. */ }
-    return el("span", {}, f.nom || "Document");
+    var nom = f.nom || "Document";
+    var lien = REMISE.preuveValide({ type: "lien", url: f.emplacement });
+    var chemin = REMISE.fichierServi(f.emplacement);
+    var preuve = !lien && !chemin ? REMISE.preuveValide(f.preuve) : null;
+    if (preuve && preuve.type === "lien") lien = preuve;
+    if (preuve && preuve.type === "fichier") chemin = preuve.chemin;
+    if (lien) return el("a", { href: lien.url, target: "_blank", rel: "noopener noreferrer" }, nom);
+    if (chemin) return el("a", { href: chemin, target: "_blank", rel: "noopener" }, nom);
+    if (preuve) return el("span", {}, nom + " · " + (preuve.texte ? "déclaré : « " + preuve.texte + " »" : "déclaré, sans pièce jointe"));
+    return el("span", {}, nom);
   }
 
   function fichiersRevue(l, numero) {
@@ -159,7 +166,7 @@ window.VUE_ASSET = (function () {
       fichiersRevue(l, numero),
       preuves.length ? el("details", {}, el("summary", {}, "Justificatifs de remise de la V" + numero),
         el("ul.rvp-docs", {}, preuves.map(function (r) {
-          return el("li", {}, dossier({ nom: r.preuve.nom, emplacement: r.preuve.url }), " · ", r.id, " · ", O.joli(r.remis_le));
+          return el("li", {}, dossier({ nom: r.preuve.nom, preuve: r.preuve }), " · ", r.id, " · ", O.joli(r.remis_le));
         }))) : null,
       motive && motive !== ancienne ? el("p.rvp-meta", {}, "Motif du passage à la version suivante « " + motive.motif + " »") : null);
   }

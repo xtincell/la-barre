@@ -245,6 +245,29 @@ test('les reçus et les BAT écrits avant les preuves souples se relisent à l�
   assert.equal(R.preuveCourante(p, ci), null, 'un lien qui n’est pas https ne devient pas valide');
 });
 
+test('le suivi dit « BAT accordé » sans pièce, « BAT signé » avec, et « Fichiers à remettre » avant la remise', async () => {
+  const { p, ci, R } = await installation();
+  const accord = { type: 'declaration', texte: 'OK par WhatsApp', contact: 'Imprimerie', date: '2026-11-08' };
+  ci.fichiers = [{ id: 'B-1', type: 'bat', version: 2, nom: 'BAT déclaré', emplacement: '', signataire: 'Imprimerie', signe_le: '2026-11-08', preuve: accord },
+    { id: 'S-1', type: 'asset', role: 'sortie', version: 2, nom: 'Fichiers finaux · V2', emplacement: '', canal: 'WeTransfer' }];
+  let suivi = R.suiviPiece(p, ci, () => {});
+  assert.match(suivi.textContent, /BAT accordé · V2/);
+  assert.match(suivi.textContent, /Déclaré : « OK par WhatsApp »/);
+  assert.match(suivi.textContent, /Fichiers à remettre/);
+  assert.doesNotMatch(suivi.textContent, /Fichiers remis/);
+  /* Le bon photographié et posé à l'étage : il s'ouvre, et le BAT est signé. */
+  Object.assign(ci.fichiers[0], { nom: 'bon-signe.jpg', emplacement: 'assets/review/livrables/L-ci-f1.jpg', preuve: { ...accord, texte: '' } });
+  suivi = R.suiviPiece(p, ci, () => {});
+  assert.match(suivi.textContent, /BAT signé · V2/);
+  assert.equal(noeuds(suivi, n => n.tagName === 'A')[0].getAttribute('href'), 'assets/review/livrables/L-ci-f1.jpg');
+  assert.doesNotMatch(suivi.textContent, /sans pièce jointe/, 'le fichier posé est la pièce jointe');
+  assert.ok(R.consigner(p.id, [R.empreintePiece(ci, R.etatPiece(ci))], { destinataire: 'Imprimerie', quand: '2026-11-09',
+    preuve: { type: 'declaration', texte: '' } }).recu);
+  assert.match(R.suiviPiece(p, ci, () => {}).textContent, /Fichiers remis/);
+  for (const faux of ['assets/review/../depots/base.json', 'assets/review/x.jpg', '/assets/review/livrables/x.jpg', 'https://exemple.test/x.jpg'])
+    assert.equal(R.fichierServi(faux), null, faux);
+});
+
 /* ————— Le geste : un seul formulaire ————— */
 
 function noeuds(n, test, out = []) {

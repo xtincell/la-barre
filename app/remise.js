@@ -110,6 +110,13 @@ window.REMISE = (function () {
     }) || null;
   }
 
+  /* Un fichier que La Barre sert elle-même : un chemin relatif sous
+   * assets/review/ (un BAT photographié et posé à son étage, par exemple). */
+  function fichierServi(v) {
+    var s = texte(v);
+    return /^assets\/review\/[A-Za-z0-9_-]+\/[A-Za-z0-9_.-]+\.(jpe?g|png|webp|pdf)$/i.test(s) && s.indexOf("..") === -1 ? s : null;
+  }
+
   /* Le fichier qui part : rattaché par son emplacement, ou déclaré par le
    * canal qui l'a porté (WeTransfer, Drive, clé…), lien facultatif. Un visuel
    * de revue compressé n'en est jamais un. */
@@ -707,18 +714,25 @@ window.REMISE = (function () {
     var ouvert = enregistrementPermis() && !l.annule && !p.fusionne && !(window.CLOTURE && CLOTURE.est(p));
     var bat = etat.bat;
     var preuveBat = bat ? preuveValide(bat.preuve) || preuveValide({ type: "lien", url: bat.emplacement }) : null;
+    /* Ce qui s'ouvre : la pièce jointe, sinon le fichier posé à l'étage. Le
+     * mot de la déclaration se dit à côté. */
+    var ouvrirBat = !bat ? null : preuveBat && preuveBat.type !== "declaration" ? lienPreuve(preuveBat, "Ouvrir le BAT")
+      : fichierServi(bat.emplacement) ? lienFichier(fichierServi(bat.emplacement), "Ouvrir le BAT") : null;
+    /* « Signé » quand une pièce le montre ; un accord oral ou par message est
+     * un BAT accordé. */
+    var batPiece = !!ouvrirBat || !!texte(bat && bat.emplacement);
     return el("section.remise-suivi", { "aria-label": "BAT et remise" },
       el("header.remise-tete", {}, el("h3", {}, "BAT et remise"),
         UI.eti(recu ? "Remise justifiée" : etat.nom, recu ? "vert" : "attente")),
       bat ? el("div.remise-preuve", {},
-        el("strong", {}, "BAT signé · V" + etat.version),
+        el("strong", {}, (batPiece ? "BAT signé" : "BAT accordé") + " · V" + etat.version),
         el("span", {}, bat.nom + " · " + bat.signataire
           + (bat.signe_le ? " · " + O.joli(bat.signe_le) : "")),
-        preuveBat && preuveBat.type !== "declaration" ? lienPreuve(preuveBat, "Ouvrir le BAT")
-          : preuveBat ? lienPreuve(preuveBat) : null) : null,
+        ouvrirBat,
+        preuveBat && preuveBat.type === "declaration" && (preuveBat.texte || !ouvrirBat) ? lienPreuve(preuveBat) : null) : null,
       recu ? cartePreuve(recu) : null,
       recu ? sauvegarde() : null,
-      etat.fichiers ? el("details", {}, el("summary", {}, "Fichiers remis"),
+      etat.fichiers ? el("details", {}, el("summary", {}, recu ? "Fichiers remis" : "Fichiers à remettre"),
         etat.fichiers.map(function (f) {
           return el("div.remise-preuve", {}, el("strong", {}, f.nom),
             lienExterne(f.emplacement, "Ouvrir le fichier")
@@ -837,5 +851,5 @@ window.REMISE = (function () {
     etat: etat, ouvrir: ouvrir, droits: droits, mentions: mentions, etatPiece: etatPiece,
     empreintePiece: empreintePiece, preuveCourante: preuveCourante, consigner: consigner,
     suiviPiece: suiviPiece, suiviLot: suiviLot, versionCourante: versionCourante,
-    preuveValide: preuveValide, marquerLivre: marquerLivre };
+    preuveValide: preuveValide, fichierServi: fichierServi, marquerLivre: marquerLivre };
 })();
