@@ -6,7 +6,7 @@
 // Chrome). Sans eux, le test est sauté, sauf en CI où il doit tourner.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mesurerDansLaPage, depouiller, ecartDePixels, SEUIL_PIXEL } from '../outils/recette-captures.mjs';
+import { mesurerDansLaPage, depouiller, ecartDePixels, aLOeil } from '../outils/recette-captures.mjs';
 
 let chromium = null, navigateur = null, raison = null;
 try { ({ chromium } = await import('playwright')); } catch { raison = 'Playwright absent : npm ci'; }
@@ -76,7 +76,7 @@ test('un texte coupé et un contrôle hors écran sont relevés, sans compter ce
   await p.close();
 });
 
-test('deux captures se comparent au pixel, sans compter le lissage', sauter, async () => {
+test('deux captures se comparent au pixel, et seules les zones d’image pardonnent une nuance', sauter, async () => {
   const p = await page('<!doctype html><body></body>');
   const [a, b, c, d] = await p.evaluate(() => {
     const dessiner = (couleur, x, largeur = 40) => {
@@ -87,12 +87,64 @@ test('deux captures se comparent au pixel, sans compter le lissage', sauter, asy
     };
     return [dessiner('rgb(0,0,0)', 10), dessiner('rgb(12,12,12)', 10), dessiner('rgb(0,0,0)', 14), dessiner('rgb(0,0,0)', 10, 50)];
   });
-  assert.deepEqual(await p.evaluate(ecartDePixels, { a, b: a, seuil: SEUIL_PIXEL }), { pixels: 0, max: 0 });
-  // Une nuance de 12/255 : identique à l'œil.
-  assert.equal((await p.evaluate(ecartDePixels, { a, b, seuil: SEUIL_PIXEL })).pixels, 0);
+  const meme = await p.evaluate(ecartDePixels, { a, b: a });
+  assert.equal(meme.pixels, 0);
+  assert.equal(aLOeil(meme), true);
+  // Une nuance de 12/255 sur un bloc de 100 pixels, hors de toute image : modifiée.
+  const nuance = await p.evaluate(ecartDePixels, { a, b });
+  assert.deepEqual([nuance.pixels, nuance.max, nuance.hors.pixels], [100, 12, 100]);
+  assert.equal(aLOeil(nuance), false);
+  // La même nuance dans une zone d'image (le lissage d'une vignette) : identique à l'œil.
+  const lissage = await p.evaluate(ecartDePixels, { a, b, zones: [[5, 5, 20, 20]] });
+  assert.deepEqual([lissage.hors.pixels, lissage.images.pixels, lissage.images.max], [0, 100, 12]);
+  assert.equal(aLOeil(lissage), true);
+  // Les zones sont en px CSS : sur un écran de densité 2, la zone [5, 5, 10, 10] couvre le bloc.
+  assert.equal((await p.evaluate(ecartDePixels, { a, b, zones: [[5, 5, 10, 10]], densite: 2 })).hors.pixels, 0);
   // Un bloc déplacé de 4 px : 2 × 4 × 10 pixels changent.
-  assert.equal((await p.evaluate(ecartDePixels, { a, b: c, seuil: SEUIL_PIXEL })).pixels, 80);
+  assert.equal((await p.evaluate(ecartDePixels, { a, b: c })).pixels, 80);
   // Une autre taille : modifiée, sans compte de pixels.
-  assert.equal((await p.evaluate(ecartDePixels, { a, b: d, seuil: SEUIL_PIXEL })).pixels, null);
+  const taille = await p.evaluate(ecartDePixels, { a, b: d });
+  assert.equal(taille.pixels, null);
+  assert.equal(aLOeil(taille), false);
+  await p.close();
+});
+
+/* Une page d'agence ordinaire : une carte bordée, un texte, une vignette. */
+const CARTE = `<!doctype html><html lang="fr"><body style="margin:0;font:16px sans-serif;background:#fff">
+  <main id="contenu" style="padding:24px">
+    <h1 style="color:#1f2937">Orvelle Zeste — lancement</h1>
+    <div class="carte" style="border:1px solid #deded8;border-radius:12px;padding:16px;width:420px">
+      <p style="color:#1f2937">KV · Ghana · V1, en attente de décision.</p>
+      <img alt="" width="120" height="80" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80'%3E%3Crect width='120' height='80' fill='%23c7501f'/%3E%3C/svg%3E">
+    </div>
+    <div style="width:240px;height:60px;background:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect width='10' height='10' fill='%23eee'/%3E%3C/svg%3E&quot;)"></div>
+  </main></body></html>`;
+
+test('une page assombrie de 8 %, une bordure ou un texte d’un ton plus pâle sont « modifiés », pas « identiques à l’œil »', sauter, async () => {
+  const p = await page(CARTE, 1440);
+  const m = await p.evaluate(mesurerDansLaPage);
+  // L'image et le fond en url() sont des zones d'image, en px CSS, débordées d'un pixel.
+  assert.equal(m.zonesImages.length, 2, JSON.stringify(m.zonesImages));
+  assert.equal(m.densite, 1);
+  const photo = async css => {
+    await p.evaluate(x => { let s = document.getElementById('essai'); if (!s) { s = document.createElement('style'); s.id = 'essai'; document.head.append(s); } s.textContent = x; }, css);
+    return (await p.screenshot({ animations: 'disabled', caret: 'hide' })).toString('base64');
+  };
+  const avant = await photo('');
+  const zones = m.zonesImages;
+  const classer = async css => { const e = await p.evaluate(ecartDePixels, { a: avant, b: await photo(css), zones }); return [aLOeil(e) ? 'à l’œil' : 'modifiée', e]; };
+  // La même page, photographiée deux fois : rien ne change.
+  assert.equal((await classer(''))[1].pixels, 0);
+  for (const [cas, css] of [
+    ['page assombrie de 8 %', 'html{filter:brightness(.92)}'],
+    ['bordure d’un ton plus pâle', '.carte{border-color:#e8e8e2!important}'],
+    ['texte éclairci', 'p,h1{color:#3a4250!important}'],
+  ]) {
+    const [v, e] = await classer(css);
+    assert.equal(v, 'modifiée', cas + ' : ' + JSON.stringify({ ...e, total: undefined }));
+  }
+  // Une nuance dans la vignette seulement (son lissage) : identique à l'œil.
+  const [v] = await classer('img{filter:brightness(.97)}');
+  assert.equal(v, 'à l’œil');
   await p.close();
 });

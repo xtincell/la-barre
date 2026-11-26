@@ -41,32 +41,70 @@ projet ouvert ; la demande de proposition ouverte ; la page partagée. Sous
 768 px, la page est vue comme sur un téléphone : écran tactile, densité 2,
 `(hover: none)` et `(pointer: coarse)` vrais.
 
+La passe « avant » se fait **sur la branche de base du lot** : `main`, ou
+`adoption/00-mesurer` tant que ce lot n'est pas fusionné (les gains rapides
+s'empilent dessus). La passe « après » se fait sur la branche du lot, **avec
+la même version de l'outil**.
+
 ```bash
-# sur main, avant le changement
+# 1. Au début du lot, avant le premier changement (la branche est encore
+#    au commit de base) :
 BROWSER_CHANNEL=chrome npm run recette:captures -- --avant --horloge 2026-11-26T09:00:00
-# sur la branche, après le changement
+# 2. À la fin du lot :
 BROWSER_CHANNEL=chrome npm run recette:captures -- --apres --horloge 2026-11-26T09:00:00
 ```
 
-- Les captures sont écrites **hors du dépôt** (`../recette-adoption/avant` et
-  `../recette-adoption/apres` par défaut ; `--sortie` pour un autre dossier).
-  Le script refuse d'écrire dans le dépôt.
-- Ouvrez `apres/index.html` : la planche-contact montre chaque route, avant et
+Si le lot a déjà commencé, ou s'il modifie `outils/recette-captures.mjs` ou
+`outils/termes-interdits.mjs`, refaites l'avant depuis un export du commit de
+base, avec l'outil de la branche :
+
+```bash
+base=<commit de base du lot>     # par exemple : git merge-base HEAD origin/main
+export=$(mktemp -d) && git archive "$base" | tar -x -C "$export"
+cp outils/recette-captures.mjs outils/termes-interdits.mjs "$export/outils/"
+ln -s "$PWD/node_modules" "$export/node_modules"
+BROWSER_CHANNEL=chrome node "$export/outils/recette-captures.mjs" --avant \
+  --commit "$(git rev-parse --short "$base")" --sortie "$(node outils/recette-captures.mjs --ou)" \
+  --horloge 2026-11-26T09:00:00
+```
+
+- Les captures sont écrites **hors du dépôt**, dans un dossier par branche :
+  `../recette-adoption/<branche>/avant` et `…/apres` par défaut (`--sortie`
+  pour un autre dossier ; `--ou` affiche celui de la branche courante). Deux
+  lots qui lancent la recette en même temps n'écrasent pas leurs passes. Le
+  script refuse d'écrire dans le dépôt, et ne vide ni n'écrase jamais un
+  dossier qui ne vient pas d'une recette.
+- `captures.json` porte la **version de la mesure** (`mesure.version`,
+  l'empreinte de l'outil et de la liste des termes) et le poste de capture
+  (`mesure.contexte`). Si l'avant a été pris par une autre version, la
+  planche le dit en tête (« refaites-la »), aucune capture n'est comptée comme
+  modifiée et `comparaison.mesure.identique` vaut `false` : la comparaison ne
+  vaut rien, refaites l'avant. Avec `--apres` sans passe avant, l'outil
+  prévient sur la sortie d'erreur.
+- Ouvrez `apres/index.html` : la planche-contact montre chaque écran, avant et
   après, à chaque largeur, avec ses alertes. Elle s'ouvre sur ce qui a changé :
-  chaque capture porte « modifiée », « identique » ou « identique à l'œil »
-  (quelques pixels à peine nuancés par le lissage d'une image), et la case
-  « N'afficher que les captures modifiées ou nouvelles » ne garde qu'elles.
+  chaque capture porte « modifiée », « identique » ou « identique à l'œil »,
+  et la case « N'afficher que les captures à regarder » ne garde que les
+  modifiées, nouvelles, nuancées ou non comparées (ou dit qu'il n'y en a
+  aucune). « Identique à l'œil » ne pardonne que le lissage des images
+  (jusqu'à 32/255, dans les rectangles des images seulement) et le crénelage
+  de quelques bords (au plus 8/255, sur moins de 0,1 % de l'écran) : une
+  couleur de fond, de bordure ou de texte qui change, même d'un ton, rend la
+  capture « modifiée ». Les captures nuancées sont listées, avec leur nuance,
+  dans « Ce qui a changé ».
 - `apres/captures.json` ne contient **ni exception, ni débordement
-  horizontal**. Sa section `comparaison` liste les captures modifiées, les
-  routes apparues ou disparues, les exceptions, débordements, textes coupés,
-  contrôles hors écran et valeurs techniques nouveaux, et le nombre de termes
-  interdits avant et après.
+  horizontal**. Sa section `comparaison` liste les captures modifiées et
+  nuancées, les routes apparues ou disparues, les exceptions, débordements,
+  textes coupés, contrôles hors écran et valeurs techniques nouveaux, et le
+  nombre de termes interdits avant et après. Un relevé que l'avant ne
+  mesurait pas encore vaut `null` (« non mesuré avant »), jamais zéro.
 - Aucune alerte nouvelle : `comparaison.coupesNouvelles` (un texte rogné par
   sa boîte ou par le bord de l'écran, un texte d'exemple plus large que son
   champ), `comparaison.horsEcranNouveaux` (un bouton ou un lien rejeté hors de
   l'écran) et `comparaison.valeursNouvelles` (« undefined », « null », « NaN »,
   « [object Object] » à l'écran) sont vides. Sur les écrans touchés, celles qui
-  existaient déjà sont corrigées, ou la PR dit pourquoi elles restent.
+  existaient déjà sont corrigées, ou la PR dit pourquoi elles restent. Une
+  liste à `null` (« non mesuré avant ») ne prouve rien : refaites l'avant.
 - La comparaison se fait sur une passe complète. Avec `--routes`, elle ne porte
   que sur les routes filtrées, et la planche le dit.
 - Joignez à la PR les captures des espaces touchés, aux trois largeurs.
@@ -141,7 +179,9 @@ elle ne s'invente pas.
   montre les deux.
 - Aucune PR n'ajoute d'occurrence : `comparaison.termes.apres` ne dépasse pas
   `comparaison.termes.avant`, ni `comparaison.termesReplies.apres`
-  `comparaison.termesReplies.avant`.
+  `comparaison.termesReplies.avant`. Ces nombres ne se comparent que si
+  `comparaison.mesure.identique` vaut `true` : une liste de termes élargie
+  change la version de la mesure, et l'avant se refait.
 - Une fois la microcopie réécrite, la recette tourne avec `--strict`, qui
   échoue au premier terme, visible ou replié, et à la première valeur
   technique affichée.

@@ -755,10 +755,12 @@ Trois outils encadrent désormais chaque changement d'interface :
   standard (`--format md|csv`, `--depuis AAAA-MM-JJ`, `--anonyme`).
 - **Regarder.** `outils/recette-captures.mjs` photographie tous les espaces à
   320, 390 et 1440 px (vus comme sur un téléphone sous 768 px), avant
-  (`--avant`) et après (`--apres`) un changement, et écrit hors du dépôt une
+  (`--avant`) et après (`--apres`) un changement, et écrit hors du dépôt, dans
+  un dossier par branche (`../recette-adoption/<branche>`), une
   planche-contact et un relevé JSON : exceptions, débordements, textes coupés,
   contrôles hors écran, valeurs techniques affichées, termes interdits visibles
-  ou dans un bloc replié, et, après, les captures modifiées. Il demande
+  ou dans un bloc replié, et, après, les captures modifiées. Deux passes ne se
+  comparent que si elles ont la même version de la mesure. Il demande
   Playwright et un navigateur (`BROWSER_CHANNEL=chrome`).
 
 La définition de « fini » d'une PR d'interface est dans

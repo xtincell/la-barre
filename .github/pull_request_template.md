@@ -27,13 +27,15 @@ fond-langage-1, friction-parcours-5. -->
 
 ## Captures avant et après
 
-<!-- outils/recette-captures.mjs --avant (sur main) puis --apres (sur la
-branche), à 320, 390 et 1440 px, de tous les espaces touchés. Joindre les
-captures des espaces touchés ; jamais celles d'une vraie base. -->
+<!-- outils/recette-captures.mjs --avant sur la branche de base du lot (main,
+ou adoption/00-mesurer tant que ce lot n'est pas fusionné), puis --apres sur
+la branche, avec la même version de l'outil (documents/FINI.md, section 2),
+à 320, 390 et 1440 px. Joindre les captures des espaces touchés ; jamais
+celles d'une vraie base. -->
 
-- Commande et horloge : 
+- Commande, horloge et commit de la passe avant : 
 - Espaces touchés : 
-- `captures.json` : exceptions 0 · débordements 0 · termes interdits avant → après :
+- `captures.json` : version de la mesure identique (`comparaison.mesure.identique`) · exceptions 0 · débordements 0 · termes interdits avant → après :
 
 | Espace | 320 | 390 | 1440 |
 |---|---|---|---|

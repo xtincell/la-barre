@@ -5,17 +5,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
-import { mkdtemp, mkdir, writeFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { routesDe, lireArguments, planche, comparer, restreindre, problemes, preparerSortie, pluriel, dateLisible,
-  MODES_ATTENDUS, LARGEURS, MARQUE } from '../outils/recette-captures.mjs';
+  sortieParDefaut, typographie, aLOeil, versionMesure, MODES_ATTENDUS, LARGEURS, MARQUE, OUTIL, ECART } from '../outils/recette-captures.mjs';
 import { relever, VALEURS_TECHNIQUES } from '../outils/termes-interdits.mjs';
 
 const RACINE = fileURLToPath(new URL('../', import.meta.url));
 
 const INVENTAIRE = {
-  modes: { valider: null, planning: null, reporting: null, referentiel: null },
+  modes: { valider: null, planning: null, reporting: null, referentiel: null }, nomsSections: { pistes: 'Pistes créatives' },
   natures: [{ cle: 'campagne', nom: 'Campagne', sections: ['identite', 'brief', 'livrables'] }, { cle: 'pitch', nom: 'Pitch', sections: ['identite', 'pistes'] }],
   dossiers: { campagne: 'PRJ-a' }, temoins: { pitch: 'PRO-t' },
   pieces: { attente: { p: 'PRJ-a', l: 'L-1' }, approuvee: { p: 'PRJ-a', l: 'L-2' }, historique: { p: 'PRJ-a', l: 'L-3', n: 1 }, piste: { p: 'PRJ-a', id: 'PI-1' } },
@@ -42,13 +42,18 @@ test('les routes couvrent chaque espace, chaque mode et chaque rubrique de chaqu
   assert.deepEqual(routes.find(r => r.id === 'demande'), { id: 'demande', espace: 'demande', hash: '#/projets/PRO-t/pistes',
     nom: 'Demande de proposition ouverte', action: 'demande', cible: 'PRO-t' });
   assert.deepEqual(LARGEURS, [320, 390, 1440]);
+  // Chaque écran porte un nom qu'une personne du métier reconnaît.
+  assert.equal(routes.find(r => r.id === 'dossier/pitch/pistes').nom, 'Pitch · Pistes créatives');
+  assert.equal(routes.find(r => r.id === 'referentiel/doctrine').nom, 'Ressources · doctrine');
 });
 
 test('les modes lus dans l’application l’emportent, et ce qui manque à la base est dit', () => {
-  const { routes, manquantes } = routesDe({ ...INVENTAIRE, modes: { ...INVENTAIRE.modes, reporting: ['indicateurs', 'nouveau'] },
+  const { routes, manquantes } = routesDe({ ...INVENTAIRE, modes: { ...INVENTAIRE.modes, reporting: ['indicateurs', 'nouveau'],
+    referentiel: [{ cle: 'doctrine', nom: 'Doctrine' }] },
     marque: null, jeton: null, pieces: { attente: null, approuvee: null, historique: null, piste: null }, temoins: {} });
   const ids = routes.map(r => r.id);
   assert.ok(ids.includes('reporting/nouveau') && !ids.includes('reporting/equipe'));
+  assert.equal(routes.find(r => r.id === 'referentiel/doctrine').nom, 'Ressources · Doctrine');
   assert.ok(manquantes.includes('projets/marque') && manquantes.includes('partage') && manquantes.includes('piece/juger') && manquantes.includes('dossier/pitch'));
   assert.ok(manquantes.includes('demande'), 'aucun dossier n’a de pistes : la demande n’est pas inventée');
 });
@@ -79,6 +84,17 @@ test('les valeurs techniques affichées sont relevées, sensibles à la casse', 
   assert.deepEqual(relever('Nulle part, Nan Diallo, une valeur nulle, indéfini.', VALEURS_TECHNIQUES), []);
 });
 
+test('la sortie par défaut est propre à la branche, et une passe faite depuis un export se nomme', () => {
+  assert.equal(sortieParDefaut('adoption/11-valider-dire', 'abc1234'), resolve(RACINE, '..', 'recette-adoption', 'adoption-11-valider-dire'));
+  // Un commit détaché, ou un export sans git.
+  assert.equal(sortieParDefaut('HEAD', '848a1ed'), resolve(RACINE, '..', 'recette-adoption', 'commit-848a1ed'));
+  assert.equal(sortieParDefaut(null, null), resolve(RACINE, '..', 'recette-adoption', 'hors-git'));
+  assert.equal(lireArguments(['--commit', '848a1ed', '--sortie', resolve(RACINE, '..', 'r')]).commit, '848a1ed');
+  assert.throws(() => lireArguments(['--commit', 'main; rm']), /--commit/);
+  assert.match(lireArguments([]).sortie, /recette-adoption[\\/][^\\/]+$/);
+  assert.equal(lireArguments(['--ou']).ou, true);
+});
+
 test('la sortie doit rester hors du dépôt', () => {
   assert.throws(() => lireArguments(['--sortie', RACINE]), /hors du dépôt/);
   assert.throws(() => lireArguments(['--sortie', join(RACINE, 'documents', 'captures')]), /hors du dépôt/);
@@ -99,8 +115,15 @@ test('un dossier qui ne vient pas d’une recette n’est jamais vidé', async (
     await writeFile(join(d, 'captures', 'vacances.png'), 'x');
     await assert.rejects(preparerSortie(d), /ne vient pas d’une recette/);
     assert.ok(existsSync(join(d, 'captures', 'vacances.png')));
-    // Une sortie de recette (captures.json à côté) : vidée, puis marquée.
-    await writeFile(join(d, 'captures.json'), '{}');
+    // Une planche et un captures.json qui ne viennent pas d'une recette : refusés, intacts.
+    const autre = join(d, 'autre');
+    await mkdir(autre);
+    await writeFile(join(autre, 'index.html'), '<p>Mon site</p>');
+    await writeFile(join(autre, 'captures.json'), '{}');
+    await assert.rejects(preparerSortie(autre), /contient déjà index\.html et captures\.json, qui ne vient pas d’une recette/);
+    assert.equal(await readFile(join(autre, 'index.html'), 'utf8'), '<p>Mon site</p>');
+    // Une sortie de recette (captures.json de cet outil à côté) : vidée, puis marquée.
+    await writeFile(join(d, 'captures.json'), JSON.stringify({ outil: OUTIL }));
     await mkdir(join(d, 'cibles'));
     await preparerSortie(d);
     assert.deepEqual(await readdir(join(d, 'captures')), [MARQUE]);
@@ -123,10 +146,16 @@ function capture(id, largeur, extra = {}) {
 }
 const VERDICT = { terme: 'verdict', nombre: 1, extraits: ['…Rendre un verdict…'] };
 const PORTE = { terme: 'porte A/B/C', nombre: 2, extraits: ['…la porte A se ferme…'] };
+const MESURE = { version: 'v-test', contexte: { postes: { telephone: { deviceScaleFactor: 2 } }, sous: 768, pleinePage: false } };
+/* Un écart de pixels tel que ecartDePixels le rend, sur un écran de 1 000 000 px. */
+function ecart(hors, images = { pixels: 0, max: 0 }) {
+  const pixels = hors.pixels + images.pixels;
+  return { pixels, total: 1e6, part: pixels / 1e6, max: Math.max(hors.max, images.max), hors, images };
+}
 
 test('la planche-contact échappe le texte et compare avant et après', () => {
-  const avant = { quand: '2026-11-26', commit: 'aaa', captures: [capture('bureau', 320), capture('plus', 320)] };
-  const apres = { quand: '2026-11-27', commit: 'bbb', temps: 'apres', largeurs: [320], base: { fichier: 'b.json', projets: 1, livrables: 1 },
+  const avant = { quand: '2026-11-26', commit: 'aaa', mesure: MESURE, captures: [capture('bureau', 320), capture('plus', 320)] };
+  const apres = { quand: '2026-11-27', commit: 'bbb', mesure: MESURE, temps: 'apres', largeurs: [320], base: { fichier: 'b.json', projets: 1, livrables: 1 },
     manquantes: [], captures: [capture('bureau', 320, { debordement: 12, termes: [{ terme: 'verdict', nombre: 1, extraits: [] }] }), capture('galerie', 320)],
     resume: { routes: 2, captures: 2, exceptions: 0, debordements: 1, termes: 1, introuvables: 0, imagesCassees: 0 } };
   const html = planche(apres, { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' });
@@ -134,17 +163,19 @@ test('la planche-contact échappe le texte et compare avant et après', () => {
   assert.match(html, /Titre &lt;b&gt;/);
   assert.match(html, /\.\.\/avant\/captures\/bureau--320\.png/);
   assert.match(html, /déborde de 12 px/);
+  assert.match(html, /<meta name="generator" content="outils\/recette-captures\.mjs">/);
   const c = comparer(avant, apres);
   assert.deepEqual(c.routesNouvelles, ['galerie']);
   assert.deepEqual(c.routesDisparues, ['plus']);
   assert.deepEqual(c.debordementsNouveaux, ['bureau@320']);
   assert.deepEqual(c.termes, { avant: 0, apres: 1 });
+  assert.equal(c.mesure.identique, true);
   assert.deepEqual(problemes(capture('x', 320)), []);
 });
 
 test('les termes repliés, les textes coupés, les contrôles hors écran et les valeurs techniques comptent', () => {
-  const avant = { captures: [capture('piece', 320), capture('piece', 1440, { termesReplies: [PORTE] })] };
-  const apres = { captures: [
+  const avant = { mesure: MESURE, captures: [capture('piece', 320), capture('piece', 1440, { termesReplies: [PORTE] })] };
+  const apres = { mesure: MESURE, captures: [
     capture('piece', 320, { termesReplies: [PORTE], coupes: { nombre: 1, exemples: [{ selecteur: 'span.etat', texte: 'le projet peut…', px: 35 }] },
       horsEcran: { nombre: 1, exemples: [{ selecteur: 'button.panneau-fermer', texte: '✕' }] } }),
     capture('piece', 1440, { termesReplies: [PORTE], valeurs: [{ terme: 'undefined', nombre: 1, extraits: ['Fermée par : undefined'] }] }),
@@ -154,18 +185,54 @@ test('les termes repliés, les textes coupés, les contrôles hors écran et les
   assert.deepEqual(c.coupesNouvelles, ['piece@320']);
   assert.deepEqual(c.horsEcranNouveaux, ['piece@320']);
   assert.deepEqual(c.valeursNouvelles, ['piece@1440']);
-  const p = Object.fromEntries(problemes(apres.captures[0]).map(([k, t, e]) => [k, [t, e]]));
-  assert.deepEqual(p.replie, ['replié : porte A/B/C ×2', '…la porte A se ferme…']);
-  assert.deepEqual(p.coupe, ['1 texte coupé', 'le projet peut… · span.etat']);
-  assert.deepEqual(p['hors-ecran'], ['1 contrôle hors écran', '✕ · button.panneau-fermer']);
+  // Le texte d'abord, le sélecteur à part : il ne sert qu'à qui corrige le code.
+  const p = Object.fromEntries(problemes(apres.captures[0]).map(([k, t, e, d]) => [k, [t, e, d]]));
+  assert.deepEqual(p.replie, ['replié : porte A/B/C ×2', '…la porte A se ferme…', '']);
+  assert.deepEqual(p.coupe, ['1 texte coupé', 'le projet peut…', 'span.etat']);
+  assert.deepEqual(p['hors-ecran'], ['1 contrôle hors écran', '✕', 'button.panneau-fermer']);
   assert.equal(problemes(apres.captures[1])[0][1], 'affiche « undefined »');
-  // Une passe « avant » d'avant cet outil n'a pas de termes repliés : c'est dit, pas compté à zéro.
-  assert.equal(comparer({ captures: [{ ...capture('piece', 320), termesReplies: undefined }] }, apres).termesReplies.avant, null);
+});
+
+test('une passe « avant » d’une version plus ancienne : ce qu’elle ne mesurait pas est « non mesuré avant », et rien n’est compté comme modifié', () => {
+  // L'avant de la première version de l'outil : ni contexte de téléphone, ni
+  // textes coupés, ni contrôles hors écran, ni valeurs techniques, ni termes repliés.
+  const ancienne = c => { const { coupes, horsEcran, valeurs, termesReplies, ...reste } = c; return reste; };
+  const avant = { captures: [ancienne(capture('piece', 320, { termes: [VERDICT] })), ancienne(capture('bureau', 320))] };
+  const apres = { mesure: MESURE, temps: 'apres', largeurs: [320], base: { fichier: 'base-fictive.json', projets: 1, livrables: 1 }, manquantes: [],
+    resume: { routes: 2, captures: 2, exceptions: 0, debordements: 0, termes: 1, introuvables: 0, imagesCassees: 0 },
+    captures: [
+      capture('piece', 320, { termes: [VERDICT, PORTE], empreinte: 'autre', ecart: { pixels: null },
+        coupes: { nombre: 1, exemples: [{ selecteur: 'span.etat', texte: 'le projet peut…', px: 35 }] },
+        horsEcran: { nombre: 1, exemples: [{ selecteur: 'button', texte: '✕' }] }, valeurs: [{ terme: 'undefined', nombre: 1, extraits: ['x'] }] }),
+      capture('bureau', 320)] };
+  const c = comparer(avant, apres);
+  assert.equal(c.coupesNouvelles, null);
+  assert.equal(c.horsEcranNouveaux, null);
+  assert.equal(c.valeursNouvelles, null);
+  assert.equal(c.termesReplies.avant, null);
+  assert.deepEqual(c.exceptionsNouvelles, [], 'les exceptions étaient déjà mesurées');
+  // La version diffère : la capture qui a changé n'est pas « modifiée », elle n'est pas comparée.
+  assert.deepEqual(c.mesure, { avant: null, apres: 'v-test', identique: false, contexte: false });
+  assert.deepEqual(c.modifiees, []);
+  assert.equal(c.identiques, 1);
+  assert.equal(c.nonComparees, 1);
+  assert.deepEqual(c.termes, { avant: 1, apres: 3 });
+  const html = planche(apres, { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' });
+  assert.match(html, /La passe «\u00a0avant\u00a0» a été prise avec une autre version de l’outil \(une version qui ne notait pas encore la sienne\)/);
+  assert.match(html, /Textes coupés nouveaux\u00a0: non mesuré avant\. Contrôles hors écran nouveaux\u00a0: non mesuré avant\. Valeurs techniques nouvelles\u00a0: non mesuré avant\./);
+  assert.match(html, /badge etat inconnue">non comparée/);
+  assert.match(html, /1 → 3\u202f; dans un bloc replié ou une bulle\u00a0: non mesuré avant → 0 <i>\(à refaire/);
+  // Une autre version notée, ou un autre poste de capture : même refus.
+  const autre = comparer({ ...avant, mesure: { ...MESURE, version: 'v-ancienne' } }, apres);
+  assert.deepEqual(autre.mesure, { avant: 'v-ancienne', apres: 'v-test', identique: false, contexte: true });
+  const poste = comparer({ ...avant, mesure: { ...MESURE, contexte: { ...MESURE.contexte, pleinePage: true } } }, apres);
+  assert.equal(poste.mesure.identique, false);
+  assert.equal(poste.mesure.contexte, false);
 });
 
 test('avec --routes, la comparaison ne confronte que les routes filtrées', () => {
-  const avant = { captures: ['bureau', 'valider/file', 'plus', 'reporting/bilan'].map(id => capture(id, 320, { termes: [VERDICT] })) };
-  const apres = { filtre: '^(bureau|valider/)', captures: ['bureau', 'valider/file'].map(id => capture(id, 320, { termes: [VERDICT] })) };
+  const avant = { mesure: MESURE, captures: ['bureau', 'valider/file', 'plus', 'reporting/bilan'].map(id => capture(id, 320, { termes: [VERDICT] })) };
+  const apres = { mesure: MESURE, filtre: '^(bureau|valider/)', captures: ['bureau', 'valider/file'].map(id => capture(id, 320, { termes: [VERDICT] })) };
   const brut = comparer(avant, apres);
   assert.deepEqual(brut.routesDisparues, ['plus', 'reporting/bilan'], 'sans restriction, la comparaison serait fausse');
   const c = comparer(restreindre(avant, /^(bureau|valider\/)/), restreindre(apres, null));
@@ -176,38 +243,97 @@ test('avec --routes, la comparaison ne confronte que les routes filtrées', () =
   assert.deepEqual(d.routesNouvelles, []);
 });
 
-test('la planche « après » dit ce qui a changé, et laisse le lissage de côté', () => {
-  const avant = { quand: '2026-11-26T08:00:00.000Z', commit: 'aaa', captures: [
+test('« identique à l’œil » ne pardonne que le lissage des images et le crénelage de quelques coins', () => {
+  // Le lissage d'une vignette : des milliers de pixels, jusqu'à 16/255, tous dans l'image.
+  assert.equal(aLOeil(ecart({ pixels: 0, max: 0 }, { pixels: 4943, max: 16 })), true);
+  // Le crénelage des coins arrondis ou d'un bout de soulignement : quelques dizaines de pixels hors des images, jusqu'à 5/255.
+  assert.equal(aLOeil(ecart({ pixels: 41, max: 2 })), true);
+  assert.equal(aLOeil(ecart({ pixels: 8, max: 5 })), true);
+  // Une page assombrie de 8 % : tous les pixels, jusqu'à 20/255. Modifiée.
+  assert.equal(aLOeil(ecart({ pixels: 1e6, max: 20 })), false);
+  // Une bordure d'un ton plus pâle (#deded8 → #e8e8e2) : 10/255 sur quelques milliers de pixels. Modifiée.
+  assert.equal(aLOeil(ecart({ pixels: 3200, max: 10 })), false);
+  // Un texte un peu éclairci (#1f2937 → #3a4250) : 27/255. Modifiée.
+  assert.equal(aLOeil(ecart({ pixels: 900, max: 27 })), false);
+  // Un fond décalé d'un point sur tout l'écran : invisible pixel par pixel, mais trop étendu pour du bruit.
+  assert.equal(aLOeil(ecart({ pixels: 5000, max: 1 })), false);
+  // Une autre image : plus de 32/255 dans l'image. Modifiée.
+  assert.equal(aLOeil(ecart({ pixels: 0, max: 0 }, { pixels: 20000, max: 200 })), false);
+  // Deux tailles différentes, ou rien de mesuré : modifiée.
+  assert.equal(aLOeil({ pixels: null }), false);
+  assert.equal(aLOeil(undefined), false);
+  assert.deepEqual(ECART, { bruit: 8, partBruit: 0.001, image: 32 });
+});
+
+test('la planche « après » dit ce qui a changé, et laisse le lissage de côté sans le cacher', () => {
+  const avant = { quand: '2026-11-26T08:00:00.000Z', commit: 'aaa', mesure: MESURE, captures: [
     capture('bureau', 320), capture('bureau', 1440), capture('plus', 320), capture('partage', 320)] };
-  const apres = { quand: '2026-11-26T14:07:25.070Z', commit: 'bbb', temps: 'apres', largeurs: [320, 1440], base: { fichier: 'base-fictive.json', projets: 2, livrables: 1 },
+  const apres = { quand: '2026-11-26T14:07:25.070Z', commit: 'bbb', temps: 'apres', mesure: MESURE, largeurs: [320, 1440], base: { fichier: 'base-fictive.json', projets: 2, livrables: 1 },
     manquantes: [], captures: [
-      capture('bureau', 320, { empreinte: 'autre', ecart: { pixels: 1200, max: 255 }, termes: [VERDICT] }),
-      capture('bureau', 1440, { termes: [VERDICT] }),
-      capture('plus', 320),
-      capture('partage', 320, { empreinte: 'lisse', ecart: { pixels: 0, max: 2 } })],
+      capture('bureau', 320, { nom: 'Bureau', empreinte: 'autre', ecart: ecart({ pixels: 1200, max: 255 }), termes: [VERDICT] }),
+      capture('bureau', 1440, { nom: 'Bureau', termes: [VERDICT] }),
+      capture('plus', 320, { nom: 'Plus' }),
+      capture('partage', 320, { nom: 'Page partagée', empreinte: 'lisse', ecart: ecart({ pixels: 0, max: 0 }, { pixels: 300, max: 16 }) })],
     resume: { routes: 3, captures: 4, exceptions: 0, debordements: 0, coupes: 0, horsEcran: 0, valeurs: 0, termes: 2, termesReplies: 0, introuvables: 0, imagesCassees: 1 } };
   const c = comparer(avant, apres);
   assert.deepEqual(c.modifiees, ['bureau@320']);
   assert.equal(c.identiques, 2);
   assert.equal(c.identiquesALOeil, 1);
+  assert.deepEqual(c.nuancees, [{ capture: 'partage@320', max: 16, pixels: 300 }]);
   const html = planche(apres, { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' });
-  assert.match(html, /Ce qui a changé depuis la passe « avant »/);
+  assert.match(html, /Ce qui a changé depuis la passe «\u00a0avant\u00a0»/);
+  assert.doesNotMatch(html, /alerte-version">/);
   assert.match(html, /<b>1 capture modifiée<\/b>, 3 identiques \(dont 1 à l’œil seulement/);
-  assert.match(html, /<article id="bureau" class="modifiee">/);
+  assert.match(html, /Écrans touchés\u00a0: <a href="#bureau" title="bureau">Bureau<\/a>/);
+  // Les captures nuancées sont nommées avec leur nuance, et restent visibles sous le filtre.
+  assert.match(html, /Identiques à l’œil, à vérifier d’un regard\u00a0: <a href="#partage" title="partage">Page partagée<\/a> à 320 px \(nuance 16\/255 sur 300 px\)/);
+  assert.match(html, /<article id="bureau" class="a-voir">/);
+  assert.match(html, /<article id="partage" class="a-voir">/);
   assert.match(html, /<article id="plus">/);
-  assert.match(html, /badge etat modifiee">modifiée · 1\u202f200 px|badge etat modifiee">modifiée · 1 200 px/);
-  assert.match(html, /badge etat quasi">identique à l’œil/);
+  assert.match(html, /badge etat modifiee">modifiée · 1\u202f200 px \(0,1\u202f%\)/);
+  assert.match(html, /badge etat quasi">identique à l’œil · nuance 16\/255/);
   assert.match(html, /id="seulement"/);
+  assert.match(html, /figure\.identique,/);
+  assert.doesNotMatch(html, /figure\.quasi\{|figure\.quasi,/, 'une capture nuancée n’est pas cachée par le filtre');
+  // Quand le filtre ne garde rien, la planche le dit.
+  assert.match(html, /<p class="rien">Aucune capture modifiée, nouvelle ou nuancée depuis la passe «\u00a0avant\u00a0»\.<\/p>/);
+  assert.match(html, /body:has\(#seulement:checked\):not\(:has\(article\.a-voir\)\) \.rien\{display:block\}/);
   // Lisible par quelqu'un du métier : date en clair, base nommée une fois, pluriels accordés.
   assert.doesNotMatch(html, /2026-11-26T14:07/);
   assert.match(html, /Le 26 novembre 2026 à \d{2}:\d{2}/);
   assert.match(html, /base fictive \(base-fictive\.json\), 2 projets et 1 pièce/);
+  assert.match(html, /version de la mesure v-test/);
   assert.doesNotMatch(html, /\(s\)/);
   assert.match(html, /0 exception</);
   assert.match(html, /1 image cassée</);
-  // « À regarder » : une entrée par route, ses largeurs et sa première phrase.
-  assert.match(html, /À regarder : 1 route/);
-  assert.match(html, /<li><a href="#bureau">bureau<\/a><ul><li><span class="badge terme">verdict<\/span> à 320 et 1440 px : <q>…Rendre un verdict…<\/q><\/li><\/ul><\/li>/);
+  // « À regarder » : une entrée par écran, nommé comme dans l'application, ses largeurs et sa première phrase.
+  assert.match(html, /À regarder\u00a0: 1 écran/);
+  assert.match(html, /<li><a href="#bureau" title="bureau">Bureau<\/a><ul><li><span class="badge terme">verdict<\/span> à 320 et 1440 px\u00a0: <q>…Rendre un verdict…<\/q><\/li><\/ul><\/li>/);
+  assert.match(html, /<h3>Bureau<\/h3>/);
+});
+
+test('« À regarder » montre le texte, et garde le sélecteur sur une ligne discrète', () => {
+  const r = { quand: '2026-11-26', largeurs: [320], base: { fichier: 'b.json', projets: 1, livrables: 1 }, manquantes: [],
+    resume: { routes: 1, captures: 1, exceptions: 0, debordements: 0, termes: 0, introuvables: 0, imagesCassees: 0 },
+    captures: [capture('nouveau-projet', 320, { nom: 'Nouveau projet ouvert',
+      coupes: { nombre: 1, exemples: [{ selecteur: 'div#contenu > div.lb-outils-collection > input', texte: 'Nom, client, référence, marque', px: 40 }] } })] };
+  const html = planche(r, { dossier: '/tmp/r' });
+  assert.match(html, /<a href="#nouveau-projet" title="nouveau-projet">Nouveau projet ouvert<\/a>/);
+  assert.match(html, /<q>Nom, client, référence, marque<\/q><br><small class="tech" title="Où le trouver dans la page">div#contenu &gt; div\.lb-outils-collection &gt; input<\/small>/);
+});
+
+test('la typographie garde la ponctuation avec son mot, sans toucher aux balises ni au style', () => {
+  assert.equal(typographie('<p>Termes : 138 → 138 ; repliés ? oui ! « avant » 0,1 %</p>'),
+    '<p>Termes\u00a0: 138 → 138\u202f; repliés\u202f? oui\u202f! «\u00a0avant\u00a0» 0,1\u202f%</p>');
+  assert.equal(typographie('<a href="#a :b" title="x ; y">z</a>'), '<a href="#a :b" title="x ; y">z</a>');
+  const html = planche({ quand: '2026-11-26', largeurs: [320], base: { fichier: 'b.json', projets: 1, livrables: 1 }, manquantes: [], captures: [capture('bureau', 320)],
+    resume: { routes: 1, captures: 1, exceptions: 0, debordements: 0, termes: 0, introuvables: 0, imagesCassees: 0 } }, { dossier: '/tmp/r' });
+  assert.match(html, /<style>\n:root\{/, 'la feuille de style est intacte');
+});
+
+test('la version de la mesure est l’empreinte de l’outil et de la liste des termes', () => {
+  assert.match(versionMesure(), /^[0-9a-f]{12}$/);
+  assert.equal(versionMesure(), versionMesure());
 });
 
 test('la planche montre la planche cible assez grande, et les pluriels justes', () => {
