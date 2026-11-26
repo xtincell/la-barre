@@ -286,8 +286,9 @@ window.FEEDBACK = (function () {
       selPortee.appendChild(el("option", { value: k }, NIVEAUX[k].nom + " — " + NIVEAUX[k].quoi));
     });
     if (cibles && cibles.length) selPortee.value = "declinaison";
-    var aideN = el("div.indice", {}, NIVEAUX[selPortee.value].onde);
-    selPortee.addEventListener("change", function () { aideN.textContent = NIVEAUX[selPortee.value].onde; });
+    function phraseDe(t) { return t.charAt(0).toUpperCase() + t.slice(1) + "."; }
+    var aideN = el("div.indice", {}, phraseDe(NIVEAUX[selPortee.value].onde));
+    selPortee.addEventListener("change", function () { aideN.textContent = phraseDe(NIVEAUX[selPortee.value].onde); });
 
     /* Les pièces par leur titre ; le code reste en info-bulle, pour départager
      * deux pièces de même support et de même marché. */
@@ -335,23 +336,27 @@ window.FEEDBACK = (function () {
     choixRoutes.surChangement(dessiner);
     dessiner();
 
-    var erreur = el("p.remise-erreur", { role: "alert" }, "");
+    /* Le manque se dit sous le champ qui manque, et le suivant remplace le
+     * précédent : sur téléphone, il est là où le focus arrive. */
+    var manqueTexte = el("p.remise-erreur", { id: "fb-texte-erreur", role: "alert" }, "");
+    var manqueAuteur = el("p.remise-erreur", { id: "fb-auteur-erreur", role: "alert" }, "");
+    champ.setAttribute("aria-describedby", "fb-texte-erreur");
+    selAuteur.setAttribute("aria-describedby", "fb-auteur-erreur");
     PANNEAU.ouvrir("Enregistrer un retour", p.ref, el("div", {},
       el("p.fb-note", {}, "Notez le retour tel qu'il a été dit ou écrit, même sur WhatsApp : il sera daté et rattaché aux pièces qu'il touche."),
       el("div.form", {},
-        el("div.champ", {}, el("label", { for: "fb-texte" }, "Ce qui est demandé"), champ),
-        el("div.champ", {}, el("label", { for: "fb-auteur" }, "Par qui"), selAuteur),
+        el("div.champ", {}, el("label", { for: "fb-texte" }, "Ce qui est demandé"), champ, manqueTexte),
+        el("div.champ", {}, el("label", { for: "fb-auteur" }, "Par qui"), selAuteur, manqueAuteur),
         el("div.champ", {}, el("label", { for: "fb-quand" }, "Quand"), champDate),
         el("div.champ", {}, el("label", { for: "fb-canal" }, "Par quel canal"), selCanal),
         el("div.champ", {}, el("label", { for: "fb-niveau" }, "À quel niveau il s'applique"), selPortee, aideN)),
       zoneCibles,
       el("div.sousbloc", {}, el("h3", {}, "Ce que ça touche"), apercu),
-      erreur,
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          /* Le manque se dit sur place, et le suivant remplace le précédent. */
-          if (!champ.value.trim()) { erreur.textContent = "Écrivez ce qui est demandé avant d'enregistrer."; champ.focus(); return; }
-          if (!selAuteur.value) { erreur.textContent = "Dites qui a formulé ce retour : il sera rattaché à cette personne."; selAuteur.focus(); return; }
+          manqueTexte.textContent = ""; manqueAuteur.textContent = "";
+          if (!champ.value.trim()) { manqueTexte.textContent = "Écrivez ce qui est demandé avant d'enregistrer."; champ.focus(); return; }
+          if (!selAuteur.value) { manqueAuteur.textContent = "Dites qui a formulé ce retour : il sera rattaché à cette personne."; selAuteur.focus(); return; }
           var f = Object.assign(brouillon(), {
             id: O.id("FB"), texte: champ.value.trim(), auteur: selAuteur.value,
             canal: selCanal.value, quand: champDate.value,
