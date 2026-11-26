@@ -915,3 +915,21 @@ test('« Demander un retour », « Décrire un fichier » et « Nouveau KV » re
   s.ctx.VUE_PLANCHE.ajouter(p, () => {});
   etiquettesReliees(s.dernier(), ['Niveau du KV', 'Marque', 'Piste du master', 'Master de référence', 'Marché de destination']);
 });
+
+/* La file de Décider et le dossier disent la même chose : une demande simple
+ * n'a pas de brief à traiter (sa nature n'a pas de section brief), et une
+ * ligne de la chaîne dit le geste qui reste, pas « brief accepté à faire ». */
+test('la chaîne du brief ne réclame rien à une demande simple, et nomme le geste qui reste', async () => {
+  const ctx = await bac();
+  Object.assign(ctx, { MAISON: ctx.MAISON_BASE.creer({}), VALIDATION: { valide: o => !!(o && o.validation) },
+    VUE_ATELIER: { idees: () => [] }, DEMANDE: { toutes: () => [] } });
+  for (const nom of ['nature', 'chaine-brief']) vm.runInContext(await lire(nom), ctx, { filename: nom + '.js' });
+  const demande = { nature: 'demande', sections: {} };
+  assert.deepEqual(JSON.parse(JSON.stringify(ctx.CHAINE_BRIEF.avancement(demande))), { faits: 0, total: 0, prochain: null });
+  const campagne = { nature: 'campagne', sections: {} };
+  assert.equal(ctx.CHAINE_BRIEF.avancement(campagne).prochain.afaire, 'brief à accepter');
+  campagne.sections.brief = { validation: { verdict: 'approuve' } };
+  assert.equal(ctx.CHAINE_BRIEF.avancement(campagne).prochain.afaire, 'plateforme de marque à établir');
+  assert.deepEqual(Array.from(ctx.CHAINE_BRIEF.CHAINE, c => c.afaire), ['brief à accepter', 'plateforme de marque à établir',
+    'stratégie à définir', 'atelier à tenir', 'big idea à définir', 'demande au DA à envoyer']);
+});
