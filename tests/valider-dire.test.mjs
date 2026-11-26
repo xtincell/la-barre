@@ -247,6 +247,56 @@ test('une page fermée avant l’échéance : la note se rejoue à la réouvertu
   assert.equal(ouverte.notes().length, 1);
 });
 
+/* L'horloge du bac (decisions-scenarios.mjs) part du 10 novembre à 9 h et
+ * avance d'une seconde à chaque lecture. */
+test('une note jamais marquée (onglet tué sans pagehide) se rejoue passé 128 s, et pas avant', async () => {
+  const avant = await validation(54);
+  cliquer(bouton(avant.s.ctx.VUE_LIVRABLE.decider(avant.p, avant.l, () => {}), 'Valider la V1'));
+  const note = avant.notes()[0];
+  assert.equal(note.rejouer, false);
+
+  const vieille = { ...note, quand: '2026-11-10T08:57:00.000Z' };   // trois minutes avant
+  const ancienne = await validation(55, [['la-barre-validations', JSON.stringify([vieille])]]);
+  assert.equal(ancienne.s.ctx.VUE_LIVRABLE.reprendreValidations(), 1);
+  assert.equal(ancienne.l.versions[0].verdict, 'approuve');
+  assert.equal(ancienne.s.ctx.DEPOT.liste('decisions').length, 1);
+  assert.deepEqual(ancienne.notes(), [], 'rejouée, la note est retirée');
+  assert.equal(ancienne.s.ctx.VUE_LIVRABLE.reprendreValidations(), 0, 'une note ne se rejoue qu’une fois');
+  assert.equal(ancienne.s.ctx.DEPOT.liste('decisions').length, 1);
+
+  const recente = { ...note, quand: '2026-11-10T08:59:00.000Z' };   // une minute avant
+  const ouverte = await validation(56, [['la-barre-validations', JSON.stringify([recente])]]);
+  assert.equal(ouverte.s.ctx.VUE_LIVRABLE.reprendreValidations(), 0, 'moins de 128 s : la page qui l’a posée est peut-être encore ouverte');
+  assert.equal(ouverte.l.versions[0].verdict, undefined);
+  assert.equal(ouverte.s.ctx.DEPOT.liste('decisions').length, 0);
+  assert.deepEqual(ouverte.notes().map(n => n.id), [note.id], 'la note reste à sa place');
+});
+
+test('une page revenue du cache de navigation reprend sa validation : la note n’est plus à rejouer ailleurs', async () => {
+  const v = await validation(57);
+  const ecouteurs = {};
+  v.s.ctx.addEventListener = (type, f) => { (ecouteurs[type] ||= []).push(f); };
+  cliquer(bouton(v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {}), 'Valider la V1'));
+  ecouteurs.pagehide.forEach(f => f({ persisted: true }));
+  assert.deepEqual(v.notes().map(n => n.rejouer), [true], 'la page qui se cache marque sa note');
+  ecouteurs.pageshow.forEach(f => f({ persisted: true }));
+  assert.deepEqual(v.notes().map(n => n.rejouer), [false], 'revenue, elle la reprend');
+
+  const ailleurs = await validation(58, [['la-barre-validations', JSON.stringify(v.notes())]]);
+  assert.equal(ailleurs.s.ctx.VUE_LIVRABLE.reprendreValidations(), 0, 'un autre onglet ne la prend pas');
+  v.minuteries[0]();
+  assert.equal(v.l.versions[0].verdict, 'approuve', 'elle s’écrit ici, à son échéance');
+  assert.deepEqual(v.notes(), []);
+
+  const recharge = await validation(59);
+  const sur = {};
+  recharge.s.ctx.addEventListener = (type, f) => { (sur[type] ||= []).push(f); };
+  cliquer(bouton(recharge.s.ctx.VUE_LIVRABLE.decider(recharge.p, recharge.l, () => {}), 'Valider la V1'));
+  sur.pagehide.forEach(f => f({ persisted: false }));
+  sur.pageshow.forEach(f => f({ persisted: false }));
+  assert.deepEqual(recharge.notes().map(n => n.rejouer), [true], 'une page neuve ne démarque pas la note d’une autre');
+});
+
 /* ————— Décider depuis la fiche de la pièce ————— */
 
 const textes = n => (n && n.textContent) || '';
