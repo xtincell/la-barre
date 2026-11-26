@@ -316,7 +316,13 @@ window.UI = (function () {
    *
    * `compte(m)` rend un nombre ou rien ; `alerte(m)` colore la pastille du
    * mode qui porte l'urgence. Si tout est rouge, la priorité cesse d'être
-   * rare : c'est à l'appelant de n'en désigner qu'un. */
+   * rare : c'est à l'appelant de n'en désigner qu'un.
+   *
+   * Les modes restent visibles, quel que soit leur nombre. Repliés derrière
+   * « Vue ▸ », les sept rubriques de Ressources et les vues du Bilan ne se
+   * trouvaient plus (constat forme-systeme-css-4). Sur ordinateur, ils vont à
+   * la ligne ; sur téléphone, ils tiennent sur une ligne qui défile, le mode
+   * actif en vue. */
   function modes(liste, courant, quand, opts) {
     opts = opts || {};
     var actif = liste.filter(function (m) { return m.cle === courant; })[0] || liste[0];
@@ -332,8 +338,11 @@ window.UI = (function () {
       });
     }
     var choix = el("div.studio-statuts", { role: "group", "aria-label": opts.titre || "Vues" }, contenu());
-    if (liste.length <= 2) return el("div.st-modes", {}, choix);
-    return el("details.st-modes.lb-modes", {}, el("summary", {}, "Vue", el("strong", {}, actif.nom)), choix);
+    if (window.requestAnimationFrame) requestAnimationFrame(function () {
+      var a = choix.querySelector(".active");
+      if (a && choix.scrollWidth > choix.clientWidth) choix.scrollLeft = Math.max(0, a.offsetLeft - choix.offsetLeft - 16);
+    });
+    return el("div.st-modes", {}, choix);
   }
 
   /* ————————————————————— 17 · La bande de recevabilité ————————————————————— */

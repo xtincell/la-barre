@@ -256,12 +256,22 @@ try {
   await page.setViewportSize({width:320,height:700});
   await page.getByRole('navigation',{name:'Navigation mobile'}).getByRole('link',{name:'Plus'}).click();
   await page.locator('.lb-liste-liens').getByRole('link',{name:'Planning'}).click();
-  await page.locator('.lb-modes summary').click();
-  await page.locator('.lb-modes a[href="#/planning/charge"]').click();
+  // Les vues ne se replient jamais : sur téléphone, une ligne qui défile,
+  // la vue active en vue, sans élargir la page.
+  const vuesPlanning = page.getByRole('group', { name:'Vues du planning' });
+  assert.equal(await page.locator('.st-modes summary').count(), 0, 'Aucune vue repliée derrière « Vue »');
+  await vuesPlanning.locator('a[href="#/planning/charge"]').click();
   await page.waitForURL('**/#/planning/charge');
   await page.reload({waitUntil:'networkidle'});
-  await page.locator('.lb-modes summary').click();
-  assert.match(await page.locator('.lb-modes [aria-current="page"]').innerText(),/Plan de charge/);
+  assert.match(await vuesPlanning.locator('[aria-current="page"]').innerText(),/Plan de charge/);
+  const ligneVues = await vuesPlanning.evaluate(g => {
+    const hauts = [...g.children].map(a => Math.round(a.getBoundingClientRect().top));
+    const actif = g.querySelector('[aria-current]').getBoundingClientRect(), cadre = g.getBoundingClientRect();
+    return { lignes: new Set(hauts).size, defile: g.scrollWidth > g.clientWidth,
+      actifVisible: actif.left >= cadre.left - 1 && actif.right <= cadre.right + 1,
+      page: document.documentElement.scrollWidth <= innerWidth };
+  });
+  assert.deepEqual(ligneVues, { lignes: 1, defile: true, actifVisible: true, page: true });
   // À 320 et 360 px, le titre d'une pièce longue (« Key visual — Côte
   // d'Ivoire · Orvelle ») passe sous celui du panneau : la croix reste entière
   // dans l'écran, et « Demander des modifs » tient sur une ligne.
