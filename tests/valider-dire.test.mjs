@@ -158,6 +158,16 @@ test('« Annuler la validation » resté à l’écran après l’échéance dit
   assert.equal(v.s.ctx.DEPOT.liste('decisions').length, 1);
 });
 
+test('une note déjà prise par un autre onglet ne s’écrit pas une seconde fois', async () => {
+  const v = await validation(48);
+  cliquer(bouton(v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {}), 'Valider la V1'));
+  v.s.ctx.localStorage.removeItem('la-barre-validations');   // l'autre onglet l'a rejouée
+  v.minuteries[0]();
+  assert.equal(v.l.versions[0].verdict, undefined);
+  assert.equal(v.s.ctx.DEPOT.liste('decisions').length, 0);
+  assert.match(v.avis[v.avis.length - 1][1], /enregistrée depuis un autre onglet/);
+});
+
 test('annulée à temps, la validation ne laisse ni décision ni note', async () => {
   const v = await validation(43);
   cliquer(bouton(v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {}), 'Valider la V1'));

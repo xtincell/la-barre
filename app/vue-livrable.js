@@ -672,7 +672,12 @@ window.VUE_LIVRABLE = (function () {
   function echeance(e) {
     if (!desengager(e)) return;
     /* La note a déjà été prise : un autre onglet a écrit cette validation. */
-    if (e.note && !prendre(e.id)) { e.issue = "ailleurs"; redessiner(e); return; }
+    if (e.note && !prendre(e.id)) {
+      e.issue = "ailleurs";
+      if (window.AVIS) AVIS.fait("La V" + e.numero + " a été enregistrée depuis un autre onglet. Rechargez la page pour la voir.");
+      redessiner(e);
+      return;
+    }
     conclure(e);
     redessiner(e);
   }
