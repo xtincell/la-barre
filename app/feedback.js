@@ -421,10 +421,10 @@ window.FEEDBACK = (function () {
 
       motifs.length
         ? el("div.sousbloc", {},
-            el("h3", {}, "Sur quoi je peux m'opposer",
-              el("span.droite", {}, motifs.length + (motifs.length > 1 ? " motifs opposables" : " motif opposable"))),
+            el("h3", {}, "Ce qui permet de discuter ce retour",
+              el("span.droite", {}, motifs.length + (motifs.length > 1 ? " motifs" : " motif"))),
             listeM)
-        : UI.banniere("", "Aucun motif opposable : ce retour arrive avant validation, dans les allers-retours vendus, sur du périmètre prévu. Il se traite, il ne se conteste pas."),
+        : UI.banniere("", "Rien à discuter : ce retour arrive avant validation, dans les allers-retours prévus au devis et sur le périmètre prévu. Il se traite."),
 
       el("div.form", {},
         el("div.champ", {}, el("label", {}, "L'issue"), selI, aide),

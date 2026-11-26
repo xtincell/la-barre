@@ -38,21 +38,21 @@ window.DEMANDE = (function () {
     var e = MAISON.etages.filter(function (x) { return x.n === d.etage; })[0];
     return [
       { quoi: "Un DA nommé", ok: !!d.da, poids: 5,
-        cout: "champ bloquant du §10 : sans nom, personne n'est en défaut le jour où rien n'arrive" },
-      { quoi: "Étage autorisé", ok: d.etage !== null && d.etage !== undefined, poids: 4,
+        cout: "sans DA nommé, personne ne répond du travail le jour où rien n'arrive" },
+      { quoi: "Niveau autorisé", ok: d.etage !== null && d.etage !== undefined, poids: 4,
         cout: "sans plafond d'effort, la proposition arrivera finie — et l'écart se paiera en jours" },
       { quoi: "Critères d'acceptation", ok: (d.criteres || []).length > 0, poids: 5,
         cout: "ce travail ne pourra être refusé que par goût" },
       { quoi: "Périmètre d'expression", ok: (d.latitude || []).length > 0, poids: 5,
-        cout: "rien n'est donné au DA : il exécutera au lieu de proposer, et la porte A se ferme" },
+        cout: "rien n'est laissé au DA : il exécutera au lieu de proposer" },
       { quoi: "Un délai", ok: !!d.echeance, poids: 3,
         cout: "aucune date : la charge ne peut être ni placée ni réclamée" },
       { quoi: "Entrées fournies", ok: (d.entrees || []).length > 0, poids: 2,
         cout: "il attendra des fichiers que personne ne doit lui donner" },
-      { quoi: "Étage cohérent avec la plateforme de marque", ok: !!(p.sections.socle || {}).idee_directrice, poids: 3,
-        cout: "sans plateforme de marque active, la proposition pourra être refusée en revue sans recours" },
+      { quoi: "Niveau cohérent avec la plateforme de marque", ok: !!(p.sections.socle || {}).idee_directrice, poids: 3,
+        cout: "sans plateforme de marque active, la proposition pourra être refusée en revue sans qu'on puisse la défendre" },
       { quoi: "Rattachée à une big idea", ok: !!(p.sections.bigidea || {}).idee, poids: 4,
-        cout: e ? "à l'étage " + e.n + ", le DA n'a rien à traiter — il inventera l'idée aussi" : "" },
+        cout: e ? "au niveau " + e.n + ", le DA n'a rien à traiter : il inventera l'idée aussi" : "" },
     ];
   }
 
@@ -89,7 +89,7 @@ window.DEMANDE = (function () {
       ETAT.ligne(ETAT.demande(d), "dmd-etat"),
       el("div.dmd-m", {},
         el("span", {}, da ? da.nom : "aucun DA nommé"),
-        e ? el("span", {}, "Étage " + e.n + " · " + e.effort + " %") : el("span.alerte", {}, "Étage non fixé"),
+        e ? el("span", {}, "Niveau " + e.n + " · " + e.effort + " %") : el("span.alerte", {}, "Niveau non fixé"),
         el("span", {}, (d.criteres || []).length + " critères"),
         el("span" + ((d.latitude || []).length ? "" : ".alerte"), {},
           (d.latitude || []).length + " points de latitude"),
@@ -125,7 +125,7 @@ window.DEMANDE = (function () {
     var selE = el("select", {});
     MAISON.etages.forEach(function (x) {
       var o = el("option", { value: x.n },
-        "Étage " + x.n + " — " + x.nom + "  ·  " + x.effort + " %  ·  " + x.produit);
+        "Niveau " + x.n + " — " + x.nom + "  ·  " + x.effort + " %  ·  " + x.produit);
       if (d.etage === x.n) o.selected = true;
       selE.appendChild(o);
     });
@@ -133,7 +133,7 @@ window.DEMANDE = (function () {
     /* 3 · Les critères — repris de la big idea, complétables */
     var critB = ((p.sections.bigidea || {}).criteres || []);
     var lCrit = puces(d.criteres && d.criteres.length ? d.criteres : critB.slice(),
-      "Un critère par ligne — ce sont les seuls éléments opposables");
+      "Un critère par ligne : c'est sur eux que la proposition sera jugée");
     /* 4 · Les interdits */
     var lInt = puces(d.interdits && d.interdits.length ? d.interdits
       : ((p.sections.bigidea || {}).interdits || []).slice(), "Une direction interdite par ligne");
@@ -168,17 +168,16 @@ window.DEMANDE = (function () {
 
     PANNEAU.ouvrir(neuf ? "Nouvelle demande de proposition" : (d.titre || "Demande"), p.ref, el("div", {},
       bande,
-      UI.banniere("", "L'ordre de ce formulaire est celui du §5, porte C : on ferme d'abord, on ouvre ensuite. L'inverse donne l'impression de reprendre d'une main ce qu'on donne de l'autre."),
 
       el("div.form", {},
         el("div.champ", {}, el("label", {}, "Titre"), titre)),
 
-      etape(1, "Le DA nommé", "Champ bloquant du §10. Une direction ne se demande pas à un service.", selDA),
-      etape(2, "L'étage autorisé", "Ce qu'il plafonne, et ce que le client aura signé pour l'ouvrir.",
+      etape(1, "Le DA nommé", "Qui est le DA sur ce job ? Une personne, pas un service.", selDA),
+      etape(2, "Le niveau autorisé", "Jusqu'où aller, et ce que le client aura signé pour l'ouvrir.",
         el("div", {}, selE, aideE)),
-      etape(3, "Les critères d'acceptation", "Écrits avant de lire. Ce sont les seuls éléments opposables — sans eux, je ne pourrai refuser que par goût.", lCrit.noeud),
+      etape(3, "Les critères d'acceptation", "Écrits avant de voir les propositions : c'est sur eux qu'elles seront jugées, pas sur le goût.", lCrit.noeud),
       etape(4, "Les interdits", "Les directions que je ne veux pas voir revenir. Dites maintenant, pas en revue.", lInt.noeud),
-      etape(5, "Le périmètre d'expression", "Ce que le DA décide seul et que personne ne rediscutera. C'est la porte A : sans cette zone, il exécute au lieu de proposer.", lLat.noeud),
+      etape(5, "Le périmètre d'expression", "Ce que le DA décide seul et que personne ne rediscutera. Sans cette zone, il exécute au lieu de proposer.", lLat.noeud),
       etape(6, "Le délai et les entrées", "La date, et ce que je lui fournis avec qui le fournit.",
         el("div", {}, el("div.champ", {}, el("label", {}, "Attendue le"), ech), lEnt.noeud)),
 

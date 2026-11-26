@@ -264,7 +264,7 @@ window.BILAN = (function () {
       mesure({ nom: "propositions argumentées", valeur: s.avecArg + " / " + s.props, brut: s.avecArg,
         assise: s.props, ton: s.avecArg < s.props ? "alerte" : "vert",
         quoi: s.props - s.avecArg
-          ? (s.props - s.avecArg) + " sans sacrifice ou sans argument — refusables au §8"
+          ? (s.props - s.avecArg) + " sans sacrifice ou sans argument : à compléter avant la revue"
           : "toutes défendables",
         sansQuoi: "aucune proposition reçue de mon équipe sur la période" }),
 

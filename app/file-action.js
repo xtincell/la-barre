@@ -170,7 +170,7 @@ window.FILE = (function () {
       var n = window.INFERENCE ? INFERENCE.compte(p) : 0;
       if (!n) return;
       out.push(item("contresigner", n + " champs à confirmer sur « " + p.nom + " »",
-        "Utilisables pour travailler, pas opposables au client : le jour où il conteste, rien ne tient.",
+        "Utilisables pour travailler, mais pas encore confirmés par le client : faites-les confirmer avant qu'il ne conteste.",
         35, "#/projets/" + p.id + "/identite"));
     });
 

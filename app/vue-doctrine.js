@@ -129,8 +129,8 @@ window.VUE_DOCTRINE = (function () {
           el("span.docd-g", {}, "gouverne " + x.gouverne),
           el("code.docd-f", {}, x.fichier));
       })),
-      el("p.doc-note", {}, "Le produit ne les ouvre pas encore : il sait dire lequel "
-        + "gouverne quoi, et où le trouver sur le disque."));
+      el("p.doc-note", {}, "Ces documents se lisent sur le disque de l'agence : la liste dit "
+        + "lequel fait foi pour quoi, et où le trouver."));
   }
 
   /* Une section repliable. Celle qu'un blocage vient d'ouvrir se déplie seule. */

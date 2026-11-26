@@ -12,12 +12,12 @@ window.REGLES = (function () {
 
   var PRIX = {
     "decideur-absent": "Aucune validation client ne prendra effet.",
-    "tueur-absent": "La signature de l'étage 1 n'immunise rien : la remise en cause restera possible sans être imputable.",
+    "tueur-absent": "Sans critère éliminatoire écrit, valider le concept ne protège rien : le client pourra tout remettre en cause plus tard.",
     "fenetre-absente": "La charge de production ne peut être ni placée ni tenue.",
-    "socle-absent": "La campagne pourra être refusée en revue sans recours.",
-    "rattachement-absent": "Le §6 bis demande que toute plateforme créative se rattache explicitement au socle ou justifie son écart. Sans ce champ, la big idea n'a rien à opposer si la marque la conteste.",
+    "socle-absent": "Sans plateforme de marque, la campagne pourra être refusée en revue sans qu'on puisse la défendre.",
+    "rattachement-absent": "Dites en une phrase comment la big idea sert la plateforme de marque, ou pourquoi elle s'en écarte. Sans cette phrase, elle sera difficile à défendre si la marque la conteste.",
     "criteres-absents": "Ce travail ne pourra être refusé que par goût.",
-    "da-absent": "Direction de la Création qui produit : la porte A se ferme pour l'équipe.",
+    "da-absent": "Aucun DA nommé : c'est le DC qui exécute, et l'équipe ne propose plus.",
     "auteur-absent": "L'idée ne pourra être attribuée à personne, et l'indicateur juniors reste à zéro.",
     "arbitrage-absent": "L'équipe travaille sans savoir quel concept fait autorité.",
     "axe-absent": "La piste ne se distingue des autres que par son titre : la comparer n'oppose rien, et le client tranchera sur le visuel qu'on lui montre.",
@@ -33,7 +33,7 @@ window.REGLES = (function () {
     "insight-est-un-constat": "Le troisième temps est vide : l'énoncé dit ce qui est, jamais ce que ça empêche. Vrai, vérifiable, et sans aucune conséquence pour la création.",
     "insight-une-source": "Une seule source produit une opinion ; trois produisent un insight. Celui-ci se défendra mal à la deuxième question du client.",
     "insight-non-teste": "Personne n'a posé les trois questions. Un énoncé que nul ne peut contredire n'ouvre aucun choix — et on ne le saura qu'en séance.",
-    "decalage-de-couche": "Le problème ne vit pas à l'étage où on lui répond. Obéir au brief produira un travail juste sur une question qui n'est pas la bonne — et ce sera la création qu'on tiendra pour responsable.",
+    "decalage-de-couche": "Le problème ne se pose pas au niveau où on lui répond. Obéir au brief produira un travail juste sur une question qui n'est pas la bonne — et ce sera la création qu'on tiendra pour responsable.",
     "axes-concurrents": "Ce ne sont pas des axes : ce sont des recommandations concurrentes dans le même document. Le client recomposera entre elles, et il sortira autant de signatures que de pistes.",
     "piste-hors-territoire": "Cette piste ne remonte à aucune racine : impossible de dire si elle traite le même problème que les autres, ni de la défendre autrement que par le goût.",
     "territoire-a-un-concept": "Un insight qui ne donne qu'un seul concept possible n'est pas un insight : c'est déjà une idée, arrivée trop tôt. Le territoire n'a pas de durée.",
@@ -41,11 +41,11 @@ window.REGLES = (function () {
     "briefback-sans-reponse": "Envoyé, jamais contresigné. Ce qui a été compris n'engage que nous : le client pourra dire qu'il demandait autre chose, et il aura raison puisque rien ne dit le contraire.",
     "reco-sans-arbitrage": "Trois pistes sans arbitrage ne sont pas des routes parallèles : ce sont trois recommandations dans le même document. Le client choisira seul, sans les raisons, et il recomposera entre les pistes — il sortira autant de signatures que de routes.",
     "pistes-sans-role": "Trois pistes d'égale valeur ne font pas un choix : il en faut une à vendre, et deux qui bornent le territoire. Sans rôles, la sage l'emporte par défaut, parce qu'elle rassure.",
-    "integrite-non-ecrite": "Sur un compte à comités en cascade, c'est la seule pièce écrite qui protège le travail entre deux étages de validation. Sans elle, le concept d'une piste remontera monté sur l'exécution d'une autre, et personne ne saura dire ce qui a été perdu.",
+    "integrite-non-ecrite": "Sur un compte à comités en cascade, c'est la seule pièce écrite qui protège le travail entre deux niveaux de validation. Sans elle, le concept d'une piste remontera monté sur l'exécution d'une autre, et personne ne saura dire ce qui a été perdu.",
     "structure-hybride": "Le deck mélange deux squelettes. Le client sent l'incohérence sans savoir la nommer, et l'argumentation s'affaiblit là où elle devrait porter.",
     "ecole-sans-preuve": "L'école est déclarée et ce qu'elle réclame n'est pas au dossier. On travaille selon un critère qu'on ne pourra pas produire le jour où le client demandera sur quoi la reco s'appuie.",
     "convention-supposee": "Une convention qu'on ne peut pas montrer en trois visuels de concurrents n'est pas identifiée : elle est supposée. La rupture qu'on construira dessus cassera peut-être une porte ouverte.",
-    "ecoles-meme-etage": "Deux écoles au même étage, et chacune apporte sa racine. Elles se neutralisent : le deck portera deux raisonnements concurrents, et le client sentira l'incohérence sans savoir la nommer.",
+    "ecoles-meme-etage": "Deux écoles au même niveau, et chacune apporte sa racine. Elles se neutralisent : le deck portera deux raisonnements concurrents, et le client sentira l'incohérence sans savoir la nommer.",
     "chiffre-sans-source": "Un chiffre sans source se retourne en réunion, et emporte avec lui le reste du diagnostic. On n'invente jamais un chiffre : on dit à quel niveau il a été obtenu.",
 
     /* Une reprise d'emballage se suit sur deux sources — un tableau et un
@@ -64,10 +64,10 @@ window.REGLES = (function () {
     "sans-proprietaire": "Personne n'est en défaut le jour où ça n'avance pas.",
     "casquette-sans-part": "La charge de cette personne est fausse.",
     "bilan-absent": "Le projet suivant sur cette marque partira sans son diagnostic.",
-    "infere-non-contresigne": "Utilisable pour travailler, pas opposable au client : le jour où il conteste, rien ne tient.",
+    "infere-non-contresigne": "Utilisable pour travailler, mais pas encore confirmé par le client : s'il conteste, rien d'écrit ne le montre.",
     "brief-sans-porteur": "Personne ne répond de ce qui a été compris : au premier écart entre le dit et l'écrit, il n'y a pas d'arbitre.",
     "adaptation-hors-da": "Une correction demandée par le marché arrivera chez quelqu'un qui n'a pas fait la piste.",
-    "livrable-sans-piste": "Elle se fabrique sans concept opposable : refusable par le goût seul, jamais sur un critère écrit.",
+    "livrable-sans-piste": "Elle se fabrique sans concept de référence : on ne pourra la juger qu'au goût, jamais sur un critère écrit.",
     "sku-hors-zone": "Un produit montré là où il n'est pas vendu se rappelle, et le rappel est pour l'agence.",
     "orthographe-diffusee": "La faute part sur toute la descendance, et se lit sur chaque support imprimé.",
     "packshot-cmyk": "Bon pour l'impression, faux à l'écran : les couleurs ne seront pas celles validées.",
@@ -380,7 +380,7 @@ window.REGLES = (function () {
           });
           if (Object.keys(racines).length < 2) return;
           pousser(trouves, p, "ecoles-meme-etage",
-            Object.keys(cles).length + " écoles à l'étage « " + et + " », sur "
+            Object.keys(cles).length + " écoles au niveau « " + et + " », sur "
               + Object.keys(racines).length + " racines différentes",
             "planning", "strategie");
         });

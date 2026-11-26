@@ -41,7 +41,7 @@ window.ETAT = (function () {
     if (pi.statut === "ecartee") {
       return { nom: "écartée", ton: "terne",
         quoi: pi.motif ? "le motif est écrit — elle ne consomme plus de ressource"
-          : "sans motif écrit — refusée par goût, donc indéfendable au §8" };
+          : "sans motif écrit : écrivez pourquoi elle est écartée" };
     }
 
     var autre = (p.sections.pistes || []).filter(function (x) {
