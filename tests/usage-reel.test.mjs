@@ -122,6 +122,70 @@ test('une base complète : canaux, annotations, fichiers, liens, remises, person
   assert.ok(!JSON.stringify(r.parMois).includes('lectures'));
 });
 
+test('un projet fusionné n’est pas compté deux fois', () => {
+  // outils/renommer-projets-2026.py recopie les livrables du doublon dans le
+  // dossier gardé et laisse le doublon dans la base, marqué `fusionne`.
+  const livrable = () => ({ id: 'L-1', versions: [{ n: 1, soumis_le: '2026-10-01T08:00:00.000Z', verdict: 'approuve', juge_le: '2026-10-01T12:00:00.000Z' }],
+    annotations: [{ id: 'AN-1', quand: '2026-10-01T09:00:00.000Z' }], fichiers: [{ id: 'F-1', type: 'bat', quand: '2026-10-01T09:00:00.000Z' }] });
+  const base = { schema: 5, projets: [
+    { id: 'PRO-garde', cree_le: '2026-09-01T08:00:00.000Z', livrables: [livrable()], preuvesRemise: [{ id: 'R-1', quand: '2026-10-02T08:00:00.000Z' }] },
+    { id: 'PRO-doublon', cree_le: '2026-09-02T08:00:00.000Z', fusionne: { dans: 'PRO-garde', quand: '2026-10-05T08:00:00.000Z', motif: 'doublon' },
+      livrables: [livrable()], preuvesRemise: [{ id: 'R-1', quand: '2026-10-02T08:00:00.000Z' }] },
+  ] };
+  const r = mesurer(base);
+  assert.equal(r.totaux.projets, 1);
+  assert.equal(r.volume.projets, 1);
+  assert.equal(r.volume.projetsFusionnes, 1);
+  assert.equal(r.volume.livrables, 1);
+  assert.equal(r.totaux.versionsSoumises, 1);
+  assert.equal(r.totaux.versionsJugees, 1);
+  assert.equal(r.totaux.annotations, 1);
+  assert.equal(r.totaux.fichiers, 1);
+  assert.equal(r.totaux.remises, 1);
+  assert.match(enMarkdown(r), /1 projet fusionné dans un autre dossier est écarté/);
+});
+
+test('l’attente se compte comme le Bilan : dernière version, hors annulé et hors dossier clos', () => {
+  const v = (n, extra = {}) => ({ n, soumis_le: '2026-10-0' + n + 'T08:00:00.000Z', ...extra });
+  const base = { schema: 5, projets: [
+    { id: 'PRO-ouvert', cree_le: '2026-10-01', livrables: [
+      // V1 dépassée sans décision, V2 en attente : une seule pièce attend.
+      { id: 'L-1', versions: [v(1), v(2)] },
+      // V1 sans décision, V2 validée : plus rien n'attend.
+      { id: 'L-2', versions: [v(1), v(2, { verdict: 'approuve', juge_le: '2026-10-03T08:00:00.000Z' })] },
+      // Annulé : n'attend plus.
+      { id: 'L-3', annule: true, versions: [v(1)] },
+      // Dernière version jamais soumise : n'attend pas encore.
+      { id: 'L-4', versions: [{ n: 1 }] },
+    ] },
+    { id: 'PRO-clos', cree_le: '2026-10-01', cloture: { le: '2026-10-09', bilan: '' }, livrables: [{ id: 'L-5', versions: [v(1)] }] },
+  ] };
+  const r = mesurer(base);
+  assert.equal(r.totaux.versionsEnAttente, 1);
+  assert.equal(r.totaux.versionsSoumises, 6);
+  assert.match(enMarkdown(r), /Pièces en attente de décision \(dernière version, dossiers ouverts\) \| 1 \|/);
+});
+
+test('le relevé parle la langue de l’agence et accorde ses pluriels', () => {
+  const base = baseComplete();
+  base.decisions.push(
+    { id: 'DEC-4', type: 'bigidea', verdict: 'approuve', quand: '2026-10-06T10:00:00.000Z', qui: 'creation' },
+    { id: 'DEC-5', type: 'recevabilite', verdict: 'retour', quand: '2026-10-06T10:00:00.000Z', qui: 'creation' },
+    { id: 'DEC-6', type: 'bilan-campagne', verdict: 'approuve', quand: '2026-10-06T10:00:00.000Z', qui: 'creation' });
+  const r = mesurer(base);
+  const md = enMarkdown(r);
+  assert.match(md, /\| big idea \|/);
+  assert.match(md, /\| recevabilité du brief \|/);
+  assert.match(md, /\| bilan de campagne \|/);
+  assert.match(md, /\| BAT \| 1 \|/);
+  assert.doesNotMatch(md, /\(s\)/);
+  // Décisions et journal en deux colonnes : leur somme ne se lit plus comme un seul nombre.
+  assert.match(md, /\| Personne \| Identité \| Décisions \| Lignes de journal \|/);
+  assert.match(md, /\| Alice Martin \| attestée \| 1 \| 1 \|/);
+  // Le CSV garde les clés, pour les recoupements.
+  assert.match(enCsv(r), /decisions_par_type,2026-10,bigidea\/approuve,1/);
+});
+
 test('--depuis écarte ce qui est plus ancien, et le dit', () => {
   const r = mesurer(baseComplete(), { depuis: '2026-10-01' });
   assert.equal(r.totaux.decisions, 2);

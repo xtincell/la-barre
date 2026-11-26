@@ -36,6 +36,22 @@ const CANAUX = {
   people: 'relevé du registre des projets', lien: 'lien de revue',
 };
 
+/* Les types de décision, en mots d'agence. La clé reste dans le CSV. */
+export const TYPES_DECISION = {
+  livrable: 'livrable', piece: 'pièce en revue', piste: 'piste créative', idee: "idée tranchée à l'atelier",
+  bigidea: 'big idea', socle: 'plateforme de marque', strategie: 'stratégie', brief: 'brief',
+  recevabilite: 'recevabilité du brief', 'bilan-campagne': 'bilan de campagne',
+  'reference-campagne': 'référence de campagne', 'ecart-campagne': 'écart à la référence commune',
+  ecart: 'écart du relevé', 'ecart-marche': "écart d'un marché", 'hors-ecart': "adaptation hors de l'écart d'un marché",
+  concept: 'concept de la réserve', composition: 'case de composition',
+};
+
+/* Les types de fichier posé (app/production.js). */
+export const TYPES_FICHIER = { asset: 'asset', bat: 'BAT', simulation: 'simulation', storyboard: 'storyboard', ouvert: 'sources' };
+
+/* « 0 élément », « 1 élément », « 2 éléments ». */
+export function accorder(n, un, plusieurs = un + 's') { return n + ' ' + (n > 1 ? plusieurs : un); }
+
 /* ————— Lecture prudente des dates ————— */
 
 function jourDe(v) {
@@ -119,7 +135,11 @@ export function mesurer(base, { depuis = null, anonyme = false } = {}) {
     return j.slice(0, 7);
   }
 
-  const projets = liste(base.projets);
+  /* Un projet fusionné garde sa fiche, mais ses livrables ont été recopiés
+   * dans le dossier gardé (outils/renommer-projets-2026.py) : le compter, ce
+   * serait compter deux fois. L'application l'écarte partout ; ici aussi. */
+  const tous = liste(base.projets);
+  const projets = tous.filter(p => !p.fusionne);
   const m = {
     decisions: compteur(), decisionsParAuteur: new Map(),
     soumises: compteur(), jugees: compteur(), delais: new Map(), enAttente: 0, jugeesSansDate: 0,
@@ -128,11 +148,12 @@ export function mesurer(base, { depuis = null, anonyme = false } = {}) {
     personnes: new Map(), actifsParMois: new Map(),
   };
 
-  function actif(e, mois) {
+  function actif(e, mois, source) {
     const a = auteur(e);
     if (a.identite === 'poste') return;
-    const p = m.personnes.get(a.cle) || { ...a, gestes: 0, premier: null, dernier: null };
+    const p = m.personnes.get(a.cle) || { ...a, gestes: 0, decisions: 0, journal: 0, premier: null, dernier: null };
     p.gestes++;
+    p[source]++;
     const j = jourDe(e.quand || e.cree_le);
     if (j && (!p.premier || j < p.premier)) p.premier = j;
     if (j && (!p.dernier || j > p.dernier)) p.dernier = j;
@@ -148,7 +169,7 @@ export function mesurer(base, { depuis = null, anonyme = false } = {}) {
     const a = auteur(d);
     const x = m.decisionsParAuteur.get(a.cle) || { ...a, nombre: 0 };
     x.nombre++; m.decisionsParAuteur.set(a.cle, x);
-    actif(d, mois);
+    actif(d, mois, 'decisions');
   }
 
   for (const e of liste(base.journal)) {
@@ -156,11 +177,12 @@ export function mesurer(base, { depuis = null, anonyme = false } = {}) {
     if (!mois) continue;
     m.journal.ajouter(mois);
     m.actions.set(e.action || 'sans action', (m.actions.get(e.action || 'sans action') || 0) + 1);
-    actif(e, mois);
+    actif(e, mois, 'journal');
   }
 
   for (const p of projets) {
     const releve = !!(p.releve && typeof p.releve === 'object');
+    const clos = !!(p.cloture && typeof p.cloture === 'object' && p.cloture.le);
     const mois = retenir(p.cree_le);
     if (mois) m.projets.ajouter(mois, releve ? 'relevé' : 'saisi');
     const partages = Object.entries(objet(p.partages)).map(([doc, x]) => ({ doc, ...objet(x) }))
@@ -189,8 +211,13 @@ export function mesurer(base, { depuis = null, anonyme = false } = {}) {
             }
           }
         } else if (v.verdict) m.jugeesSansDate++;
-        else if (v.soumis_le && !l.annule) m.enAttente++;
       }
+      /* L'attente se compte comme le Bilan et la revue la montrent
+       * (app/bilan.js) : la dernière version, soumise et pas encore jugée,
+       * hors livrable annulé et hors dossier clos. Une version dépassée sans
+       * décision n'attend plus rien. */
+      const derniere = liste(l.versions).slice(-1)[0];
+      if (derniere && !derniere.verdict && instant(derniere.soumis_le) !== null && !l.annule && !clos) m.enAttente++;
       for (const a of liste(l.annotations)) { const mo = retenir(a.quand); if (mo) m.annotations.ajouter(mo); }
       for (const f of liste(l.fichiers)) { const mo = retenir(f.quand); if (mo) m.fichiers.ajouter(mo, f.type || 'sans type'); }
     }
@@ -221,7 +248,8 @@ export function mesurer(base, { depuis = null, anonyme = false } = {}) {
 
   return {
     depuis, anonyme, ecartees,
-    volume: { projets: projets.length, projetsReleves: projets.filter(p => p.releve && typeof p.releve === 'object').length,
+    volume: { projets: projets.length, projetsFusionnes: tous.length - projets.length,
+      projetsReleves: projets.filter(p => p.releve && typeof p.releve === 'object').length,
       livrables, versions, decisions: liste(base.decisions).length, journal: liste(base.journal).length,
       lectures: liste(base.lectures).length, schema: base.schema ?? null },
     totaux: {
@@ -257,7 +285,7 @@ export function mesurer(base, { depuis = null, anonyme = false } = {}) {
     fichiersParType: m.fichiers.cles().map(t => ({ type: t, nombre: m.fichiers.total(t) })).sort((a, b) => b.nombre - a.nombre),
     liensParDocument: m.liens.cles().map(d => ({ document: d, nombre: m.liens.total(d) })),
     actions: [...m.actions].map(([action, nombre]) => ({ action, nombre })).sort((a, b) => b.nombre - a.nombre).slice(0, 12),
-    personnes: [...m.personnes.values()].map(p => ({ nom: nommer(p), identite: p.identite, gestes: p.gestes, premier: p.premier, dernier: p.dernier }))
+    personnes: [...m.personnes.values()].map(p => ({ nom: nommer(p), identite: p.identite, gestes: p.gestes, decisions: p.decisions, journal: p.journal, premier: p.premier, dernier: p.dernier }))
       .sort((a, b) => (a.identite === b.identite ? 0 : a.identite === 'attestée' ? -1 : 1) || b.gestes - a.gestes || a.nom.localeCompare(b.nom)),
   };
 }
@@ -282,9 +310,10 @@ export function enMarkdown(r, meta = {}) {
   out.push(`- Base lue : \`${meta.fichier || 'base'}\`${meta.empreinte ? ` · empreinte \`${meta.empreinte}\`` : ''} · schéma ${v.schema ?? '—'}`);
   out.push(`- Relevé fait le ${meta.le || new Date().toISOString().slice(0, 10)}, en lecture seule (aucune écriture, aucun appel réseau).`);
   out.push(r.depuis
-    ? `- Période : depuis le ${r.depuis}. ${r.ecartees.avant} élément(s) plus ancien(s) et ${r.ecartees.sansDate} sans date sont écartés.`
-    : `- Période : toute la base. ${r.ecartees.sansDate} élément(s) sans date sont comptés à part (« sans date »).`);
-  out.push(`- Volume : ${v.projets} projets (dont ${v.projetsReleves} relevés par ingestion), ${v.livrables} livrables, ${v.versions} versions, ${v.decisions} décisions, ${v.journal} lignes de journal.`);
+    ? `- Période : depuis le ${r.depuis}. Écartés : ${accorder(r.ecartees.avant, 'élément plus ancien', 'éléments plus anciens')} et ${accorder(r.ecartees.sansDate, 'élément sans date', 'éléments sans date')}.`
+    : `- Période : toute la base. ${r.ecartees.sansDate > 1 ? r.ecartees.sansDate + ' éléments sans date sont comptés' : r.ecartees.sansDate + ' élément sans date est compté'} à part (« sans date »).`);
+  out.push(`- Volume : ${accorder(v.projets, 'projet')} (dont ${accorder(v.projetsReleves, 'relevé', 'relevés')} par ingestion), ${accorder(v.livrables, 'livrable')}, ${accorder(v.versions, 'version')}, ${accorder(v.decisions, 'décision')}, ${accorder(v.journal, 'ligne', 'lignes')} de journal.`
+    + (v.projetsFusionnes ? ` ${v.projetsFusionnes > 1 ? v.projetsFusionnes + ' projets fusionnés dans un autre dossier sont écartés' : '1 projet fusionné dans un autre dossier est écarté'} : leurs livrables sont comptés dans le dossier gardé.` : ''));
   if (r.anonyme) out.push('- Les noms sont remplacés par « Personne n ».');
   out.push('', '## En bref', '');
   out.push(tableau(['Mesure', 'Nombre'], [
@@ -292,7 +321,7 @@ export function enMarkdown(r, meta = {}) {
     ['Versions soumises', t.versionsSoumises],
     ['Versions jugées (datées)', t.versionsJugees],
     ['Délai médian entre dépôt et décision', heures(t.delaiMedianHeures)],
-    ['Versions en attente de décision', t.versionsEnAttente],
+    ['Pièces en attente de décision (dernière version, dossiers ouverts)', t.versionsEnAttente],
     ['Retours enregistrés', t.retours],
     ['Annotations posées sur une image', t.annotations],
     ['Fichiers posés (BAT, simulations, situations…)', t.fichiers],
@@ -310,17 +339,18 @@ export function enMarkdown(r, meta = {}) {
     x.annotations, x.fichiers, x.projets, x.liens, x.remises, x.gestesJournal, x.personnesAttestees, x.personnesDeclarees])));
   out.push('## Décisions par mois, type et résultat', '');
   out.push(tableau(['Mois', 'Type', 'Résultat', 'Nombre'],
-    r.decisionsParMoisEtType.map(x => [x.mois, x.type, RESULTATS[x.resultat] ? `${x.resultat} (${RESULTATS[x.resultat]})` : x.resultat, x.nombre])));
+    r.decisionsParMoisEtType.map(x => [x.mois, TYPES_DECISION[x.type] || x.type, RESULTATS[x.resultat] ? `${x.resultat} (${RESULTATS[x.resultat]})` : x.resultat, x.nombre])));
   out.push('## Décisions par auteur', '');
   out.push(tableau(['Auteur', 'Identité', 'Décisions'], r.decisionsParAuteur.map(x => [x.auteur, x.identite, x.nombre])));
   out.push('## Retours par canal', '');
   out.push(tableau(['Canal', 'Retours'], r.retoursParCanal.map(x => [x.libelle, x.nombre])));
   out.push('## Fichiers posés par type', '');
-  out.push(tableau(['Type', 'Fichiers'], r.fichiersParType.map(x => [x.type, x.nombre])));
+  out.push(tableau(['Type', 'Fichiers'], r.fichiersParType.map(x => [TYPES_FICHIER[x.type] || x.type, x.nombre])));
   out.push('## Liens de partage par document', '');
   out.push(tableau(['Document', 'Liens'], r.liensParDocument.map(x => [x.document, x.nombre])));
   out.push('## Personnes actives', '');
-  out.push(tableau(['Personne', 'Identité', 'Gestes', 'Premier', 'Dernier'], r.personnes.map(x => [x.nom, x.identite, x.gestes, x.premier, x.dernier])));
+  out.push(tableau(['Personne', 'Identité', 'Décisions', 'Lignes de journal', 'Premier geste', 'Dernier geste'],
+    r.personnes.map(x => [x.nom, x.identite, x.decisions, x.journal, x.premier, x.dernier])));
   out.push('## Gestes les plus fréquents au journal', '');
   out.push(tableau(['Action', 'Nombre'], r.actions.map(x => [x.action, x.nombre])));
   out.push('## Ce que ces chiffres ne disent pas', '');
@@ -330,7 +360,9 @@ export function enMarkdown(r, meta = {}) {
     '- Le journal est tronqué au-delà de 2 000 lignes (il en garde environ 1 500) : les mois anciens sont sous-comptés.',
     '- Un projet relevé par ingestion porte la date de l\'ingestion (`cree_le`), pas celle du travail.',
     '- Les échanges qui ne passent pas par La Barre (WhatsApp, Drive, mail, oral) ne laissent ici aucune trace : la semaine témoin les compte (`documents/observation/SEMAINE-TEMOIN.md`).',
-    `- ${t.versionsJugeesSansDate} version(s) portent un résultat sans date de décision : elles ne sont pas dans les délais.`,
+    `- ${t.versionsJugeesSansDate > 1 ? t.versionsJugeesSansDate + ' versions portent' : t.versionsJugeesSansDate + ' version porte'} un résultat sans date de décision : ${t.versionsJugeesSansDate > 1 ? 'elles ne sont' : 'elle n\'est'} pas dans les délais.`,
+    '- Les pièces en attente sont un état du jour, pas un geste daté : `--depuis` ne les filtre pas.',
+    '- « Gestes au journal » compte toutes les lignes du journal, poste compris ; la liste des personnes ne garde que les gestes rattachés à une personne (attestée ou déclarée).',
     '');
   return out.join('\n');
 }
