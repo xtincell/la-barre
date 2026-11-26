@@ -1,12 +1,22 @@
 // La mesure des captures, dans un vrai navigateur : ce qui est replié est lu
 // puis refermé, ce qui est coupé ou rejeté hors de l'écran est relevé, une
-// valeur technique affichée aussi, et deux captures se comparent au pixel près.
+// valeur technique affichée aussi, deux captures se comparent au pixel près,
+// et l'outil entier tourne sur la base fictive, du bureau au téléphone.
 //
 // Demande Playwright et un navigateur (BROWSER_CHANNEL=chrome pour Google
 // Chrome). Sans eux, le test est sauté, sauf en CI où il doit tourner.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mesurerDansLaPage, depouiller, ecartDePixels, aLOeil } from '../outils/recette-captures.mjs';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
+import { mesurerDansLaPage, depouiller, ecartDePixels, aLOeil, versionMesure } from '../outils/recette-captures.mjs';
+
+const OUTIL = fileURLToPath(new URL('../outils/recette-captures.mjs', import.meta.url));
+const executer = promisify(execFile);
 
 let chromium = null, navigateur = null, raison = null;
 try { ({ chromium } = await import('playwright')); } catch { raison = 'Playwright absent : npm ci'; }
@@ -147,4 +157,47 @@ test('une page assombrie de 8 %, une bordure ou un texte d’un ton plus pâle s
   const [v] = await classer('img{filter:brightness(.97)}');
   assert.equal(v, 'à l’œil');
   await p.close();
+});
+
+/* La largeur d'un PNG, lue dans son en-tête. */
+async function largeurPng(fichier) { return (await readFile(fichier)).readUInt32BE(16); }
+
+test('l’outil entier tourne sur la base fictive : bureau, recherche, nouveau projet, demande et page partagée, au bureau et au téléphone', { ...sauter, timeout: 240000 }, async () => {
+  const dossier = await mkdtemp(join(tmpdir(), 'recette-bout-en-bout-'));
+  const options = ['--sortie', dossier, '--routes', '^(bureau|recherche|nouveau-projet|demande|partage)$', '--largeurs', '390,1440',
+    '--horloge', '2026-11-26T09:00:00', '--commit', 'abc1234'];
+  const env = { ...process.env };
+  try {
+    await executer(process.execPath, [OUTIL, '--avant', ...options], { env, timeout: 120000 });
+    const { stdout, stderr } = await executer(process.execPath, [OUTIL, '--apres', ...options], { env, timeout: 120000 });
+    assert.doesNotMatch(stderr, /fatal|Attention/, stderr);
+    const r = JSON.parse(await readFile(join(dossier, 'apres', 'captures.json'), 'utf8'));
+    // Toutes les actions de l'outil trouvent encore ce qu'elles appellent dans l'application.
+    assert.deepEqual(r.captures.flatMap(c => c.exceptions.map(e => c.id + '@' + c.largeur + ' : ' + e)), []);
+    assert.equal(r.horsCapture.length, 0, r.horsCapture.join('\n'));
+    assert.deepEqual([...new Set(r.captures.map(c => c.id))].sort(), ['bureau', 'demande', 'nouveau-projet', 'partage', 'recherche']);
+    assert.equal(r.captures.length, 10);
+    assert.equal(r.commit, 'abc1234');
+    assert.equal(r.mesure.version, versionMesure());
+    // Le formulaire, la recherche et Nouveau projet sont bien ouverts.
+    const titre = id => r.captures.find(c => c.id === id && c.largeur === 1440).titre;
+    assert.notEqual(titre('recherche'), titre('bureau'));
+    assert.notEqual(titre('nouveau-projet'), '');
+    // Au téléphone, la page est vue en densité 2 : 390 px font 780 pixels.
+    for (const c of r.captures) {
+      assert.equal(c.telephone, c.largeur < 768);
+      assert.equal(await largeurPng(join(dossier, 'apres', c.fichier)), c.largeur * (c.telephone ? 2 : 1), c.fichier);
+      assert.equal(c.densite, c.telephone ? 2 : 1);
+    }
+    // Deux passes du même code : rien de modifié, la même mesure, aucune alerte nouvelle.
+    const cmp = r.comparaison;
+    assert.equal(cmp.mesure.identique, true);
+    assert.deepEqual(cmp.modifiees, [], JSON.stringify(r.captures.filter(c => c.ecart).map(c => [c.id, c.largeur, c.ecart])));
+    assert.equal(cmp.identiques + cmp.identiquesALOeil, 10);
+    for (const champ of ['exceptionsNouvelles', 'debordementsNouveaux', 'coupesNouvelles', 'horsEcranNouveaux', 'valeursNouvelles'])
+      assert.deepEqual(cmp[champ], [], champ);
+    assert.equal(cmp.termes.avant, cmp.termes.apres);
+    assert.match(stdout, /"modifiees": 0/);
+    assert.match(await readFile(join(dossier, 'apres', 'index.html'), 'utf8'), /Ce qui a changé depuis la passe/);
+  } finally { await rm(dossier, { recursive: true, force: true }); }
 });
