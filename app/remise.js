@@ -464,7 +464,8 @@ window.REMISE = (function () {
         var f = entree.files && entree.files[0];
         nom.textContent = f ? f.name : "";
       } });
-    return el("div.champ.remise-joint", {}, entree, el("label.b", { for: id }, titre), nom);
+    return el("div.champ.remise-joint", {}, entree, el("label.b", { for: id }, titre,
+      options.facultatif ? el("span.remise-facultatif", {}, " (facultatif)") : null), nom);
   }
 
   /* Ce qui est facultatif se replie : le panneau ne montre d'abord que ce qui
@@ -615,8 +616,8 @@ window.REMISE = (function () {
       repli("Joindre un justificatif : photo, PDF ou lien", pieceJointe(f, "remise", "du justificatif", saisi.lien)));
   }
 
-  /* Un refus dit après une virgule commence par une minuscule, sauf un
-   * sigle (« BAT »). */
+  /* Un refus repris après les deux-points commence par une minuscule, sauf
+   * un sigle (« BAT »). */
   function minuscule(s) {
     s = String(s || "");
     return /^[A-ZÀ-Ý][a-zà-ÿ’']/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s;
@@ -644,7 +645,7 @@ window.REMISE = (function () {
         champ(f, "bat-par", "BAT accordé par", "text", null, { exemple: "Nom ou imprimeur" }),
         champ(f, "bat-le", "Date du BAT", "date", O.jour()),
         repli(pose ? "Ajouter une photo, un PDF, un lien ou un mot" : "Joindre une photo, un PDF, un lien ou un mot", [
-          champ(f, "bat-comment", "Comment", "text", null, { facultatif: true, exemple: "OK WhatsApp, bon signé…" }),
+          champ(f, "bat-comment", "Comment le BAT a été donné", "text", null, { facultatif: true, exemple: "OK WhatsApp, bon signé…" }),
           pieceJointe(f, "bat", "du BAT")])) : null,
       demandeSortie ? el("fieldset.remise-bloc", {}, el("legend", {}, "Les fichiers remis"),
         champ(f, "canal", "Moyen d’envoi", "choix", null, { choix: CANAUX }),

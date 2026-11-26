@@ -36,7 +36,7 @@ window.VUE_LIVRAISONS = (function () {
     { cle: "tout", nom: "Tout", quoi: "dépôts, BAT et preuves à vérifier" },
     /* Les noms de l'état de la pièce (REMISE.etatPiece) : un même état ne
      * porte pas deux noms sur un même écran. */
-    { cle: "bat", nom: "BAT attendu", quoi: "versions approuvées dont personne n’a encore dit le BAT accordé" },
+    { cle: "bat", nom: "BAT attendu", quoi: "versions approuvées dont le BAT n’est pas encore enregistré" },
     { cle: "sortie", nom: "Fichiers à remettre", quoi: "versions approuvées dont on ne sait pas par où les fichiers partent" },
     { cle: "preuve", nom: "Livraison à enregistrer", quoi: "versions approuvées dont la remise reste à enregistrer" },
     { cle: "dement", nom: "Annonce sans fichier", quoi: "annoncé fait, rien au dossier" },
