@@ -348,7 +348,7 @@ try {
   await fermee.goto(url + '/#/valider/file');
   await fermee.locator('.decisions-file').getByText('Affiche de lancement · V2').waitFor();
   await fermee.clock.runFor(9000);
-  await fermee.getByText('V2 de « Affiche de lancement » enregistrée.').waitFor();
+  await fermee.getByText('Validation de la V2 de « Affiche de lancement » enregistrée.').waitFor();
   assert.equal(await fermee.locator('.decisions-file').getByText('Affiche de lancement · V2').count(), 0,
     'La file de Décisions ne liste plus la version validée');
   await fermee.clock.resume();

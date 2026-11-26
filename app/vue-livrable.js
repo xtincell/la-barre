@@ -690,7 +690,9 @@ window.VUE_LIVRABLE = (function () {
    * écrite. La file de Décisions et le Bureau, qui la listaient encore, se
    * redessinent, sauf si l'on y est en train d'écrire ou de choisir. */
   function faireSavoir(e) {
-    if (window.AVIS) AVIS.fait("V" + e.numero + " de « " + e.titre + " » enregistrée.");
+    /* Les mêmes mots que pour une validation rejouée (rejouer) : un même
+     * événement se dit d'une seule façon. */
+    if (window.AVIS) AVIS.fait("Validation de la V" + e.numero + " de « " + e.titre + " » enregistrée.");
     var liste = /^#\/(bureau|valider|decider|revue|direction)(\/|$)|^#?\/?$/.test((window.location && location.hash) || "");
     var actif = window.document && document.activeElement;
     var saisie = !!actif && /^(INPUT|TEXTAREA|SELECT)$/.test(actif.tagName || "");

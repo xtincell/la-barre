@@ -203,7 +203,7 @@ test('à l’échéance, la pièce quittée : un avis dit la validation enregist
   cliquer(bouton(v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {}), 'Valider la V1'));
   v.minuteries[0]();
   assert.equal(v.l.versions[0].verdict, 'approuve');
-  assert.deepEqual(v.avis[v.avis.length - 1], ['fait', 'V1 de « Affiche · CM » enregistrée.']);
+  assert.deepEqual(v.avis[v.avis.length - 1], ['fait', 'Validation de la V1 de « Affiche · CM » enregistrée.']);
   assert.equal(rendus, 1, 'Décisions, qui listait la version, se redessine');
 
   for (const [hash, attendu] of [['#/projets/VA/livrables/autre/juger', 0], ['#/planning', 0], ['#/bureau', 1], ['', 1]]) {
