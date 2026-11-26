@@ -39,18 +39,23 @@
 .st-modes .studio-statuts a[aria-current],.lb-vues-projets a[aria-current]{background:var(--studio-bleu-pale);color:var(--studio-bleu)}
 .lb-retour{margin:0 0 6px;padding-left:0}.zone:focus:not(:focus-visible){outline:none}
 .lb-detail-piece { min-width:0;border:1px solid var(--trait); background:white; border-radius:10px; padding:clamp(12px,2vw,25px); }
-.lb-bureau {max-width:1400px!important}
 .lb-bureau .studio-entete{margin-bottom:clamp(16px,2vw,28px)}
-.lb-piece { border:1px solid var(--trait); border-radius:10px; background:white; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.08fr); overflow:hidden; }
+.lb-piece { border:1px solid var(--trait); border-radius:10px; background:white; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); overflow:hidden; }
 .lb-piece.sans-visuel{grid-template-columns:1fr}
-.lb-piece-texte{padding:clamp(20px,3vw,44px);align-self:center;min-width:0}
+.lb-piece-texte{padding:clamp(22px,2.7vw,50px);align-self:center;min-width:0}
 .lb-etat {border-left:3px solid var(--arbitrage,#80500d);padding-left:9px;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:550}
 .lb-etat span{color:var(--arbitrage,#80500d)}.lb-piece-projet {margin:18px 0 4px}
 .lb-piece-projet a{display:inline-flex;align-items:center;min-height:44px;color:var(--clair-terne);font:550 16px/1.3 var(--affichage);text-decoration:none}
-.lb-piece h2{font:580 clamp(27px,3.4vw,48px)/1.06 var(--affichage);letter-spacing:-.045em;overflow-wrap:anywhere;color:var(--studio-encre)}
+/* « Key visual — Côte d'Ivoire · Orvelle » tient en deux lignes de 1024 à
+   2560 px : à trois, la carte grandissait et le visuel gagnait deux bandes. */
+.lb-piece h2{font:580 clamp(1.65rem,2.5vw,3rem)/1.06 var(--affichage);letter-spacing:-.045em;overflow-wrap:anywhere;color:var(--studio-encre)}
 .lb-piece-meta{color:var(--clair-terne);font-size:15px;margin:8px 0 0}.lb-piece .b{margin-top:18px;text-decoration:none}
-.lb-piece-image{position:relative;min-height:215px;overflow:hidden;background:var(--surface-4)}
-.lb-piece-image>.vig,.lb-piece-image img,.lb-piece-image video{width:100%;height:100%;position:absolute;inset:0;object-fit:contain;max-height:none}
+/* Le visuel occupe tout son cadre, sur le blanc de la carte : plus de bande
+   grise autour d'une création (constats forme-visuel-1 et -11). Il n'est pas
+   rogné : un KV dont on couperait l'accroche ne se juge plus d'un coup d'œil. */
+.lb-piece-image{position:relative;min-height:clamp(240px,25vw,425px);overflow:hidden;background:white}
+.lb-piece-image>.vignette{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:0;background:white}
+.lb-piece-image img,.lb-piece-image video{width:100%;height:100%;position:absolute;inset:0;object-fit:contain;max-height:none}
 .lb-intention.studio-intention{justify-content:center;margin:0;padding:clamp(20px,4vw,60px);font:500 clamp(22px,2.4vw,38px)/1.25 var(--affichage);overflow-wrap:anywhere}
 .lb-file{margin:8px 0 16px;padding:0 2px}.lb-file summary{color:var(--clair-terne)}.lb-file summary .studio-compte{margin-left:8px}
 .lb-file-lignes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(190px,100%),1fr));gap:4px;margin:8px 0}
@@ -75,10 +80,10 @@ body[data-vue=partage]{display:block}
  .avis-pile .avis-graves{position:fixed;top:calc(8px + env(safe-area-inset-top));left:8px;right:8px;display:grid;gap:6px;max-height:60vh;overflow-y:auto}.avis-a{min-height:44px}
  .aller-contenu{left:8px}
  .zone,.zone.studio{padding:18px 14px 24px;min-width:0}.zone .studio-entete h1{overflow-wrap:anywhere}
- .lb-piece{grid-template-columns:minmax(0,1fr) minmax(64px,25%);gap:12px;padding:16px;align-items:center}
- .lb-piece-texte{padding:0}.lb-etat{font-size:13px}.lb-piece-projet{margin:6px 0 0}.lb-piece-projet a{font-size:14px}
+ .lb-piece{grid-template-columns:1fr}
+ .lb-piece-texte{padding:16px 16px 18px}.lb-etat{font-size:13px}.lb-piece-projet{margin:6px 0 0}.lb-piece-projet a{font-size:14px}
  .lb-piece h2{font-size:clamp(23px,5.7vw,30px)}.lb-piece-meta{margin:5px 0;font-size:14px}.lb-piece .b{margin-top:8px;min-height:44px}
- .lb-piece-image{min-height:0;aspect-ratio:1;border-radius:5px}.lb-intention.studio-intention{font-size:15px;padding:10px;max-height:125px;overflow:auto}
+ .lb-piece-image{order:-1;min-height:0;aspect-ratio:4/3}.lb-intention.studio-intention{order:-1;font-size:17px;padding:16px;max-height:180px;overflow:auto}
  .lb-file .studio-filtre{flex-wrap:wrap}.lb-dossiers{padding:0 14px 8px}.lb-dossiers .studio-couverture{width:42px;height:40px}
  .studio-index-outils .lb-vues-projets{gap:0}.studio-index-outils .lb-vues-projets a{padding:6px 8px}
  .lb-detail-piece{padding:12px}.lb-bureau .studio-section-tete{padding:12px 14px;gap:8px}.lb-bureau .studio-section-tete h2{font-size:18px}
@@ -101,36 +106,13 @@ body[data-vue=partage]{display:block}
     width: 100%;
     min-width: 0;
   }
-  #corps > .zone.lb-bureau {max-width: 2080px !important}
+  #corps > .zone.lb-bureau {max-width: 2080px}
   #corps > .studio-index, #corps > .galerie {max-width: 1840px}
 }
 .lb-travail, .lb-table {min-width: 0}
 .lb-travail {display: grid; align-items: start; gap: clamp(16px, 2vw, 32px)}
 .lb-bureau .studio-entete {padding: 0; margin-bottom: clamp(18px, 2vw, 30px)}
 .lb-bureau .studio-date {margin: 0 0 8px; font-size: .9375rem}
-.lb-bureau .lb-piece {
-  background: #193347; color: #fff; border: 0; border-radius: 14px;
-  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
-}
-/* « Key visual — Côte d'Ivoire · Orvelle » tient en deux lignes de 1024 à
- * 2560 px : à trois, la carte grandissait et le visuel gagnait deux bandes. */
-.lb-bureau .lb-piece h2 {color: #fff; font-size: clamp(1.65rem, 2.5vw, 3rem); line-height: 1.06}
-.lb-piece-texte {padding: clamp(22px, 2.7vw, 50px)}
-.lb-piece .lb-etat {color: #f6dec1; border: 0; padding: 0; font-weight: 550}
-.lb-piece .lb-etat span {color: #ffd292}
-.lb-piece .lb-piece-projet a, .lb-piece .lb-piece-meta {color: #d6e2e9}
-.lb-piece .lb-piece-projet a {min-height: 44px; line-height: 1.3}
-.lb-piece .b.or, .lb-piece .b.or:hover {
-  background: #fff; color: #163346; border-color: #fff; padding-inline: 16px;
-}
-.lb-piece :focus-visible {outline-color: #aaceff}
-.lb-piece.sans-visuel {grid-template-columns: 1fr}
-/* Le visuel se montre entier : le recadrer coupait l'accroche (« Drvelle
- * Zest »). Il repose sur le fond de la carte, sans bandes grises autour. */
-.lb-piece-image {background: transparent; min-height: clamp(240px, 25vw, 425px)}
-.lb-piece-image > .vignette {position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 0; background: transparent}
-.lb-piece-image > .vignette img {height: 100%; width: 100%; object-fit: contain}
-.lb-intention.studio-intention {color: #193347; background: #d9e9f0}
 .lb-file {margin: 6px 0 0}
 .lb-file summary {display: flex; align-items: center; gap: 9px; min-height: 48px; width: fit-content}
 .lb-file summary::after, .lb-filtre-structure summary::after, .rt-volet > summary::after {content: "⌄"; margin-left: auto}
@@ -144,7 +126,7 @@ body[data-vue=partage]{display:block}
   margin: 0; padding: 0 0 10px; display: flex; align-items: center; justify-content: space-between;
 }
 .lb-bureau .studio-section-tete h2 {font-size: clamp(1.1rem, 1.6vw, 1.5rem)}
-.lb-bureau .studio-section-tete a {min-height: 44px; display: inline-flex; align-items: center; font-size: .875rem; color: var(--studio-bleu)}
+.lb-bureau .studio-section-tete a {min-height: 44px; display: inline-flex; align-items: center; font-size: .875rem; color: var(--studio-bleu); text-decoration: none}
 .lb-dossiers {padding: 0}
 .lb-bureau .lb-dossiers .studio-dossier {gap: 14px; padding: 11px 0}
 .lb-dossiers .studio-couverture {width: 64px; height: 58px; border-radius: 6px}
@@ -181,11 +163,6 @@ body[data-vue=partage]{display:block}
   #corps > #contenu {padding-inline: clamp(26px, 2.8vw, 64px); padding-top: clamp(25px, 2.2vw, 48px)}
 }
 @media(max-width:800px) {
-  .lb-bureau .lb-piece {grid-template-columns: minmax(0,1fr) minmax(68px,27%); gap: 8px; padding: 18px}
-  .lb-bureau .lb-piece.sans-visuel {grid-template-columns: 1fr}
-  .lb-piece-texte {padding: 0}
-  .lb-bureau .lb-piece h2 {font-size: clamp(1.45rem,5vw,1.95rem)}
-  .lb-piece-image {min-height: 0; aspect-ratio: 1 / 1.12}
   .lb-dossiers .studio-couverture {width: 48px; height: 48px}
   .lb-bureau .lb-dossiers .studio-dossier {padding-block: 10px}
   .lb-outils-collection input {flex: 1 1 9rem}
