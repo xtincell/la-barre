@@ -17,15 +17,24 @@ window.VUE_PLANCHE = (function () {
     var retours = g.kvs.reduce(function (t, l) { return t + ANNOT.ouvertes(l).length; }, 0);
 
     return el("div.pl", {},
-      bande(p, g, nonConformes, sansVisuel, retours, rafraichir),
+      el("header.pj-travail-entete", {}, el("h2", {}, "Déclinaisons"),
+        el("div.pj-travail-actions", {},
+          el("button.b.or", { type: "button", onclick: function () { ajouter(p, rafraichir); } }, "Ajouter un KV"),
+          g.kvs.length ? el("button.b", { type: "button", onclick: function () { decliner(p, g, rafraichir); } }, "Créer des formats") : null)),
       g.kvs.length ? tete(rafraichir) : null,
-      g.kvs.length ? grille(p, g, rafraichir) : vide(p, rafraichir)
+      g.kvs.length ? grille(p, g, rafraichir) : vide(),
+      el("details.pj-procedure.pj-detail", { "data-pj-detail": "planche-controles" },
+        el("summary", {}, "Contrôles et impression",
+          nonConformes.length ? el("span.studio-compte", {}, nonConformes.length + " KV à vérifier") : null),
+        el("div.pj-procedure-corps", {}, bande(p, g, nonConformes, sansVisuel, retours),
+          el("div.pj-travail-actions", {},
+            el("button.b", { type: "button", onclick: function () { window.print(); } }, "Imprimer la planche"))))
     );
   }
 
   /* ————————————————————— La question ————————————————————— */
 
-  function bande(p, g, nonConformes, sansVisuel, retours, rafraichir) {
+  function bande(p, g, nonConformes, sansVisuel, retours) {
     var pire = KV.pireEcart(p);
     var controles = [
       { quoi: "Une référence commune", ok: KV.maitres(p).length > 0, poids: 5,
@@ -47,25 +56,18 @@ window.VUE_PLANCHE = (function () {
       g.kvs.length
         ? (nonConformes.length ? "Quels choix restent à vérifier ?" : "Contrôles renseignés — réception distincte")
         : "Aucun KV master",
-      controles, null,
-      [
-        { nom: "Ajouter un KV", fort: !g.kvs.length,
-          quand: function () { ajouter(p, rafraichir); } },
-        g.kvs.length ? { nom: "Créer des formats", quand: function () { decliner(p, g, rafraichir); } } : null,
-        { nom: "Imprimer la planche", doux: true, quand: function () { window.print(); } },
-      ].filter(Boolean));
+      controles, null, []);
   }
 
   function tete(rafraichir) {
     return el("div.pl-tete", {}, reglette(rafraichir));
   }
 
-  function vide(p, rafraichir) {
+  function vide() {
     return el("div.pl-vide", {},
       UI.icone("projets", 28),
       el("div.plv-t", {}, "La planche est vide."),
-      el("div.plv-s", {}, "Le master porte les choix communs de la piste. Une adaptation ne porte que les différences d'un marché ; les formats peuvent venir directement du master."),
-      el("button.b.or", { type: "button", onclick: function () { ajouter(p, rafraichir); } }, "Poser le premier KV")
+      el("div.plv-s", {}, "Ajoutez le KV master qui servira de référence aux formats et aux adaptations par marché.")
     );
   }
 

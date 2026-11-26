@@ -11,6 +11,16 @@
 window.VUE_PIPELINE = (function () {
   var el = O.el;
   var vue = "ordre";
+  var ouverts = new Set();
+
+  function volet(selecteur, cle, ...contenu) {
+    var d = el(selecteur, { open: ouverts.has(cle) }, contenu);
+    d.addEventListener("toggle", function () {
+      if (d.open) ouverts.add(cle);
+      else ouverts.delete(cle);
+    });
+    return d;
+  }
 
   /* Le pipeline n'est plus une destination : c'est le corps de deux modes de
    * Placer. Il ne porte donc plus ni titre d'écran ni onglets — ceux-ci
@@ -22,9 +32,9 @@ window.VUE_PIPELINE = (function () {
 
     var pieces = PRODUCTION.toutesLesPieces();
     hote.appendChild(el("div", {},
-      vue === "charge" ? charge(pieces, hote) : ordre(hote),
+      vue === "charge" ? charge(pieces) : ordre(),
       el("details.pilotage-contexte.pilotage-synthese", {},
-        el("summary", {}, "Chiffres de production"),
+        el("summary", {}, "Totaux de production"),
         bandeHaute(pieces))
     ));
   }
@@ -84,7 +94,7 @@ window.VUE_PIPELINE = (function () {
    *
    * « Aucun client ne doit souffrir » est la loi de cet écran. */
 
-  function ordre(hote) {
+  function ordre() {
     var rangs = [[], [], [], []];
     DEPOT.liste("projets").forEach(function (p) {
       (p.sections.pistes || []).forEach(function (pi) {
@@ -106,54 +116,64 @@ window.VUE_PIPELINE = (function () {
     var vendu = { j: jours(rangs[0]) + jours(rangs[1]), n: pieces(rangs[0]) + pieces(rangs[1]) };
     var parie = { j: jours(rangs[2]) + jours(rangs[3]), n: pieces(rangs[2]) + pieces(rangs[3]) };
     var haut = Math.max(vendu.j, parie.j, 1);
-    var c = PRIORITE.conflits();
+    var conflits = PRIORITE.conflits().conflits;
+    if (!rangs.some(function (g) { return g.length; })) {
+      return el("div.pilotage-action", {},
+        el("h2", {}, "Aucun livrable ou piste à prioriser"),
+        el("a.b.nu", { href: APP.adresse("projets") }, "Voir les projets"));
+    }
+    var action = conflits.length ? null : actionPrioritaire(rangs);
 
-    return el("div.pp", {},
-      el("div.pp-titre", {},
-        el("h2", {}, parie.n && !vendu.n
-          ? parie.n + (parie.n > 1 ? " livrables sans engagement" : " livrable sans engagement")
-          : vendu.n && parie.n
-            ? Math.round(vendu.j) + " j engagés · " + Math.round(parie.j) + " j sans engagement"
-            : vendu.n ? "Livrables engagés" : "Aucun livrable à prioriser")),
+    return el("div.pp.pilotage-priorites", {},
+      conflits.length
+        ? el("section.pilotage-action.pilotage-alerte", {},
+            el("h2", {}, "Engagements en retard"),
+            conflits.map(function (x) {
+              return el("div.pilotage-conflit", {},
+                el("strong", {}, x.personne ? x.personne.nom : "Personne non renseignée"),
+                el("p.pilotage-meta", {}, x.speculatif.length + " en spéculatif · " + x.ferme.length + " engagés en retard"),
+                el("div.pilotage-liste", {}, x.ferme.map(function (f) {
+                  return lignePiece(f.p, f.l, "En retard");
+                })));
+            }))
+        : el("section.pilotage-action", {},
+            el("h2", {}, "Prochaine action"),
+            el("p", {}, action.texte),
+            el("div.form-actions", {}, action.liens)),
 
-      /* Les deux plateaux, de part et d'autre d'un axe. */
-      el("section.pp-bal", {},
-        cote("vendu", "Ce qui est vendu", vendu, haut, [
-          { r: PRIORITE.RANGS[0], g: rangs[0] }, { r: PRIORITE.RANGS[1], g: rangs[1] },
-        ], hote),
-        el("div.pp-axe", {}),
-        cote("parie", "Ce qui est parié", parie, haut, [
-          { r: PRIORITE.RANGS[2], g: rangs[2] }, { r: PRIORITE.RANGS[3], g: rangs[3] },
-        ], hote)),
+      el("section.pilotage-rangs", {},
+        el("h2", {}, "Ordre des engagements"),
+        el("div.pilotage-liste", {}, rangs.map(function (g, i) {
+          var r = PRIORITE.RANGS[i];
+          var n = pieces(g);
+          return volet("details.pilotage-rang", r.cle,
+            el("summary", {}, el("strong", {}, r.nom),
+              el("span.pilotage-meta", {}, n + (n === 1 ? " livrable" : " livrables")
+                + (n ? " · " + Math.round(jours(g)) + " j estimés" : ""))),
+            el("p", {}, r.regle),
+            g.length ? el("div.pilotage-liste", {}, g.flatMap(function (x) {
+              if (x.ls.length) return x.ls.map(function (l) { return lignePiece(x.p, l); });
+              return x.pi ? [el("a.pilotage-ligne", { href: APP.adresse("projets", x.p.id, "pistes", x.pi.id) },
+                el("span", {}, el("strong", {}, x.pi.titre || "Piste sans titre"),
+                  el("small", {}, x.p.nom)), el("span.pilotage-etat", {}, "Sans livrable"))] : [];
+            })) : null);
+        }))),
 
-      /* Ce qui ferait basculer la balance — le geste, pas le constat. */
-      el("section.pp-d", {},
-        el("h3", {}, "Ce qui débloquerait la balance"),
-        el("p", {}, debloquer(rangs)),
-        el("div.form-actions", {}, gestesBalance(rangs))),
-
-      c.conflits.length
-        ? el("section.pp-conflit.f-alerte", {},
-            el("h3", {}, el("span.pp-signe", { "aria-hidden": "true" }, "● "), "Du spéculatif devant du ferme"),
-            c.conflits.map(function (x) {
-              return el("div.ppc-l", {},
-                x.personne ? UI.avatar(x.personne, 24) : null,
-                el("div", {},
-                  el("div.ppcl-n", {}, (x.personne ? x.personne.nom : "quelqu'un")
-                    + " tient " + x.speculatif.length
-                    + (x.speculatif.length > 1 ? " livrables spéculatifs" : " livrable spéculatif")
-                    + " pendant que " + x.ferme.length
-                    + (x.ferme.length > 1 ? " livrables engagés sont" : " livrable engagé est") + " en retard."),
-                  el("div.ppcl-d", {}, x.ferme.slice(0, 3).map(function (f) {
-                    return f.p.ref + " · " + f.l.nom; }).join("  ·  "))));
-            }),
-            el("p.ppc-r", {}, "Ce n'est pas un reproche : c'est l'ordre qui n'a pas été dit."))
-        : null
+      vendu.n || parie.n ? el("details.pilotage-contexte.pilotage-synthese", {},
+        el("summary", {}, "Répartition du temps estimé"),
+        el("div.pp-bal", {},
+          cote("vendu", "Engagé", vendu, haut, [
+            { r: PRIORITE.RANGS[0], g: rangs[0] }, { r: PRIORITE.RANGS[1], g: rangs[1] },
+          ]),
+          el("div.pp-axe", {}),
+          cote("parie", "Sans engagement", parie, haut, [
+            { r: PRIORITE.RANGS[2], g: rangs[2] }, { r: PRIORITE.RANGS[3], g: rangs[3] },
+          ]))) : null
     );
   }
 
   /* Un plateau : sa hauteur est proportionnelle aux jours consommés. */
-  function cote(cle, titre, tot, haut, blocs, hote) {
+  function cote(cle, titre, tot, haut, blocs) {
     var vide = !tot.n;
     return el("div.pp-c." + cle, {},
       el("h3.ppc-t", {}, titre),
@@ -182,42 +202,42 @@ window.VUE_PIPELINE = (function () {
     return v.map(function (l) { return IMAGE.vignette(l, "carte"); });
   }
 
-  function debloquer(rangs) {
-    var enLice = [];
-    DEPOT.liste("projets").forEach(function (p) {
-      (p.sections.pistes || []).forEach(function (pi) {
-        if (pi.statut === "proposee") enLice.push({ p: p, pi: pi });
-      });
-    });
+  function actionPrioritaire(rangs) {
+    var enLice = rangs.flat().filter(function (x) { return x.pi && x.pi.statut === "proposee"; });
     if (enLice.length) {
-      var age = enLice.reduce(function (n, x) {
-        return Math.max(n, x.pi.soumis_le ? O.depuis(x.pi.soumis_le) : 0); }, 0);
-      return "Une piste retenue et validée fait basculer ses livrables à gauche. "
-        + enLice.length + (enLice.length > 1 ? " pistes sont en lice" : " piste est en lice")
-        + (age ? " depuis " + age + (age > 1 ? " jours" : " jour") : "") + ".";
+      enLice.sort(function (a, b) {
+        return String(a.pi.soumis_le || "9999").localeCompare(String(b.pi.soumis_le || "9999"));
+      });
+      var x = enLice[0];
+      var age = x.pi.soumis_le ? O.depuis(x.pi.soumis_le) : 0;
+      return { texte: enLice.length + (enLice.length > 1 ? " pistes à arbitrer" : " piste à arbitrer")
+          + (age > 0 ? " · la plus ancienne attend depuis " + age + (age > 1 ? " jours" : " jour") : "") + ".",
+        liens: [
+          el("a.b.or", { href: APP.adresse("projets", x.p.id, "pistes", x.pi.id) },
+            "Ouvrir " + (x.pi.titre || "la piste")),
+          GESTE.bouton("presentation", { p: x.p }, null, "b.nu")
+        ] };
     }
     if (!rangs[0].length && rangs[1].length) {
-      return "Les pistes sont validées mais pas payées. Relancer la facturation : "
-        + "produire sans bon de commande, c'est financer le client.";
+      var validee = rangs[1][0];
+      return { texte: rangs[1].length + (rangs[1].length === 1 ? " piste validée attend" : " pistes validées attendent") + " un bon de commande.",
+        liens: [el("a.b.or", { href: APP.adresse("projets", validee.p.id, "pistes", validee.pi.id) },
+          "Ouvrir " + (validee.pi.titre || "la piste"))] };
     }
-    return "La balance tient : ce qui se produit est vendu.";
+    return { texte: rangs[2].length || rangs[3].length
+        ? "Vérifier la charge avant d’engager les livrables spéculatifs."
+        : "Vérifier les échéances et les affectations.",
+      liens: [GESTE.bouton("charge", {}, null, "b.nu")] };
   }
 
-  function gestesBalance(rangs) {
-    var g = [];
-    var cible = null;
-    DEPOT.liste("projets").forEach(function (p) {
-      (p.sections.pistes || []).forEach(function (pi) {
-        if (!cible && pi.statut === "proposee") cible = p;
-      });
-    });
-    if (cible) {
-      g.push(GESTE.bouton("pistes", { p: cible }, null, "b.or"));
-      g.push(GESTE.bouton("presentation", { p: cible }, null, "b.nu"));
-    } else {
-      g.push(GESTE.bouton("charge", {}, null, "b.nu"));
-    }
-    return g;
+  function lignePiece(p, l, etat) {
+    var responsable = l.responsable && DEPOT.trouve("personnes", l.responsable);
+    var marche = l.marche && DEPOT.trouve("marches", l.marche);
+    return el("a.pilotage-ligne", { href: APP.adresse("projets", p.id, "livrables", l.id) },
+      el("span", {},
+        el("strong", {}, l.nom || "Livrable sans nom"),
+        el("small", {}, [p.nom, marche ? marche.nom : null, responsable ? responsable.nom : "Sans responsable"].filter(Boolean).join(" · "))),
+      etat ? el("span.pilotage-etat", {}, etat) : null);
   }
 
   function carteRoute(x, r, hote) {
@@ -290,7 +310,7 @@ window.VUE_PIPELINE = (function () {
     return r;
   }
 
-  function charge(pieces, hote) {
+  function charge(pieces) {
     var tout = pieces.map(function (x) {
       var r = risque(x.projet, x.l);
       return { p: x.projet, l: x.l, r: r };
@@ -304,34 +324,29 @@ window.VUE_PIPELINE = (function () {
     var chaud = tout.filter(function (x) { return x.r.pts >= 30; });
     var calme = tout.filter(function (x) { return x.r.pts < 30; });
 
-    return el("div.pp", {},
+    return el("div.pp.pilotage-charge", {},
       el("h2", {}, tout.length + (tout.length > 1 ? " livrables suivis" : " livrable suivi")),
-      groupeCharge("À surveiller", chaud, 8, hote, true),
-      groupeCharge("Autres livrables", calme, 12, hote, false));
+      groupeCharge("À surveiller", chaud, "charge-risques"),
+      groupeCharge("Autres livrables", calme, "charge-suivi"));
   }
 
-  function groupeCharge(titre, liste, limite, hote, chaud) {
+  function groupeCharge(titre, liste, cle) {
     if (!liste.length) return null;
-    var classes = "div.ppm-l." + (chaud ? "chaud" : "calme");
+    var limite = 6;
     return el("section.pp-mur", {},
       el("h3.ppm-t", {}, titre, " · ", liste.length),
-      el(classes, {}, liste.slice(0, limite).map(function (x) { return piece(x, hote, chaud); })),
-      liste.length > limite ? el("details.pilotage-contexte", {},
-        el("summary", {}, (liste.length - limite) + " de plus"),
-        el(classes, {}, liste.slice(limite).map(function (x) { return piece(x, hote, chaud); }))) : null);
+      el("div.pilotage-liste", {}, liste.slice(0, limite).map(ligneCharge)),
+      liste.length > limite ? volet("details.pilotage-contexte", cle,
+        el("summary", {}, (liste.length - limite) + " autres"),
+        el("div.pilotage-liste", {}, liste.slice(limite).map(ligneCharge))) : null);
   }
 
-  function piece(x, hote, chaud) {
-    var pe = x.l.responsable ? DEPOT.trouve("personnes", x.l.responsable) : null;
-    var m = DEPOT.trouve("marches", x.l.marche);
-    return el("button.ppm-p" + (chaud ? ".chaud" : ""), { type: "button",
-      onclick: function () { VUE_ASSET.ouvrir(x.p, x.l, function () { rendre(hote); }); } },
-      IMAGE.vignette(x.l, "planche"),
-      el("span.ppmp-n", {}, x.l.nom + (m ? " · " + m.code : "")),
-      el("span.ppmp-c", {}, chaud ? el("span.pp-signe", { "aria-hidden": "true" }, "● ") : null,
-        cap(x.r.causes.length ? x.r.causes.slice(0, 2).join(" · ")
-          : x.r.jours !== null ? "remise dans " + x.r.jours + " j" : "prête")),
-      el("span.ppmp-q", {}, [x.p.ref || x.p.nom, pe ? pe.nom : "Sans responsable"].filter(Boolean).join(" · ")));
+  function ligneCharge(x) {
+    var etat = x.r.causes.length ? cap(x.r.causes.join(" · "))
+      : x.r.jours !== null ? "Remise dans " + x.r.jours + " j" : "Sans alerte de charge";
+    var ligne = lignePiece(x.p, x.l, etat);
+    if (x.r.pts >= 30) ligne.classList.add("pilotage-ligne-alerte");
+    return ligne;
   }
 
   function cap(t) { return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;

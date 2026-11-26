@@ -63,9 +63,15 @@ window.VUE_PRESENTATION = (function () {
   function rendre(p, rafraichir) {
     var d = pres(p);
     return el("div.pr", {},
-      bande(p, d, rafraichir),
-      window.PARTAGE ? PARTAGE.bloc(p, rafraichir) : null,
-      laSalle(p, d, rafraichir),
+      el("header.pj-travail-entete", {},
+        el("div", {}, el("h2", {}, "Présentation"),
+          d.statut === "presentee" ? el("p", {}, "Présentée le " + O.joli((d.seance || {}).date)) : null),
+        el("div.pj-travail-actions", {},
+          el("button.b", { type: "button", onclick: function () {
+            lecture = lecture === "dossier" ? "montage" : "dossier";
+            rafraichir();
+          } }, lecture === "dossier" ? "Revenir au montage" : "Lire le dossier"),
+          el("button.b.or", { type: "button", onclick: function () { presenter(p, d, rafraichir); } }, "Présenter"))),
       d.statut === "presentee" ? apresSeance(p, d, rafraichir) : null,
       /* Le montage client n'est pas le dossier moins quelques pages : c'est un
        * choix, et le choix doit être visible. À gauche ce qui part dans son
@@ -82,7 +88,17 @@ window.VUE_PRESENTATION = (function () {
                   d.retirees = []; d.ordre = []; DEPOT.enregistrer(); rafraichir(); } }, "Revenir au parcours complet"))
             : null,
           pages(p, d, rafraichir)),
-        registreRetire(p))
+        el("details.pj-procedure.pj-detail", { "data-pj-detail": "presentation-interne" },
+          el("summary", {}, "Contenu gardé en interne"),
+          registreRetire(p))),
+      el("details.pj-procedure.pj-detail", { "data-pj-detail": "presentation-montage" },
+        el("summary", {}, "Options de montage et contrôles"),
+        el("div.pj-procedure-corps", {},
+          laSalle(p, d, rafraichir),
+          bande(p, d, rafraichir))),
+      window.PARTAGE ? el("details.pj-procedure.pj-detail", { "data-pj-detail": "presentation-partage" },
+        el("summary", {}, "Partager la présentation"),
+        el("div.pj-procedure-corps", {}, PARTAGE.bloc(p, rafraichir))) : null
     );
   }
 
@@ -192,10 +208,6 @@ window.VUE_PRESENTATION = (function () {
       d.statut === "presentee" ? "Présentée le " + O.joli((d.seance || {}).date) : "Cette présentation peut-elle partir ?",
       controles, null,
       [
-        { nom: "Présenter", fort: true, quand: function () { presenter(p, d, rafraichir); } },
-        { nom: lecture === "dossier" ? "Revenir au montage" : "Lire le dossier", fort: false,
-          quand: function () { lecture = lecture === "dossier" ? "montage" : "dossier"; rafraichir(); } },
-        { nom: "Choisir la structure", quand: function () { choisirStructure(p, d, rafraichir); } },
         { nom: "Ajouter une page", quand: function () { ajouterPage(p, d, rafraichir); } },
         { nom: d.niveau === "ambitieux" ? "Revenir au minimum client" : "Passer en pitch ambitieux",
           quand: function () { regenerer(p, d, rafraichir); } },
