@@ -101,12 +101,25 @@ window.VUE_ASSET = (function () {
     return medium;
   }
 
-  function toile(objet, nom) {
+  /* La loupe posée sur l'image en cachait le coin bas à droite : celui où une
+   * affiche porte sa signature ou son logo. Rien de l'interface ne se pose
+   * plus sur la création : l'image s'agrandit d'un clic, et le bouton
+   * « Agrandir le visuel » vit dans la barre des gestes, sous la décision. */
+  function zoomable(objet) {
     var source = IMAGE.source(objet);
-    var zoom = source && !IMAGE.estVideo(source) ? el("button.b.rvp-agrandir", { type: "button", "aria-label": "Agrandir le visuel",
-      onclick: function () { PANNEAU.ouvrir("Aperçu du visuel", nom, el("div.rvp-zoom", {}, mediaRevue(objet, nom))); } },
-    UI.icone("recherche", 16)) : null;
-    return el("figure.rvp-toile", {}, mediaRevue(objet, nom), zoom);
+    return !!source && !IMAGE.estVideo(source);
+  }
+
+  function agrandir(objet, nom) {
+    return function () { PANNEAU.ouvrir("Aperçu du visuel", nom, el("div.rvp-zoom", {}, mediaRevue(objet, nom))); };
+  }
+
+  function toile(objet, nom) {
+    if (!zoomable(objet)) return el("figure.rvp-toile", {}, mediaRevue(objet, nom));
+    var ouvrir = agrandir(objet, nom);
+    return el("figure.rvp-toile.rvp-zoomable", { title: "Agrandir le visuel", onclick: function (e) {
+      if (e.currentTarget.querySelector("img")) ouvrir();
+    } }, mediaRevue(objet, nom));
   }
 
   function dossier(f) {
@@ -170,9 +183,11 @@ window.VUE_ASSET = (function () {
     var documents = fichiersRevue(l, numero);
     var annotation = !lecture && IMAGE.source(l) ? el("button.b.nu", { type: "button",
       onclick: function () { ANNOT.ouvrir(p, l, apres, numero); } }, "Annoter le visuel") : null;
+    var titre = KV.titre(l) + " — V" + numero;
+    var zoom = zoomable(l) ? el("button.b.nu", { type: "button", onclick: agrandir(l, titre) }, "Agrandir le visuel") : null;
     return el("div.rvp", {},
       el("div.rvp-plan", {},
-        toile(l, KV.titre(l) + " — V" + numero),
+        toile(l, titre),
         el("div.rvp-pupitre", {},
           el("div.rvp-portee", {},
             el("p.rvp-meta", {}, (marche ? marche.nom : "Marché non renseigné") + " · V" + numero),
@@ -191,7 +206,7 @@ window.VUE_ASSET = (function () {
           el("ul.rvp-docs", {}, historique.map(function (n) {
             return el("li", {}, ongletLien(lien, "juger", "rvp-lien", "Version " + n, n));
           }))) : null,
-        el("nav.rvp-liens", { "aria-label": "Autres actions du livrable" }, annotation,
+        el("nav.rvp-liens", { "aria-label": "Autres actions du livrable" }, zoom, annotation,
           ongletLien(lien, "poser", "b.nu", "Visuels et fichiers"),
           ongletLien(lien, "origine", "b.nu", "Origine et dépendances"))));
   }
