@@ -686,3 +686,17 @@ test('la file accorde « 1 livrable sans responsable » et ses voisins au singul
   }
   assert.ok(!lignes.some(l => /\b1 (livrables|champs)\b/.test(l)), lignes.join('\n'));
 });
+
+test('Décisions ne redit pas le support et le marché que le titre de la pièce donne déjà', async () => {
+  const s = await bacDecisions(APP, 95);
+  await s.charger('kv-modele');
+  await s.charger('vue-revue');
+  const v1 = { versions: [{ n: 1, soumis_le: '2026-11-03T08:00:00.000Z' }] };
+  semer(s.ctx, { personnes: PERSONNES, ...REFERENTIEL, projets: [projet('RV', { livrables: [
+    livrable('L-kv', { nom: 'KV · GH · Orvelle', support: 'S-kv', marche: 'M-gh', ...v1 }),
+    livrable('L-eq', { nom: 'Bannière de lancement', support: 'S-social', marche: 'M-ci', ...v1 })] })] });
+  const lignes = [...s.ctx.VUE_REVUE.pieces()].map(x => [x.titre.replace(/ /g, ' '), x.contexte]);
+  assert.deepEqual(lignes, [
+    ['Key visual — Ghana · Orvelle · V1', 'REF-RV'],
+    ['Bannière de lancement · V1', 'REF-RV · Post social 1:1 · Côte d’Ivoire']]);
+});

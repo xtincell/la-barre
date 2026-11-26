@@ -220,7 +220,7 @@ window.VUE_ASSET = (function () {
     var retours = courant === "juger" ? retoursClient(p, l, apres) : null;
     var ouvrirRetours = courant === "juger" ? retoursAOuvrir(l) : null;
     return el("div.as" + (courant === "juger" ? ".as-revue" : ""), {},
-      entete(p, l),
+      entete(p, l, !!lien),
       horsEcart(p, l, apres),
       courant === "poser" ? bande(p, l, apres, voirRetours) : null,
       navigation,
@@ -240,8 +240,9 @@ window.VUE_ASSET = (function () {
 
   function vide(t) { return el("p.rien", {}, t); }
 
-  /* Ce qu'on voit avant de juger : le livrable, son niveau, son marché, son état. */
-  function entete(p, l) {
+  /* Ce qu'on voit avant de juger : le livrable, son niveau, son marché, son état.
+   * Sur la page, le code est déjà en surtitre : la ligne d'infos ne le redit pas. */
+  function entete(p, l, surPage) {
     var m = DEPOT.trouve("marches", l.marche);
     var s = DEPOT.trouve("supports", l.support);
     var resp = l.responsable ? DEPOT.trouve("personnes", l.responsable) : null;
@@ -253,7 +254,7 @@ window.VUE_ASSET = (function () {
       el("div.ast-c", {},
         el("div.ast-n", {}, KV.titre(l)),
         el("div.ast-m", {},
-          KV.surtitre(l) ? el("span", {}, KV.surtitre(l)) : null,
+          !surPage && KV.surtitre(l) ? el("span", {}, KV.surtitre(l)) : null,
           UI.eti(KV.NIVEAUX[KV.niveau(l)].nom, "terne"),
           m ? el("span", {}, UI.drapeau(m), " ", m.nom) : null,
           s ? el("span", {}, s.nom) : null,

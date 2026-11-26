@@ -46,12 +46,18 @@ window.VUE_REVUE = (function () {
         var v = version.objet;
         var s = DEPOT.trouve("supports", l.support);
         var m = DEPOT.trouve("marches", l.marche);
+        var titre = window.KV && KV.titre ? KV.titre(l) : l.nom;
+        /* Le support et le marché que le titre dit déjà (« Key visual — Ghana »)
+         * ne se répètent pas dans la ligne d'infos ; un nom écrit par l'équipe
+         * (« Affiche de lancement ») les garde. */
+        var dit = String(titre).replace(/\u00a0/g, " ");
+        function nouveau(x) { return x && x.nom && dit.indexOf(x.nom) === -1 ? " · " + x.nom : ""; }
         liste.push({
           type: "livrable", id: l.id, projet: p, objet: l, version: version.numero,
-          titre: (window.KV && KV.titre ? KV.titre(l) : l.nom) + " · V" + version.numero,
+          titre: titre + " · V" + version.numero,
           /* La décision garde le nom enregistré : c'est ce qu'elle a toujours écrit. */
           nomDecision: l.nom + " — V" + version.numero,
-          contexte: p.ref + (s ? " · " + s.nom : "") + (m ? " · " + m.nom : ""),
+          contexte: p.ref + nouveau(s) + nouveau(m),
           depuis: v.soumis_le, criteres: "livrable", etape: 3,
           auteur: l.responsable, semaine: PLATEAU.semaineDe(PLATEAU.echeanceDe(p, l)),
         });
