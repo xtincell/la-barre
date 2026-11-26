@@ -167,7 +167,7 @@ window.VUE_LIVRABLE = (function () {
     }
 
     return UI.recevabilite(
-      coince.length === 0 && !manques.length ? "Ce livrable est prête" : "Que manque-t-il pour livrer ?",
+      coince.length === 0 && !manques.length ? "Ce livrable est prêt" : "Que manque-t-il pour livrer ?",
       controles, prix, gestes);
   }
 

@@ -271,6 +271,13 @@ window.O = (function () {
     return (v % 1 ? v.toFixed(1).replace(".", ",") : String(v));
   }
 
+  /* « 1 visuel manquant », « 3 visuels manquants », « 0 visuel ». Le pluriel
+   * se donne quand il n'ajoute pas seulement un s (« cheval », « chevaux »). */
+  function pluriel(n, singulier, plurielForme) {
+    var nombre = Number(n) || 0;
+    return nombre + " " + (Math.abs(nombre) >= 2 ? (plurielForme || singulier + "s") : singulier);
+  }
+
   function contient(paille, aiguille) {
     return normalise(paille).indexOf(normalise(aiguille)) !== -1;
   }
@@ -288,7 +295,7 @@ window.O = (function () {
     id: id, aleatoire: aleatoire, codePoste: codePoste, identifiantUnique: identifiantUnique, TIRAGES: TIRAGES,
     referenceSuivante: referenceSuivante, PREFIXE_REFERENCE: PREFIXE_REFERENCE,
     poste: poste, jeton: jeton, normalise: normalise, contient: contient,
-    milliers: milliers, decimal: decimal,
+    milliers: milliers, decimal: decimal, pluriel: pluriel,
     langue: langue,
   };
 })();

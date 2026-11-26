@@ -104,8 +104,8 @@ window.VUE_LIVRAISON = (function () {
         el("span.plv-n", {}, pleins.length + " / " + ls.length),
         el("span.plv-q", {}, pleins.length === ls.length
           ? "La planche est complète — elle se montre telle quelle."
-          : (ls.length - pleins.length) + " cases attendent leur visuel. "
-            + "Tire le dossier de rendus n'importe où sur la planche.")),
+          : O.pluriel(ls.length - pleins.length, "visuel manquant", "visuels manquants") + ". "
+            + "Glissez le dossier des rendus n'importe où sur la planche.")),
       el("div.plv-modes.studio-statuts", { role: "group", "aria-label": "Mode de la planche" }, [
         { cle: "livraison", nom: "Livraison", quoi: "Tout, les trous compris" },
         { cle: "presentation", nom: "Présentation", quoi: "Les visuels au dossier, imprimables" },

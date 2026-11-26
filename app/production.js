@@ -262,7 +262,7 @@ window.PRODUCTION = (function () {
     var vieux = perimes(l);
 
     return el("div", {},
-      UI.recevabilite("Ce livrable peut-elle partir en production ?",
+      UI.recevabilite("Ce livrable peut-il partir en production ?",
         porte(p, l), null,
         /* Deux gestes, et le premier est l'import : dans la vraie vie le
          * fichier existe déjà quelque part, et le décrire à la main est ce

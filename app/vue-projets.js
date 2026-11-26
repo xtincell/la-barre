@@ -1192,7 +1192,8 @@ window.VUE_PROJETS = (function () {
     if (archive) {
       var cle = sections.indexOf("livrables") !== -1 ? "livrables"
         : sections.indexOf("presentation") !== -1 ? "presentation" : "identite";
-      return action("Projet clos", CLOTURE.etat(p).quoi, cle, "Consulter " + nomSection(cle).toLowerCase());
+      return action("Projet clos", CLOTURE.etat(p).quoi, cle,
+        { livrables: "Consulter les livrables", presentation: "Consulter la présentation" }[cle] || "Consulter le dossier");
     }
 
     var recu = VUE_BRIEF.reception(p);
