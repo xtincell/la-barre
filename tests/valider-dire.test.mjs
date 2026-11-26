@@ -247,6 +247,25 @@ test('une page fermée avant l’échéance : la note se rejoue à la réouvertu
   assert.equal(ouverte.notes().length, 1);
 });
 
+test('un onglet resté ouvert écrit la note d’un onglet fermé, mais n’abandonne pas une note qu’il ne reconnaît pas', async () => {
+  const avant = await validation(60);
+  cliquer(bouton(avant.s.ctx.VUE_LIVRABLE.decider(avant.p, avant.l, () => {}), 'Valider la V1'));
+  const stockage = [['la-barre-validations', JSON.stringify([{ ...avant.notes()[0], rejouer: true }])]];
+
+  const retard = await validation(61, stockage);
+  retard.l.vignette = 'assets/review/autre.jpg';   // sa base n'est pas celle de l'onglet fermé
+  assert.equal(retard.s.ctx.VUE_LIVRABLE.reprendreValidations({ surPlace: true }), 0);
+  assert.deepEqual(retard.avis, [], 'aucun avis : la note n’est pas tranchée ici');
+  assert.equal(retard.notes().length, 1, 'elle reste pour la prochaine ouverture');
+  assert.equal(retard.s.ctx.DEPOT.liste('decisions').length, 0);
+
+  const ouvert = await validation(62, stockage);
+  assert.equal(ouvert.s.ctx.VUE_LIVRABLE.reprendreValidations({ surPlace: true }), 1);
+  assert.equal(ouvert.l.versions[0].verdict, 'approuve');
+  assert.deepEqual(ouvert.avis, [['fait', 'Validation de la V1 de « Affiche · CM » enregistrée.']]);
+  assert.deepEqual(ouvert.notes(), []);
+});
+
 /* L'horloge du bac (decisions-scenarios.mjs) part du 10 novembre à 9 h et
  * avance d'une seconde à chaque lecture. */
 test('une note jamais marquée (onglet tué sans pagehide) se rejoue passé 128 s, et pas avant', async () => {

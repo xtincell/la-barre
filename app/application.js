@@ -360,6 +360,21 @@ window.APP = (function () {
       if (!local) { AMORCE.poser(); noter("exemple posé en attendant"); }
     }
 
+    /* Un autre onglet qui se ferme avant l'échéance d'une validation la marque
+     * à rejouer. Avec la base servie, un onglet resté ouvert l'écrit tout de
+     * suite plutôt qu'au prochain chargement : le client et Radar la voient
+     * sans attendre. Sans base servie, chaque onglet tient sa propre copie et
+     * l'écriture de celui-ci écraserait le travail de l'autre : la note attend
+     * la prochaine ouverture. */
+    window.addEventListener("storage", function (e) {
+      if (e.key !== "la-barre-validations" || !e.newValue) return;
+      if (!DEPOT.fichierServi || !DEPOT.fichierServi()) return;
+      if (!window.VUE_LIVRABLE || !VUE_LIVRABLE.reprendreValidations) return;
+      if (VUE_LIVRABLE.reprendreValidations({ surPlace: true })) {
+        var x = window.scrollX, y = window.scrollY; rendre(); window.scrollTo(x, y);
+      }
+    });
+
     ecouter();
     rendre();
   }

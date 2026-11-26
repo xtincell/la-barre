@@ -713,32 +713,49 @@ window.VUE_LIVRABLE = (function () {
   /* À l'ouverture, une fois la base de référence lue (application.js) : les
    * validations engagées dans une page fermée avant leur échéance s'écrivent,
    * avec la même garde de version. Une pièce qui a changé entre-temps n'est pas
-   * validée à l'aveugle : la note est abandonnée, et l'avis le dit. */
-  function reprendreValidations() {
+   * validée à l'aveugle : la note est abandonnée, et l'avis le dit.
+   *
+   * `surPlace` : la reprise vient d'un onglet resté ouvert, prévenu qu'un autre
+   * s'est fermé (application.js, événement storage). Sa base peut être en
+   * retard sur celle de l'onglet fermé : une note qu'elle ne reconnaît pas
+   * n'est pas abandonnée, elle reste pour la prochaine ouverture. */
+  function reprendreValidations(options) {
     if (!window.DEPOT || !DEPOT.baseLue || !DEPOT.baseLue()) return 0;
+    var surPlace = !!(options && options.surPlace);
     var fichier = DEPOT.fichierServi ? DEPOT.fichierServi() : null;
     var maintenant = Date.now(), n = 0;
     notes().forEach(function (x) {
       if (x.fichier && x.fichier !== fichier) return;
       if (engagements.some(function (e) { return e.id === x.id; })) return;
       if (!x.rejouer && !(maintenant - Date.parse(x.quand) > ABANDON)) return;
+      if (surPlace && etatDeNote(x).cle === "changee") return;
       if (!prendre(x.id)) return;
       rejouer(x); n++;
     });
     return n;
   }
 
-  function rejouer(x) {
-    var verdict = verdictDe(x.verdict);
+  /* Ce que la base de cette page dit d'une note : déjà écrite, à écrire, ou
+   * pièce changée depuis. */
+  function etatDeNote(x) {
     var p = DEPOT.trouve("projets", x.projetId);
     var l = p && (p.livrables || []).filter(function (y) { return y.id === x.livrableId; })[0];
     var version = l && REMISE.versionCourante(l);
     var meme = version && String(version.numero) === String(x.numero);
-    var nom = "la V" + x.numero + (x.titre ? " de « " + x.titre + " »" : "");
-    /* Déjà écrite (avant la fermeture, ou par un autre poste) : rien à refaire. */
-    if (meme && version.objet.verdict === x.verdict) return;
+    if (meme && version.objet.verdict === x.verdict) return { cle: "ecrite" };
     var contexte = meme ? etatPourVerdict(l, version.objet) : null;
-    if (!verdict || !contexte || version.objet.verdict || empreinte(contexte) !== x.empreinte) {
+    if (!verdictDe(x.verdict) || !contexte || version.objet.verdict || empreinte(contexte) !== x.empreinte) return { cle: "changee" };
+    return { cle: "a-ecrire", contexte: contexte };
+  }
+
+  function rejouer(x) {
+    var verdict = verdictDe(x.verdict);
+    var nom = "la V" + x.numero + (x.titre ? " de « " + x.titre + " »" : "");
+    var etat = etatDeNote(x);
+    /* Déjà écrite (avant la fermeture, ou par un autre poste) : rien à refaire. */
+    if (etat.cle === "ecrite") return;
+    var contexte = etat.contexte;
+    if (etat.cle === "changee") {
       /* Un avis qui reste : la personne croyait cette validation enregistrée. */
       if (window.AVIS) AVIS.grave("La validation de " + nom + " n'a pas été enregistrée : la pièce a changé depuis. "
         + "Relisez-la, et validez-la de nouveau si c'est toujours votre décision.");

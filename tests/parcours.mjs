@@ -382,13 +382,32 @@ try {
     await rouverte.goto('http://127.0.0.1:' + port + '/#/projets/PRJ-demo/livrables/L-demo/juger/2', { waitUntil: 'networkidle' });
     await rouverte.getByText('Validation de la V2 de « Affiche de lancement » enregistrée.').waitFor();
     assert.deepEqual(await surDisque(2), { verdict: 'approuve', decisions: 2 }, 'La validation d’un onglet fermé est dans le fichier');
+    // Un onglet resté ouvert n'attend pas le prochain chargement : il écrit la
+    // validation de l'onglet qu'on vient de fermer, et le dit.
+    await rouverte.evaluate(() => {
+      const l = DEPOT.trouve('projets', 'PRJ-demo').livrables[0];
+      l.versions.push({ n: 3, soumis_le: new Date().toISOString(), verdict: null }); l.version = 3;
+      DEPOT.enregistrer();
+    });
+    await rouverte.waitForFunction(() => DEPOT.stockage().cle === 'disque');
+    const principal = await navigateur.newPage();
+    principal.on('pageerror', e => { errors.push(e.message); console.error('Erreur navigateur (principal):', e.stack); });
+    principal.setDefaultTimeout(10000);
+    await principal.goto('http://127.0.0.1:' + port + '/#/bureau', { waitUntil: 'networkidle' });
+    await rouverte.goto('http://127.0.0.1:' + port + '/#/projets/PRJ-demo/livrables/L-demo/juger/3');
+    await rouverte.getByRole('button', { name:'Valider la V3', exact:true }).click();
+    await rouverte.locator('.avis-pile .avis.action').waitFor();
+    await rouverte.close({ runBeforeUnload: true });
+    await principal.getByText('Validation de la V3 de « Affiche de lancement » enregistrée.').waitFor();
+    assert.deepEqual(await surDisque(3), { verdict: 'approuve', decisions: 3 }, 'L’onglet resté ouvert a écrit la validation');
+    assert.equal(await principal.evaluate(() => localStorage.getItem('la-barre-validations')), null);
     await navigateur.close();
   } finally {
     if (servi && servi.exitCode === null) { servi.kill(); await once(servi, 'exit'); }
     await rm(racine, { recursive: true, force: true });
   }
   assert.deepEqual(errors, []);
-  console.log('PASS — revue, validation en un clic avec annulation (échéance, écran rouvert, page fermée en poste seul et en base servie), demande de modifs, décision persistante, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
+  console.log('PASS — revue, validation en un clic avec annulation (échéance, écran rouvert, page fermée en poste seul et en base servie, reprise par un onglet resté ouvert), demande de modifs, décision persistante, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
 } finally {
   if (browser) await browser.close();
   await new Promise(r => server.close(r));
