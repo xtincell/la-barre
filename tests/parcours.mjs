@@ -138,10 +138,15 @@ try {
     const x = document.querySelector('.avis-pile .avis.refus .avis-x').getBoundingClientRect();
     AVIS.fait('Réussi');
     const apres = document.querySelectorAll('.avis-pile .avis.refus').length;
+    // Sur téléphone, un avis grave se tient en haut, loin des gestes du bas ;
+    // « Annuler » se touche au doigt.
+    const grave = AVIS.grave('Grave').getBoundingClientRect();
+    const annuler = AVIS.action('Engagé', 'Annuler', null, 0).querySelector('.avis-a').getBoundingClientRect();
     document.querySelectorAll('.avis-pile .avis').forEach(n => n.remove());
-    return { refus, apres, x: [Math.round(x.width), Math.round(x.height)] };
+    return { refus, apres, x: [Math.round(x.width), Math.round(x.height)],
+      graveEnHaut: grave.top < 60, annuler: Math.round(annuler.height) };
   });
-  assert.deepEqual(pile, { refus: 1, apres: 0, x: [44, 44] });
+  assert.deepEqual(pile, { refus: 1, apres: 0, x: [44, 44], graveEnHaut: true, annuler: 44 });
   await page.goBack();
   await page.setViewportSize({ width:1440, height:1050 });
   await page.getByRole('heading', {name:'Sur la table'}).waitFor();
