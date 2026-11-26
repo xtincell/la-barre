@@ -305,7 +305,9 @@ try {
   ]);
   assert.equal(selecteur.isMultiple(), false);
   assert.equal(await page.getByRole('dialog', { name:'Décrire un fichier' }).count(), 0, 'Aucun formulaire de description ne s’ouvre');
-  await page.getByRole('button', { name:'Décrire un fichier sans le déposer' }).first().waitFor();
+  const decrire = page.getByRole('button', { name:'Décrire un fichier sans le déposer' });
+  await decrire.first().waitFor();
+  assert.equal(await decrire.count(), 1, '« Décrire un fichier sans le déposer » n’est proposé qu’une fois');
   await page.keyboard.press('Meta+k');
   await saisie.fill('support');
   await saisie.press('Escape');
@@ -765,14 +767,29 @@ try {
     await principal.goto(adresse + '/#/projets/PRJ-demo/livrables/L-demo/poser');
     await principal.locator('.ptff', { hasText: 'Fichiers finaux · V3' }).getByText('Fichiers envoyés sur clé USB').waitFor();
     assert.equal(await principal.getByText('Emplacement non dit').count(), 0);
+    // Rien de l'interface ne se pose sur l'image : elle s'agrandit d'un clic,
+    // ou par « Agrandir le visuel », dans la barre des gestes.
+    await principal.goto(adresse + '/#/projets/PRJ-demo/livrables/L-demo/juger/3');
+    const toile = principal.locator('.rvp-plan .rvp-toile');
+    await toile.locator('img').waitFor();
+    assert.equal(await toile.locator('button').count(), 0, 'Aucun bouton posé sur la création');
+    const apercu = principal.getByRole('dialog', { name: 'Aperçu du visuel' });
+    await principal.locator('.rvp-liens').getByRole('button', { name: 'Agrandir le visuel', exact: true }).click();
+    await apercu.locator('img').waitFor();
+    await principal.keyboard.press('Escape');
+    await apercu.waitFor({ state: 'detached' });
+    await toile.locator('img').click();
+    await apercu.locator('img').waitFor();
+    await principal.keyboard.press('Escape');
+    await apercu.waitFor({ state: 'detached' });
     // L'historique d'une version ouvre ses documents servis et dit les
     // déclarations : le BAT, nommé comme tel, sa photo posée et le PDF joint ;
     // les fichiers remis ; la remise déclarée.
     await principal.evaluate(() => {
       const l = DEPOT.trouve('projets', 'PRJ-demo').livrables[0];
       l.versions.push({ n: 4, soumis_le: new Date().toISOString(), verdict: null }); l.version = 4;
+      APP.rendre();
     });
-    await principal.goto(adresse + '/#/projets/PRJ-demo/livrables/L-demo/juger/3');
     const archive = principal.locator('.rvp-archive');
     await archive.getByRole('heading', { name: 'Version 3 · historique' }).waitFor();
     assert.equal(await archive.getByRole('link', { name: 'BAT · bon-signe.png', exact: true }).getAttribute('href'), batPose[0].emplacement);
@@ -786,7 +803,7 @@ try {
     await rm(racine, { recursive: true, force: true });
   }
   assert.deepEqual(errors, []);
-  console.log('PASS — revue, validation en un clic avec annulation (échéance, écran rouvert, page fermée en poste seul et en base servie, reprise par un onglet resté ouvert, Décisions à jour à l’échéance), demande de modifs, décision persistante, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide, fichiers posés et pièce jointe du BAT sur le serveur.');
+  console.log('PASS — revue, validation en un clic avec annulation (échéance, écran rouvert, page fermée en poste seul et en base servie, reprise par un onglet resté ouvert, Décisions à jour à l’échéance), demande de modifs, décision persistante, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide, fichiers posés et pièce jointe du BAT sur le serveur, loupe hors de l’image, documents d’une version.');
 } finally {
   if (browser) await browser.close();
   await new Promise(r => server.close(r));
