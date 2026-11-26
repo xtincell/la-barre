@@ -15,10 +15,10 @@ window.FEEDBACK = (function () {
   var CANAUX = {
     seance: { nom: "En séance", trace: true },
     ecrit: { nom: "Par écrit", trace: true },
-    message: { nom: "Par messagerie", trace: false,
-      cout: "un retour WhatsApp n'a pas de version : on ne saura pas sur quoi il portait" },
-    oral: { nom: "À l'oral", trace: false,
-      cout: "aucune trace côté client : il pourra dire qu'il n'a jamais demandé ça" },
+    /* WhatsApp est le canal principal des clients : un retour reçu par
+     * messagerie s'enregistre comme les autres, sans avertissement. */
+    message: { nom: "Par messagerie", trace: false },
+    oral: { nom: "À l'oral", trace: false },
     /* Les retours relevés dans les commentaires de tâche de Matanga People. Ce
      * canal n'était dans aucune table : la fiche du livrable plantait dessus.
      * Il se relève, il ne se saisit pas — le formulaire ne le propose pas. */
@@ -50,7 +50,7 @@ window.FEEDBACK = (function () {
       onde: "elle s'applique à tous les formats, y compris ceux qui n'existent pas encore",
       avant: "À trancher avant de produire d'autres formats, sinon on décline deux fois." },
     declinaison: { rang: 4, nom: "Un format", ton: "terne",
-      quoi: "un livrable, et elle seule",
+      quoi: "un livrable, et lui seul",
       onde: "rien d'autre ne bouge",
       avant: "Se traite en dernier : c'est le seul niveau qui n'entraîne rien." },
   };
@@ -264,11 +264,11 @@ window.FEEDBACK = (function () {
     var p = DEPOT.trouve("projets", projetId);
     if (!p) return;
 
-    var champ = el("textarea", { rows: 3, placeholder: "Ce que le client a demandé, dans ses mots" });
-    var selCanal = el("select", {});
+    var champ = el("textarea", { id: "fb-texte", rows: 3, placeholder: "Ce que le client a demandé, dans ses mots" });
+    var selCanal = el("select", { id: "fb-canal" });
     Object.keys(CANAUX).filter(function (k) { return !CANAUX[k].releve; })
       .forEach(function (k) { selCanal.appendChild(el("option", { value: k }, CANAUX[k].nom)); });
-    var selAuteur = el("select", {});
+    var selAuteur = el("select", { id: "fb-auteur" });
     selAuteur.appendChild(el("option", { value: "" }, "— qui l'a formulé —"));
     DEPOT.liste("contacts").filter(function (c) {
       return !c.clientId || c.clientId === clientDe(p);
@@ -278,15 +278,15 @@ window.FEEDBACK = (function () {
     DEPOT.liste("personnes").forEach(function (x) {
       selAuteur.appendChild(el("option", { value: "P:" + x.id }, x.nom + " · " + O.poste(x.poste).court));
     });
-    var champDate = el("input", { type: "date" });
+    var champDate = el("input", { type: "date", id: "fb-quand" });
     champDate.value = O.jour();
 
-    var selPortee = el("select", {});
+    var selPortee = el("select", { id: "fb-niveau" });
     Object.keys(NIVEAUX).forEach(function (k) {
       selPortee.appendChild(el("option", { value: k }, NIVEAUX[k].nom + " — " + NIVEAUX[k].quoi));
     });
     if (cibles && cibles.length) selPortee.value = "declinaison";
-    var aideN = el("div.indice", {}, NIVEAUX.idee.onde);
+    var aideN = el("div.indice", {}, NIVEAUX[selPortee.value].onde);
     selPortee.addEventListener("change", function () { aideN.textContent = NIVEAUX[selPortee.value].onde; });
 
     var choixCibles = coches((p.livrables || []).filter(function (l) { return !l.annule; })
@@ -306,12 +306,11 @@ window.FEEDBACK = (function () {
     function dessiner() {
       O.vider(zoneCibles);
       var n = selPortee.value;
-      if (n === "declinaison" || n === "maitre") zoneCibles.appendChild(bloc("Quelles livrables", choixCibles.noeud));
+      if (n === "declinaison" || n === "maitre") zoneCibles.appendChild(bloc("Quels livrables", choixCibles.noeud));
       if (n === "adaptation" || n === "maniere") zoneCibles.appendChild(bloc("Quels marchés", choixMarches.noeud));
       if (n === "idee" || n === "maniere") zoneCibles.appendChild(bloc("Quelles pistes", choixRoutes.noeud));
 
       var i = impact(brouillon());
-      var c = CANAUX[selCanal.value];
       O.vider(apercu);
       var dn = NIVEAUX[selPortee.value];
       apercu.appendChild(el("div.stats", {},
@@ -324,7 +323,6 @@ window.FEEDBACK = (function () {
         dn.onde + ".  " + dn.avant));
       if (i.aVenir) apercu.appendChild(UI.banniere("",
         "Une règle de déclinaison s'applique aussi à ce qui n'existe pas encore : les formats à venir la porteront sans qu'on ait à y penser."));
-      if (!c.trace) apercu.appendChild(UI.banniere("rouge", c.cout));
     }
     selPortee.addEventListener("change", dessiner);
     selCanal.addEventListener("change", dessiner);
@@ -334,19 +332,19 @@ window.FEEDBACK = (function () {
     dessiner();
 
     PANNEAU.ouvrir("Enregistrer un retour", p.ref, el("div", {},
-      UI.banniere("", "Un retour non enregistré n'existe pas — et personne ne sera comptable de ce qu'il coûte."),
+      UI.banniere("", "Notez le retour tel qu'il a été dit ou écrit, même sur WhatsApp : il sera daté et rattaché aux pièces qu'il touche."),
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Ce qui est demandé"), champ),
-        el("div.champ", {}, el("label", {}, "Par qui"), selAuteur),
-        el("div.champ", {}, el("label", {}, "Quand"), champDate),
-        el("div.champ", {}, el("label", {}, "Par quel canal"), selCanal),
-        el("div.champ", {}, el("label", {}, "À quel niveau il s'applique"), selPortee, aideN)),
+        el("div.champ", {}, el("label", { for: "fb-texte" }, "Ce qui est demandé"), champ),
+        el("div.champ", {}, el("label", { for: "fb-auteur" }, "Par qui"), selAuteur),
+        el("div.champ", {}, el("label", { for: "fb-quand" }, "Quand"), champDate),
+        el("div.champ", {}, el("label", { for: "fb-canal" }, "Par quel canal"), selCanal),
+        el("div.champ", {}, el("label", { for: "fb-niveau" }, "À quel niveau il s'applique"), selPortee, aideN)),
       zoneCibles,
       el("div.sousbloc", {}, el("h3", {}, "Ce que ça touche"), apercu),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          if (!champ.value.trim()) { AVIS.refus("Un retour sans texte n'est pas un retour."); return; }
-          if (!selAuteur.value) { AVIS.refus("Un retour sans auteur ne sera imputable à personne."); return; }
+          if (!champ.value.trim()) { AVIS.refus("Écrivez ce qui est demandé avant d'enregistrer."); champ.focus(); return; }
+          if (!selAuteur.value) { AVIS.refus("Dites qui a formulé ce retour : il sera rattaché à cette personne."); selAuteur.focus(); return; }
           var f = Object.assign(brouillon(), {
             id: O.id("FB"), texte: champ.value.trim(), auteur: selAuteur.value,
             canal: selCanal.value, quand: champDate.value,
