@@ -545,6 +545,25 @@ test('la recherche dit le référentiel en mots, pas par sa clé', async () => {
   assert.deepEqual([...s.ctx.APP.chercher('Post social')].map(r => r.ou), ['Support']);
 });
 
+test('« KV GH » trouve un KV né avec un nom en clair, et lui seul', async () => {
+  const s = await bacDecisions(APP, 74);
+  s.ctx.document.addEventListener = () => {};
+  await s.charger('kv-modele');
+  await s.charger('application');
+  semer(s.ctx, { personnes: PERSONNES, ...REFERENTIEL, projets: [projet('OR')] });
+  const p = s.ctx.DEPOT.trouve('projets', 'OR');
+  const master = s.ctx.KV.creer(p, null, null, 'maitre');
+  master.kv.marque = 'Orvelle'; master.nom = s.ctx.KV.nomDeTravail(master);
+  s.ctx.KV.creer(p, 'M-gh', master, 'adaptation');
+  s.ctx.KV.creer(p, 'M-ci', master, 'adaptation');
+  p.livrables.push({ id: 'F-so', nom: 'Post social 1:1 · CI', support: 'S-social', marche: 'M-ci' });
+  const trouve = q => [...s.ctx.APP.chercher(q)].filter(r => /livrables/.test(r.lien)).map(r => r.quoi.replace(/\u00a0/g, ' ') + ' — ' + r.ou);
+  assert.deepEqual(trouve('KV GH'), ['Key visual — Ghana · Orvelle — REF-OR · KV · GH · Orvelle']);
+  assert.deepEqual(trouve('kv · ci'), ['Key visual — Côte d’Ivoire · Orvelle — REF-OR · KV · CI · Orvelle']);
+  assert.equal(trouve('KV').length, 3, 'le master et ses deux adaptations');
+  assert.deepEqual(trouve('Ghana Orvelle'), ['Key visual — Ghana · Orvelle — REF-OR · KV · GH · Orvelle']);
+});
+
 /* ————— Le code reste la clé de rapprochement —————
  *
  * Un KV neuf s'appelle « Key visual — Ghana · Orvelle », mais l'agence nomme

@@ -121,17 +121,27 @@ window.APP = (function () {
     (selection || champ).focus();
   }
 
+  /* « KV GH » trouve « KV · GH · Orvelle » : chaque mot cherché y est, dans
+   * n'importe quel ordre, et les séparateurs ne comptent pas. */
+  function tousLesMots(paille, q) {
+    var mots = String(q || "").split(/[\s·—–]+/).filter(Boolean);
+    return mots.length > 1 && mots.every(function (m) { return O.contient(paille, m); });
+  }
+
   function chercher(q) {
     var t = [];
     DEPOT.liste("projets").forEach(function (p) {
       if (O.contient(p.nom + " " + p.ref, q)) t.push({ quoi: p.nom, ou: p.ref, lien: adresse("projets", p.id) });
       (p.livrables || []).forEach(function (l) {
         var m = DEPOT.trouve("marches", l.marche);
+        var s = DEPOT.trouve("supports", l.support);
         /* La pièce par son titre (« Key visual — Ghana ») ; son code reste
-         * cherchable, et se lit à côté du dossier. */
+         * cherchable, même pour un KV né avec un nom en clair (« KV GH »), et
+         * se lit à côté du dossier. */
         var titre = window.KV && KV.titre ? KV.titre(l) : l.nom;
-        var code = window.KV && KV.surtitre ? KV.surtitre(l) : null;
-        if (O.contient(l.nom + " " + titre.replace(/\u00a0/g, " ") + " " + (m ? m.nom + " " + m.code : ""), q))
+        var code = window.KV && KV.code ? KV.code(l) : null;
+        var paille = [l.nom, titre.replace(/\u00a0/g, " "), m ? m.nom + " " + m.code : "", s ? s.code || "" : "", code || ""].join(" ");
+        if (O.contient(paille, q) || tousLesMots(paille, q))
           t.push({ quoi: titre + (m && !code ? " · " + m.code : ""), ou: p.ref + " · " + (code || "livrable"),
             lien: adresse("projets", p.id, "livrables", l.id) });
       });
