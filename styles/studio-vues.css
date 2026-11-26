@@ -1417,6 +1417,7 @@ button.st-e:hover { background: var(--surface-4); }
 .plc-hors:hover { background: var(--surface-3); }
 .plch-q { font: 550 13px var(--affichage); color: var(--arbitrage); }
 .plch-x { font-size: 12px; line-height: 1.45; color: var(--clair-terne); }
+.plch-a { font: 600 13px var(--affichage); color: var(--studio-bleu); }
 .plc-gestes { display: flex; gap: 0 4px; flex-wrap: wrap; align-items: center; margin-left: -8px; }
 .pl-grille.dense .plc-gestes { display: none; }
 .pl-grille.dense .pl-c:hover .plc-gestes, .pl-grille.dense .pl-c:focus-within .plc-gestes { display: flex; }

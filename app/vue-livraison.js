@@ -182,7 +182,7 @@ window.VUE_LIVRAISON = (function () {
         el("span.plvc-n", {}, window.KV && KV.titre ? KV.titre(l) : l.nom),
         el("span.plvc-m", {}, [
           "V" + (l.version || 1),
-          (l.fichiers || []).length ? (l.fichiers || []).length + " fichiers" : null,
+          (l.fichiers || []).length ? O.pluriel(l.fichiers.length, "fichier") : null,
           recu ? "Remise justifiée" : suivi && suivi.cle !== "validation" ? suivi.nom : null,
           l.responsable ? null : "sans responsable",
         ].filter(Boolean).join(" · "))));

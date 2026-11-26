@@ -270,11 +270,14 @@ window.VUE_ASSET = (function () {
     var x = window.ECARTS_MARCHE ? ECARTS_MARCHE.etiquette(p, l) : null;
     if (!x) return null;
     if (lecture) return el("p.rvp-meta", {}, x.texte);
+    /* Le bandeau est le bouton qui ouvre le choix : il le dit (« Décider › »),
+     * sur téléphone aussi, où rien ne se survole. */
     return el("button.plc-hors.as-hors", { type: "button",
       onclick: function () { ECARTS_MARCHE.revoir(p, l, apres); } },
       el("span.plch-q", {}, x.texte),
       el("span.plch-x", {}, x.revue ? "Correction demandée : la décli revient à ce qui était prévu."
-        : x.question));
+        : x.question),
+      el("span.plch-a", {}, x.revue ? "Revoir" : "Décider", el("span", { "aria-hidden": "true" }, " ›")));
   }
 
   /* ————————————————————— La question ————————————————————— */
