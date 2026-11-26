@@ -324,6 +324,16 @@ window.DEPOT = (function () {
     return null;
   }
 
+  /* La base que ce poste tient fait-elle foi ? Sans fichier servi, oui : c'est
+   * la sienne. Avec un fichier, une fois celui-ci lu dans cette session. Les
+   * validations engagées dans une page fermée attendent ce moment pour
+   * s'écrire (vue-livrable.js, reprendreValidations). */
+  function baseLue() {
+    if (DEMO) return false;
+    if (!fichier || location.protocol === "file:" || !window.fetch) return true;
+    return referenceLue;
+  }
+
   /* La version de la base telle que ce navigateur l'a lue ou écrite en
    * dernier. Elle part avec chaque écriture : le serveur refuse si le fichier a
    * changé depuis. */
@@ -1055,7 +1065,7 @@ window.DEPOT = (function () {
     reinitialiser: reinitialiser, surChangement: surChangement,
     ageSauvegarde: ageSauvegarde, noterExport: noterExport, vide: vide, poids: poids,
     referenceDisponible: referenceDisponible, chargerReference: chargerReference,
-    relire: relire, peutEcrire: peutEcrire,
+    relire: relire, peutEcrire: peutEcrire, baseLue: baseLue, fichierServi: function () { return fichier; },
     provenance: provenance, stockage: stockage, rattacherAuFichier: rattacherAuFichier,
     ecrireSurDisque: ecrireSurDisque, conflits: conflits, resoudre: resoudre,
     reprisesDisponibles: function () { return reprisesAutres.map(function (r) { return { cle: r.cle, quand: r.quand, ancien: !!r.ancien }; }); },

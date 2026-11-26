@@ -299,9 +299,13 @@ par un seul chemin, `app/decision.js` : verdict parmi quatre (`approuve`,
 unique entre postes. À l'écran, ces quatre clés se disent « Validé »,
 « Validé avec réserves », « Modifs demandées » et « Refusé : hors brief »
 (`MAISON.verdicts`, avec le verbe de chaque bouton). Sur une pièce, « Valider
-la V2 » se pose d'un clic mais ne s'écrit qu'au bout de huit secondes, ou
-quand la page se ferme (`pagehide`) : « Annuler » le reprend sans qu'aucune
-décision ait existé, et Radar ne lit donc jamais une validation retirée.
+la V2 » se pose d'un clic mais ne s'écrit qu'au bout de huit secondes :
+« Annuler » le reprend sans qu'aucune décision ait existé, et Radar ne lit
+donc jamais une validation retirée. Dès le clic, la validation engagée est
+notée dans le `localStorage` (`la-barre-validations`) ; une page fermée avant
+l'échéance la marque à rejouer (`pagehide`), et la page suivante l'écrit une
+fois la base de référence lue, avec la même garde de version, ou l'abandonne
+en le disant si la pièce a changé.
 « Demander des modifs » tient en un panneau, « Ce qu'il faut changer »,
 prérempli par les retours posés sur l'image. Elle se rattache à un projet, à une campagne ou à une marque. Passent
 par lui : la big idea, la piste ou l'idée retenue ou écartée, la référence

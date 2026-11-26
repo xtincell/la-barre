@@ -113,3 +113,82 @@ test('sans personne déclarée, le retour porte le nom du poste, pas celui du cl
   assert.equal(r.auteurLibre, a.s.ctx.ACTEUR.nom());
   assert.notEqual(a.s.ctx.ANNOT.auteur(r), 'client');
 });
+
+/* ————— Valider, avec le temps de se reprendre —————
+ *
+ * La note de la validation engagée est ce qui survit à une page fermée ; la
+ * page suivante la rejoue avec la même garde de version. Le geste complet, dans
+ * un vrai navigateur et avec une base servie, est dans tests/parcours.mjs. */
+
+async function validation(graine, stockage) {
+  const s = await bacDecisions(APP, graine);
+  if (stockage) for (const [k, v] of stockage) s.ctx.localStorage.setItem(k, v);
+  await s.charger('vue-livrable');
+  semer(s.ctx, { personnes: PERSONNES, projets: [projet('VA', { livrables: [livrable('L-va', { nom: 'Affiche · CM' })] })] });
+  const minuteries = [], avis = [];
+  s.ctx.setTimeout = f => { minuteries.push(f); return minuteries.length; };
+  s.ctx.AVIS = { refus: m => avis.push(['refus', m]), fait: m => avis.push(['fait', m]), grave() {},
+    action: t => { avis.push(['action', t]); return {}; }, retirer() {} };
+  const p = s.ctx.DEPOT.trouve('projets', 'VA');
+  return { s, p, l: p.livrables[0], minuteries, avis, notes: () => JSON.parse(s.ctx.localStorage.getItem('la-barre-validations') || '[]') };
+}
+
+test('une validation engagée est notée sur-le-champ, et rien ne s’écrit avant l’échéance', async () => {
+  const v = await validation(41);
+  cliquer(bouton(v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {}), 'Valider la V1'));
+  assert.equal(v.l.versions[0].verdict, undefined);
+  assert.deepEqual(v.notes().map(n => [n.livrableId, n.numero, n.verdict, n.rejouer]), [['L-va', 1, 'approuve', false]]);
+  v.minuteries[0]();
+  assert.equal(v.l.versions[0].verdict, 'approuve');
+  assert.equal(v.s.ctx.DEPOT.liste('decisions').length, 1);
+  assert.deepEqual(v.notes(), [], 'écrite, la note est retirée');
+});
+
+test('« Annuler la validation » resté à l’écran après l’échéance dit qu’elle est enregistrée', async () => {
+  const v = await validation(42);
+  cliquer(bouton(v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {}), 'Valider la V1'));
+  const attente = v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {});
+  v.minuteries[0]();
+  cliquer(bouton(attente, 'Annuler la validation'));
+  assert.deepEqual(v.avis[v.avis.length - 1], ['fait', 'La validation est déjà enregistrée.']);
+  assert.equal(v.l.versions[0].verdict, 'approuve');
+  assert.equal(v.s.ctx.DEPOT.liste('decisions').length, 1);
+});
+
+test('annulée à temps, la validation ne laisse ni décision ni note', async () => {
+  const v = await validation(43);
+  cliquer(bouton(v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {}), 'Valider la V1'));
+  cliquer(bouton(v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {}), 'Annuler la validation'));
+  v.minuteries[0]();
+  assert.deepEqual(v.avis[v.avis.length - 1], ['fait', "Validation annulée : rien n'a été enregistré."]);
+  assert.equal(v.l.versions[0].verdict, undefined);
+  assert.deepEqual(v.notes(), []);
+  assert.equal(v.s.ctx.DEPOT.liste('decisions').length, 0);
+});
+
+test('une page fermée avant l’échéance : la note se rejoue à la réouverture, sauf si la pièce a changé', async () => {
+  const avant = await validation(44);
+  cliquer(bouton(avant.s.ctx.VUE_LIVRABLE.decider(avant.p, avant.l, () => {}), 'Valider la V1'));
+  const note = { ...avant.notes()[0], rejouer: true };   // ce que pagehide écrit
+  const stockage = [['la-barre-validations', JSON.stringify([note])]];
+
+  const apres = await validation(45, stockage);
+  assert.equal(apres.s.ctx.VUE_LIVRABLE.reprendreValidations(), 1);
+  assert.equal(apres.l.versions[0].verdict, 'approuve');
+  assert.equal(apres.s.ctx.DEPOT.liste('decisions').length, 1);
+  assert.deepEqual(apres.avis, [['fait', 'Validation de la V1 de « Affiche · CM » enregistrée.']]);
+  assert.deepEqual(apres.notes(), []);
+  assert.equal(apres.s.ctx.VUE_LIVRABLE.reprendreValidations(), 0, 'une note ne se rejoue qu’une fois');
+
+  const changee = await validation(46, stockage);
+  changee.l.vignette = 'assets/review/autre.jpg';
+  changee.s.ctx.VUE_LIVRABLE.reprendreValidations();
+  assert.equal(changee.l.versions[0].verdict, undefined, 'une pièce changée n’est pas validée à l’aveugle');
+  assert.equal(changee.s.ctx.DEPOT.liste('decisions').length, 0);
+  assert.match(changee.avis[0][1], /n'a pas été enregistrée : la pièce a changé depuis/);
+  assert.deepEqual(changee.notes(), []);
+
+  const ouverte = await validation(47, [['la-barre-validations', JSON.stringify([{ ...note, rejouer: false, quand: '2026-11-10T09:00:00.000Z' }])]]);
+  assert.equal(ouverte.s.ctx.VUE_LIVRABLE.reprendreValidations(), 0, 'la note d’une page encore ouverte n’est pas prise');
+  assert.equal(ouverte.notes().length, 1);
+});

@@ -421,25 +421,31 @@ window.VUE_LIVRABLE = (function () {
     var version = REMISE.versionCourante(l);
     if (!version) return null;
     var attente = validationEnCours(l);
+    var bloc;
     if (attente) {
-      return el("div.rvp-decision", { "data-livrable": l.id },
+      bloc = el("div.rvp-decision", { "data-livrable": l.id },
         el("p.rvp-meta", { role: "status" }, "V" + attente.numero + " validée. Elle s'enregistre dans quelques secondes."),
         el("button.b.rvp-action", { type: "button", "data-geste": "annuler-validation",
           onclick: function () { annuler(attente); } }, "Annuler la validation"));
+    } else {
+      var contexte = etatPourVerdict(l, version.objet);
+      var geste = function (cle) { return function () { juger(p, l, verdictDe(cle), apres, contexte); }; };
+      var autres = MAISON.verdicts.filter(function (v) { return v.cle === "reserve" || v.cle === "hors"; });
+      bloc = el("div.rvp-decision", { "data-livrable": l.id },
+        el("div.rvp-gestes", {},
+          el("button.b.or.rvp-action", { type: "button", "data-geste": "valider", onclick: geste("approuve") },
+            "Valider la V" + version.numero),
+          el("button.b.rvp-action", { type: "button", "data-geste": "modifs", onclick: geste("retour") },
+            "Demander des modifs")),
+        autres.length ? el("details.rvp-autre", {}, el("summary", {}, "Autre décision"),
+          el("div.rvp-gestes", {}, autres.map(function (v) {
+            return el("button.b.nu", { type: "button", "data-geste": v.cle, onclick: geste(v.cle) }, v.geste || v.nom);
+          }))) : null);
     }
-    var contexte = etatPourVerdict(l, version.objet);
-    function geste(cle) { return function () { juger(p, l, verdictDe(cle), apres, contexte); }; }
-    var autres = MAISON.verdicts.filter(function (v) { return v.cle === "reserve" || v.cle === "hors"; });
-    return el("div.rvp-decision", { "data-livrable": l.id },
-      el("div.rvp-gestes", {},
-        el("button.b.or.rvp-action", { type: "button", "data-geste": "valider", onclick: geste("approuve") },
-          "Valider la V" + version.numero),
-        el("button.b.rvp-action", { type: "button", "data-geste": "modifs", onclick: geste("retour") },
-          "Demander des modifs")),
-      autres.length ? el("details.rvp-autre", {}, el("summary", {}, "Autre décision"),
-        el("div.rvp-gestes", {}, autres.map(function (v) {
-          return el("button.b.nu", { type: "button", "data-geste": v.cle, onclick: geste(v.cle) }, v.geste || v.nom);
-        }))) : null);
+    /* Le redessin de l'écran qui dessine ce bloc : c'est lui que l'échéance
+     * appelle, tant que le bloc est affiché (redessiner). */
+    bloc.redessinerDecision = apres;
+    return bloc;
   }
 
   function criteres(p, l, apres, compact) {
@@ -523,24 +529,95 @@ window.VUE_LIVRABLE = (function () {
    *
    * Une validation ne s'écrit pas tout de suite. Pendant huit secondes,
    * « Annuler » la reprend sans qu'aucune décision ait existé : Radar ne lit
-   * donc jamais une validation qu'on retire. À l'échéance, ou plus tôt si la
-   * page se ferme (pagehide), elle s'écrit comme les autres, avec la même garde
-   * de version. */
+   * donc jamais une validation qu'on retire. À l'échéance, elle s'écrit comme
+   * les autres, avec la même garde de version.
+   *
+   * Dès le clic, la validation engagée est notée dans ce navigateur
+   * (localStorage, écrit sur-le-champ). C'est la seule écriture qui survit
+   * sûrement à une page qu'on ferme : la copie de reprise est asynchrone, et la
+   * sauvegarde ne part que 900 ms après le geste ; ni l'une ni l'autre n'aboutit
+   * pendant pagehide. Une page qui se ferme avant l'échéance marque donc sa
+   * note « à rejouer » ; à la prochaine ouverture, une fois la base de référence
+   * lue, la validation s'écrit (reprendreValidations), ou elle est abandonnée
+   * avec un avis si la pièce a changé entre-temps.
+   *
+   * Qui retire la note l'écrit : un autre onglet qui l'a rejouée la tient, et
+   * cette page ne l'écrit pas une seconde fois. */
   var DELAI_ANNULATION = 8000;
+  /* Une note jamais marquée (un onglet tué sans pagehide) se rejoue passé ce délai. */
+  var ABANDON = DELAI_ANNULATION + 120000;
+  var CLE_NOTES = "la-barre-validations";
   var engagements = [];
+  var notesCreees = 0;
 
   function validationEnCours(l) {
     return engagements.filter(function (e) { return e.livrableId === l.id; })[0] || null;
   }
 
+  function notes() {
+    try {
+      var brut = window.localStorage ? window.localStorage.getItem(CLE_NOTES) : null;
+      var n = brut ? JSON.parse(brut) : [];
+      return Array.isArray(n) ? n.filter(function (x) { return x && typeof x.id === "string"; }) : [];
+    } catch (e) { return []; }
+  }
+  function ecrireNotes(n) {
+    try {
+      if (n.length) window.localStorage.setItem(CLE_NOTES, JSON.stringify(n));
+      else window.localStorage.removeItem(CLE_NOTES);
+      return true;
+    } catch (e) { return false; }
+  }
+  /* Retirer une note, c'est la prendre : seul celui qui la retire l'écrit. */
+  function prendre(id) {
+    var n = notes(), pris = null;
+    n = n.filter(function (x) { if (!pris && x.id === id) { pris = x; return false; } return true; });
+    if (pris) ecrireNotes(n);
+    return pris;
+  }
+  function marquer(ids, rejouer) {
+    var n = notes(), change = false;
+    n.forEach(function (x) {
+      if (ids.indexOf(x.id) !== -1 && !!x.rejouer !== rejouer) { x.rejouer = rejouer; change = true; }
+    });
+    if (change) ecrireNotes(n);
+  }
+  /* La note ne garde pas la pièce entière (sa vignette peut peser) : une
+   * empreinte suffit à reconnaître la version qu'on regardait. */
+  function empreinte(texte) {
+    var h = 2166136261;
+    for (var i = 0; i < texte.length; i++) { h ^= texte.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return texte.length + ":" + h.toString(36);
+  }
+  function noter(e) {
+    if (!window.localStorage || (window.DEPOT && DEPOT.estDemonstration && DEPOT.estDemonstration())) return false;
+    var n = notes();
+    n.push({ id: e.id, fichier: window.DEPOT && DEPOT.fichierServi ? DEPOT.fichierServi() : null,
+      projetId: e.projetId, livrableId: e.livrableId, numero: e.numero, verdict: e.verdict.cle,
+      empreinte: empreinte(e.contexte), titre: e.titre, quand: new Date().toISOString(), rejouer: false });
+    return ecrireNotes(n);
+  }
+
   function engager(p, l, contexte, verdict, numero, apres) {
-    var e = { projetId: p.id, livrableId: l.id, contexte: contexte, verdict: verdict, numero: numero, apres: apres };
+    var e = { projetId: p.id, livrableId: l.id, contexte: contexte, verdict: verdict, numero: numero,
+      titre: window.KV && KV.titre ? KV.titre(l) : l.nom, apres: apres };
     /* Sans pile d'avis (un rejeu, le compilateur), rien à annuler : elle se pose. */
-    if (!window.AVIS || !AVIS.action) { conclure(e); return; }
+    if (!window.AVIS || !AVIS.action) { conclure(e); if (apres) apres(); return; }
     if (validationEnCours(l)) return;
+    e.id = "VAL-" + Date.now().toString(36) + "-" + (++notesCreees);
+    var demonstration = window.DEPOT && DEPOT.estDemonstration && DEPOT.estDemonstration();
+    e.note = noter(e);
+    /* Un navigateur qui refuse la note (plein, ou privé) : la validation
+     * s'écrit tout de suite, sans délai d'annulation, plutôt que de risquer
+     * d'être perdue. La démonstration n'écrit nulle part : elle garde le délai. */
+    if (!e.note && !demonstration) {
+      if (conclure(e)) AVIS.fait("V" + numero + " validée.");
+      if (apres) apres();
+      return;
+    }
     engagements.push(e);
     ecouterFermeture();
-    e.minuterie = setTimeout(function () { conclure(e, siVisible(e)); }, DELAI_ANNULATION);
+    e.minuterie = setTimeout(function () { echeance(e); }, DELAI_ANNULATION);
     e.avis = AVIS.action("V" + numero + " validée.", "Annuler", function () { annuler(e); }, DELAI_ANNULATION);
     if (apres) apres();
   }
@@ -554,34 +631,103 @@ window.VUE_LIVRABLE = (function () {
     return true;
   }
 
-  /* L'écran ne se redessine que s'il montre encore cette pièce : une échéance
-   * ou une annulation venue d'un autre écran ne rouvre rien. */
-  function siVisible(e) {
-    return !!(window.document && document.querySelectorAll) && [].some.call(document.querySelectorAll("[data-livrable]"),
-      function (n) { return n.getAttribute("data-livrable") === e.livrableId; });
+  /* Redessiner les écrans qui montrent encore cette pièce, et eux seuls :
+   * chaque bloc de décision garde le redessin de l'écran qui l'a dessiné. Un
+   * écran quitté puis rouvert est redessiné par son propre rendu ; une échéance
+   * venue d'un autre écran ne rouvre rien. */
+  function redessiner(e) {
+    if (!window.document || !document.querySelectorAll) return;
+    var faits = [];
+    [].slice.call(document.querySelectorAll(".rvp-decision[data-livrable]")).forEach(function (n) {
+      var f = n.redessinerDecision;
+      if (n.getAttribute("data-livrable") !== e.livrableId || typeof f !== "function") return;
+      if (n.isConnected === false || faits.indexOf(f) !== -1) return;
+      faits.push(f); f();
+    });
   }
 
-  function conclure(e, redessiner) {
-    desengager(e);
+  /* Écrire la validation. Rend vrai si elle est enregistrée. */
+  function conclure(e) {
     var erreur = poser(e.projetId, e.livrableId, e.contexte, e.verdict, "");
+    e.issue = erreur ? "refusee" : "ecrite";
     if (erreur && window.AVIS) AVIS.refus(erreur);
-    if (redessiner !== false && e.apres) e.apres();
+    return !erreur;
+  }
+
+  function echeance(e) {
+    if (!desengager(e)) return;
+    /* La note a déjà été prise : un autre onglet a écrit cette validation. */
+    if (e.note && !prendre(e.id)) { e.issue = "ailleurs"; redessiner(e); return; }
+    conclure(e);
+    redessiner(e);
   }
 
   function annuler(e) {
-    if (!desengager(e)) return;
-    AVIS.fait("Validation annulée : rien n'a été enregistré.");
-    if (e.apres && siVisible(e)) e.apres();
+    var engagee = desengager(e);
+    var notee = e.note ? !!prendre(e.id) : engagee;
+    if (!engagee || !notee) {
+      AVIS.fait(e.issue === "refusee" ? "Cette validation n'a pas été enregistrée : la pièce avait changé."
+        : "La validation est déjà enregistrée.");
+    } else {
+      AVIS.fait("Validation annulée : rien n'a été enregistré.");
+    }
+    redessiner(e);
   }
 
-  /* Une page qui se ferme n'attend pas l'échéance : ce qui est engagé s'écrit. */
+  /* Une page qui se ferme marque ses validations à rejouer : elles s'écriront
+   * à la prochaine ouverture. Revenue du cache de navigation, elle reprend ses
+   * minuteries, et ses validations s'écrivent ici, à leur échéance. */
   var fermetureEcoutee = false;
   function ecouterFermeture() {
     if (fermetureEcoutee || !window.addEventListener) return;
     fermetureEcoutee = true;
-    window.addEventListener("pagehide", function () {
-      engagements.slice().forEach(function (e) { conclure(e, false); });
+    function notees() {
+      return engagements.filter(function (e) { return e.note; }).map(function (e) { return e.id; });
+    }
+    window.addEventListener("pagehide", function () { var ids = notees(); if (ids.length) marquer(ids, true); });
+    window.addEventListener("pageshow", function (ev) {
+      var ids = notees(); if (ev && ev.persisted && ids.length) marquer(ids, false);
     });
+  }
+
+  /* À l'ouverture, une fois la base de référence lue (application.js) : les
+   * validations engagées dans une page fermée avant leur échéance s'écrivent,
+   * avec la même garde de version. Une pièce qui a changé entre-temps n'est pas
+   * validée à l'aveugle : la note est abandonnée, et l'avis le dit. */
+  function reprendreValidations() {
+    if (!window.DEPOT || !DEPOT.baseLue || !DEPOT.baseLue()) return 0;
+    var fichier = DEPOT.fichierServi ? DEPOT.fichierServi() : null;
+    var maintenant = Date.now(), n = 0;
+    notes().forEach(function (x) {
+      if (x.fichier && x.fichier !== fichier) return;
+      if (engagements.some(function (e) { return e.id === x.id; })) return;
+      if (!x.rejouer && !(maintenant - Date.parse(x.quand) > ABANDON)) return;
+      if (!prendre(x.id)) return;
+      rejouer(x); n++;
+    });
+    return n;
+  }
+
+  function rejouer(x) {
+    var verdict = verdictDe(x.verdict);
+    var p = DEPOT.trouve("projets", x.projetId);
+    var l = p && (p.livrables || []).filter(function (y) { return y.id === x.livrableId; })[0];
+    var version = l && REMISE.versionCourante(l);
+    var meme = version && String(version.numero) === String(x.numero);
+    var nom = "la V" + x.numero + (x.titre ? " de « " + x.titre + " »" : "");
+    /* Déjà écrite (avant la fermeture, ou par un autre poste) : rien à refaire. */
+    if (meme && version.objet.verdict === x.verdict) return;
+    var contexte = meme ? etatPourVerdict(l, version.objet) : null;
+    if (!verdict || !contexte || version.objet.verdict || empreinte(contexte) !== x.empreinte) {
+      if (window.AVIS) AVIS.refus("La validation de " + nom + " n'a pas été enregistrée : la pièce a changé depuis. "
+        + "Relisez-la, et validez-la de nouveau si c'est toujours votre décision.");
+      return;
+    }
+    var erreur = poser(x.projetId, x.livrableId, contexte, verdict, "");
+    if (window.AVIS) {
+      if (erreur) AVIS.refus("La validation de " + nom + " n'a pas été enregistrée. " + erreur);
+      else AVIS.fait("Validation de " + nom + " enregistrée.");
+    }
   }
 
   function etatPourVerdict(l, v) {
@@ -726,5 +872,5 @@ window.VUE_LIVRABLE = (function () {
 
   return { ouvrir: ouvrir, ouvrirFiche: ouvrirFiche,
     criteres: criteres, controles: controles, decider: decider, juger: juger,
-    validationEnCours: validationEnCours, dependances: dependances };
+    validationEnCours: validationEnCours, reprendreValidations: reprendreValidations, dependances: dependances };
 })();

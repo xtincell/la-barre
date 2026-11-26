@@ -111,10 +111,20 @@ try {
   assert.equal(await verdictDemo(), null, 'Une validation annulée ne laisse aucune décision');
   assert.equal(await page.evaluate(() => DEPOT.liste('decisions').length), 0);
   await valider.click();
+  // Quitter la pièce puis y revenir pendant le délai : l'échéance redessine
+  // l'écran rouvert, pas celui du premier clic.
+  const annulerValidation = page.getByRole('button', { name:'Annuler la validation', exact:true });
+  await annulerValidation.waitFor();
+  await page.goto(url + '/#/bureau');
+  await page.waitForFunction(() => location.hash === '#/bureau');
+  await page.goBack();
+  await annulerValidation.waitFor();
   await page.clock.runFor(7000);
   assert.equal(await verdictDemo(), null, 'La validation attend son échéance');
   await page.clock.runFor(1000);
   assert.equal(await verdictDemo(), 'approuve', 'À l’échéance, la validation s’écrit');
+  assert.equal(await annulerValidation.count(), 0, 'L’écran rouvert ne propose plus d’annuler une validation enregistrée');
+  await page.locator('.rvp-etat').getByText('Validé', { exact:true }).waitFor();
   await page.clock.resume();
   await page.getByRole('link', { name:'Suivre le BAT et la remise' }).waitFor();
   assert.equal(await valider.count(), 0, 'La décision enregistrée reste en lecture seule');
@@ -257,8 +267,8 @@ try {
   assert.equal(unicite.r.deja, 1); assert.equal(unicite.r.renommees.length, 1);
   assert.deepEqual(unicite.apres, [unicite.avant[0], unicite.r.renommees[0].vers]);
   assert.ok(unicite.trace, 'le renommage est au journal');
-  // Une page qui se ferme pendant le délai n'attend pas l'échéance : la
-  // validation engagée s'écrit à pagehide, et se relit après rechargement.
+  // Une page qui se ferme pendant le délai marque sa validation à rejouer :
+  // elle s'écrit à la réouverture, une fois la base lue, et l'avis le dit.
   const fermee = await browser.newPage({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce' });
   fermee.on('pageerror', e => { errors.push(e.message); console.error('Erreur navigateur (fermée):', e.stack); });
   fermee.setDefaultTimeout(10000);
@@ -275,6 +285,8 @@ try {
   assert.equal(await fermee.evaluate(() => DEPOT.trouve('projets','PRJ-demo').livrables[0].versions[0].verdict), 'approuve',
     'La validation engagée s’écrit quand la page se ferme');
   assert.equal(await fermee.evaluate(() => DEPOT.liste('decisions').filter(d => d.objet === 'L-demo').length), 1);
+  await fermee.getByText('Validation de la V1 de « Affiche de lancement » enregistrée.').waitFor();
+  assert.equal(await fermee.evaluate(() => localStorage.getItem('la-barre-validations')), null, 'La note rejouée est retirée');
   await fermee.close();
   await page.evaluate(() => { DEPOT.reinitialiser(); location.hash = '#/bureau'; APP.rendre(); });
   await page.getByRole('button', { name:'Créer mon premier projet', exact:true }).waitFor();
@@ -293,7 +305,9 @@ try {
     const port = r.address().port; await new Promise(x => r.close(x));
     servi = spawn(process.execPath, [join(racine, 'servir.mjs'), String(port)], { stdio: ['ignore', 'pipe', 'pipe'] });
     await once(servi.stdout, 'data');
-    const pageServie = await browser.newPage({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce' });
+    // Un contexte à part : ses onglets partagent un même navigateur (stockage).
+    const navigateur = await browser.newContext({ viewport: { width: 1440, height: 1050 }, reducedMotion: 'reduce' });
+    const pageServie = await navigateur.newPage();
     pageServie.on('pageerror', e => { errors.push(e.message); console.error('Erreur navigateur (servie):', e.stack); });
     pageServie.setDefaultTimeout(10000);
     await pageServie.goto('http://127.0.0.1:' + port + '/#/projets', { waitUntil: 'networkidle' });
@@ -316,13 +330,53 @@ try {
     await pageServie.reload({ waitUntil: 'networkidle' });
     await pageServie.locator('.pj-reference', { hasText: 'PRJ-0001' }).waitFor();
     assert.equal(await pageServie.locator('.pj-reference', { hasText: '(provisoire)' }).count(), 0);
-    await pageServie.close();
+    // Une validation engagée, puis la page rechargée avant l'échéance : la
+    // sauvegarde n'a pas eu le temps de partir. La validation s'écrit à la
+    // réouverture, dans le fichier servi, une seule fois.
+    const surDisque = async (n) => {
+      for (let i = 0; i < 80; i++) {
+        const base = JSON.parse(await readFile(join(racine, 'depots', 'parcours.json'), 'utf8'));
+        const l = base.projets.find(p => p.id === 'PRJ-demo').livrables[0];
+        const v = l.versions.find(x => x.n === n);
+        if (v && v.verdict) return { verdict: v.verdict, decisions: (base.decisions || []).filter(d => d.objet === 'L-demo').length };
+        await new Promise(r => setTimeout(r, 100));
+      }
+      return { verdict: null, decisions: 0 };
+    };
+    await pageServie.goto('http://127.0.0.1:' + port + '/#/projets/PRJ-demo/livrables/L-demo/juger/1');
+    await pageServie.getByRole('button', { name:'Valider la V1', exact:true }).click();
+    await pageServie.locator('.avis-pile .avis.action').waitFor();
+    await pageServie.reload({ waitUntil: 'networkidle' });
+    await pageServie.getByText('Validation de la V1 de « Affiche de lancement » enregistrée.').waitFor();
+    assert.deepEqual(await surDisque(1), { verdict: 'approuve', decisions: 1 }, 'La validation engagée avant le rechargement est dans le fichier');
+    await pageServie.locator('.rvp-etat').getByText('Validé', { exact:true }).waitFor();
+    await pageServie.reload({ waitUntil: 'networkidle' });
+    await pageServie.locator('.rvp-etat').getByText('Validé', { exact:true }).waitFor();
+    assert.deepEqual(await surDisque(1), { verdict: 'approuve', decisions: 1 }, 'Rien n’est rejoué deux fois');
+    // Même chose quand l'onglet se ferme, puis qu'un autre s'ouvre dans le même navigateur.
+    await pageServie.evaluate(() => {
+      const l = DEPOT.trouve('projets', 'PRJ-demo').livrables[0];
+      l.versions.push({ n: 2, soumis_le: new Date().toISOString(), verdict: null }); l.version = 2;
+      DEPOT.enregistrer();
+    });
+    await pageServie.waitForFunction(() => DEPOT.stockage().cle === 'disque');
+    await pageServie.goto('http://127.0.0.1:' + port + '/#/projets/PRJ-demo/livrables/L-demo/juger/2');
+    await pageServie.getByRole('button', { name:'Valider la V2', exact:true }).click();
+    await pageServie.locator('.avis-pile .avis.action').waitFor();
+    await pageServie.close({ runBeforeUnload: true });
+    const rouverte = await navigateur.newPage();
+    rouverte.on('pageerror', e => { errors.push(e.message); console.error('Erreur navigateur (rouverte):', e.stack); });
+    rouverte.setDefaultTimeout(10000);
+    await rouverte.goto('http://127.0.0.1:' + port + '/#/projets/PRJ-demo/livrables/L-demo/juger/2', { waitUntil: 'networkidle' });
+    await rouverte.getByText('Validation de la V2 de « Affiche de lancement » enregistrée.').waitFor();
+    assert.deepEqual(await surDisque(2), { verdict: 'approuve', decisions: 2 }, 'La validation d’un onglet fermé est dans le fichier');
+    await navigateur.close();
   } finally {
     if (servi && servi.exitCode === null) { servi.kill(); await once(servi, 'exit'); }
     await rm(racine, { recursive: true, force: true });
   }
   assert.deepEqual(errors, []);
-  console.log('PASS — revue, validation en un clic avec annulation (échéance et pagehide), demande de modifs, décision persistante, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
+  console.log('PASS — revue, validation en un clic avec annulation (échéance, écran rouvert, page fermée en poste seul et en base servie), demande de modifs, décision persistante, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
 } finally {
   if (browser) await browser.close();
   await new Promise(r => server.close(r));

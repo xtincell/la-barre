@@ -326,21 +326,30 @@ window.APP = (function () {
     }
     var surExemple = local && AMORCE.present();
     noter("local=" + local + " surExemple=" + surExemple);
+    /* Une validation engagée dans une page fermée avant son échéance s'écrit
+     * maintenant, une fois la base de référence lue (vue-livrable.js). */
+    function reprendreValidations() {
+      return window.VUE_LIVRABLE && VUE_LIVRABLE.reprendreValidations ? VUE_LIVRABLE.reprendreValidations() : 0;
+    }
 
-    if (local && !surExemple) DEPOT.rattacherAuFichier(function () { noter("rattaché"); actualiserReferences(); rendre(); });
+    if (local && !surExemple) DEPOT.rattacherAuFichier(function () {
+      noter("rattaché"); actualiserReferences(); reprendreValidations(); rendre();
+    });
 
     if (!local || surExemple) {
       DEPOT.referenceDisponible(function (m) {
         noter("manifeste=" + (m ? m.reference : "aucun"));
         if (!m) {
           /* Rien à côté : l'exemple fait office, et le dit. */
-          if (!local) { AMORCE.poser(); rendre(); }
+          if (!local) { AMORCE.poser(); rendre(); } else if (reprendreValidations()) rendre();
           return;
         }
         DEPOT.chargerReference(m, function (ok) {
           noter("référence chargée=" + ok);
           if (!ok && !local) AMORCE.poser();
-          actualiserReferences(); rendre();
+          actualiserReferences();
+          if (ok) reprendreValidations();
+          rendre();
         });
       });
       if (!local) { AMORCE.poser(); noter("exemple posé en attendant"); }
