@@ -206,7 +206,7 @@ window.VUE_PIPELINE = (function () {
     var enLice = rangs.flat().filter(function (x) { return x.pi && x.pi.statut === "proposee"; });
     if (enLice.length) {
       enLice.sort(function (a, b) {
-        return (a.pi.soumis_le || "9999").localeCompare(b.pi.soumis_le || "9999");
+        return String(a.pi.soumis_le || "9999").localeCompare(String(b.pi.soumis_le || "9999"));
       });
       var x = enLice[0];
       var age = x.pi.soumis_le ? O.depuis(x.pi.soumis_le) : 0;
@@ -235,7 +235,7 @@ window.VUE_PIPELINE = (function () {
     var marche = l.marche && DEPOT.trouve("marches", l.marche);
     return el("a.pilotage-ligne", { href: APP.adresse("projets", p.id, "livrables", l.id) },
       el("span", {},
-        el("strong", {}, l.nom),
+        el("strong", {}, l.nom || "Livrable sans nom"),
         el("small", {}, [p.nom, marche ? marche.nom : null, responsable ? responsable.nom : "Sans responsable"].filter(Boolean).join(" · "))),
       etat ? el("span.pilotage-etat", {}, etat) : null);
   }

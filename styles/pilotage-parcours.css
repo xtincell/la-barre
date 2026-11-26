@@ -258,6 +258,8 @@
   .pilotage-parent a { display: inline-flex; min-block-size: 2.75rem; align-items: center; }
   .pilotage-action { padding: 0.65rem 0.75rem; }
   .pilotage-etat { max-inline-size: 13ch; }
+  .pilotage-charge .pilotage-ligne { grid-template-columns: minmax(0, 1fr); gap: 0.25rem; }
+  .pilotage-charge .pilotage-etat { max-inline-size: none; justify-self: start; text-align: start; }
   .pilotage-rang > summary span { display: block; margin: 0.15rem 0 0 0.85rem; }
   .pilotage-definitions { grid-template-columns: minmax(0, 1fr); }
   .pilotage .pp-bal { grid-template-columns: minmax(0, 1fr); }
