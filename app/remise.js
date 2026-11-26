@@ -401,21 +401,46 @@ window.REMISE = (function () {
     var x = preuveValide(preuve);
     if (!x) return null;
     if (x.type === "lien") return lienExterne(x.url, libelle);
-    if (x.type === "fichier") return el("a.b", { href: x.chemin, target: "_blank", rel: "noopener" }, libelle);
+    if (x.type === "fichier") return lienFichier(x.chemin, libelle);
     return el("span", {}, x.texte ? "Déclaré : « " + x.texte + " »" : "Déclaré, sans pièce jointe");
+  }
+
+  function lienFichier(chemin, libelle) {
+    return el("a.b", { href: chemin, target: "_blank", rel: "noopener" }, libelle);
   }
 
   function champ(form, cle, titre, type, valeur, options) {
     options = options || {};
     var id = form + "-" + cle;
+    if (type === "file") return fichierJoint(id, cle, titre, options);
     var entree = type === "choix"
       ? el("select", { id: id, name: cle, required: !options.facultatif },
           [el("option", { value: "" }, "Choisir…")].concat(options.choix.map(function (c) { return el("option", { value: c }, c); })))
       : el("input", { id: id, name: cle, type: type || "text", required: !options.facultatif,
-          value: valeur || "", max: type === "date" ? O.jour() : null, accept: options.accept || null,
+          value: valeur || "", max: type === "date" ? O.jour() : null,
           placeholder: options.exemple || null });
     return el("div.champ", {}, el("label", { for: id }, titre,
       options.facultatif ? el("span.remise-facultatif", {}, " (facultatif)") : null), entree);
+  }
+
+  /* Le sélecteur natif disait « Choisir un fichier · Aucun fichier choisi »,
+   * coupé sur téléphone. Le champ reste un vrai champ fichier, hors de la vue
+   * mais au clavier ; son étiquette est le bouton qu'on touche, et le nom du
+   * fichier choisi s'écrit à côté. */
+  function fichierJoint(id, cle, titre, options) {
+    var nom = el("span.remise-joint-nom", { "aria-live": "polite" }, "");
+    var entree = el("input.remise-joint-entree", { id: id, name: cle, type: "file", accept: options.accept || null,
+      onchange: function () {
+        var f = entree.files && entree.files[0];
+        nom.textContent = f ? f.name : "";
+      } });
+    return el("div.champ.remise-joint", {}, entree, el("label.b", { for: id }, titre), nom);
+  }
+
+  /* Ce qui est facultatif se replie : le panneau ne montre d'abord que ce qui
+   * est demandé, et le bouton d'envoi reste à portée de pouce. */
+  function repli(titre, enfants) {
+    return el("details.remise-joindre", {}, el("summary", {}, titre), el("div.remise-joindre-corps", {}, enfants));
   }
 
   /* Un formulaire de remise. `valider` rend un résultat, ou une promesse
@@ -477,11 +502,13 @@ window.REMISE = (function () {
     "Courriel": "par courriel", "WhatsApp": "par WhatsApp" };
   function envoi(canal) { return PAR[canal] ? "Fichiers envoyés " + PAR[canal] : ""; }
 
-  /* Une pièce jointe facultative : un fichier déposé, ou un lien. */
-  function pieceJointe(form, prefixe, titre) {
+  /* Une pièce jointe facultative : un fichier déposé, ou un lien. Les noms
+   * diffèrent d'un bloc à l'autre : un lecteur d'écran qui parcourt les
+   * champs n'entend pas deux fois la même chose. */
+  function pieceJointe(form, prefixe, quoi) {
     return [
-      champ(form, prefixe + "-fichier", titre, "file", null, { facultatif: true, accept: "image/*,application/pdf" }),
-      champ(form, prefixe + "-lien", "Ou son lien", "url", null, { facultatif: true, exemple: "https://…" }),
+      champ(form, prefixe + "-fichier", "Photo ou PDF " + quoi, "file", null, { facultatif: true, accept: "image/*,application/pdf" }),
+      champ(form, prefixe + "-lien", "Lien " + quoi, "url", null, { facultatif: true, exemple: "https://…" }),
     ];
   }
 
@@ -517,6 +544,14 @@ window.REMISE = (function () {
       ? { projet: projet, l: courant, v: vc } : null;
   }
 
+  /* Les champs de la remise, les mêmes pour une pièce et pour un lot. */
+  function blocRemise(f) {
+    return el("fieldset.remise-bloc", {}, el("legend", {}, "La remise"),
+      champ(f, "destinataire", "Remis à", "text", null, { exemple: "Qui a reçu" }),
+      champ(f, "remis-le", "Date de remise", "date", O.jour()),
+      repli("Joindre un justificatif : photo, PDF ou lien", pieceJointe(f, "remise", "du justificatif")));
+  }
+
   function marquerLivre(p, l, apres, options) {
     options = options || {};
     if (!enregistrementPermis()) return;
@@ -530,17 +565,16 @@ window.REMISE = (function () {
     var f = "livre";
     var enfants = [
       demandeBat ? el("fieldset.remise-bloc", {}, el("legend", {}, "Le BAT de la V" + v.numero),
-        champ(f, "bat-par", "BAT accordé par", "text", null, { exemple: "Nom de la personne, ou l’imprimeur" }),
-        champ(f, "bat-le", "Le", "date", O.jour()),
-        champ(f, "bat-comment", "Comment", "text", null, { facultatif: true, exemple: "OK par WhatsApp, bon signé en main propre…" }),
-        pieceJointe(f, "bat", "Photo, capture ou PDF du BAT")) : null,
+        champ(f, "bat-par", "BAT accordé par", "text", null, { exemple: "Nom ou imprimeur" }),
+        champ(f, "bat-le", "Date du BAT", "date", O.jour()),
+        repli("Joindre une photo, un PDF, un lien ou un mot", [
+          champ(f, "bat-comment", "Comment", "text", null, { facultatif: true, exemple: "OK WhatsApp, bon signé…" }),
+          pieceJointe(f, "bat", "du BAT")])) : null,
       demandeSortie ? el("fieldset.remise-bloc", {}, el("legend", {}, "Les fichiers remis"),
         champ(f, "canal", "Moyen d’envoi", "choix", null, { choix: CANAUX }),
-        champ(f, "sortie-lien", "Lien de téléchargement", "url", null, { facultatif: true, exemple: "https://…" })) : null,
-      batSeul ? null : el("fieldset.remise-bloc", {}, el("legend", {}, "La remise"),
-        champ(f, "destinataire", "Remis à", "text", null, { exemple: "La personne ou le prestataire qui a reçu" }),
-        champ(f, "remis-le", "Le", "date", O.jour()),
-        pieceJointe(f, "remise", "Justificatif : photo, capture ou PDF")),
+        repli("Ajouter le lien de téléchargement",
+          champ(f, "sortie-lien", "Lien de téléchargement", "url", null, { facultatif: true, exemple: "https://…" }))) : null,
+      batSeul ? null : blocRemise(f),
     ];
     formulaire(batSeul ? "Enregistrer le BAT" : "Marquer comme livré", (window.KV && KV.titre ? KV.titre(l) : l.nom) + " · V" + v.numero,
       enfants, function (data) {
@@ -617,10 +651,8 @@ window.REMISE = (function () {
     });
     var f = "lot";
     formulaire("Marquer le lot comme livré", p.ref || p.nom, [
-      el("fieldset", {}, el("legend", {}, "Pièces remises"), choix),
-      champ(f, "destinataire", "Remis à", "text"),
-      champ(f, "remis-le", "Le", "date", O.jour()),
-      pieceJointe(f, "remise", "Justificatif : photo, capture ou PDF"),
+      el("fieldset.remise-bloc", {}, el("legend", {}, "Pièces remises"), choix),
+      blocRemise(f),
     ], function (data) {
       var selection = data.getAll("pieces").map(function (i) { return cibles[Number(i)]; }).filter(Boolean);
       var destinataire = texte(data.get("destinataire")), quand = texte(data.get("remis-le"));
