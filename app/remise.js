@@ -550,10 +550,10 @@ window.REMISE = (function () {
   /* Une pièce jointe facultative : un fichier déposé, ou un lien. Les noms
    * diffèrent d'un bloc à l'autre : un lecteur d'écran qui parcourt les
    * champs n'entend pas deux fois la même chose. */
-  function pieceJointe(form, prefixe, quoi) {
+  function pieceJointe(form, prefixe, quoi, lien) {
     return [
       champ(form, prefixe + "-fichier", "Photo ou PDF " + quoi, "file", null, { facultatif: true, accept: "image/*,application/pdf" }),
-      champ(form, prefixe + "-lien", "Lien " + quoi, "url", null, { facultatif: true, exemple: "https://…" }),
+      champ(form, prefixe + "-lien", "Lien " + quoi, "url", lien || null, { facultatif: true, exemple: "https://…" }),
     ];
   }
 
@@ -602,18 +602,32 @@ window.REMISE = (function () {
       ? { projet: projet, l: courant, v: vc } : null;
   }
 
-  /* Les champs de la remise, les mêmes pour une pièce et pour un lot. */
-  function blocRemise(f) {
+  /* Les champs de la remise, les mêmes pour une pièce et pour un lot.
+   * `saisi` : ce qui avait déjà été dit, quand le geste se rouvre après un
+   * refus (voir `reprendre`). */
+  function blocRemise(f, saisi) {
+    saisi = saisi || {};
     return el("fieldset.remise-bloc", {}, el("legend", {}, "La remise"),
-      champ(f, "destinataire", "Remis à", "text", null, { exemple: "Qui a reçu" }),
-      champ(f, "remis-le", "Date de remise", "date", O.jour()),
-      repli("Joindre un justificatif : photo, PDF ou lien", pieceJointe(f, "remise", "du justificatif")));
+      saisi.deja ? el("p.remise-note", {}, "« " + saisi.deja.nom + " » est déjà déposé : il reste joint, "
+        + "sauf si vous en joignez un autre.") : null,
+      champ(f, "destinataire", "Remis à", "text", saisi.destinataire, { exemple: "Qui a reçu" }),
+      champ(f, "remis-le", "Date de remise", "date", saisi.remisLe || O.jour()),
+      repli("Joindre un justificatif : photo, PDF ou lien", pieceJointe(f, "remise", "du justificatif", saisi.lien)));
+  }
+
+  /* Un refus dit après une virgule commence par une minuscule, sauf un
+   * sigle (« BAT »). */
+  function minuscule(s) {
+    s = String(s || "");
+    return /^[A-ZÀ-Ý][a-zà-ÿ’']/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s;
   }
 
   /* Rend vrai quand le formulaire s'est ouvert. `options.avis` : un refus à
-   * dire en tête du formulaire rouvert (voir `reprendre`). */
+   * dire en tête du formulaire rouvert ; `options.saisi` : ce qui avait été
+   * dit de la remise, pour ne pas le redemander (voir `reprendre`). */
   function marquerLivre(p, l, apres, options) {
     options = options || {};
+    var saisi = options.saisi || {};
     if (!enregistrementPermis()) return false;
     var v = versionCourante(l);
     var depart = etatPiece(l);
@@ -636,7 +650,7 @@ window.REMISE = (function () {
         champ(f, "canal", "Moyen d’envoi", "choix", null, { choix: CANAUX }),
         repli("Ajouter le lien de téléchargement",
           champ(f, "sortie-lien", "Lien de téléchargement", "url", null, { facultatif: true, exemple: "https://…" }))) : null,
-      batSeul ? null : blocRemise(f),
+      batSeul ? null : blocRemise(f, saisi),
     ];
     formulaire(batSeul ? "Enregistrer le BAT" : "Marquer comme livré", (window.KV && KV.titre ? KV.titre(l) : l.nom) + " · V" + v.numero,
       enfants, function (data) {
@@ -663,8 +677,12 @@ window.REMISE = (function () {
         return (demandeBat ? preuveSaisie(jBat, batDeclare) : Promise.resolve({}))
           .then(function (bat) {
             if (bat.erreur) return bat;
-            return (batSeul ? Promise.resolve({}) : preuveSaisie(jRemise,
-              { type: "declaration", texte: envoi(canal), contact: destinataire, date: remisLe }))
+            /* Rouvert après un refus, la pièce jointe déjà déposée reste
+             * jointe, sauf si une autre la remplace. */
+            var texteRemise = envoi(canal) || texte(saisi.mot);
+            return (batSeul ? Promise.resolve({})
+              : !jRemise.fichier && !jRemise.lien && saisi.deja ? Promise.resolve(saisi.deja)
+              : preuveSaisie(jRemise, { type: "declaration", texte: texteRemise, contact: destinataire, date: remisLe }))
               .then(function (remise) {
                 if (remise.erreur) return remise;
                 /* Après le dépôt, la pièce a pu bouger : on relit avant d'écrire. */
@@ -697,16 +715,20 @@ window.REMISE = (function () {
                 /* Le BAT et les fichiers posés restent vrais même si la remise est
                  * refusée. Le formulaire ne vaut plus : il demandait ce qui est
                  * maintenant écrit. On le rouvre sur l'état atteint, qui ne
-                 * demande plus que la remise. Une pièce jointe déjà montée pour
-                 * la remise reste sur le disque sans être désignée par la base :
-                 * c'est rare, sans effet, et on l'accepte. */
+                 * demande plus que la remise, avec ce qui en avait été dit : à
+                 * qui, quand, le lien, et la pièce jointe déjà déposée, qui
+                 * resservira au lieu de rester sur le disque sans être
+                 * désignée par la base. */
                 DEPOT.enregistrer();
-                var ecrit = [demandeBat ? "Le BAT" : null, demandeSortie ? "les fichiers remis" : null].filter(Boolean);
-                var dit = ecrit.join(" et ") + (ecrit.length > 1 ? " sont enregistrés" : " est enregistré")
-                  + ", pas encore la remise : " + recu.erreur;
-                dit = dit.charAt(0).toUpperCase() + dit.slice(1);
+                var dit = (demandeBat && demandeSortie ? "Le BAT et les fichiers remis sont enregistrés"
+                  : demandeBat ? "Le BAT est enregistré" : "Les fichiers remis sont enregistrés")
+                  + ", pas encore la remise : " + minuscule(recu.erreur);
+                var preuveRemise = preuveValide(remise.preuve);
+                var dejaSaisi = { destinataire: destinataire, remisLe: remisLe, mot: texteRemise,
+                  lien: preuveRemise && preuveRemise.type === "lien" ? preuveRemise.url : "",
+                  deja: preuveRemise && preuveRemise.type === "fichier" ? remise : null };
                 return { erreur: dit, reprendre: function () {
-                  if (!marquerLivre(la.projet, la.l, apres, { avis: dit })) AVIS.refus(dit);
+                  if (!marquerLivre(la.projet, la.l, apres, { avis: dit, saisi: dejaSaisi })) AVIS.refus(dit);
                 } };
               });
           });

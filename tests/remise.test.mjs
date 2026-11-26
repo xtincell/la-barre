@@ -449,15 +449,40 @@ test('une remise refusée après l’écriture du BAT rouvre le geste sur l’é
   assert.equal(p.preuvesRemise, undefined, 'la remise ne l’est pas');
   const rouvert = s.dernier();
   assert.notEqual(rouvert, premier, 'le formulaire se rouvre');
-  assert.match(rouvert.textContent, /Le BAT et les fichiers remis sont enregistrés, pas encore la remise : Impossible d’attribuer/);
+  assert.match(rouvert.textContent, /Le BAT et les fichiers remis sont enregistrés, pas encore la remise : impossible d’attribuer/);
   assert.deepEqual(champs(rouvert).filter(c => c.getAttribute('required') !== null).map(c => c.getAttribute('name')),
     ['destinataire', 'remis-le'], 'il ne redemande ni le BAT ni les fichiers');
+  const valeur = nom => champs(rouvert).find(c => c.getAttribute('name') === nom).getAttribute('value');
+  assert.deepEqual([valeur('destinataire'), valeur('remis-le')], ['Chargée de production', '2026-11-10'],
+    'ce qui avait été dit de la remise n’est pas à retaper');
   s.ctx.O.identifiantUnique = attribuer;
-  remplir(rouvert, { destinataire: 'Chargée de production' });
   envoyer(rouvert);
   await laisserFiler();
-  assert.ok(R.preuveCourante(p, ci), 'la pièce est livrée au second envoi');
+  const recu = R.preuveCourante(p, ci);
+  assert.ok(recu, 'la pièce est livrée au second envoi');
+  assert.deepEqual([recu.destinataire, recu.preuve.type, recu.preuve.texte], ['Chargée de production', 'declaration', 'Fichiers envoyés par WeTransfer'],
+    'la remise garde par où les fichiers sont partis, que le formulaire rouvert ne redemande pas');
   assert.equal(ci.fichiers.filter(f => f.type === 'bat').length, 1);
+});
+
+test('rouvert après un refus, le justificatif déjà déposé reste joint au lieu d’être redemandé', async () => {
+  const { s, p, ci, R, depots } = await geste();
+  const attribuer = s.ctx.O.identifiantUnique;
+  s.ctx.O.identifiantUnique = () => null;
+  R.marquerLivre(p, ci, () => {});
+  remplir(s.dernier(), { 'bat-par': 'Imprimerie', canal: 'Clé USB', destinataire: 'Imprimerie',
+    'remise-fichier': { name: 'bon-de-livraison.pdf', size: 4096 } });
+  envoyer(s.dernier());
+  await laisserFiler();
+  assert.deepEqual(depots, ['bon-de-livraison.pdf']);
+  const rouvert = s.dernier();
+  assert.match(rouvert.textContent, /« bon-de-livraison\.pdf » est déjà déposé : il reste joint/);
+  s.ctx.O.identifiantUnique = attribuer;
+  envoyer(rouvert);
+  await laisserFiler();
+  assert.deepEqual(depots, ['bon-de-livraison.pdf'], 'il n’est pas déposé une seconde fois');
+  const recu = R.preuveCourante(p, ci);
+  assert.deepEqual([recu.preuve.nom, recu.preuve.type, recu.preuve.chemin], ['bon-de-livraison.pdf', 'fichier', 'assets/review/preuves/preuve-1.jpg']);
 });
 
 test('une erreur imprévue ne laisse jamais le bouton désactivé, et ne prétend pas que rien n’est écrit', async () => {
