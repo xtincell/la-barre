@@ -108,7 +108,7 @@ window.FILE = (function () {
       if (pistes.length > 1 && !pistes.some(function (x) { return x.statut === "retenue"; })) {
         var n = (p.livrables || []).filter(function (l) { return !l.annule; }).length;
         out.push(item("trancher", "« " + p.nom + " » : " + pistes.length + " pistes, aucune retenue",
-          n + " livrables se fabriquent sans savoir quel concept fait autorité.",
+          O.pluriel(n, "livrable se fabrique", "livrables se fabriquent") + " sans savoir quel concept fait autorité.",
           90, "#/projets/" + p.id + "/pistes"));
       }
     });
@@ -117,8 +117,9 @@ window.FILE = (function () {
     var c = PRIORITE.conflits();
     c.conflits.forEach(function (x) {
       out.push(item("ordre", (x.personne ? x.personne.nom : "Quelqu'un") + " tient du spéculatif",
-        x.speculatif.length + " livrables spéculatifs pendant que " + x.ferme.length
-          + " livrables engagés sont en retard. Le spéculatif ne s'arrête pas : il passe après.",
+        O.pluriel(x.speculatif.length, "livrable spéculatif", "livrables spéculatifs") + " pendant que "
+          + O.pluriel(x.ferme.length, "livrable engagé est", "livrables engagés sont")
+          + " en retard. Le spéculatif ne s'arrête pas : il passe après.",
         85, "#/pipeline"));
     });
 
@@ -158,18 +159,18 @@ window.FILE = (function () {
         if (!l.remise) sansDate++;
       });
     });
-    if (sansResp) out.push(item("placer", sansResp + " livrables sans responsable",
+    if (sansResp) out.push(item("placer", O.pluriel(sansResp, "livrable sans responsable", "livrables sans responsable"),
       "Personne n'est en défaut le jour où ça n'avance pas.", 50, "#/pipeline"));
-    if (sansCharge) out.push(item("placer", sansCharge + " livrables sans estimation",
+    if (sansCharge) out.push(item("placer", O.pluriel(sansCharge, "livrable sans estimation", "livrables sans estimation"),
       "Ils sont invisibles dans la charge : la semaine se calcule sans eux, et le mur arrive sans prévenir.", 45, "#/pipeline"));
-    if (sansDate) out.push(item("placer", sansDate + " livrables sans date de remise",
+    if (sansDate) out.push(item("placer", O.pluriel(sansDate, "livrable sans date de remise", "livrables sans date de remise"),
       "Ni plaçables ni réclamables. Le rétroplanning ne les voit pas.", 40, "#/pipeline"));
 
     /* 9 · Ce qui tient sur une inférence. */
     projets.forEach(function (p) {
       var n = window.INFERENCE ? INFERENCE.compte(p) : 0;
       if (!n) return;
-      out.push(item("contresigner", n + " champs à confirmer sur « " + p.nom + " »",
+      out.push(item("contresigner", O.pluriel(n, "champ", "champs") + " à confirmer sur « " + p.nom + " »",
         "Utilisables pour travailler, mais pas encore confirmés par le client : faites-les confirmer avant qu'il ne conteste.",
         35, "#/projets/" + p.id + "/identite"));
     });

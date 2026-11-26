@@ -667,3 +667,22 @@ test('la case d’un KV sans fichier dit ce qui reste à faire, pas un procès-v
   gh.versions = [{ n: 1, soumis_le: '2026-11-03T08:00:00.000Z' }];
   assert.equal(s.ctx.TRACE.attendu(gh).quoi, 'pas encore vu');
 });
+
+test('la file accorde « 1 livrable sans responsable » et ses voisins au singulier', async () => {
+  const s = await bacDecisions(APP, 94);
+  Object.assign(s.ctx, {
+    VUE_REVUE: { pieces: () => [] }, FEEDBACK: { ouverts: () => [] }, ECARTS: { compte: () => ({}) },
+    RENVOI: { ouvertes: () => [] }, CHAINE_BRIEF: { avancement: () => ({}) },
+    PRIORITE: { conflits: () => ({ conflits: [{ personne: { nom: 'Ilan' }, speculatif: [{}], ferme: [{}] }] }) },
+  });
+  await s.charger('file-action');
+  semer(s.ctx, { personnes: PERSONNES, projets: [projet('FA', { livrables: [livrable('L-fa', { responsable: null })],
+    inferences: { identite: [{ cle: 'promesse' }] } })] });
+  s.ctx.INFERENCE.compte = p => ((p.inferences || {}).identite || []).length;
+  const lignes = [...s.ctx.FILE.tout()].map(x => x.quoi + ' — ' + x.cout);
+  for (const attendu of [/^1 livrable sans responsable — /, /^1 livrable sans estimation — /, /^1 livrable sans date de remise — /,
+    /^1 champ à confirmer sur « Projet FA »/, /— 1 livrable spéculatif pendant que 1 livrable engagé est en retard\./]) {
+    assert.ok(lignes.some(l => attendu.test(l)), attendu + '\n' + lignes.join('\n'));
+  }
+  assert.ok(!lignes.some(l => /\b1 (livrables|champs)\b/.test(l)), lignes.join('\n'));
+});
