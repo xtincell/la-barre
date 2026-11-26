@@ -489,7 +489,9 @@ window.REMISE = (function () {
       if (envoi.disabled) return;
       statut.textContent = "";
       envoi.disabled = true;
-      Promise.resolve(valider(new FormData(form), form)).then(function (res) {
+      /* Une exception levée par `valider` lui-même devient un refus : le
+       * bouton n'est jamais laissé désactivé. */
+      new Promise(function (resoudre) { resoudre(valider(new FormData(form), form)); }).then(function (res) {
         envoi.disabled = false;
         if (res.erreur && res.reprendre) {
           fermer();
@@ -502,8 +504,12 @@ window.REMISE = (function () {
         if (apres) apres();
         suiviSauvegarde(res.deja ? "Cette livraison est déjà enregistrée." : libelles.fait || "Livraison enregistrée.");
       }, function () {
+        /* Une erreur imprévue a pu survenir après une première écriture (le
+         * BAT posé, pas encore la remise) : on ne promet pas que rien n'est
+         * écrit. */
         envoi.disabled = false;
-        statut.textContent = "Rien n’a été enregistré. Réessayez ; si cela persiste, prévenez la personne qui gère La Barre.";
+        statut.textContent = "L’enregistrement n’a pas abouti. Vérifiez ce que montre la pièce avant de réessayer ; "
+          + "si cela persiste, prévenez la personne qui gère La Barre.";
       });
     } }, enfants, statut,
       el("div.form-actions", {}, envoi,

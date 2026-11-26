@@ -460,6 +460,31 @@ test('une remise refusée après l’écriture du BAT rouvre le geste sur l’é
   assert.equal(ci.fichiers.filter(f => f.type === 'bat').length, 1);
 });
 
+test('une erreur imprévue ne laisse jamais le bouton désactivé, et ne prétend pas que rien n’est écrit', async () => {
+  const { s, p, ci, R } = await geste();
+  const Lu = s.ctx.FormData;
+  R.marquerLivre(p, ci, () => {});
+  const form = s.dernier();
+  const bouton = () => noeuds(form, n => n.tagName === 'BUTTON' && n.getAttribute('type') === 'submit')[0];
+  remplir(form, { 'bat-par': 'Imprimerie', canal: 'Drive', destinataire: 'Imprimerie' });
+  /* Une exception levée avant toute promesse. */
+  s.ctx.FormData = class { constructor() { throw new Error('lecture impossible'); } };
+  envoyer(form);
+  await laisserFiler();
+  assert.equal(bouton().disabled, false, 'le bouton se réactive');
+  assert.match(erreur(form), /L’enregistrement n’a pas abouti\. Vérifiez ce que montre la pièce/);
+  /* Une exception après l'écriture du BAT en mémoire : le message ne dit pas « rien n'a été enregistré ». */
+  s.ctx.FormData = Lu;
+  const tracer = s.ctx.DEPOT.tracer;
+  s.ctx.DEPOT.tracer = (action, ...reste) => { if (action === 'fichier à remettre') throw new Error('journal'); return tracer(action, ...reste); };
+  envoyer(form);
+  await laisserFiler();
+  assert.equal(bouton().disabled, false);
+  assert.doesNotMatch(erreur(form), /Rien n’a été enregistré/);
+  assert.match(erreur(form), /n’a pas abouti/);
+  s.ctx.DEPOT.tracer = tracer;
+});
+
 test('« Enregistrer seulement le BAT » pose le BAT sans marquer la pièce livrée', async () => {
   const { s, p, ci, R } = await geste();
   R.marquerLivre(p, ci, () => {}, { batSeul: true });
