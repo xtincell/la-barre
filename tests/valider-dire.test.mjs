@@ -502,3 +502,27 @@ test('un retour WhatsApp s’enregistre sans bannière rouge, étiquettes relié
   assert.deepEqual(s.refus, []);
   assert.equal(s.ctx.DEPOT.liste('feedbacks').length, 0);
 });
+
+test('un retour enregistré le dit, avec la pièce, et mène au bloc des retours', async () => {
+  const s = await bacDecisions(APP, 72);
+  await s.charger('kv-modele');
+  await s.charger('feedback');
+  s.ctx.PRODUCTION.ouverte = () => false;
+  const el = s.ctx.O.el, avis = [];
+  s.ctx.UI = new Proxy({ banniere: (ton, t) => el('div', {}, t), stat: (a, b, c) => el('div', {}, a, ' ', b, ' ', c) },
+    { get: (t, k) => t[k] || (() => el('div')) });
+  s.ctx.AVIS = { refus: m => avis.push(['refus', m]), fait: m => avis.push(['fait', m]), grave() {}, retirer() {},
+    action: (t, libelle, quand) => { avis.push(['action', t, libelle]); quand(); } };
+  semer(s.ctx, { personnes: PERSONNES, ...REFERENTIEL,
+    projets: [projet('FB', { livrables: [livrable('L-fb', { nom: 'KV · GH · Orvelle', support: 'S-kv', marche: 'M-gh' })] })] });
+  let vu = 0;
+  s.ctx.FEEDBACK.ouvrir('FB', ['L-fb'], () => {}, () => { vu++; });
+  const panneau = s.dernier();
+  const tous = (n, f, out = []) => { if (n && typeof n === 'object') { if (f(n)) out.push(n); (n.childNodes || []).forEach(c => tous(c, f, out)); } return out; };
+  saisie(panneau).value = 'Le logo plus grand';
+  tous(panneau, n => n.getAttribute && n.getAttribute('id') === 'fb-auteur')[0].value = 'P:P-recette';
+  cliquer(bouton(panneau, 'Enregistrer'));
+  assert.equal(s.ctx.DEPOT.liste('feedbacks').length, 1);
+  assert.deepEqual(avis, [['action', 'Retour enregistré sur « Key visual —\u00a0Ghana · Orvelle ».', 'Voir les retours']]);
+  assert.equal(vu, 1, '« Voir les retours » mène au bloc des retours de la pièce');
+});

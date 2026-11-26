@@ -27,6 +27,13 @@ window.VUE_ASSET = (function () {
     { cle: "remise", nom: "BAT et remise" },
   ];
   var onglet = "poser";
+  /* La pièce dont le bloc des retours s'ouvre au prochain dessin, une fois. */
+  var retoursOuverts = null;
+  function retoursAOuvrir(l) {
+    if (retoursOuverts !== l.id) return null;
+    retoursOuverts = null;
+    return true;
+  }
 
   function page(p, l, apres, modeInitial, numero) {
     var mode = ONGLETS.some(function (x) { return x.cle === modeInitial; }) ? modeInitial : "poser";
@@ -154,6 +161,7 @@ window.VUE_ASSET = (function () {
     var historique = Array.from(new Set((l.versions || []).map(function (ancienne) { return ancienne.n || ancienne.numero; })))
       .filter(function (n) { return n && Number(n) !== numero; }).reverse();
     var retours = retoursClient(p, l, apres, lecture, numero);
+    var ouvrirRetours = retoursAOuvrir(l);
     var documents = fichiersRevue(l, numero);
     var annotation = !lecture && IMAGE.source(l) ? el("button.b.nu", { type: "button",
       onclick: function () { ANNOT.ouvrir(p, l, apres, numero); } }, "Annoter le visuel") : null;
@@ -171,7 +179,7 @@ window.VUE_ASSET = (function () {
       el("div.rvp-annexes", {},
         horsEcart(p, l, apres, lecture),
         !lecture && !verdict ? el("details", {}, el("summary", {}, "Critères et contrôles"), VUE_LIVRABLE.controles(p, l)) : null,
-        retours ? el("details", {}, el("summary", {}, "Retours et annotations"), retours) : null,
+        retours ? el("details", { open: ouvrirRetours }, el("summary", {}, "Retours et annotations"), retours) : null,
         documents ? el("details", {}, el("summary", {}, "Documents de la V" + numero), documents) : null,
         historique.length ? el("details", {}, el("summary", {}, "Versions précédentes"),
           el("ul.rvp-docs", {}, historique.map(function (n) {
@@ -199,19 +207,26 @@ window.VUE_ASSET = (function () {
         APP.remplacerVue(lien(cle));
       };
     }
+    /* Après un retour enregistré : l'onglet de la décision, son bloc de
+     * retours ouvert. */
+    function voirRetours() {
+      retoursOuverts = l.id;
+      if (lien && APP.remplacerVue) APP.remplacerVue(lien("juger")); else choisir("juger");
+    }
     var navigation = lien ? el("nav.onglets", { "aria-label": "Vues du livrable" }, ONGLETS.map(function (o) {
       return el("a.onglet", { href: lien(o.cle), onclick: naviguer(o.cle), "aria-current": o.cle === courant ? "page" : null }, o.nom);
     })) : UI.onglets(ONGLETS, courant, choisir);
     var retours = courant === "juger" ? retoursClient(p, l, apres) : null;
+    var ouvrirRetours = courant === "juger" ? retoursAOuvrir(l) : null;
     return el("div.as" + (courant === "juger" ? ".as-revue" : ""), {},
       entete(p, l),
       horsEcart(p, l, apres),
-      courant === "poser" ? bande(p, l, apres) : null,
+      courant === "poser" ? bande(p, l, apres, voirRetours) : null,
       navigation,
       el("div", { style: { "margin-top": "1rem" } },
         courant === "poser" ? el("div", {}, cases(p, l, apres), packsMontres(p, l, apres), MOCKUP.bloc(p, l, apres))
           : courant === "juger" ? el("div", {}, VUE_LIVRABLE.criteres(p, l, apres, true),
-              retours ? el("details", {}, el("summary", {}, "Retours client"), retours) : null,
+              retours ? el("details", { open: ouvrirRetours }, el("summary", {}, "Retours client"), retours) : null,
               REMISE.etatPiece(l).cle !== "validation" ? (lien
                 ? el("a.b.or", { href: lien("remise"), onclick: naviguer("remise") }, "Suivre le BAT et la remise")
                 : el("button.b.or", { type: "button", onclick: function () { choisir("remise"); } }, "Suivre le BAT et la remise")) : null)
@@ -282,12 +297,12 @@ window.VUE_ASSET = (function () {
 
   /* ————————————————————— La question ————————————————————— */
 
-  function bande(p, l, apres) {
+  function bande(p, l, apres, voirRetours) {
     return UI.recevabilite("Que manque-t-il pour produire ?",
       PRODUCTION.porte(p, l), null,
       [
         { nom: "Poser un fichier", fort: true, quand: function () { PRODUCTION.ajouter(p, l, apres); } },
-        { nom: "Enregistrer un retour", quand: function () { FEEDBACK.ouvrir(p.id, [l.id], apres); } },
+        { nom: "Enregistrer un retour", quand: function () { FEEDBACK.ouvrir(p.id, [l.id], apres, voirRetours); } },
         { nom: "Nouvelle version", doux: true, quand: function () {
             VERSION.nouvelle(l, l.nom, apres, { perime: function () { return KV.descendance(p, l.id); } });
           } },

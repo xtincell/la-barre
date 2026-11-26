@@ -260,7 +260,9 @@ window.FEEDBACK = (function () {
 
   /* ————————————————————— Enregistrer un retour ————————————————————— */
 
-  function ouvrir(projetId, cibles, apres) {
+  /* `voir`, facultatif : ce qui mène au bloc des retours de la pièce. L'avis
+   * qui suit l'enregistrement le propose. */
+  function ouvrir(projetId, cibles, apres, voir) {
     var p = DEPOT.trouve("projets", projetId);
     if (!p) return;
 
@@ -365,6 +367,12 @@ window.FEEDBACK = (function () {
           DEPOT.ajoute("feedbacks", f);
           DEPOT.tracer("retour client", "feedback", projetId, champ.value.trim().slice(0, 50));
           DEPOT.enregistrer(); PANNEAU.fermer(); if (apres) apres();
+          /* Le panneau se fermait sans rien dire, et le retour n'était pas sur
+           * l'écran courant : l'avis dit où il est, et y mène. */
+          var touchees = impact(f).pieces;
+          var dit = touchees.length === 1 ? "Retour enregistré sur « " + KV.titre(touchees[0]) + " »."
+            : touchees.length ? "Retour enregistré sur " + O.pluriel(touchees.length, "pièce") + "." : "Retour enregistré.";
+          if (voir && AVIS.action) AVIS.action(dit, "Voir les retours", voir, 6000); else AVIS.fait(dit);
         } }, "Enregistrer"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
     ));
