@@ -46,8 +46,7 @@ window.VUE_DIRECTION = (function () {
     var nf = window.FILE ? FILE.tout().length : 0;
     if (nf) {
       h.appendChild(el("div.cmd-file", {},
-        el("span", {}, nf + (nf > 1 ? " décisions attendent" : " décision attend")
-          + " — elles se prennent dans la salle de tri, pas ici."),
+        el("span", {}, nf + (nf > 1 ? " décisions en attente" : " décision en attente")),
         GESTE.bouton("file", {}, null, "b.nu")));
     }
 
@@ -106,12 +105,10 @@ window.VUE_DIRECTION = (function () {
     var portent = lignes.filter(function (l) { return l.pieces.length; });
     return el("section.sm", {},
       el("div.sm-t", {},
-        el("h2", {}, titreSemaine(enMur, vides)),
-        el("p", {}, "La charge est un problème de calendrier, pas de pourcentage. "
-          + "Un cumul déclaré réduit la capacité — il se voit ici, pas dans une note.")),
+        el("h2", {}, titreSemaine(enMur, vides))),
 
       /* Les cinq jours, nommés une fois. */
-      el("div.sm-g", {},
+      el("div.sm-g", { role: "region", "aria-label": "Capacité de l’équipe cette semaine", tabindex: "0" },
         el("div.smg-h", {},
           el("span.smgh-v", {}),
           el("div.smgh-l", {}, jours.map(function (j) {
@@ -123,8 +120,7 @@ window.VUE_DIRECTION = (function () {
         vides.length
           ? el("details.sm-vides", {},
               el("summary.smv-t", {}, vides.length + (vides.length > 1
-                ? " personnes sans livrable affecté" : " personne sans livrable affecté"),
-                el("span", {}, "des talents qu'on ne détecte pas")),
+                ? " personnes sans livrable affecté" : " personne sans livrable affecté")),
               vides.map(function (l) { return ligneSemaine(l, jours, rafraichir); }))
           : null),
 

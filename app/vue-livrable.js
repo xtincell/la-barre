@@ -364,7 +364,7 @@ window.VUE_LIVRABLE = (function () {
     return boite;
   }
 
-  function criteres(p, l, apres) {
+  function criteres(p, l, apres, compact) {
     var b = p.sections.bigidea || {};
     var boite = el("div.criteres-l");
     function dessiner() {
@@ -381,11 +381,13 @@ window.VUE_LIVRABLE = (function () {
     }
     dessiner();
 
-    return el("div", {},
-      el("div.sousbloc", {}, el("h3", {}, "Critères d'acceptation de l'idée"),
-        (b.criteres && b.criteres.length) ? PANNEAU.puces(b.criteres)
-          : UI.banniere("", REGLES.prix("criteres-absents"))),
-      el("div.sousbloc", {}, el("h3", {}, "Ce qui le fait refuser"), boite),
+    var accord = (b.criteres && b.criteres.length) ? PANNEAU.puces(b.criteres)
+      : UI.banniere("", REGLES.prix("criteres-absents"));
+    var controles = el("div.sousbloc", {}, el("h3", {}, "Critères d'acceptation de l'idée"), accord,
+      el("h3", {}, "Grille de refus"), boite);
+    return el("div.revue-criteres", {},
+      compact && b.criteres && b.criteres[0] ? el("p.revue-premier-critere", {}, b.criteres[0]) : null,
+      !compact ? controles : null,
       el("div.sousbloc", {}, el("h3", {}, "Verdict — chacun porte son coût"),
         el("div.rc-verdicts", {}, MAISON.verdicts.map(function (v) {
           var piece = { type: "livrable", objet: l, projet: p, titre: l.nom,
@@ -398,41 +400,75 @@ window.VUE_LIVRABLE = (function () {
             el("span.v-signe", {}, v.signe),
             el("span.v-nom", {}, v.nom),
             el("span.v-cout" + (c.alertes.length ? ".alerte" : ""), {}, resume.slice(0, 58)));
-        })))
+        }))),
+      compact ? el("details", {}, el("summary", {}, "Voir tous les critères"), controles) : null
     );
   }
 
   function juger(p, l, verdict, apres) {
-    var v = (l.versions || [])[l.versions.length - 1];
-    if (!v) { AVIS.refus("Aucune version soumise : il n'y a rien à juger."); return; }
-
-    if (!verdict.motifRequis) { poser(p, l, v, verdict, "", apres); return; }
-
-    /* Le motif se choisit d'abord dans les critères écrits. Le texte libre
-     * existe, il est le dernier de la liste — sinon chacun réinvente le
-     * vocabulaire et rien n'est comparable d'un mois sur l'autre. */
+    var version = REMISE.versionCourante(l);
+    if (!version) { AVIS.refus("Soumettez la version en cours avant de la juger."); return; }
+    var v = version.objet;
+    var contexte = etatPourVerdict(l, v);
+    var marche = l.marche ? DEPOT.trouve("marches", l.marche) : null;
     var g = REGLES.grille("livrable", l);
     var etat = l.grille || {};
     var vides = g.filter(function (c) { return etat[c.cle] !== true; }).map(function (c) { return c.texte; });
-
-    PANNEAU.demander(verdict.nom, {
-      etiquette: l.nom, label: "Le motif", lignes: 2,
-      choix: vides,
-      aide: vides.length
-        ? "Cliquer un critère non tenu le recopie. Le texte libre reste possible, en dernier."
-        : "Tous les critères écrits sont tenus : ce refus ne s'appuiera que sur du texte libre.",
-      requis: "Un retour sans motif n'est pas un retour.",
-      bouton: verdict.nom,
-    }, function (motif) { poser(p, l, v, verdict, motif, apres); });
+    var enDessus = !!document.querySelector(".panneau[role='dialog']");
+    var fermer = enDessus ? PANNEAU.fermerSur : PANNEAU.fermer;
+    var champ = el("textarea", { id: "revue-motif", rows: 3, required: verdict.motifRequis ? true : null });
+    var statut = el("p.remise-erreur", { role: "alert" }, "");
+    var formulaire = el("form.form", { onsubmit: function (e) {
+      e.preventDefault();
+      var motif = verdict.motifRequis ? champ.value.trim() : "";
+      if (verdict.motifRequis && !motif) { statut.textContent = "Un retour exige un motif."; champ.focus(); return; }
+      var erreur = poser(p.id, l.id, contexte, verdict, motif);
+      if (erreur) { statut.textContent = erreur; return; }
+      fermer();
+      if (apres) apres();
+    } }, el("p", {}, verdict.nom + " · V" + version.numero + " · " + (marche ? marche.nom : "Marché non renseigné")),
+      v.verdict ? el("p", {}, "Le verdict de cette version est déjà consigné. Un changement ajoute une décision à son historique.") : null,
+      verdict.motifRequis ? el("div.champ", {},
+        el("label", { for: "revue-motif" }, "Motif du verdict"), champ,
+        vides.length ? el("details", {}, el("summary", {}, "Choisir un critère non tenu"),
+          el("div.form-actions", {}, vides.map(function (critere) {
+            return el("button.motif", { type: "button", onclick: function () { champ.value = critere; champ.focus(); } }, critere);
+          }))) : null) : null,
+      statut,
+      el("div.form-actions", {},
+        el("button.b.or", { type: "submit" }, "Confirmer le verdict"),
+        el("button.b.nu", { type: "button", onclick: fermer }, "Annuler")));
+    (enDessus ? PANNEAU.sur : PANNEAU.ouvrir)("Confirmer le verdict", l.nom, formulaire);
   }
 
-  function poser(p, l, v, verdict, motif, apres) {
-    v.verdict = verdict.cle; v.motif = motif; v.juge_le = new Date().toISOString();
-    if (verdict.cle === "approuve") l.points.central = "pret";
-    DECISION.poser({ objet: l.id, type: "livrable", projet: p.id, verdict: verdict.cle,
-      motif: motif, quand: v.juge_le, qui: MAISON.titulaire, titre: l.nom });
+  function etatPourVerdict(l, v) {
+    return JSON.stringify([l.version, l.marche, l.support, l.vignette, l.review, l.fichiers, l.grille, v]);
+  }
+
+  function poser(projetId, livrableId, contexte, verdict, motif) {
+    var p = DEPOT.trouve("projets", projetId);
+    var l = p && !p.fusionne && !(window.CLOTURE && CLOTURE.est(p)) && (p.livrables || []).find(function (x) {
+      return x.id === livrableId && !x.annule;
+    });
+    var version = l && REMISE.versionCourante(l);
+    if (!version || etatPourVerdict(l, version.objet) !== contexte)
+      return "Le livrable a changé depuis l’ouverture du verdict. Rouvrez sa version en cours.";
+    var v = version.objet;
+    if (v.verdict === verdict.cle && (v.motif || "") === motif) return null;
+    var quand = new Date().toISOString();
+    var decision;
+    try {
+      decision = DECISION.construire({ objet: l.id, type: "livrable", projet: p.id, verdict: verdict.cle,
+        motif: motif, quand: quand, qui: MAISON.titulaire, titre: l.nom });
+    } catch (e) { return e.message; }
+    v.verdict = verdict.cle; v.motif = motif; v.juge_le = quand;
+    if (verdict.cle === "approuve") {
+      if (!l.points) l.points = {};
+      l.points.central = "pret";
+    }
+    DECISION.ajouter(decision);
     DEPOT.enregistrer();
-    if (apres) apres();
+    return null;
   }
 
   function dependances(p, l, apres) {

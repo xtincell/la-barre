@@ -29,25 +29,22 @@ window.VUE_VAULT = (function () {
     O.vider(hote);
 
     if (!arbre.length) {
-      hote.appendChild(el("p.rien", {}, "Aucune marque. Une marque naît avec son "
-        + "premier dossier — et sa bibliothèque de marque se remplit en travaillant."));
+      hote.appendChild(el("p.rien", {}, "Aucune marque associée à un dossier."));
       return;
     }
 
     var orphelins = VAULT.orphelins();
 
-    /* L'en-tête des Ressources dit déjà l'état en titre : la phrase ne se répète
-     * pas ici, seule reste la règle de lecture de l'arbre. */
     hote.appendChild(el("div.vt", {},
-      el("p.vt-s", {}, "Ce qui est ici vaut plusieurs années. Une campagne y puise — "
-        + "elle n'y écrit pas. Chaque niveau hérite du précédent : ce qu'on n'écrit "
-        + "pas plus bas vaut tel quel."),
-
       orphelins.length ? blocOrphelins(orphelins, DEPOT.liste("marques"), hote) : null,
 
       window.COUVERTURE ? COUVERTURE.inclassables() : null,
 
-      el("div.vt-arbre", {}, arbre.map(function (n) { return noeud(n, 0, hote); }))
+      el("div.vt-arbre", {}, arbre.map(function (n) { return noeud(n, 0, hote); })),
+      el("details.pilotage-contexte", {},
+        el("summary", {}, "Héritage de la plateforme"),
+        el("p", {}, "La gamme hérite de la marque et la marque de l’ombrelle. "
+          + "Les campagnes utilisent ces références. Les champs canoniques se modifient dans La Fusée."))
     ));
   }
 
@@ -71,9 +68,15 @@ window.VUE_VAULT = (function () {
     var couleur = (VAULT.vaultDe(n.type, n.id) || {}).couleur;
 
     return el("div.vn.n" + profondeur + (ici ? ".ici" : ""), {},
-      el("button.vn-h", { type: "button",
-        onclick: function () { ouverte = ici ? null : cle(n); rendre(hote); } },
-        el("span.vn-e", {}, ici ? "−" : "+"),
+      el("button.vn-h", { type: "button", "aria-expanded": ici ? "true" : "false", "data-marque-noeud": cle(n),
+        onclick: function () {
+          ouverte = ici ? null : cle(n);
+          rendre(hote);
+          Array.from(hote.querySelectorAll("[data-marque-noeud]")).find(function (item) {
+            return item.dataset.marqueNoeud === cle(n);
+          })?.focus();
+        } },
+        el("span.vn-e", { "aria-hidden": "true" }, ici ? "−" : "+"),
         logo && logo.vignette
           ? el("span.vn-l", {}, el("img", { src: logo.vignette, alt: n.nom }))
           : el("span.vn-p", couleur ? { style: { background: couleur } } : {}),

@@ -78,15 +78,8 @@ window.INTAKE = (function () {
 
     hote.appendChild(el("div.reg", {},
       el("div.reg-t", {},
-        el("h2.regt-l", {}, "Boîte d'entrée"),
-        el("span.regt-d", {}, "⌘K pour capturer, d'où qu'on soit")),
-
-      el("div.reg-n", {},
-        el("b", {}, "Facultative, et c'est voulu.  "),
-        "La Clientèle filtre : les briefs arrivent qualifiés mais pas mis en forme, et "
-        + "c'est l'ingesteur qui les met en forme. Cette pile sert à ce qui arrive "
-        + "autrement — un couloir, un appel, un message le samedi. C'est le seul endroit "
-        + "du produit où l'on a le droit d'être sale."),
+        el("h2.regt-l", {}, "Notes à ranger · " + p.length),
+        el("button.b.nu", { type: "button", onclick: function () { CAPTURE.ouvrir(); } }, "Prendre une note")),
 
       p.length
         ? el("div.ink-l", {}, p.map(function (c) { return ligne(c, rafraichir); }))
@@ -133,12 +126,12 @@ function cap(t) { t = String(t || ""); return t.charAt(0).toUpperCase() + t.slic
    * en travaillant. C'est la règle d'amorçage — entrer tout avant de
    * commencer, c'est ne jamais commencer. */
   function ouvrirDossier(c, rafraichir) {
-    var champNom = el("input", { type: "text", value: c.texte.slice(0, 70) });
-    var selN = el("select", {});
+    var champNom = el("input", { id: "intake-nom", type: "text", value: c.texte.slice(0, 70) });
+    var selN = el("select", { id: "intake-nature" });
     NATURE.liste().forEach(function (n) {
       selN.appendChild(el("option", { value: n.cle, title: n.quoi }, n.nom)); });
     selN.value = "demande";
-    var selC = el("select", {});
+    var selC = el("select", { id: "intake-client" });
     selC.appendChild(el("option", { value: "" }, "— quel client ? —"));
     DEPOT.liste("clients").forEach(function (x) {
       selC.appendChild(el("option", { value: x.id }, x.nom)); });
@@ -147,9 +140,9 @@ function cap(t) { t = String(t || ""); return t.charAt(0).toUpperCase() + t.slic
       UI.banniere("", "Trois champs suffisent. Le dossier se complète en travaillant — "
         + "tout saisir avant de commencer, c'est ne jamais commencer."),
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Nom du dossier"), champNom),
-        el("div.champ", {}, el("label", {}, "Nature"), selN),
-        el("div.champ", {}, el("label", {}, "Client"), selC)),
+        el("div.champ", {}, el("label", { for: "intake-nom" }, "Nom du dossier"), champNom),
+        el("div.champ", {}, el("label", { for: "intake-nature" }, "Nature"), selN),
+        el("div.champ", {}, el("label", { for: "intake-client" }, "Client"), selC)),
       el("div.form-actions", {},
         el("button.bouton", { type: "button", onclick: function () {
           if (!champNom.value.trim()) { AVIS.refus("Un dossier a besoin d'un nom."); return; }
@@ -166,7 +159,7 @@ function cap(t) { t = String(t || ""); return t.charAt(0).toUpperCase() + t.slic
           rattacher(c, p.id);
           PANNEAU.fermer();
           AVIS.fait("Dossier ouvert. La note d'origine est au brief, mot pour mot.");
-          location.hash = "#/projets/" + p.id;
+          location.hash = "#/projets/" + p.id + "/brief";
         } }, "Ouvrir"),
         el("button.bouton.creux", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
     ), "var(--accent)");

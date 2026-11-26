@@ -41,11 +41,17 @@ window.INGESTEUR = (function () {
 
   function ouvrir(p, rafraichir) {
     var def = window.CHAMPS.section("brief");
+    var lecture = etatLu();
+    function etatLu() { return JSON.stringify([p.sections.brief, p.briefSource, p.briefCitations]); }
     var source = el("textarea.ing-src", { rows: 22,
       placeholder: "Colle ici le brief tel qu'il est arrivé — mail, message, retranscription. Ne le corrige pas : c'est la source, elle doit rester intacte." });
     if (p.briefSource) source.value = p.briefSource;
 
-    var valeurs = Object.assign({}, p.sections.brief || {});
+    var valeurs = {};
+    def.champs.forEach(function (c) {
+      var valeur = (p.sections.brief || {})[c.cle];
+      if (valeur !== undefined) valeurs[c.cle] = valeur;
+    });
     var citations = Object.assign({}, p.briefCitations || {});
     var courant = null;
 
@@ -70,7 +76,7 @@ window.INGESTEUR = (function () {
       dessiner();
     }
 
-    function vider(cle) { delete valeurs[cle]; delete citations[cle]; dessiner(); }
+    function vider(cle) { valeurs[cle] = estListe(cle) ? [] : ""; delete citations[cle]; dessiner(); }
 
     function estListe(cle) {
       var c = def.champs.filter(function (x) { return x.cle === cle; })[0];
@@ -158,20 +164,35 @@ window.INGESTEUR = (function () {
         el("div.form-actions", {},
           el("button.b.or", { type: "button", onclick: function () { demanderGo(); } },
             "Enregistrer et demander le go"),
-          el("button.b", { type: "button", onclick: function () { enregistrer(); PANNEAU.fermer(); rafraichir(); } },
+          el("button.b", { type: "button", onclick: function () {
+            if (enregistrer()) { PANNEAU.fermer(); rafraichir(); }
+          } },
             "Enregistrer seulement"),
           el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))));
     }
 
     function enregistrer() {
-      p.sections.brief = Object.assign(p.sections.brief || {}, valeurs);
+      if (DEPOT.trouve("projets", p.id) !== p || etatLu() !== lecture) {
+        AVIS.refus("Le brief a changé depuis l’ouverture. Relisez la source avant d’enregistrer.");
+        return false;
+      }
+      var ancien = p.sections.brief || {};
+      var sourceModifiee = source.value !== (p.briefSource || "");
+      var champsModifies = def.champs.filter(function (c) {
+        return JSON.stringify(valeurs[c.cle]) !== JSON.stringify(ancien[c.cle]);
+      });
+      if (sourceModifiee || champsModifies.length) VUE_BRIEF.preparerRevision(p);
+      p.sections.brief = Object.assign(ancien, valeurs);
       p.briefSource = source.value;
       p.briefCitations = citations;
-      /* Ce que j'ai déplacé sans citation est une inférence, pas du reçu. */
+      /* Le texte d’un champ déjà consigné garde sa provenance tant que ni
+       * sa valeur ni sa citation n’ont changé. */
       def.champs.forEach(function (c) {
         var v = valeurs[c.cle];
         var rempli = Array.isArray(v) ? v.length > 0 : !!String(v || "").trim();
-        if (rempli && !citations[c.cle]) {
+        var citationPerimee = sourceModifiee && citations[c.cle] && source.value.indexOf(citations[c.cle]) === -1;
+        if (citationPerimee) delete citations[c.cle];
+        if (rempli && !citations[c.cle] && (citationPerimee || champsModifies.indexOf(c) !== -1)) {
           INFERENCE.poser(p, "brief", c.cle, v,
             "Saisi à la mise en forme sans citation de la source : c'est une reconstitution, pas les mots du client.");
         }
@@ -179,11 +200,13 @@ window.INGESTEUR = (function () {
       DEPOT.tracer("brief mis en forme", "brief", p.id,
         window.CHAMPS.etat("brief", valeurs).fait + " champs");
       DEPOT.enregistrer();
+      lecture = etatLu();
+      return true;
     }
 
     /* Le go final : un objet, pas une politesse. */
     function demanderGo() {
-      enregistrer();
+      if (!enregistrer()) return;
       var e = window.CHAMPS.etat("brief", valeurs);
       var manque = e.manquants.map(function (c) { return c.nom; });
 

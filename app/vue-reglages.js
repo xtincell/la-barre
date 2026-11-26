@@ -9,6 +9,7 @@
 window.VUE_REGLAGES = (function () {
   var el = O.el;
   var vueActive = null;
+  var journalOuvert = false;
   DEPOT.surChangement(function () {
     if (vueActive && vueActive.repere.isConnected) rendre(vueActive.hote);
   });
@@ -67,13 +68,14 @@ window.VUE_REGLAGES = (function () {
   function rendre(hote) {
     var age = DEPOT.ageSauvegarde();
 
-        O.vider(hote);
+    O.vider(hote);
     var repere = el("span", { hidden: true });
     hote.appendChild(repere); vueActive = { hote: hote, repere: repere };
 
     /* L'avertissement d'abord, et en grand tant qu'il est vrai. */
     var pds = DEPOT.poids();
     var risque = pds.fichier ? !pds.surDisque : age === null || age > 2;
+    var images = window.IMAGE ? IMAGE.poids() : null;
     var n = DEPOT.liste("projets").length;
     var pcs = DEPOT.liste("projets").reduce(function (t, p) {
       return t + (p.livrables || []).filter(function (l) { return !l.annule; }).length; }, 0);
@@ -82,24 +84,26 @@ window.VUE_REGLAGES = (function () {
 
     hote.appendChild(el("div.rg-tete" + (risque ? ".risque" : ".sain"), {},
       el("div.rgt-c", {},
-        el("div.rgt-h", {}, risque ? "⚠" : "✓"),
+        el("div.rgt-h", { "aria-hidden": "true" }, risque ? "⚠" : "✓"),
         el("div", {},
-          el("h2", {}, pds.fichier ? (pds.surDisque ? "Sauvegarde reçue" : "Sauvegarde en attente")
+          el("h2", {}, pds.grave ? "Cache local plein" : pds.fichier ? (pds.surDisque ? "Sauvegarde reçue" : "Sauvegarde en attente")
             : age === null ? "La base n'a jamais été exportée"
             : risque ? "Dernier export il y a " + age + (age > 1 ? " jours" : " jour")
             : "La base est à jour"),
-          el("p.rgt-q", {}, pds.fichier
-            ? (pds.surDisque ? "Le fichier partagé a reçu votre travail." : "Les gestes non reçus sont conservés dans ce navigateur. Une divergence se règle ci-dessous.")
+          el("p.rgt-q", {}, pds.grave
+            ? "Les écritures dans ce navigateur échouent. Exportez la base pour garder une copie."
+            : pds.fichier
+            ? (pds.surDisque ? "Le fichier partagé a reçu vos modifications." : "Les modifications en attente restent dans ce navigateur. Les divergences sont signalées ci-dessous.")
             : risque
             ? "Vider les données du navigateur détruirait tout : " + n
               + (n > 1 ? " dossiers, " : " dossier, ") + pcs + " livrables, " + infs + " inférences."
-            : "Exporté il y a " + age + (age > 1 ? " jours" : " jour") + ". Le fichier sur le Drive fait foi."),
+            : "Dernier export il y a " + age + (age > 1 ? " jours." : " jour.")),
           el("p.rgt-s", {}, pds.fichier
-            ? "Les sauvegardes sont automatiques. L’export reste une copie que vous pouvez emporter."
-            : "Le navigateur n'en garde qu'un cache. Import à l'ouverture, export à la fermeture."))),
+            ? "L’export JSON conserve une copie du dépôt."
+            : "Le navigateur conserve le dépôt courant. L’export JSON permet de le reprendre ailleurs."))),
       el("div.rgt-g", {},
         el("button.b.or", { type: "button", onclick: function () {
-          DEPOT.exporter(); DEPOT.noterExport(); rendre(hote); } }, "Exporter la base →"),
+          DEPOT.exporter(); DEPOT.noterExport(); rendre(hote); } }, "Exporter la base"),
         el("button.b.nu", { type: "button", onclick: function () { importer(hote); } },
           "Importer un fichier"),
         pds.fichier && !pds.surDisque && !DEPOT.conflits().length
@@ -113,13 +117,15 @@ window.VUE_REGLAGES = (function () {
             } }, "Réessayer la sauvegarde") : null),
       el("div.rgt-j", {},
         el("i", { style: { width: Math.min(100, pds.part) + "%" } }),
-        el("span", {}, pds.mo + " Mo sur 5 Mo · plafond du navigateur"))
+        el("span", {}, pds.mo + " Mo sur 5 Mo · plafond du navigateur")),
+      images && images.restantes ? el("p.rgt-s", {}, images.restantes
+        + " vignettes stockées dans le dépôt · " + O.milliers(images.ko) + " Ko") : null
     ));
     rapprochement(hote);
     var reprises = DEPOT.reprisesDisponibles();
     if (reprises.length) hote.appendChild(el("section.groupe", { "aria-label": "Autres brouillons conservés" },
       el("h2", {}, "Autres brouillons conservés"),
-      el("p", {}, "Ces gestes proviennent d’un autre onglet. Ils restent disponibles après sa fermeture. Reprenez-les lorsque le travail ouvert est sauvegardé."),
+      el("p", {}, "Brouillons d’autres onglets, reprenables après réception du travail ouvert."),
       reprises.map(function (r) {
         return el("button.b", { type: "button", disabled: !pds.surDisque,
           onclick: function () { DEPOT.reprendre(r.cle); } }, (r.ancien ? "Rapprocher l’ancien cache conservé le " : "Reprendre le brouillon du ") + new Date(r.quand).toLocaleString("fr-FR"));
@@ -143,7 +149,6 @@ window.VUE_REGLAGES = (function () {
         ),
         el("div.reglage", {},
           el("h4", {}, "Mes règles"),
-          el("p", {}, "Ce que je refuse de recevoir, et ce que « fini » veut dire."),
           el("div.form-actions", {},
             el("button.b", { type: "button", onclick: conditions }, "Conditions de réception"),
             el("button.b", { type: "button", onclick: reglesFini }, "Définitions de fini"))
@@ -157,9 +162,12 @@ window.VUE_REGLAGES = (function () {
       )
     ));
 
-    hote.appendChild(el("div.groupe", {},
-      el("div.section-titre", {}, "Journal", el("span.droite", {}, "les cent dernières traces")),
-      el("div.journal", {}, DEPOT.journal().slice(0, 100).map(ligneJournal))
+    var journal = DEPOT.journal().slice(0, 100);
+    hote.appendChild(el("details.groupe.pilotage-contexte", { open: journalOuvert,
+      ontoggle: function (e) { journalOuvert = e.currentTarget.open; } },
+      el("summary", {}, "Journal des modifications · " + journal.length),
+      journal.length ? el("div.journal", {}, journal.map(ligneJournal))
+        : el("p.rien", {}, "Aucune modification consignée.")
     ));
   }
 

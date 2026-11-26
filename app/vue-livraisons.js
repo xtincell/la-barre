@@ -33,8 +33,11 @@ window.VUE_LIVRAISONS = (function () {
   var montres = LOT;
 
   var FILTRES = [
-    { cle: "tout", nom: "Tout", quoi: "tout ce qui est dû et n'est pas arrivé" },
-    { cle: "dement", nom: "Le tableau ment", quoi: "annoncé fait, rien au dossier" },
+    { cle: "tout", nom: "Tout", quoi: "dépôts, BAT et preuves à vérifier" },
+    { cle: "bat", nom: "BAT à signer", quoi: "versions approuvées sans BAT signé exploitable" },
+    { cle: "sortie", nom: "Fichier à rattacher", quoi: "versions approuvées dont le fichier final manque" },
+    { cle: "preuve", nom: "Preuve à joindre", quoi: "versions approuvées dont la remise reste à justifier" },
+    { cle: "dement", nom: "Annonce sans fichier", quoi: "annoncé fait, rien au dossier" },
     { cle: "depasse", nom: "En retard", quoi: "la remise est passée" },
     { cle: "sansTrace", nom: "Sans trace", quoi: "rien, nulle part" },
     { cle: "aTracer", nom: "À tracer", quoi: "fait, non déposé — mon geste" },
@@ -43,7 +46,19 @@ window.VUE_LIVRAISONS = (function () {
   function rendre(hote) {
     O.vider(hote);
 
-    var tout = TRACE.enSouffrance();
+    var anomalie = TRACE.enSouffrance();
+    var aVerifier = [];
+    if (window.REMISE) DEPOT.liste("projets").forEach(function (p) {
+      if (p.fusionne || (window.CLOTURE && CLOTURE.est(p))) return;
+      (p.livrables || []).forEach(function (l) {
+        if (l.annule || REMISE.preuveCourante(p, l)) return;
+        var e = REMISE.etatPiece(l);
+        if (e.cle === "bat" || e.cle === "sortie" || e.cle === "preuve") aVerifier.push({ projet: p, l: l,
+          s: { cle: e.cle, nom: e.nom, ton: "attente", jours: null, quoi: e.nom },
+          remise: true });
+      });
+    });
+    var tout = anomalie.concat(aVerifier);
     var lignes = tout.filter(function (x) {
       if (projetId && x.projet.id !== projetId) return false;
       if (filtre !== "tout" && x.s.cle !== filtre) return false;
@@ -62,7 +77,7 @@ window.VUE_LIVRAISONS = (function () {
       lignes.length
         ? el("section.liv-liste", {}, lignes.slice(0, montres).map(function (x) { return ligne(hote, x); }))
         : el("p.rien", {}, filtre === "tout" && !projetId
-            ? "Aucun livrable en souffrance. Tout ce qui est dû est arrivé, ou n'est pas encore exigible."
+            ? "Aucun dépôt, BAT ou justificatif à traiter dans cette vue."
             : "Rien dans cette sélection."),
       lignes.length > montres
         ? el("button.studio-lien.liv-plus", { type: "button",
@@ -128,10 +143,12 @@ window.VUE_LIVRAISONS = (function () {
 
       el("div.livl-qui", {},
         qui ? el("span.livl-p", {}, qui.nom) : el("span.livl-p.sans", {}, "◐ Sans responsable"),
-        l.remise ? el("span.livl-d", {}, "Remise " + O.jourCourt(l.remise))
+        l.remise ? el("span.livl-d", {}, "Échéance " + O.jourCourt(l.remise))
           : el("span.livl-d.sans", {}, "◐ Sans date")),
 
       el("div.livl-g", {},
+        x.remise ? el("a.b", { href: "#/projets/" + encodeURIComponent(p.id) + "/livrables/"
+          + encodeURIComponent(l.id) }, "Ouvrir le suivi") : [
         /* Le geste principal : le fichier entre ici, sur la ligne. C'est la
          * seule façon que le suivi cesse d'être une ressaisie. */
         /* Un geste par ligne, pas cinq cents boutons pleins : l'action
@@ -141,12 +158,12 @@ window.VUE_LIVRAISONS = (function () {
           "Importer"),
         el("button.studio-lien", { type: "button",
           onclick: function () { VUE_LIVRABLE.ouvrir(p, l, function () { rendre(hote); }); } },
-          "Ouvrir"))
+          "Ouvrir")])
     );
 
     /* Le fichier se lâche sur la ligne. Deux cents livraisons ne se saisissent
      * pas au formulaire ; elles se glissent depuis le Finder. */
-    return IMAGE.accepterDepot(noeud, l, function () { rendre(hote); });
+    return x.remise ? noeud : IMAGE.accepterDepot(noeud, l, function () { rendre(hote); });
   }
 
   return { rendre: rendre, FILTRES: FILTRES };

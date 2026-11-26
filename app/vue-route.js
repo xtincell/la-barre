@@ -33,9 +33,7 @@ window.VUE_ROUTE = (function () {
 
   /* Ouvrir une piste, c'est changer d'écran — pas ouvrir un tiroir. */
   function ouvrir(p, pi, rafraichir) {
-    VUE_PISTES.ouvrir(pi.id);
-    location.hash = "#/projets/" + p.id + "/pistes";
-    if (rafraichir) rafraichir();
+    location.hash = APP.adresse("projets", p.id, "pistes", pi.id);
   }
 
   function etiquette(pi) {

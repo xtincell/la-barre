@@ -1,7 +1,6 @@
 /* application.js — la coque : barre latérale, fil, recherche, capture.
  *
- * Trois colonnes. À gauche ce qui ne bouge jamais — c'est la mémoire du geste
- * qui rend un rituel hebdomadaire tenable.
+ * Les mêmes destinations ont une adresse sur ordinateur et sur téléphone.
  */
 
 window.APP = (function () {
@@ -9,385 +8,233 @@ window.APP = (function () {
   var corps = null;
   var railNoeud = null;
 
-  /* Quatre intentions, pas huit destinations.
-   *
-   * Une navigation n'est pas la liste des modules disponibles : c'est la
-   * réponse à « quelle intention puis-je avoir en ouvrant ce logiciel ». Le
-   * test qui la valide : quelqu'un qui découvre le produit doit savoir sans
-   * hésiter où aller pour voir ce qui demande son intervention. */
   var VUES = [
-    { cle: "bureau", ico: "atelier", nom: "Bureau",
-      quoi: "les créations à regarder et les projets en cours",
-      vue: function () { return VUE_STUDIO; } },
-    { cle: "valider", ico: "revue", nom: "Décisions",
-      quoi: "ce qui attend ma validation",
-      vue: function () { return VUE_DECIDER; } },
-    { cle: "planning", ico: "charge", nom: "Planning",
-      quoi: "charge, priorités, équipe",
-      vue: function () { return VUE_PLACER; } },
-    { cle: "reporting", ico: "standard", nom: "Bilan",
-      quoi: "indicateurs, bilan, arbitrages",
-      vue: function () { return VUE_CONSTATER; } },
-    { cle: "projets", ico: "projets", nom: "Projets",
-      quoi: "où en est chaque projet",
-      vue: function () { return VUE_PROJETS; } },
-    { cle: "galerie", ico: "galerie", nom: "Galerie",
-      quoi: "les campagnes et leur structure, en images",
-      vue: function () { return VUE_GALERIE; } },
-    { cle: "referentiel", ico: "referentiel", nom: "Ressources",
-      quoi: "marques, marchés, gabarits, base",
-      vue: function () { return VUE_MAISON; } },
+    { cle: "bureau", ico: "bureau", nom: "Bureau", vue: function () { return VUE_STUDIO; } },
+    { cle: "projets", ico: "projets", nom: "Projets", vue: function () { return VUE_PROJETS; } },
+    { cle: "valider", ico: "decision", nom: "Décisions", vue: function () { return VUE_DECIDER; } },
+    { cle: "planning", ico: "calendrier", nom: "Planning", vue: function () { return VUE_PLACER; } },
+    { cle: "reporting", ico: "standard", nom: "Bilan", vue: function () { return VUE_CONSTATER; } },
+    { cle: "referentiel", ico: "referentiel", nom: "Ressources", vue: function () { return VUE_MAISON; } }
   ];
-
-  /* Les anciennes adresses continuent de fonctionner : elles arrivent au bon
-   * mode de la bonne intention. Un lien ne se casse pas parce qu'on a changé
-   * d'architecture. */
   var ANCIENNES = {
-    /* Les noms d'avant la normalisation du vocabulaire. Un lien partagé il y a
-     * six mois doit arriver quelque part — on ne casse pas une adresse. */
-    decider: ["valider", "file"],
-    placer: ["planning", "ordre"],
-    constater: ["reporting", "indicateurs"],
-    maison: ["referentiel", "marches"],
-    direction: ["valider", "file"],
-    revue: ["valider", "file"],
-    attentes: ["valider", "du"],
-    briefs: ["reporting", "indicateurs"],
-    standard: ["reporting", "indicateurs"],
-    pipeline: ["planning", "ordre"],
-    reglages: ["referentiel", "parametres"],
-    people: ["referentiel", "people"],
+    decider: ["valider", "file"], placer: ["planning", "ordre"],
+    constater: ["reporting", "indicateurs"], maison: ["referentiel", "marches"],
+    direction: ["valider", "file"], revue: ["valider", "file"], attentes: ["valider", "du"],
+    briefs: ["reporting", "indicateurs"], standard: ["reporting", "indicateurs"],
+    pipeline: ["planning", "ordre"], reglages: ["referentiel", "parametres"], people: ["referentiel", "people"],
+    galerie: ["projets", "galerie"]
   };
-
-  function piste() {
-    var brut = location.hash.replace(/^#\/?/, "");
-    var m = brut.split("/");
-    var cle = m[0] || "bureau";
-
-    if (ANCIENNES[cle]) {
-      var a = ANCIENNES[cle];
-      cle = a[0];
-      m = [a[0], a[1]].concat(m.slice(1));
-    }
-
-    var v = null;
-    VUES.forEach(function (x) { if (x.cle === cle) v = x; });
-    return { vue: v || VUES[0], arg: m[1] || null, sous: m[2] || null };
-  }
-
-  /* ————————————————————— La barre latérale ————————————————————— */
-
-  /* Le dossier ouvert se retient : quitter un projet pour la Revue ne doit pas
-   * le remplacer par le premier de la liste. */
-  var dernierProjet = null;
-
-  function rail() {
-    var r = piste();
-    var aJuger = VUE_REVUE.pieces().length;
-    var attentes = RENVOI.ouvertes().length;
-    var projets = DEPOT.liste("projets");
-    var age = DEPOT.ageSauvegarde();
-
-    if (r.vue.cle === "projets" && r.arg) dernierProjet = r.arg;
-    var actif = (dernierProjet ? DEPOT.trouve("projets", dernierProjet) : null) || projets[0];
-
-    var n = el("nav.rail", { "aria-label": "Navigation principale" },
-      el("div.rail-marque", {},
-        el("span.studio-signe", { "aria-hidden": "true" }, "▰"),
-        el("a.rail-logo", { href: "#/bureau" }, "La Barre", el("span", {}, ".")),
-        el("div.os", {}, "Direction créative"),
-        DEPOT.estDemonstration() ? el("div.demo-marque", {}, "Démonstration — données fictives") : null
-      ),
-
-      /* Chaque place dit ce qui l'attend. Un compteur qui ne bouge jamais est
-       * un compteur qu'on cesse de lire : on ne montre que ce qui appelle. */
-      el("div.rail-nav", {}, VUES.map(function (v) {
-        var c = charge(v.cle, aJuger, attentes, projets, age);
-        return el("a", { href: "#/" + v.cle, "aria-current": r.vue.cle === v.cle ? "page" : null,
-          title: c.quoi || null },
-          el("span.ico", {}, UI.icone(v.ico, 15)),
-          el("span", {}, v.nom),
-          c.n ? el("span.compte" + (c.ton ? "." + c.ton : ""), {}, c.n) : null
-        );
-      })),
-
-      r.vue.cle === "projets" && r.arg && actif ? blocDossier(actif, r, projets) : null,
-
-      el("div.rail-titre", {}, "À portée de main"),
-      el("div.rail-outils", {},
-        el("button", { type: "button", onclick: function () { RENVOI.ouvrir({}); } },
-          el("span.ico", {}, UI.icone("renvoi", 14)), "Demander un retour"),
-        el("button", { type: "button", onclick: CAPTURE.ouvrir },
-          el("span.ico", {}, UI.icone("capture", 14)), "Prendre une note", el("span.touche", {}, "⌘K")),
-        el("button", { type: "button", onclick: function () { var c = document.querySelector(".chapeau-outils input"); if (c) c.focus(); } },
-          el("span.ico", {}, UI.icone("recherche", 14)), "Recherche", el("span.touche", {}, "⌘F")),
-        el("button", { type: "button", onclick: function () { window.print(); } },
-          el("span.ico", {}, UI.icone("imprimer", 14)), "Imprimer")
-      ),
-
-      el("div.rail-pied", {},
-        el("div.qui", {},
-          el("div.portrait", {}, initiales(moi())),
-          el("div", {},
-            el("div.nom", {}, moi()),
-            el("div.poste", {}, ACTEUR.postes().map(function (p) { return O.poste(p).court; }).join(" · ")),
-            /* Le régime de l'acteur, toujours dit : imposé par La Fusée, ou choisi ici. */
-            el("div.poste.acteur-" + ACTEUR.mode(), {}, ACTEUR.mention())
-          )
-        ),
-        el("a.rail-suite", { href: MAISON.suite.url, target: "_blank", rel: "noopener noreferrer" }, "Dans la suite Shinkiro ↗"),
-        el("button.sauvegarde." + (age === null || age > 2 ? "alerte" : "ok"), { type: "button", onclick: function () { DEPOT.exporter(); DEPOT.noterExport(); rendre(); }, title: "Télécharger une sauvegarde JSON" },
-          age === null ? "Sauvegarder mon travail" : age === 0 ? "exporté aujourd'hui" : "exporté il y a " + age + " j")
-      )
-    );
-    return n;
-  }
-
-  /* Ce qui attend derrière chaque place.
-   *
-   * Les clés sont celles des cinq destinations, pas celles des anciens
-   * modules : renommer une vue sans renommer son compteur éteint le compteur
-   * en silence, et un badge qui disparaît ne se remarque jamais.
-   *
-   * Reporting n'a pas de compteur : c'est une lecture mensuelle, pas une
-   * file. Lui en donner un ferait cinq badges permanents, et la priorité
-   * cesserait d'être rare. */
-  function charge(cle, aJuger, attentes, projets, age) {
-    if (cle === "valider") return { n: aJuger ? String(aJuger) : null, ton: "alerte",
-      quoi: aJuger + (aJuger > 1 ? " livrables attendent mon verdict" : " livrable attend mon verdict")
-        + (attentes ? " — et " + attentes + " renvois sont sans retour" : "") };
-
-    if (cle === "planning") {
-      /* Le compteur dit le plus coûteux des deux, pas leur somme. Un conflit
-       * d'ordre passe avant un retard : il fait travailler quelqu'un sur du
-       * spéculatif pendant qu'un engagement dort. Sans conflit, ce qui compte
-       * est ce qui est annoncé livré et n'existe pas. */
-      var c = PRIORITE.conflits().conflits.length;
-      if (c) {
-        return { n: String(c), ton: "alerte",
-          quoi: c + (c > 1 ? " conflits d'ordre" : " conflit d'ordre")
-            + " : du spéculatif passe avant un engagement" };
-      }
-      var souf = TRACE.enSouffrance();
-      var ment = souf.filter(function (x) { return x.s.cle === "dement"; }).length;
-      if (ment) {
-        return { n: String(ment), ton: "alerte",
-          quoi: ment + (ment > 1 ? " livraisons sont annoncées faites" : " livraison est annoncée faite")
-            + " et rien n'est au dossier" };
-      }
-      var tard = souf.filter(function (x) { return x.s.cle === "depasse"; }).length;
-      return { n: tard ? String(tard) : null, ton: "attente",
-        quoi: tard + (tard > 1 ? " remises sont passées" : " remise est passée")
-          + " sans que rien n'arrive" };
-    }
-
-    if (cle === "projets") {
-      var n = projets.filter(function (p) {
-        return REGLES.blocages(p.id).some(function (b) { return b.type !== "infere-non-contresigne"; });
-      }).length;
-      return { n: n ? String(n) : null, ton: "alerte",
-        quoi: n + (n > 1 ? " projets ont un blocage ouvert" : " projet a un blocage ouvert") };
-    }
-
-    /* Le dépôt d'abord : c'est la seule perte irréversible du produit, et il
-     * vit derrière cette place depuis que les réglages y ont déménagé. */
-    if (cle === "referentiel") {
-      /* La démonstration ne garde rien : réclamer un export n'y aurait pas de sens. */
-      if (DEPOT.estDemonstration()) return {};
-      var pds = DEPOT.poids();
-      if (pds.fichier && !pds.surDisque) return { n: "!", ton: "alerte", quoi: "sauvegarde en attente — voir les paramètres" };
-      if (!pds.fichier && (age === null || age > 2)) {
-        return { n: "!", ton: "alerte",
-          quoi: age === null ? "la base n'a jamais été exportée"
-            : "la base a été exportée il y a " + age + " jours" };
-      }
-      var trous = 0;
-      DEPOT.liste("marches").forEach(function (m) {
-        if (!(m.mentions || []).length) trous++;
-        if (!(m.sku || []).length) trous++;
-      });
-      return { n: trous ? String(trous) : null, ton: "attente",
-        quoi: trous + (trous > 1 ? " entrées de référentiel manquent" : " entrée de référentiel manque") };
-    }
-
-    return { n: null };
-  }
-
-  /* ————————————————————— Le dossier ouvert ————————————————————— */
-
-  /* Ce n'est pas une seconde table des matières : c'est l'état du dossier —
-   * son visuel, ce qui le bloque, et où en sont ses sections en une ligne. */
-  function blocDossier(p, r, projets) {
-    var blocs = REGLES.blocages(p.id);
-    var durs = blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; }).length;
-    var infs = window.INFERENCE ? INFERENCE.compte(p) : 0;
-    var ici = r.vue.cle === "projets" && r.arg === p.id;
-    var ech = (p.sections.identite || {}).echeance;
-    var jours = ech ? Math.round((new Date(ech) - new Date(O.jour())) / 86400000) : null;
-    var visuel = premierVisuel(p);
-
-    return el("div.bloc-projets" + (ici ? ".ici" : ""), {},
-      el("div.rail-titre", {}, "Le dossier ouvert",
-        projets.length > 1
-          ? el("button.rd-changer", { type: "button", onclick: function () { choisir(projets, p); } }, "Changer")
-          : null),
-
-      el("a.rd", { href: "#/projets/" + p.id },
-        visuel ? el("span.rd-vig", {}, IMAGE.vignette(visuel, "planche")) : null,
-        el("span.rd-nom", {}, p.nom),
-        el("span.rd-ref", {}, p.ref + (p.sections.identite && p.sections.identite.marque
-          ? "  ·  " + p.sections.identite.marque : "")),
-        el("span.rd-etat", {},
-          durs
-            ? el("span.rde.alerte", {
-                title: blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; })
-                  .map(function (b) { return b.quoi + " — " + REGLES.prix(b.type); }).join("\n"),
-              }, durs + (durs > 1 ? " blocages" : " blocage"))
-            : el("span.rde.vert", {}, "Rien ne bloque"),
-          infs ? el("span.rde.attente", {}, infs + " à confirmer") : null),
-        jours !== null
-          ? el("span.rd-ech" + (jours < 0 ? ".alerte" : jours < 15 ? ".attente" : ""), {},
-              jours < 0 ? "Échéance dépassée de " + (-jours) + " j"
-                : jours === 0 ? "Échéance aujourd'hui" : "Échéance dans " + jours + " j")
-          : el("span.rd-ech.alerte", {}, "Aucune échéance")
-      )
-      /* Les pastilles de sections sont parties : le navigateur à trois temps,
-       * juste à droite, dit la même chose avec les noms. Le rail rappelle où
-       * l'on est ; il ne double pas l'écran. */
-    );
-  }
-
-  function premierVisuel(p) {
-    var l = (p.livrables || []).filter(function (x) { return x.vignette && !x.annule; })[0];
-    if (l) return l;
-    return (p.sections.pistes || []).filter(function (x) { return x.vignette; })[0] || null;
-  }
-
-  function choisir(projets, courant) {
-    PANNEAU.ouvrir("Changer de dossier", projets.length + " dossiers", el("div", {},
-      projets.map(function (p) {
-        var blocs = REGLES.blocages(p.id).filter(function (b) { return b.type !== "infere-non-contresigne"; }).length;
-        return UI.fileItem(premierVisuel(p), p.nom,
-          p.ref + (blocs ? "  ·  " + blocs + (blocs > 1 ? " blocages" : " blocage") : "  ·  rien ne bloque"),
-          p.id === courant.id ? "ouvert" : null,
-          function () { dernierProjet = p.id; PANNEAU.fermer(); location.hash = "#/projets/" + p.id; });
-      })));
-  }
-
-  function moi() {
-    return ACTEUR.nom();
-  }
-
-  function initiales(nom) {
-    return String(nom).split(/\s+/).slice(0, 2).map(function (m) { return m[0]; }).join("").toUpperCase();
-  }
-
-  function sectionsDe(p) { return VUE_PROJETS.sectionsDe(p); }
-
-  /* ————————————————————— Le fil et la recherche ————————————————————— */
-
-  function chapeau() {
-    var r = piste();
-    var fil = [el("a", { href: "#/" + r.vue.cle }, r.vue.nom.charAt(0) + r.vue.nom.slice(1).toLowerCase())];
-    if (r.arg) {
-      var p = DEPOT.trouve("projets", r.arg);
-      if (p) {
-        fil.push(el("span", {}, " / "));
-        fil.push(el("a", { href: "#/projets/" + p.id }, p.nom));
-        if (r.sous) {
-          fil.push(el("span", {}, " / "));
-          fil.push(el("b", {}, VUE_PROJETS.nomSection(r.sous)));
-        }
-      }
-    }
-
-    var champ = el("input", { type: "search", placeholder: "Rechercher…", "aria-label": "Rechercher" });
-    var resultats = el("div.resultats", { style: { display: "none" } });
-
-    champ.addEventListener("input", function () {
-      var q = champ.value.trim();
-      O.vider(resultats);
-      if (q.length < 2) { resultats.style.display = "none"; return; }
-      var t = chercher(q);
-      if (!t.length) resultats.appendChild(el("button", { type: "button" }, el("span.quoi", {}, "Rien trouvé")));
-      t.slice(0, 20).forEach(function (x) {
-        resultats.appendChild(el("button", {
-          type: "button",
-          onclick: function () { resultats.style.display = "none"; champ.value = ""; location.hash = x.lien; },
-        }, el("span.quoi", {}, x.quoi), el("span.ou", {}, x.ou)));
-      });
-      resultats.style.display = "block";
+  function segments() {
+    return location.hash.replace(/^#\/?/, "").split("/").map(function (s) {
+      try { return decodeURIComponent(s); } catch (_) { return s; }
     });
-    champ.addEventListener("blur", function () { setTimeout(function () { resultats.style.display = "none"; }, 200); });
+  }
+  function adresse() { return "#/" + Array.from(arguments).map(encodeURIComponent).join("/"); }
+  function piste() {
+    var m = segments();
+    if (Object.prototype.hasOwnProperty.call(ANCIENNES, m[0])) m = ANCIENNES[m[0]].concat(m.slice(1));
+    var cle = m[0] || "bureau";
+    return { vue: VUES.find(function (v) { return v.cle === cle; }), cle: cle,
+      arg: m[1], sous: m[2], objet: m[3], mode: m[4], version: m[5] };
+  }
 
-    return el("div.chapeau", {},
-      el("div.fil", {}, fil),
-      el("div.chapeau-outils", {},
-        champ,
-        el("button.b.nu", { type: "button", onclick: CAPTURE.ouvrir, title: "Prendre une note ⌘K" }, "Prendre une note"),
-        resultats
-      )
-    );
+  function moi() { return ACTEUR.nom(); }
+  function marque() {
+    return el("a.lb-marque", { href: "#/bureau", "aria-label": "La Barre, bureau" },
+      el("span.lb-signe", { "aria-hidden": "true" }), "La Barre");
+  }
+  function navigation(v, cle) {
+    return el("a", { href: adresse(v.cle), "aria-current": cle === v.cle ? "page" : null },
+      UI.icone(v.ico, 20), el("span", {}, v.nom));
+  }
+  function raccourci() { return /Mac|iPhone|iPad/.test(navigator.platform || "") ? "⌘" : "Ctrl"; }
+  function outils() {
+    var age = DEPOT.ageSauvegarde();
+    return el("div.lb-outils", {},
+      el("button", { type: "button", onclick: CAPTURE.ouvrir }, UI.icone("capture"), "Prendre une note"),
+      el("button", { type: "button", onclick: function () { RENVOI.ouvrir({}); } }, UI.icone("renvoi"), "Demander un retour"),
+      el("button", { type: "button", onclick: function () { window.print(); } }, UI.icone("imprimer"), "Imprimer"),
+      el("a", { href: "#/referentiel/parametres" }, UI.icone("reglages"), "Paramètres"),
+      DEPOT.estDemonstration() ? null : el("button", { type: "button", title: age === null ? "Aucun export" : "Dernier export il y a " + age + " j",
+        onclick: function () { DEPOT.exporter(); DEPOT.noterExport(); rendre(); } }, UI.icone("fichier"), "Exporter la sauvegarde"),
+      MAISON.suite && MAISON.suite.url ? el("a", { href: MAISON.suite.url, target: "_blank", rel: "noopener noreferrer" }, "Ouvrir la suite ↗") : null,
+      el("p.lb-identite", {}, moi(), el("small", {}, ACTEUR.postes().map(function (p) { return O.poste(p).court; }).join(" · ")), el("small", {}, ACTEUR.mention())));
+  }
+  function rail(r) {
+    var principales = ["bureau","projets","valider"];
+    return el("aside.rail.lb-rail", { "aria-label": DEPOT.estDemonstration() ? "Démonstration — données fictives" : "Espace de travail" },
+      el("div.lb-entete-rail", {}, marque(),
+        el("button.lb-chercher", { type: "button", "aria-label": "Rechercher", onclick: ouvrirRecherche },
+          UI.icone("recherche", 20), el("span", {}, "Rechercher"), el("kbd", {}, raccourci() + " F"))),
+      el("nav.rail-nav.lb-nav", { "aria-label": "Navigation principale" }, VUES.map(function (v) { return navigation(v, r.cle); })),
+      el("details.lb-commande", {}, el("summary", {}, UI.icone("reglages", 18), "Outils du poste"), outils()),
+      el("nav.lb-mobile", { "aria-label": "Navigation mobile" }, VUES.slice(0, 3).map(function (v) { return navigation(v, r.cle); }),
+        navigation({ cle: "plus", ico: "plus", nom: "Plus" }, principales.indexOf(r.cle) < 0 ? "plus" : r.cle)));
+  }
+  function plus(zone) {
+    zone.appendChild(el("header.studio-entete", {}, el("h1", {}, "Plus")));
+    zone.appendChild(el("nav.lb-liste-liens", { "aria-label": "Autres espaces" },
+      VUES.slice(3).map(function (v) { return navigation(v, ""); })));
+    zone.appendChild(el("details.lb-outils-mobile", {}, el("summary", {}, "Outils du poste"), outils()));
+  }
+
+  function ouvrirRecherche(reprise) {
+    if (document.querySelector("dialog[open], .panneau[role=dialog]") || segments()[0] === "partage") return;
+    var declencheur = document.activeElement;
+    var champ = el("input", { type: "search", placeholder: "Nom, référence ou marché", "aria-label": "Rechercher dans La Barre", autocomplete: "off" });
+    var liste = el("div.lb-resultats");
+    var retour = el("p", { role: "status", "aria-live": "polite" });
+    var boite = el("dialog.lb-recherche", { "aria-labelledby": "lb-recherche-titre", "data-route":location.hash },
+      el("header", {}, el("h2", { id: "lb-recherche-titre" }, "Rechercher"),
+        el("button", { type: "button", "aria-label": "Fermer la recherche", onclick: function () { boite.close(); } }, "×")),
+      champ, retour, liste);
+    function afficher() {
+      var q = champ.value.trim();
+      var lignes = q.length >= 2 ? chercher(q) : [];
+      O.vider(liste);
+      retour.textContent = q.length < 2 ? "Saisissez au moins deux caractères." :
+        lignes.length ? (lignes.length > 20 ? "20 premiers résultats sur " : "") + lignes.length + (lignes.length > 20 ? "" : lignes.length > 1 ? " résultats" : " résultat") : "Aucun résultat.";
+      lignes.slice(0,20).forEach(function (x) {
+        liste.appendChild(el("a", { href: x.lien, onclick: function (e) {
+          if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) boite.close();
+        } }, el("strong", {}, x.quoi), el("small", {}, x.ou)));
+      });
+    }
+    champ.addEventListener("input", afficher);
+    champ.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { e.preventDefault(); boite.close(); }
+      if ((e.key === "ArrowDown" || e.key === "Enter") && liste.firstElementChild) {
+        e.preventDefault(); if (e.key === "Enter") liste.firstElementChild.click(); else liste.firstElementChild.focus();
+      }
+    });
+    boite.addEventListener("close", function () { boite.remove(); if (declencheur && declencheur.isConnected) declencheur.focus(); }, { once: true });
+    document.body.appendChild(boite);
+    if (reprise && typeof reprise.texte === "string") champ.value = reprise.texte;
+    afficher(); boite.showModal();
+    var selection = reprise && Array.from(liste.querySelectorAll("a")).find(function (a) { return a.hash === reprise.lien; });
+    (selection || champ).focus();
   }
 
   function chercher(q) {
     var t = [];
     DEPOT.liste("projets").forEach(function (p) {
-      if (O.contient(p.nom + " " + p.ref, q)) t.push({ quoi: p.nom, ou: p.ref, lien: "#/projets/" + p.id });
+      if (O.contient(p.nom + " " + p.ref, q)) t.push({ quoi: p.nom, ou: p.ref, lien: adresse("projets", p.id) });
       (p.livrables || []).forEach(function (l) {
         var m = DEPOT.trouve("marches", l.marche);
         if (O.contient(l.nom + " " + (m ? m.nom + " " + m.code : ""), q))
-          t.push({ quoi: l.nom + (m ? " · " + m.code : ""), ou: p.ref + " · livrable", lien: "#/projets/" + p.id + "/livrables" });
+          t.push({ quoi: l.nom + (m ? " · " + m.code : ""), ou: p.ref + " · livrable", lien: adresse("projets", p.id, "livrables", l.id) });
       });
       (p.sections.pistes || []).forEach(function (pi) {
         if (O.contient(pi.titre + " " + (pi.concept || ""), q))
-          t.push({ quoi: pi.titre, ou: p.ref + " · piste", lien: "#/projets/" + p.id + "/pistes" });
+          t.push({ quoi: pi.titre, ou: p.ref + " · piste", lien: adresse("projets", p.id, "pistes", pi.id) });
       });
     });
     ["marches", "supports", "assets"].forEach(function (type) {
       DEPOT.liste(type).forEach(function (x) {
         if (O.contient(x.nom + " " + (x.code || "") + " " + (x.source || ""), q))
-          t.push({ quoi: x.nom, ou: type.slice(0, -1), lien: "#/referentiel" });
+          t.push({ quoi: x.nom, ou: type.slice(0, -1), lien: adresse("referentiel", "marches", type.slice(0, -1), x.id) });
       });
     });
     DEPOT.liste("attentes").forEach(function (a) {
       if (O.contient((a.quoi || "") + " " + (a.critere || ""), q))
-        t.push({ quoi: a.quoi, ou: "attente", lien: "#/attentes" });
+        t.push({ quoi: a.quoi, ou: "attente", lien: adresse("valider", "du", a.id) });
+    });
+    ["marques","campagnes"].forEach(function (type) {
+      DEPOT.liste(type).forEach(function (x) {
+        if (O.contient(x.nom || "", q)) t.push({ quoi:x.nom, ou:type === "marques" ? "Marque" : "Campagne", lien:adresse("projets", x.id) });
+      });
     });
     return t;
   }
 
   /* ————————————————————— Rendu ————————————————————— */
 
+  var dernierHash = null;
+  function retour(fallback, label) {
+    var depuis = (history.state || {}).barreDepuis;
+    return el("a.lb-retour", { href: depuis || fallback,
+      onclick: function (e) {
+        if (depuis && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { e.preventDefault(); history.back(); }
+      } }, "← " + (label || "Retour"));
+  }
+  function piece(zone, r) {
+    var p = DEPOT.trouve("projets", r.arg);
+    var estPiste = r.sous === "pistes";
+    var objets = p && (estPiste ? p.sections.pistes : p.livrables);
+    var objet = (objets || []).find(function (x) { return x.id === r.objet; });
+    zone.appendChild(retour(p ? adresse("projets", p.id, r.sous) : "#/projets"));
+    if (!objet) { zone.appendChild(el("h1", {}, "Pièce introuvable")); return; }
+    zone.appendChild(el("header.studio-entete", {}, el("div", {}, el("p.studio-date", {},
+      el("a", { href: adresse("projets", p.id) }, p.nom)), el("h1", {}, objet.titre || objet.nom || "Pièce"))));
+    var scene = el("div.lb-detail-piece"); zone.appendChild(scene);
+    if (!estPiste && r.version) {
+      var courante = REMISE.versionCourante(objet);
+      if (!courante || String(courante.numero) !== r.version) {
+        var ancienne = (objet.versions || []).find(function (v) { return String(v.n || v.numero) === r.version; });
+        scene.appendChild(el("section.lb-version", {},
+          el("h2", {}, ancienne ? "Version " + r.version + " · historique" : "Version introuvable"),
+          ancienne ? el("p", {}, ancienne.verdict ? "Verdict consigné · " + ((MAISON.verdicts.find(function (v) { return v.cle === ancienne.verdict; }) || {}).nom || ancienne.verdict) : "Aucun verdict consigné.") : null,
+          ancienne && ancienne.motif ? el("p", {}, ancienne.motif) : null,
+          el("a.b", {href:adresse("projets", p.id, "livrables", objet.id)}, "Voir le livrable actuel")));
+        return;
+      }
+    }
+    if (estPiste) {
+      function relire() { O.vider(scene); scene.appendChild(VUE_ROUTE.rendre(p, objet, relire)); }
+      relire();
+    } else {
+      scene.appendChild(VUE_ASSET.page(p, objet, null, r.mode || "poser"));
+    }
+  }
   function rendre() {
-    /* Un lien de partage s'ouvre sans LA BARRE autour : ni rail, ni chapeau. */
-    var brut = location.hash.replace(/^#\/?/, "").split("/");
-    if (brut[0] === "partage" && window.PARTAGE) {
-      if (railNoeud && railNoeud.parentNode) railNoeud.parentNode.removeChild(railNoeud);
-      railNoeud = null;
-      O.vider(corps);
+    var hash = location.hash, r = piste(), change = dernierHash !== null && dernierHash !== hash;
+    var initial = dernierHash === null;
+    var ancienFocus = document.activeElement;
+    var y = window.scrollY;
+    dernierHash = hash;
+    if (r.cle === "partage" && window.PARTAGE) {
+      if (railNoeud) railNoeud.remove();
+      railNoeud = null; document.body.dataset.vue = "partage"; O.vider(corps);
       if (DEPOT.estDemonstration()) corps.appendChild(bandeauDemonstration());
-      PARTAGE.page(corps, brut[1] || "", brut[2] || null);
-      window.scrollTo(0, 0);
+      PARTAGE.page(corps, r.arg || "", r.sous || null);
+      document.title = ((corps.querySelector("h1") || {}).textContent || "Document partagé") + " · La Barre";
+      if (initial || change) window.scrollTo(0,0);
       return;
     }
     delete document.body.dataset.impression;
-    var r = piste();
-
-    document.body.dataset.vue = r.vue.cle;
-    var nouveauRail = rail();
-    if (railNoeud && railNoeud.parentNode) railNoeud.parentNode.replaceChild(nouveauRail, railNoeud);
-    else document.body.insertBefore(nouveauRail, document.body.firstChild);
-    railNoeud = nouveauRail;
-
+    document.body.dataset.vue = r.cle;
+    var nouveau = rail(r);
+    if (railNoeud && railNoeud.isConnected) railNoeud.replaceWith(nouveau);
+    else document.body.insertBefore(nouveau, corps);
+    railNoeud = nouveau;
     O.vider(corps);
     if (DEPOT.estDemonstration()) corps.appendChild(bandeauDemonstration());
-    corps.appendChild(chapeau());
-    var zone = el("div.zone", { id: "contenu", tabindex: "-1" });
+    var zone = el("div.zone.studio", {id:"contenu", tabindex:"-1"});
     corps.appendChild(zone);
-    r.vue.vue().rendre(zone, r.arg, r.sous);
-    if (window.VAULT && VAULT.statutContexte().etat === "erreur") zone.prepend(UI.banniere("", "La plateforme de marque n’a pas pu être actualisée. Les références déjà reçues restent identifiées ; rechargez ce dossier pour réessayer."));
-    window.scrollTo(0, 0);
+    if (r.cle === "plus") plus(zone);
+    else if (!r.vue) zone.appendChild(el("div", {}, el("h1", {}, "Page introuvable"), el("a.b", {href:"#/bureau"}, "Revenir au Bureau")));
+    else if (r.cle === "projets" && r.arg === "galerie") VUE_GALERIE.rendre(zone);
+    else if (r.cle === "projets" && r.arg === "archives") VUE_STUDIO.projets(zone, true);
+    else if (r.cle === "projets" && r.objet && ["livrables","pistes"].includes(r.sous)) piece(zone, r);
+    else r.vue.vue().rendre(zone, r.arg, r.sous, r.objet);
+    if (window.VAULT && VAULT.statutContexte().etat === "erreur") zone.prepend(UI.banniere("", "La plateforme de marque n’a pas pu être actualisée. Rechargez le dossier pour réessayer."));
+    var titre = zone.querySelector("h1");
+    document.title = (titre ? titre.textContent.trim() : (r.vue && r.vue.nom || "Plus")) + " · La Barre";
+    if (change) {
+      var position = history.state || {};
+      var cible = Array.from(zone.querySelectorAll("a[href]")).find(function (a) { return a.hash === position.barreLien && a.getClientRects().length; });
+      if (document.querySelector("dialog[open], .panneau[role=dialog]")) return;
+      if (titre) titre.setAttribute("tabindex", "-1");
+      (cible || titre || zone).focus({preventScroll:true});
+      window.scrollTo(0, position.barreY || 0);
+      if (position.barreRecherche) ouvrirRecherche(position.barreRecherche);
+    } else if (!initial) {
+      if (ancienFocus && !ancienFocus.isConnected && ancienFocus.id) {
+        var remplace = document.getElementById(ancienFocus.id);
+        if (remplace) remplace.focus({preventScroll:true});
+      }
+      window.scrollTo(0,y);
+    }
   }
 
   /* ————————————————————— La démonstration —————————————————————
@@ -398,11 +245,10 @@ window.APP = (function () {
 
   function bandeauDemonstration() {
     var d = DEPOT.demonstration() || {};
-    return el("div.demo-bandeau", { role: "note" },
-      el("strong", {}, "Démonstration — données fictives."),
-      el("span", {}, " Aucune marque, aucune personne ni aucune campagne réelle. Rien ne s'enregistre : "
-        + "recharger la page remet la démonstration à zéro."),
-      d.vitrine ? el("a", { href: d.vitrine }, "← La vitrine") : null);
+    return el("details.demo-bandeau.lb-demo", {},
+      el("summary", {}, el("strong", {}, "Démonstration — données fictives.")),
+      el("p", {}, "Les changements sont effacés au rechargement.",
+        d.vitrine ? el("a", { href: d.vitrine }, "Retour à la vitrine") : null));
   }
 
   /* La base fictive est un fichier JSON posé à côté de la page, et rien
@@ -425,20 +271,31 @@ window.APP = (function () {
   }
 
   function ecouter() {
-    window.addEventListener("hashchange", function () { PANNEAU.fermer(); rendre(); });
+    document.addEventListener("click", function (e) {
+      var lien = e.target.closest("a[href^='#/']");
+      if (!lien || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      var recherche = lien.closest(".lb-resultats") ? {texte:lien.closest("dialog").querySelector("input").value, lien:lien.hash} : null;
+      history.replaceState(Object.assign({}, history.state, {barreY:window.scrollY, barreLien:lien.hash, barreRecherche:recherche}), "");
+    }, true);
+    window.addEventListener("hashchange", function (e) {
+      PANNEAU.fermer(); PANNEAU.fermerSur();
+      document.querySelectorAll("dialog[open]").forEach(function (d) { if (d.dataset.route !== location.hash) d.close(); });
+      if (!history.state && e.oldURL) history.replaceState({barreDepuis:new URL(e.oldURL).hash || "#/bureau"}, "");
+      rendre();
+    });
     document.addEventListener("keydown", function (e) {
-      if (!(e.metaKey || e.ctrlKey)) return;
+      if (!(e.metaKey || e.ctrlKey) || segments()[0] === "partage" || document.querySelector("dialog[open], .panneau[role=dialog]")) return;
       var k = e.key.toLowerCase();
       if (k === "k") { e.preventDefault(); CAPTURE.ouvrir(); }
 
-      if (k === "f") { e.preventDefault(); var c = document.querySelector(".chapeau-outils input"); if (c) c.focus(); }
+      if (k === "f") { e.preventDefault(); ouvrirRecherche(); }
     });
   }
 
   function demarrer() {
     corps = document.getElementById("corps");
     document.querySelector(".aller-contenu").addEventListener("click", function (e) {
-      e.preventDefault(); document.getElementById("contenu").focus();
+      e.preventDefault(); (document.getElementById("contenu") || corps).focus();
     });
 
     /* La démonstration ne lit ni le cache, ni un manifeste, ni l'exemple, ni
@@ -490,7 +347,12 @@ window.APP = (function () {
     rendre();
   }
 
-  return { demarrer: demarrer, rendre: rendre, chercher: chercher, moi: moi };
+  function remplacerVue(lien) {
+    history.replaceState(Object.assign({}, history.state, {barreY:0, barreLien:null, barreRecherche:null}), "", lien);
+    rendre();
+  }
+  return { demarrer: demarrer, rendre: rendre, chercher: chercher, moi: moi, adresse: adresse, retour: retour,
+    remplacerVue: remplacerVue };
 })();
 
 /* ————————————————————— La capture rapide ————————————————————— */
@@ -501,33 +363,29 @@ window.CAPTURE = (function () {
 
   function ouvrir() {
     if (ouvert) return;
-    var champ = el("input", { type: "text", placeholder: "Note ça — on rangera au moment de la revue" });
+    var origine = document.activeElement;
+    var champ = el("input", { id: "lb-note", type: "text", required: true, autocomplete: "off" });
     var pile = DEPOT.liste("captures").filter(function (c) { return !c.range; });
-
-    var boite = el("div.capture-fond", { onclick: function (e) { if (e.target === boite) fermer(); } },
-      el("div.capture-boite", {},
-        champ,
-        el("div.capture-pied", {},
-          el("span", {}, "Entrée pour poser · Échap pour fermer"),
-          el("span", {}, pile.length + " en attente de rangement")
-        )
-      )
-    );
-
-    champ.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && champ.value.trim()) {
-        DEPOT.ajoute("captures", { texte: champ.value.trim(), range: false });
-        champ.value = ""; fermer(); APP.rendre();
-      }
-      if (e.key === "Escape") fermer();
-    });
-
-    document.body.appendChild(boite);
-    ouvert = boite;
-    champ.focus();
+    var boite = el("dialog.lb-recherche.lb-capture", { "aria-labelledby":"lb-note-titre", "data-route":location.hash },
+      el("header", {}, el("h2", {id:"lb-note-titre"}, "Prendre une note"),
+        el("button", {type:"button", onclick:fermer, "aria-label":"Fermer la note"}, "×")),
+      el("form", {onsubmit:function (e) {
+        e.preventDefault();
+        var texte = champ.value.trim();
+        if (!texte) { champ.setCustomValidity("Saisissez votre note."); champ.reportValidity(); return; }
+        DEPOT.ajoute("captures", {texte:texte, range:false}); fermer(); APP.rendre();
+      }}, el("label", {for:"lb-note"}, "Note pour la boîte d’entrée"), champ,
+      el("button.b.or", {type:"submit"}, "Enregistrer la note")),
+      pile.length ? el("p", {}, pile.length + " en attente de rangement") : null);
+    champ.addEventListener("input", function () { champ.setCustomValidity(""); });
+    boite.addEventListener("close", function () {
+      boite.remove(); ouvert = null;
+      if (origine && origine.isConnected) origine.focus();
+    }, {once:true});
+    document.body.appendChild(boite); ouvert = boite; boite.showModal(); champ.focus();
   }
 
-  function fermer() { if (ouvert) { document.body.removeChild(ouvert); ouvert = null; } }
+  function fermer() { if (ouvert) ouvert.close(); }
 
   return { ouvrir: ouvrir, fermer: fermer };
 })();

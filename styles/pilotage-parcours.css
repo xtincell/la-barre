@@ -1,0 +1,102 @@
+.pilotage .studio-entete {
+  padding: 0;
+}
+
+.pilotage-parent,
+.pilotage-meta {
+  color: var(--clair-terne);
+  font-size: 0.875rem;
+  margin: 0 0 0.4rem;
+}
+
+.pilotage .dc-corps,
+.pilotage .dc-corps > div {
+  min-inline-size: 0;
+}
+
+.pilotage-contexte {
+  margin-block: 0.5rem 0.875rem;
+  padding: 0.25rem 0.75rem;
+  border-block: 1px solid var(--trait);
+}
+
+.pilotage-contexte > summary {
+  min-block-size: 2.75rem;
+  padding-block: 0.55rem;
+  cursor: pointer;
+  color: var(--clair);
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+
+.pilotage-contexte > p {
+  max-inline-size: 68ch;
+  margin: 0 0 0.65rem;
+  color: var(--clair-doux);
+}
+
+.pilotage-synthese {
+  margin-block-start: 1rem;
+}
+
+.pilotage-fiche {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  margin-block-end: 1rem;
+}
+
+.pilotage-fiche h2 {
+  margin: 0;
+  scroll-margin-block-start: 5rem;
+  overflow-wrap: anywhere;
+}
+
+.pilotage .rf-as,
+.pilotage .rf-m,
+.pilotage .ppmp-n {
+  overflow-wrap: anywhere;
+}
+
+.pilotage .rf-plus {
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  padding-block: 0.6rem;
+}
+
+.pilotage .sdg-v {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+}
+
+.pilotage .sd-gros {
+  border-radius: 0.5rem;
+}
+
+.pilotage .sm-g {
+  overflow-x: auto;
+}
+
+@media (max-width: 640px) {
+  .pilotage .sm-g > :is(.smg-h, .sm-r, .sm-vides) {
+    min-inline-size: 34rem;
+  }
+
+  .pilotage .pp-k,
+  .pilotage .sd-cinq,
+  .pilotage .reg-c {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pilotage .reg-c > *,
+  .pilotage .pp-k > *,
+  .pilotage .sd-cinq > * {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media print {
+  .pilotage .pilotage-contexte {
+    display: none;
+  }
+}

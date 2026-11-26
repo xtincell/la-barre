@@ -30,26 +30,40 @@ try {
   page.setDefaultTimeout(10000);
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.evaluate(data => { DEPOT.importer(data); APP.rendre(); }, fixture);
-  await page.getByRole('heading', { name: "L'œil sur la création." }).waitFor();
+  await page.getByRole('heading', { name: "Sur la table" }).waitFor();
   assert.equal(await page.locator('.studio-piece').count(), 3);
+  const listeRevue = page.locator('.lb-file');
+  await listeRevue.locator('summary').click();
   await page.locator('.studio-piece').nth(1).click();
   assert.match(await page.locator('.studio-intention').innerText(), /Plus d’attachement/);
   assert.equal(await page.locator('.studio-piece[aria-pressed="true"]').count(), 1);
+  await listeRevue.locator('summary').click();
   await page.getByLabel('Projet', { exact: true }).selectOption('PRJ-demo-2');
   await page.getByText("Ce projet n'attend pas de verdict.").waitFor();
   await page.getByLabel('Projet', { exact: true }).selectOption('');
   await page.locator('.studio-piece').filter({ hasText: 'Affiche de lancement' }).click();
-  await page.getByRole('button', { name: 'Examiner et décider', exact: true }).click();
+  await page.getByRole('link', { name: 'Examiner la V1', exact: true }).click();
+  await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo/juger/1');
+  await page.locator('.rc-v.approuve').click();
   await page.getByRole('dialog').waitFor();
-  assert.ok(await page.locator('.rc-verdicts').isVisible(), 'Le verdict est accessible sans un onglet supplémentaire');
-  await page.getByRole('button', { name: 'Fermer le panneau', exact: true }).focus();
+  assert.equal(await page.evaluate(() => !!DEPOT.trouve('projets','PRJ-demo').livrables[0].versions[0].verdict), false);
+  await page.getByRole('dialog').getByRole('button').first().focus();
   await page.keyboard.press('Shift+Tab');
-  assert.ok(await page.evaluate(() => !!document.activeElement.closest('[role="dialog"]')), 'Le focus reste dans le panneau');
-  const approve = page.locator('.rc-v.approuve');
-  await approve.click();
+  assert.ok(await page.evaluate(() => !!document.activeElement.closest('[role="dialog"]')), 'Le focus reste dans le dialogue');
+  await page.getByRole('button', { name:'Confirmer le verdict', exact:true }).click();
   assert.equal(await page.evaluate(() => DEPOT.trouve('projets','PRJ-demo').livrables[0].versions[0].verdict), 'approuve');
-  await page.keyboard.press('Escape');
+  await page.goBack();
+  await page.getByRole('heading', {name:'Sur la table'}).waitFor();
   assert.equal(await page.locator('.studio-piece').count(), 2, 'La pièce validée sort de la revue');
+  // Un lien de décision partagé continue à viser la même version après une nouvelle soumission.
+  await page.evaluate(() => {
+    const l = DEPOT.trouve('projets','PRJ-demo').livrables[0];
+    l.version = 2; l.versions.push({n:2});
+  });
+  await page.goto(url+'/#/projets/PRJ-demo/livrables/L-demo/juger/1');
+  await page.getByRole('heading',{name:'Version 1 · historique'}).waitFor();
+  assert.equal(await page.locator('.rc-v').count(),0);
+  await page.goto(url+'/#/bureau');
   await page.reload({ waitUntil: 'networkidle' });
   assert.equal(await page.evaluate(() => DEPOT.trouve('projets','PRJ-demo').livrables[0].versions[0].verdict), 'approuve', 'Le verdict survit au rechargement');
   // Deux retours touchant le même livrable ne doivent pas perdre leur identité.
@@ -90,6 +104,31 @@ try {
   assert.match(cree.id, /^PRO-[0-9a-z]{4}-[0-9a-z]{12}$/);
   assert.equal(cree.id.split('-')[1], cree.poste);
   assert.ok(!Number.isNaN(Date.parse(cree.cree_le)));
+  await page.getByRole('heading', {level:1,name:'Projet de contrôle'}).waitFor();
+  // La recherche conserve le résultat au clavier et ouvre le livrable identifié.
+  await page.keyboard.press('Control+f');
+  const rechercheGlobale = page.getByRole('dialog', { name:'Rechercher' });
+  const saisie = rechercheGlobale.getByRole('searchbox');
+  await saisie.fill('Affiche de lancement');
+  await saisie.press('ArrowDown');
+  assert.ok(await page.evaluate(() => document.activeElement.matches('.lb-resultats a')));
+  await page.keyboard.press('Enter');
+  await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo');
+  await page.getByRole('heading',{level:1,name:'Affiche de lancement'}).waitFor();
+  await page.keyboard.press('Control+f');
+  await saisie.fill('support');
+  await saisie.press('Escape');
+  assert.equal(await rechercheGlobale.count(),0);
+  await page.setViewportSize({width:320,height:700});
+  await page.getByRole('navigation',{name:'Navigation mobile'}).getByRole('link',{name:'Plus'}).click();
+  await page.locator('.lb-liste-liens').getByRole('link',{name:'Planning'}).click();
+  await page.locator('.lb-modes summary').click();
+  await page.locator('.lb-modes a[href="#/planning/charge"]').click();
+  await page.waitForURL('**/#/planning/charge');
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('.lb-modes summary').click();
+  assert.match(await page.locator('.lb-modes [aria-current="page"]').innerText(),/Plan de charge/);
+  await page.setViewportSize({width:1440,height:1050});
   // Aucun ancien lien ne doit provoquer d'erreur de rendu.
   for (const route of ['bureau','valider','planning','reporting','projets','projets/marques','referentiel','attentes','reglages']) {
     await page.goto(url + '/#/' + route);
@@ -99,6 +138,7 @@ try {
   // Captures reproductibles de la refonte : uniquement la fixture fictive.
   await page.evaluate(data => { DEPOT.importer(data); }, fixture);
   await page.goto(url + '/#/bureau');
+  await page.locator('.lb-file summary').click();
   await page.getByLabel('Projet', { exact:true }).selectOption('');
   await page.locator('.studio-piece').first().click();
   if (process.env.SCREENSHOT_DIR) {
@@ -166,14 +206,14 @@ try {
     assert.equal(attente.ref, 'PRJ-… (provisoire)');
     assert.deepEqual(attente.demande, { prefixe: 'PRJ' });
     assert.equal(attente.attribuee, null);
-    await pageServie.locator('.studio-date', { hasText: '(provisoire)' }).waitFor();
+    await pageServie.locator('.pj-reference', { hasText: '(provisoire)' }).waitFor();
     await pageServie.waitForFunction(() => DEPOT.referenceAttribuee(DEPOT.liste('projets').find(x => x.nom === 'Projet servi')) === 'PRJ-0001');
     const lu = JSON.parse(await readFile(join(racine, 'depots', 'parcours.json'), 'utf8')).projets.find(p => p.nom === 'Projet servi');
     assert.equal(lu.ref, 'PRJ-0001');
     assert.equal('refDemandee' in lu, false);
     await pageServie.reload({ waitUntil: 'networkidle' });
-    await pageServie.locator('.studio-date', { hasText: 'PRJ-0001' }).waitFor();
-    assert.equal(await pageServie.locator('.studio-date', { hasText: '(provisoire)' }).count(), 0);
+    await pageServie.locator('.pj-reference', { hasText: 'PRJ-0001' }).waitFor();
+    assert.equal(await pageServie.locator('.pj-reference', { hasText: '(provisoire)' }).count(), 0);
     await pageServie.close();
   } finally {
     if (servi && servi.exitCode === null) { servi.kill(); await once(servi, 'exit'); }

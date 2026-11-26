@@ -107,7 +107,7 @@ window.PRODUCTION = (function () {
    *
    * Chaque jalon rend état, conséquence et prochain geste : la frise se lit
    * sans ouvrir le livrable. */
-  var ETAPES = ["Brief", "Concept", "Création", "Validation", "BAT", "Livré"];
+  var ETAPES = ["Brief", "Concept", "Création", "Validation", "BAT", "Remise"];
 
   function etape(p, l) {
     var piste = p ? (p.sections.pistes || []).filter(function (x) {
@@ -121,6 +121,16 @@ window.PRODUCTION = (function () {
     var bats = de(l, "bat").filter(function (f) { return (f.version || 1) === v; });
     var signe = bats.filter(function (f) { return f.signataire; })[0] || null;
     var manque = porte(p, l).filter(function (c) { return !c.ok; });
+    if (window.REMISE) {
+      var suivi = REMISE.etatPiece(l);
+      var remise = REMISE.preuveCourante(p, l);
+      if (remise) return { i: 5, nom: "Remise justifiée", ton: "vert",
+        quoi: "Preuve consignée pour la V" + suivi.version + " · " + remise.id, geste: "Consulter le justificatif" };
+      if (suivi.cle === "bat") return { i: 4, nom: "BAT", ton: "attente",
+        quoi: suivi.nom, geste: "Joindre le document signé de la V" + suivi.version };
+      if (suivi.cle === "sortie" || suivi.cle === "preuve") return { i: 5, nom: "Remise", ton: "attente",
+        quoi: suivi.nom, geste: "Ouvrir le suivi de cette version" };
+    }
 
     if (!piste) {
       return { i: 0, nom: "Brief", ton: "attente",
@@ -163,10 +173,10 @@ window.PRODUCTION = (function () {
           + " : " + manque[0].quoi.toLowerCase(),
         geste: manque[0].cout };
     }
-    return { i: 5, nom: "Livré", ton: "vert",
+    return { i: 5, nom: "Remise à justifier", ton: "attente",
       quoi: signe ? "BAT signé par " + signe.signataire + " sur la V" + (signe.version || v)
         : "approuvé, tous les fichiers posés",
-      geste: l.publication ? "parution le " + O.jourCourt(l.publication) : "rien n'est dû" };
+      geste: "Consigner la preuve de remise" };
   }
 
   /* ————————————————————— La porte ————————————————————— */

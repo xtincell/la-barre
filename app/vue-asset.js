@@ -19,28 +19,74 @@ window.VUE_ASSET = (function () {
     DEPOT.lu("livrables", l.id);
   }
 
-  /* Trois onglets, pas cinq : ce qu'on regarde, ce qu'on juge, d'où ça vient.
-   * L'écran de livrable faisait doublon — il est absorbé ici. */
+  /* Les vues d’un livrable séparent la création, son verdict et sa remise. */
   var ONGLETS = [
     { cle: "poser", nom: "Visuels et fichiers" },
     { cle: "juger", nom: "Critères et verdict" },
     { cle: "origine", nom: "Versions et dépendances" },
+    { cle: "remise", nom: "BAT et remise" },
   ];
   var onglet = "poser";
 
-  function rendre(p, l, apres) {
-    return el("div.as", {},
+  function page(p, l, apres, modeInitial) {
+    var mode = ONGLETS.some(function (x) { return x.cle === modeInitial; }) ? modeInitial : "poser";
+    var zone = el("div.asset-page");
+    var version = location.hash.match(/\/(?:poser|juger|origine|remise)\/(\d+)$/);
+    function lien(cle) {
+      return "#/projets/" + encodeURIComponent(p.id) + "/livrables/" + encodeURIComponent(l.id)
+        + "/" + cle + (version ? "/" + version[1] : "");
+    }
+    function dessiner() {
+      var projet = DEPOT.trouve("projets", p.id);
+      var livrable = projet && (projet.livrables || []).find(function (x) { return x.id === l.id; });
+      O.vider(zone);
+      if (!livrable) { zone.appendChild(vide("Ce livrable n’est plus au dossier.")); return; }
+      zone.appendChild(rendre(projet, livrable, function () {
+        var reprendreFocus = zone.contains(document.activeElement);
+        dessiner();
+        if (reprendreFocus) {
+          var cible = zone.querySelector(".remise-suivi > button.b.or")
+            || zone.querySelector(".remise-tete h3, .as-revue .revue-criteres h3")
+            || zone.querySelector(".onglet[aria-current]");
+          if (cible) { if (cible.tabIndex < 0) cible.tabIndex = -1; cible.focus(); }
+        }
+        if (apres) apres();
+      }, mode, lien));
+    }
+    dessiner();
+    return zone;
+  }
+
+  function rendre(p, l, apres, mode, lien) {
+    var courant = mode || onglet;
+    function choisir(c) { onglet = c; apres(); }
+    function naviguer(cle) {
+      return function (e) {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button > 0 || !APP.remplacerVue) return;
+        e.preventDefault();
+        APP.remplacerVue(lien(cle));
+      };
+    }
+    var navigation = lien ? el("nav.onglets", { "aria-label": "Vues du livrable" }, ONGLETS.map(function (o) {
+      return el("a.onglet", { href: lien(o.cle), onclick: naviguer(o.cle), "aria-current": o.cle === courant ? "page" : null }, o.nom);
+    })) : UI.onglets(ONGLETS, courant, choisir);
+    var retours = courant === "juger" ? retoursClient(p, l, apres) : null;
+    return el("div.as" + (courant === "juger" ? ".as-revue" : ""), {},
       entete(p, l),
       horsEcart(p, l, apres),
-      bande(p, l, apres),
-      UI.onglets(ONGLETS, onglet, function (c) { onglet = c; apres(); }),
+      courant === "poser" ? bande(p, l, apres) : null,
+      navigation,
       el("div", { style: { "margin-top": "1rem" } },
-        onglet === "poser" ? el("div", {}, cases(p, l, apres), packsMontres(p, l, apres), MOCKUP.bloc(p, l, apres))
-          : onglet === "juger" ? el("div", {}, retoursClient(p, l, apres) || vide("Aucun retour sur ce livrable."),
-              VUE_LIVRABLE.criteres(p, l, apres))
+        courant === "poser" ? el("div", {}, cases(p, l, apres), packsMontres(p, l, apres), MOCKUP.bloc(p, l, apres))
+          : courant === "juger" ? el("div", {}, VUE_LIVRABLE.criteres(p, l, apres, true),
+              retours ? el("details", {}, el("summary", {}, "Retours client"), retours) : null,
+              REMISE.etatPiece(l).cle !== "validation" ? (lien
+                ? el("a.b.or", { href: lien("remise"), onclick: naviguer("remise") }, "Suivre le BAT et la remise")
+                : el("button.b.or", { type: "button", onclick: function () { choisir("remise"); } }, "Suivre le BAT et la remise")) : null)
+          : courant === "remise" ? REMISE.suiviPiece(p, l, apres)
           : el("div", {}, precedente(p, l) || vide("Une seule version : rien n'a encore été repris."),
               VUE_LIVRABLE.dependances(p, l, apres))),
-      gestes(p, l, apres)
+      courant === "poser" ? gestes(p, l, apres) : null
     );
   }
 
@@ -60,7 +106,7 @@ window.VUE_ASSET = (function () {
         el("div.ast-n", {}, l.nom),
         el("div.ast-m", {},
           UI.eti(KV.NIVEAUX[KV.niveau(l)].nom, "terne"),
-          m ? UI.drapeau(m) : null,
+          m ? el("span", {}, UI.drapeau(m), " ", m.nom) : null,
           s ? el("span", {}, s.nom) : null,
           el("span", {}, "V" + (l.version || 1)),
           pr ? UI.eti(pr.nom, pr.ton) : null),
@@ -424,5 +470,5 @@ window.VUE_ASSET = (function () {
     );
   }
 
-  return { ouvrir: ouvrir, rendre: rendre };
+  return { ouvrir: ouvrir, rendre: rendre, page: page };
 })();

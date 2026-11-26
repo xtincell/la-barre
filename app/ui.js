@@ -20,6 +20,10 @@ window.UI = (function () {
   /* ————————————————————— 1 · Icônes ————————————————————— */
 
   var TRACES = {
+    bureau: "M3 14l3-9h12l3 9v6H3zM3 14h5l2 3h4l2-3h5",
+    decision: "M4 4h16v16H4zM7.5 12l3 3 6-6",
+    calendrier: "M3 5h18v16H3zM7 3v4m10-4v4M3 10h18",
+    plus: "M4 12h1m6 0h1m6 0h1",
     galerie: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
     revue: "M3 12h4l3-7 4 14 3-7h4",
     projets: "M3 4h7l2 3h9v13H3z",
@@ -316,18 +320,20 @@ window.UI = (function () {
   function modes(liste, courant, quand, opts) {
     opts = opts || {};
     var actif = liste.filter(function (m) { return m.cle === courant; })[0] || liste[0];
-    return el("div.st-modes", {},
-      el("div.studio-statuts", { role: "group", "aria-label": opts.titre || "Modes" },
-        liste.map(function (m) {
-          var n = opts.compte ? opts.compte(m) : null;
-          return el("button" + (m.cle === actif.cle ? ".active" : ""), {
-            type: "button", "aria-pressed": m.cle === actif.cle ? "true" : "false",
-            title: m.quoi || null,
-            onclick: function () { quand(m.cle); } },
-            m.nom,
-            n ? el("span.studio-compte" + (opts.alerte && opts.alerte(m) ? ".alerte" : ""), {}, String(n)) : null);
-        })),
-      actif.quoi ? el("p.st-modes-q", {}, actif.quoi.charAt(0).toUpperCase() + actif.quoi.slice(1) + ".") : null);
+    function contenu() {
+      return liste.map(function (m) {
+        var n = opts.compte ? opts.compte(m) : null;
+        var cls = m.cle === actif.cle ? ".active" : "";
+        var badge = n ? el("span.studio-compte", {}, String(n)) : null;
+        if (opts.route) return el("a" + cls, { href: "#/" + opts.route + "/" + m.cle,
+          "aria-current": cls ? "page" : null }, m.nom, badge);
+        return el("button" + cls, { type: "button", "aria-pressed": cls ? "true" : "false",
+          onclick: function () { quand(m.cle); } }, m.nom, badge);
+      });
+    }
+    var choix = el("div.studio-statuts", { role: "group", "aria-label": opts.titre || "Vues" }, contenu());
+    if (liste.length <= 2) return el("div.st-modes", {}, choix);
+    return el("details.st-modes.lb-modes", {}, el("summary", {}, "Vue", el("strong", {}, actif.nom)), choix);
   }
 
   /* ————————————————————— 17 · La bande de recevabilité ————————————————————— */

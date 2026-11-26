@@ -15,14 +15,16 @@ window.VUE_PLACER = (function () {
   var mode = "ordre";
 
   var MODES = [
-    { cle: "ordre", nom: "Priorités", quoi: "ce qui passe avant, et pourquoi" },
-    { cle: "charge", nom: "Plan de charge", quoi: "où en sont les livrables" },
-    { cle: "gens", nom: "Équipe", quoi: "la capacité de chacun" },
-    { cle: "livraisons", nom: "Livraisons", quoi: "ce qui est dû et n'est pas arrivé" },
+    { cle: "ordre", nom: "Priorités" },
+    { cle: "charge", nom: "Plan de charge" },
+    { cle: "gens", nom: "Équipe" },
+    { cle: "livraisons", nom: "Livraisons" },
   ];
 
   function rendre(hote, arg) {
-    if (arg && MODES.some(function (m) { return m.cle === arg; })) mode = arg;
+    if (arguments.length > 1) {
+      mode = MODES.some(function (m) { return m.cle === arg; }) ? arg : MODES[0].cle;
+    }
 
     hote.className = "zone studio";
     O.vider(hote);
@@ -39,22 +41,24 @@ window.VUE_PLACER = (function () {
       : mode === "charge" ? pireCharge(pieces, sansPlace)
       : pireOrdre(c, sansPlace);
 
-    /* Le même en-tête que Décisions : le titre dit l'état du mode et sa
-     * conséquence, le sélecteur vient dessous, seul le mode actif porte
-     * l'alerte de son compteur. */
-    hote.appendChild(el("div.dc", {},
+    var courant = MODES.find(function (m) { return m.cle === mode; });
+    hote.appendChild(el("div.dc.pilotage", {},
       el("header.studio-entete.dc-tete", {},
         el("div", {},
-          el("h1", {}, p.t),
-          el("p.studio-intro", {}, p.q))),
-      UI.modes(MODES, mode, function (cle) { mode = cle; rendre(hote); }, {
-        titre: "Modes du Planning",
+          el("p.pilotage-parent", {}, "Planning"),
+          el("h1", {}, courant.nom))),
+      UI.modes(MODES, mode, function (cle) { location.hash = "#/planning/" + cle; }, {
+        titre: "Vues du planning", route: "planning",
         compte: function (m) {
           return m.cle === "ordre" ? c.conflits.length
             : m.cle === "charge" ? sansPlace
             : m.cle === "livraisons" ? souffrance.length : 0; },
         alerte: function (m) { return m.cle === mode; } }),
-      el("div.dc-corps", {}, corps(hote))
+      el("div.dc-corps", {},
+        el("details.pilotage-contexte", {},
+          el("summary", {}, p.t),
+          el("p", {}, p.q)),
+        corps())
     ));
   }
 
@@ -171,7 +175,7 @@ window.VUE_PLACER = (function () {
     return TRACE.phrase(b);
   }
 
-  function corps(hote) {
+  function corps() {
     if (mode === "livraisons") {
       var zl = el("div");
       VUE_LIVRAISONS.rendre(zl);
