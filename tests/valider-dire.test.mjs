@@ -187,6 +187,40 @@ test('une validation engagée est notée sur-le-champ, et rien ne s’écrit ava
   assert.deepEqual(v.notes(), [], 'écrite, la note est retirée');
 });
 
+test('à l’échéance, la pièce quittée : un avis dit la validation enregistrée ; la pièce à l’écran se redessine sans avis', async () => {
+  const v = await validation(63);
+  let rendus = 0;
+  v.s.ctx.APP = { rendre: () => { rendus++; } };
+  v.s.ctx.scrollTo = () => {};
+  v.s.ctx.location.hash = '#/valider/file';
+  cliquer(bouton(v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {}), 'Valider la V1'));
+  v.minuteries[0]();
+  assert.equal(v.l.versions[0].verdict, 'approuve');
+  assert.deepEqual(v.avis[v.avis.length - 1], ['fait', 'V1 de « Affiche · CM » enregistrée.']);
+  assert.equal(rendus, 1, 'Décisions, qui listait la version, se redessine');
+
+  for (const [hash, attendu] of [['#/projets/VA/livrables/autre/juger', 0], ['#/planning', 0], ['#/bureau', 1], ['', 1]]) {
+    const u = await validation(65);
+    let n = 0;
+    u.s.ctx.APP = { rendre: () => { n++; } };
+    u.s.ctx.scrollTo = () => {};
+    u.s.ctx.location.hash = hash;
+    cliquer(bouton(u.s.ctx.VUE_LIVRABLE.decider(u.p, u.l, () => {}), 'Valider la V1'));
+    u.minuteries[0]();
+    assert.equal(n, attendu, 'redessin sur « ' + hash + ' »');
+  }
+
+  const w = await validation(64);
+  let dessins = 0;
+  const bloc = w.s.ctx.VUE_LIVRABLE.decider(w.p, w.l, () => { dessins++; });
+  w.s.ctx.document.querySelectorAll = () => [bloc];
+  cliquer(bouton(bloc, 'Valider la V1'));
+  const avant = w.avis.length;
+  w.minuteries[0]();
+  assert.equal(dessins, 2, 'le bloc affiché est redessiné à l’échéance');
+  assert.equal(w.avis.length, avant, 'il montre lui-même la décision : pas d’avis en plus');
+});
+
 test('« Annuler la validation » resté à l’écran après l’échéance dit qu’elle est enregistrée', async () => {
   const v = await validation(42);
   cliquer(bouton(v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {}), 'Valider la V1'));

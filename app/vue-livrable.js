@@ -668,7 +668,7 @@ window.VUE_LIVRABLE = (function () {
    * écran quitté puis rouvert est redessiné par son propre rendu ; une échéance
    * venue d'un autre écran ne rouvre rien. */
   function redessiner(e) {
-    if (!window.document || !document.querySelectorAll) return;
+    if (!window.document || !document.querySelectorAll) return 0;
     var faits = [];
     [].slice.call(document.querySelectorAll(".rvp-decision[data-livrable]")).forEach(function (n) {
       var f = n.redessinerDecision;
@@ -676,6 +676,20 @@ window.VUE_LIVRABLE = (function () {
       if (n.isConnected === false || faits.indexOf(f) !== -1) return;
       faits.push(f); f();
     });
+    return faits.length;
+  }
+
+  /* La pièce n'est plus à l'écran : un avis court dit que sa validation est
+   * écrite. La file de Décisions et le Bureau, qui la listaient encore, se
+   * redessinent, sauf si l'on y est en train d'écrire ou de choisir. */
+  function faireSavoir(e) {
+    if (window.AVIS) AVIS.fait("V" + e.numero + " de « " + e.titre + " » enregistrée.");
+    var liste = /^#\/(bureau|valider|decider|revue|direction)(\/|$)|^#?\/?$/.test((window.location && location.hash) || "");
+    var actif = window.document && document.activeElement;
+    var saisie = !!actif && /^(INPUT|TEXTAREA|SELECT)$/.test(actif.tagName || "");
+    if (liste && !saisie && window.APP && APP.rendre) {
+      var x = window.scrollX, y = window.scrollY; APP.rendre(); window.scrollTo(x, y);
+    }
   }
 
   /* Écrire la validation. Rend vrai si elle est enregistrée. */
@@ -696,8 +710,8 @@ window.VUE_LIVRABLE = (function () {
       redessiner(e);
       return;
     }
-    conclure(e);
-    redessiner(e);
+    var ecrite = conclure(e);
+    if (!redessiner(e) && ecrite) faireSavoir(e);
   }
 
   function annuler(e) {

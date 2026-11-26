@@ -299,6 +299,23 @@ try {
   assert.equal(await fermee.evaluate(() => DEPOT.liste('decisions').filter(d => d.objet === 'L-demo').length), 1);
   await fermee.getByText('Validation de la V1 de « Affiche de lancement » enregistrée.').waitFor();
   assert.equal(await fermee.evaluate(() => localStorage.getItem('la-barre-validations')), null, 'La note rejouée est retirée');
+  // Valider, puis ouvrir Décisions avant l'échéance : à l'échéance, un avis
+  // le dit et la file ne liste plus la version validée.
+  await fermee.evaluate(() => {
+    const l = DEPOT.trouve('projets', 'PRJ-demo').livrables[0];
+    l.versions.push({ n: 2, soumis_le: new Date().toISOString() }); l.version = 2; DEPOT.enregistrer();
+  });
+  await fermee.goto(url + '/#/projets/PRJ-demo/livrables/L-demo/juger/2');
+  await fermee.clock.pauseAt(await fermee.evaluate(() => Date.now()) + 1000);
+  await fermee.getByRole('button', { name:'Valider la V2', exact:true }).click();
+  await fermee.locator('.avis-pile .avis.action').waitFor();
+  await fermee.goto(url + '/#/valider/file');
+  await fermee.locator('.decisions-file').getByText('Affiche de lancement · V2').waitFor();
+  await fermee.clock.runFor(9000);
+  await fermee.getByText('V2 de « Affiche de lancement » enregistrée.').waitFor();
+  assert.equal(await fermee.locator('.decisions-file').getByText('Affiche de lancement · V2').count(), 0,
+    'La file de Décisions ne liste plus la version validée');
+  await fermee.clock.resume();
   await fermee.close();
   await page.evaluate(() => { DEPOT.reinitialiser(); location.hash = '#/bureau'; APP.rendre(); });
   await page.getByRole('button', { name:'Créer mon premier projet', exact:true }).waitFor();
@@ -407,7 +424,7 @@ try {
     await rm(racine, { recursive: true, force: true });
   }
   assert.deepEqual(errors, []);
-  console.log('PASS — revue, validation en un clic avec annulation (échéance, écran rouvert, page fermée en poste seul et en base servie, reprise par un onglet resté ouvert), demande de modifs, décision persistante, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
+  console.log('PASS — revue, validation en un clic avec annulation (échéance, écran rouvert, page fermée en poste seul et en base servie, reprise par un onglet resté ouvert, Décisions à jour à l’échéance), demande de modifs, décision persistante, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
 } finally {
   if (browser) await browser.close();
   await new Promise(r => server.close(r));
