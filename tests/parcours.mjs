@@ -204,6 +204,17 @@ try {
   });
   assert.deepEqual({ ...pile, ...graves }, { refus: 1, apres: 0, x: [44, 44], graveEnHaut: true, empiles: true, titreVisible: true,
     decalage: '', annuler: 44 });
+  // Livrer, c'est un seul geste, sans lien HTTPS : qui a accordé le BAT, par
+  // où les fichiers sont partis, à qui ils ont été remis.
+  await page.getByRole('link', { name:'Suivre le BAT et la remise' }).click();
+  await page.getByRole('button', { name:'Marquer comme livré', exact:true }).click();
+  const livrer = page.getByRole('dialog', { name:'Marquer comme livré' });
+  assert.equal(await livrer.locator('input[type="url"][required]').count(), 0, 'Aucun lien HTTPS n’est exigé');
+  await livrer.getByLabel('BAT accordé par').fill('Imprimerie de recette');
+  await livrer.getByLabel('Moyen d’envoi').selectOption('WeTransfer');
+  await livrer.getByLabel('Remis à').fill('Production de recette');
+  await livrer.getByRole('button', { name:'Marquer comme livré', exact:true }).click();
+  await page.locator('.remise-tete').getByText('Remise justifiée').waitFor();
   await page.goBack();
   await page.setViewportSize({ width:1440, height:1050 });
   await page.getByRole('heading', {name:'À valider aujourd’hui'}).waitFor();

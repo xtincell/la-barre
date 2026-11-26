@@ -61,7 +61,7 @@ test('l’accord et le BAT courant ne valent ni fichier de sortie ni preuve', as
   assert.equal(R.etatPiece(ci).cle, 'sortie');
   assert.equal(R.lot(p).physiques, 0);
   assert.equal(R.piece(p, ci).pret, false);
-  assert.equal(s.ctx.PRODUCTION.etape(p, ci).quoi, 'Fichier à remettre à rattacher');
+  assert.equal(s.ctx.PRODUCTION.etape(p, ci).quoi, 'Fichiers à remettre');
   ci.fichiers.push(fichier({ id: 'apercu', emplacement: 'assets/review/livrables/revue.jpg' }));
   assert.equal(R.etatPiece(ci).cle, 'sortie', 'un visuel compressé de revue ne devient pas un fichier de sortie');
   ci.fichiers.push(fichier({ id: 'asset', emplacement: '/production/affiche.pdf' }));
@@ -69,7 +69,7 @@ test('l’accord et le BAT courant ne valent ni fichier de sortie ni preuve', as
   assert.equal(R.lot(p).physiques, 1);
   assert.equal(R.preuveCourante(p, ci), null);
   assert.equal(R.etatPiece(digital).cle, 'sortie', 'le support social peut omettre le BAT');
-  assert.equal(s.ctx.PRODUCTION.etape(p, ci).quoi, 'Preuve de remise à joindre');
+  assert.equal(s.ctx.PRODUCTION.etape(p, ci).quoi, 'Livraison à enregistrer');
 });
 
 test('une date de remise historique reste une échéance, jamais un justificatif', async () => {
@@ -243,4 +243,111 @@ test('les reçus et les BAT écrits avant les preuves souples se relisent à l�
   assert.equal(R.etatPiece(ci).cle, 'preuve');
   p.preuvesRemise[0].preuve.url = 'http://documents.example.test/remises/42.pdf';
   assert.equal(R.preuveCourante(p, ci), null, 'un lien qui n’est pas https ne devient pas valide');
+});
+
+/* ————— Le geste : un seul formulaire ————— */
+
+function noeuds(n, test, out = []) {
+  if (!n || typeof n !== 'object') return out;
+  if (test(n)) out.push(n);
+  for (const e of n.childNodes || []) noeuds(e, test, out);
+  return out;
+}
+const champs = racine => noeuds(racine, n => ['INPUT', 'SELECT', 'TEXTAREA'].includes(n.tagName));
+function remplir(racine, valeurs) {
+  for (const c of champs(racine)) {
+    const nom = c.getAttribute('name');
+    if (Object.hasOwn(valeurs, nom)) { if (c.getAttribute('type') === 'file') c.fichier = valeurs[nom]; else c.value = valeurs[nom]; }
+  }
+}
+class FormulaireLu {
+  constructor(form) { this.form = form; }
+  get(k) {
+    const c = champs(this.form).find(x => x.getAttribute('name') === k);
+    if (!c) return null;
+    if (c.getAttribute('type') === 'file') return c.fichier || { name: '', size: 0 };
+    return c.value !== '' ? c.value : (c.getAttribute('value') || '');
+  }
+  getAll(k) { return champs(this.form).filter(x => x.getAttribute('name') === k && x.checked).map(x => x.getAttribute('value')); }
+}
+const laisserFiler = () => new Promise(r => setImmediate(r));
+function envoyer(racine) {
+  const f = noeuds(racine, n => n.tagName === 'FORM')[0];
+  for (const traiter of f.ecouteurs.submit || []) traiter.call(f, { preventDefault() {}, target: f });
+}
+
+async function geste() {
+  const x = await installation();
+  x.s.ctx.FormData = FormulaireLu;
+  x.depots = [];
+  x.s.ctx.IMAGE = { deposerPreuve(f, apres) { x.depots.push(f.name); apres('assets/review/preuves/preuve-' + x.depots.length + '.jpg'); } };
+  return x;
+}
+
+test('« Marquer comme livré » : un seul geste, cinq champs requis au plus, aucun lien HTTPS exigé', async () => {
+  const { s, p, ci, R } = await geste();
+  R.marquerLivre(p, ci, () => {});
+  const form = s.dernier();
+  const requis = champs(form).filter(c => c.getAttribute('required') !== null).map(c => c.getAttribute('name'));
+  assert.deepEqual(requis, ['bat-par', 'bat-le', 'canal', 'destinataire', 'remis-le']);
+  assert.ok(!champs(form).some(c => c.getAttribute('type') === 'url' && c.getAttribute('required') !== null));
+  remplir(form, { 'bat-par': 'Imprimerie du port', 'bat-comment': 'OK par WhatsApp', canal: 'WeTransfer', destinataire: 'Chargée de production' });
+  envoyer(form);
+  await laisserFiler();
+  const bat = ci.fichiers.find(f => f.type === 'bat');
+  assert.deepEqual([bat.signataire, bat.signe_le, bat.emplacement, bat.preuve.type, bat.preuve.texte, bat.version],
+    ['Imprimerie du port', '2026-11-10', '', 'declaration', 'OK par WhatsApp', 2]);
+  assert.equal(bat.acteur.personneId, 'P-recette');
+  const sortie = ci.fichiers.find(f => f.role === 'sortie');
+  assert.deepEqual([sortie.canal, sortie.emplacement, sortie.version], ['WeTransfer', '', 2]);
+  const recu = R.preuveCourante(p, ci);
+  assert.ok(recu, 'la pièce est livrée');
+  assert.deepEqual([recu.destinataire, recu.remis_le, recu.preuve.type, recu.preuve.texte],
+    ['Chargée de production', '2026-11-10', 'declaration', 'Fichiers envoyés par WeTransfer']);
+  assert.equal(s.ctx.PRODUCTION.etape(p, ci).nom, 'Remise justifiée');
+});
+
+test('« Marquer comme livré » joint la photo du BAT et le PDF de la remise quand on les donne', async () => {
+  const { s, p, ci, R, depots } = await geste();
+  R.marquerLivre(p, ci, () => {});
+  remplir(s.dernier(), { 'bat-par': 'Imprimerie', 'bat-fichier': { name: 'bon-signe.jpg', size: 2048 }, canal: 'Clé USB',
+    destinataire: 'Imprimerie', 'remise-fichier': { name: 'bon-de-livraison.pdf', size: 4096 } });
+  envoyer(s.dernier());
+  await laisserFiler();
+  assert.deepEqual(depots, ['bon-signe.jpg', 'bon-de-livraison.pdf']);
+  const bat = ci.fichiers.find(f => f.type === 'bat');
+  assert.deepEqual([bat.nom, bat.emplacement, bat.preuve.type], ['bon-signe.jpg', 'assets/review/preuves/preuve-1.jpg', 'fichier']);
+  const recu = R.preuveCourante(p, ci);
+  assert.deepEqual([recu.preuve.nom, recu.preuve.type, recu.preuve.chemin], ['bon-de-livraison.pdf', 'fichier', 'assets/review/preuves/preuve-2.jpg']);
+});
+
+test('un lien invalide ou une pièce qui change pendant le geste n’écrivent rien', async () => {
+  const { s, p, ci, R } = await geste();
+  R.marquerLivre(p, ci, () => {});
+  const form = s.dernier();
+  remplir(form, { 'bat-par': 'Imprimerie', 'bat-lien': 'http://documents.example.test/bat', canal: 'Drive', destinataire: 'Imprimerie' });
+  envoyer(form);
+  await laisserFiler();
+  assert.match(noeuds(form, n => n.className === 'remise-erreur')[0].textContent, /https:\/\//);
+  assert.equal((ci.fichiers || []).length, 0);
+  remplir(form, { 'bat-lien': '' });
+  ci.versions.push(version(3, null)); ci.version = 3;
+  envoyer(form);
+  await laisserFiler();
+  assert.match(noeuds(form, n => n.className === 'remise-erreur')[0].textContent, /ont changé/);
+  assert.equal((ci.fichiers || []).length, 0);
+  assert.equal(p.preuvesRemise, undefined);
+});
+
+test('« Enregistrer seulement le BAT » pose le BAT sans marquer la pièce livrée', async () => {
+  const { s, p, ci, R } = await geste();
+  R.marquerLivre(p, ci, () => {}, { batSeul: true });
+  const form = s.dernier();
+  assert.deepEqual(champs(form).filter(c => c.getAttribute('required') !== null).map(c => c.getAttribute('name')), ['bat-par', 'bat-le']);
+  remplir(form, { 'bat-par': 'Imprimerie', 'bat-le': '2026-11-09' });
+  envoyer(form);
+  await laisserFiler();
+  assert.equal(R.etatPiece(ci).cle, 'sortie');
+  assert.equal(R.preuveCourante(p, ci), null);
+  assert.equal(p.preuvesRemise, undefined);
 });

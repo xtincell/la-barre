@@ -46,10 +46,10 @@ window.IMAGE = (function () {
     entree.click();
   }
 
-  function reduire(source, apres) {
+  function reduire(source, apres, largeur) {
     var img = new Image();
     img.onload = function () {
-      var ratio = Math.min(1, LARGEUR / img.width);
+      var ratio = Math.min(1, (largeur || LARGEUR) / img.width);
       var c = document.createElement("canvas");
       c.width = Math.round(img.width * ratio);
       c.height = Math.round(img.height * ratio);
@@ -343,6 +343,38 @@ window.IMAGE = (function () {
       });
   }
 
+  /* Une preuve qui n'a pas d'adresse : la photo d'un BAT signé, la capture
+   * d'un accord reçu par message, le PDF d'un bon de livraison. Elle se range
+   * dans assets/review/preuves/, et la base n'en garde que le chemin. Une
+   * photo est réduite pour rester lisible sans peser ; un PDF part tel quel.
+   * `apres(chemin)` reçoit null quand rien n'a été rangé : le refus est dit. */
+  var PREUVES = { jpg: 1, jpeg: 1, png: 1, webp: 1, pdf: 1 };
+  function deposerPreuve(f, apres) {
+    var ext = extension(f && f.name);
+    if (!f || !PREUVES[ext]) {
+      AVIS.refus("Joignez une photo, une capture ou un PDF.");
+      apres(null); return;
+    }
+    if (f.size > PLAFOND_MO * 1024 * 1024) {
+      AVIS.refus("« " + f.name + " » pèse " + Math.round(f.size / 1048576) + " Mo. Au-delà de "
+        + PLAFOND_MO + " Mo, joignez plutôt son lien.");
+      apres(null); return;
+    }
+    var lecteur = new FileReader();
+    lecteur.onerror = function () { AVIS.refus("Fichier illisible."); apres(null); };
+    lecteur.onload = function () {
+      var donnee = String(lecteur.result);
+      var base = "assets/review/preuves/" + O.id("preuve");
+      function poser(chemin, d) { monter(chemin, d, function (c) { apres(c); }, function () { apres(null); }); }
+      if (ext === "pdf") { poser(base + ".pdf", donnee.replace(/^data:[^;,]*/, "data:application/pdf")); return; }
+      reduire(donnee, function (reduite) {
+        if (!reduite) { AVIS.refus("Image illisible."); apres(null); return; }
+        poser(base + ".jpg", reduite);
+      }, 1800);
+    };
+    lecteur.readAsDataURL(f);
+  }
+
   /* Le sélecteur de fichier, pour un livrable. `type` : l'étage, quand
    * l'écran le connaît. */
   function importer(l, apres, type) {
@@ -509,7 +541,7 @@ window.IMAGE = (function () {
   return { choisir: choisir, ranger: ranger, poser: poser, estFichier: estFichier,
     estVideo: estVideo, source: source, media: media,
     vignette: vignette, bouton: bouton, poids: poids, parcourir: parcourir,
-    importer: importer, accueillir: accueillir, accepterDepot: accepterDepot,
+    importer: importer, accueillir: accueillir, accepterDepot: accepterDepot, deposerPreuve: deposerPreuve,
     boutonImport: boutonImport, proche: proche, extension: extension,
     apparier: apparier, poserLot: poserLot, mots: mots };
 })();

@@ -119,11 +119,11 @@ window.REMISE = (function () {
       return { cle: "validation", nom: "Approbation attendue", version: version && version.numero };
     var bat = batSigne(l, version.numero);
     if (batRequis(l) && !bat)
-      return { cle: "bat", nom: "BAT signé à joindre", version: version.numero };
+      return { cle: "bat", nom: "BAT attendu", version: version.numero };
     var fichiers = fichiersSortie(l, version.numero);
     if (!fichiers.length)
-      return { cle: "sortie", nom: "Fichier à remettre à rattacher", version: version.numero, bat: bat };
-    return { cle: "preuve", nom: "Preuve de remise à joindre", version: version.numero, bat: bat, fichiers: fichiers };
+      return { cle: "sortie", nom: "Fichiers à remettre", version: version.numero, bat: bat };
+    return { cle: "preuve", nom: "Livraison à enregistrer", version: version.numero, bat: bat, fichiers: fichiers };
   }
 
   /* Une preuve décrit un instantané. Une autre version, un autre marché, un
@@ -395,27 +395,54 @@ window.REMISE = (function () {
     return href ? el("a.b", { href: href, target: "_blank", rel: "noopener noreferrer" }, libelle) : null;
   }
 
-  function champ(form, cle, titre, type, valeur) {
-    var id = form + "-" + cle;
-    var entree = el("input", { id: id, name: cle, type: type || "text", required: true,
-      value: valeur || "", max: type === "date" ? O.jour() : null });
-    return el("div.champ", {}, el("label", { for: id }, titre), entree);
+  /* Ce qu'une preuve montre : un lien qui s'ouvre, un fichier déposé qui
+   * s'ouvre, ou les mots de la déclaration (qui et quand sont dits à côté). */
+  function lienPreuve(preuve, libelle) {
+    var x = preuveValide(preuve);
+    if (!x) return null;
+    if (x.type === "lien") return lienExterne(x.url, libelle);
+    if (x.type === "fichier") return el("a.b", { href: x.chemin, target: "_blank", rel: "noopener" }, libelle);
+    return el("span", {}, x.texte ? "Déclaré : « " + x.texte + " »" : "Déclaré, sans pièce jointe");
   }
 
-  function formulaire(titre, sous, enfants, valider, apres) {
+  function champ(form, cle, titre, type, valeur, options) {
+    options = options || {};
+    var id = form + "-" + cle;
+    var entree = type === "choix"
+      ? el("select", { id: id, name: cle, required: !options.facultatif },
+          [el("option", { value: "" }, "Choisir…")].concat(options.choix.map(function (c) { return el("option", { value: c }, c); })))
+      : el("input", { id: id, name: cle, type: type || "text", required: !options.facultatif,
+          value: valeur || "", max: type === "date" ? O.jour() : null, accept: options.accept || null,
+          placeholder: options.exemple || null });
+    return el("div.champ", {}, el("label", { for: id }, titre,
+      options.facultatif ? el("span.remise-facultatif", {}, " (facultatif)") : null), entree);
+  }
+
+  /* Un formulaire de remise. `valider` rend un résultat, ou une promesse
+   * quand une pièce jointe doit d'abord monter sur le disque. */
+  function formulaire(titre, sous, enfants, valider, apres, libelles) {
+    libelles = libelles || {};
     var avecPanneau = !!document.querySelector(".panneau[role='dialog']");
     var fermer = avecPanneau ? PANNEAU.fermerSur : PANNEAU.fermer;
     var statut = el("p.remise-erreur", { role: "alert" }, "");
+    var envoi = el("button.b.or", { type: "submit" }, libelles.action || "Enregistrer");
     var form = el("form.form.remise-form", { onsubmit: function (e) {
       e.preventDefault();
-      var res = valider(new FormData(form), form);
-      if (res.erreur) { statut.textContent = res.erreur; return; }
-      fermer();
-      if (apres) apres();
-      suiviSauvegarde(res.deja ? "Cette preuve est déjà consignée." : "Justificatif consigné.");
+      if (envoi.disabled) return;
+      statut.textContent = "";
+      envoi.disabled = true;
+      Promise.resolve(valider(new FormData(form), form)).then(function (res) {
+        envoi.disabled = false;
+        if (res.erreur) { statut.textContent = res.erreur; return; }
+        fermer();
+        if (apres) apres();
+        suiviSauvegarde(res.deja ? "Cette livraison est déjà enregistrée." : libelles.fait || "Livraison enregistrée.");
+      }, function () {
+        envoi.disabled = false;
+        statut.textContent = "Rien n’a été enregistré. Réessayez ; si cela persiste, prévenez la personne qui gère La Barre.";
+      });
     } }, enfants, statut,
-      el("div.form-actions", {},
-        el("button.b.or", { type: "submit" }, "Confirmer l’enregistrement"),
+      el("div.form-actions", {}, envoi,
         el("button.b.nu", { type: "button", onclick: fermer }, "Annuler")));
     (avecPanneau ? PANNEAU.sur : PANNEAU.ouvrir)(titre, sous, form);
   }
@@ -430,71 +457,150 @@ window.REMISE = (function () {
         document.querySelectorAll(".remise-ecriture").forEach(function (ligne) { ligne.remove(); });
         AVIS.fait(message + " Sauvegarde reçue.");
       }
-      else AVIS.refus("La preuve reste dans le brouillon. Réessayez depuis l’état de la sauvegarde.");
+      else AVIS.refus("La livraison reste dans le brouillon. Réessayez depuis l’état de la sauvegarde.");
     });
   }
 
-  function ajouterBat(p, l, apres) {
-    if (!enregistrementPermis()) return;
-    var v = versionCourante(l);
-    if (!v || etatPiece(l).cle !== "bat") return;
-    var note = el("p", {}, "Liez le bon à tirer signé pour la V" + v.numero + ".");
-    formulaire("Joindre un BAT signé", l.nom + " · V" + v.numero, [note,
-      champ("bat", "nom", "Nom du document"),
-      champ("bat", "url", "Lien HTTPS du BAT signé", "url"),
-      champ("bat", "signataire", "Signataire"),
-      champ("bat", "date", "Date de signature", "date", O.jour())
-    ], function (data) {
-      var projet = DEPOT.trouve("projets", p.id);
-      var courant = projet && !projet.fusionne && !(window.CLOTURE && CLOTURE.est(projet))
-        ? (projet.livrables || []).find(function (x) { return x.id === l.id && !x.annule; }) : null;
-      var vc = courant && versionCourante(courant);
-      if (!enregistrementPermis() || !vc || vc.numero !== v.numero || vc.objet !== v.objet
-          || etatPiece(courant).cle !== "bat")
-        return { erreur: "La version ou son BAT a changé. Rouvrez le livrable." };
-      var url = urlPreuve(data.get("url")), nom = texte(data.get("nom"));
-      var auteur = texte(data.get("signataire")), date = dater(texte(data.get("date")));
-      if (!url || !nom || !auteur || !date)
-        return { erreur: "Indiquez le document, son lien HTTPS, le signataire et la date de signature." };
-      var f = PRODUCTION.poser(courant, "bat", nom, url, auteur);
-      f.version = vc.numero;
-      f.signe_le = date;
-      DEPOT.tracer("BAT signé", "livrables", courant.id, projet.id + " · V" + f.version + " · " + f.id);
-      DEPOT.enregistrer();
-      return { ok: true };
-    }, apres);
+  /* ————————————————————— Le geste : marquer comme livré —————————————————————
+   *
+   * Trois formulaires successifs (joindre le BAT, rattacher le fichier final,
+   * consigner la remise), dix champs obligatoires et trois liens HTTPS : c'était
+   * incompatible avec un BAT accordé sur WhatsApp ou des fichiers partis par
+   * WeTransfer. Un seul geste, qui ne demande que ce qui manque à la pièce :
+   * qui a accordé le BAT et quand, par où les fichiers sont partis, à qui ils
+   * ont été remis et quand. Chaque pièce jointe est facultative — une photo, une
+   * capture, un PDF ou un lien ; sans elle, la déclaration fait foi, datée et
+   * signée de celui qui l'écrit. */
+
+  var CANAUX = ["WeTransfer", "Drive", "Clé USB", "Courriel", "WhatsApp", "Autre"];
+  var PAR = { "WeTransfer": "par WeTransfer", "Drive": "par le Drive", "Clé USB": "sur clé USB",
+    "Courriel": "par courriel", "WhatsApp": "par WhatsApp" };
+  function envoi(canal) { return PAR[canal] ? "Fichiers envoyés " + PAR[canal] : ""; }
+
+  /* Une pièce jointe facultative : un fichier déposé, ou un lien. */
+  function pieceJointe(form, prefixe, titre) {
+    return [
+      champ(form, prefixe + "-fichier", titre, "file", null, { facultatif: true, accept: "image/*,application/pdf" }),
+      champ(form, prefixe + "-lien", "Ou son lien", "url", null, { facultatif: true, exemple: "https://…" }),
+    ];
   }
 
-  function ajouterSortie(p, l, apres) {
-    if (!enregistrementPermis()) return;
-    var v = versionCourante(l);
-    if (!v || etatPiece(l).cle !== "sortie") return;
-    formulaire("Rattacher le fichier à remettre", l.nom + " · V" + v.numero, [
-      el("p", {}, "Liez le fichier final dans son espace d’origine, avec les droits existants."),
-      champ("sortie", "nom", "Nom du fichier"),
-      champ("sortie", "url", "Lien HTTPS du fichier final", "url"),
-    ], function (data) {
-      var projet = DEPOT.trouve("projets", p.id);
-      var courant = projet && !projet.fusionne && !(window.CLOTURE && CLOTURE.est(projet))
-        ? (projet.livrables || []).find(function (x) { return x.id === l.id && !x.annule; }) : null;
-      var vc = courant && versionCourante(courant);
-      if (!enregistrementPermis() || !vc || vc.numero !== v.numero || vc.objet !== v.objet
-          || etatPiece(courant).cle !== "sortie")
-        return { erreur: "La version ou ses fichiers ont changé. Rouvrez le livrable." };
-      var url = urlPreuve(data.get("url")), nom = texte(data.get("nom"));
-      if (!url || !nom) return { erreur: "Indiquez le nom du fichier final et son lien HTTPS." };
-      var f = PRODUCTION.poser(courant, "asset", nom, url);
-      f.version = vc.numero;
-      f.role = "sortie";
-      DEPOT.tracer("fichier à remettre", "livrables", courant.id, projet.id + " · V" + f.version + " · " + f.id);
-      DEPOT.enregistrer();
-      return { ok: true };
-    }, apres);
+  /* Monte la pièce jointe si elle existe et rend la preuve : fichier, lien,
+   * ou la déclaration donnée. Rend { erreur } si le lien est invalide ou si
+   * le dépôt échoue. */
+  function preuveSaisie(data, prefixe, declaration) {
+    var fichier = data.get(prefixe + "-fichier");
+    var lien = texte(data.get(prefixe + "-lien"));
+    if (fichier && fichier.size) {
+      return new Promise(function (resoudre) {
+        IMAGE.deposerPreuve(fichier, function (chemin) {
+          resoudre(chemin ? { preuve: { type: "fichier", chemin: chemin }, nom: fichier.name }
+            : { erreur: "La pièce jointe n’a pas été déposée : rien n’a été enregistré." });
+        });
+      });
+    }
+    if (lien) {
+      return Promise.resolve(urlPreuve(lien) ? { preuve: { type: "lien", url: urlPreuve(lien) } }
+        : { erreur: "Le lien doit commencer par https://, ou laissez-le vide." });
+    }
+    return Promise.resolve({ preuve: declaration });
   }
 
+  /* La pièce telle qu'elle est maintenant au dossier, si elle n'a pas changé
+   * de version depuis l'ouverture du formulaire. */
+  function relire(p, l, v) {
+    var projet = DEPOT.trouve("projets", p.id);
+    var courant = projet && !projet.fusionne && !(window.CLOTURE && CLOTURE.est(projet))
+      ? (projet.livrables || []).find(function (x) { return x.id === l.id && !x.annule; }) : null;
+    var vc = courant && versionCourante(courant);
+    return enregistrementPermis() && vc && vc.numero === v.numero && vc.objet === v.objet
+      ? { projet: projet, l: courant, v: vc } : null;
+  }
+
+  function marquerLivre(p, l, apres, options) {
+    options = options || {};
+    if (!enregistrementPermis()) return;
+    var v = versionCourante(l);
+    var depart = etatPiece(l);
+    if (!v || ["bat", "sortie", "preuve"].indexOf(depart.cle) === -1) return;
+    var batSeul = !!options.batSeul && depart.cle === "bat";
+    if (!batSeul && !DEPOT.exigerReference(p, "La livraison")) return;
+    var demandeBat = depart.cle === "bat";
+    var demandeSortie = !batSeul && !fichiersSortie(l, v.numero).length;
+    var f = "livre";
+    var enfants = [
+      demandeBat ? el("fieldset.remise-bloc", {}, el("legend", {}, "Le BAT de la V" + v.numero),
+        champ(f, "bat-par", "BAT accordé par", "text", null, { exemple: "Nom de la personne, ou l’imprimeur" }),
+        champ(f, "bat-le", "Le", "date", O.jour()),
+        champ(f, "bat-comment", "Comment", "text", null, { facultatif: true, exemple: "OK par WhatsApp, bon signé en main propre…" }),
+        pieceJointe(f, "bat", "Photo, capture ou PDF du BAT")) : null,
+      demandeSortie ? el("fieldset.remise-bloc", {}, el("legend", {}, "Les fichiers remis"),
+        champ(f, "canal", "Moyen d’envoi", "choix", null, { choix: CANAUX }),
+        champ(f, "sortie-lien", "Lien de téléchargement", "url", null, { facultatif: true, exemple: "https://…" })) : null,
+      batSeul ? null : el("fieldset.remise-bloc", {}, el("legend", {}, "La remise"),
+        champ(f, "destinataire", "Remis à", "text", null, { exemple: "La personne ou le prestataire qui a reçu" }),
+        champ(f, "remis-le", "Le", "date", O.jour()),
+        pieceJointe(f, "remise", "Justificatif : photo, capture ou PDF")),
+    ];
+    formulaire(batSeul ? "Enregistrer le BAT" : "Marquer comme livré", (window.KV && KV.titre ? KV.titre(l) : l.nom) + " · V" + v.numero,
+      enfants, function (data) {
+        var ici = relire(p, l, v);
+        if (!ici || etatPiece(ici.l).cle !== depart.cle)
+          return { erreur: "La version ou ses fichiers ont changé. Rouvrez la pièce." };
+        var par = texte(data.get("bat-par")), batLe = dater(texte(data.get("bat-le")));
+        var canal = texte(data.get("canal")), lienSortie = texte(data.get("sortie-lien"));
+        var destinataire = texte(data.get("destinataire")), remisLe = dater(texte(data.get("remis-le")));
+        if (demandeBat && (!par || !batLe)) return { erreur: "Dites qui a accordé le BAT, et une date passée ou du jour." };
+        if (demandeSortie && CANAUX.indexOf(canal) === -1) return { erreur: "Dites par où les fichiers sont partis." };
+        if (demandeSortie && lienSortie && !urlPreuve(lienSortie))
+          return { erreur: "Le lien de téléchargement doit commencer par https://, ou laissez-le vide." };
+        if (!batSeul && (!destinataire || !remisLe))
+          return { erreur: "Dites à qui la livraison a été remise, et une date passée ou du jour." };
+        var comment = texte(data.get("bat-comment"));
+        var batDeclare = { type: "declaration", texte: comment, contact: par, date: batLe };
+        return (demandeBat ? preuveSaisie(data, "bat", batDeclare) : Promise.resolve({}))
+          .then(function (bat) {
+            if (bat.erreur) return bat;
+            return (batSeul ? Promise.resolve({}) : preuveSaisie(data, "remise",
+              { type: "declaration", texte: envoi(canal), contact: destinataire, date: remisLe }))
+              .then(function (remise) {
+                if (remise.erreur) return remise;
+                /* Après le dépôt, la pièce a pu bouger : on relit avant d'écrire. */
+                var la = relire(p, l, v);
+                if (!la || etatPiece(la.l).cle !== depart.cle)
+                  return { erreur: "La version ou ses fichiers ont changé pendant l’envoi. Rouvrez la pièce." };
+                var trace = window.ACTEUR ? ACTEUR.trace() : null;
+                if (demandeBat) {
+                  var preuveBat = preuveValide(bat.preuve);
+                  var fb = PRODUCTION.poser(la.l, "bat", bat.nom || (preuveBat.type === "declaration"
+                    ? "BAT déclaré" : "BAT signé · V" + v.numero),
+                    preuveBat.type === "lien" ? preuveBat.url : preuveBat.type === "fichier" ? preuveBat.chemin : "", par);
+                  fb.version = v.numero; fb.signe_le = batLe; fb.preuve = preuveBat; fb.acteur = trace;
+                  DEPOT.tracer("BAT signé", "livrables", la.l.id, la.projet.id + " · V" + v.numero + " · " + fb.id);
+                }
+                if (demandeSortie) {
+                  var fs = PRODUCTION.poser(la.l, "asset", "Fichiers finaux · V" + v.numero, urlPreuve(lienSortie) || "");
+                  fs.version = v.numero; fs.role = "sortie"; fs.canal = canal; fs.acteur = trace;
+                  DEPOT.tracer("fichier à remettre", "livrables", la.l.id, la.projet.id + " · V" + v.numero + " · " + fs.id);
+                }
+                if (batSeul) { DEPOT.enregistrer(); return { ok: true }; }
+                var e = etatPiece(la.l);
+                if (e.cle !== "preuve") { DEPOT.enregistrer(); return { erreur: "La pièce n’est pas prête à être remise : " + e.nom + "." }; }
+                var recu = consigner(la.projet.id, [empreintePiece(la.l, e)], { nom: remise.nom, destinataire: destinataire,
+                  quand: remisLe, preuve: remise.preuve });
+                /* Le BAT et les fichiers posés restent vrais même si la remise est refusée. */
+                if (recu.erreur) DEPOT.enregistrer();
+                return recu;
+              });
+          });
+      }, apres, { action: batSeul ? "Enregistrer le BAT" : "Marquer comme livré",
+        fait: batSeul ? "BAT enregistré." : "Livraison enregistrée." });
+  }
+
+  /* Le même geste pour un lot : les pièces prêtes à partir, une seule remise. */
   function ouvrirPreuve(p, livrables, apres) {
     if (!enregistrementPermis()) return;
-    if (!DEPOT.exigerReference(p, "Le reçu de remise")) return;
+    if (!DEPOT.exigerReference(p, "La livraison")) return;
     var cibles = [];
     livrables.forEach(function (l) {
       var e = etatPiece(l);
@@ -509,24 +615,32 @@ window.REMISE = (function () {
         el("span", {}, x.nom + " · V" + x.version + (m ? " · " + m.nom : ""),
           el("small", {}, x.fichiers.map(function (f) { return f.nom; }).join(", "))));
     });
-    formulaire("Consigner une remise", p.ref || p.nom, [
-      el("fieldset", {}, el("legend", {}, "Versions couvertes par la preuve"), choix),
-      champ("preuve", "nom", "Nom du justificatif"),
-      champ("preuve", "url", "Lien HTTPS du justificatif", "url"),
-      champ("preuve", "destinataire", "Destinataire"),
-      champ("preuve", "date", "Date de remise", "date", O.jour())
+    var f = "lot";
+    formulaire("Marquer le lot comme livré", p.ref || p.nom, [
+      el("fieldset", {}, el("legend", {}, "Pièces remises"), choix),
+      champ(f, "destinataire", "Remis à", "text"),
+      champ(f, "remis-le", "Le", "date", O.jour()),
+      pieceJointe(f, "remise", "Justificatif : photo, capture ou PDF"),
     ], function (data) {
       var selection = data.getAll("pieces").map(function (i) { return cibles[Number(i)]; }).filter(Boolean);
-      return consigner(p.id, selection, { nom: data.get("nom"), url: data.get("url"),
-        destinataire: data.get("destinataire"), quand: data.get("date") });
-    }, apres);
+      var destinataire = texte(data.get("destinataire")), quand = texte(data.get("remis-le"));
+      if (!selection.length) return { erreur: "Choisissez au moins une pièce." };
+      if (!destinataire || !dater(quand)) return { erreur: "Dites à qui le lot a été remis, et une date passée ou du jour." };
+      return preuveSaisie(data, "remise", { type: "declaration", texte: "", contact: destinataire, date: quand })
+        .then(function (r) {
+          if (r.erreur) return r;
+          return consigner(p.id, selection, { nom: r.nom, destinataire: destinataire, quand: quand, preuve: r.preuve });
+        });
+    }, apres, { action: "Marquer comme livré", fait: "Livraison enregistrée." });
   }
 
   function cartePreuve(r) {
+    var x = preuveValide(r.preuve);
     return el("div.remise-preuve", {},
-      el("strong", {}, r.preuve.nom),
-      el("span", {}, [r.id, O.joli(r.remis_le), r.destinataire].filter(Boolean).join(" · ")),
-      lienExterne(r.preuve.url, "Ouvrir le justificatif"));
+      el("strong", {}, r.preuve.nom || "Justificatif de remise"),
+      el("span", {}, [r.id, O.joli(r.remis_le), r.destinataire,
+        r.acteur && r.acteur.nom ? "noté par " + r.acteur.nom : null].filter(Boolean).join(" · ")),
+      x && x.type !== "declaration" ? lienPreuve(x, "Ouvrir le justificatif") : x ? lienPreuve(x) : null);
   }
 
   function sauvegarde() {
@@ -545,28 +659,31 @@ window.REMISE = (function () {
         && r.pieces.some(function (x) { return x.id === l.id; });
     });
     var ouvert = enregistrementPermis() && !l.annule && !p.fusionne && !(window.CLOTURE && CLOTURE.est(p));
+    var bat = etat.bat;
+    var preuveBat = bat ? preuveValide(bat.preuve) || preuveValide({ type: "lien", url: bat.emplacement }) : null;
     return el("section.remise-suivi", { "aria-label": "BAT et remise" },
       el("header.remise-tete", {}, el("h3", {}, "BAT et remise"),
         UI.eti(recu ? "Remise justifiée" : etat.nom, recu ? "vert" : "attente")),
-      etat.bat ? el("div.remise-preuve", {},
+      bat ? el("div.remise-preuve", {},
         el("strong", {}, "BAT signé · V" + etat.version),
-        el("span", {}, etat.bat.nom + " · " + etat.bat.signataire
-          + (etat.bat.signe_le ? " · " + O.joli(etat.bat.signe_le) : "")),
-        lienExterne(etat.bat.emplacement, "Ouvrir le BAT")) : null,
+        el("span", {}, bat.nom + " · " + bat.signataire
+          + (bat.signe_le ? " · " + O.joli(bat.signe_le) : "")),
+        preuveBat && preuveBat.type !== "declaration" ? lienPreuve(preuveBat, "Ouvrir le BAT")
+          : preuveBat ? lienPreuve(preuveBat) : null) : null,
       recu ? cartePreuve(recu) : null,
       recu ? sauvegarde() : null,
-      etat.fichiers ? el("details", {}, el("summary", {}, "Fichiers à remettre"),
+      etat.fichiers ? el("details", {}, el("summary", {}, "Fichiers remis"),
         etat.fichiers.map(function (f) {
           return el("div.remise-preuve", {}, el("strong", {}, f.nom),
-            lienExterne(f.emplacement, "Ouvrir le fichier") || el("span", {}, f.emplacement));
+            lienExterne(f.emplacement, "Ouvrir le fichier")
+              || el("span", {}, f.canal ? envoi(f.canal) || f.canal : f.emplacement));
         })) : null,
-      ouvert && !recu && etat.cle === "bat"
-        ? el("button.b.or", { type: "button", onclick: function () { ajouterBat(p, l, apres); } }, "Joindre le BAT signé")
-        : ouvert && !recu && etat.cle === "sortie"
-          ? el("button.b.or", { type: "button", onclick: function () { ajouterSortie(p, l, apres); } }, "Rattacher le fichier final")
-        : ouvert && !recu && etat.cle === "preuve"
-          ? el("button.b.or", { type: "button", onclick: function () { ouvrirPreuve(p, [l], apres); } }, "Consigner la remise")
-          : null,
+      ouvert && !recu && ["bat", "sortie", "preuve"].indexOf(etat.cle) !== -1
+        ? el("div.remise-gestes", {},
+            el("button.b.or", { type: "button", onclick: function () { marquerLivre(p, l, apres); } }, "Marquer comme livré"),
+            etat.cle === "bat" ? el("button.b.nu", { type: "button",
+              onclick: function () { marquerLivre(p, l, apres, { batSeul: true }); } }, "Enregistrer seulement le BAT") : null)
+        : null,
       anciens.length ? el("details", {},
         el("summary", {}, "Preuves des versions ou périmètres précédents"),
         anciens.map(cartePreuve)) : null);
@@ -578,11 +695,11 @@ window.REMISE = (function () {
     var permis = enregistrementPermis() && !p.fusionne && !(window.CLOTURE && CLOTURE.est(p));
     return el("section.remise-suivi", { "aria-label": "Suivi de la remise" },
       el("header.remise-tete", {}, el("h3", {}, "Suivi de la remise"),
-        UI.eti(livres + " / " + ls.length + " avec preuve", livres && livres === ls.length ? "vert" : "terne")),
+        UI.eti(livres + " / " + ls.length + " livrées", livres && livres === ls.length ? "vert" : "terne")),
       permis && candidats.length ? el("button.b.or", { type: "button",
-        onclick: function () { ouvrirPreuve(p, candidats, apres); } }, "Consigner un lot") : null,
+        onclick: function () { ouvrirPreuve(p, candidats, apres); } }, "Marquer le lot comme livré") : null,
       livres ? sauvegarde() : null,
-      preuves(p).length ? el("details", {}, el("summary", {}, "Justificatifs consignés"),
+      preuves(p).length ? el("details", {}, el("summary", {}, "Livraisons enregistrées"),
         preuves(p).slice().reverse().filter(function (r) { return r && r.preuve && Array.isArray(r.pieces); }).map(function (r) {
           return el("div", {}, cartePreuve(r), el("ul", {}, r.pieces.map(function (x) {
             var l = ls.find(function (y) { return y.id === x.id; });
@@ -674,5 +791,5 @@ window.REMISE = (function () {
     etat: etat, ouvrir: ouvrir, droits: droits, mentions: mentions, etatPiece: etatPiece,
     empreintePiece: empreintePiece, preuveCourante: preuveCourante, consigner: consigner,
     suiviPiece: suiviPiece, suiviLot: suiviLot, versionCourante: versionCourante,
-    preuveValide: preuveValide };
+    preuveValide: preuveValide, marquerLivre: marquerLivre };
 })();

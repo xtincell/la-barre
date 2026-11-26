@@ -127,7 +127,7 @@ window.PRODUCTION = (function () {
       if (remise) return { i: 5, nom: "Remise justifiée", ton: "vert",
         quoi: "Preuve consignée pour la V" + suivi.version + " · " + remise.id, geste: "Consulter le justificatif" };
       if (suivi.cle === "bat") return { i: 4, nom: "BAT", ton: "attente",
-        quoi: suivi.nom, geste: "Joindre le document signé de la V" + suivi.version };
+        quoi: suivi.nom, geste: "Enregistrer le BAT de la V" + suivi.version + ", ou marquer la pièce comme livrée" };
       if (suivi.cle === "sortie" || suivi.cle === "preuve") return { i: 5, nom: "Remise", ton: "attente",
         quoi: suivi.nom, geste: "Ouvrir le suivi de cette version" };
     }
@@ -176,7 +176,7 @@ window.PRODUCTION = (function () {
     return { i: 5, nom: "Remise à justifier", ton: "attente",
       quoi: signe ? "BAT signé par " + signe.signataire + " sur la V" + (signe.version || v)
         : "approuvé, tous les fichiers posés",
-      geste: "Consigner la preuve de remise" };
+      geste: "Marquer comme livré" };
   }
 
   /* ————————————————————— La porte ————————————————————— */
