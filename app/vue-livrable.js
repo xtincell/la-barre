@@ -771,7 +771,10 @@ window.VUE_LIVRABLE = (function () {
       if (!x.rejouer && !(maintenant - Date.parse(x.quand) > ABANDON)) return;
       if (surPlace && etatDeNote(x).cle === "changee") return;
       if (!prendre(x.id)) return;
-      rejouer(x); n++;
+      /* Ne compte que ce qui change quelque chose à l'écran : une validation
+       * écrite, ou abandonnée avec un avis. Une note déjà écrite ne redessine
+       * rien. */
+      if (rejouer(x) !== "deja") n++;
     });
     return n;
   }
@@ -794,13 +797,13 @@ window.VUE_LIVRABLE = (function () {
     var nom = "la V" + x.numero + (x.titre ? " de « " + x.titre + " »" : "");
     var etat = etatDeNote(x);
     /* Déjà écrite (avant la fermeture, ou par un autre poste) : rien à refaire. */
-    if (etat.cle === "ecrite") return;
+    if (etat.cle === "ecrite") return "deja";
     var contexte = etat.contexte;
     if (etat.cle === "changee") {
       /* Un avis qui reste : la personne croyait cette validation enregistrée. */
       if (window.AVIS) AVIS.grave("La validation de " + nom + " n'a pas été enregistrée : la pièce a changé depuis. "
         + "Relisez-la, et validez-la de nouveau si c'est toujours votre décision.");
-      return;
+      return "abandonnee";
     }
     /* Datée du moment où elle se serait écrite (le clic, plus le délai
      * d'annulation), pas de son rejeu : le délai de décision du Bilan et la date
@@ -812,6 +815,7 @@ window.VUE_LIVRABLE = (function () {
       if (erreur) AVIS.grave("La validation de " + nom + " n'a pas été enregistrée. " + erreur);
       else AVIS.fait("Validation de " + nom + " enregistrée.");
     }
+    return erreur ? "abandonnee" : "ecrite";
   }
 
   function etatPourVerdict(l, v) {

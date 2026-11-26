@@ -377,18 +377,28 @@ window.APP = (function () {
      * suite plutôt qu'au prochain chargement : le client et Radar la voient
      * sans attendre. Sans base servie, chaque onglet tient sa propre copie et
      * l'écriture de celui-ci écraserait le travail de l'autre : la note attend
-     * la prochaine ouverture. */
+     * la prochaine ouverture.
+     *
+     * Quelqu'un qui écrit dans un champ de cet onglet ne perd ni son focus ni
+     * sa saisie : l'avis dit la validation enregistrée, l'écran se redessinera
+     * au prochain geste. */
     window.addEventListener("storage", function (e) {
       if (e.key !== "la-barre-validations" || !e.newValue) return;
       if (!DEPOT.fichierServi || !DEPOT.fichierServi()) return;
       if (!window.VUE_LIVRABLE || !VUE_LIVRABLE.reprendreValidations) return;
-      if (VUE_LIVRABLE.reprendreValidations({ surPlace: true })) {
+      if (VUE_LIVRABLE.reprendreValidations({ surPlace: true }) && !saisieEnCours()) {
         var x = window.scrollX, y = window.scrollY; rendre(); window.scrollTo(x, y);
       }
     });
 
     ecouter();
     rendre();
+  }
+
+  /* Un champ a le focus : redessiner effacerait ce qu'on y écrit. */
+  function saisieEnCours() {
+    var actif = document.activeElement;
+    return !!actif && (/^(INPUT|TEXTAREA|SELECT)$/.test(actif.tagName || "") || actif.isContentEditable === true);
   }
 
   function remplacerVue(lien) {

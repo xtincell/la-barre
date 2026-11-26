@@ -446,12 +446,19 @@ try {
     const principal = await navigateur.newPage();
     principal.on('pageerror', e => { errors.push(e.message); console.error('Erreur navigateur (principal):', e.stack); });
     principal.setDefaultTimeout(10000);
-    await principal.goto('http://127.0.0.1:' + port + '/#/bureau', { waitUntil: 'networkidle' });
+    // Quelqu'un y écrit dans un champ : la reprise ne lui prend ni son focus
+    // ni sa saisie ; l'avis suffit.
+    await principal.goto('http://127.0.0.1:' + port + '/#/projets', { waitUntil: 'networkidle' });
+    const champPrincipal = principal.getByLabel('Rechercher un projet');
+    await champPrincipal.fill('Nac');
     await rouverte.goto('http://127.0.0.1:' + port + '/#/projets/PRJ-demo/livrables/L-demo/juger/3');
     await rouverte.getByRole('button', { name:'Valider la V3', exact:true }).click();
     await rouverte.locator('.avis-pile .avis.action').waitFor();
     await rouverte.close({ runBeforeUnload: true });
     await principal.getByText('Validation de la V3 de « Affiche de lancement » enregistrée.').waitFor();
+    assert.deepEqual(await principal.evaluate(() => [document.activeElement.getAttribute('aria-label') || document.activeElement.id,
+      document.activeElement.value]), [await champPrincipal.getAttribute('aria-label') || await champPrincipal.getAttribute('id'), 'Nac'],
+      'Le champ garde son focus et sa saisie');
     assert.deepEqual(await surDisque(3), { verdict: 'approuve', decisions: 3 }, 'L’onglet resté ouvert a écrit la validation');
     assert.equal(await principal.evaluate(() => localStorage.getItem('la-barre-validations')), null);
     await navigateur.close();

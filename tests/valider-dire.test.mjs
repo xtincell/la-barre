@@ -291,6 +291,14 @@ test('une page fermée avant l’échéance : la note se rejoue à la réouvertu
   assert.match(changee.avis[0][1], /n'a pas été enregistrée : la pièce a changé depuis/);
   assert.deepEqual(changee.notes(), []);
 
+  /* Déjà écrite par la page fermée (sa base l'a), la note se retire sans rien
+   * compter : aucun redessin pour rien. */
+  const deja = await validation(49, stockage);
+  deja.l.versions[0].verdict = 'approuve';
+  assert.equal(deja.s.ctx.VUE_LIVRABLE.reprendreValidations(), 0);
+  assert.deepEqual(deja.avis, []);
+  assert.deepEqual(deja.notes(), []);
+
   const ouverte = await validation(47, [['la-barre-validations', JSON.stringify([{ ...note, rejouer: false, quand: '2026-11-10T09:00:00.000Z' }])]]);
   assert.equal(ouverte.s.ctx.VUE_LIVRABLE.reprendreValidations(), 0, 'la note d’une page encore ouverte n’est pas prise');
   assert.equal(ouverte.notes().length, 1);
