@@ -422,7 +422,7 @@ window.VUE_LIVRABLE = (function () {
     if (!version) return null;
     var attente = validationEnCours(l);
     if (attente) {
-      return el("div.rvp-decision", {},
+      return el("div.rvp-decision", { "data-livrable": l.id },
         el("p.rvp-meta", { role: "status" }, "V" + attente.numero + " validée. Elle s'enregistre dans quelques secondes."),
         el("button.b.rvp-action", { type: "button", "data-geste": "annuler-validation",
           onclick: function () { annuler(attente); } }, "Annuler la validation"));
@@ -430,7 +430,7 @@ window.VUE_LIVRABLE = (function () {
     var contexte = etatPourVerdict(l, version.objet);
     function geste(cle) { return function () { juger(p, l, verdictDe(cle), apres, contexte); }; }
     var autres = MAISON.verdicts.filter(function (v) { return v.cle === "reserve" || v.cle === "hors"; });
-    return el("div.rvp-decision", {},
+    return el("div.rvp-decision", { "data-livrable": l.id },
       el("div.rvp-gestes", {},
         el("button.b.or.rvp-action", { type: "button", "data-geste": "valider", onclick: geste("approuve") },
           "Valider la V" + version.numero),
@@ -445,11 +445,11 @@ window.VUE_LIVRABLE = (function () {
   function criteres(p, l, apres, compact) {
     var b = p.sections.bigidea || {};
     var grille = controles(p, l);
-    return el("div.revue-criteres", {},
+    return el("div.revue-criteres", { "data-livrable": l.id },
       compact && b.criteres && b.criteres[0] ? el("p.revue-premier-critere", {}, b.criteres[0]) : null,
       !compact ? grille : null,
       el("div.sousbloc", {}, el("h3", {}, "Votre décision sur la V" + (l.version || 1)),
-        choixVerdicts(p, l, function (v) { juger(p, l, v, apres); })),
+        validationEnCours(l) ? decider(p, l, apres) : choixVerdicts(p, l, function (v) { juger(p, l, v, apres); })),
       compact ? el("details", {}, el("summary", {}, "Voir tous les critères"), grille) : null
     );
   }
@@ -540,7 +540,7 @@ window.VUE_LIVRABLE = (function () {
     if (validationEnCours(l)) return;
     engagements.push(e);
     ecouterFermeture();
-    e.minuterie = setTimeout(function () { conclure(e); }, DELAI_ANNULATION);
+    e.minuterie = setTimeout(function () { conclure(e, siVisible(e)); }, DELAI_ANNULATION);
     e.avis = AVIS.action("V" + numero + " validée.", "Annuler", function () { annuler(e); }, DELAI_ANNULATION);
     if (apres) apres();
   }
@@ -554,17 +554,24 @@ window.VUE_LIVRABLE = (function () {
     return true;
   }
 
-  function conclure(e, sansSuite) {
+  /* L'écran ne se redessine que s'il montre encore cette pièce : une échéance
+   * ou une annulation venue d'un autre écran ne rouvre rien. */
+  function siVisible(e) {
+    return !!(window.document && document.querySelectorAll) && [].some.call(document.querySelectorAll("[data-livrable]"),
+      function (n) { return n.getAttribute("data-livrable") === e.livrableId; });
+  }
+
+  function conclure(e, redessiner) {
     desengager(e);
     var erreur = poser(e.projetId, e.livrableId, e.contexte, e.verdict, "");
     if (erreur && window.AVIS) AVIS.refus(erreur);
-    if (!sansSuite && e.apres) e.apres();
+    if (redessiner !== false && e.apres) e.apres();
   }
 
   function annuler(e) {
     if (!desengager(e)) return;
     AVIS.fait("Validation annulée : rien n'a été enregistré.");
-    if (e.apres) e.apres();
+    if (e.apres && siVisible(e)) e.apres();
   }
 
   /* Une page qui se ferme n'attend pas l'échéance : ce qui est engagé s'écrit. */
@@ -573,7 +580,7 @@ window.VUE_LIVRABLE = (function () {
     if (fermetureEcoutee || !window.addEventListener) return;
     fermetureEcoutee = true;
     window.addEventListener("pagehide", function () {
-      engagements.slice().forEach(function (e) { conclure(e, true); });
+      engagements.slice().forEach(function (e) { conclure(e, false); });
     });
   }
 
