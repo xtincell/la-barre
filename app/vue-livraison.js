@@ -179,7 +179,7 @@ window.VUE_LIVRAISON = (function () {
       onclick: function () { VUE_LIVRABLE.ouvrir(p, l, rafraichir); } },
       IMAGE.vignette(l, "planche"),
       el("span.plvc-bas", {},
-        el("span.plvc-n", {}, l.nom),
+        el("span.plvc-n", {}, window.KV && KV.titre ? KV.titre(l) : l.nom),
         el("span.plvc-m", {}, [
           "V" + (l.version || 1),
           (l.fichiers || []).length ? (l.fichiers || []).length + " fichiers" : null,

@@ -69,7 +69,7 @@ window.FILE = (function () {
       var hors = ECARTS_MARCHE.libelle(x.hors);
       var renvoyee = x.etat === "renvoyee";
       out.push(item(renvoyee ? "reclamer" : "trancher",
-        x.nom + " (" + x.ref + ") : changement non prévu",
+        (l && window.KV && KV.titre ? KV.titre(l) : x.nom) + " (" + x.ref + ") : changement non prévu",
         renvoyee
           ? "Correction demandée le " + O.joli(x.revue.quand) + " : la décli revient à ce qui était prévu."
           : x.texte,

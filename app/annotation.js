@@ -190,7 +190,7 @@ window.ANNOT = (function () {
     }
 
     dessiner();
-    PANNEAU.ouvrir(l.nom, "annoter", el("div.an", {}, boite, cote));
+    PANNEAU.ouvrir(window.KV && KV.titre ? KV.titre(l) : l.nom, "Annoter", el("div.an", {}, boite, cote));
   }
 
   function nouvelle(p, l, x, y, apres, instant, numero) {
@@ -213,7 +213,7 @@ window.ANNOT = (function () {
     var reprise = estReprise(l, new Date().toISOString());
 
     var sous = PANNEAU.sur("Poser un retour",
-      (instant !== null && instant !== undefined ? "à " + tc(instant) + "  ·  " : "") + l.nom,
+      (instant !== null && instant !== undefined ? "à " + tc(instant) + "  ·  " : "") + (window.KV && KV.titre ? KV.titre(l) : l.nom),
       el("div", {},
       reprise
         ? UI.banniere("rouge", "Ce livrable a déjà été validé. Ce retour ouvrira une reprise — il sera compté, pas absorbé en silence.")

@@ -136,13 +136,17 @@ window.KV = (function () {
     });
   }
 
+  /* Le tiret ne reste jamais seul en fin de ligne : une espace insécable le
+   * tient au mot qui le précède (« Key visual — » / « Ghana »). */
+  function tenir(t) { return String(t).replace(/ — /g, "\u00a0— "); }
+
   function titre(l) {
     if (!l) return "";
-    if (!nomDeCode(l)) return l.nom || "Pièce sans nom";
+    if (!nomDeCode(l)) return tenir(l.nom || "Pièce sans nom");
     var s = l.support ? DEPOT.trouve("supports", l.support) : null;
     var m = l.marche ? DEPOT.trouve("marches", l.marche) : null;
     var support = (s && s.nom) || "Key visual";
-    return m ? support + " — " + (m.nom || m.code) : support + " master";
+    return tenir(m ? support + " — " + (m.nom || m.code) : support + " master");
   }
 
   function surtitre(l) { return nomDeCode(l) ? l.nom.trim() : null; }

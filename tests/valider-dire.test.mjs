@@ -36,16 +36,19 @@ const REFERENTIEL = {
   supports: [{ id: 'S-kv', code: 'kv', nom: 'Key visual' }, { id: 'S-social', code: 'social', nom: 'Post social 1:1' }],
 };
 
+/* Une espace insécable tient le tiret au mot qui le précède : jamais
+ * « Key visual — » seul en fin de ligne. */
 test('KV.titre dit la pièce en clair et garde le code en surtitre, sans toucher au nom', async () => {
   const ctx = await bac();
   ctx.DEPOT = depot(REFERENTIEL);
   vm.runInContext(await lire('kv-modele'), ctx, { filename: 'kv-modele.js' });
   const { KV } = ctx;
   const cas = [
-    [{ nom: 'KV · GH · Orvelle', support: 'S-kv', marche: 'M-gh' }, 'Key visual — Ghana', 'KV · GH · Orvelle'],
-    [{ nom: 'KV · GH', support: 'S-kv', marche: 'M-gh' }, 'Key visual — Ghana', 'KV · GH'],
+    [{ nom: 'KV · GH · Orvelle', support: 'S-kv', marche: 'M-gh' }, 'Key visual\u00a0— Ghana', 'KV · GH · Orvelle'],
+    [{ nom: 'KV · GH', support: 'S-kv', marche: 'M-gh' }, 'Key visual\u00a0— Ghana', 'KV · GH'],
     [{ nom: 'KV master commun · Orvelle', support: 'S-kv', niveau: 'maitre' }, 'Key visual master', 'KV master commun · Orvelle'],
-    [{ nom: 'Post social 1:1 · CI', support: 'S-social', marche: 'M-ci' }, 'Post social 1:1 — Côte d’Ivoire', 'Post social 1:1 · CI'],
+    [{ nom: 'Post social 1:1 · CI', support: 'S-social', marche: 'M-ci' }, 'Post social 1:1\u00a0— Côte d’Ivoire', 'Post social 1:1 · CI'],
+    [{ nom: 'Key visual — Ghana', support: 'S-kv', marche: 'M-gh' }, 'Key visual\u00a0— Ghana', null],
     [{ nom: 'Affiche de lancement', support: 'S-kv', marche: 'M-gh' }, 'Affiche de lancement', null],
     [{ nom: 'KV · CI · Orvelle', support: 'S-kv', marche: 'M-gh' }, 'KV · CI · Orvelle', null],
   ];

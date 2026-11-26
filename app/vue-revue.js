@@ -48,7 +48,7 @@ window.VUE_REVUE = (function () {
         var m = DEPOT.trouve("marches", l.marche);
         liste.push({
           type: "livrable", id: l.id, projet: p, objet: l, version: version.numero,
-          titre: (window.KV && KV.titre ? KV.titre(l) : l.nom) + " — V" + version.numero,
+          titre: (window.KV && KV.titre ? KV.titre(l) : l.nom) + " · V" + version.numero,
           /* La décision garde le nom enregistré : c'est ce qu'elle a toujours écrit. */
           nomDecision: l.nom + " — V" + version.numero,
           contexte: p.ref + (s ? " · " + s.nom : "") + (m ? " · " + m.nom : ""),

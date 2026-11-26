@@ -127,8 +127,13 @@ window.APP = (function () {
       if (O.contient(p.nom + " " + p.ref, q)) t.push({ quoi: p.nom, ou: p.ref, lien: adresse("projets", p.id) });
       (p.livrables || []).forEach(function (l) {
         var m = DEPOT.trouve("marches", l.marche);
-        if (O.contient(l.nom + " " + (m ? m.nom + " " + m.code : ""), q))
-          t.push({ quoi: l.nom + (m ? " · " + m.code : ""), ou: p.ref + " · livrable", lien: adresse("projets", p.id, "livrables", l.id) });
+        /* La pièce par son titre (« Key visual — Ghana ») ; son code reste
+         * cherchable, et se lit à côté du dossier. */
+        var titre = window.KV && KV.titre ? KV.titre(l) : l.nom;
+        var code = window.KV && KV.surtitre ? KV.surtitre(l) : null;
+        if (O.contient(l.nom + " " + titre.replace(/\u00a0/g, " ") + " " + (m ? m.nom + " " + m.code : ""), q))
+          t.push({ quoi: titre + (m && !code ? " · " + m.code : ""), ou: p.ref + " · " + (code || "livrable"),
+            lien: adresse("projets", p.id, "livrables", l.id) });
       });
       (p.sections.pistes || []).forEach(function (pi) {
         if (O.contient(pi.titre + " " + (pi.concept || ""), q))

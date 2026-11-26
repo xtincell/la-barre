@@ -289,8 +289,10 @@ window.FEEDBACK = (function () {
     var aideN = el("div.indice", {}, NIVEAUX[selPortee.value].onde);
     selPortee.addEventListener("change", function () { aideN.textContent = NIVEAUX[selPortee.value].onde; });
 
+    /* Les pièces par leur titre ; le code reste en info-bulle, pour départager
+     * deux pièces de même support et de même marché. */
     var choixCibles = coches((p.livrables || []).filter(function (l) { return !l.annule; })
-      .map(function (l) { return { id: l.id, nom: l.nom }; }), cibles || []);
+      .map(function (l) { var t = KV.titre(l); return { id: l.id, nom: t, titre: t !== l.nom ? l.nom : null }; }), cibles || []);
     var choixMarches = coches(DEPOT.liste("marches").map(function (m) { return { id: m.id, nom: m.nom }; }), []);
     var choixRoutes = coches((p.sections.pistes || []).map(function (x) { return { id: x.id, nom: x.titre }; }), []);
 
@@ -371,7 +373,7 @@ window.FEEDBACK = (function () {
     var ecouteurs = [];
     var boite = el("div.chips");
     liste.forEach(function (x) {
-      var b = el("button.chip", { type: "button",
+      var b = el("button.chip", { type: "button", title: x.titre || null,
         "aria-pressed": sel.indexOf(x.id) !== -1 ? "true" : null,
         onclick: function () {
           var i = sel.indexOf(x.id);
