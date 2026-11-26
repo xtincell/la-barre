@@ -200,6 +200,12 @@
    "clientId": "CL-orvelle",
    "nom": "Margaux Tilleul",
    "role": "Directrice marketing (fictive)"
+  },
+  {
+   "id": "CT-noro",
+   "clientId": "CL-noro",
+   "nom": "Suzanne Noro",
+   "role": "Fondatrice de l’atelier (fictive)"
   }
  ],
  "feedbacks": [],
@@ -1477,8 +1483,35 @@
      "type": "Demande simple",
      "debut": "2026-11-10",
      "echeance": "2026-12-08",
+     "decideurId": "CT-noro",
+     "decideur": "Suzanne Noro, fondatrice (fictive)",
+     "tueur": "Personne d’autre : la fondatrice décide seule (fictif)",
+     "fenetre": "Du 1er au 10 décembre 2026, jusqu’au vernissage",
      "objectif": "Décliner l’invitation imprimée en story, pour annoncer le vernissage du 10 décembre (fictif)."
-    }
+    },
+    "bigidea": {
+     "criteres": [
+      "Le nom de l’atelier tient dans la zone sûre de la story"
+     ]
+    },
+    "pistes": [
+     {
+      "id": "PI-noro",
+      "titre": "L’invitation telle qu’imprimée",
+      "statut": "retenue",
+      "auteurDA": "PE-ilan",
+      "version": 1,
+      "motif": "La story reprend l’invitation imprimée : rien à réinventer.",
+      "arbitre_le": "2026-11-10T15:00:00.000Z",
+      "axe_directrice": "L’invitation imprimée, remise à la verticale.",
+      "axe_ton": "Chaleureux, artisanal",
+      "axe_univers": "Le corail de l’enveloppe, le carton crème, le nom tracé à la main.",
+      "axe_valeurs": [
+       "Savoir-faire",
+       "Accueil"
+      ]
+     }
+    ]
    },
    "livrables": [
     {
@@ -1491,7 +1524,7 @@
      "nom": "Invitation · story · CM",
      "responsable": "PE-yao",
      "origine": "prevu",
-     "pisteId": null,
+     "pisteId": "PI-noro",
      "maitre": null,
      "versionMaitre": null,
      "version": 1,

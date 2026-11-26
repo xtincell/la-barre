@@ -292,7 +292,8 @@ export async function construire() {
     clients: [{ id: 'CL-orvelle', nom: 'Sources d’Orvelle', interne: false,
       nommage: '{marque}_{campagne}_{marche}_{support}_{langue}_{version}' },
       { id: 'CL-noro', nom: 'Atelier Noro', interne: false }],
-    contacts: [{ id: 'CT-margaux', clientId: 'CL-orvelle', nom: 'Margaux Tilleul', role: 'Directrice marketing (fictive)' }],
+    contacts: [{ id: 'CT-margaux', clientId: 'CL-orvelle', nom: 'Margaux Tilleul', role: 'Directrice marketing (fictive)' },
+      { id: 'CT-noro', clientId: 'CL-noro', nom: 'Suzanne Noro', role: 'Fondatrice de l’atelier (fictive)' }],
     marques: [{ id: 'MQ-orvelle', clientId: 'CL-orvelle', nom: 'Orvelle', secteur: 'Boissons',
       note: 'Marque fictive, inventée pour la démonstration.',
       vault: { couleur: '#0F3B3A', vision: 'Un monde où chacun reprend son souffle avant la journée.',
@@ -506,7 +507,11 @@ export async function construire() {
   Date.aller('2026-11-10T14:00:00.000Z');
   PRODUCTION.poser(afficheSn, 'bat', 'ORV-2027-01_affiche-4x3_SN_V1_BAT.pdf', 'Dossier de production (fictif)');
 
-  /* ——— Une demande simple, à côté : décliner une invitation en story. ——— */
+  /* ——— Une demande simple, à côté : décliner une invitation en story. ———
+   * Petite, mais cadrée : qui décide, jusqu'à quand elle sert, ce qu'on
+   * vérifie en revue, et l'invitation imprimée comme piste retenue. Une
+   * demande simple de la démo invite à juger ; elle n'arrive pas avec quatre
+   * points à traiter. */
   Date.aller('2026-11-10T15:00:00.000Z');
   const noro = {
     id: 'PRJ-noro', ref: 'NOR-2026-01', nom: 'Atelier Noro — invitation en story', nature: 'demande', gabarit: 'demande',
@@ -514,8 +519,14 @@ export async function construire() {
     equipe: [{ personne: 'PE-ilan', poste: 'da' }, { personne: 'PE-yao', poste: 'graphic' }],
     perimetre: { supports: ['S-story'], marches: ['M-cm'] }, volets: [],
     sections: { identite: { client: 'Atelier Noro', clientId: 'CL-noro', marqueIds: ['MQ-noro'], type: 'Demande simple',
-      debut: '2026-11-10', echeance: '2026-12-08',
-      objectif: 'Décliner l’invitation imprimée en story, pour annoncer le vernissage du 10 décembre (fictif).' } },
+      debut: '2026-11-10', echeance: '2026-12-08', decideurId: 'CT-noro', decideur: 'Suzanne Noro, fondatrice (fictive)',
+      tueur: 'Personne d’autre : la fondatrice décide seule (fictif)', fenetre: 'Du 1er au 10 décembre 2026, jusqu’au vernissage',
+      objectif: 'Décliner l’invitation imprimée en story, pour annoncer le vernissage du 10 décembre (fictif).' },
+      bigidea: { criteres: ['Le nom de l’atelier tient dans la zone sûre de la story'] },
+      pistes: [{ id: 'PI-noro', titre: 'L’invitation telle qu’imprimée', statut: 'retenue', auteurDA: 'PE-ilan', version: 1,
+        motif: 'La story reprend l’invitation imprimée : rien à réinventer.', arbitre_le: '2026-11-10T15:00:00.000Z',
+        axe_directrice: 'L’invitation imprimée, remise à la verticale.', axe_ton: 'Chaleureux, artisanal',
+        axe_univers: 'Le corail de l’enveloppe, le carton crème, le nom tracé à la main.', axe_valeurs: ['Savoir-faire', 'Accueil'] }] },
     livrables: [], idees: [],
   };
   projets.push(noro);
@@ -523,7 +534,7 @@ export async function construire() {
   const story = {
     id: DEPOT.identifiant('L'), cree_le: new Date().toISOString(),
     niveau: 'declinaison', voletId: null, support: 'S-story', marche: 'M-cm',
-    nom: 'Invitation · story · CM', responsable: 'PE-yao', origine: 'prevu', pisteId: null,
+    nom: 'Invitation · story · CM', responsable: 'PE-yao', origine: 'prevu', pisteId: 'PI-noro',
     maitre: null, versionMaitre: null, version: 1, versions: [],
     estime: 1, reel: null, toursVendus: 1, remise: '2026-12-04', echeance: '2026-12-05', publication: null,
     assets: ['AS-noro-invitation'], entrees: [], annotations: [], mockups: [], points: points(ctx, 'attente'),
