@@ -1,6 +1,6 @@
 # Les tâches, rôle par rôle
 
-Gabarit. Les tâches reprennent le protocole de l'audit d'adoption (§6) et les
+Gabarit. Les tâches reprennent le protocole de la section 6 de l'audit d'adoption et les
 cinq gestes « à valider avec les DC » prévus dès septembre 2026 par la
 documentation de la suite. Voir [`PROTOCOLE.md`](PROTOCOLE.md) pour le
 déroulé.

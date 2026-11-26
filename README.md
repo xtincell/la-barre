@@ -671,8 +671,8 @@ de ces requêtes.
 ## Lancer les tests
 
 La CI (`.github/workflows/verification.yml`) tourne sous Node 22, à chaque push
-et à chaque pull request vers `main`, sans `npm install`. Le job `verification`
-exécute :
+et à chaque pull request vers `main`. Le job `verification` exécute d'abord,
+sans `npm install` :
 
 ```bash
 node --check servir.mjs
@@ -735,7 +735,8 @@ saute sans eux hors de la CI ; `tests/entreprise.test.mjs` et
 parcours dans Chromium avec Playwright, sur un serveur éphémère et la base
 fictive `tests/fixtures/studio.json`. Il demande `npm install` et un Chromium
 pour Playwright (`npx playwright install chromium`, ou `BROWSER_CHANNEL` pour
-un navigateur installé). La CI ne le lance pas.
+un navigateur installé). La CI le lance avec Google Chrome s'il est installé,
+sinon avec le Chromium de Playwright.
 
 ## Mesurer avant de changer
 
@@ -865,7 +866,6 @@ La définition de « fini » d'une PR d'interface est dans
 - **Des routes locales pensées pour macOS.** `/disque-ouvrir` appelle `open` ;
   `/partage-pdf` cherche Chrome à son chemin macOS, sauf si `LA_BARRE_CHROME`
   est défini.
-- **Un parcours navigateur hors CI.** `npm test` ne se lance qu'à la main.
 
 ## Adapter l'installation
 
