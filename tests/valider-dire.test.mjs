@@ -864,6 +864,11 @@ test('« Demander un retour », « Décrire un fichier » et « Nouveau KV » re
 
   s.ctx.RENVOI.ouvrir({ quoi: 'Brief — REF-ET', projet: 'REF-ET', projetId: 'ET', objet: 'brief' });
   etiquettesReliees(s.dernier(), ['Sur quel critère', 'À qui', 'Ce que j\'attends', 'Pour quand', 'Si « autre motif »']);
+  /* Sans destinataire, le refus vouvoie, comme le reste de l'interface. */
+  const qui = trouver(s.dernier(), n => n.getAttribute && n.getAttribute('id') === 'renvoi-qui');
+  qui.value = ''; (qui.ecouteurs.change || []).forEach(f => f());
+  cliquer(trouver(s.dernier(), n => n.tagName === 'BUTTON' && /bouton/.test(n.className) && !/creux/.test(n.className)));
+  assert.deepEqual(s.refus, ['Nommez une personne : un renvoi ne s\'adresse pas à une direction.']);
 
   const l = livrable('L-et', { mockups: [{ id: 'MK-1', contexte: 'Abribus' }] });
   p.livrables.push(l);

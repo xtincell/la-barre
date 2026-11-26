@@ -132,7 +132,7 @@ window.RENVOI = (function () {
         el("button.bouton", {
           type: "button",
           onclick: function () {
-            if (!destinataire) { AVIS.refus("Nomme une personne : un renvoi ne s'adresse pas à une direction."); return; }
+            if (!destinataire) { AVIS.refus("Nommez une personne : un renvoi ne s'adresse pas à une direction."); return; }
             var s = SOUVERAINETES[choix];
             var neuve = DEPOT.ajoute("attentes", {
               quoi: contexte.quoi || "",
