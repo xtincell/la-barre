@@ -395,20 +395,6 @@ window.VUE_LIVRABLE = (function () {
 
   /* ————————————————————— Décider ————————————————————— */
 
-  /* Les quatre décisions, chacune avec ce qu'elle entraîne. */
-  function choixVerdicts(p, l, choisir) {
-    var piece = { type: "livrable", objet: l, projet: p, titre: l.nom,
-      semaine: PLATEAU.semaineDe(PLATEAU.echeanceDe(p, l)) };
-    return el("div.rc-verdicts", {}, MAISON.verdicts.map(function (v) {
-      var c = COUT.verdict(piece, v.cle);
-      var resume = c.alertes[0] || (c.jours ? "+" + c.jours + " j" : c.gagne[0] || c.effets[0] || "");
-      return el("button.rc-v." + v.cle, { type: "button", onclick: function () { choisir(v); } },
-        el("span.v-signe", { "aria-hidden": "true" }, v.signe),
-        el("span.v-nom", {}, v.geste || v.nom),
-        el("span.v-cout" + (c.alertes.length ? ".alerte" : ""), {}, resume));
-    }));
-  }
-
   function verdictDe(cle) {
     return MAISON.verdicts.filter(function (v) { return v.cle === cle; })[0] || null;
   }
@@ -448,14 +434,39 @@ window.VUE_LIVRABLE = (function () {
     return bloc;
   }
 
+  /* Une version déjà décidée : la décision, et de quoi en changer. La nouvelle
+   * décision s'ajoute à l'historique ; même une validation passe alors par le
+   * panneau, qui le dit, et jamais par un clic. */
+  function decisionRendue(p, l, version, apres, lecture) {
+    var v = version.objet, def = verdictDe(v.verdict);
+    var autres = MAISON.verdicts.filter(function (x) { return x.cle !== v.verdict; });
+    return el("div.rvp-decidee", {},
+      el("p", {}, UI.eti(def ? def.nom : "Décision enregistrée", v.verdict === "approuve" ? "vert" : "attente"),
+        v.juge_le ? " " + O.joli(v.juge_le) : null),
+      v.motif ? el("p.rvp-motif", {}, v.motif) : null,
+      lecture ? null : el("details.rvp-autre", {}, el("summary", {}, "Changer la décision"),
+        el("p.rvp-meta", {}, "La nouvelle décision s'ajoute à l'historique de la V" + version.numero + "."),
+        el("div.rvp-gestes", {}, autres.map(function (x) {
+          return el("button.b.nu", { type: "button", "data-geste": x.cle,
+            onclick: function () { juger(p, l, x, apres); } }, x.geste || x.nom);
+        }))));
+  }
+
+  /* L'onglet « Critères et décision » de la fiche : les mêmes deux boutons
+   * que la page de la pièce, « Autre décision » en dessous. */
   function criteres(p, l, apres, compact) {
     var b = p.sections.bigidea || {};
     var grille = controles(p, l);
+    var version = REMISE.versionCourante(l);
+    var lecture = !version || l.annule || p.fusionne || (window.CLOTURE && CLOTURE.est(p));
     return el("div.revue-criteres", { "data-livrable": l.id },
       compact && b.criteres && b.criteres[0] ? el("p.revue-premier-critere", {}, b.criteres[0]) : null,
       !compact ? grille : null,
-      el("div.sousbloc", {}, el("h3", {}, "Votre décision sur la V" + (l.version || 1)),
-        validationEnCours(l) ? decider(p, l, apres) : choixVerdicts(p, l, function (v) { juger(p, l, v, apres); })),
+      el("div.sousbloc", {}, el("h3", {}, "Votre décision sur la V" + (version ? version.numero : l.version || 1)),
+        !version ? el("p.rien", {}, "Aucune version à décider : soumettez d'abord la version en cours.")
+          : version.objet.verdict ? decisionRendue(p, l, version, apres, lecture)
+          : lecture ? el("p.rien", {}, "Ce dossier est clos : la pièce se consulte.")
+          : decider(p, l, apres)),
       compact ? el("details", {}, el("summary", {}, "Voir tous les critères"), grille) : null
     );
   }
@@ -489,21 +500,25 @@ window.VUE_LIVRABLE = (function () {
     var v = version.objet;
     var contexte = etatPourVerdict(l, v);
     if (attendu && (attendu !== contexte || v.verdict)) { AVIS.refus("La version a changé. Relisez la pièce avant de décider."); return; }
-    if (!verdict.motifRequis) { engager(p, l, contexte, verdict, version.numero, apres); return; }
-    var demande = DEMANDES[verdict.cle] || { champ: "Pourquoi", bouton: verdict.geste || verdict.nom, vide: "Dites pourquoi." };
+    if (!verdict.motifRequis && !v.verdict) { engager(p, l, contexte, verdict, version.numero, apres); return; }
+    /* Une validation sur une version déjà décidée passe par ce panneau : il dit
+     * qu'elle s'ajoute à l'historique, et un mot y reste facultatif. */
+    var demande = !verdict.motifRequis
+      ? { champ: "Un mot sur cette validation (facultatif)", bouton: "Valider la V" + version.numero }
+      : DEMANDES[verdict.cle] || { champ: "Pourquoi", bouton: verdict.geste || verdict.nom, vide: "Dites pourquoi." };
     var marche = l.marche ? DEPOT.trouve("marches", l.marche) : null;
     var g = REGLES.grille("livrable", l);
     var etat = l.grille || {};
     var vides = g.filter(function (c) { return etat[c.cle] !== true; }).map(function (c) { return c.texte; });
     var enDessus = !!document.querySelector(".panneau[role='dialog']");
     var fermer = enDessus ? PANNEAU.fermerSur : PANNEAU.fermer;
-    var champ = el("textarea", { id: "revue-motif", rows: 4, "aria-required": "true" });
-    champ.value = annotationsOuvertes(l, version.numero);
+    var champ = el("textarea", { id: "revue-motif", rows: 4, "aria-required": verdict.motifRequis ? "true" : null });
+    if (verdict.motifRequis) champ.value = annotationsOuvertes(l, version.numero);
     var statut = el("p.remise-erreur", { role: "alert" }, "");
     var formulaire = el("form.form", { onsubmit: function (e) {
       e.preventDefault();
       var motif = champ.value.trim();
-      if (!motif) { statut.textContent = demande.vide; champ.focus(); return; }
+      if (!motif && verdict.motifRequis) { statut.textContent = demande.vide; champ.focus(); return; }
       var erreur = poser(p.id, l.id, contexte, verdict, motif);
       if (erreur) { statut.textContent = erreur; return; }
       fermer();
@@ -512,7 +527,7 @@ window.VUE_LIVRABLE = (function () {
       v.verdict ? el("p", {}, "Cette version a déjà une décision. La nouvelle s'ajoute à son historique.") : null,
       el("div.champ", {},
         el("label", { for: "revue-motif" }, demande.champ), champ,
-        vides.length ? el("details", {}, el("summary", {}, "Reprendre un critère non tenu"),
+        verdict.motifRequis && vides.length ? el("details", {}, el("summary", {}, "Reprendre un critère non tenu"),
           el("div.form-actions", {}, vides.map(function (critere) {
             return el("button.motif", { type: "button", onclick: function () {
               champ.value = (champ.value.trim() ? champ.value.trim() + "\n" : "") + critere; champ.focus();

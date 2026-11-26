@@ -59,7 +59,7 @@ test('KV.titre dit la pièce en clair et garde le code en surtitre, sans toucher
 
 /* ————— L'auteur d'un retour posé sur l'image ————— */
 
-const { bac: bacDecisions, semer, projet, livrable, PERSONNES, bouton, saisie, cliquer } = await import('./decisions-scenarios.mjs');
+const { bac: bacDecisions, semer, projet, livrable, PERSONNES, bouton, saisie, cliquer, soumettre } = await import('./decisions-scenarios.mjs');
 const APP = new URL('../app/', import.meta.url).pathname;
 function trouver(n, test) {
   if (!n || typeof n !== 'object') return null;
@@ -191,4 +191,61 @@ test('une page fermée avant l’échéance : la note se rejoue à la réouvertu
   const ouverte = await validation(47, [['la-barre-validations', JSON.stringify([{ ...note, rejouer: false, quand: '2026-11-10T09:00:00.000Z' }])]]);
   assert.equal(ouverte.s.ctx.VUE_LIVRABLE.reprendreValidations(), 0, 'la note d’une page encore ouverte n’est pas prise');
   assert.equal(ouverte.notes().length, 1);
+});
+
+/* ————— Décider depuis la fiche de la pièce ————— */
+
+const textes = n => (n && n.textContent) || '';
+const boutons = n => {
+  const out = [];
+  (function voir(x) { if (!x || typeof x !== 'object') return; if (x.tagName === 'BUTTON') out.push(x.textContent.trim()); (x.childNodes || []).forEach(voir); })(n);
+  return out;
+};
+
+test('la fiche propose les deux mêmes boutons que la page, le reste sous « Autre décision », sans coût affiché', async () => {
+  const v = await validation(51);
+  v.s.ctx.REGLES.prix = () => 'Aucun critère écrit.';
+  const bloc = v.s.ctx.VUE_LIVRABLE.criteres(v.p, v.l, () => {}, true);
+  const b = boutons(bloc);
+  assert.ok(b.includes('Valider la V1') && b.includes('Demander des modifs'), b.join(' | '));
+  assert.ok(b.includes('Valider avec réserves') && b.includes('Refuser : hors brief'));
+  assert.match(textes(bloc), /Autre décision/);
+  assert.doesNotMatch(textes(bloc), /Hors périmètre|passerait à|chiffrage/);
+});
+
+test('une version déjà décidée ne se valide pas d’un clic depuis la fiche : le panneau dit que la décision s’ajoute', async () => {
+  const v = await validation(52);
+  v.s.ctx.REGLES.prix = () => 'Aucun critère écrit.';
+  Object.assign(v.l.versions[0], { verdict: 'retour', motif: 'Logo trop petit', juge_le: '2026-11-04T08:00:00.000Z' });
+  const bloc = v.s.ctx.VUE_LIVRABLE.criteres(v.p, v.l, () => {}, true);
+  assert.match(textes(bloc), /Logo trop petit/, 'la décision et son motif restent lisibles');
+  assert.match(textes(bloc), /Changer la décision/);
+  assert.ok(!boutons(bloc).includes('Valider la V1'), 'pas de validation en un clic');
+  cliquer(bouton(bloc, 'Valider'));
+  assert.equal(v.minuteries.length, 0, 'aucun engagement différé');
+  assert.equal(v.l.versions[0].verdict, 'retour', 'rien n’est écrit sans confirmer');
+  const panneau = v.s.dernier();
+  assert.match(textes(panneau), /Cette version a déjà une décision\. La nouvelle s'ajoute à son historique\./);
+  soumettre(panneau);
+  assert.equal(v.l.versions[0].verdict, 'approuve');
+  assert.equal(v.s.ctx.DEPOT.liste('decisions').length, 1);
+});
+
+test('« Autre décision » exige son motif : des réserves ou un refus sans texte n’écrivent rien et disent quoi écrire', async () => {
+  for (const [cle, vide, motif] of [['reserve', 'Dites quelles réserves vous posez.', 'Le fond peut être plus clair'],
+    ['hors', 'Dites ce qui sort du brief.', 'Un second visuel n’était pas au devis']]) {
+    const v = await validation(53);
+    const verdict = v.s.ctx.MAISON.verdicts.find(x => x.cle === cle);
+    v.s.ctx.VUE_LIVRABLE.juger(v.p, v.l, verdict, () => {});
+    const panneau = v.s.dernier();
+    assert.equal(saisie(panneau).value, '');
+    soumettre(panneau);
+    assert.match(textes(panneau), new RegExp(vide.replace('.', '\\.')));
+    assert.equal(v.l.versions[0].verdict, undefined, cle + ' : rien n’est écrit sans motif');
+    assert.equal(v.s.ctx.DEPOT.liste('decisions').length, 0);
+    saisie(panneau).value = motif;
+    soumettre(panneau);
+    assert.equal(v.l.versions[0].verdict, cle);
+    assert.equal(v.l.versions[0].motif, motif);
+  }
 });
