@@ -648,6 +648,43 @@ test('un rendu nommé par code va sûr sur son KV nommé en clair, jamais sur l�
   assert.deepEqual(lot.map(r => [r.etat, r.l && r.l.id]), [['sur', gh.id], ['sur', ci.id], ['sur', sn.id]]);
 });
 
+test('chaque nom d’un KV compte pour lui-même : un rendu nommé par code a le même score qu’avant', async () => {
+  const neuf = await dossierDeRendus();
+  const ancien = await dossierDeRendus(ls => {
+    ls[0].nom = 'KV master commun · Orvelle';
+    ['GH', 'CI', 'SN'].forEach((c, i) => { ls[i + 1].nom = 'KV · ' + c + ' · Orvelle'; });
+  });
+  /* Le nom en clair ne dilue pas le code : « KV-GH-Orvelle.png » vaut 1, comme
+   * contre « KV · GH · Orvelle ». Un fichier au format maison hésite entre les
+   * KV, comme avant, au lieu de ne plus rien trouver. */
+  for (const fichier of ['KV-GH-Orvelle.png', 'KV_CI_Orvelle_V3.jpg', 'Orvelle KV CI V2.jpg',
+    'Orvelle — Lancement — KV 4x3 — Le goût d ici — EN.png', 'Affiche_4x3_GH.jpg']) {
+    const [a] = ancien.apparier([fichier]), [n] = neuf.apparier([fichier]);
+    assert.deepEqual([n.etat, n.score.toFixed(2), n.l && n.l.id], [a.etat, a.score.toFixed(2), a.l && a.l.id], fichier);
+  }
+  const [maison] = neuf.apparier(['Orvelle — Lancement — KV 4x3 — Le goût d ici — EN.png']);
+  assert.equal(maison.etat, 'hesite');
+  assert.ok(neuf.kvs.includes(maison.l), 'il hésite entre les KV, pas vers l’affiche');
+
+  /* Le nom en clair compte aussi : « KV Ghana Orvelle » va sûr sur le KV. */
+  const [clair] = neuf.apparier(['KV Ghana Orvelle.png']);
+  assert.deepEqual([clair.etat, clair.l], ['sur', neuf.kvs[0]]);
+});
+
+test('APPARIER sans formes rapproche comme avant ; avec, chaque forme compte pour elle-même', async () => {
+  const s = await bacDecisions(APP, 90);
+  await s.charger('apparier');
+  const { APPARIER } = s.ctx;
+  const c = (ref, ...noms) => ({ ref, mots: [...new Set(noms.flatMap(n => APPARIER.mots(n)))], formes: noms.map(n => APPARIER.mots(n)) });
+  const sans = x => ({ ref: x.ref, mots: x.mots });
+  const cand = [c('gh', 'Key visual — Ghana · Orvelle', 'KV · GH · Orvelle'), c('aff', 'Affiche 4×3 · GH')];
+  const sujet = [{ ref: 'f', mots: APPARIER.mots('KV-GH-Orvelle.png') }];
+  const [avec] = APPARIER.rapprocher(cand, sujet), [reunion] = APPARIER.rapprocher(cand.map(sans), sujet);
+  assert.equal(avec.score, 1);
+  assert.ok(reunion.score < avec.score, 'la réunion seule dilue le code : ' + reunion.score.toFixed(2));
+  assert.deepEqual([avec.etat, avec.candidat.ref], ['sur', 'gh']);
+});
+
 test('les KV nommés par code, d’avant ce lot, se rapprochent comme avant', async () => {
   const d = await dossierDeRendus(ls => {
     ls[0].nom = 'KV master commun · Orvelle';

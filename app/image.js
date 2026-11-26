@@ -412,12 +412,13 @@ window.IMAGE = (function () {
    * Ghana · Orvelle ») se reconnaît encore à « KV_GH_Orvelle_V3.jpg » : sans
    * son code, « GH » ne désignerait plus que l'affiche du même marché, et un
    * artwork rangé sous la mauvaise pièce s'imprime. */
+  function formesDe(l) {
+    return [mots((l.releve || {}).fichier), mots(l.nom), window.KV && KV.code ? mots(KV.code(l)) : []]
+      .filter(function (f) { return f.length; });
+  }
   function motsDe(l) {
-    var a = mots((l.releve || {}).fichier);
-    var b = mots(l.nom);
-    var c = window.KV && KV.code ? mots(KV.code(l)) : [];
     var vus = {};
-    return a.concat(b, c).filter(function (m) {
+    return [].concat.apply([], formesDe(l)).filter(function (m) {
       if (vus[m]) return false; vus[m] = 1; return true;
     });
   }
@@ -428,7 +429,9 @@ window.IMAGE = (function () {
    * livrable se reconnaît, et la forme que le reste du module attend. */
   function apparier(livrables, fichiers) {
     var vivants = (livrables || []).filter(function (l) { return !l.annule; });
-    var cand = vivants.map(function (l) { return { l: l, mots: motsDe(l) }; });
+    /* Chaque nom compte pour lui-même : « KV_GH_Orvelle_V3.jpg » se lit
+     * contre « KV · GH · Orvelle » comme avant que le KV s'appelle en clair. */
+    var cand = vivants.map(function (l) { return { l: l, mots: motsDe(l), formes: formesDe(l) }; });
     var suj = (fichiers || []).map(function (f) { return { f: f, mots: APPARIER.mots(f.name) }; });
 
     return APPARIER.rapprocher(cand, suj, { seuil: SEUIL, marge: MARGE })
