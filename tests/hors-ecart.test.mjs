@@ -196,9 +196,12 @@ test('la revue tranche depuis un panneau : motif exigé, puis l’un des deux ge
   assert.match(texte(s.dernier()), /Ghana : la langue a changé sans que ce soit prévu\./);
   assert.match(texte(s.dernier()), /Non prévu.*Langue/);
   assert.doesNotMatch(texte(s.dernier()), /écart déclaré|Market Expansion/);
+  assert.match(texte(s.dernier()), /Pourquoi \(obligatoire\)/);
   cliquer(bouton(s.dernier(), 'Autoriser pour le Ghana'));
   assert.equal(decisions(s).length, 0, 'sans motif, rien');
-  assert.ok(s.refus.length);
+  assert.match(texte(s.dernier()), /Dites pourquoi vous autorisez ce changement pour le Ghana, ou ce qu'il faut corriger\./,
+    'le motif manquant se dit sur place, sans mot de doctrine');
+  assert.deepEqual(s.refus, []);
   saisie(s.dernier()).value = 'Le distributeur exige l’anglais';
   cliquer(bouton(s.dernier(), 'Autoriser pour le Ghana'));
   assert.equal(decisions(s).length, 1); assert.equal(rafraichi, 1);
@@ -236,6 +239,8 @@ test('le changement se dit en clair, avec l’article du marché', async () => {
   assert.deepEqual(['Ghana', 'Côte d’Ivoire', 'Sénégal', 'Égypte', 'Guinée équatoriale', 'Madagascar', 'États-Unis',
     'Mozambique', 'RDC', null].map(pour), ['pour le Ghana', 'pour la Côte d’Ivoire', 'pour le Sénégal', 'pour l’Égypte',
     'pour la Guinée équatoriale', 'pour Madagascar', 'pour les États-Unis', 'pour le Mozambique', 'pour la RDC', 'pour GH']);
+  assert.deepEqual(['Guinée-Bissau', 'Hongrie', 'Honduras', 'Haïti', 'Inde'].map(pour),
+    ['pour la Guinée-Bissau', 'pour la Hongrie', 'pour le Honduras', 'pour Haïti', 'pour l’Inde']);
   assert.equal(E.enClair(['langue']), 'la langue a changé');
   assert.equal(E.enClair(['reglementaire']), 'les mentions réglementaires ont changé');
   assert.equal(E.enClair(['marque', 'langue', 'produit']), 'la langue, la marque et le produit (SKU) ont changé');

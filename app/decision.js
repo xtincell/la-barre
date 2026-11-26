@@ -208,7 +208,7 @@ window.DECISION = (function () {
     var def = ECARTS[e.de];
     if (!def) throw refus("Écart inconnu : « " + e.de + " ». Une déviation s'écarte de " + Object.keys(ECARTS).join(", ") + ".");
     if (nomme(e.ref) && !texte(e.ref)) throw refus("La référence de l'écart est illisible.");
-    if (!texte(d.motif)) throw refus("Une déviation exige un motif écrit : s'écarter sans dire pourquoi, c'est s'écarter par goût.");
+    if (!texte(d.motif)) throw refus("Dites pourquoi : sans motif écrit, ce changement n'est pas enregistré.");
     if (!nomme(d.portee) || (typeof d.portee === "string" && !d.portee.trim())) {
       throw refus("Une déviation déclare sa portée : " + PORTEES.join(", ").replace(/, ([^,]*)$/, " ou $1") + ".");
     }

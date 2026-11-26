@@ -371,8 +371,8 @@ test('la portée d’une déviation doit correspondre à l’objet visé', () =>
 
 test('une déviation porte un motif, nomme ce dont elle s’écarte et s’adosse à une référence existante', () => {
   const f = fabrique(DEPOT_ECARTS);
-  /* Même approuvée : s'écarter sans dire pourquoi, c'est s'écarter par goût. */
-  for (const motif of ['', '  ', null]) assert.throws(() => f.D.poser(ecartDeCampagne({ motif })), /déviation exige un motif/);
+  /* Même approuvée, une déviation dit pourquoi : sans motif, rien n'est écrit. */
+  for (const motif of ['', '  ', null]) assert.throws(() => f.D.poser(ecartDeCampagne({ motif })), /Dites pourquoi : sans motif écrit, ce changement n'est pas enregistré\./);
   for (const ecart of [null, 'reference-campagne', [], {}, { de: '' }, { de: 3 }]) {
     assert.throws(() => f.D.poser(ecartDeCampagne({ ecart })), /nomme ce dont elle s'écarte/, JSON.stringify(ecart));
   }

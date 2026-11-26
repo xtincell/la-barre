@@ -120,20 +120,23 @@ window.ECARTS_MARCHE = (function () {
   }
 
   /* « pour le Ghana », « pour la Côte d’Ivoire », « pour l’Égypte » : l'article
-   * se lit sur le premier mot du nom, avec les exceptions courantes. */
+   * se lit sur le premier mot du nom (avant un tiret : « Guinée-Bissau »), avec
+   * les exceptions courantes. Un h aspiré se lit comme une consonne : « pour la
+   * Hongrie », « pour le Honduras ». */
   var SANS_ARTICLE = ["madagascar", "maurice", "cuba", "haïti", "djibouti", "singapour", "malte", "chypre", "israël",
     "oman", "bahreïn", "monaco", "sao tomé-et-principe"];
   var PLURIELS = ["états-unis", "pays-bas", "émirats arabes unis", "comores", "seychelles", "philippines", "maldives"];
   var MASCULINS = ["mozambique", "cambodge", "mexique", "zimbabwe", "belize", "suriname"];
   var FEMININS = ["rdc", "rca", "sierra leone"];
+  var H_ASPIRE = ["hongrie", "honduras"];
   function pourLe(m) {
     var nom = m && m.nom ? String(m.nom).trim() : "";
     if (!nom) return "pour " + ((m && m.code) || "ce marché");
-    var n = nom.toLowerCase(), premier = n.split(" ")[0];
+    var n = nom.toLowerCase(), premier = n.split(/[\s-]/)[0];
     if (SANS_ARTICLE.indexOf(n) !== -1) return "pour " + nom;
     if (PLURIELS.indexOf(n) !== -1) return "pour les " + nom;
     if (FEMININS.indexOf(n) !== -1) return "pour la " + nom;
-    if (/^[aeiouyhâàéèêîïôœ]/.test(n)) return "pour l’" + nom;
+    if (/^[aeiouyhâàéèêîïôœ]/.test(n) && H_ASPIRE.indexOf(premier) === -1) return "pour l’" + nom;
     if (MASCULINS.indexOf(n) !== -1 || !/e$/.test(premier)) return "pour le " + nom;
     return "pour la " + nom;
   }
@@ -480,23 +483,39 @@ window.ECARTS_MARCHE = (function () {
     return el("div.ligne", {}, el("span.etiq", {}, etiq), el("span.val", {}, valeur || "non renseigné"));
   }
 
+  /* Le titre d'une pièce à l'écran (kv-modele.js) : « Key visual — Ghana »
+   * plutôt que son code. */
+  function titreDe(l) {
+    return l && window.KV && KV.titre ? KV.titre(l) : (l && l.nom) || "Adaptation";
+  }
+
   /* Le panneau de revue : ce que le marché a déclaré, ce que l'adaptation
-   * change, ce qui sort, et les deux gestes. Le motif est exigé par la fabrique. */
+   * change, ce qui sort, et les deux gestes. Le motif est demandé sur place,
+   * avant tout geste ; la fabrique le vérifie aussi. */
   function revoir(p, l, apres) {
     var x = evaluer(p, l);
     var m = DEPOT.trouve("marches", l && l.marche) || { code: (l && l.marche) || "?", nom: "absent du référentiel" };
     if (x.etat !== "hors-ecart") { AVIS.refus(pasHors(x)); return; }
-    var zone = el("textarea", { id: "ecm-motif", rows: 3 });
+    var erreur = el("p.remise-erreur", { id: "ecm-motif-erreur", role: "alert" }, "");
+    var zone = el("textarea", { id: "ecm-motif", rows: 3, "aria-required": "true", "aria-describedby": "ecm-motif-erreur" });
     function geste(faire, fait) {
       return function () {
+        if (!zone.value.trim()) {
+          erreur.textContent = "Dites pourquoi vous autorisez ce changement " + pourLe(m) + ", ou ce qu'il faut corriger.";
+          zone.focus();
+          return;
+        }
         var r = faire(p, l, zone.value);
-        if (!r.ok) { AVIS.refus(r.erreur); return; }
+        if (!r.ok) { erreur.textContent = r.erreur; return; }
         PANNEAU.fermer();
         AVIS.fait(fait);
         if (apres) apres();
       };
     }
-    PANNEAU.ouvrir("Changement non prévu", (l.nom || "Adaptation") + " · " + m.nom, el("div", {},
+    var titre = titreDe(l);
+    /* Un titre composé dit déjà le pays ; un nom écrit par l'équipe, pas toujours. */
+    var sous = window.KV && KV.surtitre && KV.surtitre(l) ? titre : titre + " · " + m.nom;
+    PANNEAU.ouvrir("Changement non prévu", sous, el("div", {},
       el("p.meta", {}, phrase(m, l, x.hors) + " Rien n'est bloqué : autorisez ce changement " + pourLe(m)
         + " sur ce projet, ou faites corriger la décli pour qu'elle revienne à ce qui était prévu."),
       el("div.form", {},
@@ -508,12 +527,12 @@ window.ECARTS_MARCHE = (function () {
           return libelle([t]) + " (" + champsDe(x, t).join(", ") + ")"; }).join(" · ")),
         ligne("Non prévu", libelle(x.hors)),
         x.revue ? ligne("Correction demandée", O.joli(x.revue.quand) + " — " + x.revue.motif) : null,
-        el("div.champ", {}, el("label", { "for": "ecm-motif" }, "Pourquoi"), zone)),
+        el("div.champ", {}, el("label", { "for": "ecm-motif" }, "Pourquoi (obligatoire)"), zone, erreur)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: geste(corrigerDeclaration,
           "Changement autorisé " + pourLe(m) + " : " + libelle(x.hors).toLowerCase() + ".") }, "Autoriser " + pourLe(m)),
         el("button.b", { type: "button", onclick: geste(corrigerAdaptation,
-          (l.nom || "La décli") + " : correction demandée, elle revient à ce qui était prévu.") }, "Faire corriger la décli"),
+          titre + " : correction demandée, elle revient à ce qui était prévu.") }, "Faire corriger la décli"),
         el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); } }, "Annuler"))));
   }
 
