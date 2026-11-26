@@ -446,17 +446,24 @@ window.VUE_LIVRABLE = (function () {
    * panneau, qui le dit, et jamais par un clic. */
   function decisionRendue(p, l, version, apres, lecture) {
     var v = version.objet, def = verdictDe(v.verdict);
-    var autres = MAISON.verdicts.filter(function (x) { return x.cle !== v.verdict; });
     return el("div.rvp-decidee", {},
       el("p", {}, UI.eti(def ? def.nom : "Décision enregistrée", v.verdict === "approuve" ? "vert" : "attente"),
         v.juge_le ? " " + O.joli(v.juge_le) : null),
       v.motif ? el("p.rvp-motif", {}, v.motif) : null,
-      lecture ? null : el("details.rvp-autre", {}, el("summary", {}, "Changer la décision"),
-        el("p.rvp-meta", {}, "La nouvelle décision s'ajoute à l'historique de la V" + version.numero + "."),
-        el("div.rvp-gestes", {}, autres.map(function (x) {
-          return el("button.b.nu", { type: "button", "data-geste": x.cle,
-            onclick: function () { juger(p, l, x, apres); } }, x.geste || x.nom);
-        }))));
+      lecture ? null : changerDecision(p, l, version, apres));
+  }
+
+  /* De quoi changer une décision déjà prise : sur la fiche comme sur la page
+   * de la pièce, là où on l'a prise. */
+  function changerDecision(p, l, version, apres) {
+    var v = version.objet;
+    var autres = MAISON.verdicts.filter(function (x) { return x.cle !== v.verdict; });
+    return el("details.rvp-autre", {}, el("summary", {}, "Changer la décision"),
+      el("p.rvp-note", {}, "La nouvelle décision s'ajoute à l'historique de la V" + version.numero + "."),
+      el("div.rvp-gestes", {}, autres.map(function (x) {
+        return el("button.b.nu", { type: "button", "data-geste": x.cle,
+          onclick: function () { juger(p, l, x, apres); } }, x.geste || x.nom);
+      })));
   }
 
   /* L'onglet « Critères et décision » de la fiche : les mêmes deux boutons
@@ -947,6 +954,6 @@ window.VUE_LIVRABLE = (function () {
   }
 
   return { ouvrir: ouvrir, ouvrirFiche: ouvrirFiche,
-    criteres: criteres, controles: controles, decider: decider, juger: juger,
+    criteres: criteres, controles: controles, decider: decider, juger: juger, changerDecision: changerDecision,
     validationEnCours: validationEnCours, reprendreValidations: reprendreValidations, dependances: dependances };
 })();

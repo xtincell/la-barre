@@ -68,6 +68,10 @@
 .rvp-action { min-height: 44px; max-width: 100%; white-space: normal; text-align: center; }
 .rvp-decision, .rvp-gestes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .rvp-autre summary { padding-block: 12px; cursor: pointer; }
+.rvp-decision > .rvp-autre { flex-basis: 100%; }
+.rvp-autre .b.nu { border-color: var(--trait); color: var(--clair); }
+.rvp-autre .b.nu:hover { border-color: var(--clair-terne); }
+.rvp-note { margin: 0 0 8px; color: var(--clair-terne); font-size: 13px; font-weight: 400; line-height: 1.45; }
 .rvp-annexes { display: grid; gap: 0; margin-top: 16px; }
 .rvp-annexes > details { border-top: 1px solid var(--trait); }
 .rvp-annexes summary, .rvp-archive summary { min-height: 44px; padding: 11px 0; cursor: pointer; }

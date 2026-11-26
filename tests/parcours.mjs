@@ -127,7 +127,8 @@ try {
   await page.locator('.rvp-etat').getByText('Validé', { exact:true }).waitFor();
   await page.clock.resume();
   await page.getByRole('link', { name:'Suivre le BAT et la remise' }).waitFor();
-  assert.equal(await valider.count(), 0, 'La décision enregistrée reste en lecture seule');
+  assert.equal(await valider.count(), 0, 'La décision enregistrée ne se repropose pas d’un clic');
+  await page.locator('.rvp-pupitre .rvp-autre > summary', { hasText: 'Changer la décision' }).waitFor();
   assert.equal(await avis.count(), 0, 'L’avis d’annulation part avec l’échéance');
   // Un refus corrigé ne s'empile pas : le suivant, ou un succès, le remplace.
   // Le ✕ d'un avis se touche au doigt : 44 px de côté.
