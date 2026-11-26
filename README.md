@@ -22,8 +22,9 @@ font :
 4. **Le KV master** se juge version par version : une approbation ne vaut que
    pour la version jugée.
 5. **Les variantes par marché** ne portent que l'écart que leur marché a
-   déclaré au cadrage. Celle qui change autre chose n'est pas bloquée : elle
-   est signalée « hors écart déclaré », et la revue tranche.
+   déclaré au cadrage. Celle qui change autre chose n'est pas bloquée : la
+   pièce pose la question en clair (« Ghana : la langue a changé sans que ce
+   soit prévu. Autoriser pour le Ghana, ou faire corriger la décli ? »).
 6. **Le BAT** se pose et se signe sur une version précise ; la remise vérifie
    le manifeste avant que le fichier parte.
 7. **Le bilan** de la campagne s'arrête en une version figée, que la campagne
@@ -295,7 +296,14 @@ nom au pied du rail :
 **Le registre des décisions.** Une décision rejoint la collection `decisions`
 par un seul chemin, `app/decision.js` : verdict parmi quatre (`approuve`,
 `reserve`, `retour`, `hors`), motif écrit hors approbation, date, identifiant
-unique entre postes. Elle se rattache à un projet, à une campagne ou à une marque. Passent
+unique entre postes. À l'écran, ces quatre clés se disent « Validé »,
+« Validé avec réserves », « Modifs demandées » et « Refusé : hors brief »
+(`MAISON.verdicts`, avec le verbe de chaque bouton). Sur une pièce, « Valider
+la V2 » se pose d'un clic mais ne s'écrit qu'au bout de huit secondes, ou
+quand la page se ferme (`pagehide`) : « Annuler » le reprend sans qu'aucune
+décision ait existé, et Radar ne lit donc jamais une validation retirée.
+« Demander des modifs » tient en un panneau, « Ce qu'il faut changer »,
+prérempli par les retours posés sur l'image. Elle se rattache à un projet, à une campagne ou à une marque. Passent
 par lui : la big idea, la piste ou l'idée retenue ou écartée, la référence
 commune d'une campagne, le verdict sur un document, un livrable ou une pièce
 en revue, le concept écarté de la réserve d'une marque, le brief accepté ou
@@ -501,19 +509,20 @@ artistique n'ont pas de type.
 
 **Une adaptation hors de son écart déclaré.** Décision du 12 novembre 2026 :
 une adaptation qui change ce que son marché n'a pas déclaré n'est pas bloquée.
-Elle passe, et elle est signalée « hors écart déclaré », avec la dimension qui
-sort (`ECARTS_MARCHE.evaluer`). Le signal se voit sur la carte du mur et dans la
+Elle passe, et elle est signalée en clair, avec le pays et ce qui a changé
+(`ECARTS_MARCHE.evaluer`, `ECARTS_MARCHE.etiquette` : « Ghana : la langue a
+changé sans que ce soit prévu. »). Le signal se voit sur la carte du mur et dans la
 grille des livrables, sur la planche des KV, dans le bloc « Écarts déclarés par
 marché » et dans Décisions → À traiter. La revue tranche, depuis le même
 panneau, et chaque geste est une décision de `app/decision.js`, motif exigé :
 
-- « Corriger l'écart déclaré » étend la déclaration du marché à ce que
+- « Autoriser pour le Ghana » (`corrigerDeclaration`) étend la déclaration du marché à ce que
   l'adaptation change (`source: "revue"`, avec l'identifiant de la décision).
   La décision `ecart-marche` est une déviation du cadrage, de portée `projet`,
   qui garde les types d'avant et d'après dans `ecart`.
-- « Corriger l'adaptation » renvoie l'adaptation à ce que le marché a déclaré.
+- « Faire corriger la décli » (`corrigerAdaptation`) renvoie l'adaptation à ce que le marché a déclaré.
   La décision `hors-ecart` est un retour (`verdict: "retour"`) sur le livrable ;
-  la déclaration ne bouge pas, et le signal reste, marqué « retour décidé »,
+  la déclaration ne bouge pas, et le signal reste, marqué « correction demandée »,
   jusqu'à ce que l'adaptation soit corrigée. Dans la file, elle passe alors de
   « Trancher » à « Réclamer ».
 
