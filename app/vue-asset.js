@@ -308,7 +308,11 @@ window.VUE_ASSET = (function () {
     return UI.recevabilite("Que manque-t-il pour produire ?",
       PRODUCTION.porte(p, l), null,
       [
-        { nom: "Poser un fichier", fort: true, quand: function () { PRODUCTION.ajouter(p, l, apres); } },
+        /* Poser, c'est choisir le fichier : le sélecteur s'ouvre tout de
+         * suite. Décrire un fichier resté sur le Drive reste possible, en
+         * second. */
+        { nom: "Poser un fichier", fort: true, quand: function () { IMAGE.importer(l, apres); } },
+        { nom: "Décrire un fichier sans le déposer", doux: true, quand: function () { PRODUCTION.ajouter(p, l, apres); } },
         { nom: "Enregistrer un retour", quand: function () { FEEDBACK.ouvrir(p.id, [l.id], apres, voirRetours); } },
         { nom: "Nouvelle version", doux: true, quand: function () {
             VERSION.nouvelle(l, l.nom, apres, { perime: function () { return KV.descendance(p, l.id); } });
@@ -425,8 +429,17 @@ window.VUE_ASSET = (function () {
               el("span", {}, mk.contexte || "Sans contexte"));
           }))
         : null,
-      el("button.b.nu", { type: "button",
-        onclick: function () { PRODUCTION.ajouter(p, l, apres); } }, "+ Remplacer"));
+      el("div.ptf-a", {},
+        el("button.b.nu", { type: "button",
+          onclick: function () { IMAGE.importer(l, apres, e.cle); } }, "+ Remplacer"),
+        decrire(p, l, apres)));
+  }
+
+  /* Le second geste de chaque étage : dire où est un fichier qu'on ne dépose
+   * pas (un master sur le Drive, un lien de transfert). */
+  function decrire(p, l, apres) {
+    return el("button.studio-lien", { type: "button",
+      onclick: function () { PRODUCTION.ajouter(p, l, apres); } }, "Décrire un fichier sans le déposer");
   }
 
   /* L'étage où l'on est. C'est le seul qui prend de la place, et il porte tout
@@ -453,9 +466,10 @@ window.VUE_ASSET = (function () {
               (m.langues || []).map(O.langue).join(", ")) : null),
 
       el("button.pto-z", { type: "button",
-        onclick: function () { PRODUCTION.ajouter(p, l, apres); } },
+        onclick: function () { IMAGE.importer(l, apres, e.cle); } },
         el("span.ptoz-p", {}, "+"),
         el("span.ptoz-t", {}, "Poser " + minuscule(e.def.nom))),
+      decrire(p, l, apres),
 
       el("div.pto-c", {}, el("b", {}, "Sans lui"), PRODUCTION.coutDe(l, e.cle)),
       !retenue && e.def.signable

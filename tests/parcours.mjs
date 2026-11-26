@@ -286,6 +286,15 @@ try {
   await page.keyboard.press('Enter');
   await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo');
   await page.getByRole('heading',{level:1,name:'Affiche de lancement'}).waitFor();
+  // « Poser un fichier » ouvre le sélecteur du système, pas un formulaire ;
+  // décrire un fichier resté sur le Drive est le geste second.
+  const [selecteur] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.getByRole('button', { name:'Poser un fichier', exact:true }).click(),
+  ]);
+  assert.equal(selecteur.isMultiple(), false);
+  assert.equal(await page.getByRole('dialog', { name:'Décrire un fichier' }).count(), 0, 'Aucun formulaire de description ne s’ouvre');
+  await page.getByRole('button', { name:'Décrire un fichier sans le déposer' }).first().waitFor();
   await page.keyboard.press('Meta+k');
   await saisie.fill('support');
   await saisie.press('Escape');

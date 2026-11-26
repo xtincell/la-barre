@@ -1707,7 +1707,7 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .ptf-v { display: flex; gap: 8px; padding-left: 22px; flex-wrap: wrap; }
 .ptfv { display: grid; gap: 3px; width: 8rem; }
 .ptfv span { font-size: 11px; color: var(--clair-terne); }
-.pt-f > .b.nu { justify-self: start; margin-left: 14px; }
+.ptf-a { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; margin-left: 14px; }
 /* L'étage où l'on est : le seul qui prend de la place. */
 .pt-o { --ton: var(--studio-bleu); display: grid; gap: 12px; padding: 16px 18px; background: var(--surface-1);
   border: 1px solid var(--trait); border-left: 3px solid var(--ton); border-radius: 10px; }
@@ -1726,6 +1726,7 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .pto-z { display: flex; align-items: center; gap: 10px; justify-self: start; min-height: 44px; padding: 8px 14px;
   background: var(--surface-4); border: 1px dashed var(--trait-clair); border-radius: 6px; cursor: pointer; font: inherit; color: inherit; }
 .pto-z:hover { border-color: var(--studio-bleu); }
+.pt-o > .studio-lien { justify-self: start; margin-left: -8px; }
 .ptoz-p { font: 550 18px/1 var(--affichage); color: var(--studio-bleu); }
 .ptoz-t { font: 550 14px var(--affichage); color: var(--clair); }
 .pto-a { font-size: 13px; line-height: 1.5; color: var(--clair); }
