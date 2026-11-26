@@ -23,11 +23,17 @@ export const TERMES_INTERDITS = [
   { terme: 'indéfendable', pourquoi: 'vocabulaire de contentieux', expression: mot('indéfendables?') },
   { terme: 'paragraphe', pourquoi: 'renvoi à une procédure que personne n’a lue', expression: mot('paragraphes?') },
   { terme: '§', pourquoi: 'renvoi à une procédure que personne n’a lue', expression: /§\s*\d+(?:\s*bis)?/gu },
-  { terme: 'porte A/B/C', pourquoi: 'jargon de doctrine interne', expression: mot('[Pp]ortes?\\s+[ABC]', 'gu') },
-  /* « étage 1 », « l'étage autorisé », « Étage non fixé », « à l'étage » : les
-   * tournures de la doctrine. Une étagère ou « un étage de bureaux » passent. */
-  { terme: 'étage', pourquoi: 'jargon de doctrine interne (« étage 1 », « étage autorisé »)',
-    expression: mot('étages?\\s*\\d+|étages?\\s+(?:autorisée?s?|non\\s+fixée?s?|cohérente?s?|plafonnée?s?)|(?:à|de)\\s+l[\'’]étage') },
+  /* « porte A », « la porte B n'est pas arbitrée », et le compteur « La porte
+   * 0 sur 1 ». Sensible à la casse : « la porte a claqué » passe. Le compteur
+   * se lit même collé au mot suivant (« 0 sur 1un étage reste… »). */
+  { terme: 'porte A/B/C', pourquoi: 'jargon de doctrine interne (« porte A », « la porte 0 sur 1 »)',
+    expression: /(?<![\p{L}\p{N}_])[Pp]ortes?\s+(?:[ABC](?![\p{L}\p{N}_])|\d+\s+sur\s+\d+(?!\d))/gu },
+  /* Dans La Barre, « étage » n'a qu'un sens : celui de la doctrine (« étage 1 »,
+   * « l'étage qui commence », « un étage reste à franchir », « une école par
+   * étage »). Il est relevé partout, sauf dans les tournures d'immeuble
+   * (« un étage de bureaux », « les étages du siège »). Une étagère passe. */
+  { terme: 'étage', pourquoi: 'jargon de doctrine interne (« étage 1 », « l’étage qui commence »)',
+    expression: mot('étages?(?!\\s+(?:de\\s+bureaux|du\\s+siège|du\\s+bâtiment|de\\s+l[\'’]immeuble|d[\'’]un\\s+immeuble))') },
   { terme: 'hors écart déclaré', pourquoi: 'dire en clair ce que le marché a changé', expression: mot('hors\\s+écart\\s+déclaré') },
 ];
 

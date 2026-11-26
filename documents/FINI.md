@@ -124,10 +124,12 @@ propriétaire du produit.
 Aucun écran touché n'affiche de terme de tribunal ou de doctrine, ni d'emblée,
 ni à un clic dans un bloc replié. La liste est dans
 `outils/termes-interdits.mjs` : verdict, opposable, imputable, sans recours,
-indéfendable, paragraphe, « § » suivi d'un numéro, « porte A/B/C », « étage »
-suivi d'un numéro ou dans ses tournures de doctrine (« étage autorisé »,
-« étage non fixé », « à l'étage »), « hors écart déclaré ». Elle s'enrichira du
-glossaire validé par l'agence ; elle ne s'invente pas.
+indéfendable, paragraphe, « § » suivi d'un numéro, « porte A/B/C » et son
+compteur (« la porte 0 sur 1 »), « étage » partout où la doctrine l'emploie
+(« étage 1 », « l'étage qui commence », « un étage reste à franchir », « une
+école par étage » ; seuls « un étage de bureaux » et ses pareils passent),
+« hors écart déclaré ». Elle s'enrichira du glossaire validé par l'agence ;
+elle ne s'invente pas.
 
 - `captures.json` relève ces termes capture par capture, en deux champs :
   - `termes` : le texte visible, et le texte d'exemple des champs vides ;

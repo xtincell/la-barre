@@ -61,10 +61,16 @@ test('les termes interdits sont relevés avec les accents, sans faux positifs', 
   assert.deepEqual(relever('Valider la V2 · Demander des modifs'), []);
 });
 
-test('« étage » est relevé dans ses tournures de doctrine, pas dans la langue courante', () => {
+test('« étage » et « porte » sont relevés partout où la doctrine les emploie, pas dans la langue courante', () => {
   const n = Object.fromEntries(relever("Étage autorisé. Étage non fixé. Étage cohérent avec la plateforme. Une demande à l'étage 1. L’étage plafonné.").map(x => [x.terme, x.nombre]));
   assert.deepEqual(n, { 'étage': 5 });
-  assert.deepEqual(relever('Une étagère, un étage de bureaux, les étages du siège.'), []);
+  // Les phrases que l'écran montre vraiment (premier écran d'un dossier, d'une pièce, des Ressources).
+  for (const phrase of ['Intercalaire : tire l’étage qui commence : cadrage, conception, pistes, suite', 'un étage reste à franchir',
+    '3 étages restent à franchir', 'Un seul étage sur ce support', 'Une école par étage', 'L’école qui gouverne chaque étage'])
+    assert.deepEqual(relever(phrase).map(x => x.terme), ['étage'], phrase);
+  // « La porte » et son compteur, même collé au mot suivant comme à l'écran.
+  assert.deepEqual(Object.fromEntries(relever('La porte 0 sur 1un étage reste à franchir').map(x => [x.terme, x.nombre])), { 'porte A/B/C': 1, 'étage': 1 });
+  assert.deepEqual(relever('Une étagère, un étage de bureaux, les étages du siège, la porte a claqué, une porte bleue, 0 sur 1.'), []);
 });
 
 test('les valeurs techniques affichées sont relevées, sensibles à la casse', () => {
