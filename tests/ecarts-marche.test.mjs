@@ -202,10 +202,10 @@ test('le bloc de la grille montre chaque marché et déclare depuis le panneau',
   const p = dossier(), s = await atelier({ projets: [p] });
   let rafraichi = 0;
   let bloc = s.E.bloc(p, () => { rafraichi += 1; });
-  assert.match(s.texte(bloc), /Écarts déclarés par marché/);
+  assert.match(s.texte(bloc), /Ce que chaque marché peut changer/);
   assert.match(s.texte(bloc), /0 sur 2 marchés déclarés/);
   assert.match(s.texte(bloc), /non déclaré/);
-  s.find(bloc, n => n.tag.startsWith('button') && n.children.includes('déclarer') && n['aria-label'] === 'Déclarer l’écart de GH').onclick();
+  s.find(bloc, n => n.tag.startsWith('button') && n.children.includes('déclarer') && n['aria-label'] === 'Déclarer ce que GH peut changer').onclick();
   const cases = s.all(s.panneau, n => n.tag === 'input' && n.type === 'checkbox');
   assert.deepEqual(cases.map(c => c.value), ['langue', 'marque', 'produit', 'reglementaire']);
   cases[0].checked = true; cases[1].checked = true;
@@ -217,7 +217,7 @@ test('le bloc de la grille montre chaque marché et déclare depuis le panneau',
   assert.match(s.texte(bloc), /1 sur 2 marchés déclarés/);
   assert.match(s.texte(bloc), /Langue \+ Marque/);
 
-  s.find(bloc, n => n['aria-label'] === 'Déclarer l’écart de GH').onclick();
+  s.find(bloc, n => n['aria-label'] === 'Déclarer ce que GH peut changer').onclick();
   const rouvertes = s.all(s.panneau, n => n.tag === 'input' && n.type === 'checkbox');
   assert.deepEqual(rouvertes.map(c => !!c.checked), [true, true, false, false], 'la déclaration se relit cochée');
   s.find(s.panneau, n => n.tag.startsWith('button') && n.children.includes('Retirer la déclaration')).onclick();

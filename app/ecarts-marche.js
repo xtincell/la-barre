@@ -574,9 +574,9 @@ window.ECARTS_MARCHE = (function () {
         checked: !!(d && d.types.indexOf(t.code) !== -1) });
     });
     var zone = el("textarea", { id: "ecm-detail", rows: 2 }, d ? d.detail : "");
-    PANNEAU.ouvrir("L'écart de " + m.code, m.nom, el("div", {},
+    PANNEAU.ouvrir("Ce que " + m.code + " peut changer", m.nom, el("div", {},
       el("p.meta", {}, "Ce que ce marché a le droit de changer du master, pour ce projet. Aucune case cochée : "
-        + "le marché est déclaré sans écart. Tout autre écart se refuse, ou il se facture."),
+        + "rien de prévu pour ce marché. Tout autre changement se refuse, ou il se facture."),
       el("div.form", {},
         TYPES.map(function (t, i) {
           return el("label", { "for": "ecm-" + t.code }, cases[i], " ", el("b", {}, t.nom), " — " + t.change);
@@ -590,7 +590,7 @@ window.ECARTS_MARCHE = (function () {
           var r = declarer(p, m.id, types, zone.value);
           if (!r.ok) { AVIS.refus(r.erreur); return; }
           PANNEAU.fermer();
-          AVIS.fait(m.code + " : " + libelle(r.declaration.types) + ".");
+          AVIS.fait(m.code + " : " + prevu(r.declaration.types) + ".");
           if (apres) apres();
         } }, "Déclarer"),
         d ? el("button.b.nu", { type: "button", onclick: function () {
@@ -601,9 +601,14 @@ window.ECARTS_MARCHE = (function () {
         el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); } }, "Annuler"))));
   }
 
+  /* À l'écran, une déclaration vide se dit « rien de prévu » ; `libelle` garde
+   * « aucun écart » pour le journal et les décisions déjà écrites. */
+  function prevu(types) { return types && types.length ? libelle(types) : "rien de prévu"; }
+
   /* Le bloc de la grille : un marché par ligne, sa déclaration, le geste, et
-   * ce que ses adaptations en font. Une adaptation hors écart déclaré se revoit
-   * d'ici ; une adaptation non évaluée se compte, sans signal. */
+   * ce que ses adaptations en font. Une adaptation qui change ce qui n'était
+   * pas prévu se revoit d'ici ; une adaptation non évaluée se compte, sans
+   * signal. */
   function bloc(p, rafraichir) {
     var lignes = marches(p);
     var declares = lignes.filter(function (x) { return x.declaration; }).length;
@@ -612,9 +617,10 @@ window.ECARTS_MARCHE = (function () {
     var nonEvaluees = evals.filter(function (e) { return e.x.etat === "non-evaluee"; }).length;
     function adaptationsDe(marcheId) {
       return evals.filter(function (e) { return e.l.marche === marcheId; }).map(function (e) {
-        var nom = e.l.nom || "adaptation";
+        var nom = titreDe(e.l);
         if (e.x.etat !== "hors-ecart") {
-          return el("span.ecm-ad", {}, nom + " : " + (e.x.etat === "non-evaluee" ? "non évaluée" : "dans l'écart"));
+          return el("span.ecm-ad", { title: e.l.nom || null }, nom + " : "
+            + (e.x.etat === "non-evaluee" ? "non évaluée" : "conforme à ce qui était prévu"));
         }
         return el("button.b.nu.ecm-signal", { type: "button", title: "Décider pour " + nom,
           onclick: function () { revoir(p, e.l, rafraichir); } },
@@ -624,7 +630,7 @@ window.ECARTS_MARCHE = (function () {
     }
     return el("div.volet", {},
       el("div.volet-tete", {},
-        el("b", {}, "Écarts déclarés par marché"),
+        el("b", {}, "Ce que chaque marché peut changer"),
         el("span.age", {}, declares + " sur " + lignes.length + " marchés déclarés"),
         hors ? el("span.ecm-compte", {}, hors + (hors > 1 ? " changements non prévus" : " changement non prévu")) : null,
         nonEvaluees ? el("span.age", {}, nonEvaluees + (nonEvaluees > 1 ? " adaptations non évaluées" : " adaptation non évaluée")) : null,
@@ -632,7 +638,7 @@ window.ECARTS_MARCHE = (function () {
         el("button.b.nu", { type: "button", onclick: function () { choisirFichier(p, rafraichir); } }, "Importer")),
       el("p.meta", { style: { padding: "0 .8rem .4rem" } },
         "Ce que chaque marché a le droit de changer du master, pour ce projet : langue, marque, produit / SKU, "
-        + "réglementaire. Un marché peut en porter plusieurs. « Non déclaré » n'est pas « aucun écart ». "
+        + "réglementaire. Un marché peut en porter plusieurs. « Non déclaré » ne veut pas dire « rien de prévu ». "
         + "Une adaptation qui change autre chose passe, signalée comme changement non prévu : on l'autorise "
         + "pour le marché, ou on fait corriger la décli."),
       lignes.length
@@ -640,10 +646,10 @@ window.ECARTS_MARCHE = (function () {
             var d = x.declaration;
             return el("tr", {},
               el("td.entete-ligne", {}, x.marche.code + " · " + x.marche.nom),
-              el("td", {}, d ? libelle(d.types) + (d.inconnus.length ? " · inconnus : " + d.inconnus.join(", ") : "") : "non déclaré"),
+              el("td", {}, d ? prevu(d.types) + (d.inconnus.length ? " · inconnus : " + d.inconnus.join(", ") : "") : "non déclaré"),
               el("td", {}, d ? d.detail : ""),
               el("td.ecm-adaptations", {}, adaptationsDe(x.marche.id)),
-              el("td", {}, el("button.b.nu", { type: "button", "aria-label": "Déclarer l’écart de " + x.marche.code,
+              el("td", {}, el("button.b.nu", { type: "button", "aria-label": "Déclarer ce que " + x.marche.code + " peut changer",
                 onclick: function () { dialogue(p, x.marche, rafraichir); } }, d ? "modifier" : "déclarer")));
           }))))
         : el("p.rien", { style: { padding: ".6rem .8rem" } }, "Aucun marché : le périmètre n'en promet encore aucun."));
