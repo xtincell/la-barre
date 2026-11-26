@@ -381,6 +381,30 @@ test('un BAT posé à son étage, sans signataire, est complété : il n’y a j
   assert.ok(R.preuveCourante(p, ci), 'la pièce est livrée');
 });
 
+test('une remise refusée après l’écriture du BAT rouvre le geste sur l’état atteint, qui ne demande plus que la remise', async () => {
+  const { s, p, ci, R } = await geste();
+  const attribuer = s.ctx.O.identifiantUnique;
+  s.ctx.O.identifiantUnique = () => null;
+  R.marquerLivre(p, ci, () => {});
+  const premier = s.dernier();
+  remplir(premier, { 'bat-par': 'Imprimerie', canal: 'WeTransfer', destinataire: 'Chargée de production' });
+  envoyer(premier);
+  await laisserFiler();
+  assert.equal(R.etatPiece(ci).cle, 'preuve', 'le BAT et les fichiers sont écrits');
+  assert.equal(p.preuvesRemise, undefined, 'la remise ne l’est pas');
+  const rouvert = s.dernier();
+  assert.notEqual(rouvert, premier, 'le formulaire se rouvre');
+  assert.match(rouvert.textContent, /Le BAT et les fichiers remis sont enregistrés, pas encore la remise : Impossible d’attribuer/);
+  assert.deepEqual(champs(rouvert).filter(c => c.getAttribute('required') !== null).map(c => c.getAttribute('name')),
+    ['destinataire', 'remis-le'], 'il ne redemande ni le BAT ni les fichiers');
+  s.ctx.O.identifiantUnique = attribuer;
+  remplir(rouvert, { destinataire: 'Chargée de production' });
+  envoyer(rouvert);
+  await laisserFiler();
+  assert.ok(R.preuveCourante(p, ci), 'la pièce est livrée au second envoi');
+  assert.equal(ci.fichiers.filter(f => f.type === 'bat').length, 1);
+});
+
 test('« Enregistrer seulement le BAT » pose le BAT sans marquer la pièce livrée', async () => {
   const { s, p, ci, R } = await geste();
   R.marquerLivre(p, ci, () => {}, { batSeul: true });

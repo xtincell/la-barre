@@ -460,12 +460,15 @@ window.REMISE = (function () {
   }
 
   /* Un formulaire de remise. `valider` rend un résultat, ou une promesse
-   * quand une pièce jointe doit d'abord monter sur le disque. */
+   * quand une pièce jointe doit d'abord monter sur le disque. Un résultat
+   * refusé qui porte `reprendre` a déjà écrit une partie de la pièce : le
+   * formulaire se ferme, l'écran se redessine, et `reprendre` rouvre le geste
+   * sur l'état atteint, avec le refus dit en tête. */
   function formulaire(titre, sous, enfants, valider, apres, libelles) {
     libelles = libelles || {};
     var avecPanneau = !!document.querySelector(".panneau[role='dialog']");
     var fermer = avecPanneau ? PANNEAU.fermerSur : PANNEAU.fermer;
-    var statut = el("p.remise-erreur", { role: "alert" }, "");
+    var statut = el("p.remise-erreur", { role: "alert" }, libelles.avis || "");
     var envoi = el("button.b.or", { type: "submit" }, libelles.action || "Enregistrer");
     var form = el("form.form.remise-form", { onsubmit: function (e) {
       e.preventDefault();
@@ -474,6 +477,12 @@ window.REMISE = (function () {
       envoi.disabled = true;
       Promise.resolve(valider(new FormData(form), form)).then(function (res) {
         envoi.disabled = false;
+        if (res.erreur && res.reprendre) {
+          fermer();
+          if (apres) apres();
+          res.reprendre(res.erreur);
+          return;
+        }
         if (res.erreur) { statut.textContent = res.erreur; return; }
         fermer();
         if (apres) apres();
@@ -568,14 +577,16 @@ window.REMISE = (function () {
       repli("Joindre un justificatif : photo, PDF ou lien", pieceJointe(f, "remise", "du justificatif")));
   }
 
+  /* Rend vrai quand le formulaire s'est ouvert. `options.avis` : un refus à
+   * dire en tête du formulaire rouvert (voir `reprendre`). */
   function marquerLivre(p, l, apres, options) {
     options = options || {};
-    if (!enregistrementPermis()) return;
+    if (!enregistrementPermis()) return false;
     var v = versionCourante(l);
     var depart = etatPiece(l);
-    if (!v || ["bat", "sortie", "preuve"].indexOf(depart.cle) === -1) return;
+    if (!v || ["bat", "sortie", "preuve"].indexOf(depart.cle) === -1) return false;
     var batSeul = !!options.batSeul && depart.cle === "bat";
-    if (!batSeul && !DEPOT.exigerReference(p, "La livraison")) return;
+    if (!batSeul && !DEPOT.exigerReference(p, "La livraison")) return false;
     var demandeBat = depart.cle === "bat";
     var demandeSortie = !batSeul && !fichiersSortie(l, v.numero).length;
     var pose = demandeBat ? batEnAttente(l, v.numero) : null;
@@ -640,16 +651,29 @@ window.REMISE = (function () {
                 }
                 if (batSeul) { DEPOT.enregistrer(); return { ok: true }; }
                 var e = etatPiece(la.l);
-                if (e.cle !== "preuve") { DEPOT.enregistrer(); return { erreur: "La pièce n’est pas prête à être remise : " + e.nom + "." }; }
-                var recu = consigner(la.projet.id, [empreintePiece(la.l, e)], { nom: remise.nom, destinataire: destinataire,
-                  quand: remisLe, preuve: remise.preuve });
-                /* Le BAT et les fichiers posés restent vrais même si la remise est refusée. */
-                if (recu.erreur) DEPOT.enregistrer();
-                return recu;
+                var recu = e.cle !== "preuve" ? { erreur: "La pièce n’est pas prête à être remise : " + e.nom + "." }
+                  : consigner(la.projet.id, [empreintePiece(la.l, e)], { nom: remise.nom, destinataire: destinataire,
+                    quand: remisLe, preuve: remise.preuve });
+                if (!recu.erreur || !(demandeBat || demandeSortie)) return recu;
+                /* Le BAT et les fichiers posés restent vrais même si la remise est
+                 * refusée. Le formulaire ne vaut plus : il demandait ce qui est
+                 * maintenant écrit. On le rouvre sur l'état atteint, qui ne
+                 * demande plus que la remise. Une pièce jointe déjà montée pour
+                 * la remise reste sur le disque sans être désignée par la base :
+                 * c'est rare, sans effet, et on l'accepte. */
+                DEPOT.enregistrer();
+                var ecrit = [demandeBat ? "Le BAT" : null, demandeSortie ? "les fichiers remis" : null].filter(Boolean);
+                var dit = ecrit.join(" et ") + (ecrit.length > 1 ? " sont enregistrés" : " est enregistré")
+                  + ", pas encore la remise : " + recu.erreur;
+                dit = dit.charAt(0).toUpperCase() + dit.slice(1);
+                return { erreur: dit, reprendre: function () {
+                  if (!marquerLivre(la.projet, la.l, apres, { avis: dit })) AVIS.refus(dit);
+                } };
               });
           });
       }, apres, { action: batSeul ? "Enregistrer le BAT" : "Marquer comme livré",
-        fait: batSeul ? "BAT enregistré." : "Livraison enregistrée." });
+        fait: batSeul ? "BAT enregistré." : "Livraison enregistrée.", avis: options.avis });
+    return true;
   }
 
   /* Le même geste pour un lot : les pièces prêtes à partir, une seule remise. */
