@@ -700,3 +700,18 @@ test('Décisions ne redit pas le support et le marché que le titre de la pièce
     ['Key visual — Ghana · Orvelle · V1', 'REF-RV'],
     ['Bannière de lancement · V1', 'REF-RV · Post social 1:1 · Côte d’Ivoire']]);
 });
+
+test('sur la planche, un master ancien et un master neuf se lisent de la même façon', async () => {
+  const s = await bacDecisions(APP, 96);
+  for (const nom of ['kv-modele', 'apparier', 'image', 'trace', 'annotation', 'vue-planche']) await s.charger(nom);
+  semer(s.ctx, { personnes: PERSONNES, ...REFERENTIEL, projets: [projet('PL')] });
+  const p = s.ctx.DEPOT.trouve('projets', 'PL');
+  const ancien = s.ctx.KV.creer(p, null, null, 'maitre', { marque: 'Orvelle' });
+  ancien.nom = 'KV master commun · Orvelle';
+  const neuf = s.ctx.KV.creer(p, null, null, 'maitre', { marque: 'Peak' });
+  const sous = l => trouver(s.ctx.VUE_PLANCHE.caseKV(p, l, () => {}), n => /plc-sous/.test(n.className)).textContent.split(' · ')[0];
+  assert.deepEqual([sous(ancien), sous(neuf)].map(t => t.replace(/ /g, ' ')), ['Key visual master · Orvelle', 'Key visual master · Peak']);
+  s.ctx.VUE_PLANCHE.ajouter(p, () => {});
+  const menu = trouver(s.dernier(), n => n.tagName === 'SELECT' && n.getAttribute('aria-label') === 'Master de référence');
+  assert.deepEqual(menu.childNodes.map(o => o.textContent.replace(/ /g, ' ')), ['Key visual master · Orvelle · V1', 'Key visual master · Peak · V1']);
+});

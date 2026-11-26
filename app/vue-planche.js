@@ -141,7 +141,7 @@ window.VUE_PLANCHE = (function () {
         el("span.plc-bas", {},
           el("span.plc-copy" + (k.copy ? "" : ".vide"), {}, k.copy || "Accroche à écrire"),
           el("span.plc-sous", {}, [
-            KV.estMaitre(l) && l.nom ? l.nom : KV.NIVEAUX[KV.niveau(l)].nom.toLowerCase(),
+            KV.estMaitre(l) && l.nom ? KV.titre(l) : KV.NIVEAUX[KV.niveau(l)].nom.toLowerCase(),
             O.langue(k.langue) || "langue ?",
             decl ? decl + (decl > 1 ? " formats" : " format") : "aucun format",
             mks ? mks + " en situation" : null,
@@ -267,7 +267,9 @@ window.VUE_PLANCHE = (function () {
     selType.appendChild(el("option", { value: "adaptation" }, "Adaptation marché"));
     selType.value = maitres.length ? "adaptation" : "maitre";
     var selBase = el("select", { "aria-label": "Master de référence" });
-    maitres.forEach(function (l) { selBase.appendChild(el("option", { value: l.id }, l.nom + " · V" + (l.version || 1))); });
+    /* Le master par son titre : un ancien (« KV master commun · Orvelle ») et
+     * un neuf (« Key visual master · Peak ») se lisent de la même façon. */
+    maitres.forEach(function (l) { selBase.appendChild(el("option", { value: l.id }, KV.titre(l) + " · V" + (l.version || 1))); });
     var selM = el("select", { "aria-label": "Marché de destination" });
     selM.appendChild(el("option", { value: "" }, "Choisir un marché"));
     DEPOT.liste("marches").forEach(function (m) {
@@ -314,7 +316,8 @@ window.VUE_PLANCHE = (function () {
     var selKV = el("select", { "aria-label": "KV de référence" });
     g.kvs.forEach(function (l) {
       var m = DEPOT.trouve("marches", l.marche);
-      selKV.appendChild(el("option", { value: l.id }, l.nom + (m ? " · " + m.nom : "")));
+      var t = KV.titre(l);
+      selKV.appendChild(el("option", { value: l.id }, t + (m && t.indexOf(m.nom) === -1 ? " · " + m.nom : "")));
     });
     var selM = el("select", { "aria-label": "Marché des formats" });
     selM.appendChild(el("option", { value: "" }, "Choisir un marché"));
