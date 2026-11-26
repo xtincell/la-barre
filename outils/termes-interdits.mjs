@@ -37,6 +37,16 @@ export const TERMES_INTERDITS = [
   { terme: 'hors écart déclaré', pourquoi: 'dire en clair ce que le marché a changé', expression: mot('hors\\s+écart\\s+déclaré') },
 ];
 
+/* Un extrait d'une trentaine de signes de part et d'autre de [debut, fin[,
+ * coupé entre deux mots, jamais au milieu d'un mot (« …jeudi 26 novembre »,
+ * pas « …di 26 novembre »). */
+export function extrait(t, debut, fin, marge = 30) {
+  let a = Math.max(0, debut - marge), b = Math.min(t.length, fin + marge);
+  if (a > 0 && t[a - 1] !== ' ') { const i = t.indexOf(' ', a); a = i >= 0 && i < debut ? i + 1 : debut; }
+  if (b < t.length && t[b] !== ' ') { const i = t.lastIndexOf(' ', b); b = i >= fin ? i : fin; }
+  return (a > 0 ? '…' : '') + t.slice(a, b).trim() + (b < t.length ? '…' : '');
+}
+
 /* Relève les termes interdits d'un texte : combien de fois, et où (trois
  * extraits au plus, pour retrouver la phrase sans relire tout l'écran). */
 export function relever(texte, termes = TERMES_INTERDITS) {
@@ -46,10 +56,7 @@ export function relever(texte, termes = TERMES_INTERDITS) {
     const re = new RegExp(expression.source, expression.flags.includes('g') ? expression.flags : expression.flags + 'g');
     const trouves = [...t.matchAll(re)];
     if (!trouves.length) continue;
-    out.push({ terme, nombre: trouves.length, extraits: trouves.slice(0, 3).map(m => {
-      const debut = Math.max(0, m.index - 30), fin = Math.min(t.length, m.index + m[0].length + 30);
-      return (debut > 0 ? '…' : '') + t.slice(debut, fin).trim() + (fin < t.length ? '…' : '');
-    }) });
+    out.push({ terme, nombre: trouves.length, extraits: trouves.slice(0, 3).map(m => extrait(t, m.index, m.index + m[0].length)) });
   }
   return out;
 }

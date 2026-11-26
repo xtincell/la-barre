@@ -6,11 +6,11 @@ import assert from 'node:assert/strict';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { mkdtemp, mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { routesDe, lireArguments, planche, comparer, restreindre, problemes, preparerSortie, pluriel, dateLisible,
-  sortieParDefaut, typographie, aLOeil, versionMesure, MODES_ATTENDUS, LARGEURS, MARQUE, OUTIL, ECART } from '../outils/recette-captures.mjs';
-import { relever, VALEURS_TECHNIQUES } from '../outils/termes-interdits.mjs';
+  sortieParDefaut, typographie, aLOeil, versionMesure, decrireNuance, MODES_ATTENDUS, LARGEURS, MARQUE, OUTIL, ECART, ONGLETS_PIECE } from '../outils/recette-captures.mjs';
+import { relever, extrait, VALEURS_TECHNIQUES } from '../outils/termes-interdits.mjs';
 
 const RACINE = fileURLToPath(new URL('../', import.meta.url));
 
@@ -45,6 +45,19 @@ test('les routes couvrent chaque espace, chaque mode et chaque rubrique de chaqu
   // Chaque écran porte un nom qu'une personne du métier reconnaît.
   assert.equal(routes.find(r => r.id === 'dossier/pitch/pistes').nom, 'Pitch · Pistes créatives');
   assert.equal(routes.find(r => r.id === 'referentiel/doctrine').nom, 'Ressources · doctrine');
+  // Les onglets d'une pièce, nommés comme l'application les affiche, sans terme interdit.
+  assert.equal(routes.find(r => r.id === 'piece/poser').nom, 'Pièce · Visuels et fichiers');
+  assert.equal(routes.find(r => r.id === 'piece/juger').nom, 'Pièce · Critères et décision');
+  assert.equal(routes.find(r => r.id === 'piece/origine').nom, 'Pièce · Versions et dépendances');
+  assert.equal(routes.find(r => r.id === 'piece/remise').nom, 'Pièce · BAT et remise');
+  assert.equal(routes.find(r => r.id === 'piece/version-historique').nom, 'Pièce · Critères et décision, version précédente');
+  assert.deepEqual(Object.keys(ONGLETS_PIECE), ['poser', 'juger', 'origine', 'remise']);
+  assert.deepEqual(relever(routes.map(r => r.nom).join('\n')), [], 'aucun nom d’écran ne porte de terme interdit');
+  // Recopiés de l'application, qui ne les expose pas : ils doivent rester les siens, « verdict » mis à part.
+  const source = readFileSync(join(RACINE, 'app', 'vue-asset.js'), 'utf8');
+  const onglets = Object.fromEntries([...source.matchAll(/\{ cle: "(\w+)", nom: "([^"]+)" \}/g)].map(m => [m[1], m[2]]));
+  assert.deepEqual(Object.keys(onglets), Object.keys(ONGLETS_PIECE));
+  for (const [cle, nom] of Object.entries(onglets)) assert.equal(ONGLETS_PIECE[cle], nom.replace(/verdict/g, 'décision'), cle);
 });
 
 test('les modes lus dans l’application l’emportent, et ce qui manque à la base est dit', () => {
@@ -64,6 +77,10 @@ test('les termes interdits sont relevés avec les accents, sans faux positifs', 
   assert.deepEqual(n, { verdict: 2, opposable: 1, '§': 2, 'porte A/B/C': 1, 'étage': 1, 'hors écart déclaré': 1 });
   assert.ok(t[0].extraits[0].includes('verdict'));
   assert.deepEqual(relever('Valider la V2 · Demander des modifs'), []);
+  // L'extrait se coupe entre deux mots, jamais au milieu d'un mot.
+  assert.deepEqual(relever('Le bureau du jeudi 26 novembre 2026 : rendre un verdict sur la V2 avant midi, sans faute ni retard.')[0].extraits,
+    ['…26 novembre 2026 : rendre un verdict sur la V2 avant midi, sans…']);
+  assert.equal(extrait('verdict', 0, 7), 'verdict');
 });
 
 test('« étage » et « porte » sont relevés partout où la doctrine les emploie, pas dans la langue courante', () => {
@@ -162,7 +179,7 @@ test('la planche-contact échappe le texte et compare avant et après', () => {
   assert.match(html, /^<!doctype html>/);
   assert.match(html, /Titre &lt;b&gt;/);
   assert.match(html, /\.\.\/avant\/captures\/bureau--320\.png/);
-  assert.match(html, /déborde de 12 px/);
+  assert.match(html, /déborde de 12\u00a0px/);
   assert.match(html, /<meta name="generator" content="outils\/recette-captures\.mjs">/);
   const c = comparer(avant, apres);
   assert.deepEqual(c.routesNouvelles, ['galerie']);
@@ -279,19 +296,22 @@ test('la planche « après » dit ce qui a changé, et laisse le lissage de côt
   assert.deepEqual(c.modifiees, ['bureau@320']);
   assert.equal(c.identiques, 2);
   assert.equal(c.identiquesALOeil, 1);
-  assert.deepEqual(c.nuancees, [{ capture: 'partage@320', max: 16, pixels: 300 }]);
+  assert.deepEqual(c.nuancees, [{ capture: 'partage@320', max: 16, pixels: 300, hors: { pixels: 0, max: 0 }, images: { pixels: 300, max: 16 } }]);
   const html = planche(apres, { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' });
   assert.match(html, /Ce qui a changé depuis la passe «\u00a0avant\u00a0»/);
   assert.doesNotMatch(html, /alerte-version">/);
   assert.match(html, /<b>1 capture modifiée<\/b>, 3 identiques \(dont 1 à l’œil seulement/);
   assert.match(html, /Écrans touchés\u00a0: <a href="#bureau" title="bureau">Bureau<\/a>/);
   // Les captures nuancées sont nommées avec leur nuance, et restent visibles sous le filtre.
-  assert.match(html, /Identiques à l’œil, à vérifier d’un regard\u00a0: <a href="#partage" title="partage">Page partagée<\/a> à 320 px \(nuance 16\/255 sur 300 px\)/);
+  assert.match(html, /Identiques à l’œil, à vérifier d’un regard\u00a0: <a href="#partage" title="partage">Page partagée<\/a> à 320\u00a0px \(nuance 16\/255 sur 300\u00a0pixels, dans une image\)/);
+  // La règle écrite est celle qui est appliquée : le lissage d'une image et le crénelage de quelques bords.
+  assert.match(html, /Seuls sont pardonnés le lissage d’une image \(jusqu’à 32\/255, dans les images\) et le crénelage de quelques bords \(au plus 8\/255, sur moins de 0,1\u202f% de la photo, hors des images\)\u202f; tout autre écart rend la capture «\u00a0modifiée\u00a0»/);
+  assert.match(html, /\(dont 1 à l’œil seulement\u00a0: le lissage d’une image ou le crénelage de quelques bords, listées ci-dessous\)/);
   assert.match(html, /<article id="bureau" class="a-voir">/);
   assert.match(html, /<article id="partage" class="a-voir">/);
   assert.match(html, /<article id="plus">/);
-  assert.match(html, /badge etat modifiee">modifiée · 1\u202f200 px \(0,1\u202f%\)/);
-  assert.match(html, /badge etat quasi">identique à l’œil · nuance 16\/255/);
+  assert.match(html, /badge etat modifiee">modifiée · 1\u202f200\u00a0pixels \(0,1\u202f%\)/);
+  assert.match(html, /badge etat quasi">identique à l’œil · nuance 16\/255 sur 300\u00a0pixels, dans une image/);
   assert.match(html, /id="seulement"/);
   assert.match(html, /figure\.identique,/);
   assert.doesNotMatch(html, /figure\.quasi\{|figure\.quasi,/, 'une capture nuancée n’est pas cachée par le filtre');
@@ -306,13 +326,15 @@ test('la planche « après » dit ce qui a changé, et laisse le lissage de côt
   assert.doesNotMatch(html, /\(s\)/);
   assert.match(html, /0 exception</);
   assert.match(html, /1 image cassée</);
-  // « À regarder » : une entrée par écran, nommé comme dans l'application, ses largeurs et sa première phrase.
-  assert.match(html, /À regarder\u00a0: 1 écran/);
-  assert.match(html, /<li><a href="#bureau" title="bureau">Bureau<\/a><ul><li><span class="badge terme">verdict<\/span> à 320 et 1440 px\u00a0: <q>…Rendre un verdict…<\/q><\/li><\/ul><\/li>/);
+  // Les alertes : une entrée par écran, nommé comme dans l'application, ses largeurs et sa première phrase.
+  // « À regarder » ne nomme que le filtre des captures, pas ce bloc.
+  assert.match(html, /<summary>Alertes, écran par écran\u00a0: 1 écran \(termes\)<\/summary>/);
+  assert.doesNotMatch(html, /À regarder/);
+  assert.match(html, /<li><a href="#bureau" title="bureau">Bureau<\/a><ul><li><span class="badge terme">verdict<\/span> à 320 et 1440\u00a0px\u00a0: <q>…Rendre un verdict…<\/q><\/li><\/ul><\/li>/);
   assert.match(html, /<h3>Bureau<\/h3>/);
 });
 
-test('« À regarder » montre le texte, et garde le sélecteur sur une ligne discrète', () => {
+test('les alertes montrent le texte, et gardent le sélecteur sur une ligne discrète', () => {
   const r = { quand: '2026-11-26', largeurs: [320], base: { fichier: 'b.json', projets: 1, livrables: 1 }, manquantes: [],
     resume: { routes: 1, captures: 1, exceptions: 0, debordements: 0, termes: 0, introuvables: 0, imagesCassees: 0 },
     captures: [capture('nouveau-projet', 320, { nom: 'Nouveau projet ouvert',
@@ -326,9 +348,16 @@ test('la typographie garde la ponctuation avec son mot, sans toucher aux balises
   assert.equal(typographie('<p>Termes : 138 → 138 ; repliés ? oui ! « avant » 0,1 %</p>'),
     '<p>Termes\u00a0: 138 → 138\u202f; repliés\u202f? oui\u202f! «\u00a0avant\u00a0» 0,1\u202f%</p>');
   assert.equal(typographie('<a href="#a :b" title="x ; y">z</a>'), '<a href="#a :b" title="x ; y">z</a>');
+  // Un nombre et son unité ne se séparent pas.
+  assert.equal(typographie('<p>nuance 5/255 sur 2 pixels, à 320 px, 1 pixel</p>'), '<p>nuance 5/255 sur 2\u00a0pixels, à 320\u00a0px, 1\u00a0pixel</p>');
   const html = planche({ quand: '2026-11-26', largeurs: [320], base: { fichier: 'b.json', projets: 1, livrables: 1 }, manquantes: [], captures: [capture('bureau', 320)],
     resume: { routes: 1, captures: 1, exceptions: 0, debordements: 0, termes: 0, introuvables: 0, imagesCassees: 0 } }, { dossier: '/tmp/r' });
   assert.match(html, /<style>\n:root\{/, 'la feuille de style est intacte');
+  // Les guillemets des extraits portent leurs espaces insécables ; une pastille ne se casse pas en deux.
+  assert.match(html, /q\{color:var\(--terne\);quotes:"«\\00a0" "\\00a0»"\}/);
+  assert.match(html, /\.badge\{display:inline-block;max-width:100%/);
+  // Une expression --routes longue se coupe, au lieu d'élargir la planche au téléphone.
+  assert.match(html, /\.meta code\{overflow-wrap:anywhere\}/);
 });
 
 test('la version de la mesure est l’empreinte de l’outil et de la liste des termes', () => {
@@ -348,4 +377,10 @@ test('la planche montre la planche cible assez grande, et les pluriels justes', 
   assert.match(html, /base copie\.json, 1 projet et 3 pièces/);
   assert.match(html, /vue de téléphone tactile/);
   assert.match(html, /Aucune exception, aucun débordement/);
+});
+
+test('une nuance dit où elle est : hors des images ou dans une image', () => {
+  assert.equal(decrireNuance({ pixels: 60, max: 16, hors: { pixels: 52, max: 1 }, images: { pixels: 8, max: 16 } }),
+    'nuance 1/255 sur 52 pixels, hors des images ; nuance 16/255 sur 8 pixels, dans une image');
+  assert.equal(decrireNuance({ pixels: 1, max: 3 }), 'nuance 3/255 sur 1 pixel, hors des images');
 });

@@ -93,6 +93,12 @@ export const PLANCHES = {
   ressources: '05-ressources.png', partage: '06-mobile-remise-partage.png',
 };
 
+/* Les onglets d'une pièce, nommés comme l'application les affiche
+ * (app/vue-asset.js, ONGLETS, que l'application n'expose pas). L'onglet
+ * « juger » s'y appelle « Critères et verdict » : la recette l'écrit sans le
+ * terme interdit, que la microcopie retirera de l'application. */
+export const ONGLETS_PIECE = { poser: 'Visuels et fichiers', juger: 'Critères et décision', origine: 'Versions et dépendances', remise: 'BAT et remise' };
+
 const ESPACE_DE = { valider: 'decisions', planning: 'planning', reporting: 'bilan', referentiel: 'ressources' };
 const NOM_VUE = { valider: 'Décisions', planning: 'Planning', reporting: 'Bilan', referentiel: 'Ressources' };
 
@@ -117,12 +123,12 @@ export function routesDe(inv) {
 
   const pc = inv.pieces || {};
   if (pc.attente) for (const mode of ['poser', 'juger', 'origine'])
-    ajouter('piece/' + mode, 'piece', adresse('projets', pc.attente.p, 'livrables', pc.attente.l, mode), 'Pièce · ' + mode);
+    ajouter('piece/' + mode, 'piece', adresse('projets', pc.attente.p, 'livrables', pc.attente.l, mode), 'Pièce · ' + ONGLETS_PIECE[mode]);
   else manquantes.push('piece/poser', 'piece/juger', 'piece/origine');
-  if (pc.approuvee) ajouter('piece/remise', 'piece', adresse('projets', pc.approuvee.p, 'livrables', pc.approuvee.l, 'remise'), 'Pièce · remise');
+  if (pc.approuvee) ajouter('piece/remise', 'piece', adresse('projets', pc.approuvee.p, 'livrables', pc.approuvee.l, 'remise'), 'Pièce · ' + ONGLETS_PIECE.remise);
   else manquantes.push('piece/remise');
   if (pc.historique) ajouter('piece/version-historique', 'piece',
-    adresse('projets', pc.historique.p, 'livrables', pc.historique.l, 'juger', pc.historique.n), 'Pièce · version historique');
+    adresse('projets', pc.historique.p, 'livrables', pc.historique.l, 'juger', pc.historique.n), 'Pièce · ' + ONGLETS_PIECE.juger + ', version précédente');
   else manquantes.push('piece/version-historique');
   if (pc.piste) ajouter('piece/piste', 'piece', adresse('projets', pc.piste.p, 'pistes', pc.piste.id), 'Piste');
   else manquantes.push('piece/piste');
@@ -289,12 +295,14 @@ function echapper(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '
 function lien(depuis, fichier) { return relative(depuis, fichier).split(sep).map(encodeURIComponent).join('/'); }
 
 /* La typographie française : une espace insécable avant « ; ? ! % » (fine)
- * et « : » (normale), et à l'intérieur des guillemets, pour qu'aucun signe ne
+ * et « : » (normale), à l'intérieur des guillemets, et entre un nombre et son
+ * unité (« 2 px », « 52 pixels »), pour qu'aucun signe ni aucune unité ne
  * commence une ligne sur un téléphone. Seul le texte est touché, jamais une
  * balise ni la feuille de style. */
 export function typographie(html) {
   return html.replace(/>([^<]+)</g, (m, t) => '>' + t
     .replace(/ ([;?!%])/g, '\u202f$1')
+    .replace(/(\d) (px|pixels?)\b/g, '$1\u00a0$2')
     .replace(/ :/g, '\u00a0:')
     .replace(/« /g, '«\u00a0')
     .replace(/ »/g, '\u00a0»') + '<');
@@ -343,7 +351,7 @@ export function problemes(c) {
   return p;
 }
 
-/* « À regarder », regroupé par écran : chaque alerte une fois, avec les
+/* Les alertes, regroupées par écran : chaque alerte une fois, avec les
  * largeurs où elle se voit et sa première phrase. */
 function aRegarder(captures) {
   const routes = new Map();
@@ -357,6 +365,14 @@ function aRegarder(captures) {
   }
   return routes;
 }
+/* Les sortes d'alertes présentes, dans l'ordre de `problemes`. */
+const SORTES = { exception: 'exceptions', debordement: 'débordements', 'hors-ecran': 'contrôles hors écran', coupe: 'textes coupés',
+  valeur: 'valeurs techniques', terme: 'termes', replie: 'termes repliés', image: 'images cassées', introuvable: 'pages introuvables', vide: 'pages presque vides' };
+function sortesDAlertes(regarder) {
+  const vues = new Set();
+  for (const x of regarder.values()) for (const k of x.alertes.keys()) vues.add(k);
+  return Object.keys(SORTES).filter(k => vues.has(k)).map(k => SORTES[k]);
+}
 
 /* L'état d'une capture par rapport à la passe « avant ». Une capture qui
  * diffère d'une passe mesurée par une autre version de l'outil n'est pas
@@ -369,10 +385,18 @@ function etat(c, a, memeMesure = true) {
   return aLOeil(c.ecart) ? 'quasi' : 'modifiee';
 }
 const ETATS = { nouvelle: 'nouvelle', inconnue: 'non comparée', identique: 'identique', quasi: 'identique à l’œil', modifiee: 'modifiée' };
+/* « nuance 1/255 sur 52 pixels, hors des images ». Les pixels sont ceux de
+ * l'image : deux par px CSS au téléphone. */
+export function decrireNuance(x) {
+  const hors = x.hors || { pixels: x.pixels, max: x.max }, images = x.images || { pixels: 0, max: 0 };
+  const une = (z, ou) => 'nuance ' + z.max + '/255 sur ' + pluriel(z.pixels, 'pixel').replace(/^\d+/, z.pixels.toLocaleString('fr-FR')) + ', ' + ou;
+  return [hors.pixels ? une(hors, 'hors des images') : '', images.pixels ? une(images, 'dans une image') : ''].filter(Boolean).join(' ; ');
+}
+
 function libelleEtat(e, c) {
   const x = c.ecart;
-  if (e === 'modifiee' && x && x.pixels) return 'modifiée · ' + x.pixels.toLocaleString('fr-FR') + ' px' + (x.part ? ' (' + pourcent(x.part) + ')' : '');
-  if (e === 'quasi' && x && x.max) return 'identique à l’œil · nuance ' + x.max + '/255';
+  if (e === 'modifiee' && x && x.pixels) return 'modifiée · ' + pluriel(x.pixels, 'pixel').replace(/^\d+/, x.pixels.toLocaleString('fr-FR')) + (x.part ? ' (' + pourcent(x.part) + ')' : '');
+  if (e === 'quasi' && x && x.max) return 'identique à l’œil · ' + decrireNuance(x);
   return ETATS[e];
 }
 
@@ -393,12 +417,12 @@ function blocComparaison(cmp, noms) {
   const avantApres = x => (x.avant === null || x.avant === undefined ? 'non mesuré avant → ' + x.apres : x.avant + ' → ' + x.apres);
   const modifiees = [...new Set(cmp.modifiees.map(k => k.split('@')[0]))].filter(id => noms.has(id));
   const sur = cmp.mesure && !cmp.mesure.identique ? ' <i>(à refaire : l’avant a été mesuré par une autre version)</i>' : '';
-  const nuancees = (cmp.nuancees || []).map(x => { const [id, l] = x.capture.split('@');
-    return ecran(id) + ' à ' + l + ' px (nuance ' + x.max + '/255 sur ' + x.pixels.toLocaleString('fr-FR') + ' px)'; });
+  const nuancees = (cmp.nuancees || []).map(x => { const [id, l] = x.capture.split('@'); return ecran(id) + ' à ' + l + ' px (' + decrireNuance(x) + ')'; });
+  const seuils = `le lissage d’une image (jusqu’à ${ECART.image}/255, dans les images) et le crénelage de quelques bords (au plus ${ECART.bruit}/255, sur moins de ${pourcent(ECART.partBruit).replace('moins de ', '')} de la photo, hors des images)`;
   return `<section class="comparaison"><h2>Ce qui a changé depuis la passe « avant »</h2>
 <ul>
-<li><b>${pluriel(cmp.modifiees.length, 'capture modifiée', 'captures modifiées')}</b>, ${pluriel(cmp.identiques + cmp.identiquesALOeil, 'identique', 'identiques')}${cmp.identiquesALOeil ? ' (dont ' + cmp.identiquesALOeil + ' à l’œil seulement : le lissage d’une image, listé ci-dessous)' : ''}${cmp.nonComparees ? ', ' + pluriel(cmp.nonComparees, 'non comparée', 'non comparées') : ''}. Écrans touchés : ${modifiees.length ? modifiees.map(ecran).join(', ') : 'aucun'}.</li>
-${nuancees.length ? `<li>Identiques à l’œil, à vérifier d’un regard : ${nuancees.join(', ')}. Seules les images y diffèrent, d’une nuance de lissage ; tout écart hors des images, même léger, rend la capture « modifiée ».</li>` : ''}
+<li><b>${pluriel(cmp.modifiees.length, 'capture modifiée', 'captures modifiées')}</b>, ${pluriel(cmp.identiques + cmp.identiquesALOeil, 'identique', 'identiques')}${cmp.identiquesALOeil ? ' (dont ' + cmp.identiquesALOeil + ' à l’œil seulement : le lissage d’une image ou le crénelage de quelques bords, listées ci-dessous)' : ''}${cmp.nonComparees ? ', ' + pluriel(cmp.nonComparees, 'non comparée', 'non comparées') : ''}. Écrans touchés : ${modifiees.length ? modifiees.map(ecran).join(', ') : 'aucun'}.</li>
+${nuancees.length ? `<li>Identiques à l’œil, à vérifier d’un regard : ${nuancees.join(', ')}. Seuls sont pardonnés ${seuils} ; tout autre écart rend la capture « modifiée ».</li>` : ''}
 <li>Écrans nouveaux : ${routes(cmp.routesNouvelles)}. Écrans disparus : ${cmp.routesDisparues.length ? cmp.routesDisparues.map(id => echapper(nom(id))).join(', ') : 'aucun'}.</li>
 <li>Termes interdits visibles : ${avantApres(cmp.termes)} ; dans un bloc replié ou une bulle : ${avantApres(cmp.termesReplies)}${sur}.</li>
 <li>Exceptions nouvelles : ${captures(cmp.exceptionsNouvelles, 'aucune')}. Débordements nouveaux : ${captures(cmp.debordementsNouveaux)}.</li>
@@ -464,7 +488,7 @@ ${r.filtre ? `<p class="meta">Routes limitées à <code>${echapper(r.filtre)}</c
 ${r.manquantes.length ? `<p class="meta">Absentes de cette base, donc non capturées : ${r.manquantes.map(echapper).join(', ')}.</p>` : ''}
 ${avant ? `<p class="meta">Comparaison avec <a href="${echapper(lien(dossier, join(avantDossier, 'index.html')))}">la passe « avant »</a> du ${echapper(dateLisible(avant.quand))}, commit ${echapper(avant.commit || 'inconnu')}.</p>` : ''}
 ${cmp ? blocComparaison(cmp, noms) : ''}
-${liste ? `<details><summary>À regarder : ${pluriel(regarder.size, 'écran')}</summary><ul>${liste}</ul></details>` : '<p>Aucune exception, aucun débordement, aucun texte coupé, aucune valeur technique, aucun terme interdit.</p>'}
+${liste ? `<details><summary>Alertes, écran par écran : ${pluriel(regarder.size, 'écran')} (${enumerer(sortesDAlertes(regarder))})</summary><ul>${liste}</ul></details>` : '<p>Aucune exception, aucun débordement, aucun texte coupé, aucune valeur technique, aucun terme interdit.</p>'}
 ${sections}`;
   return `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -475,7 +499,7 @@ ${sections}`;
 @media (prefers-color-scheme:dark){:root{--fond:#161615;--carte:#20201e;--texte:#ededea;--terne:#a3a39c;--trait:#3a3a36;--alerte:#ff8a80;--attente:#f0c060;--change:#8ab4ff}}
 *{box-sizing:border-box}body{margin:0;padding:16px;font:14px/1.45 system-ui,-apple-system,sans-serif;background:var(--fond);color:var(--texte)}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:18px;margin:0}h3{font-size:14px;margin:0}
-.meta{color:var(--terne);margin:0 0 12px}.chiffres{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.meta{color:var(--terne);margin:0 0 12px}.meta code{overflow-wrap:anywhere}.chiffres{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
 .chiffres span{background:var(--carte);border:1px solid var(--trait);border-radius:6px;padding:6px 10px}
 .alerte-version{border:2px solid var(--alerte);border-radius:8px;padding:10px 14px;background:var(--carte)}
 section{margin:28px 0}.tete{display:flex;align-items:flex-end;gap:16px;border-bottom:1px solid var(--trait);padding-bottom:8px;margin-bottom:12px;flex-wrap:wrap}
@@ -492,10 +516,10 @@ article header{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;mar
 figure{margin:0;min-width:0}figcaption{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:4px;font-size:12px}
 img{display:block;width:100%;height:auto;max-height:640px;object-fit:cover;object-position:top;border:1px solid var(--trait);border-radius:4px;background:#fff}
 .paire{display:grid;grid-template-columns:1fr 1fr;gap:6px}.paire small{color:var(--terne)}.absent{color:var(--terne);font-style:italic}
-.badge{border-radius:10px;padding:1px 8px;font-size:11px;border:1px solid currentColor}.exception,.debordement,.image,.introuvable,.hors-ecran,.valeur{color:var(--alerte)}.terme,.replie,.coupe,.vide{color:var(--attente)}
+.badge{display:inline-block;max-width:100%;border-radius:10px;padding:1px 8px;font-size:11px;border:1px solid currentColor}.exception,.debordement,.image,.introuvable,.hors-ecran,.valeur{color:var(--alerte)}.terme,.replie,.coupe,.vide{color:var(--attente)}
 .etat.modifiee,.etat.nouvelle{color:var(--change);font-weight:600}.etat.identique,.etat.quasi,.etat.inconnue{color:var(--terne)}
 .tech{color:var(--terne);font:11px/1.3 ui-monospace,monospace;overflow-wrap:anywhere}
-ul{padding-left:18px}ul ul{padding-left:14px;margin:2px 0 6px}a{color:inherit}q{color:var(--terne)}
+ul{padding-left:18px}ul ul{padding-left:14px;margin:2px 0 6px}a{color:inherit}q{color:var(--terne);quotes:"«\\00a0" "\\00a0»"}
 </style></head><body>
 ${typographie(corps)}
 </body></html>
@@ -532,6 +556,7 @@ export function comparer(avant, apres) {
    * images (le lissage d'une image) n'est pas une capture modifiée. */
   const nuancees = memeMesure ? differentes.filter(([, c]) => aLOeil(c.ecart)) : [];
   const empreinteBase = x => (x.base && x.base.empreinte) || null;
+  const zone = z => (z ? { pixels: z.pixels, max: z.max } : { pixels: 0, max: 0 });
   return {
     mesure: { avant: version(avant), apres: version(apres), identique: memeMesure, contexte: memeContexte },
     base: empreinteBase(avant) && empreinteBase(apres) ? empreinteBase(avant) === empreinteBase(apres) : null,
@@ -541,7 +566,8 @@ export function comparer(avant, apres) {
     modifiees: memeMesure ? differentes.filter(([, c]) => !aLOeil(c.ecart)).map(([k]) => k) : [],
     identiques: comparables.length - differentes.length,
     identiquesALOeil: nuancees.length,
-    nuancees: nuancees.map(([k, c]) => ({ capture: k, max: c.ecart.max, pixels: c.ecart.pixels })),
+    nuancees: nuancees.map(([k, c]) => ({ capture: k, max: c.ecart.max, pixels: c.ecart.pixels,
+      hors: zone(c.ecart.hors || { pixels: c.ecart.pixels, max: c.ecart.max }), images: zone(c.ecart.images) })),
     nonComparees: communes.length - comparables.length + (memeMesure ? 0 : differentes.length),
     exceptionsNouvelles: nouveaux('exceptions', c => c.exceptions.length > 0),
     debordementsNouveaux: nouveaux('debordement', c => c.debordement > 0),
@@ -701,7 +727,9 @@ export function mesurerDansLaPage() {
   const images = [...document.images].filter(i => i.getClientRects().length);
   const dansEcran = i => { const b = i.getBoundingClientRect(); return b.bottom > 0 && b.top < innerHeight && b.width >= 24 && b.height >= 24; };
   const rendu = e => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden';
-  const court = t => String(t || '').replace(/\s+/g, ' ').trim().slice(0, 90);
+  /* Un texte court, coupé entre deux mots. */
+  const court = t => { const x = String(t || '').replace(/\s+/g, ' ').trim(); if (x.length <= 90) return x;
+    const c = x.slice(0, 90), i = c.lastIndexOf(' '); return (i > 40 ? c.slice(0, i) : c) + '…'; };
   const un = x => x.tagName.toLowerCase() + (x.id ? '#' + x.id : [...x.classList].slice(0, 2).map(c => '.' + c).join(''));
   const selecteur = e => { const t = []; for (let x = e; x && x !== document.body && t.length < 3; x = x.parentElement) t.unshift(un(x)); return t.join(' > '); };
 
