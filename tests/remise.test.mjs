@@ -235,7 +235,16 @@ test('la remise se déclare : « remis à X le D », datée, attribuée, et rejo
 test('les reçus et les BAT écrits avant les preuves souples se relisent à l’identique', async () => {
   const { p, ci, R } = await installation();
   preparer(ci, 'CI');
-  const piece = R.empreintePiece(ci, R.etatPiece(ci));
+  /* L'empreinte telle que l'écrivait la formule d'avant les preuves souples
+   * (BAT avec emplacement https, sortie sans canal), figée en clair : un
+   * changement de formule qui la déplacerait rendrait orphelins les reçus
+   * déjà écrits, et ce test le dirait. */
+  const EMPREINTE_HISTORIQUE = '["2026-11-03T08:00:00.000Z","2026-11-06T12:00:00.000Z",'
+    + '["BAT-CI","BAT-CI.pdf","Imprimerie","https://documents.example.test/bat/CI.pdf",null],'
+    + '["[\\"FINAL-CI\\",\\"FINAL-CI.pdf\\",\\"https://documents.example.test/final/CI.pdf\\"]"]]';
+  assert.equal(R.empreintePiece(ci, R.etatPiece(ci)).empreinte, EMPREINTE_HISTORIQUE);
+  const piece = { id: 'L-ci', version: 2, marche: 'CI', support: 'S-affiche', empreinte: EMPREINTE_HISTORIQUE,
+    nom: 'Livrable L-ci', fichiers: [{ id: 'FINAL-CI', nom: 'FINAL-CI.pdf' }] };
   /* La forme d'avant : une preuve sans type, un BAT sans preuve, une sortie sans canal. */
   p.preuvesRemise = [{ id: 'REM-ancien', remis_le: '2026-11-09', destinataire: 'Chargée de production',
     preuve: { nom: 'Accusé', url: 'https://documents.example.test/remises/42.pdf' }, pieces: [piece] }];
