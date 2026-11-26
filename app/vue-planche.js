@@ -243,9 +243,10 @@ window.VUE_PLANCHE = (function () {
           FORM.appliquer(f, function () { return l.kv || {}; }, function (changements) {
             if (Object.keys(changements).length) {
               VERSION.ouvrir(l, "interne", "Correction du KV : " + Object.keys(changements).join(", "), null, { complet: true });
+              var marqueAvant = (l.kv || {}).marque;
               l.kv = Object.assign({}, l.kv || {}, changements);
-              /* Un nom de code suit la marque ; un nom de travail ne bouge pas. */
-              if (KV.nomDeCode(l)) l.nom = (KV.estMaitre(l) && !l.marche ? "KV master commun" : "KV · " + (m ? m.code : "?")) + (l.kv.marque ? " · " + l.kv.marque : "");
+              /* Un nom posé par l'outil suit la marque ; un nom écrit par l'équipe ne bouge pas. */
+              KV.suivreMarque(l, marqueAvant);
               DEPOT.tracer("modification", "kv", p.id, l.nom);
               DEPOT.enregistrer();
             }
@@ -303,8 +304,7 @@ window.VUE_PLANCHE = (function () {
           var l = KV.creer(p, selType.value === "adaptation" ? selM.value : null, base, selType.value);
           if (piste) { l.pisteId = piste.id; if (l.niveau === "maitre") l.responsable = piste.auteurDA || null; }
           else if (l.niveau === "maitre") l.pisteId = selPiste.value || null;
-          if (l.niveau === "maitre") l.kv.marque = champMarque.value.trim();
-          l.nom += l.kv.marque ? " · " + l.kv.marque : "";
+          if (l.niveau === "maitre") { l.kv.marque = champMarque.value.trim(); l.nom = KV.nomDeTravail(l); }
           DEPOT.enregistrer(); fermer(); rafraichir();
         } }, "Créer"),
         el("button.b.nu", { type: "button", onclick: fermer }, "Annuler"))

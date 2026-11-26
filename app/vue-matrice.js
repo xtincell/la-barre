@@ -377,7 +377,7 @@ window.VUE_MATRICE = (function () {
        * identiques à l'œil : on nomme celui dont il s'agit. */
       var nom;
       if (!maitre) nom = m ? "Adaptation " + m.nom : "Sans marché";
-      else if (plusieursMaitres) nom = kv.nom.replace(/^KV master\s*·\s*/, "") + " — la référence";
+      else if (plusieursMaitres) nom = KV.titre(kv) + " — la référence";
       else nom = "La référence — aucun marché";
       return { kv: kv, code: maitre ? "Maître" : (m ? m.code : "?"), nom: nom,
         ls: reste.filter(function (l) { return l.maitre === kv.id; }) };

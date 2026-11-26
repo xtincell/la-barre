@@ -37,16 +37,23 @@ const REFERENTIEL = {
 };
 
 /* Une espace insécable tient le tiret au mot qui le suit : jamais
- * « Key visual — » pendu en fin de ligne. */
-test('KV.titre dit la pièce en clair et garde le code en surtitre, sans toucher au nom', async () => {
+ * « Key visual — » pendu en fin de ligne. La marque que porte le code reste
+ * dans le titre : sur une planche, elle seule distingue deux KV d'un marché. */
+async function kvSeul() {
   const ctx = await bac();
   ctx.DEPOT = depot(REFERENTIEL);
   vm.runInContext(await lire('kv-modele'), ctx, { filename: 'kv-modele.js' });
-  const { KV } = ctx;
+  return ctx.KV;
+}
+
+test('KV.titre dit la pièce en clair et garde le code en surtitre, sans toucher au nom', async () => {
+  const KV = await kvSeul();
   const cas = [
-    [{ nom: 'KV · GH · Orvelle', support: 'S-kv', marche: 'M-gh' }, 'Key visual —\u00a0Ghana', 'KV · GH · Orvelle'],
+    [{ nom: 'KV · GH · Orvelle', support: 'S-kv', marche: 'M-gh' }, 'Key visual —\u00a0Ghana · Orvelle', 'KV · GH · Orvelle'],
     [{ nom: 'KV · GH', support: 'S-kv', marche: 'M-gh' }, 'Key visual —\u00a0Ghana', 'KV · GH'],
-    [{ nom: 'KV master commun · Orvelle', support: 'S-kv', niveau: 'maitre' }, 'Key visual master', 'KV master commun · Orvelle'],
+    [{ nom: 'KV · GH', support: 'S-kv', marche: 'M-gh', kv: { marque: 'Peak' } }, 'Key visual —\u00a0Ghana · Peak', 'KV · GH'],
+    [{ nom: 'KV master commun · Orvelle', support: 'S-kv', niveau: 'maitre' }, 'Key visual master · Orvelle', 'KV master commun · Orvelle'],
+    [{ nom: 'KV master commun', support: 'S-kv', niveau: 'maitre' }, 'Key visual master', 'KV master commun'],
     [{ nom: 'Post social 1:1 · CI', support: 'S-social', marche: 'M-ci' }, 'Post social 1:1 —\u00a0Côte d’Ivoire', 'Post social 1:1 · CI'],
     [{ nom: 'Key visual — Ghana', support: 'S-kv', marche: 'M-gh' }, 'Key visual —\u00a0Ghana', null],
     [{ nom: 'Affiche de lancement', support: 'S-kv', marche: 'M-gh' }, 'Affiche de lancement', null],
@@ -58,6 +65,39 @@ test('KV.titre dit la pièce en clair et garde le code en surtitre, sans toucher
     assert.equal(KV.surtitre(l), surtitre, l.nom);
     assert.equal(JSON.stringify(l), avant, 'le nom enregistré ne change pas');
   }
+});
+
+test('deux KV du même marché pour deux marques ont deux titres', async () => {
+  const KV = await kvSeul();
+  const titres = ['KV · GH · Peak', 'KV · GH · Cowbell', 'KV · GH · Bonnet Rouge']
+    .map(nom => KV.titre({ nom, support: 'S-kv', marche: 'M-gh' }));
+  assert.deepEqual(titres, ['Key visual —\u00a0Ghana · Peak', 'Key visual —\u00a0Ghana · Cowbell', 'Key visual —\u00a0Ghana · Bonnet Rouge']);
+  const masters = ['KV master commun · Orvelle', 'KV master commun · Lumen']
+    .map(nom => KV.titre({ nom, support: 'S-kv', niveau: 'maitre' }));
+  assert.equal(new Set(masters).size, 2, masters.join(' | '));
+});
+
+test('un nom posé par l’outil suit la marque ; un nom écrit par l’équipe ne bouge pas', async () => {
+  const KV = await kvSeul();
+  const neuf = { nom: 'Key visual master', support: 'S-kv', niveau: 'maitre', kv: { marque: 'Orvelle' } };
+  assert.equal(KV.nomDeTravail(neuf), 'Key visual master · Orvelle');
+  assert.equal(KV.suivreMarque(neuf, ''), true);
+  assert.equal(neuf.nom, 'Key visual master · Orvelle');
+  neuf.kv.marque = 'Lumen';
+  KV.suivreMarque(neuf, 'Orvelle');
+  assert.equal(neuf.nom, 'Key visual master · Lumen');
+
+  const ada = { nom: 'Key visual — Ghana · Peak', support: 'S-kv', marche: 'M-gh', kv: { marque: 'Cowbell' } };
+  KV.suivreMarque(ada, 'Peak');
+  assert.equal(ada.nom, 'Key visual — Ghana · Cowbell');
+
+  const code = { nom: 'KV · GH · Peak', support: 'S-kv', marche: 'M-gh', kv: { marque: 'Cowbell' } };
+  KV.suivreMarque(code, 'Peak');
+  assert.equal(code.nom, 'KV · GH · Cowbell', 'un code reste un code');
+
+  const ecrit = { nom: 'Affiche de lancement', support: 'S-kv', marche: 'M-gh', kv: { marque: 'Cowbell' } };
+  assert.equal(KV.suivreMarque(ecrit, 'Peak'), false);
+  assert.equal(ecrit.nom, 'Affiche de lancement');
 });
 
 /* ————— L'auteur d'un retour posé sur l'image ————— */
@@ -332,7 +372,7 @@ test('un retour WhatsApp s’enregistre sans bannière rouge, étiquettes relié
     assert.equal(tous(panneau, n => n.getAttribute && n.getAttribute('id') === cible).length, 1, cible);
   }
   const puce = tous(panneau, n => n.tagName === 'BUTTON' && /chip/.test(n.className))[0];
-  assert.equal(puce.textContent, 'Key visual —\u00a0Ghana');
+  assert.equal(puce.textContent, 'Key visual —\u00a0Ghana · Orvelle');
   assert.equal(puce.getAttribute('title'), 'KV · GH · Orvelle', 'le code reste en info-bulle');
 
   cliquer(bouton(panneau, 'Enregistrer'));

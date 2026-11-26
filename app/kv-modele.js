@@ -119,21 +119,63 @@ window.KV = (function () {
   /* ————— Le titre d'une pièce à l'écran —————
    *
    * L'outil nommait les pièces par leurs codes : « KV · GH · Orvelle », « Post
-   * social 1:1 · CI ». Le studio dit « Key visual — Ghana ». Quand le nom suit
-   * ce motif, l'écran compose le support et le marché en clair, et le code passe
-   * en surtitre ; un nom écrit par l'équipe reste tel quel. Rien n'est réécrit
-   * dans la base. */
-  function nomDeCode(l) {
+   * social 1:1 · CI ». Le studio dit « Key visual — Ghana · Orvelle ». Quand le
+   * nom suit ce motif, l'écran compose le support et le marché en clair, garde
+   * ce qui suit le code (la marque), et le code passe en surtitre ; un nom écrit
+   * par l'équipe reste tel quel. Rien n'est réécrit dans la base.
+   *
+   * La marque reste dans le titre : sur une planche, trois KV du Cameroun ne se
+   * distinguent que par elle. */
+  function referentiel(l) {
+    return { m: l && l.marche ? DEPOT.trouve("marches", l.marche) : null,
+      s: l && l.support ? DEPOT.trouve("supports", l.support) : null };
+  }
+
+  /* Ce qui suit le code (« Orvelle » dans « KV · GH · Orvelle »), « » s'il n'y
+   * a rien, null si le nom n'est pas un code. */
+  function suiteDeCode(l) {
     var nom = l && typeof l.nom === "string" ? l.nom.trim() : "";
-    if (!nom) return false;
-    if (/^KV master commun( · .+)?$/.test(nom)) return true;
-    var m = l.marche ? DEPOT.trouve("marches", l.marche) : null;
-    if (!m || !m.code) return false;
-    var s = l.support ? DEPOT.trouve("supports", l.support) : null;
-    return ["KV"].concat(s ? [s.nom, s.code] : []).filter(Boolean).some(function (x) {
-      var debut = x + " · " + m.code;
-      return nom === debut || nom.indexOf(debut + " · ") === 0;
-    });
+    if (!nom) return null;
+    var maitre = /^KV master commun(?: · (.+))?$/.exec(nom);
+    if (maitre) return maitre[1] || "";
+    var r = referentiel(l);
+    if (!r.m || !r.m.code) return null;
+    var prefixes = ["KV"].concat(r.s ? [r.s.nom, r.s.code] : []).filter(Boolean);
+    for (var i = 0; i < prefixes.length; i++) {
+      var debut = prefixes[i] + " · " + r.m.code;
+      if (nom === debut) return "";
+      if (nom.indexOf(debut + " · ") === 0) return nom.slice(debut.length + 3);
+    }
+    return null;
+  }
+  function nomDeCode(l) { return suiteDeCode(l) !== null; }
+
+  function marqueDe(l) { return l && l.kv && typeof l.kv.marque === "string" ? l.kv.marque.trim() : ""; }
+
+  /* « Key visual — Ghana · Orvelle », « Key visual master · Orvelle ». */
+  function composer(l, suite) {
+    var r = referentiel(l);
+    var support = (r.s && r.s.nom) || "Key visual";
+    return (r.m ? support + " — " + (r.m.nom || r.m.code) : support + " master") + (suite ? " · " + suite : "");
+  }
+
+  /* Le nom qu'un KV neuf reçoit : ce qu'il est, où, et pour quelle marque. */
+  function nomDeTravail(l) { return composer(l, marqueDe(l)); }
+
+  /* Quand la marque d'un KV change, un nom posé par l'outil la suit : un code
+   * reste un code (« KV · GH · Peak »), un nom de travail reste un nom de
+   * travail (« Key visual — Ghana · Peak »). Un nom écrit par l'équipe ne bouge
+   * pas. `avant` est la marque d'avant le changement. */
+  function suivreMarque(l, avant) {
+    var nom = l && typeof l.nom === "string" ? l.nom.trim() : "";
+    var marque = marqueDe(l), r = referentiel(l);
+    if (nomDeCode(l)) {
+      l.nom = (estMaitre(l) && !l.marche ? "KV master commun" : "KV · " + (r.m ? r.m.code : "?")) + (marque ? " · " + marque : "");
+      return true;
+    }
+    avant = typeof avant === "string" ? avant.trim() : "";
+    if (nom === composer(l, "") || (avant && nom === composer(l, avant))) { l.nom = nomDeTravail(l); return true; }
+    return false;
   }
 
   /* Le tiret ne reste jamais pendu en fin de ligne (« Key visual — » /
@@ -143,11 +185,9 @@ window.KV = (function () {
 
   function titre(l) {
     if (!l) return "";
-    if (!nomDeCode(l)) return tenir(l.nom || "Pièce sans nom");
-    var s = l.support ? DEPOT.trouve("supports", l.support) : null;
-    var m = l.marche ? DEPOT.trouve("marches", l.marche) : null;
-    var support = (s && s.nom) || "Key visual";
-    return tenir(m ? support + " — " + (m.nom || m.code) : support + " master");
+    var suite = suiteDeCode(l);
+    if (suite === null) return tenir(l.nom || "Pièce sans nom");
+    return tenir(composer(l, suite || marqueDe(l)));
   }
 
   function surtitre(l) { return nomDeCode(l) ? l.nom.trim() : null; }
@@ -173,7 +213,7 @@ window.KV = (function () {
       id: DEPOT.identifiant("KV"), cree_le: new Date().toISOString(), niveau: cible,
       voletId: base && base.voletId ? base.voletId : null,
       support: support.id, marche: marcheId || null,
-      nom: (support.nom || "Key visual") + (m ? " — " + (m.nom || m.code) : " master"),
+      nom: null,           /* posé juste après, avec la marque reçue */
       responsable: null,   /* posé juste après, selon le niveau */
       origine: "prevu", pisteId: base ? base.pisteId : pisteRetenue(p),
       maitre: cible === "adaptation" ? base.id : null,
@@ -196,6 +236,7 @@ window.KV = (function () {
       l.kv[a.cle] = base && base.kv ? (base.kv[a.cle] || "") : "";
     });
     if (cible === "adaptation") l.depart = pointDeDepart(base, l.kv);
+    l.nom = nomDeTravail(l);
     if (!p.livrables) p.livrables = [];
     p.livrables.push(l);
     DEPOT.tracer("création", "kv", p.id, l.nom);
@@ -401,5 +442,6 @@ window.KV = (function () {
     descendance: descendance, parMarche: parMarche,
     creer: creer, reprendreReference: reprendreReference, daDePiste: daDePiste, adaptationsMalPortees: adaptationsMalPortees,
     conformite: conformite, conforme: conforme, pireEcart: pireEcart, grille: grille,
-    skuNonDistribues: skuNonDistribues, titre: titre, surtitre: surtitre, nomDeCode: nomDeCode };
+    skuNonDistribues: skuNonDistribues, titre: titre, surtitre: surtitre, nomDeCode: nomDeCode,
+    nomDeTravail: nomDeTravail, suivreMarque: suivreMarque };
 })();
