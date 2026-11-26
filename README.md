@@ -57,6 +57,10 @@ seule table (`APP.ALIAS`) que la barre latérale et les liens des écrans
 partagent. Un bouton qui mène ailleurs (`app/geste.js`) est un lien : il part
 d'un clic, et dit au survol ce qu'on trouve à l'arrivée.
 
+La recherche s'ouvre sur ⌘K (Ctrl K) ; ⌘F reste au navigateur. La note rapide
+est en tête de la barre latérale, et sur Alt N hors d'un champ de saisie. Le
+reste (demander un retour, imprimer, paramètres, export) est sous « Outils ».
+
 | Entrée | Adresse | Ce qu'on y trouve | Fichiers de `app/` |
 |---|---|---|---|
 | Bureau | `#/bureau` | Les créations à regarder et les projets en cours. Un livrable à examiner s'ouvre en panneau. | `vue-studio.js`, `vue-revue.js`, `vue-asset.js` |

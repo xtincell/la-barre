@@ -1,7 +1,7 @@
 /* intake.js — la boîte d'entrée, et la porte de sortie qui lui manquait.
  *
- * Le produit a une capture rapide depuis le premier jour : ⌘K, une ligne, et
- * ça tombe dans `depot.captures`. C'était la bonne idée — « ta boîte d'entrée
+ * Le produit a une capture rapide depuis le premier jour : Alt N (la « Note
+ * rapide » de la barre), une ligne, et ça tombe dans `depot.captures`. C'était la bonne idée — « ta boîte d'entrée
  * réelle n'est pas l'outil : c'est WhatsApp le samedi, un couloir, un appel ».
  *
  * Mais RIEN N'AFFICHAIT LA PILE. On pouvait capturer ; on ne pouvait pas

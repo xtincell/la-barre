@@ -232,7 +232,8 @@ try {
   assert.ok(!Number.isNaN(Date.parse(cree.cree_le)));
   await page.getByRole('heading', {level:1,name:'Projet de contrôle'}).waitFor();
   // La recherche conserve le résultat au clavier et ouvre le livrable identifié.
-  await page.keyboard.press('Control+f');
+  // Elle s'ouvre sur ⌘K ou Ctrl K, comme dans les outils de l'équipe.
+  await page.keyboard.press('Control+k');
   const rechercheGlobale = page.getByRole('dialog', { name:'Rechercher' });
   const saisie = rechercheGlobale.getByRole('searchbox');
   await saisie.fill('Affiche de lancement');
@@ -241,10 +242,31 @@ try {
   await page.keyboard.press('Enter');
   await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo');
   await page.getByRole('heading',{level:1,name:'Affiche de lancement'}).waitFor();
-  await page.keyboard.press('Control+f');
+  await page.keyboard.press('Meta+k');
   await saisie.fill('support');
   await saisie.press('Escape');
   assert.equal(await rechercheGlobale.count(),0);
+  // ⌘F et Ctrl F restent au navigateur : La Barre ne les intercepte plus.
+  await page.evaluate(() => { window.__toucheF = []; window.addEventListener('keydown', e => { if (e.code === 'KeyF') window.__toucheF.push(e.defaultPrevented); }); });
+  await page.keyboard.press('Meta+f');
+  await page.keyboard.press('Control+f');
+  assert.deepEqual(await page.evaluate(() => window.__toucheF), [false, false], '⌘F et Ctrl F ne sont pas interceptés');
+  assert.equal(await rechercheGlobale.count(), 0);
+  // La note rapide est en accès direct dans la barre, et sur Alt N hors d'un champ.
+  const note = page.getByRole('dialog', { name:'Prendre une note' });
+  await page.locator('.lb-rail').getByRole('button', { name:'Note rapide', exact:true }).click();
+  await note.waitFor();
+  await page.keyboard.press('Escape');
+  assert.equal(await note.count(), 0);
+  await page.locator('#contenu h1').click();
+  await page.keyboard.press('Alt+KeyN');
+  await note.waitFor();
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Control+k');
+  await saisie.waitFor();
+  await saisie.press('Alt+KeyN');
+  assert.equal(await note.count(), 0, 'Dans un champ, Alt N reste à la saisie');
+  await saisie.press('Escape');
   // Un lien de Décisions mène à sa destination d'un clic, sans panneau qui
   // s'intercale ; une ligne sur une date manquante ouvre le plan de charge.
   await page.goto(url + '/#/valider/file');
