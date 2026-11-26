@@ -11,13 +11,18 @@
  *     une campagne) ; chaque rubrique de chaque nature de projet ;
  *   - une pièce (poser, juger, origine, remise, version historique) et une piste ;
  *   - Décisions, Planning, Bilan et Ressources, mode par mode ;
- *   - Plus, la recherche ouverte, Nouveau projet ouvert, la page partagée.
+ *   - Plus, la recherche ouverte, Nouveau projet ouvert, la demande de
+ *     proposition ouverte, la page partagée.
+ *
+ * Sous 768 px, la page est vue comme sur un téléphone (écran tactile, densité
+ * 2) ; au-dessus, comme sur un poste de bureau.
  *
  * Il écrit, hors du dépôt : les PNG, une planche-contact `index.html` et
- * `captures.json` (exceptions, débordement horizontal, termes interdits,
- * images cassées, pages introuvables). Il n'écrit jamais dans le dépôt ni
- * dans une base : le serveur éphémère ne répond qu'aux lectures et ne sert
- * aucun `depots/`.
+ * `captures.json` (exceptions, débordement horizontal, textes coupés,
+ * contrôles hors écran, valeurs techniques affichées, termes interdits visibles
+ * ou dans un bloc replié, images cassées, pages introuvables). Il n'écrit
+ * jamais dans le dépôt ni dans une base : le serveur éphémère ne répond qu'aux
+ * lectures et ne sert aucun `depots/`.
  *
  *   BROWSER_CHANNEL=chrome node outils/recette-captures.mjs --avant
  *   BROWSER_CHANNEL=chrome node outils/recette-captures.mjs --apres
@@ -31,11 +36,13 @@ import { extname, resolve, sep, join, dirname, relative, basename, isAbsolute } 
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { relever } from './termes-interdits.mjs';
+import { relever, VALEURS_TECHNIQUES } from './termes-interdits.mjs';
 
 const RACINE = fileURLToPath(new URL('../', import.meta.url));
 
 export const LARGEURS = [320, 390, 1440];
+/* Sous cette largeur, la capture se fait dans un contexte de téléphone. */
+export const TELEPHONE = 768;
 export const HAUTEURS = { 320: 700, 375: 812, 390: 844, 768: 1024, 1024: 768, 1440: 900, 3200: 1694 };
 
 /* Les modes de chaque espace, tels que le plan de recette les nomme. Le script
@@ -53,13 +60,14 @@ export const ESPACES = [
   ['bureau', 'Bureau'], ['projets', 'Projets'], ['piece', 'Pièce'], ['decisions', 'Décisions'],
   ['planning', 'Planning'], ['bilan', 'Bilan'], ['ressources', 'Ressources'], ['plus', 'Plus'],
   ['recherche', 'Recherche ouverte'], ['nouveau-projet', 'Nouveau projet ouvert'],
-  ['dossier', 'Dossier : chaque rubrique de chaque nature'], ['partage', 'Page partagée'],
+  ['dossier', 'Dossier : chaque rubrique de chaque nature'], ['demande', 'Demande de proposition ouverte'],
+  ['partage', 'Page partagée'],
 ];
 
 /* La planche cible de chaque espace, dans le dossier des planches de
  * conception (option --cibles). */
 export const PLANCHES = {
-  bureau: '01-bureau-projets.png', projets: '01-bureau-projets.png', dossier: '02-dossier.png',
+  bureau: '01-bureau-projets.png', projets: '01-bureau-projets.png', dossier: '02-dossier.png', demande: '02-dossier.png',
   decisions: '03-decisions-revue.png', piece: '03-decisions-revue.png',
   planning: '04-planning-bilan.png', bilan: '04-planning-bilan.png',
   ressources: '05-ressources.png', partage: '06-mobile-remise-partage.png',
@@ -74,7 +82,7 @@ function adresse(...segments) { return '#/' + segments.map(s => encodeURICompone
  * elle est signalée dans `manquantes`. */
 export function routesDe(inv) {
   const routes = [], manquantes = [];
-  const ajouter = (id, espace, hash, nom, action = null) => routes.push({ id, espace, hash, nom, action });
+  const ajouter = (id, espace, hash, nom, action = null, cible = null) => routes.push({ id, espace, hash, nom, action, ...(cible ? { cible } : {}) });
   ajouter('bureau', 'bureau', '#/bureau', 'Bureau');
   ajouter('projets/en-cours', 'projets', '#/projets', 'Projets en cours');
   ajouter('projets/archives', 'projets', '#/projets/archives', 'Archives');
@@ -112,6 +120,12 @@ export function routesDe(inv) {
     ajouter('dossier/' + n.cle, 'dossier', adresse('projets', id), n.nom + (temoin ? ' (projet témoin vide)' : '') + ' · vue d’ensemble');
     for (const s of n.sections) ajouter('dossier/' + n.cle + '/' + s, 'dossier', adresse('projets', id, s), n.nom + ' · ' + s);
   }
+  /* Le formulaire de demande de proposition, ouvert depuis les pistes d'un
+   * dossier : un vrai dossier d'abord, un projet témoin sinon. */
+  const avecPistes = (inv.natures || []).filter(n => (n.sections || []).includes('pistes'));
+  const dossierPistes = avecPistes.map(n => (inv.dossiers || {})[n.cle]).find(Boolean) || avecPistes.map(n => (inv.temoins || {})[n.cle]).find(Boolean);
+  if (dossierPistes) ajouter('demande', 'demande', adresse('projets', dossierPistes, 'pistes'), 'Demande de proposition ouverte', 'demande', dossierPistes);
+  else manquantes.push('demande');
   if (inv.jeton) ajouter('partage', 'partage', adresse('partage', inv.jeton), 'Page partagée');
   else manquantes.push('partage');
   return { routes, manquantes };
@@ -163,19 +177,23 @@ const AIDE = `Usage : BROWSER_CHANNEL=chrome node outils/recette-captures.mjs [o
 
   --avant | --apres     range les captures dans <sortie>/avant ou <sortie>/apres ;
                         avec --apres, la planche compare à <sortie>/avant s'il existe
-  --sortie <dossier>    dossier de sortie, hors du dépôt (défaut : ../recette-adoption)
+  --sortie <dossier>    dossier de sortie, hors du dépôt (défaut : ../recette-adoption) ;
+                        ses sous-dossiers captures/ et cibles/ sont vidés à chaque
+                        passe, seulement s'ils viennent d'une passe précédente
   --base <fichier>      base importée en mémoire (défaut : vitrine/demo/base-fictive.json)
   --medias <dossier>    où chercher les images que la base cite (défaut : le dossier de la base)
   --largeurs 320,390,1440   largeurs en px (3200 en option)
-  --routes <expression> ne capture que les routes dont l'identifiant correspond
+  --routes <expression> ne capture que les routes dont l'identifiant correspond ;
+                        avec --apres, la comparaison ne porte que sur elles
   --horloge <date ISO>  fige l'heure de la page, pour comparer deux jours différents
   --cibles <dossier>    planches cibles de la conception, montrées en tête de chaque espace
   --pleine-page         capture la page entière, pas seulement le premier écran
-  --strict              sort en erreur s'il y a une exception, un débordement ou un terme interdit`;
+  --strict              sort en erreur s'il y a une exception, un débordement, une valeur
+                        technique affichée ou un terme interdit, visible ou replié`;
 
 export function lireArguments(args) {
   const o = { sortie: resolve(RACINE, '..', 'recette-adoption'), temps: null, base: join(RACINE, 'vitrine', 'demo', 'base-fictive.json'),
-    medias: null, largeurs: LARGEURS.slice(), routes: null, horloge: null, cibles: null, pleinePage: false, strict: false, aide: false };
+    medias: null, largeurs: LARGEURS.slice(), routes: null, filtre: null, horloge: null, cibles: null, pleinePage: false, strict: false, aide: false };
   const valeur = (i, nom) => { const v = args[i + 1]; if (v === undefined || v.startsWith('--')) throw new Error(nom + ' attend une valeur.'); return v; };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -191,7 +209,11 @@ export function lireArguments(args) {
       o.largeurs = valeur(i++, a).split(',').map(x => Number(x.trim()));
       if (!o.largeurs.length || o.largeurs.some(n => !Number.isInteger(n) || n < 240 || n > 4000)) throw new Error('--largeurs attend des nombres entre 240 et 4000, séparés par des virgules.');
     }
-    else if (a === '--routes') o.routes = new RegExp(valeur(i++, a));
+    else if (a === '--routes') {
+      const v = valeur(i++, a);
+      try { o.routes = new RegExp(v); } catch (e) { throw new Error('--routes attend une expression régulière : ' + e.message); }
+      o.filtre = v;
+    }
     else if (a === '--horloge') {
       o.horloge = valeur(i++, a);
       if (Number.isNaN(Date.parse(o.horloge))) throw new Error('--horloge attend une date ISO, par exemple 2026-11-26T09:00:00.');
@@ -214,15 +236,84 @@ export function lireArguments(args) {
 function echapper(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
 function lien(depuis, fichier) { return relative(depuis, fichier).split(sep).map(encodeURIComponent).join('/'); }
 
+/* « 0 exception », « 1 exception », « 2 exceptions ». */
+export function pluriel(n, un, plusieurs = un + 's') { return n + ' ' + (n > 1 ? plusieurs : un); }
+function enumerer(t) { return t.length < 2 ? t.join('') : t.slice(0, -1).join(', ') + ' et ' + t[t.length - 1]; }
+function nombre(x) { return (x && x.nombre) || 0; }
+function occurrences(termes) { return (termes || []).reduce((n, t) => n + t.nombre, 0); }
+function listeTermes(termes) { return termes.map(t => t.terme + (t.nombre > 1 ? ' ×' + t.nombre : '')).join(', '); }
+
+/* La date d'une passe, en clair et à l'heure du poste. */
+export function dateLisible(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso ?? '');
+  const jour = /^\d{4}-\d{2}-\d{2}$/.test(String(iso));
+  return d.toLocaleString('fr-FR', jour ? { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }
+    : { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+}
+function nomBase(fichier) { return fichier === 'base-fictive.json' ? 'base fictive (base-fictive.json)' : 'base ' + fichier; }
+
+/* Ce qu'il faut regarder sur une capture : [nature, libellé, premier extrait]. */
 export function problemes(c) {
   const p = [];
-  if (c.exceptions.length) p.push(['exception', c.exceptions.length + ' exception(s)']);
-  if (c.debordement > 0) p.push(['debordement', 'déborde de ' + c.debordement + ' px']);
-  if (c.termes.length) p.push(['terme', c.termes.map(t => t.terme + (t.nombre > 1 ? ' ×' + t.nombre : '')).join(', ')]);
-  if (c.images && c.images.cassees) p.push(['image', c.images.cassees + ' image(s) cassée(s)']);
-  if (c.introuvable) p.push(['introuvable', 'page introuvable']);
-  else if (c.vide) p.push(['vide', 'presque vide']);
+  if (c.exceptions.length) p.push(['exception', pluriel(c.exceptions.length, 'exception'), c.exceptions[0]]);
+  if (c.debordement > 0) p.push(['debordement', 'déborde de ' + c.debordement + ' px', '']);
+  if (nombre(c.horsEcran)) p.push(['hors-ecran', pluriel(nombre(c.horsEcran), 'contrôle hors écran', 'contrôles hors écran'),
+    c.horsEcran.exemples[0] ? (c.horsEcran.exemples[0].texte || '(sans texte)') + ' · ' + c.horsEcran.exemples[0].selecteur : '']);
+  if (nombre(c.coupes)) p.push(['coupe', pluriel(nombre(c.coupes), 'texte coupé', 'textes coupés'),
+    c.coupes.exemples[0] ? c.coupes.exemples[0].texte + ' · ' + c.coupes.exemples[0].selecteur : '']);
+  if ((c.valeurs || []).length) p.push(['valeur', 'affiche ' + c.valeurs.map(v => '« ' + v.terme + ' »').join(', '), c.valeurs[0].extraits[0] || '']);
+  if (c.termes.length) p.push(['terme', listeTermes(c.termes), c.termes[0].extraits[0] || '']);
+  if ((c.termesReplies || []).length) p.push(['replie', 'replié : ' + listeTermes(c.termesReplies), c.termesReplies[0].extraits[0] || '']);
+  if (c.images && c.images.cassees) p.push(['image', pluriel(c.images.cassees, 'image cassée', 'images cassées'), '']);
+  if (c.introuvable) p.push(['introuvable', 'page introuvable', '']);
+  else if (c.vide) p.push(['vide', 'presque vide', '']);
   return p;
+}
+
+/* « À regarder », regroupé par route : chaque alerte une fois, avec les
+ * largeurs où elle se voit et sa première phrase. */
+function aRegarder(captures) {
+  const routes = new Map();
+  for (const c of captures) for (const [nature, libelle, extrait] of problemes(c)) {
+    if (!routes.has(c.id)) routes.set(c.id, { nom: c.nom, alertes: new Map() });
+    const a = routes.get(c.id).alertes;
+    if (!a.has(nature)) a.set(nature, { libelle, extrait, largeurs: [] });
+    const x = a.get(nature);
+    x.largeurs.push(c.largeur);
+    if (!x.extrait && extrait) x.extrait = extrait;
+  }
+  return routes;
+}
+
+/* L'état d'une capture par rapport à la passe « avant ». */
+function etat(c, a) {
+  if (!a) return 'nouvelle';
+  if (!a.empreinte || !c.empreinte) return 'inconnue';
+  if (a.empreinte === c.empreinte) return 'identique';
+  return c.ecart && c.ecart.pixels === 0 ? 'quasi' : 'modifiee';
+}
+const ETATS = { nouvelle: 'nouvelle', inconnue: 'non comparée', identique: 'identique', quasi: 'identique à l’œil', modifiee: 'modifiée' };
+function libelleEtat(e, c) {
+  return ETATS[e] + (e === 'modifiee' && c.ecart && c.ecart.pixels ? ' · ' + c.ecart.pixels.toLocaleString('fr-FR') + ' px' : '');
+}
+
+function blocComparaison(cmp, ids) {
+  const routes = t => (t.length ? t.map(id => `<a href="#${echapper(id)}">${echapper(id)}</a>`).join(', ') : 'aucune');
+  const cles = (t, aucun = 'aucun') => (t.length ? t.map(echapper).join(', ') : aucun);
+  const avantApres = x => (x.avant === null || x.avant === undefined ? 'non mesuré avant → ' + x.apres : x.avant + ' → ' + x.apres);
+  const modifiees = [...new Set(cmp.modifiees.map(k => k.split('@')[0]))].filter(id => ids.has(id));
+  return `<section class="comparaison"><h2>Ce qui a changé depuis la passe « avant »</h2>
+<ul>
+<li><b>${pluriel(cmp.modifiees.length, 'capture modifiée', 'captures modifiées')}</b>, ${pluriel(cmp.identiques + cmp.identiquesALOeil, 'identique', 'identiques')}${cmp.identiquesALOeil ? ' (dont ' + cmp.identiquesALOeil + ' à l’œil seulement : quelques pixels à peine nuancés)' : ''}${cmp.nonComparees ? ', ' + pluriel(cmp.nonComparees, 'non comparée', 'non comparées') : ''}. Routes touchées : ${routes(modifiees)}.</li>
+<li>Routes nouvelles : ${routes(cmp.routesNouvelles)}. Routes disparues : ${cmp.routesDisparues.length ? cmp.routesDisparues.map(echapper).join(', ') : 'aucune'}.</li>
+<li>Termes interdits visibles : ${avantApres(cmp.termes)} ; dans un bloc replié ou une bulle : ${avantApres(cmp.termesReplies)}.</li>
+<li>Exceptions nouvelles : ${cles(cmp.exceptionsNouvelles, 'aucune')}. Débordements nouveaux : ${cles(cmp.debordementsNouveaux)}.</li>
+<li>Textes coupés nouveaux : ${cles(cmp.coupesNouvelles)}. Contrôles hors écran nouveaux : ${cles(cmp.horsEcranNouveaux)}. Valeurs techniques nouvelles : ${cles(cmp.valeursNouvelles, 'aucune')}.</li>
+</ul>
+${cmp.filtres && (cmp.filtres.avant || cmp.filtres.apres) ? `<p class="meta">Comparaison limitée aux routes ${[cmp.filtres.avant, cmp.filtres.apres].filter(Boolean).map(f => '<code>' + echapper(f) + '</code>').join(' et ')}.</p>` : ''}
+<label class="filtre"><input type="checkbox" id="seulement"> N’afficher que les captures modifiées ou nouvelles</label>
+</section>`;
 }
 
 export function planche(r, { dossier, avant = null, avantDossier = null, cibles = {} } = {}) {
@@ -238,38 +329,50 @@ export function planche(r, { dossier, avant = null, avantDossier = null, cibles 
   const image = (titre, fichier, depuis) => `<a href="${lien(dossier, join(depuis, fichier))}" title="${echapper(titre)}"><img loading="lazy" alt="${echapper(titre)}" src="${lien(dossier, join(depuis, fichier))}"></a>`;
   const s = r.resume;
   const temps = r.temps ? ' · ' + ({ avant: 'avant', apres: 'après' }[r.temps] || echapper(r.temps)) : '';
+  const cmp = avant ? (r.comparaison || comparer(avant, r)) : null;
   const sections = groupes.filter(g => g.routes.length).map(g => {
-    const cible = cibles[g.cle] ? `<a class="cible" href="${lien(dossier, cibles[g.cle])}"><img loading="lazy" alt="Planche cible" src="${lien(dossier, cibles[g.cle])}"><span>Planche cible</span></a>` : '';
+    const cible = cibles[g.cle] ? `<a class="cible" href="${lien(dossier, cibles[g.cle])}" title="Ouvrir la planche cible en grand"><img loading="lazy" alt="Planche cible" src="${lien(dossier, cibles[g.cle])}"><span>Planche cible</span></a>` : '';
     const lignes = g.routes.map(id => {
       const cs = ordre.get(id);
+      let change = false;
       const cellules = cs.map(c => {
         const a = parCle.get(c.id + '@' + c.largeur);
+        const e = avant ? etat(c, a) : null;
+        if (e === 'modifiee' || e === 'nouvelle') change = true;
         const contenu = avant
           ? `<div class="paire"><div><small>Avant</small>${a ? image('Avant', a.fichier, avantDossier) : '<p class="absent">absente</p>'}</div><div><small>Après</small>${image('Après', c.fichier, dossier)}</div></div>`
           : image(c.id + ' à ' + c.largeur + ' px', c.fichier, dossier);
-        return `<figure><figcaption><b>${c.largeur} px</b> ${badge(c)}</figcaption>${contenu}</figure>`;
+        return `<figure class="${e || ''}"><figcaption><b>${c.largeur} px</b>${e ? ` <span class="badge etat ${e}">${echapper(libelleEtat(e, c))}</span>` : ''} ${badge(c)}</figcaption>${contenu}</figure>`;
       }).join('');
       const c0 = cs[0];
       /* Une colonne par largeur, proportionnée sans écraser le téléphone. */
       const colonnes = cs.map(c => Math.sqrt(c.largeur).toFixed(1) + 'fr').join(' ');
-      return `<article id="${echapper(id)}"><header><h3>${echapper(id)}</h3><code>${echapper(c0.hash)}</code><span>${echapper(c0.titre || '(sans titre)')}</span></header><div class="largeurs" style="grid-template-columns:${colonnes}">${cellules}</div></article>`;
+      return `<article id="${echapper(id)}"${change ? ' class="modifiee"' : ''}><header><h3>${echapper(id)}</h3><code>${echapper(c0.hash)}</code><span>${echapper(c0.titre || '(sans titre)')}</span></header><div class="largeurs" style="grid-template-columns:${colonnes}">${cellules}</div></article>`;
     }).join('');
     return `<section><div class="tete"><h2>${echapper(g.nom)}</h2>${cible}</div>${lignes}</section>`;
   }).join('');
-  const liste = r.captures.filter(c => problemes(c).length)
-    .map(c => `<li><a href="#${echapper(c.id)}">${echapper(c.id)}</a> à ${c.largeur} px : ${problemes(c).map(p => echapper(p[1])).join(' · ')}</li>`).join('');
+  const regarder = aRegarder(r.captures);
+  const liste = [...regarder].map(([id, x]) => `<li><a href="#${echapper(id)}">${echapper(id)}</a><ul>${[...x.alertes].map(([k, a]) =>
+    `<li><span class="badge ${k}">${echapper(a.libelle)}</span> à ${enumerer(a.largeurs.map(String))} px${a.extrait ? ` : <q>${echapper(a.extrait)}</q>` : ''}</li>`).join('')}</ul></li>`).join('');
+  const ids = new Set(r.captures.map(c => c.id));
+  const horloge = r.horloge ? ' · horloge figée au ' + echapper(dateLisible(r.horloge)) : '';
+  const telephone = r.largeurs.some(l => l < TELEPHONE) ? ` (sous ${TELEPHONE} px, vue de téléphone tactile)` : '';
   return `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Recette des captures${temps}</title>
 <style>
-:root{--fond:#f6f6f4;--carte:#fff;--texte:#1d1d1b;--terne:#6b6b66;--trait:#deded8;--alerte:#b3261e;--attente:#8a5a00}
-@media (prefers-color-scheme:dark){:root{--fond:#161615;--carte:#20201e;--texte:#ededea;--terne:#a3a39c;--trait:#3a3a36;--alerte:#ff8a80;--attente:#f0c060}}
+:root{--fond:#f6f6f4;--carte:#fff;--texte:#1d1d1b;--terne:#6b6b66;--trait:#deded8;--alerte:#b3261e;--attente:#8a5a00;--change:#1f5fbf}
+@media (prefers-color-scheme:dark){:root{--fond:#161615;--carte:#20201e;--texte:#ededea;--terne:#a3a39c;--trait:#3a3a36;--alerte:#ff8a80;--attente:#f0c060;--change:#8ab4ff}}
 *{box-sizing:border-box}body{margin:0;padding:16px;font:14px/1.45 system-ui,-apple-system,sans-serif;background:var(--fond);color:var(--texte)}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:18px;margin:0}h3{font-size:14px;margin:0}
 .meta{color:var(--terne);margin:0 0 12px}.chiffres{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
 .chiffres span{background:var(--carte);border:1px solid var(--trait);border-radius:6px;padding:6px 10px}
 section{margin:28px 0}.tete{display:flex;align-items:flex-end;gap:16px;border-bottom:1px solid var(--trait);padding-bottom:8px;margin-bottom:12px;flex-wrap:wrap}
-.cible{display:flex;align-items:center;gap:8px;color:var(--terne);text-decoration:none}.cible img{height:64px;border:1px solid var(--trait);border-radius:4px}
+.cible{display:flex;align-items:flex-end;gap:8px;color:var(--terne);text-decoration:none;max-width:100%}.cible span{white-space:nowrap}
+.cible img{width:auto;height:160px;max-width:100%;max-height:160px;object-fit:contain;border:1px solid var(--trait);border-radius:4px}
+.comparaison{background:var(--carte);border:1px solid var(--trait);border-radius:8px;padding:12px 16px}.comparaison ul{margin:8px 0}
+.filtre{display:inline-flex;gap:8px;align-items:center;font-weight:600}
+body:has(#seulement:checked) article:not(.modifiee),body:has(#seulement:checked) figure.identique,body:has(#seulement:checked) figure.quasi,body:has(#seulement:checked) section:not(.comparaison):not(:has(article.modifiee)){display:none}
 article{background:var(--carte);border:1px solid var(--trait);border-radius:8px;padding:12px;margin:0 0 12px}
 article header{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin-bottom:8px}article code{color:var(--terne);font-size:12px;overflow-wrap:anywhere}
 .largeurs{display:grid;gap:12px;align-items:start}
@@ -277,34 +380,60 @@ article header{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;mar
 figure{margin:0;min-width:0}figcaption{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-bottom:4px;font-size:12px}
 img{display:block;width:100%;height:auto;max-height:640px;object-fit:cover;object-position:top;border:1px solid var(--trait);border-radius:4px;background:#fff}
 .paire{display:grid;grid-template-columns:1fr 1fr;gap:6px}.paire small{color:var(--terne)}.absent{color:var(--terne);font-style:italic}
-.badge{border-radius:10px;padding:1px 8px;font-size:11px;border:1px solid currentColor}.exception,.debordement,.image,.introuvable{color:var(--alerte)}.terme,.vide{color:var(--attente)}
-ul{padding-left:18px}a{color:inherit}
+.badge{border-radius:10px;padding:1px 8px;font-size:11px;border:1px solid currentColor}.exception,.debordement,.image,.introuvable,.hors-ecran,.valeur{color:var(--alerte)}.terme,.replie,.coupe,.vide{color:var(--attente)}
+.etat.modifiee,.etat.nouvelle{color:var(--change);font-weight:600}.etat.identique,.etat.quasi,.etat.inconnue{color:var(--terne)}
+ul{padding-left:18px}ul ul{padding-left:14px;margin:2px 0 6px}a{color:inherit}q{color:var(--terne)}
 </style></head><body>
 <h1>Recette des captures${temps}</h1>
-<p class="meta">${echapper(r.quand)} · commit ${echapper(r.commit || 'inconnu')} · base ${echapper(r.base.fichier)} (${r.base.projets} projets, ${r.base.livrables} pièces) · largeurs ${r.largeurs.join(', ')} px${r.horloge ? ' · horloge figée ' + echapper(r.horloge) : ''}</p>
-<div class="chiffres"><span>${s.routes} routes</span><span>${s.captures} captures</span><span>${s.exceptions} exception(s)</span><span>${s.debordements} débordement(s)</span><span>${s.termes} capture(s) avec un terme interdit</span><span>${s.introuvables} introuvable(s)</span><span>${s.imagesCassees} image(s) cassée(s)</span></div>
+<p class="meta">Le ${echapper(dateLisible(r.quand))} · commit ${echapper(r.commit || 'inconnu')} · ${echapper(nomBase(r.base.fichier))}, ${pluriel(r.base.projets, 'projet')} et ${pluriel(r.base.livrables, 'pièce')} · largeurs ${enumerer(r.largeurs.map(String))} px${telephone}${horloge}</p>
+<div class="chiffres"><span>${pluriel(s.routes, 'route')}</span><span>${pluriel(s.captures, 'capture')}</span><span>${pluriel(s.exceptions, 'exception')}</span><span>${pluriel(s.debordements, 'capture qui déborde', 'captures qui débordent')}</span><span>${pluriel(s.horsEcran || 0, 'capture avec un contrôle hors écran', 'captures avec un contrôle hors écran')}</span><span>${pluriel(s.coupes || 0, 'capture avec un texte coupé', 'captures avec un texte coupé')}</span><span>${pluriel(s.valeurs || 0, 'capture avec une valeur technique', 'captures avec une valeur technique')}</span><span>${pluriel(s.termes, 'capture avec un terme interdit visible', 'captures avec un terme interdit visible')}</span><span>${pluriel(s.termesReplies || 0, 'capture avec un terme dans un bloc replié', 'captures avec un terme dans un bloc replié')}</span><span>${pluriel(s.introuvables, 'page introuvable', 'pages introuvables')}</span><span>${pluriel(s.imagesCassees, 'image cassée', 'images cassées')}</span></div>
+${r.filtre ? `<p class="meta">Routes limitées à <code>${echapper(r.filtre)}</code>.</p>` : ''}
 ${r.manquantes.length ? `<p class="meta">Absentes de cette base, donc non capturées : ${r.manquantes.map(echapper).join(', ')}.</p>` : ''}
-${avant ? `<p class="meta">Comparaison avec ${echapper(lien(dossier, avantDossier) || '.')}/ (${echapper(avant.quand)}, commit ${echapper(avant.commit || 'inconnu')}).</p>` : ''}
-${liste ? `<details><summary>À regarder (${r.captures.filter(c => problemes(c).length).length})</summary><ul>${liste}</ul></details>` : '<p>Aucune exception, aucun débordement, aucun terme interdit.</p>'}
+${avant ? `<p class="meta">Comparaison avec <a href="${echapper(lien(dossier, join(avantDossier, 'index.html')))}">la passe « avant »</a> du ${echapper(dateLisible(avant.quand))}, commit ${echapper(avant.commit || 'inconnu')}.</p>` : ''}
+${cmp ? blocComparaison(cmp, ids) : ''}
+${liste ? `<details><summary>À regarder : ${pluriel(regarder.size, 'route')}</summary><ul>${liste}</ul></details>` : '<p>Aucune exception, aucun débordement, aucun texte coupé, aucune valeur technique, aucun terme interdit.</p>'}
 ${sections}
 </body></html>
 `;
 }
 
-/* Ce qui a changé entre deux recettes : routes, exceptions, débordements, termes. */
+/* Ce qui a changé entre deux recettes : routes, images, exceptions,
+ * débordements, textes coupés, contrôles hors écran, valeurs techniques et
+ * termes interdits. Les deux passes doivent porter sur les mêmes routes :
+ * filtrez-les avant (voir `principal`, option --routes). */
 export function comparer(avant, apres) {
   const cle = c => c.id + '@' + c.largeur;
   const a = new Map(avant.captures.map(c => [cle(c), c]));
   const b = new Map(apres.captures.map(c => [cle(c), c]));
   const ids = x => [...new Set(x.captures.map(c => c.id))];
+  const nouveaux = test => [...b].filter(([k, c]) => test(c) && !test(a.get(k) || { exceptions: [], termes: [] })).map(([k]) => k);
+  const mesure = (x, champ) => (x.captures.some(c => Array.isArray(c[champ])) ? x.captures.reduce((n, c) => n + occurrences(c[champ]), 0) : null);
+  const communes = [...b].filter(([k]) => a.has(k));
+  const comparables = communes.filter(([k, c]) => c.empreinte && a.get(k).empreinte);
   return {
     routesNouvelles: ids(apres).filter(id => !ids(avant).includes(id)),
     routesDisparues: ids(avant).filter(id => !ids(apres).includes(id)),
-    exceptionsNouvelles: [...b].filter(([k, c]) => c.exceptions.length && !(a.get(k) || { exceptions: [] }).exceptions.length).map(([k]) => k),
-    debordementsNouveaux: [...b].filter(([k, c]) => c.debordement > 0 && !((a.get(k) || {}).debordement > 0)).map(([k]) => k),
-    termes: { avant: avant.captures.reduce((n, c) => n + c.termes.reduce((m, t) => m + t.nombre, 0), 0),
-      apres: apres.captures.reduce((n, c) => n + c.termes.reduce((m, t) => m + t.nombre, 0), 0) },
+    /* Une empreinte qui change sans un pixel visiblement différent (le
+     * lissage d'une image) n'est pas une capture modifiée. */
+    modifiees: comparables.filter(([k, c]) => c.empreinte !== a.get(k).empreinte && !(c.ecart && c.ecart.pixels === 0)).map(([k]) => k),
+    identiques: comparables.filter(([k, c]) => c.empreinte === a.get(k).empreinte).length,
+    identiquesALOeil: comparables.filter(([k, c]) => c.empreinte !== a.get(k).empreinte && c.ecart && c.ecart.pixels === 0).length,
+    nonComparees: communes.length - comparables.length,
+    exceptionsNouvelles: nouveaux(c => c.exceptions.length > 0),
+    debordementsNouveaux: nouveaux(c => c.debordement > 0),
+    coupesNouvelles: nouveaux(c => nombre(c.coupes) > 0),
+    horsEcranNouveaux: nouveaux(c => nombre(c.horsEcran) > 0),
+    valeursNouvelles: nouveaux(c => (c.valeurs || []).length > 0),
+    termes: { avant: mesure(avant, 'termes') ?? 0, apres: mesure(apres, 'termes') ?? 0 },
+    termesReplies: { avant: mesure(avant, 'termesReplies'), apres: mesure(apres, 'termesReplies') ?? 0 },
   };
+}
+
+/* Ne garder d'une recette que les routes d'une expression (option --routes). */
+export function restreindre(recette, expression) {
+  if (!expression) return recette;
+  const re = expression instanceof RegExp ? expression : new RegExp(expression);
+  return { ...recette, captures: recette.captures.filter(c => re.test(c.id)) };
 }
 
 /* ————— Le serveur éphémère ————— */
@@ -380,32 +509,186 @@ async function ouvrirRecherche(page, texte) {
   await page.locator('dialog[open] input[type=search]').fill(texte);
 }
 
-async function mesurer(page) {
-  return page.evaluate(() => {
-    const zone = document.querySelector('#contenu') || document.querySelector('#corps') || document.body;
-    const dialogue = document.querySelector('dialog[open], .panneau[role=dialog]');
-    const titre = (dialogue && dialogue.querySelector('h1, h2')) || zone.querySelector('h1') || document.querySelector('h1');
-    const images = [...document.images].filter(i => i.getClientRects().length);
-    const dansEcran = i => { const b = i.getBoundingClientRect(); return b.bottom > 0 && b.top < innerHeight && b.width >= 24 && b.height >= 24; };
-    return {
-      titre: titre ? titre.textContent.trim().replace(/\s+/g, ' ').slice(0, 140) : '',
-      texte: document.body.innerText,
-      contenu: zone.innerText.trim().length,
-      debordement: Math.max(0, document.documentElement.scrollWidth - innerWidth),
-      hauteurPage: document.documentElement.scrollHeight,
-      images: {
-        premierEcran: images.filter(i => i.complete && i.naturalWidth > 0 && dansEcran(i)).length,
-        cassees: images.filter(i => i.complete && i.naturalWidth === 0 && i.getAttribute('src')).length,
-      },
-    };
+/* Ce que l'écran montre, mesuré dans la page. Exécutée dans le navigateur :
+ * cette fonction n'emploie rien du module.
+ *
+ *   texte        le texte visible (innerText), et le texte d'exemple des champs
+ *                vides, qui est à l'écran ;
+ *   texteReplie  ce qui est à un geste : le contenu des blocs repliés
+ *                (<details> fermés, ouverts le temps de la lecture puis
+ *                refermés avant la photo) et les bulles d'aide (title) ;
+ *   coupes       les boîtes qui cachent une partie de leur texte (overflow
+ *                hidden ou clip, points de suspension compris), les textes à
+ *                cheval sur le bord de l'écran et les textes d'exemple plus
+ *                larges que leur champ ;
+ *   horsEcran    les contrôles (lien, bouton, champ) rejetés hors de l'écran ou
+ *                rognés par un conteneur, qu'aucun défilement ne ramène.
+ * Le débordement de la page reste mesuré à part : son historique ne change pas. */
+export function mesurerDansLaPage() {
+  const zone = document.querySelector('#contenu') || document.querySelector('#corps') || document.body;
+  const dialogue = document.querySelector('dialog[open], .panneau[role=dialog]');
+  const titre = (dialogue && dialogue.querySelector('h1, h2')) || zone.querySelector('h1') || document.querySelector('h1');
+  const images = [...document.images].filter(i => i.getClientRects().length);
+  const dansEcran = i => { const b = i.getBoundingClientRect(); return b.bottom > 0 && b.top < innerHeight && b.width >= 24 && b.height >= 24; };
+  const rendu = e => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden';
+  const court = t => String(t || '').replace(/\s+/g, ' ').trim().slice(0, 90);
+  const un = x => x.tagName.toLowerCase() + (x.id ? '#' + x.id : [...x.classList].slice(0, 2).map(c => '.' + c).join(''));
+  const selecteur = e => { const t = []; for (let x = e; x && x !== document.body && t.length < 3; x = x.parentElement) t.unshift(un(x)); return t.join(' > '); };
+
+  const champs = [...document.querySelectorAll('input[placeholder], textarea[placeholder]')].filter(e => rendu(e) && !e.value && e.placeholder.trim());
+  const texte = document.body.innerText + '\n' + champs.map(e => e.placeholder).join('\n');
+
+  /* Textes coupés : le plus profond seulement, son parent ne dit rien de plus. */
+  const coupes = [];
+  for (const e of document.body.querySelectorAll('*')) {
+    if (!e.clientWidth || e.scrollWidth <= e.clientWidth + 1 || !rendu(e)) continue;
+    if (!['hidden', 'clip'].includes(getComputedStyle(e).overflowX)) continue;
+    const t = court(e.innerText);
+    if (t) coupes.push({ e, selecteur: selecteur(e), texte: t, px: e.scrollWidth - e.clientWidth });
+  }
+  const defilant = e => { for (let a = e.parentElement; a && a !== document.documentElement; a = a.parentElement) {
+    const ox = getComputedStyle(a).overflowX; if (ox === 'auto' || ox === 'scroll') return true; } return false; };
+  /* Un texte à cheval sur le bord de l'écran (un panneau plus large que le
+   * téléphone, par exemple) : coupé lui aussi. Un texte entièrement rejeté
+   * hors de l'écran est un masquage voulu, il ne compte pas. */
+  const marcheur = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const plage = document.createRange();
+  for (let n = marcheur.nextNode(); n; n = marcheur.nextNode()) {
+    if (!n.data.trim() || !n.parentElement || coupes.some(x => x.e === n.parentElement)) continue;
+    plage.selectNodeContents(n);
+    const b = plage.getBoundingClientRect();
+    if (!b.width || !((b.left < innerWidth && b.right > innerWidth + 1) || (b.right > 0 && b.left < -1))) continue;
+    if (!rendu(n.parentElement) || defilant(n.parentElement)) continue;
+    coupes.push({ e: n.parentElement, selecteur: selecteur(n.parentElement), texte: court(n.data), px: Math.ceil(Math.max(b.right - innerWidth, -b.left)) });
+  }
+  const toile = document.createElement('canvas').getContext('2d');
+  for (const e of champs) {
+    if (e.tagName !== 'INPUT') continue;
+    const cs = getComputedStyle(e);
+    toile.font = [cs.fontStyle, cs.fontWeight, cs.fontSize, cs.fontFamily].join(' ');
+    const libre = e.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const besoin = toile.measureText(e.placeholder).width;
+    if (besoin > libre + 1) coupes.push({ e, selecteur: selecteur(e), texte: court(e.placeholder), px: Math.ceil(besoin - libre) });
+  }
+  const coupesFinales = coupes.filter(x => !coupes.some(y => y !== x && x.e.contains(y.e)));
+
+  const horsEcran = [];
+  for (const e of document.querySelectorAll('a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button]')) {
+    if (!rendu(e)) continue;
+    const r = e.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) continue;
+    let cache = r.left < -1 || r.right > innerWidth + 1;
+    for (let a = e.parentElement; !cache && a && a !== document.documentElement; a = a.parentElement) {
+      const ox = getComputedStyle(a).overflowX;
+      if (ox !== 'hidden' && ox !== 'clip') continue;
+      const ar = a.getBoundingClientRect();
+      if (r.left < ar.left - 1 || r.right > ar.right + 1) cache = true;
+    }
+    if (cache && !defilant(e)) horsEcran.push({ selecteur: selecteur(e), texte: court(e.innerText || e.getAttribute('aria-label') || e.title || e.value) });
+  }
+
+  /* Les blocs repliés : ouverts le temps de lire, puis refermés. */
+  const fermes = [...document.querySelectorAll('details:not([open])')];
+  fermes.forEach(d => { d.open = true; });
+  const dehors = fermes.filter(d => !fermes.some(x => x !== d && x.contains(d)) && d.getClientRects().length);
+  const replies = dehors.map(d => {
+    const resume = d.querySelector(':scope > summary');
+    let t = d.innerText;
+    if (resume) { const r = resume.innerText, i = t.indexOf(r); if (i >= 0) t = t.slice(0, i) + t.slice(i + r.length); }
+    return t;
   });
+  const bulles = [...document.querySelectorAll('[title]')]
+    .filter(e => e.title.trim() && rendu(e) && !(e.innerText || '').includes(e.title.trim())).map(e => e.title);
+  fermes.forEach(d => { d.open = false; });
+
+  return {
+    titre: titre ? titre.textContent.trim().replace(/\s+/g, ' ').slice(0, 140) : '',
+    texte, texteReplie: replies.concat(bulles).join('\n'),
+    blocsReplies: dehors.length,
+    contenu: zone.innerText.trim().length,
+    debordement: Math.max(0, document.documentElement.scrollWidth - innerWidth),
+    hauteurPage: document.documentElement.scrollHeight,
+    coupes: { nombre: coupesFinales.length, exemples: coupesFinales.slice(0, 5).map(({ e, ...x }) => x) },
+    horsEcran: { nombre: horsEcran.length, exemples: horsEcran.slice(0, 5) },
+    images: {
+      premierEcran: images.filter(i => i.complete && i.naturalWidth > 0 && dansEcran(i)).length,
+      cassees: images.filter(i => i.complete && i.naturalWidth === 0 && i.getAttribute('src')).length,
+    },
+  };
+}
+
+/* L'écart entre deux PNG, pixel par pixel. Exécutée dans le navigateur. Un
+ * pixel compte s'il s'écarte de plus de `seuil` (sur 255) sur un canal. Le
+ * lissage d'une image redimensionnée nuance jusqu'à 18/255 d'une passe à
+ * l'autre ; un texte, une couleur ou un bloc qui change, bien plus. */
+export const SEUIL_PIXEL = 32;
+export async function ecartDePixels({ a, b, seuil }) {
+  const charger = async s => { const i = new Image(); i.src = 'data:image/png;base64,' + s; await i.decode(); return i; };
+  const [x, y] = await Promise.all([charger(a), charger(b)]);
+  if (x.width !== y.width || x.height !== y.height) return { pixels: null, taille: [x.width, x.height, y.width, y.height] };
+  const lire = i => { const t = document.createElement('canvas'); t.width = i.width; t.height = i.height;
+    const g = t.getContext('2d'); g.drawImage(i, 0, 0); return g.getImageData(0, 0, i.width, i.height).data; };
+  const p = lire(x), q = lire(y);
+  let pixels = 0, max = 0;
+  for (let k = 0; k < p.length; k += 4) {
+    const d = Math.max(Math.abs(p[k] - q[k]), Math.abs(p[k + 1] - q[k + 1]), Math.abs(p[k + 2] - q[k + 2]), Math.abs(p[k + 3] - q[k + 3]));
+    if (d > max) max = d;
+    if (d > seuil) pixels++;
+  }
+  return { pixels, max };
+}
+
+/* La mesure brute, rangée comme `captures.json` la garde. */
+export function depouiller(m) {
+  return {
+    titre: m.titre, contenu: m.contenu, debordement: m.debordement, hauteurPage: m.hauteurPage, images: m.images,
+    coupes: m.coupes, horsEcran: m.horsEcran, blocsReplies: m.blocsReplies,
+    introuvable: /introuvable|ne mène à rien/i.test(m.titre), vide: m.contenu < 10,
+    termes: relever(m.texte), termesReplies: relever(m.texteReplie),
+    valeurs: relever(m.texte + '\n' + m.texteReplie, VALEURS_TECHNIQUES),
+  };
 }
 
 function nomFichier(id, largeur) { return id.replace(/[^a-z0-9-]+/gi, '_') + '--' + largeur + '.png'; }
+function empreinte(tampon) { return createHash('sha256').update(tampon).digest('hex').slice(0, 16); }
 
 function commit() {
   try { return execFileSync('git', ['-C', RACINE, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim(); }
   catch { return null; }
+}
+
+/* Le dossier de sortie : `captures/` et `cibles/` y sont vidés à chaque passe,
+ * mais seulement s'ils viennent d'une passe précédente (captures.json à côté,
+ * ou la marque déposée dans captures/). Un dossier quelconque n'est jamais
+ * effacé. */
+export const MARQUE = '.recette-captures';
+export async function preparerSortie(dossier) {
+  const captures = join(dossier, 'captures');
+  const notre = existsSync(join(dossier, 'captures.json')) || existsSync(join(captures, MARQUE));
+  for (const d of [captures, join(dossier, 'cibles')]) {
+    if (!existsSync(d)) continue;
+    if (!notre) throw new Error(d + ' existe et ne vient pas d’une recette : choisissez un autre --sortie, ou videz ce dossier vous-même.');
+    await rm(d, { recursive: true, force: true });
+  }
+  await mkdir(captures, { recursive: true });
+  await writeFile(join(captures, MARQUE), 'Écrit par outils/recette-captures.mjs : ce dossier est vidé à chaque passe.\n');
+  return captures;
+}
+
+/* Un projet témoin vide pour chaque nature absente de la base, et un lien de
+ * partage s'il n'y en a aucun. En mémoire seulement, avec des identifiants
+ * fixes : chaque page (bureau, téléphone) reçoit les mêmes. Exécuté dans le
+ * navigateur. */
+function ajouterTemoins({ absentes, jeton, principal }) {
+  const temoins = {};
+  for (const n of NATURE.liste()) if (absentes.includes(n.cle)) {
+    temoins[n.cle] = DEPOT.ajoute('projets', { id: 'PRO-temoin-' + n.cle, ref: 'TEMOIN-' + n.cle.toUpperCase(), nom: 'Projet témoin · ' + n.nom, nature: n.cle,
+      statut: 'ouvert', equipe: [], volets: [], livrables: [], sections: { identite: { client: 'Témoin de recette' } } }).id;
+  }
+  let j = jeton;
+  const p = DEPOT.trouve('projets', principal) || DEPOT.liste('projets')[0];
+  if (!j && p) { j = 'c0ffeec0ffeec0ffeec0ffee'; p.partages = Object.assign({}, p.partages, { cadrage: { jeton: j, cree_le: new Date().toISOString() } }); }
+  return { temoins, jeton: j };
 }
 
 async function principal() {
@@ -415,10 +698,17 @@ async function principal() {
   if (o.aide) { process.stdout.write(AIDE + '\n'); return; }
 
   const texte = await readFile(o.base, 'utf8');
-  const dossierCaptures = join(o.dossier, 'captures');
-  await rm(dossierCaptures, { recursive: true, force: true });
-  await rm(join(o.dossier, 'cibles'), { recursive: true, force: true });
-  await mkdir(dossierCaptures, { recursive: true });
+  try { await preparerSortie(o.dossier); }
+  catch (e) { process.stderr.write(e.message + '\n'); process.exitCode = 2; return; }
+  let avant = null;
+  const avantDossier = o.temps === 'apres' ? join(o.sortie, 'avant') : null;
+  if (avantDossier && existsSync(join(avantDossier, 'captures.json'))) {
+    avant = JSON.parse(await readFile(join(avantDossier, 'captures.json'), 'utf8'));
+    /* Une passe « avant » plus ancienne n'a pas d'empreinte : on la calcule. */
+    for (const c of avant.captures) if (!c.empreinte) {
+      try { c.empreinte = empreinte(await readFile(join(avantDossier, c.fichier))); } catch { /* capture absente */ }
+    }
+  }
 
   const { chromium } = await import('playwright');
   const srv = serveur([RACINE, o.medias]);
@@ -426,25 +716,37 @@ async function principal() {
   const url = 'http://127.0.0.1:' + srv.address().port;
   let navigateur;
   const r = { outil: 'outils/recette-captures.mjs', temps: o.temps, quand: new Date().toISOString(), commit: commit(),
-    horloge: o.horloge, largeurs: o.largeurs, pleinePage: o.pleinePage,
+    horloge: o.horloge, largeurs: o.largeurs, pleinePage: o.pleinePage, filtre: o.filtre,
+    telephone: { sous: TELEPHONE, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
     base: { fichier: basename(o.base), empreinte: createHash('sha256').update(texte).digest('hex').slice(0, 12) },
     manquantes: [], horsCapture: [], captures: [] };
   try {
     navigateur = await chromium.launch({ headless: true, ...(process.env.BROWSER_CHANNEL ? { channel: process.env.BROWSER_CHANNEL } : {}) });
-    const contexte = await navigateur.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce', deviceScaleFactor: 1 });
-    const page = await contexte.newPage();
-    page.setDefaultTimeout(15000);
-    if (o.horloge) await page.clock.setFixedTime(new Date(o.horloge));
     let courant = null;
-    page.on('pageerror', e => (courant ? courant.exceptions : r.horsCapture).push(String((e && e.message) || e)));
-    await page.goto(url + '/#/bureau', { waitUntil: 'networkidle' });
-    await page.waitForFunction(() => window.APP && window.DEPOT && window.DECISION);
-    const recu = await page.evaluate(t => {
-      try { DEPOT.importer(t); APP.rendre(); return null; } catch (e) { return e.message; }
-    }, texte);
-    if (recu) throw new Error('La base n’a pas pu être importée : ' + recu);
 
-    let inv = await page.evaluate(inventaire);
+    /* Un poste de bureau, et un téléphone (tactile, densité 2) pour les
+     * largeurs étroites : (hover: none) et (pointer: coarse) y sont vrais. */
+    async function ouvrirPoste(telephone) {
+      const contexte = await navigateur.newContext(telephone
+        ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, reducedMotion: 'reduce' }
+        : { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, reducedMotion: 'reduce' });
+      const page = await contexte.newPage();
+      page.setDefaultTimeout(15000);
+      if (o.horloge) await page.clock.setFixedTime(new Date(o.horloge));
+      page.on('pageerror', e => (courant ? courant.exceptions : r.horsCapture).push(String((e && e.message) || e)));
+      await page.goto(url + '/#/bureau', { waitUntil: 'networkidle' });
+      await page.waitForFunction(() => window.APP && window.DEPOT && window.DECISION);
+      const recu = await page.evaluate(t => {
+        try { DEPOT.importer(t); APP.rendre(); return null; } catch (e) { return e.message; }
+      }, texte);
+      if (recu) throw new Error('La base n’a pas pu être importée : ' + recu);
+      return page;
+    }
+    const pages = new Map();
+    for (const telephone of [...new Set(o.largeurs.map(l => l < TELEPHONE))]) pages.set(telephone, await ouvrirPoste(telephone));
+    const pageDe = largeur => pages.get(largeur < TELEPHONE);
+
+    let inv = await pageDe(o.largeurs[0]).evaluate(inventaire);
     Object.assign(r.base, inv.volume);
     const faites = new Set();
 
@@ -453,7 +755,8 @@ async function principal() {
         if (o.routes && !o.routes.test(route.id)) continue;
         faites.add(route.id);
         for (const largeur of o.largeurs) {
-          const c = { id: route.id, espace: route.espace, nom: route.nom, hash: route.hash, largeur,
+          const page = pageDe(largeur);
+          const c = { id: route.id, espace: route.espace, nom: route.nom, hash: route.hash, largeur, telephone: largeur < TELEPHONE,
             hauteurEcran: HAUTEURS[largeur] || 900, fichier: join('captures', nomFichier(route.id, largeur)), exceptions: [] };
           courant = c;
           try {
@@ -463,70 +766,82 @@ async function principal() {
             await stabiliser(page);
             if (route.action === 'recherche') await ouvrirRecherche(page, inv.recherche);
             if (route.action === 'nouveau-projet') await page.evaluate(() => VUE_PROJETS.nouveau());
+            if (route.action === 'demande') await page.evaluate(id => DEMANDE.editer(DEPOT.trouve('projets', id), null, () => {}), route.cible);
             await page.evaluate(() => window.scrollTo(0, 0));
             await stabiliser(page);
-            const m = await mesurer(page);
-            await page.screenshot({ path: join(o.dossier, c.fichier), fullPage: o.pleinePage, animations: 'disabled', caret: 'hide' });
-            Object.assign(c, { titre: m.titre, contenu: m.contenu, debordement: m.debordement, hauteurPage: m.hauteurPage, images: m.images,
-              introuvable: /introuvable|ne mène à rien/i.test(m.titre), vide: m.contenu < 10, termes: relever(m.texte) });
+            const m = await page.evaluate(mesurerDansLaPage);
+            const tampon = await page.screenshot({ path: join(o.dossier, c.fichier), fullPage: o.pleinePage, animations: 'disabled', caret: 'hide' });
+            Object.assign(c, depouiller(m), { empreinte: empreinte(tampon) });
           } catch (e) {
             c.exceptions.push('Recette : ' + ((e && e.message) || e));
             Object.assign(c, { titre: '', contenu: 0, debordement: 0, hauteurPage: 0, images: { premierEcran: 0, cassees: 0 },
-              introuvable: false, vide: true, termes: [] });
+              coupes: { nombre: 0, exemples: [] }, horsEcran: { nombre: 0, exemples: [] },
+              introuvable: false, vide: true, termes: [], termesReplies: [], valeurs: [] });
           }
           r.captures.push(c);
           courant = null;
         }
       }
-      await fermer(page);
+      for (const page of pages.values()) await fermer(page);
     }
 
     /* D'abord les espaces tels que la base les montre. */
     const premiers = routesDe(inv);
     await capturer(premiers.routes);
 
-    /* Puis, en mémoire seulement : un projet témoin vide pour chaque nature
-     * absente de la base, et un lien de partage s'il n'y en a aucun. Ils
-     * viennent après, pour ne changer aucune des captures précédentes. */
-    const absentes = inv.natures.filter(n => !inv.dossiers[n.cle]).map(n => n.cle);
-    const ajouts = await page.evaluate(({ absentes, jeton, principal }) => {
-      const temoins = {};
-      for (const n of NATURE.liste()) if (absentes.includes(n.cle)) {
-        temoins[n.cle] = DEPOT.ajoute('projets', { ref: 'TEMOIN-' + n.cle.toUpperCase(), nom: 'Projet témoin · ' + n.nom, nature: n.cle,
-          statut: 'ouvert', equipe: [], volets: [], livrables: [], sections: { identite: { client: 'Témoin de recette' } } }).id;
-      }
-      let j = jeton;
-      const p = DEPOT.trouve('projets', principal) || DEPOT.liste('projets')[0];
-      if (!j && p) { j = 'c0ffeec0ffeec0ffeec0ffee'; p.partages = Object.assign({}, p.partages, { cadrage: { jeton: j, cree_le: new Date().toISOString() } }); }
-      return { temoins, jeton: j };
-    }, { absentes, jeton: inv.jeton, principal: inv.dossiers.campagne || Object.values(inv.dossiers)[0] || null });
+    /* Puis les témoins, en mémoire : ils viennent après, pour ne changer
+     * aucune des captures précédentes. */
+    const params = { absentes: inv.natures.filter(n => !inv.dossiers[n.cle]).map(n => n.cle), jeton: inv.jeton,
+      principal: inv.dossiers.campagne || Object.values(inv.dossiers)[0] || null };
+    let ajouts = null;
+    for (const page of pages.values()) ajouts = await page.evaluate(ajouterTemoins, params);
     inv = { ...inv, temoins: ajouts.temoins, jeton: ajouts.jeton };
     const tout = routesDe(inv);
     await capturer(tout.routes.filter(x => !faites.has(x.id)));
     r.manquantes = tout.manquantes;
     if (o.routes) r.manquantes = r.manquantes.filter(id => o.routes.test(id));
+
+    /* Avec --apres : l'écart de pixels de chaque capture dont l'empreinte a
+     * changé, pour ne pas montrer comme modifié un simple lissage. */
+    if (avant) {
+      const parCle = new Map(avant.captures.map(c => [c.id + '@' + c.largeur, c]));
+      const outil = await (await navigateur.newContext()).newPage();
+      for (const c of r.captures) {
+        const a = parCle.get(c.id + '@' + c.largeur);
+        if (!a || !a.empreinte || !c.empreinte || a.empreinte === c.empreinte) continue;
+        try {
+          const [x, y] = await Promise.all([readFile(join(avantDossier, a.fichier)), readFile(join(o.dossier, c.fichier))]);
+          c.ecart = await outil.evaluate(ecartDePixels, { a: x.toString('base64'), b: y.toString('base64'), seuil: SEUIL_PIXEL });
+        } catch { /* illisible : la capture reste « modifiée » */ }
+      }
+    }
   } finally {
     if (navigateur) await navigateur.close();
     await new Promise(x => srv.close(x));
   }
 
+  const parMot = champ => Object.fromEntries(Object.entries(r.captures.flatMap(c => c[champ]).reduce((t, x) => (t[x.terme] = (t[x.terme] || 0) + x.nombre, t), {})).sort((a, b) => b[1] - a[1]));
   r.resume = {
     routes: new Set(r.captures.map(c => c.id)).size, captures: r.captures.length,
     exceptions: r.captures.reduce((n, c) => n + c.exceptions.length, 0) + r.horsCapture.length,
     debordements: r.captures.filter(c => c.debordement > 0).length,
+    coupes: r.captures.filter(c => c.coupes.nombre > 0).length,
+    horsEcran: r.captures.filter(c => c.horsEcran.nombre > 0).length,
+    valeurs: r.captures.filter(c => c.valeurs.length).length,
     termes: r.captures.filter(c => c.termes.length).length,
+    termesReplies: r.captures.filter(c => c.termesReplies.length).length,
     introuvables: r.captures.filter(c => c.introuvable).length,
     imagesCassees: r.captures.reduce((n, c) => n + ((c.images || {}).cassees || 0), 0),
-    termesParMot: Object.fromEntries(Object.entries(r.captures.flatMap(c => c.termes).reduce((t, x) => (t[x.terme] = (t[x.terme] || 0) + x.nombre, t), {})).sort((a, b) => b[1] - a[1])),
+    termesParMot: parMot('termes'),
+    termesRepliesParMot: parMot('termesReplies'),
+    valeursParMot: parMot('valeurs'),
   };
 
-  let avant = null, avantDossier = null;
-  if (o.temps === 'apres') {
-    avantDossier = join(o.sortie, 'avant');
-    if (existsSync(join(avantDossier, 'captures.json'))) {
-      avant = JSON.parse(await readFile(join(avantDossier, 'captures.json'), 'utf8'));
-      r.comparaison = { avant: relative(o.dossier, avantDossier), ...comparer(avant, r) };
-    }
+  if (avant) {
+    /* Les deux passes portent sur les mêmes routes : chacune est restreinte
+     * au filtre de l'autre. */
+    r.comparaison = { avant: relative(o.dossier, avantDossier), filtres: { avant: avant.filtre || null, apres: o.filtre }, seuilPixel: SEUIL_PIXEL,
+      ...comparer(restreindre(avant, o.routes), restreindre(r, avant.filtre)) };
   }
   const cibles = {};
   if (o.cibles) {
@@ -541,10 +856,11 @@ async function principal() {
   }
   await writeFile(join(o.dossier, 'captures.json'), JSON.stringify(r, null, 1));
   await writeFile(join(o.dossier, 'index.html'), planche(r, { dossier: o.dossier, avant, avantDossier, cibles }));
-  const { termesParMot, ...court } = r.resume;
+  const { termesParMot, termesRepliesParMot, valeursParMot, ...court } = r.resume;
+  const { modifiees, ...cmp } = r.comparaison || {};
   process.stdout.write(JSON.stringify({ sortie: o.dossier, planche: join(o.dossier, 'index.html'), ...court,
-    manquantes: r.manquantes, ...(r.comparaison ? { comparaison: r.comparaison } : {}) }, null, 2) + '\n');
-  if (o.strict && (r.resume.exceptions || r.resume.debordements || r.resume.termes)) process.exitCode = 1;
+    manquantes: r.manquantes, ...(r.comparaison ? { comparaison: { ...cmp, modifiees: modifiees.length } } : {}) }, null, 2) + '\n');
+  if (o.strict && (r.resume.exceptions || r.resume.debordements || r.resume.valeurs || r.resume.termes || r.resume.termesReplies)) process.exitCode = 1;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

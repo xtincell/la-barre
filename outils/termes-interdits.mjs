@@ -3,9 +3,9 @@
  * Ce sont les mots de tribunal et de doctrine relevés par l'audit d'adoption
  * (docs/audits/2026-11-26-adoption.md, constats fond-langage-1 à -4) : ils
  * font de chaque geste une procédure. La recette des captures les relève dans
- * le texte visible (outils/recette-captures.mjs). La liste s'enrichira du
- * glossaire validé par l'agence (chantier de microcopie) ; elle ne s'invente
- * pas ici.
+ * le texte visible et dans les blocs repliés (outils/recette-captures.mjs).
+ * La liste s'enrichira du glossaire validé par l'agence (chantier de
+ * microcopie) ; elle ne s'invente pas ici.
  *
  * Les clés de données (`verdict`, `approuve`, `reserve`, `retour`, `hors`)
  * restent : Radar les lit. Seul le texte affiché est en cause. */
@@ -24,7 +24,10 @@ export const TERMES_INTERDITS = [
   { terme: 'paragraphe', pourquoi: 'renvoi à une procédure que personne n’a lue', expression: mot('paragraphes?') },
   { terme: '§', pourquoi: 'renvoi à une procédure que personne n’a lue', expression: /§\s*\d+(?:\s*bis)?/gu },
   { terme: 'porte A/B/C', pourquoi: 'jargon de doctrine interne', expression: mot('[Pp]ortes?\\s+[ABC]', 'gu') },
-  { terme: 'étage', pourquoi: 'jargon de doctrine interne (« étage 1 »)', expression: mot('étages?\\s*\\d+') },
+  /* « étage 1 », « l'étage autorisé », « Étage non fixé », « à l'étage » : les
+   * tournures de la doctrine. Une étagère ou « un étage de bureaux » passent. */
+  { terme: 'étage', pourquoi: 'jargon de doctrine interne (« étage 1 », « étage autorisé »)',
+    expression: mot('étages?\\s*\\d+|étages?\\s+(?:autorisée?s?|non\\s+fixée?s?|cohérente?s?|plafonnée?s?)|(?:à|de)\\s+l[\'’]étage') },
   { terme: 'hors écart déclaré', pourquoi: 'dire en clair ce que le marché a changé', expression: mot('hors\\s+écart\\s+déclaré') },
 ];
 
@@ -44,3 +47,15 @@ export function relever(texte, termes = TERMES_INTERDITS) {
   }
   return out;
 }
+
+/* Ce qu'un écran ne doit jamais montrer non plus : une valeur de programme
+ * restée brute (« Fermée par : undefined », « NaN j »). Relevées avec
+ * `relever(texte, VALEURS_TECHNIQUES)`. Sensibles à la casse : « nulle part »
+ * ou le prénom « Nan » ne comptent pas. */
+export const VALEURS_TECHNIQUES = [
+  { terme: 'undefined', expression: mot('undefined', 'gu') },
+  { terme: 'null', expression: mot('null', 'gu') },
+  { terme: 'NaN', expression: mot('NaN', 'gu') },
+  { terme: '[object Object]', expression: /\[object [A-Z][A-Za-z]*\]/gu },
+  { terme: 'Invalid Date', expression: /Invalid Date/gu },
+];

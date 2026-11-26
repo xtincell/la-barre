@@ -693,6 +693,10 @@ npm run test:vitrine
 npm run test:recette
 ```
 
+Puis il installe les dépendances (`npm ci`) et lance, avec Google Chrome s'il
+est installé, sinon avec le Chromium de Playwright, le parcours (`npm test`) et
+la mesure des captures (`node --test tests/recette-mesure.test.mjs`).
+
 S'il réussit, deux jobs construisent et exercent les images Docker :
 
 - `image` lance l'image racine avec deux volumes. Il vérifie la page d'accueil
@@ -720,12 +724,14 @@ Les scripts de `package.json` :
 | `npm run test:radar` | `node --test tests/radar-decisions.test.mjs` |
 | `npm run test:vitrine` | `node --test tests/vitrine.test.mjs` |
 | `npm run vitrine:base` | `node outils/vitrine-base.mjs` (réécrit la base fictive de la démonstration) |
-| `npm run test:recette` | `node --test tests/usage-reel.test.mjs tests/recette-captures.test.mjs` |
+| `npm run test:recette` | `node --test tests/usage-reel.test.mjs tests/recette-captures.test.mjs tests/recette-mesure.test.mjs` |
 | `npm run usage:reel` | `node outils/usage-reel.mjs` (relevé d'usage sur une copie de la base, en lecture seule) |
 | `npm run recette:captures` | `node outils/recette-captures.mjs` (captures de tous les espaces, hors du dépôt) |
 
-Les tests `node --test` n'ont besoin d'aucune dépendance npm ;
-`tests/entreprise.test.mjs` et `tests/vitrine.test.mjs` appellent aussi `git`. `npm test` lance un
+Les tests `node --test` n'ont besoin d'aucune dépendance npm, sauf
+`tests/recette-mesure.test.mjs`, qui demande Playwright et un navigateur et se
+saute sans eux hors de la CI ; `tests/entreprise.test.mjs` et
+`tests/vitrine.test.mjs` appellent aussi `git`. `npm test` lance un
 parcours dans Chromium avec Playwright, sur un serveur éphémère et la base
 fictive `tests/fixtures/studio.json`. Il demande `npm install` et un Chromium
 pour Playwright (`npx playwright install chromium`, ou `BROWSER_CHANNEL` pour
@@ -747,10 +753,12 @@ Trois outils encadrent désormais chaque changement d'interface :
   remises et personnes actives. Il ne fait que lire et écrit sur la sortie
   standard (`--format md|csv`, `--depuis AAAA-MM-JJ`, `--anonyme`).
 - **Regarder.** `outils/recette-captures.mjs` photographie tous les espaces à
-  320, 390 et 1440 px, avant (`--avant`) et après (`--apres`) un changement,
-  et écrit hors du dépôt une planche-contact et un relevé JSON (exceptions,
-  débordements, termes interdits). Il demande Playwright et un navigateur
-  (`BROWSER_CHANNEL=chrome`).
+  320, 390 et 1440 px (vus comme sur un téléphone sous 768 px), avant
+  (`--avant`) et après (`--apres`) un changement, et écrit hors du dépôt une
+  planche-contact et un relevé JSON : exceptions, débordements, textes coupés,
+  contrôles hors écran, valeurs techniques affichées, termes interdits visibles
+  ou dans un bloc replié, et, après, les captures modifiées. Il demande
+  Playwright et un navigateur (`BROWSER_CHANNEL=chrome`).
 
 La définition de « fini » d'une PR d'interface est dans
 [`documents/FINI.md`](documents/FINI.md), et le gabarit de PR la reprend.

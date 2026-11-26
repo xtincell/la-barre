@@ -17,7 +17,8 @@ node --check servir.mjs
 for f in app/*.js; do node --check "$f" || exit; done
 npm run test:persistance && npm run test:manuel && npm run test:marches
 npm run test:provenances && npm run test:decisions && npm run test:bilan
-npm run test:radar && npm run test:vitrine && npm run test:recette
+npm run test:radar && npm run test:vitrine
+BROWSER_CHANNEL=chrome npm run test:recette   # la mesure des captures demande un navigateur
 node --test tests/bilan-delai.test.mjs tests/ecarts.test.mjs tests/registre-radar.test.mjs
 node --test tests/approches.test.mjs tests/entreprise.test.mjs
 node outils/vitrine-base.mjs --check
@@ -36,7 +37,9 @@ dans le même commit.
 une campagne) ; chaque rubrique de chaque nature ; une pièce (poser, juger,
 origine, remise, version historique) et une piste ; Décisions, Planning (4 vues),
 Bilan (5 vues), Ressources (8 vues) ; Plus ; la recherche ouverte ; Nouveau
-projet ouvert ; la page partagée.
+projet ouvert ; la demande de proposition ouverte ; la page partagée. Sous
+768 px, la page est vue comme sur un téléphone : écran tactile, densité 2,
+`(hover: none)` et `(pointer: coarse)` vrais.
 
 ```bash
 # sur main, avant le changement
@@ -49,11 +52,23 @@ BROWSER_CHANNEL=chrome npm run recette:captures -- --apres --horloge 2026-11-26T
   `../recette-adoption/apres` par défaut ; `--sortie` pour un autre dossier).
   Le script refuse d'écrire dans le dépôt.
 - Ouvrez `apres/index.html` : la planche-contact montre chaque route, avant et
-  après, à chaque largeur, avec ses alertes.
+  après, à chaque largeur, avec ses alertes. Elle s'ouvre sur ce qui a changé :
+  chaque capture porte « modifiée », « identique » ou « identique à l'œil »
+  (quelques pixels à peine nuancés par le lissage d'une image), et la case
+  « N'afficher que les captures modifiées ou nouvelles » ne garde qu'elles.
 - `apres/captures.json` ne contient **ni exception, ni débordement
-  horizontal**. Sa section `comparaison` liste les routes apparues ou disparues,
-  les exceptions et débordements nouveaux, et le nombre de termes interdits
-  avant et après.
+  horizontal**. Sa section `comparaison` liste les captures modifiées, les
+  routes apparues ou disparues, les exceptions, débordements, textes coupés,
+  contrôles hors écran et valeurs techniques nouveaux, et le nombre de termes
+  interdits avant et après.
+- Aucune alerte nouvelle : `comparaison.coupesNouvelles` (un texte rogné par
+  sa boîte ou par le bord de l'écran, un texte d'exemple plus large que son
+  champ), `comparaison.horsEcranNouveaux` (un bouton ou un lien rejeté hors de
+  l'écran) et `comparaison.valeursNouvelles` (« undefined », « null », « NaN »,
+  « [object Object] » à l'écran) sont vides. Sur les écrans touchés, celles qui
+  existaient déjà sont corrigées, ou la PR dit pourquoi elles restent.
+- La comparaison se fait sur une passe complète. Avec `--routes`, elle ne porte
+  que sur les routes filtrées, et la planche le dit.
 - Joignez à la PR les captures des espaces touchés, aux trois largeurs.
 - La base par défaut est la base fictive de la vitrine. Une passe sur une copie
   de la vraie base (`--base`, `--medias`) est recommandée pour voir le volume
@@ -106,18 +121,28 @@ propriétaire du produit.
 
 ## 6. Aucun terme interdit
 
-Aucun écran touché n'affiche de terme de tribunal ou de doctrine. La liste est
-dans `outils/termes-interdits.mjs` : verdict, opposable, imputable, sans
-recours, indéfendable, paragraphe, « § » suivi d'un numéro, « porte A/B/C »,
-« étage » suivi d'un numéro, « hors écart déclaré ». Elle s'enrichira du
+Aucun écran touché n'affiche de terme de tribunal ou de doctrine, ni d'emblée,
+ni à un clic dans un bloc replié. La liste est dans
+`outils/termes-interdits.mjs` : verdict, opposable, imputable, sans recours,
+indéfendable, paragraphe, « § » suivi d'un numéro, « porte A/B/C », « étage »
+suivi d'un numéro ou dans ses tournures de doctrine (« étage autorisé »,
+« étage non fixé », « à l'étage »), « hors écart déclaré ». Elle s'enrichira du
 glossaire validé par l'agence ; elle ne s'invente pas.
 
-- `captures.json` relève ces termes capture par capture (`termes`) et en
-  tout (`resume.termesParMot`).
+- `captures.json` relève ces termes capture par capture, en deux champs :
+  - `termes` : le texte visible, et le texte d'exemple des champs vides ;
+  - `termesReplies` : ce qui est à un geste, c'est-à-dire le contenu des blocs
+    repliés (ouverts le temps de la lecture, refermés avant la photo) et les
+    bulles d'aide.
+
+  En tout : `resume.termesParMot` et `resume.termesRepliesParMot`. La planche
+  montre les deux.
 - Aucune PR n'ajoute d'occurrence : `comparaison.termes.apres` ne dépasse pas
-  `comparaison.termes.avant`.
+  `comparaison.termes.avant`, ni `comparaison.termesReplies.apres`
+  `comparaison.termesReplies.avant`.
 - Une fois la microcopie réécrite, la recette tourne avec `--strict`, qui
-  échoue au premier terme.
+  échoue au premier terme, visible ou replié, et à la première valeur
+  technique affichée.
 
 Les clés de données (`verdict`, `approuve`, `reserve`, `retour`, `hors`) ne
 changent pas : Radar les lit. Seul le texte affiché est en cause.

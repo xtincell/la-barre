@@ -36,11 +36,12 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           if command -v google-chrome >/dev/null; then
-            BROWSER_CHANNEL=chrome npm test
+            export BROWSER_CHANNEL=chrome
           else
             npx playwright install --with-deps chromium
-            npm test
           fi
+          npm test
+          node --test tests/recette-mesure.test.mjs
   image-entreprise:
     needs: verification
     runs-on: ubuntu-latest
