@@ -251,6 +251,7 @@ test('une note déjà prise par un autre onglet ne s’écrit pas une seconde fo
   assert.ok(!boutons(redessine).includes('Valider la V1'), 'la base de cet onglet est en retard : la validation ne se repropose pas');
   assert.match(textes(redessine), /V1 validée depuis un autre onglet\. Rechargez la page pour la voir\./);
   assert.ok(boutons(redessine).includes('Recharger la page'));
+  assert.equal(v.s.ctx.VUE_LIVRABLE.valideeAilleurs(v.l, 1), true, 'la page de la pièce le sait aussi');
   v.s.ctx.VUE_LIVRABLE.juger(v.p, v.l, v.s.ctx.MAISON.verdicts.find(x => x.cle === 'approuve'), () => {});
   assert.equal(v.minuteries.length, 1, 'aucune seconde validation engagée');
   assert.equal(v.s.ctx.DEPOT.liste('decisions').length, 0);
@@ -777,4 +778,14 @@ test('la version précédente ne dit pas « Fermée par : undefined » quand ell
   assert.doesNotMatch(t, /undefined|Fermée par/, t);
   const close = livrable('L-cl', { versions: [{ n: 1, origine: 'client', motif: 'Le logo plus grand', close_le: '2026-11-03T08:00:00.000Z' }] });
   assert.match(texteDe(s.interne['vue-asset'].precedente(projet('PR'), close)), /Fermée par : Retour client\|Le logo plus grand\|3 nov\./);
+});
+
+test('l’étiquette d’une pièce validée depuis un autre onglet dit « Validé », pas « À examiner »', async () => {
+  const s = await bacDecisions(APP, 99);
+  await s.charger('vue-asset', ['etatVerdict']);
+  s.ctx.UI = { eti: (t, ton) => ({ texte: t, ton }) };
+  const etat = s.interne['vue-asset'].etatVerdict;
+  assert.deepEqual({ ...etat({ n: 1 }, false, false) }, { texte: 'À examiner', ton: 'attente' });
+  assert.deepEqual({ ...etat({ n: 1 }, false, true) }, { texte: 'Validé', ton: 'vert' });
+  assert.deepEqual({ ...etat({ n: 1 }, true, false) }, { texte: 'Validation en cours', ton: 'vert' });
 });

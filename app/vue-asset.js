@@ -78,8 +78,12 @@ window.VUE_ASSET = (function () {
     } }, nom);
   }
 
-  function etatVerdict(v, enCours) {
+  /* `ailleurs` : un autre onglet a écrit la validation de cette version, que
+   * la base de cette page n'a pas encore. L'étiquette dit « Validé », comme
+   * la ligne d'à côté, et pas « À examiner ». */
+  function etatVerdict(v, enCours, ailleurs) {
     if (enCours) return UI.eti("Validation en cours", "vert");
+    if (ailleurs) return UI.eti(MAISON.verdicts.find(function (x) { return x.cle === "approuve"; }).nom, "vert");
     var def = v && MAISON.verdicts.find(function (x) { return x.cle === v.verdict; });
     var ton = v && v.verdict === "approuve" ? "vert" : "attente";
     return def ? UI.eti(def.nom, ton) : v && v.verdict ? UI.eti("Décision enregistrée", "terne") : UI.eti("À examiner", "attente");
@@ -156,6 +160,7 @@ window.VUE_ASSET = (function () {
     var b = p.sections.bigidea || {};
     var critere = (b.criteres || []).find(Boolean) || (REGLES.grille("livrable", l)[0] || {}).texte;
     var enCours = !lecture && !verdict && VUE_LIVRABLE.validationEnCours(l);
+    var ailleurs = !lecture && !verdict && !enCours && VUE_LIVRABLE.valideeAilleurs(l, numero);
     var action = !lecture && !verdict ? VUE_LIVRABLE.decider(p, l, apres)
       : !lecture && verdict === "approuve" ? ongletLien(lien, "remise", "b.or.rvp-action", "Suivre le BAT et la remise") : null;
     var historique = Array.from(new Set((l.versions || []).map(function (ancienne) { return ancienne.n || ancienne.numero; })))
@@ -171,7 +176,7 @@ window.VUE_ASSET = (function () {
         el("div.rvp-pupitre", {},
           el("div.rvp-portee", {},
             el("p.rvp-meta", {}, (marche ? marche.nom : "Marché non renseigné") + " · V" + numero),
-            el("div.rvp-etat", { tabindex: "-1" }, verdict || !lecture ? etatVerdict(v, enCours)
+            el("div.rvp-etat", { tabindex: "-1" }, verdict || !lecture ? etatVerdict(v, enCours, ailleurs)
               : UI.eti(v ? "Consultation" : "Version à soumettre", "terne"))),
           !verdict && critere ? el("p.rvp-critere", {}, critere) : null,
           action,

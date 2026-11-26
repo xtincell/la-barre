@@ -957,5 +957,6 @@ window.VUE_LIVRABLE = (function () {
 
   return { ouvrir: ouvrir, ouvrirFiche: ouvrirFiche,
     criteres: criteres, controles: controles, decider: decider, juger: juger, changerDecision: changerDecision,
-    validationEnCours: validationEnCours, reprendreValidations: reprendreValidations, dependances: dependances };
+    validationEnCours: validationEnCours, valideeAilleurs: ecriteAilleurs,
+    reprendreValidations: reprendreValidations, dependances: dependances };
 })();
