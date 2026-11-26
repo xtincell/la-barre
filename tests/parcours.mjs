@@ -239,6 +239,36 @@ try {
   await page.reload({waitUntil:'networkidle'});
   await page.locator('.lb-modes summary').click();
   assert.match(await page.locator('.lb-modes [aria-current="page"]').innerText(),/Plan de charge/);
+  // À 320 et 360 px, le titre d'une pièce longue (« Key visual — Côte
+  // d'Ivoire · Orvelle ») passe sous celui du panneau : la croix reste entière
+  // dans l'écran, et « Demander des modifs » tient sur une ligne.
+  const kvCI = await page.evaluate(() => {
+    DEPOT.ajoute('marches', { id: 'M-ci-etroit', code: 'CI', nom: 'Côte d’Ivoire', langues: ['fr'] });
+    const p = DEPOT.trouve('projets', 'PRJ-demo');
+    const master = KV.creer(p, null, null, 'maitre', { marque: 'Orvelle' });
+    const l = KV.creer(p, 'M-ci-etroit', master, 'adaptation');
+    l.versions = [{ n: 1, soumis_le: '2026-09-25T09:00:00Z', verdict: null }];
+    DEPOT.enregistrer();
+    return l.id;
+  });
+  for (const width of [320, 360]) {
+    await page.setViewportSize({ width, height: 700 });
+    await page.goto(url + '/#/projets/PRJ-demo/livrables/' + kvCI + '/juger/1');
+    await page.getByRole('button', { name:'Demander des modifs', exact:true }).click();
+    const panneauModifs = page.getByRole('dialog', { name:'Demander des modifs' });
+    await panneauModifs.waitFor();
+    const tete = await panneauModifs.evaluate(d => {
+      const x = d.querySelector('.panneau-fermer').getBoundingClientRect();
+      const h2 = d.querySelector('.panneau-tete h2');
+      const ligne = parseFloat(getComputedStyle(h2).lineHeight);
+      return { gauche: x.left >= 0, droite: x.right <= innerWidth, largeur: Math.round(x.width),
+        lignes: Math.round(h2.getBoundingClientRect().height / ligne),
+        etat: d.querySelector('.panneau-tete .etat').textContent.replace(/\u00a0/g, ' ') };
+    });
+    assert.deepEqual(tete, { gauche: true, droite: true, largeur: 44, lignes: 1, etat: 'Key visual — Côte d’Ivoire · Orvelle' },
+      `En-tête du panneau à ${width}px`);
+    await page.keyboard.press('Escape');
+  }
   await page.setViewportSize({width:1440,height:1050});
   // Aucun ancien lien ne doit provoquer d'erreur de rendu.
   for (const route of ['bureau','valider','planning','reporting','projets','projets/marques','referentiel','attentes','reglages']) {

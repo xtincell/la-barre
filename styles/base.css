@@ -547,11 +547,20 @@ body {
   padding: .85rem 1rem; border-bottom: 1px solid var(--trait);
   display: flex; align-items: center; gap: .7rem; background: var(--nuit-carte);
 }
-.panneau-tete h2 { font-size: var(--t-lire); letter-spacing: var(--ls-lire); font-weight: 400; line-height: 1.2; }
-.panneau-tete .etat { font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--or); margin-left: auto; white-space: nowrap; }
+.panneau-tete h2 { flex: 1 1 0; min-width: 7em; font-size: var(--t-lire); letter-spacing: var(--ls-lire); font-weight: 400; line-height: 1.2; }
+/* Le titre de la pièce (« Key visual — Côte d'Ivoire · Orvelle ») revient à
+ * la ligne plutôt que de pousser la croix hors de l'écran. */
+.panneau-tete .etat { min-width: 0; text-align: right; font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); color: var(--or); }
+/* Sur téléphone, il passe sous le titre du panneau : à côté, il l'écrasait sur
+ * trois lignes (« Demander / des / modifs »). */
+@media (max-width: 480px) {
+  .panneau-tete { flex-wrap: wrap; row-gap: .25rem; }
+  .panneau-tete .etat { order: 3; flex: 1 0 100%; text-align: left; }
+}
 /* La croix était à 29 px de haut : sous la cible de 44. C'est le seul geste
- * disponible sur une modale ouverte — il ne peut pas être le plus petit. */
-.panneau-fermer { min-width: var(--cible); min-height: var(--cible);
+ * disponible sur une modale ouverte — il ne peut pas être le plus petit, ni
+ * céder sa place. */
+.panneau-fermer { flex: 0 0 auto; min-width: var(--cible); min-height: var(--cible);
   background: none; border: 1px solid var(--trait-clair); color: var(--clair-doux);
   font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: .15rem .4rem; cursor: pointer; }
 .panneau-fermer:hover { background: var(--alerte); color: #fff; border-color: var(--alerte); }
