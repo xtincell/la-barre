@@ -104,7 +104,12 @@ window.VALIDATION = (function () {
       lignes,
       el("div.vd-gestes", {},
         el("span.vd-v", {}, "V" + VERSION.num(objet)),
-        MAISON.verdicts.map(function (v) {
+        /* La décision qui couvre déjà cette version ne se repropose pas sous
+         * elle (« Validé le 3 oct. » puis « Valider ») ; une validation « pour
+         * travail » reste à confirmer, son bouton reste. */
+        MAISON.verdicts.filter(function (v) {
+          return vieux || v.cle !== e.cle || (v.cle === "approuve" && e.ton !== "vert");
+        }).map(function (v) {
           return el("button.b" + (v.cle === "approuve" ? ".vert" : ""), { type: "button",
             onclick: function () { rendre(p, cle, objet, v, rafraichir); } },
             el("span", { "aria-hidden": "true" }, v.signe), " " + gesteDe(v));

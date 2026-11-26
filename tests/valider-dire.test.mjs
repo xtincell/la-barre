@@ -292,9 +292,12 @@ test('la validation d’un document : des boutons qui disent le geste, des refus
   s.ctx.VALIDATION.rendre(p, 'brief', p.sections.brief, verdict('approuve'), () => {});
   cliquer(bouton(s.dernier(), 'Valider'));
   assert.equal(p.sections.brief.validation.verdict, 'approuve');
-  const apres = textes(s.ctx.VALIDATION.bande(p, 'brief', p.sections.brief, () => {}));
+  const bandeApres = s.ctx.VALIDATION.bande(p, 'brief', p.sections.brief, () => {});
+  const apres = textes(bandeApres);
   assert.match(apres, /Validé le \d+ [a-zé]+\. Le travail créatif peut commencer\./);
   assert.doesNotMatch(apres, /\.\./, 'un seul point après la date');
+  assert.ok(!boutons(bandeApres).includes('✓ Valider'), 'une version validée ne se repropose pas à valider');
+  assert.ok(boutons(bandeApres).includes('↩ Demander des modifs'));
 });
 
 /* ————— Enregistrer un retour client ————— */
