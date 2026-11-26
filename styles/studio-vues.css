@@ -318,6 +318,8 @@ textarea { min-height: 44px; }
 /* Le sous-bloc d'une fiche ou d'un panneau : un titre 12 px, puis son contenu. */
 .sousbloc { margin-top: 16px; }
 .sousbloc h3 { font: 700 12px var(--affichage); color: var(--clair); letter-spacing: 0; text-transform: none; margin-bottom: 8px; }
+.sousbloc > h3:has(> .droite) { display: flex; align-items: baseline; gap: 8px; }
+.sousbloc > h3 > .droite { margin-left: auto; font-weight: 500; color: var(--clair-terne); }
 ul.puces { list-style: none; padding: 0; margin: 0; }
 ul.puces li { position: relative; padding: 3px 0 3px 14px; font-size: 13px; line-height: 1.5; color: var(--clair); }
 ul.puces li::before { content: ""; position: absolute; left: 2px; top: 11px; width: 5px; height: 5px; border-radius: 50%; background: var(--studio-bleu); }

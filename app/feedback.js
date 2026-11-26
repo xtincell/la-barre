@@ -435,7 +435,7 @@ window.FEEDBACK = (function () {
       motifs.length
         ? el("div.sousbloc", {},
             el("h3", {}, "Ce qui permet de discuter ce retour",
-              el("span.droite", {}, motifs.length + (motifs.length > 1 ? " motifs" : " motif"))),
+              el("span.droite", {}, O.pluriel(motifs.length, "motif"))),
             listeM)
         : UI.banniere("", "Rien à discuter : ce retour arrive avant validation, dans les allers-retours prévus au devis et sur le périmètre prévu. Il se traite."),
 

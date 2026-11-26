@@ -223,6 +223,8 @@
   color: var(--clair-doux); font: inherit; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: .3rem .5rem; cursor: pointer; }
 .motif:hover { border-color: var(--trait-clair); }
 .motif.actif { border-color: var(--or); color: var(--clair); }
+.motif > b, .motif > span { display: block; }
+.motif > b { color: var(--clair); }
 
 /* ————————————————————— La comparaison des routes ————————————————————— */
 
