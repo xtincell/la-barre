@@ -71,12 +71,12 @@ window.VALIDATION = (function () {
 
     var lignes = [];
     if (e.cle === "aucun") {
-      lignes.push(UI.banniere("", "Personne n'a rendu de verdict sur " + def.nom
-        + ". Tant qu'il n'y en a pas, l'aval travaille sans savoir si l'amont tient."));
+      lignes.push(UI.banniere("", "Personne n'a encore validé " + def.nom
+        + ". Tant que ce n'est pas fait, la suite avance sans savoir si ce qui précède tient."));
     } else if (vieux) {
       lignes.push(UI.banniere("rouge", e.nom + " — mais sur la V" + e.version
         + ", et on en est à la V" + VERSION.num(objet)
-        + ". Le verdict ne couvre plus ce qui est écrit."));
+        + ". Cette décision ne couvre plus ce qui est écrit."));
     } else {
       lignes.push(UI.banniere(e.ton === "vert" ? "vert" : "",
         e.nom + " le " + O.joli(e.quand) + (e.motif ? " — " + e.motif : "")
