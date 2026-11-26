@@ -350,21 +350,10 @@ window.VUE_PROJETS = (function () {
      * de rythme. */
     var vivantes = lignes.filter(function (x) { return x.vivants.length; });
     var dormantes = lignes.filter(function (x) { return !x.vivants.length; });
-    var muettes = vivantes.filter(function (x) { return !x.campagnes.length; }).length;
-    var intro = !lignes.length ? "Aucun dossier n'est encore rattaché à une marque."
-      : !vivantes.length ? "Aucune marque n'a de dossier ouvert."
-      : vivantes.length + (vivantes.length > 1 ? " marques ont" : " marque a") + " un dossier ouvert. "
-        + (muettes
-          ? muettes + (muettes > 1 ? " n'ont" : " n'a") + " ni campagne ni cycle : leur rythme "
-            + "n'existe que dans la tête de ceux qui le tiennent."
-          : "Toutes ont un rythme : un cycle qui tourne, ou des temps forts.");
-
     hote.appendChild(el("header.studio-entete", {},
-      el("div", {},
-        el("p.studio-date", {}, el("a.mql-fil", { href: "#/projets" }, "Vos projets"), " · par marque"),
-        el("h1", {}, "Vos marques."),
-        el("p.studio-intro", {}, intro)),
+      el("h1", {}, "Par marque"),
       el("button.b.or", { type: "button", onclick: nouveau }, "+ Nouveau projet")));
+    hote.appendChild(VUE_STUDIO.navProjets("marques"));
 
     if (!lignes.length) {
       hote.appendChild(el("div.studio-vide", {}, el("h3", {}, "Aucune marque ici."),
@@ -380,8 +369,7 @@ window.VUE_PROJETS = (function () {
             + (sansC ? " · " + sansC + " sans campagne rattachée" : ""))),
         el("section.mql-liste", {}, dormantes.map(ligneMarque))));
     }
-    hote.appendChild(el("p.mql-pied", {}, "Une marque est toujours en campagne : un cycle "
-      + "qui tourne, et des temps forts. Ce qui n'est rattaché à ni l'un ni l'autre se voit."));
+
   }
 
   /* Une marque sur une ligne : son nom, ce qui tourne, son rythme, son socle.
@@ -1168,20 +1156,12 @@ window.VUE_PROJETS = (function () {
         p.fusionne ? "Fusionné" : cloture ? cloture.nom : "En cours")));
 
     hote.appendChild(navigateur(p, phs, courante));
-    var droite = el("aside.aside.pj-rail", { "aria-label": "Suivi du projet" },
-      courante === "bigidea" ? VUE_BIGIDEA.rail(p) : null,
-      blocs.length ? panneauBlocages(p, blocs, rafraichir) : null,
-      panneauSuivi(p, g, blocs, rafraichir)
-    );
-    var gauche = el("div.pj-corps", {},
+    hote.appendChild(el("div.pj-corps", {},
       courante
-        ? [
-            transitionDossier(p, phs, courante, rafraichir),
-            el("div.pj-section", {}, corpsSection(p, courante, rafraichir)),
-          ]
-        : vueEnsemble(p, phs, rafraichir)
-    );
-    hote.appendChild(el("div.pj-espace", {}, gauche, droite));
+        ? el("div.pj-section", {}, corpsSection(p, courante, rafraichir))
+        : vueEnsemble(p, phs, rafraichir),
+      panneauSuivi(p, g, phs, courante, blocs, rafraichir)
+    ));
     hote.querySelectorAll("details[data-pj-detail]").forEach(function (d) {
       d.open = ouverts.indexOf(d.dataset.pjDetail) !== -1;
     });
@@ -1257,18 +1237,20 @@ window.VUE_PROJETS = (function () {
           geste.detail ? el("p", {}, geste.detail) : null),
         geste.action),
       el("section.pj-contextuel", { "aria-labelledby": "pj-contexte" },
-        el("h2", { id: "pj-contexte" }, "Informations du projet"),
-        p.refDemandee ? el("button.studio-lien", { type: "button", onclick: function () { redemander(p, rafraichir); } },
-          "Modifier la référence demandée") : null,
-        ligneCampagne(p, rafraichir),
-        window.STRUCTURE ? STRUCTURE.ligne(p) : null,
+        el("h2", { id: "pj-contexte" }, "Repères du projet"),
         el("dl.pj-meta", {},
           meta("Marchés", marches(p)),
           meta("Supports", supports(p)),
           meta("Décideur final", nomDecideur(p)),
           meta("Fenêtre", ident.fenetre)
         ),
-        chezPeople(p))
+        el("details.pj-detail.pj-contextuel-more", { "data-pj-detail": "contexte" },
+          el("summary", {}, "Rattachements et références"),
+          p.refDemandee ? el("button.studio-lien", { type: "button", onclick: function () { redemander(p, rafraichir); } },
+            "Modifier la référence demandée") : null,
+          ligneCampagne(p, rafraichir),
+          window.STRUCTURE ? STRUCTURE.ligne(p) : null,
+          chezPeople(p)))
     );
   }
 
@@ -1276,15 +1258,7 @@ window.VUE_PROJETS = (function () {
     var blocages = blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; });
     var ordre = blocages.concat(blocs.filter(function (b) { return b.type === "infere-non-contresigne"; }));
 
-    return el("section.pj-cote", { "aria-labelledby": "pj-attention" },
-      el("h2", { id: "pj-attention" }, "À traiter",
-        ordre.length ? el("span.studio-compte", {}, String(ordre.length)) : null),
-      ordre.length ? [
-        ligneBlocage(p, ordre[0], rafraichir),
-        ordre.length > 1 ? el("details.pj-detail", { "data-pj-detail": "blocages" },
-          el("summary", {}, ordre.length === 2 ? "Voir l’autre point" : "Voir les " + (ordre.length - 1) + " autres points"),
-          el("div.pj-points", {}, ordre.slice(1).map(function (b) { return ligneBlocage(p, b, rafraichir); }))) : null,
-      ] : el("p.pj-sans-blocage", {}, "Aucun blocage signalé."));
+    return el("div.pj-points", {}, ordre.map(function (b) { return ligneBlocage(p, b, rafraichir); }));
   }
 
   function ligneBlocage(p, b, rafraichir) {
@@ -1302,9 +1276,12 @@ window.VUE_PROJETS = (function () {
         window.VUE_DOCTRINE ? VUE_DOCTRINE.lien(b.type) : null));
   }
 
-  function panneauSuivi(p, g, blocs, rafraichir) {
+  function panneauSuivi(p, g, phs, courante, blocs, rafraichir) {
     var durs = blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; }).length;
+    var transition = courante ? transitionDossier(p, phs, courante, rafraichir) : null;
     var rubriques = [
+      ["documents", "Documents et phases précédentes", transition],
+      ["activite-idee", "Validations par marché et activité", courante === "bigidea" ? VUE_BIGIDEA.rail(p) : null],
       ["champs", "Champs à renseigner", panneauSante(p, g, durs)],
       ["equipe", "Équipe", panneauEquipe(p)],
       ["cout", "Chiffrage", panneauChiffrage(p, rafraichir)],
@@ -1313,11 +1290,15 @@ window.VUE_PROJETS = (function () {
       ["cloture", "Clôture", panneauCloture(p, rafraichir)],
       ["releve", "Relevé d’origine", panneauReleve(p)],
     ];
-    return el("section.pj-cote.pj-suivi", { "aria-labelledby": "pj-suivre" },
-      el("h2", { id: "pj-suivre" }, "Suivi du projet"),
-      rubriques.filter(function (r) { return r[2]; }).map(function (r) {
-        return el("details.pj-detail", { "data-pj-detail": r[0] }, el("summary", {}, r[1]), r[2]);
-      }));
+    return el("details.pj-suivi.pj-detail", { id: "pj-suivi", "data-pj-detail": "suivi" },
+      el("summary", {}, "Suivi du projet",
+        blocs.length ? el("span.studio-compte" + (durs ? ".alerte" : ""), {},
+          blocs.length + (blocs.length > 1 ? " points à traiter" : " point à traiter")) : null),
+      el("div.pj-suivi-corps", {},
+        blocs.length ? panneauBlocages(p, blocs, rafraichir) : null,
+        rubriques.filter(function (r) { return r[2]; }).map(function (r) {
+          return el("details.pj-detail", { "data-pj-detail": r[0] }, el("summary", {}, r[1]), r[2]);
+        })));
   }
 
   /* ————————————————————— Le même dossier, chez People ————————————————————— */
@@ -1354,10 +1335,7 @@ window.VUE_PROJETS = (function () {
 
   /* ————————————————————— Le navigateur : trois temps, pas dix onglets ————————————————————— */
 
-  /* Dix onglets de même rang qui défilent horizontalement, ça ne se lit pas et
-   * ça ne dit rien de l'ordre. Ici : les trois temps du dossier, toujours à la
-   * même place, et sous eux les étapes du temps où l'on se trouve. Deux lignes,
-   * jamais de défilement. */
+  /* Le parcours s’appuie sur les phases métier et les rubriques propres à la nature. */
   function phases(p, g) {
     return MAISON.phases.map(function (ph) {
       var cles = ph.sections.filter(function (c) { return g.sections.indexOf(c) !== -1; });
@@ -1373,45 +1351,36 @@ window.VUE_PROJETS = (function () {
     }).filter(function (x) { return x.cles.length; });
   }
 
-  var parcoursOuvert = Object.create(null);
-
   function navigateur(p, phs, courante) {
     var lien = "#/projets/" + p.id;
-    var ici = phs.find(function (x) { return x.cles.indexOf(courante) !== -1; });
+    var contextuel = VUE_BRIEF.estContextuel(p);
+    var ici = phs.find(function (x) {
+      return x.cles.indexOf(courante) !== -1 || (courante === "brief" && contextuel && x.ph.cle === "cadrer");
+    });
     var SIGNES = { plein: "✓", partiel: "◐", vide: "○" };
-    var phaseRecueil = !ici && courante === "brief" && VUE_BRIEF.estContextuel(p);
-    var titre = !courante ? "Vue d’ensemble" : phaseRecueil ? "Demande d’origine" : nomSection(courante);
+    var etapes = ici ? ici.etats.slice() : [];
+    if (ici && ici.ph.cle === "cadrer" && contextuel && ici.cles.indexOf("brief") === -1) {
+      etapes.splice(1, 0, { cle: "brief", e: etatSection(p, "brief"),
+        etiquette: (NATURE.de(p) || {}).cle === "pitch" ? "Brief du pitch" : "Demande d’origine" });
+    }
 
-    return el("div.pj-nav",
-      el("div.pj-position",
-        el("p.pj-position-titre", {}, ici ? el("span", {}, ici.ph.nom) : null, el("strong", {}, titre)),
-        el("details.pj-parcours", { open: parcoursOuvert[p.id], ontoggle: function (e) {
-          parcoursOuvert[p.id] = e.target.open;
-        } },
-          el("summary", {}, "Parcours du dossier"),
-          el("nav", { "aria-label": "Étapes du projet" },
-            el("div.pj-phases", { role: "group", "aria-label": "Phases" },
-              el("a.pj-phase", { href: lien, "aria-current": courante ? null : "page" }, "Vue d’ensemble"),
-              phs.map(function (x) {
-                return el("a.pj-phase", {
-                  href: lien + "/" + premierUtile(x),
-                  "aria-current": x === ici ? "step" : null,
-                }, x.ph.nom);
-              })
-            ),
-            ici ? el("div.pj-etapes", { role: "group", "aria-label": "Sections" }, ici.etats.map(function (x) {
-              var etiquette = nomSection(x.cle);
-              return el("a.pj-etape." + x.e.classe, {
-                href: lien + "/" + x.cle,
-                "aria-current": x.cle === courante ? "page" : null,
-                "aria-label": etiquette + " : " + x.e.texte,
-                title: x.e.texte,
-              }, el("span.pje-s", { "aria-hidden": "true" }, SIGNES[x.e.classe]), etiquette);
-            })) : null
-          )
-        )
-      )
-    );
+    return el("nav.pj-nav", { "aria-label": "Étapes du projet" },
+      el("div.pj-phases", { role: "group", "aria-label": "Phases" },
+        el("a.pj-phase", { href: lien, "aria-current": courante ? null : "page" }, "Vue d’ensemble"),
+        phs.map(function (x) {
+          return el("a.pj-phase", {
+            href: lien + "/" + (x === ici ? courante : premierUtile(x)),
+            "aria-current": x === ici ? "step" : null,
+          }, x.ph.nom);
+        })),
+      etapes.length ? el("div.pj-etapes", { role: "group", "aria-label": "Sections de " + ici.ph.nom }, etapes.map(function (x) {
+        var etiquette = x.etiquette || nomSection(x.cle);
+        return el("a.pj-etape." + x.e.classe, {
+          href: lien + "/" + x.cle,
+          "aria-current": x.cle === courante ? "page" : null,
+          "aria-description": x.e.texte,
+        }, el("span.pje-s", { "aria-hidden": "true" }, SIGNES[x.e.classe]), etiquette);
+      })) : null);
   }
 
   function transitionDossier(p, phs, courante, rafraichir) {
@@ -1570,16 +1539,19 @@ window.VUE_PROJETS = (function () {
 
   function corpsSection(p, cle, rafraichir) {
     var corps = corpsPropre(p, cle, rafraichir);
-    var bandes = [INFERENCE.bande(p, rafraichir, cle),
-      VALIDATION.OBJETS[cle] && !(cle === "brief" && VUE_BRIEF.estContextuel(p)) ? el("div", { style: { "margin-bottom": ".9rem" } },
-        VALIDATION.bande(p, cle, objetValidable(p, cle), rafraichir)) : null];
-    /* La big idea et les pistes se lisent d'abord : leur contenu passe devant
-     * les bandes de procédure (refonte du 07/10/2026). */
-    if (cle === "brief") return el("div", {}, corps, el("details.bf-options",
-      el("summary", {}, "Suivi des confirmations et versions"),
-      el("div.se-proc", {}, bandes)));
-    if (cle === "bigidea" || cle === "pistes") return el("div", {}, corps, el("div.se-proc", {}, bandes));
-    return el("div", {}, bandes, corps);
+    var confirmations = INFERENCE.bande(p, rafraichir, cle);
+    var objet = VALIDATION.OBJETS[cle] && !(cle === "brief" && VUE_BRIEF.estContextuel(p))
+      ? objetValidable(p, cle) : null;
+    var validation = objet ? VALIDATION.bande(p, cle, objet, rafraichir) : null;
+    if (!confirmations && !validation) return corps;
+    var statut = objet ? VALIDATION.etat(objet) : null;
+    return el("div.pj-contenu", {}, corps,
+      el("details.pj-procedure.pj-detail", { "data-pj-detail": "procedure-" + cle },
+        el("summary", {}, validation ? "Validation et versions" : "Confirmations de la rubrique",
+          statut ? el("span.studio-compte", {},
+            statut.cle === "aucun" ? "En attente" : VALIDATION.perime(objet) ? "À renouveler" : statut.nom) : null,
+          confirmations ? el("span.studio-compte", {}, "À confirmer") : null),
+        el("div.pj-procedure-corps", {}, confirmations, validation)));
   }
 
 
@@ -1661,17 +1633,10 @@ window.VUE_PROJETS = (function () {
     var pe = qui ? DEPOT.trouve("personnes", qui.personne) : null;
 
     return el("div.id", {},
-      VUE_BRIEF.estContextuel(p) ? el("p",
-        el("a.b", { href: "#/projets/" + p.id + "/brief" },
-          (NATURE.de(p) || {}).cle === "pitch" ? "Ouvrir le brief du pitch" : "Ouvrir la demande d’origine")) : null,
-      el("h3.id-t", {}, inferes.length
-        ? inferes.length + (inferes.length > 1 ? " champs restent à confirmer" : " champ reste à confirmer")
-          + ", " + recus.length + " sont renseignés"
-        : recus.length + (recus.length > 1 ? " champs renseignés" : " champ renseigné")
-          + ", aucune proposition en attente"),
-      el("p.id-s", {}, "Un champ renseigné permet de travailler. Seule une confirmation avec sa personne et sa référence permet de retrouver un accord. Les données anciennes sans cette trace restent à qualifier."),
-
-      el("div.id-g", {},
+      el("header.pj-travail-entete", {}, el("h2", {}, "Identité"),
+        el("button.b.or", { type: "button", onclick: function () { editer(p, "identite", def, rafraichir); } },
+          "Compléter la section")),
+      el("div.id-g" + (inferes.length ? "" : ".seule"), {},
         el("div.id-col", {},
           el("div.idc-t", {}, "Renseigné",
             el("span.studio-compte", {}, String(recus.length))),
@@ -1684,11 +1649,10 @@ window.VUE_PROJETS = (function () {
               })
             : el("p.rien", {}, "Aucune valeur renseignée hors des propositions à confirmer.")),
 
-        el("div.id-col.infere", {},
+        inferes.length ? el("div.id-col.infere", {},
           el("div.idc-t", {}, "À confirmer",
             el("span.studio-compte", {}, String(inferes.length))),
-          inferes.length
-            ? inferes.map(function (x) {
+          inferes.map(function (x) {
                 return el("div.id-l", {},
                   el("button.idl-h", { type: "button", title: "modifier — " + x.c.nom,
                     onclick: function () { editerChamp(p, "identite", x.c.cle, rafraichir); } },
@@ -1703,13 +1667,12 @@ window.VUE_PROJETS = (function () {
                       INFERENCE.rejeter(p, "identite", x.c.cle);
                       DEPOT.enregistrer(); rafraichir();
                     } }, "Faux, à ressaisir")));
-              })
-            : el("p.rien", {}, "Aucune proposition en attente. Les confirmations consignées restent attachées à leurs valeurs."))),
+              })) : null),
 
       vides.length
-        ? el("div.id-vides", {},
-            el("div.idc-t", {}, "À renseigner", el("span.studio-compte", {}, String(vides.length))),
-            vides.map(function (c) {
+        ? el("details.pj-procedure.pj-detail", { "data-pj-detail": "identite-champs" },
+            el("summary", {}, "Champs à renseigner", el("span.studio-compte", {}, String(vides.length))),
+            el("div.pj-procedure-corps", {}, vides.map(function (c) {
               return el("button.id-v", { type: "button", title: "renseigner — " + c.nom,
                 onclick: function () { editerChamp(p, "identite", c.cle, rafraichir); } },
                 el("span.idv-n", {}, el("span.idv-s", { "aria-hidden": "true" }, "○"), c.nom),
@@ -1718,28 +1681,19 @@ window.VUE_PROJETS = (function () {
                       : c.cle === "tueur" ? "tueur-absent"
                       : c.cle === "fenetre" ? "fenetre-absente" : "sans-proprietaire")
                   : "à renseigner — sans quoi la charge de ce dossier reste fausse"));
-            }))
+            })))
         : null,
 
       /* La bande de contreseing : elle nomme qui doit signer, pas « le client ». */
-      el("div.id-sign" + (inferes.length ? ".due" : ".ok"), {},
-        el("div.ids-t", {}, inferes.length ? "Confirmations en attente" : "Aucune proposition en attente"),
-        el("div.ids-c", {}, inferes.length
-          ? el("p", {}, "Ces " + inferes.length + " champs doivent être confirmés par "
-              + (pe ? pe.nom : "la " + clientele.nom)
-              + ". Tant qu'ils ne le sont pas, aucune validation obtenue sur ce dossier "
-              + "ne tiendra le jour où le client conteste.")
-          : el("p", {}, "La présence d’une valeur ne prouve pas un accord. Les confirmations consignées sont consultables en ouvrant les champs concernés.")),
-        el("div.ids-g", {},
-          inferes.length
-            ? el("button.b.or", { type: "button", onclick: function () {
-                RENVOI.ouvrir({ quoi: "Contreseing de l'identité — " + inferes.length + " champs",
-                  projet: p.ref, projetId: p.id });
-              } }, "Écrire la demande de contreseing")
-            : null,
-          el("button.b", { type: "button", onclick: function () {
-            editer(p, "identite", def, rafraichir); } },
-            "Compléter la section")))
+      inferes.length ? el("div.id-sign.due", {},
+        el("div.ids-t", {}, "Confirmations en attente"),
+        el("div.ids-c", {}, el("p", {}, (inferes.length > 1
+          ? inferes.length + " champs doivent être confirmés par " : "Un champ doit être confirmé par ")
+          + (pe ? pe.nom : "la " + clientele.nom) + ".")),
+        el("div.ids-g", {}, el("button.b", { type: "button", onclick: function () {
+          RENVOI.ouvrir({ quoi: "Contreseing de l'identité — " + inferes.length + " champs",
+            projet: p.ref, projetId: p.id });
+        } }, "Écrire la demande de contreseing"))) : null
     );
   }
 

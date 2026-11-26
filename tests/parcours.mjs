@@ -31,6 +31,16 @@ try {
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.evaluate(data => { DEPOT.importer(data); APP.rendre(); }, fixture);
   await page.getByRole('heading', { name: "Sur la table" }).waitFor();
+  // Un écran de studio très large doit commencer au même endroit que sur un portable.
+  await page.setViewportSize({width: 3200, height: 1694});
+  const bureau = await page.locator('#contenu h1').boundingBox();
+  const rail = await page.locator('.lb-rail').boundingBox();
+  assert.ok(bureau.y < 150 && bureau.x < rail.width + 100, 'Le travail commence en haut, près de la navigation');
+  const pieceBureau = await page.locator('.lb-piece').boundingBox();
+  const dossiersBureau = await page.locator('.studio-dossiers').boundingBox();
+  assert.ok(dossiersBureau.x >= pieceBureau.x + pieceBureau.width && dossiersBureau.y < pieceBureau.y + 10,
+    'Les dossiers sont accessibles à côté de la pièce sur un grand écran');
+  await page.setViewportSize({width: 1440, height: 1050});
   assert.equal(await page.locator('.studio-piece').count(), 3);
   const listeRevue = page.locator('.lb-file');
   await listeRevue.locator('summary').click();
@@ -44,15 +54,43 @@ try {
   await page.locator('.studio-piece').filter({ hasText: 'Affiche de lancement' }).click();
   await page.getByRole('link', { name: 'Examiner la V1', exact: true }).click();
   await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo/juger/1');
-  await page.locator('.rc-v.approuve').click();
-  await page.getByRole('dialog').waitFor();
+  await page.setViewportSize({ width: 390, height: 650 });
+  const rendreVerdict = page.getByRole('button', { name:'Rendre un verdict', exact:true });
+  const critere = page.locator('.rvp-critere');
+  await rendreVerdict.waitFor();
+  assert.match(await critere.innerText(), /Un seul objet au centre/);
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
+  const positions = await rendreVerdict.evaluate(n => ({
+    verdict: n.getBoundingClientRect().bottom + window.scrollY,
+    navigation: document.querySelector('.lb-mobile').getBoundingClientRect().top,
+    largeur: innerWidth, hauteur: innerHeight,
+  }));
+  assert.equal(positions.largeur, 390);
+  assert.equal(positions.hauteur, 650);
+  assert.ok(positions.verdict <= positions.navigation,
+    `Le critère et le verdict précèdent la navigation à 390×650 (${JSON.stringify(positions)})`);
+  await rendreVerdict.click();
+  const choix = page.getByRole('dialog', { name:'Rendre un verdict' });
+  await choix.locator('.rc-v.approuve').click();
+  const confirmation = page.getByRole('dialog', { name:'Confirmer le verdict' });
+  await confirmation.waitFor();
   assert.equal(await page.evaluate(() => !!DEPOT.trouve('projets','PRJ-demo').livrables[0].versions[0].verdict), false);
-  await page.getByRole('dialog').getByRole('button').first().focus();
+  await confirmation.getByRole('button').first().focus();
   await page.keyboard.press('Shift+Tab');
-  assert.ok(await page.evaluate(() => !!document.activeElement.closest('[role="dialog"]')), 'Le focus reste dans le dialogue');
-  await page.getByRole('button', { name:'Confirmer le verdict', exact:true }).click();
+  assert.ok(await confirmation.evaluate(d => d.contains(document.activeElement)), 'Le focus reste dans la confirmation');
+  await page.keyboard.press('Escape');
+  assert.equal(await confirmation.count(), 0);
+  assert.ok(await choix.locator('.rc-v.approuve').evaluate(n => n === document.activeElement), 'Retour au choix après Échap');
+  await choix.locator('.rc-v.approuve').click();
+  await confirmation.getByRole('button', { name:'Confirmer le verdict', exact:true }).click();
   assert.equal(await page.evaluate(() => DEPOT.trouve('projets','PRJ-demo').livrables[0].versions[0].verdict), 'approuve');
+  await page.getByRole('link', { name:'Suivre le BAT et la remise' }).waitFor();
+  assert.equal(await rendreVerdict.count(), 0, 'Le verdict consigné reste en lecture seule');
   await page.goBack();
+  await page.setViewportSize({ width:1440, height:1050 });
   await page.getByRole('heading', {name:'Sur la table'}).waitFor();
   assert.equal(await page.locator('.studio-piece').count(), 2, 'La pièce validée sort de la revue');
   // Un lien de décision partagé continue à viser la même version après une nouvelle soumission.
@@ -60,9 +98,13 @@ try {
     const l = DEPOT.trouve('projets','PRJ-demo').livrables[0];
     l.version = 2; l.versions.push({n:2});
   });
-  await page.goto(url+'/#/projets/PRJ-demo/livrables/L-demo/juger/1');
-  await page.getByRole('heading',{name:'Version 1 · historique'}).waitFor();
-  assert.equal(await page.locator('.rc-v').count(),0);
+  for (const onglet of ['juger', 'remise', 'poser', 'origine']) {
+    await page.goto(url + '/#/projets/PRJ-demo/livrables/L-demo/' + onglet + '/1');
+    await page.getByRole('heading',{name:'Version 1 · historique'}).waitFor();
+    assert.equal(await page.locator('.rvp-archive button').count(), 0, 'Une version historique ne permet aucune écriture');
+    assert.equal(await rendreVerdict.count(), 0);
+    await page.locator('.rvp-archive').getByText('Approuvé', { exact: true }).waitFor();
+  }
   await page.goto(url+'/#/bureau');
   await page.reload({ waitUntil: 'networkidle' });
   assert.equal(await page.evaluate(() => DEPOT.trouve('projets','PRJ-demo').livrables[0].versions[0].verdict), 'approuve', 'Le verdict survit au rechargement');
@@ -74,6 +116,17 @@ try {
   const retours = await page.evaluate(() => FILE.tout().filter(x => x.verbatim).map(x => ({ texte:x.verbatim, impact:x.chiffre, ou:x.ou })));
   assert.equal(retours.length, 2);
   assert.ok(retours.every(x => /1 livrable/.test(x.impact) && x.ou.includes('PRJ-demo')));
+  await page.goto(url + '/#/projets/PRJ-demo/atelier');
+  await page.getByRole('button', { name:'Poser une idée', exact:true }).waitFor();
+  await page.goto(url + '/#/bureau');
+  const reprendre = page.getByRole('link', { name:/Reprendre · Séance de créa/ });
+  await reprendre.click();
+  assert.ok(page.url().endsWith('/PRJ-demo/atelier'), 'Le Bureau reprend le travail au bon endroit');
+  await page.goto(url + '/#/projets/galerie');
+  const campagne = page.getByRole('searchbox', {name:'Rechercher une campagne'});
+  await campagne.fill('campagne introuvable');
+  await page.getByRole('heading', {name:'Aucune campagne ne correspond.'}).waitFor();
+  await page.getByRole('navigation', {name:'Vues des projets'}).getByRole('link', {name:'En cours'}).click();
   await page.goto(url + '/#/projets');
   await page.getByLabel('Rechercher un projet').fill('inexistant');
   await page.getByText('Aucun projet ne correspond.').waitFor();

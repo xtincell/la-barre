@@ -28,33 +28,164 @@ window.VUE_ASSET = (function () {
   ];
   var onglet = "poser";
 
-  function page(p, l, apres, modeInitial) {
+  function page(p, l, apres, modeInitial, numero) {
     var mode = ONGLETS.some(function (x) { return x.cle === modeInitial; }) ? modeInitial : "poser";
     var zone = el("div.asset-page");
-    var version = location.hash.match(/\/(?:poser|juger|origine|remise)\/(\d+)$/);
-    function lien(cle) {
+    function lien(cle, version) {
+      if (version === undefined) version = numero;
       return "#/projets/" + encodeURIComponent(p.id) + "/livrables/" + encodeURIComponent(l.id)
-        + "/" + cle + (version ? "/" + version[1] : "");
+        + "/" + cle + (version ? "/" + encodeURIComponent(version) : "");
     }
     function dessiner() {
       var projet = DEPOT.trouve("projets", p.id);
       var livrable = projet && (projet.livrables || []).find(function (x) { return x.id === l.id; });
       O.vider(zone);
       if (!livrable) { zone.appendChild(vide("Ce livrable n’est plus au dossier.")); return; }
-      zone.appendChild(rendre(projet, livrable, function () {
+      var courante = REMISE.versionCourante(livrable);
+      var historique = numero && (!courante || String(courante.numero) !== String(numero));
+      function rafraichir() {
         var reprendreFocus = zone.contains(document.activeElement);
         dessiner();
         if (reprendreFocus) {
-          var cible = zone.querySelector(".remise-suivi > button.b.or")
-            || zone.querySelector(".remise-tete h3, .as-revue .revue-criteres h3")
+          var cible = zone.querySelector(".rvp-action, .remise-suivi > button.b.or")
+            || zone.querySelector(".rvp-etat, .remise-tete h3")
             || zone.querySelector(".onglet[aria-current]");
           if (cible) { if (cible.tabIndex < 0) cible.tabIndex = -1; cible.focus(); }
         }
         if (apres) apres();
-      }, mode, lien));
+      }
+      zone.appendChild(historique ? archive(projet, livrable, numero, lien)
+        : mode === "juger" ? revue(projet, livrable, courante, lien, rafraichir)
+        : mode === "remise" ? remise(projet, livrable, lien, rafraichir)
+        : rendre(projet, livrable, rafraichir, mode, lien));
     }
     dessiner();
     return zone;
+  }
+
+  function ongletLien(lien, mode, classe, nom, version) {
+    var href = lien(mode, version);
+    return el("a." + classe, { href: href, onclick: function (e) {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button > 0 || !APP.remplacerVue) return;
+      e.preventDefault(); APP.remplacerVue(href);
+    } }, nom);
+  }
+
+  function etatVerdict(v) {
+    var def = v && MAISON.verdicts.find(function (x) { return x.cle === v.verdict; });
+    var ton = v && v.verdict === "approuve" ? "vert" : "attente";
+    return def ? UI.eti(def.nom, ton) : v && v.verdict ? UI.eti("Verdict consigné", "terne") : UI.eti("À examiner", "attente");
+  }
+
+  function mediaRevue(objet, nom) {
+    var source = IMAGE.source(objet);
+    if (!source) return el("p.rvp-visuel-vide", {}, "Aucun aperçu de cette version");
+    var medium = IMAGE.media(Object.assign({}, objet, { nom: nom,
+      vignette: IMAGE.estVideo(source) ? objet.vignette : source }), "planche");
+    var image = medium.querySelector("img");
+    if (image) image.addEventListener("error", function () {
+      medium.replaceWith(el("p.rvp-visuel-vide", {}, "L’aperçu est indisponible."));
+    }, { once: true });
+    return medium;
+  }
+
+  function toile(objet, nom) {
+    var source = IMAGE.source(objet);
+    var zoom = source && !IMAGE.estVideo(source) ? el("button.b.rvp-agrandir", { type: "button", "aria-label": "Agrandir le visuel",
+      onclick: function () { PANNEAU.ouvrir("Aperçu du visuel", nom, el("div.rvp-zoom", {}, mediaRevue(objet, nom))); } },
+    UI.icone("recherche", 16)) : null;
+    return el("figure.rvp-toile", {}, mediaRevue(objet, nom), zoom);
+  }
+
+  function dossier(f) {
+    try {
+      var u = new URL(f.emplacement);
+      if (u.protocol === "https:" && !u.username && !u.password)
+        return el("a", { href: u.href, target: "_blank", rel: "noopener noreferrer" }, f.nom || "Document");
+    } catch (e) { /* Les anciens chemins locaux restent lisibles dans le dossier. */ }
+    return el("span", {}, f.nom || "Document");
+  }
+
+  function fichiersRevue(l, numero) {
+    var docs = (l.fichiers || []).filter(function (f) { return Number(f.version || 1) === Number(numero); });
+    if (!docs.length) return null;
+    return el("ul.rvp-docs", {}, docs.map(function (f) { return el("li", {}, dossier(f)); }));
+  }
+
+  function archive(p, l, numero, lien) {
+    var versions = (l.versions || []).filter(function (v) { return String(v.n || v.numero) === String(numero); });
+    versions.reverse();
+    var ancienne = versions.find(function (v) { return v.verdict; }) || versions[0];
+    var media = versions.map(function (v) { return v.etat; }).find(IMAGE.source);
+    var ouverture = ongletLien(lien, "juger", "b.rvp-action", "Voir le livrable actuel", null);
+    if (!ancienne) return el("section.rvp-archive", {}, el("h2", {}, "Version introuvable"), ouverture);
+    var motive = versions.find(function (v) { return v.close_le && v.motif; });
+    var preuves = (p.preuvesRemise || []).filter(function (r) {
+      return r && r.preuve && (r.pieces || []).some(function (x) { return x.id === l.id && String(x.version) === String(numero); });
+    });
+    return el("section.rvp-archive", {},
+      el("h2", {}, "Version " + numero + " · historique"),
+      el("div.rvp-plan", {},
+        el("figure.rvp-toile", {}, mediaRevue(media, l.nom + " — V" + numero)),
+        el("div.rvp-pupitre", {}, ancienne.verdict ? etatVerdict(ancienne) : el("p", {}, "Aucun verdict consigné."),
+          ancienne.juge_le ? el("p.rvp-meta", {}, O.joli(ancienne.juge_le)) : null,
+          ancienne.motif ? el("p", {}, ancienne.motif) : null,
+          ouverture)),
+      fichiersRevue(l, numero),
+      preuves.length ? el("details", {}, el("summary", {}, "Justificatifs de remise de la V" + numero),
+        el("ul.rvp-docs", {}, preuves.map(function (r) {
+          return el("li", {}, dossier({ nom: r.preuve.nom, emplacement: r.preuve.url }), " · ", r.id, " · ", O.joli(r.remis_le));
+        }))) : null,
+      motive && motive !== ancienne ? el("p.rvp-meta", {}, "Motif du passage à la version suivante « " + motive.motif + " »") : null);
+  }
+
+  function revue(p, l, version, lien, apres) {
+    var v = version && version.objet;
+    var numero = version ? version.numero : l.version || 1;
+    var verdict = v && v.verdict;
+    var lecture = !v || l.annule || p.fusionne || (window.CLOTURE && CLOTURE.est(p));
+    var marche = l.marche && DEPOT.trouve("marches", l.marche);
+    var b = p.sections.bigidea || {};
+    var critere = (b.criteres || []).find(Boolean) || (REGLES.grille("livrable", l)[0] || {}).texte;
+    var action = !lecture && !verdict ? el("button.b.or.rvp-action", { type: "button",
+      onclick: function () { VUE_LIVRABLE.choisirVerdict(p, l, apres); } }, "Rendre un verdict")
+      : !lecture && verdict === "approuve" ? ongletLien(lien, "remise", "b.or.rvp-action", "Suivre le BAT et la remise") : null;
+    var historique = Array.from(new Set((l.versions || []).map(function (ancienne) { return ancienne.n || ancienne.numero; })))
+      .filter(function (n) { return n && Number(n) !== numero; }).reverse();
+    var retours = retoursClient(p, l, apres, lecture, numero);
+    var documents = fichiersRevue(l, numero);
+    var annotation = !lecture && IMAGE.source(l) ? el("button.b.nu", { type: "button",
+      onclick: function () { ANNOT.ouvrir(p, l, apres, numero); } }, "Annoter le visuel") : null;
+    return el("div.rvp", {},
+      el("div.rvp-plan", {},
+        toile(l, l.nom + " — V" + numero),
+        el("div.rvp-pupitre", {},
+          el("div.rvp-portee", {},
+            el("p.rvp-meta", {}, (marche ? marche.nom : "Marché non renseigné") + " · V" + numero),
+            el("div.rvp-etat", { tabindex: "-1" }, verdict || !lecture ? etatVerdict(v)
+              : UI.eti(v ? "Consultation" : "Version à soumettre", "terne"))),
+          !verdict && critere ? el("p.rvp-critere", {}, critere) : null,
+          action,
+          verdict && v.motif ? el("p.rvp-motif", {}, v.motif) : null)),
+      el("div.rvp-annexes", {},
+        horsEcart(p, l, apres, lecture),
+        !lecture && !verdict ? el("details", {}, el("summary", {}, "Critères et contrôles"), VUE_LIVRABLE.controles(p, l)) : null,
+        retours ? el("details", {}, el("summary", {}, "Retours et annotations"), retours) : null,
+        documents ? el("details", {}, el("summary", {}, "Documents de la V" + numero), documents) : null,
+        historique.length ? el("details", {}, el("summary", {}, "Versions précédentes"),
+          el("ul.rvp-docs", {}, historique.map(function (n) {
+            return el("li", {}, ongletLien(lien, "juger", "rvp-lien", "Version " + n, n));
+          }))) : null,
+        el("nav.rvp-liens", { "aria-label": "Autres actions du livrable" }, annotation,
+          ongletLien(lien, "poser", "b.nu", "Visuels et fichiers"),
+          ongletLien(lien, "origine", "b.nu", "Origine et dépendances"))));
+  }
+
+  function remise(p, l, lien, apres) {
+    return el("div.rvp.rvp-remise", {}, REMISE.suiviPiece(p, l, apres),
+      el("nav.rvp-liens", { "aria-label": "Autres vues du livrable" },
+        ongletLien(lien, "juger", "b.nu", "Revoir le verdict"),
+        ongletLien(lien, "poser", "b.nu", "Visuels et fichiers")));
   }
 
   function rendre(p, l, apres, mode, lien) {
@@ -133,9 +264,10 @@ window.VUE_ASSET = (function () {
   /* Une adaptation hors de l'écart déclaré de son marché : elle se juge comme
    * les autres — rien ne la bloque —, et le signal dit ce que la revue doit
    * trancher à côté du verdict (ecarts-marche.js). */
-  function horsEcart(p, l, apres) {
+  function horsEcart(p, l, apres, lecture) {
     var x = window.ECARTS_MARCHE ? ECARTS_MARCHE.etiquette(p, l) : null;
     if (!x) return null;
+    if (lecture) return el("p.rvp-meta", {}, x.texte);
     return el("button.plc-hors.as-hors", { type: "button",
       onclick: function () { ECARTS_MARCHE.revoir(p, l, apres); } },
       el("span.plch-q", {}, x.texte),
@@ -399,11 +531,11 @@ window.VUE_ASSET = (function () {
 
   /* ————————————————————— Ce que le client en a dit ————————————————————— */
 
-  function retoursClient(p, l, apres) {
+  function retoursClient(p, l, apres, lecture, numero) {
     var fbs = FEEDBACK.duProjet(p.id).filter(function (f) {
       return FEEDBACK.impact(f).pieces.some(function (x) { return x.id === l.id; });
     });
-    var annots = ANNOT.liste(l);
+    var annots = ANNOT.liste(l, numero);
     if (!fbs.length && !annots.length) return null;
 
     return el("div.as-bloc", {},
@@ -423,13 +555,13 @@ window.VUE_ASSET = (function () {
             el("span", {}, (FEEDBACK.CANAUX[f.canal] || { nom: f.canal || "Canal non dit" }).nom),
             el("span", {}, i.assets + (i.assets > 1 ? " livrables touchés" : " livrable touché")),
             UI.eti(iss.nom, iss.ton)),
-          f.issue === "ouvert"
+          f.issue === "ouvert" && !lecture
             ? el("button.b.nu", { type: "button", onclick: function () { FEEDBACK.trancher(f, apres); } }, "Trancher")
             : f.motif ? el("div.asfb-mo", {}, f.motif) : null);
       }),
 
-      annots.length
-        ? el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); ANNOT.ouvrir(p, l, apres); } },
+      annots.length && !lecture
+        ? el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); ANNOT.ouvrir(p, l, apres, numero); } },
             annots.length + " points posés sur le visuel →")
         : null
     );

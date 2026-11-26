@@ -4,6 +4,31 @@ window.VUE_STUDIO = (function () {
   var el = O.el;
   var selection = null;
   var projet = "";
+  var derniereRubrique = null;
+
+  function noterRubrique(p, rubrique) {
+    if (!p || !rubrique || !NATURE.aSection(p,rubrique)) return;
+    derniereRubrique = {projet:p.id, rubrique:rubrique};
+    if (!DEPOT.estDemonstration()) {
+      try { sessionStorage.setItem("labarre.rubrique", JSON.stringify(derniereRubrique)); } catch (_) {}
+    }
+  }
+
+  function rubriqueRecente(projets) {
+    if (!derniereRubrique && !DEPOT.estDemonstration()) {
+      try { derniereRubrique = JSON.parse(sessionStorage.getItem("labarre.rubrique")); } catch (_) {}
+    }
+    if (!derniereRubrique) return null;
+    var p = projets.find(function (x) { return x.id === derniereRubrique.projet; });
+    return p && NATURE.aSection(p,derniereRubrique.rubrique) ? derniereRubrique : null;
+  }
+
+  function navProjets(vue) {
+    var vues = [["", "En cours"], ["archives", "Archives"], ["marques", "Par marque"], ["galerie", "Galerie"]];
+    return el("nav.studio-statuts.lb-vues-projets", {"aria-label":"Vues des projets"}, vues.map(function (v) {
+      return el("a", {href: v[0] ? APP.adresse("projets",v[0]) : "#/projets", "aria-current": v[0] === vue ? "page" : null}, v[1]);
+    }));
+  }
 
   function rendre(hote) {
     hote.className = "zone studio lb-bureau";
@@ -24,15 +49,19 @@ window.VUE_STUDIO = (function () {
       el("h1", {}, "Sur la table"))));
     if (DEPOT.provenance().cle === "exemple") hote.appendChild(el("div.studio-demo", {role:"status"},
       el("span", {}, "Données d’exemple"), el("a", {href:"#/referentiel/parametres"}, "Importer mon travail")));
+    var travail = el("div.lb-travail");
+    var table = el("div.lb-table");
+    travail.appendChild(table);
+    hote.appendChild(travail);
     if (active) {
       var p = active.projet, o = active.objet;
-      var piste = active.type === "piste", versions = o.versions || [], derniere = versions[versions.length-1];
+      var piste = active.type === "piste";
       var marche = o.marche && DEPOT.trouve("marches",o.marche);
       var chemin = VUE_REVUE.lienPiece(active);
-      var version = derniere && derniere.n || o.version;
+      var version = active.version;
       var meta = [marche && marche.nom, version ? "V" + version : null].filter(Boolean).join(" · ");
       var intention = o.concept || o.signature;
-      hote.appendChild(el("article.lb-piece" + (!o.vignette && !intention ? ".sans-visuel" : ""), {},
+      table.appendChild(el("article.lb-piece" + (!o.vignette && !intention ? ".sans-visuel" : ""), {},
         el("div.lb-piece-texte", {},
           el("p.lb-etat", {}, el("span", { "aria-hidden":"true" }, "◐"), piste ? "Piste à arbitrer" : "Verdict attendu"),
           el("p.lb-piece-projet", {}, el("a", {href:APP.adresse("projets",p.id)}, p.nom)),
@@ -42,11 +71,12 @@ window.VUE_STUDIO = (function () {
         o.vignette ? el("div.lb-piece-image", {}, IMAGE.vignette(o,"planche")) : intention ?
           el("blockquote.studio-intention.lb-intention",{}, intention) : null));
     } else {
-      var sujets = FILE.tout();
+      var sujet = !projet && FILE.tout()[0];
       var t = projet ? "Ce projet n'attend pas de verdict." : "Aucune pièce en attente de verdict.";
-      hote.appendChild(el("section.studio-vide.lb-vide", {},
-        el("h2",{},t), sujets.length ? el("a.b.or",{href:"#/valider/file"},"Ouvrir les décisions") :
-        el("a.b",{href:"#/projets"},"Voir les projets")));
+      table.appendChild(el("section.studio-vide.lb-vide", {},
+        el("h2",{},t), sujet ? el("p",{}, sujet.chiffre || sujet.quoi) : null,
+        sujet ? el("a.b.or",{href:"#/valider/file"},"Ouvrir les décisions") :
+        el("a.b",{href:projet ? APP.adresse("projets",projet) : "#/projets"},projet ? "Ouvrir le dossier" : "Voir les projets")));
     }
     var file = el("details.lb-file", {}, el("summary", {}, "File de revue", el("span.studio-compte",{},String(pieces.length))),
       el("div.studio-filtre",{},el("label",{for:"studio-projet"},"Projet"),choix),
@@ -55,28 +85,38 @@ window.VUE_STUDIO = (function () {
           selection = cle(x); rendre(hote); var lien = hote.querySelector(".lb-piece .b"); if (lien) lien.focus();
         }}, el("strong",{},x.titre),el("span",{},x.projet.nom));
       })));
-    hote.appendChild(file);
-    hote.appendChild(el("section.studio-dossiers", { "aria-label":"Dossiers en cours" },
-      el("div.studio-section-tete",{}, el("h2",{},"Dossiers en cours"), el("a",{href:"#/projets"},"Tous les projets ↗")),
-      projets.length ? el("div.lb-dossiers",{}, projets.slice(0,4).map(dossier)) :
+    table.appendChild(file);
+    var reprise = rubriqueRecente(projets);
+    var proches = projets.slice().sort(function (a,b) {
+      if (reprise && a.id !== b.id) {
+        if (a.id === reprise.projet) return -1;
+        if (b.id === reprise.projet) return 1;
+      }
+      return String((a.sections.identite || {}).echeance || "9999").localeCompare(String((b.sections.identite || {}).echeance || "9999"));
+    });
+    travail.appendChild(el("section.studio-dossiers", { "aria-label":"Dossiers en cours" },
+      el("div.studio-section-tete",{}, el("h2",{},"Dossiers en cours"), el("a",{href:"#/projets","aria-label":"Tous les projets"},"Tout voir")),
+      proches.length ? el("div.lb-dossiers",{}, proches.slice(0,4).map(function (p) {
+        return dossier(p, reprise && p.id === reprise.projet ? reprise.rubrique : null);
+      })) :
         el("div.studio-vide",{},el("button.b.or",{type:"button",onclick:VUE_PROJETS.nouveau},"Créer mon premier projet"))));
   }
 
-  function dossier(p) {
+  function dossier(p, rubrique) {
     var ident = p.sections.identite || {};
     var livrables = (p.livrables || []).filter(function (l) { return !l.annule; });
-    var visuel = livrables.filter(function (l) { return l.vignette; })[0];
     var blocs = REGLES.blocages(p.id).filter(function (b) { return b.type !== "infere-non-contresigne"; });
-    return el("a.studio-dossier", { href: "#/projets/" + p.id },
-      el("div.studio-couverture", {}, (function () {
-        var cov = window.COUVERTURE ? COUVERTURE.projet(p) : null;
-        if (cov) return COUVERTURE.rendre(cov, "planche", p.nom);
-        return visuel ? IMAGE.vignette(visuel, "planche") : el("span", {}, ident.marque || ident.client || p.ref || "Projet");
-      })()),
+    var couverture = COUVERTURE.projet(p);
+    var type = (NATURE.de(p) || {}).nom || "Projet";
+    return el("a.studio-dossier", { href: rubrique ? APP.adresse("projets",p.id,rubrique) : APP.adresse("projets",p.id) },
+      el("div.studio-couverture", {"aria-hidden":"true"}, couverture && couverture.type !== "aucune"
+        ? COUVERTURE.rendre(couverture, "planche", p.nom)
+        : el("span.lb-monogramme",{}, (ident.marque || ident.client || p.nom || type).toString().slice(0,1).toUpperCase())),
       el("div.studio-dossier-texte", {}, el("span.studio-piece-ref", {}, p.ref,
           window.STRUCTURE && !STRUCTURE.estAgence(p) ? el("span.st-badge.st-" + STRUCTURE.de(p).id, {}, STRUCTURE.de(p).court) : null),
         el("h3", {}, p.nom),
-        el("p", {}, livrables.length + " livrables", el("span", {}, blocs.length ? blocs.length + " points à résoudre" : "Aucun blocage")))) ;
+        rubrique ? el("p.lb-reprendre", {}, "Reprendre · " + VUE_PROJETS.nomSection(rubrique)) : el("p", {}, livrables.length ? livrables.length + (livrables.length === 1 ? " livrable" : " livrables") : type,
+          blocs.length ? el("span.lb-a-traiter", {}, blocs.length + " à traiter") : null)));
   }
   var recherche = "";
   function projets(hote, archives) {
@@ -112,15 +152,22 @@ window.VUE_STUDIO = (function () {
     champ.addEventListener("input", function () { recherche = champ.value; filtrer(); });
     hote.appendChild(el("header.studio-entete", {}, el("div", {}, el("h1", {}, "Projets")),
       el("button.b.or", { type:"button", onclick:VUE_PROJETS.nouveau }, "+ Nouveau projet")));
-    hote.appendChild(el("div.studio-index-outils", {}, el("nav.studio-statuts.lb-vues-projets", { "aria-label":"Vues des projets" },
-      el("a", { href:"#/projets", "aria-current":!archives ? "page" : null }, "En cours"),
-      el("a", { href:"#/projets/archives", "aria-current":archives ? "page" : null }, "Archives"),
-      el("a", { href:"#/projets/marques" }, "Par marque"), el("a", { href:"#/projets/galerie" }, "Galerie")), champ));
-    /* Matanga, UPgraders, Friends Studio : trois structures, une seule liste — filtrable. */
-    if (window.STRUCTURE) hote.appendChild(STRUCTURE.puces(tous, function () { projets(hote,archives); }));
+    hote.appendChild(navProjets(archives ? "archives" : ""));
+    var outils = el("div.lb-outils-collection", {}, champ);
+    if (window.STRUCTURE) {
+      var structure = STRUCTURE.filtre();
+      var filtre = el("details.lb-filtre-structure", {},
+        el("summary", {}, UI.icone("reglages", 16), structure === "toutes" ? "Structure" : STRUCTURE.de({structure:structure}).court));
+      filtre.appendChild(STRUCTURE.puces(tous, function () {
+        projets(hote,archives);
+        hote.querySelector(".lb-filtre-structure summary").focus();
+      }));
+      outils.appendChild(filtre);
+    }
+    hote.appendChild(outils);
     hote.appendChild(compte);
     hote.appendChild(liste);
     filtrer();
   }
-  return { rendre: rendre, projets: projets };
+  return { rendre: rendre, projets: projets, navProjets: navProjets, noterRubrique: noterRubrique };
 })();

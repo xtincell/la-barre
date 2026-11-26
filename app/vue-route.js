@@ -40,36 +40,36 @@ window.VUE_ROUTE = (function () {
     return pi.statut === "retenue" ? "Retenue" : pi.statut === "ecartee" ? "Écartée" : "En lice";
   }
 
-  function rendre(p, pi, apres) {
+  function rendre(p, pi, apres, pleinePage) {
     var mes = kvs(p, pi);
     var da = DEPOT.trouve("personnes", pi.auteurDA);
     var decl = declinaisons(p, pi);
     var mks = mockups(p, pi);
-
-    return el("div.rt", {},
-      el("div.rt-tete", {},
-        el("h2", {}, pi.titre || "Piste sans titre"),
-        UI.eti(etiquette(pi), pi.statut === "retenue" ? "vert" : pi.statut === "ecartee" ? "terne" : "attente"),
-        controle(p, da)
-      ),
-      scene(p, pi, apres),
-      window.APPROCHES ? APPROCHES.source(pi) : null,
-      PRIORITE.bande(p, pi, apres),
-      el("div", {}, VALIDATION.bande(p, "piste", pi, apres)),
-      bande(p, pi, mes, decl, apres),
-      /* L'axe avant l'argumentaire : le sacrifice et l'argument défendent
-       * quelque chose, et ce quelque chose est l'axe. Le lire après, c'est
-       * lire une plaidoirie avant de savoir sur quoi elle porte. */
-      AXE.bloc(p, pi, apres),
-      argumentaire(pi),
-      /* La fabrique : maquettes, storyboard, conducteur, musique — ce qui montre la piste avant l'arbitrage. */
-      window.FABRIQUE ? FABRIQUE.bloc(pi) : null,
-      DISPOSITIF.bloc(p, pi, apres),
-      RETRO.bloc(p, pi, apres),
-      mes.length ? blocKV(p, pi, mes, apres) : null,
-      decl.length ? blocDecl(p, pi, decl, apres) : null,
-      mks.length ? blocSituation(p, mks, apres) : null,
-      gestes(p, pi, apres)
+    var arbitre = el("details.rt-volet", {},
+      el("summary", {}, "Critères et arbitrage"),
+      bande(p, pi, mes, decl, apres), PRIORITE.bande(p, pi, apres),
+      VALIDATION.bande(p, "piste", pi, apres), controle(p, da), gestes(p, pi, apres));
+    function examiner() {
+      arbitre.open = true;
+      arbitre.querySelector("summary").focus();
+      arbitre.scrollIntoView({block:"start"});
+    }
+    var proposition = pi.signature || pi.concept || pi.argument;
+    return el("div.rt.rt-travail", {},
+      el("section.rt-plan", {},
+        scene(p, pi, apres),
+        el("div.rt-lecture", {},
+          UI.eti(etiquette(pi), pi.statut === "retenue" ? "vert" : pi.statut === "ecartee" ? "terne" : "attente"),
+          pleinePage ? null : el("h2", {}, pi.titre || "Piste sans titre"),
+          proposition ? el("p.rt-proposition", {}, proposition) : null,
+          el("button.b.or", {type:"button", onclick:examiner}, pi.statut === "proposee" ? "Arbitrer cette piste" : "Voir l’arbitrage"))),
+      arbitre,
+      el("details.rt-volet", {}, el("summary", {}, "Concept et argumentaire"),
+        AXE.bloc(p, pi, apres), argumentaire(pi), window.APPROCHES ? APPROCHES.source(pi) : null),
+      el("details.rt-volet", {}, el("summary", {}, "Production et déclinaisons"),
+        window.FABRIQUE ? FABRIQUE.bloc(pi) : null, DISPOSITIF.bloc(p, pi, apres), RETRO.bloc(p, pi, apres),
+        mes.length ? blocKV(p, pi, mes, apres) : null, decl.length ? blocDecl(p, pi, decl, apres) : null,
+        mks.length ? blocSituation(p, mks, apres) : null)
     );
   }
 

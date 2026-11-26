@@ -85,3 +85,111 @@ body[data-vue=partage]{display:block}
 .lb-bureau .studio-entete{min-height:0;padding:5px 0 0}.lb-bureau .studio-dossiers{border:1px solid var(--trait);border-radius:10px;background:white;padding:0}.lb-bureau .studio-section-tete{flex-direction:row;align-items:center}
 .lb-bureau .studio-dossiers .studio-section-tete h2{margin:0}.lb-bureau .studio-dossiers .studio-section-tete a{margin-left:auto}
 .lb-retour{justify-content:flex-start;width:fit-content}.lb-detail-piece .ast-n{display:none}.zone h1[tabindex="-1"]:focus{outline:none}.studio-date>a{color:var(--clair-terne);text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+
+/* Tous les espaces commencent à la même origine, même sur un écran de studio.
+   Les deux colonnes du Bureau se composent à partir de la largeur disponible. */
+@media screen {
+  #corps > #contenu {
+    margin: 0 auto 0 0;
+    width: 100%;
+    min-width: 0;
+  }
+  #corps > .zone.lb-bureau {max-width: 2080px !important}
+  #corps > .studio-index, #corps > .galerie {max-width: 1840px}
+}
+.lb-travail, .lb-table {min-width: 0}
+.lb-travail {display: grid; align-items: start; gap: clamp(16px, 2vw, 32px)}
+.lb-bureau .studio-entete {padding: 0; margin-bottom: clamp(18px, 2vw, 30px)}
+.lb-bureau .studio-date {margin: 0 0 8px; font-size: .9375rem}
+.lb-bureau .lb-piece {
+  background: #193347; color: #fff; border: 0; border-radius: 14px;
+  grid-template-columns: minmax(0,.9fr) minmax(0,1.1fr);
+}
+.lb-bureau .lb-piece h2 {color: #fff; font-size: clamp(1.65rem, 3vw, 3.4rem); line-height: 1.06}
+.lb-piece-texte {padding: clamp(22px, 2.7vw, 50px)}
+.lb-piece .lb-etat {color: #f6dec1; border: 0; padding: 0; font-weight: 550}
+.lb-piece .lb-etat span {color: #ffd292}
+.lb-piece .lb-piece-projet a, .lb-piece .lb-piece-meta {color: #d6e2e9}
+.lb-piece .lb-piece-projet a {min-height: 44px; line-height: 1.3}
+.lb-piece .b.or, .lb-piece .b.or:hover {
+  background: #fff; color: #163346; border-color: #fff; padding-inline: 16px;
+}
+.lb-piece :focus-visible {outline-color: #aaceff}
+.lb-piece.sans-visuel {grid-template-columns: 1fr}
+.lb-piece-image {background: #e7edf0; min-height: clamp(240px, 25vw, 425px)}
+.lb-piece-image > .vignette {position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 0}
+.lb-piece-image > .vignette img {height: 100%; width: 100%; object-fit: contain}
+.lb-intention.studio-intention {color: #193347; background: #d9e9f0}
+.lb-file {margin: 6px 0 0}
+.lb-file summary {display: flex; align-items: center; gap: 9px; min-height: 48px; width: fit-content}
+.lb-file summary::after, .lb-filtre-structure summary::after, .rt-volet > summary::after {content: "⌄"; margin-left: auto}
+.lb-file[open] > summary::after, .lb-filtre-structure[open] > summary::after, .rt-volet[open] > summary::after {content: "⌃"}
+.lb-file .studio-filtre {border-bottom: 1px solid var(--trait); padding-block: 10px}
+.lb-file-lignes {grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%),1fr))}
+.lb-file-lignes .studio-piece {border: 1px solid var(--trait); border-radius: 6px; padding: 12px; min-height: 48px}
+.lb-file-lignes .studio-piece[aria-pressed="true"] {box-shadow: inset 3px 0 var(--studio-bleu); background: var(--studio-bleu-pale)}
+.lb-bureau .studio-dossiers {margin: 0; border: 0; background: transparent; border-radius: 0}
+.lb-bureau .studio-dossiers .studio-section-tete {
+  margin: 0; padding: 0 0 10px; display: flex; align-items: center; justify-content: space-between;
+}
+.lb-bureau .studio-section-tete h2 {font-size: clamp(1.1rem, 1.6vw, 1.5rem)}
+.lb-bureau .studio-section-tete a {min-height: 44px; display: inline-flex; align-items: center; font-size: .875rem; color: var(--studio-bleu)}
+.lb-dossiers {padding: 0}
+.lb-bureau .lb-dossiers .studio-dossier {gap: 14px; padding: 11px 0}
+.lb-dossiers .studio-couverture {width: 64px; height: 58px; border-radius: 6px}
+.studio-couverture .lb-monogramme {display: grid; place-items: center; padding: 0; width: 100%; height: 100%; background: #e5edf3; color: #547080}
+.lb-dossiers .studio-dossier h3 {font: 570 1rem/1.28 var(--affichage); margin: 0}
+.lb-dossiers .studio-dossier-texte p {justify-content: start; gap: 10px; font-size: .8125rem}
+.lb-a-traiter {color: #754b12}
+.lb-vues-projets {background: transparent; border-bottom: 1px solid var(--trait); border-radius: 0; padding: 0; gap: 8px; margin-bottom: 16px}
+.lb-vues-projets a {border-radius: 0; border-bottom: 2px solid transparent; color: var(--clair-terne)}
+.lb-vues-projets a[aria-current] {background: transparent; border-color: var(--studio-bleu)}
+.lb-outils-collection {display: flex; align-items: start; flex-wrap: wrap; gap: 10px; margin-bottom: 10px}
+.lb-outils-collection input {min-height: 44px; width: min(100%,28rem); max-width: 100%; min-width: 0; border: 1px solid var(--trait); border-radius: 7px; padding: 8px 12px; font: inherit; background: white; color: var(--studio-encre)}
+.lb-filtre-structure {max-width: 100%; min-width: 0; color: var(--studio-encre)}
+.lb-filtre-structure > summary {display: flex; min-height: 44px; gap: 8px; align-items: center; padding: 8px 12px; cursor: pointer; border: 1px solid var(--trait); background: white; border-radius: 7px; font-size: .9rem}
+.lb-filtre-structure .st-filtre, .lb-filtre-structure .gal-filtres {margin: 8px 0}
+.studio-index .studio-projets {grid-template-columns: repeat(auto-fill,minmax(min(245px,100%),1fr)); gap: clamp(14px,2vw,28px)}
+.studio-index .studio-dossier {padding: 0; border: 0; background: transparent; box-shadow: none}
+.studio-index .studio-couverture {aspect-ratio: 2.1; border-radius: 8px}
+.studio-index .studio-dossier-texte {padding: 9px 0 14px}
+.studio-index .studio-dossier h3 {margin: 4px 0; font: 570 1.0625rem/1.28 var(--affichage)}
+.studio-index .studio-dossier p {justify-content: start; gap: 12px; font-size: .8125rem}
+.rt-travail {gap: 12px}
+.rt-plan {display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(200px,.65fr); align-items: center; gap: clamp(12px, 2.3vw, 34px)}
+.rt-lecture {min-width: 0; display: grid; justify-items: start; gap: 12px}
+.rt-proposition {font: 500 clamp(1rem,1.7vw,1.5rem)/1.4 var(--affichage); overflow-wrap: anywhere}
+.rt-volet {min-width: 0; border-top: 1px solid var(--trait)}
+.rt-volet > summary {display: flex; align-items: center; justify-content: space-between; min-height: 48px; gap: 10px; font-weight: 550; cursor: pointer}
+.rt-volet[open] > :not(summary) {margin-block: 8px}
+@media(min-width:1250px) {
+  .lb-travail {grid-template-columns: minmax(0, 2.25fr) minmax(268px, .85fr)}
+  .lb-bureau .studio-dossiers {border-left: 1px solid var(--trait); padding-left: clamp(16px,2vw,36px)}
+}
+@media(min-width:801px) {
+  #corps > #contenu {padding-inline: clamp(26px, 2.8vw, 64px); padding-top: clamp(25px, 2.2vw, 48px)}
+}
+@media(max-width:800px) {
+  .lb-bureau .lb-piece {grid-template-columns: minmax(0,1fr) minmax(68px,27%); gap: 8px; padding: 18px}
+  .lb-bureau .lb-piece.sans-visuel {grid-template-columns: 1fr}
+  .lb-piece-texte {padding: 0}
+  .lb-bureau .lb-piece h2 {font-size: clamp(1.45rem,5vw,1.95rem)}
+  .lb-piece-image {min-height: 0; aspect-ratio: 1 / 1.12}
+  .lb-dossiers .studio-couverture {width: 48px; height: 48px}
+  .lb-bureau .lb-dossiers .studio-dossier {padding-block: 10px}
+  .lb-outils-collection input {flex: 1 1 9rem}
+  .rt-plan {grid-template-columns: 1fr; gap: 8px}
+  .rt-plan .rts-toile .vignette img {max-height: 29svh}
+  .rt-plan .rts-toile .vignette.vide {min-height: 96px}
+  .rt-plan .rt-proposition {font-size: 1rem}
+}
+@media(max-width:560px) {
+  .studio-index .studio-projets {grid-template-columns: 1fr; gap: 0}
+  .studio-index .studio-dossier {display: grid; grid-template-columns: 54px minmax(0,1fr); gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--trait); border-radius: 0}
+  .studio-index .studio-couverture {width: 54px; height: 54px; aspect-ratio: 1}
+  .studio-index .studio-dossier-texte {padding: 0}
+  .studio-index .studio-piece-ref {display: none}
+  .lb-vues-projets {gap: 0}
+  .lb-vues-projets a {font-size: .85rem; padding-inline: 9px}
+  .lb-dossiers .studio-dossier-texte p {font-size: .8125rem}
+}

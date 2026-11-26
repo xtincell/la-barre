@@ -113,7 +113,7 @@ window.VUE_GALERIE = (function () {
 
     var zone = el("div.gal-zone");
     var compte = el("p.studio-resultats", { "aria-live": "polite" });
-    var champ = el("input#gal-recherche", { type: "search", placeholder: "Marque, client, campagne, projet…", "aria-label": "Rechercher une campagne" });
+    var champ = el("input", { id: "gal-recherche", type: "search", placeholder: "Rechercher une campagne…", "aria-label": "Rechercher une campagne" });
     champ.value = etat.q || "";
 
     function filtrer() {
@@ -142,20 +142,24 @@ window.VUE_GALERIE = (function () {
           el("div.gal-grille", {}, g.map(carte))));
       });
     }
-    function tout() { rendre(hote); }
+    function tout() {
+      rendre(hote);
+      var panneau = hote.querySelector(".lb-filtres-galerie");
+      panneau.open = true;
+      panneau.querySelector("summary").focus();
+    }
     champ.addEventListener("input", function () { etat.q = champ.value; garder(); filtrer(); });
 
-    hote.appendChild(APP.retour("#/projets"));
     hote.appendChild(el("header.studio-entete", {}, el("h1", {}, "Galerie")));
-    var filtres = el("details.lb-filtres-galerie", {}, el("summary", {}, "Filtres"),
+    hote.appendChild(VUE_STUDIO.navProjets("galerie"));
+    var actifs = [etat.structure !== "toutes", etat.regime !== "tous", etat.annee !== "toutes"].filter(Boolean).length;
+    var filtres = el("details.lb-filtre-structure.lb-filtres-galerie", {}, el("summary", {}, UI.icone("reglages",16), actifs ? "Filtres (" + actifs + ")" : "Filtres"),
       el("div.gal-filtres", {},
       puces("Structure", [{ v: "toutes", nom: "Toutes", n: toutes.length }].concat(STRUCTURE.liste()
         .filter(function (s) { return parStruct[s.id]; }).map(function (s) { return { v: s.id, nom: s.court, n: parStruct[s.id] }; })), "structure", tout),
       puces("Année", [{ v: "toutes", nom: "Toutes" }].concat(listeAns.map(function (a) { return { v: a, nom: a, n: ans[a] }; })), "annee", tout),
-      puces("Régime", [{ v: "tous", nom: "Tout" }, { v: "temps", nom: "Temps forts" }, { v: "fil", nom: "Fils de l'année" }], "regime", tout),
-      champ));
-    filtres.open = etat.structure !== "toutes" || etat.regime !== "tous" || etat.annee !== "toutes" || !!etat.q;
-    hote.appendChild(filtres);
+      puces("Régime", [{ v: "tous", nom: "Tout" }, { v: "temps", nom: "Temps forts" }, { v: "fil", nom: "Fils de l'année" }], "regime", tout)));
+    hote.appendChild(el("div.lb-outils-collection", {}, champ, filtres));
     hote.appendChild(compte);
     hote.appendChild(zone);
     filtrer();

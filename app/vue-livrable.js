@@ -364,7 +364,7 @@ window.VUE_LIVRABLE = (function () {
     return boite;
   }
 
-  function criteres(p, l, apres, compact) {
+  function controles(p, l) {
     var b = p.sections.bigidea || {};
     var boite = el("div.criteres-l");
     function dessiner() {
@@ -375,41 +375,67 @@ window.VUE_LIVRABLE = (function () {
         var tenu = etat[c.cle] === true;
         boite.appendChild(el("button.critere-l" + (tenu ? ".tenu" : ".rate"), {
           type: "button", "aria-pressed": tenu ? "true" : "false",
-          onclick: function () { etat[c.cle] = !tenu; l.grille = etat; DEPOT.enregistrer(); dessiner(); },
-        }, el("span.marque", {}, tenu ? "✓" : "✕"), el("span", {}, c.texte)));
+          onclick: function (e) {
+            etat[c.cle] = !tenu; l.grille = etat; DEPOT.enregistrer();
+            e.currentTarget.classList.toggle("tenu", !tenu);
+            e.currentTarget.classList.toggle("rate", tenu);
+            e.currentTarget.setAttribute("aria-pressed", String(!tenu));
+            e.currentTarget.querySelector(".marque").textContent = tenu ? "✕" : "✓";
+            tenu = !tenu;
+          },
+        }, el("span.marque", { "aria-hidden": "true" }, tenu ? "✓" : "✕"), el("span", {}, c.texte)));
       });
     }
     dessiner();
 
     var accord = (b.criteres && b.criteres.length) ? PANNEAU.puces(b.criteres)
       : UI.banniere("", REGLES.prix("criteres-absents"));
-    var controles = el("div.sousbloc", {}, el("h3", {}, "Critères d'acceptation de l'idée"), accord,
+    return el("div.sousbloc", {}, el("h3", {}, "Critères d'acceptation de l'idée"), accord,
       el("h3", {}, "Grille de refus"), boite);
+  }
+
+  function choixVerdicts(p, l, choisir) {
+    var piece = { type: "livrable", objet: l, projet: p, titre: l.nom,
+      semaine: PLATEAU.semaineDe(PLATEAU.echeanceDe(p, l)) };
+    return el("div.rc-verdicts", {}, MAISON.verdicts.map(function (v) {
+      var c = COUT.verdict(piece, v.cle);
+      var resume = c.alertes[0] || (c.jours ? "+" + c.jours + " j" : c.gagne[0] || c.effets[0] || "");
+      return el("button.rc-v." + v.cle, { type: "button", onclick: function () { choisir(v); } },
+        el("span.v-signe", { "aria-hidden": "true" }, v.signe),
+        el("span.v-nom", {}, v.nom),
+        el("span.v-cout" + (c.alertes.length ? ".alerte" : ""), {}, resume));
+    }));
+  }
+
+  function choisirVerdict(p, l, apres) {
+    var version = REMISE.versionCourante(l);
+    if (!version || version.objet.verdict) { AVIS.refus("La version ne peut plus recevoir de verdict ici."); return; }
+    var contexte = etatPourVerdict(l, version.objet);
+    var marche = l.marche && DEPOT.trouve("marches", l.marche);
+    PANNEAU.ouvrir("Rendre un verdict", "V" + version.numero + " · " + (marche ? marche.nom : "Marché non renseigné"),
+      el("div.revue-choix", {}, choixVerdicts(p, l, function (verdict) {
+        juger(p, l, verdict, function () { PANNEAU.fermer(); if (apres) apres(); }, contexte);
+      })));
+  }
+
+  function criteres(p, l, apres, compact) {
+    var b = p.sections.bigidea || {};
+    var grille = controles(p, l);
     return el("div.revue-criteres", {},
       compact && b.criteres && b.criteres[0] ? el("p.revue-premier-critere", {}, b.criteres[0]) : null,
-      !compact ? controles : null,
+      !compact ? grille : null,
       el("div.sousbloc", {}, el("h3", {}, "Verdict — chacun porte son coût"),
-        el("div.rc-verdicts", {}, MAISON.verdicts.map(function (v) {
-          var piece = { type: "livrable", objet: l, projet: p, titre: l.nom,
-            semaine: PLATEAU.semaineDe(PLATEAU.echeanceDe(p, l)) };
-          var c = COUT.verdict(piece, v.cle);
-          var resume = c.alertes.length ? c.alertes[0]
-            : c.jours ? "+" + c.jours + " j"
-            : c.gagne.length ? c.gagne[0] : (c.effets[0] || "");
-          return el("button.rc-v." + v.cle, { type: "button", onclick: function () { juger(p, l, v, apres); } },
-            el("span.v-signe", {}, v.signe),
-            el("span.v-nom", {}, v.nom),
-            el("span.v-cout" + (c.alertes.length ? ".alerte" : ""), {}, resume.slice(0, 58)));
-        }))),
-      compact ? el("details", {}, el("summary", {}, "Voir tous les critères"), controles) : null
+        choixVerdicts(p, l, function (v) { juger(p, l, v, apres); })),
+      compact ? el("details", {}, el("summary", {}, "Voir tous les critères"), grille) : null
     );
   }
 
-  function juger(p, l, verdict, apres) {
+  function juger(p, l, verdict, apres, attendu) {
     var version = REMISE.versionCourante(l);
     if (!version) { AVIS.refus("Soumettez la version en cours avant de la juger."); return; }
     var v = version.objet;
     var contexte = etatPourVerdict(l, v);
+    if (attendu && (attendu !== contexte || v.verdict)) { AVIS.refus("La version a changé. Relisez la pièce avant de décider."); return; }
     var marche = l.marche ? DEPOT.trouve("marches", l.marche) : null;
     var g = REGLES.grille("livrable", l);
     var etat = l.grille || {};
@@ -582,5 +608,5 @@ window.VUE_LIVRABLE = (function () {
   }
 
   return { ouvrir: ouvrir, ouvrirFiche: ouvrirFiche,
-    criteres: criteres, dependances: dependances };
+    criteres: criteres, controles: controles, choisirVerdict: choisirVerdict, dependances: dependances };
 })();

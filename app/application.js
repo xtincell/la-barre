@@ -62,14 +62,20 @@ window.APP = (function () {
   }
   function rail(r) {
     var principales = ["bureau","projets","valider"];
+    var espace = r.cle;
+    var origine = (history.state || {}).barreDepuis || "";
+    if (r.cle === "projets" && r.objet && ["livrables", "pistes"].includes(r.sous)) {
+      var depuisRevue = /^#\/(bureau|valider|decider|revue|direction)(\/|$)/.test(origine);
+      if (depuisRevue || (!origine && r.mode === "juger")) espace = "valider";
+    }
     return el("aside.rail.lb-rail", { "aria-label": DEPOT.estDemonstration() ? "Démonstration — données fictives" : "Espace de travail" },
       el("div.lb-entete-rail", {}, marque(),
         el("button.lb-chercher", { type: "button", "aria-label": "Rechercher", onclick: ouvrirRecherche },
           UI.icone("recherche", 20), el("span", {}, "Rechercher"), el("kbd", {}, raccourci() + " F"))),
-      el("nav.rail-nav.lb-nav", { "aria-label": "Navigation principale" }, VUES.map(function (v) { return navigation(v, r.cle); })),
+      el("nav.rail-nav.lb-nav", { "aria-label": "Navigation principale" }, VUES.map(function (v) { return navigation(v, espace); })),
       el("details.lb-commande", {}, el("summary", {}, UI.icone("reglages", 18), "Outils du poste"), outils()),
-      el("nav.lb-mobile", { "aria-label": "Navigation mobile" }, VUES.slice(0, 3).map(function (v) { return navigation(v, r.cle); }),
-        navigation({ cle: "plus", ico: "plus", nom: "Plus" }, principales.indexOf(r.cle) < 0 ? "plus" : r.cle)));
+      el("nav.lb-mobile", { "aria-label": "Navigation mobile" }, VUES.slice(0, 3).map(function (v) { return navigation(v, espace); }),
+        navigation({ cle: "plus", ico: "plus", nom: "Plus" }, principales.indexOf(espace) < 0 ? "plus" : espace)));
   }
   function plus(zone) {
     zone.appendChild(el("header.studio-entete", {}, el("h1", {}, "Plus")));
@@ -162,28 +168,17 @@ window.APP = (function () {
     var estPiste = r.sous === "pistes";
     var objets = p && (estPiste ? p.sections.pistes : p.livrables);
     var objet = (objets || []).find(function (x) { return x.id === r.objet; });
+    if (estPiste || r.mode === "juger" || r.mode === "remise") zone.classList.add("lb-zone-revue");
     zone.appendChild(retour(p ? adresse("projets", p.id, r.sous) : "#/projets"));
     if (!objet) { zone.appendChild(el("h1", {}, "Pièce introuvable")); return; }
     zone.appendChild(el("header.studio-entete", {}, el("div", {}, el("p.studio-date", {},
       el("a", { href: adresse("projets", p.id) }, p.nom)), el("h1", {}, objet.titre || objet.nom || "Pièce"))));
     var scene = el("div.lb-detail-piece"); zone.appendChild(scene);
-    if (!estPiste && r.version) {
-      var courante = REMISE.versionCourante(objet);
-      if (!courante || String(courante.numero) !== r.version) {
-        var ancienne = (objet.versions || []).find(function (v) { return String(v.n || v.numero) === r.version; });
-        scene.appendChild(el("section.lb-version", {},
-          el("h2", {}, ancienne ? "Version " + r.version + " · historique" : "Version introuvable"),
-          ancienne ? el("p", {}, ancienne.verdict ? "Verdict consigné · " + ((MAISON.verdicts.find(function (v) { return v.cle === ancienne.verdict; }) || {}).nom || ancienne.verdict) : "Aucun verdict consigné.") : null,
-          ancienne && ancienne.motif ? el("p", {}, ancienne.motif) : null,
-          el("a.b", {href:adresse("projets", p.id, "livrables", objet.id)}, "Voir le livrable actuel")));
-        return;
-      }
-    }
     if (estPiste) {
-      function relire() { O.vider(scene); scene.appendChild(VUE_ROUTE.rendre(p, objet, relire)); }
+      function relire() { O.vider(scene); scene.appendChild(VUE_ROUTE.rendre(p, objet, relire, true)); }
       relire();
     } else {
-      scene.appendChild(VUE_ASSET.page(p, objet, null, r.mode || "poser"));
+      scene.appendChild(VUE_ASSET.page(p, objet, null, r.mode || "poser", r.version));
     }
   }
   function rendre() {
@@ -216,7 +211,10 @@ window.APP = (function () {
     else if (r.cle === "projets" && r.arg === "galerie") VUE_GALERIE.rendre(zone);
     else if (r.cle === "projets" && r.arg === "archives") VUE_STUDIO.projets(zone, true);
     else if (r.cle === "projets" && r.objet && ["livrables","pistes"].includes(r.sous)) piece(zone, r);
-    else r.vue.vue().rendre(zone, r.arg, r.sous, r.objet);
+    else {
+      r.vue.vue().rendre(zone, r.arg, r.sous, r.objet);
+      if (r.cle === "projets" && r.sous && !r.objet) VUE_STUDIO.noterRubrique(DEPOT.trouve("projets", r.arg), r.sous);
+    }
     if (window.VAULT && VAULT.statutContexte().etat === "erreur") zone.prepend(UI.banniere("", "La plateforme de marque n’a pas pu être actualisée. Rechargez le dossier pour réessayer."));
     var titre = zone.querySelector("h1");
     document.title = (titre ? titre.textContent.trim() : (r.vue && r.vue.nom || "Plus")) + " · La Barre";

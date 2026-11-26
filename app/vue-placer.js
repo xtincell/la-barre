@@ -39,10 +39,10 @@ window.VUE_PLACER = (function () {
     var p = mode === "livraisons" ? pireLivraisons(souffrance)
       : mode === "gens" ? pireGens()
       : mode === "charge" ? pireCharge(pieces, sansPlace)
-      : pireOrdre(c, sansPlace);
+      : pireOrdre(c, sansPlace, pieces.length);
 
     var courant = MODES.find(function (m) { return m.cle === mode; });
-    hote.appendChild(el("div.dc.pilotage", {},
+    hote.appendChild(el("div.dc.pilotage.pilotage-planning", {},
       el("header.studio-entete.dc-tete", {},
         el("div", {},
           el("p.pilotage-parent", {}, "Planning"),
@@ -55,10 +55,10 @@ window.VUE_PLACER = (function () {
             : m.cle === "livraisons" ? souffrance.length : 0; },
         alerte: function (m) { return m.cle === mode; } }),
       el("div.dc-corps", {},
+        corps(),
         el("details.pilotage-contexte", {},
           el("summary", {}, p.t),
-          el("p", {}, p.q)),
-        corps())
+          el("p", {}, p.q)))
     ));
   }
 
@@ -67,7 +67,7 @@ window.VUE_PLACER = (function () {
   /* L'ordre et la charge parlent de livrables ; les gens parlent de capacité.
    * Annoncer « 3 livrables ne sont pas plaçables » au-dessus des gens, c'est
    * répondre à côté de la question qu'on vient de poser. */
-  function pireOrdre(c, sansPlace) {
+  function pireOrdre(c, sansPlace, nombre) {
     if (c.conflits.length) {
       return { t: "L'ordre n'est pas tenu",
         q: "Quelqu'un tient du spéculatif pendant qu'un engagement contractuel traîne." };
@@ -76,6 +76,8 @@ window.VUE_PLACER = (function () {
       return { t: sansPlace + (sansPlace > 1 ? " livrables ne sont pas plaçables" : " livrable n'est pas plaçable"),
         q: "Sans responsable, sans charge ou sans date, un livrable est invisible dans la semaine." };
     }
+    if (!nombre) return { t: "Aucun livrable en production",
+      q: "Les pistes peuvent être classées avant de porter un livrable." };
     return { t: "Tout est placé",
       q: "Chaque livrable a son responsable, sa charge et sa date." };
   }
