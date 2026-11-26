@@ -68,7 +68,6 @@ window.VUE_DOCTRINE = (function () {
     var d = (MAISON.doctrine || {});
 
     return el("div.doc", {},
-      tete(d),
       blocDocuments(d),
       bloc("couches", "Les quatre couches", "Insight et création",
         "Un insight ne vaut rien sans son étage. La couche où il vit décide du "
@@ -119,22 +118,11 @@ window.VUE_DOCTRINE = (function () {
     );
   }
 
-  function tete(d) {
-    var n = (d.documents || []).length;
-    return el("div.doc-tete", {},
-      el("h2", {}, "La doctrine"),
-      el("p.doc-q", {}, "D'où viennent les règles que le produit applique. "
-        + n + " documents font foi, et chaque contrôle renvoie ici."),
-      el("p.doc-r", {}, "Ce qui suit est du métier : une agence d'Accra a les mêmes "
-        + "écoles et les mêmes couches. Ce que la maison en a réglé est signalé "
-        + "à part, et se change dans la configuration, pas dans le code."));
-  }
-
   function blocDocuments(d) {
     var docs = d.documents || [];
     if (!docs.length) return null;
     return el("section.doc-s", {},
-      el("h3.docs-t", {}, "Les documents qui font foi"),
+      el("h2.docs-t", {}, "Documents de référence"),
       el("div.doc-docs", {}, docs.map(function (x) {
         return el("div.docd", {},
           el("span.docd-n", {}, x.nom),

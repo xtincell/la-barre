@@ -12,12 +12,14 @@ window.VUE_REFERENTIEL = (function () {
    * rien — il se compte, il ne se lit pas. Seuls les gabarits manquants
    * restent dépliés : ce sont les seuls qui demandent un geste. */
   var deplies = {};
+  var ciblages = new WeakMap();
+  var collections = { marche: "marches", support: "supports", asset: "assets" };
 
-  function rendre(hote) {
+  function rendre(hote, cible) {
+    if (cible) ciblages.set(hote, cible);
     var marches = DEPOT.liste("marches");
     var supports = DEPOT.liste("supports");
     var assets = DEPOT.liste("assets");
-    var manquants = compterGabaritsManquants();
     O.vider(hote);
 
     /* Trois piles de même poids disaient trois inventaires. Or le référentiel
@@ -25,22 +27,24 @@ window.VUE_REFERENTIEL = (function () {
      * gabarits et le décideur local. Le support n'existe que servi sur un
      * marché — c'est le couple qui porte les dimensions, pas le support seul. */
     var usage = croisements();
+    var ciblage = ciblages.get(hote);
+    if (ciblage) {
+      rendreCible(hote, ciblage, marches, usage, cible !== undefined);
+      return;
+    }
 
     hote.appendChild(el("div.rf-h", {},
-      el("h2.rf-t", {}, phrase(marches, manquants, assets)),
-      el("p.rf-s", {}, "Il se remplit par l'usage, jamais en préalable. "
-        + "Le marché gouverne : sa langue, ses mentions, ses gabarits, son décideur.")));
+      el("h2.rf-t", {}, phrase(marches, compterGabaritsManquants(), assets))));
 
     hote.appendChild(el("section.rf-b", {},
-      el("div.rfb-t", {}, el("h3", {}, "Les marchés"),
-        el("span", {}, marches.length + " · ils gouvernent tout le reste"),
+      el("div.rfb-t", {}, el("h3", {}, "Marchés"),
+        el("span", {}, marches.length),
         el("button.b.nu", { type: "button",
-          onclick: function () { editerMarche(null, hote); } }, "+ Ajouter")),
+          onclick: function () { editerMarche(null, hote); } }, "Ajouter un marché")),
       marches.length
         ? el("div.rf-l", {}, marches.map(function (m) {
-            return blocMarche(m, supports, usage, hote); }))
-        : el("p.rien", {}, "Aucun marché. Le premier s'ajoute au premier dossier "
-            + "qui en sert un.")));
+            return blocMarche(m, usage, hote); }))
+        : el("p.rien", {}, "Aucun marché renseigné.")));
 
     hote.appendChild(blocAssets(assets, hote));
 
@@ -54,14 +58,40 @@ window.VUE_REFERENTIEL = (function () {
         el("div.rfb-t", {}, el("h3", {}, "Supports jamais servis"),
           el("span", {}, orphelins.length + " sur " + supports.length),
           el("button.b.nu", { type: "button",
-            onclick: function () { editerSupport(null, hote); } }, "+ Ajouter")),
-        el("p.rf-p", {}, "Déclarés au référentiel, employés par aucun dossier. "
-          + "Un support qui ne sert jamais ne porte aucun gabarit — et le jour où "
-          + "on l'emploie, on part de rien."),
+            onclick: function () { editerSupport(null, hote); } }, "Ajouter un support")),
         el("div.rf-chips", {}, orphelins.map(function (s) {
-          return el("button.rf-chip", { type: "button",
+          return el("button.rf-chip", { type: "button", "data-resource-type": "support", "data-resource-id": s.id,
             onclick: function () { editerSupport(s, hote); } }, s.nom); }))));
     }
+  }
+
+  function rendreCible(hote, cible, marches, usage, focus) {
+    var collection = Object.hasOwn(collections, cible.type) ? collections[cible.type] : null;
+    var objet = collection && cible.id ? DEPOT.trouve(collection, cible.id) : null;
+    var titre = el("h2.rf-t", { tabindex: "-1" }, objet ? objet.nom : "Ressource introuvable");
+    hote.appendChild(el("div.pilotage-fiche", {},
+      APP.retour("#/referentiel/marches"),
+      titre));
+
+    if (!objet) hote.appendChild(el("p.rien", {}, "Cette référence ne figure pas dans le dépôt ouvert."));
+    else if (cible.type === "marche") hote.appendChild(blocMarche(objet, usage, hote));
+    else if (cible.type === "asset") hote.appendChild(blocAssets([objet], hote, true));
+    else {
+      var marchesServis = marches.filter(function (m) { return usage[m.id + "|" + objet.id]; });
+      hote.appendChild(el("section.rf-b", { "data-resource-type": "support", "data-resource-id": objet.id },
+        el("div.rfb-t", {},
+          el("h3", {}, "Gabarits par marché"),
+          el("button.b.nu", { type: "button", onclick: function () { editerSupport(objet, hote); } }, "Modifier le support")),
+        marchesServis.length ? el("ul", {}, marchesServis.map(function (m) {
+          var g = (objet.gabarits || {})[m.id];
+          return el("li", {},
+            el("a", { href: "#/referentiel/marches/marche/" + encodeURIComponent(m.id) }, m.nom),
+            " · " + (g ? g.dimensions || "Gabarit renseigné" : "Gabarit manquant"));
+        })) : el("p.rien", {}, "Aucun marché n’utilise encore ce support.")));
+    }
+    if (focus) requestAnimationFrame(function () {
+      if (titre.isConnected) titre.focus();
+    });
   }
 
   /* L'état du référentiel en une phrase, avec sa conséquence. */
@@ -71,10 +101,7 @@ window.VUE_REFERENTIEL = (function () {
     if (perimes) {
       return perimes + (perimes > 1 ? " assets ont des droits expirés" : " asset a des droits expirés");
     }
-    if (manquants) {
-      return manquants + (manquants > 1 ? " gabarits manquent" : " gabarit manque")
-        + " — autant de fichiers qui partiront sans qu'on ait vérifié leur taille";
-    }
+    if (manquants) return manquants + (manquants > 1 ? " gabarits manquants" : " gabarit manquant");
     if (!marches.length) return "Aucun marché servi pour l’instant";
     return marches.length + (marches.length > 1 ? " marchés servis" : " marché servi")
       + ", tous leurs gabarits renseignés";
@@ -96,7 +123,7 @@ window.VUE_REFERENTIEL = (function () {
     return out;
   }
 
-  function blocMarche(m, supports, usage, hote) {
+  function blocMarche(m, usage, hote) {
     var siens = Object.keys(usage).filter(function (k) { return k.split("|")[0] === m.id; })
       .map(function (k) { return usage[k]; });
     var sansGabarit = siens.filter(function (c) {
@@ -105,7 +132,7 @@ window.VUE_REFERENTIEL = (function () {
     });
     var pieces = siens.reduce(function (n, c) { return n + c.n; }, 0);
 
-    return el("div.rf-m", {},
+    return el("div.rf-m", { "data-resource-type": "marche", "data-resource-id": m.id },
       el("button.rfm-h", { type: "button", onclick: function () { editerMarche(m, hote); } },
         el("span.rfm-code", {}, m.code),
         el("span.rfm-n", {}, m.nom),
@@ -122,16 +149,14 @@ window.VUE_REFERENTIEL = (function () {
         ? el("div.rfm-x", {}, m.mentions.length
             + (m.mentions.length > 1 ? " mentions obligatoires" : " mention obligatoire"))
         : el("div.rfm-x.manque", {}, el("span.rf-signe", { "aria-hidden": "true" }, "◐ "),
-            "Mentions obligatoires non renseignées — un livrable diffusé ici peut être non "
-            + "conforme sans que rien ne le dise"),
+            "Mentions obligatoires à renseigner"),
       m.note ? el("div.rfm-x.manque", {}, el("span.rf-signe", { "aria-hidden": "true" }, "◐ "), m.note) : null,
 
       supports_(m, siens, hote),
 
       sansGabarit.length
         ? el("div.rfm-c", {}, el("span.rf-signe", { "aria-hidden": "true" }, "● "), sansGabarit.length
-            + (sansGabarit.length > 1 ? " gabarits manquent sur ce marché" : " gabarit manque sur ce marché")
-            + " — le fichier partira sans qu'on ait vérifié sa taille")
+            + (sansGabarit.length > 1 ? " gabarits manquants" : " gabarit manquant"))
         : null
     );
   }
@@ -145,8 +170,7 @@ window.VUE_REFERENTIEL = (function () {
    * chacune ce qu'elles contiennent, et on ouvre celui qu'on renseigne. */
   function supports_(m, siens, hote) {
     if (!siens.length) {
-      return el("p.rf-p", {}, "Aucun support servi sur ce marché. Il apparaîtra ici "
-        + "à la première livrable qu'on y produit.");
+      return el("p.rf-p", {}, "Aucun support utilisé sur ce marché.");
     }
     var tries = siens.slice().sort(function (a, b) { return b.n - a.n; });
     function gabaritDe(c) {
@@ -156,21 +180,17 @@ window.VUE_REFERENTIEL = (function () {
     var manquent = tries.filter(function (c) { return !gabaritDe(c); }).length;
     var ouvert = deplies[m.id] === true;
 
-    return el("div", {},
-      el("button.rf-plus" + (ouvert ? ".ici" : "") + (manquent ? ".manque" : ""), { type: "button",
-        onclick: function () { deplies[m.id] = !ouvert; rendre(hote); } },
-        ouvert ? "Masquer les supports"
-          : tries.length + (tries.length > 1 ? " supports" : " support")
-            + (manquent
-                ? " · " + manquent + (manquent > 1 ? " sans gabarit" : " sans gabarit")
-                  + " — les ouvrir"
-                : " · tous ont leur gabarit — les voir")),
+    return el("details", { open: ouvert, ontoggle: function (e) { deplies[m.id] = e.currentTarget.open; } },
+      el("summary.rf-plus" + (manquent ? ".manque" : ""), {},
+        tries.length + (tries.length > 1 ? " supports" : " support")
+          + (manquent ? " · " + manquent + " sans gabarit" : "")),
 
-      ouvert
-        ? el("div.rf-sup", {}, tries.map(function (c) {
+      el("div.rf-sup", {}, tries.map(function (c) {
             var s = DEPOT.trouve("supports", c.support);
             var g = gabaritDe(c);
             return el("button.rf-s" + (g ? "" : ".manque"), { type: "button",
+              "data-resource-type": "support", "data-resource-id": c.support,
+              disabled: !s,
               onclick: function () { editerSupport(s, hote); },
               title: Object.keys(c.projets).join(", ") },
               el("span.rfs-n", {}, s ? s.nom : c.support),
@@ -178,13 +198,12 @@ window.VUE_REFERENTIEL = (function () {
               el("span.rfs-g", {}, g ? (g.dimensions || "Gabarit renseigné")
                 : [el("span.rf-signe", { "aria-hidden": "true" }, "◐ "), "Gabarit manquant"]));
           }))
-        : null
     );
   }
 
   /* Les droits en troisième, et ce qui expire d'abord. Un asset dont la
    * licence tombe avant la fin de diffusion est un incident déjà écrit. */
-  function blocAssets(assets, hote) {
+  function blocAssets(assets, hote, fiche) {
     var aujourdhui = new Date();
     var classes = assets.slice().sort(function (a, b) {
       var x = a.expire_le ? new Date(a.expire_le) : new Date(8640000000000000);
@@ -193,10 +212,10 @@ window.VUE_REFERENTIEL = (function () {
     });
 
     return el("section.rf-b", {},
-      el("div.rfb-t", {}, el("h3", {}, "Les assets et leurs droits"),
-        el("span", {}, assets.length + " · zone et durée, pas seulement un fichier"),
-        el("button.b.nu", { type: "button",
-          onclick: function () { editerAsset(null, hote); } }, "+ Ajouter")),
+      el("div.rfb-t", {}, el("h3", {}, "Droits des fichiers"),
+        fiche ? null : el("span", {}, assets.length),
+        fiche ? null : el("button.b.nu", { type: "button",
+          onclick: function () { editerAsset(null, hote); } }, "Ajouter un fichier")),
 
       classes.length
         ? el("div.rf-a", {}, classes.map(function (a) {
@@ -205,27 +224,25 @@ window.VUE_REFERENTIEL = (function () {
             var bientot = exp && !perime
               && (exp - aujourdhui) / 86400000 < 90;
             return el("button.rf-as" + (perime ? ".perime" : bientot ? ".bientot" : ""),
-              { type: "button", onclick: function () { editerAsset(a, hote); } },
+              { type: "button", onclick: function () { editerAsset(a, hote); },
+                "data-resource-type": "asset", "data-resource-id": a.id },
               el("span.rfa-n", {}, a.nom),
-              el("span.rfa-s", {}, a.source || "Source non renseignée — "
-                + "aucune preuve d'autorisation commerciale"),
+              el("span.rfa-s", {}, a.source ? "Source : " + a.source : "Source non renseignée"),
               el("span.rfa-z", {}, a.zones && a.zones.length
-                ? "Autorisé sur " + a.zones.join(", ")
-                : "Zones non limitées — à vérifier avant toute diffusion hors zone"),
+                ? "Zones déclarées : " + a.zones.join(", ") : "Aucune zone déclarée"),
+              fiche ? el("span.rfa-s", {}, "Licence : " + (a.licence || "non renseignée")) : null,
+              fiche ? el("span.rfa-s", {}, "Usage commercial : " + (a.commercial || "non renseigné")) : null,
+              fiche ? el("span.rfa-s", {}, a.master ? "Original référencé" : "Original non renseigné") : null,
               exp
                 ? el("span.rfa-e", {}, perime || bientot ? el("span.rf-signe", { "aria-hidden": "true" }, perime ? "● " : "◐ ") : null, perime
                     ? "Droits expirés le " + O.joli(a.expire_le)
-                      + " — tout livrable qui s'en sert est en infraction"
                     : bientot
                       ? "Expire le " + O.joli(a.expire_le) + " — dans "
                         + Math.round((exp - aujourdhui) / 86400000) + " jours"
                       : "Jusqu'au " + O.joli(a.expire_le))
-                : el("span.rfa-e.manque", {}, el("span.rf-signe", { "aria-hidden": "true" }, "◐ "), "Aucune date de cession — "
-                    + "on ne saura pas quand l'usage devient illégal"));
+                : el("span.rfa-e.manque", {}, el("span.rf-signe", { "aria-hidden": "true" }, "◐ "), "Échéance des droits non renseignée"));
           }))
-        : el("p.rien", {}, "Aucun asset. Un asset porte sa source, sa licence, "
-            + "ses zones et sa date d'expiration — sans quoi le « zéro incident de "
-            + "droits » de la fiche Motion n'est pas vérifiable.")
+        : el("p.rien", {}, "Aucun fichier renseigné.")
     );
   }
 

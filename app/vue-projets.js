@@ -1073,7 +1073,7 @@ window.VUE_PROJETS = (function () {
 
   function nouveau() {
     var choixG = "campagne";
-    var selG = el("select", {});
+    var selG = el("select", { id: "nouveau-projet-nature" });
     NATURE.liste().forEach(function (g) {
       selG.appendChild(el("option", { value: g.cle, title: g.quoi }, g.nom)); });
     selG.addEventListener("change", function () { choixG = selG.value; });
@@ -1088,7 +1088,7 @@ window.VUE_PROJETS = (function () {
     var selMarque = el("select", { id: "nouveau-projet-marque" }, el("option", { value: "" }, "À rattacher plus tard"));
     VAULT.marquesDisponibles().forEach(function (m) { selMarque.appendChild(el("option", { value: m.id }, m.nom)); });
     PANNEAU.ouvrir("Nouveau projet", "le projet peut commencer avant que tout soit renseigné", el("div", {},
-      el("div.champ", {}, el("label", {}, "Gabarit"),
+      el("div.champ", {}, el("label", { for: "nouveau-projet-nature" }, "Gabarit"),
         el("div.indice", {}, "Une demande simple n'a pas huit sections. Le gabarit se choisit maintenant et ne change plus."), selG),
       f.noeud,
       el("div.champ", {}, el("label", { htmlFor: "nouveau-projet-marque" }, "Marque"), selMarque),
@@ -1140,93 +1140,184 @@ window.VUE_PROJETS = (function () {
     DEPOT.lu("projets", id);
 
     var g = gabarit(p);
-    var courante = section && g.sections.indexOf(section) !== -1 ? section : g.sections[0];
+    var accesBrief = section === "brief" && VUE_BRIEF.estContextuel(p);
+    var courante = section ? (g.sections.indexOf(section) !== -1 || accesBrief ? section : g.sections[0]) : null;
+    var phs = phases(p, g);
     var blocs = REGLES.blocages(p.id);
-    var durs = blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; }).length;
-    var infs = window.INFERENCE ? INFERENCE.compte(p) : 0;
     var ident = p.sections.identite || {};
+    var cloture = CLOTURE.etat(p);
     var rafraichir = function () { projet(hote, id, courante); };
+    var ouverts = Array.from(hote.querySelectorAll("details[open][data-pj-detail]"), function (d) {
+      return d.dataset.pjDetail;
+    });
 
-    hote.className = "zone avec-rail pj";
+    hote.className = "zone pj";
     O.vider(hote);
 
-    /* L'en-tête d'écran du Studio (GRAMMAIRE_STUDIO §2) : surtitre, titre,
-     * client, puis une ligne d'état — le compte qui coûte et la phrase du plus
-     * ancien. Le bloc qui flottait à droite du titre disait la même chose en
-     * plus grand, et poussait le titre sur trois lignes. */
+    if (!courante && APP.retour) hote.appendChild(APP.retour("#/projets", "Retour"));
+    hote.appendChild(el("header.pj-entete",
+      el("div.pj-id",
+        visuelDossier(p),
+        el("div.pj-id-t",
+          el("p.pj-reference.studio-date", {}, [p.ref, g.nom].filter(Boolean).join(" · ")),
+          el("h1", {}, p.nom),
+          el("div.pj-reperes",
+            el("span", {}, nomClient(p) || "Client à renseigner"),
+            ident.echeance ? el("span.pj-echeance", {}, UI.icone("horloge", 15), "Échéance le " + O.joli(ident.echeance)) : null))),
+      el("span.pj-statut" + (cloture || p.fusionne ? ".archive" : ""), {},
+        p.fusionne ? "Fusionné" : cloture ? cloture.nom : "En cours")));
+
+    hote.appendChild(navigateur(p, phs, courante));
+    var droite = el("aside.aside.pj-rail", { "aria-label": "Suivi du projet" },
+      courante === "bigidea" ? VUE_BIGIDEA.rail(p) : null,
+      blocs.length ? panneauBlocages(p, blocs, rafraichir) : null,
+      panneauSuivi(p, g, blocs, rafraichir)
+    );
     var gauche = el("div.pj-corps", {},
-      el("header.studio-entete.pj-entete", {},
-        el("div.pj-id", {},
-          MARQUE.pastille(p, 44),
-          el("div.pj-id-t", {},
-            el("p.studio-date", {}, p.ref + " · " + g.nom,
-              p.refDemandee ? [" · ", el("button.studio-lien", { type: "button", onclick: function () { redemander(p, rafraichir); } },
-                "changer la référence demandée")] : null),
-            el("h1", {}, p.nom),
-            el("p.studio-intro", {}, ident.client || "Client non renseigné"),
-            ligneCampagne(p, rafraichir),
-            window.STRUCTURE ? STRUCTURE.ligne(p) : null,
-            etatDuDossier(p, blocs, durs, infs)))),
-
-      el("dl.pj-meta", {},
-        meta("Marchés", marches(p)),
-        meta("Supports", supports(p)),
-        meta("Échéance", ident.echeance ? O.joli(ident.echeance) : null),
-        meta("Décideur final", nomDecideur(p)),
-        meta("Fenêtre", ident.fenetre)
-      ),
-
-      chezPeople(p),
-
-      navigateur(p, g, courante, hote),
-
-      el("div.pj-section", {}, corpsSection(p, courante, rafraichir))
+      courante
+        ? [
+            transitionDossier(p, phs, courante, rafraichir),
+            el("div.pj-section", {}, corpsSection(p, courante, rafraichir)),
+          ]
+        : vueEnsemble(p, phs, rafraichir)
     );
+    hote.appendChild(el("div.pj-espace", {}, gauche, droite));
+    hote.querySelectorAll("details[data-pj-detail]").forEach(function (d) {
+      d.open = ouverts.indexOf(d.dataset.pjDetail) !== -1;
+    });
+  }
 
-    var particulier = courante === "bigidea" ? VUE_BIGIDEA.rail(p) : null;
-    var droite = el("div.aside.pj-rail", {},
-      particulier,
-      blocs.length ? el("div.panneau-lat.pj-blocages", {},
-        el("h3", {}, "Ce qui bloque ici", el("span.studio-compte.alerte", {}, String(blocs.length))),
-        /* Chaque blocage porte sa clé : quand il tombe, il tombe aux quatre
-         * endroits où il vit — le rail, la carte du dossier, la charge, la
-         * file — et pas seulement là où on l'a résolu. C'est ce qui rend la
-         * résolution croyable. */
-        el("div.blocages", {}, blocs.map(function (b) {
-          var infere = b.type === "infere-non-contresigne";
-          return el("div.blocage.f-" + (infere ? "attente" : "alerte"), { "data-blocage": b.cle },
-            el("b", {}, b.quoi),
-            el("span.quand", {}, b.jours === 0 ? "depuis aujourd'hui" : "depuis " + b.jours + (b.jours > 1 ? " jours" : " jour")),
-            b.prix ? el("span.cout", {}, b.prix) : null,
-            el("span.gestes", {},
-              (b.pieces || []).length
-                ? el("button.studio-lien", { type: "button",
-                    onclick: function () { lesPieces(p, b, rafraichir); } },
-                    "Les " + b.pieces.length + " livrables →")
-                : null,
-              /* Le renvoi à la doctrine. Un contrôle qui refuse sans dire selon
-               * quel critère refait exactement ce que la doctrine reproche aux
-               * agences : « on te dira ça ne marche pas sans te dire selon quel
-               * critère ». Celui qui remplace le DC doit pouvoir lire la règle. */
-              window.VUE_DOCTRINE ? VUE_DOCTRINE.lien(b.type) : null,
-              infere
-                ? el("button.studio-lien", { type: "button",
-                    onclick: function () { INFERENCE.panneau(p, rafraichir); } }, "Faire contresigner →")
-                : null)
-          );
-        }))
-      ) : el("div.panneau-lat", {}, el("h3", {}, "État"), el("div.prix.vert", {}, el("span.signe", {}, "✓"), "Rien ne bloque ce projet.")),
-      panneauSante(p, g, durs),
-      panneauReleve(p),
-      panneauChiffrage(p, rafraichir),
-      panneauRemise(p),
-      panneauResultat(p, rafraichir),
-      panneauCloture(p, rafraichir),
-      panneauEquipe(p)
+  function visuelDossier(p) {
+    var marque = MARQUE.pastille(p, 48);
+    return marque.classList.contains("sans")
+      ? el("span.pj-dossier-ico", { "aria-hidden": "true" }, UI.icone("projets", 23))
+      : marque;
+  }
+
+  function prochainGeste(p, phs, rafraichir) {
+    var lien = "#/projets/" + p.id;
+    var phase = phs.find(function (x) { return x.etat !== "fait"; });
+    var etape = phase && phase.bloque;
+    var sections = NATURE.sections(p);
+    var archive = CLOTURE.est(p);
+    var cible = p.fusionne && DEPOT.trouve("projets", p.fusionne.dans);
+    function action(titre, detail, section, nom) {
+      return { titre: titre, detail: detail,
+        action: el("a.b.or", { href: lien + "/" + section }, nom) };
+    }
+
+    if (cible) return { titre: "Projet fusionné", detail: cible.nom,
+      action: el("a.b.or", { href: "#/projets/" + cible.id }, "Ouvrir le projet principal") };
+    if (p.fusionne) return { titre: "Projet fusionné", detail: "Dossier cible : " + p.fusionne.dans };
+    if (archive) {
+      var cle = sections.indexOf("livrables") !== -1 ? "livrables"
+        : sections.indexOf("presentation") !== -1 ? "presentation" : "identite";
+      return action("Projet clos", CLOTURE.etat(p).quoi, cle, "Consulter " + nomSection(cle).toLowerCase());
+    }
+
+    var recu = VUE_BRIEF.reception(p);
+    var contexteBrief = VUE_BRIEF.estContextuel(p);
+    if (recu.statut === "sous_reserve" && (sections.indexOf("brief") !== -1 || contexteBrief)) {
+      return action("Relire le retour sur le brief", (p.sections.brief.reserve || {}).motif,
+        "brief", "Consulter le retour");
+    }
+    if (recu.existe && !recu.statut && !VALIDATION.valide(p.sections.brief || {})
+        && (sections.indexOf("brief") !== -1 || contexteBrief)) {
+      return action("Examiner la demande reçue", "Brief de projet · V" + recu.version, "brief", "Ouvrir le brief");
+    }
+    var piece = VUE_REVUE.pieces().find(function (x) { return x.projet.id === p.id; });
+    if (piece) {
+      return { titre: "Examiner une pièce", detail: piece.titre,
+        action: APP.adresse ? el("a.b.or", {
+          href: APP.adresse("projets", p.id, piece.type === "piste" ? "pistes" : "livrables", piece.id),
+        }, "Examiner la pièce") : el("button.b.or", { type: "button", onclick: function () {
+          if (piece.type === "piste") VUE_ROUTE.ouvrir(p, piece.objet, rafraichir);
+          else VUE_ASSET.ouvrir(p, piece.objet, rafraichir, "juger");
+        } }, "Examiner la pièce") };
+    }
+    if (contexteBrief && !recu.existe && (NATURE.de(p) || {}).cle === "demande") {
+      return action("Consigner la demande", "La note d’origine reste attachée au dossier.", "brief", "Ouvrir la demande");
+    }
+    if (sections.indexOf("livraison") !== -1 && REMISE.etat(p).cle !== "rien") {
+      return { titre: "Vérifier la remise", detail: REMISE.etat(p).nom,
+        action: el("button.b.or", { type: "button", onclick: function () { REMISE.ouvrir(p); } }, "Ouvrir le manifeste") };
+    }
+    if (etape) return action("Reprendre le dossier", nomSection(etape.cle) + " · " + etape.e.texte,
+      etape.cle, "Ouvrir « " + nomSection(etape.cle) + " »");
+    return action("Consulter le dossier", "", sections[0], "Voir " + nomSection(sections[0]).toLowerCase());
+  }
+
+  function vueEnsemble(p, phs, rafraichir) {
+    var ident = p.sections.identite || {};
+    var geste = prochainGeste(p, phs, rafraichir);
+    return el("div.pj-apercu", {},
+      el("section.pj-reprise", { "aria-labelledby": "pj-continuer" },
+        el("div.pj-reprise-texte",
+          el("h2", { id: "pj-continuer" }, geste.titre),
+          geste.detail ? el("p", {}, geste.detail) : null),
+        geste.action),
+      el("section.pj-contextuel", { "aria-labelledby": "pj-contexte" },
+        el("h2", { id: "pj-contexte" }, "Informations du projet"),
+        p.refDemandee ? el("button.studio-lien", { type: "button", onclick: function () { redemander(p, rafraichir); } },
+          "Modifier la référence demandée") : null,
+        ligneCampagne(p, rafraichir),
+        window.STRUCTURE ? STRUCTURE.ligne(p) : null,
+        el("dl.pj-meta", {},
+          meta("Marchés", marches(p)),
+          meta("Supports", supports(p)),
+          meta("Décideur final", nomDecideur(p)),
+          meta("Fenêtre", ident.fenetre)
+        ),
+        chezPeople(p))
     );
+  }
 
-    hote.appendChild(gauche);
-    hote.appendChild(droite);
+  function panneauBlocages(p, blocs, rafraichir) {
+    var blocages = blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; });
+    var ordre = blocages.concat(blocs.filter(function (b) { return b.type === "infere-non-contresigne"; }));
+
+    return el("section.pj-cote", { "aria-labelledby": "pj-attention" },
+      el("h2", { id: "pj-attention" }, "À traiter",
+        ordre.length ? el("span.studio-compte", {}, String(ordre.length)) : null),
+      ordre.length ? [
+        ligneBlocage(p, ordre[0], rafraichir),
+        ordre.length > 1 ? el("details.pj-detail", { "data-pj-detail": "blocages" },
+          el("summary", {}, ordre.length === 2 ? "Voir l’autre point" : "Voir les " + (ordre.length - 1) + " autres points"),
+          el("div.pj-points", {}, ordre.slice(1).map(function (b) { return ligneBlocage(p, b, rafraichir); }))) : null,
+      ] : el("p.pj-sans-blocage", {}, "Aucun blocage signalé."));
+  }
+
+  function ligneBlocage(p, b, rafraichir) {
+    var infere = b.type === "infere-non-contresigne";
+    return el("div.pj-point." + (infere ? "attente" : "alerte"), { "data-blocage": b.cle },
+      el("p.pj-point-nom", {}, UI.icone(infere ? "horloge" : "alerte", 17), el("strong", {}, b.quoi)),
+      el("p.pj-point-date", {}, b.jours === 0 ? "Signalé aujourd’hui" : "Depuis " + b.jours + (b.jours > 1 ? " jours" : " jour")),
+      b.prix ? el("p.pj-point-cout", {}, b.prix) : null,
+      el("div.pj-point-actions", {},
+        (b.pieces || []).length ? el("button.studio-lien", { type: "button",
+          onclick: function () { lesPieces(p, b, rafraichir); } },
+          b.pieces.length === 1 ? "Voir le livrable" : "Voir les " + b.pieces.length + " livrables") : null,
+        infere ? el("button.studio-lien", { type: "button",
+          onclick: function () { INFERENCE.panneau(p, rafraichir); } }, "Faire contresigner") : null,
+        window.VUE_DOCTRINE ? VUE_DOCTRINE.lien(b.type) : null));
+  }
+
+  function panneauSuivi(p, g, blocs, rafraichir) {
+    var durs = blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; }).length;
+    var rubriques = [
+      ["champs", "Champs à renseigner", panneauSante(p, g, durs)],
+      ["equipe", "Équipe", panneauEquipe(p)],
+      ["cout", "Chiffrage", panneauChiffrage(p, rafraichir)],
+      ["remise", "Remise et manifeste", panneauRemise(p)],
+      ["resultat", "Résultats", panneauResultat(p, rafraichir)],
+      ["cloture", "Clôture", panneauCloture(p, rafraichir)],
+      ["releve", "Relevé d’origine", panneauReleve(p)],
+    ];
+    return el("section.pj-cote.pj-suivi", { "aria-labelledby": "pj-suivre" },
+      el("h2", { id: "pj-suivre" }, "Suivi du projet"),
+      rubriques.filter(function (r) { return r[2]; }).map(function (r) {
+        return el("details.pj-detail", { "data-pj-detail": r[0] }, el("summary", {}, r[1]), r[2]);
+      }));
   }
 
   /* ————————————————————— Le même dossier, chez People ————————————————————— */
@@ -1244,64 +1335,6 @@ window.VUE_PROJETS = (function () {
         ? (x.refs || []).join("  ·  ") + (x.nom ? "  —  " + x.nom : "")
         : "aucun dossier correspondant"),
       x.note ? el("p.pep-n", {}, x.note) : null);
-  }
-
-  /* ————————————————————— L'état du dossier, en une phrase ————————————————————— */
-
-  /* Trois nombres côte à côte ne demandent rien.
-   *
-   * « 3 blocages · 6 inférés · 189 livrables » se lisent en une seconde et
-   * n'appellent aucun geste. C'est exactement ce que la refonte devait
-   * retirer : un compteur n'a sa place en tête d'un dossier que s'il provoque
-   * une décision — et alors il porte sa conséquence, sinon il rassure à tort.
-   *
-   * Un seul reste en grand, celui qui coûte le plus cher aujourd'hui. Les
-   * autres passent dans la phrase, et disparaissent quand ils valent zéro.
-   * La liste des blocages est déjà au rail : ce n'est pas elle qu'on répète,
-   * c'est ce qu'elle coûte qu'on dit. */
-  function etatDuDossier(p, blocs, durs, infs) {
-    var n = (p.livrables || []).filter(function (l) { return !l.annule; }).length;
-    /* Une ligne, pas un bloc : le signe, le compte qui coûte, puis la phrase.
-     * La couleur est dans le signe et le compte, jamais en aplat. */
-    function ligne(ton, signe, compte, phrase) {
-      return el("p.pj-etat.f-" + ton, {},
-        el("span.pj-signe", { "aria-hidden": "true" }, signe),
-        el("b", {}, compte),
-        phrase ? el("span", {}, " — " + phrase) : null);
-    }
-    function pl(k, un, plusieurs) { return k + " " + (k > 1 ? plusieurs : un); }
-
-    /* Un dossier clos ne se lit pas par ce qui le bloque : il n'y a plus rien
-     * à débloquer. Il se lit par ce qu'il laisse au suivant. */
-    if (window.CLOTURE && CLOTURE.est(p)) {
-      var e = CLOTURE.etat(p);
-      var avecBilan = e.cle === "clos";
-      return ligne(avecBilan ? "calme" : "attente", avecBilan ? "✓" : "◐",
-        (avecBilan ? "Clos" : "Clos sans bilan") + " · " + pl(n, "livrable", "livrables"),
-        e.quoi + (durs ? " " + pl(durs, "risque reste", "risques restent")
-          + " : les pièces sont toujours dehors." : ""));
-    }
-
-    /* REGLES.blocages trie du plus ancien au plus récent. Le rail les liste
-     * tous ; ici on dit ce que coûte celui qui traîne depuis le plus longtemps,
-     * et on le nomme — sinon son prix a l'air d'être celui de tous. */
-    var vieux = blocs.filter(function (b) { return b.type !== "infere-non-contresigne"; })[0];
-    if (durs) {
-      return ligne("alerte", "●", pl(durs, "blocage", "blocages"),
-        (vieux
-          ? (durs > 1 ? "le plus ancien" : "le seul")
-            + (vieux.jours > 0 ? ", depuis " + pl(vieux.jours, "jour", "jours") : "")
-            + " : " + vieux.quoi + ". " + (vieux.prix || "")
-          : "rien ne se livre tant qu'ils tiennent.")
-        + (infs ? " " + pl(infs, "champ reste", "champs restent") + " à confirmer." : ""));
-    }
-    if (infs) {
-      return ligne("attente", "◐", pl(infs, "champ à confirmer", "champs à confirmer"),
-        "utilisables pour travailler, pas opposables au client : le jour où il conteste, rien ne tient.");
-    }
-    return ligne("vert", "✓", pl(n, "livrable", "livrables"), n
-      ? "rien ne bloque ce dossier. Ce qui reste est du travail, pas une décision."
-      : "aucun livrable. Une piste retenue les engendre — c'est là qu'elles naissent.");
   }
 
   /* Un blocage de lot s'ouvre : la liste des livrables qu'il porte, chacune
@@ -1340,76 +1373,74 @@ window.VUE_PROJETS = (function () {
     }).filter(function (x) { return x.cles.length; });
   }
 
-  function navigateur(p, g, courante, hote) {
-    var phs = phases(p, g);
-    var ici = phs.filter(function (x) { return x.cles.indexOf(courante) !== -1; })[0] || phs[0];
-    var rang = phs.indexOf(ici);
+  var parcoursOuvert = Object.create(null);
+
+  function navigateur(p, phs, courante) {
+    var lien = "#/projets/" + p.id;
+    var ici = phs.find(function (x) { return x.cles.indexOf(courante) !== -1; });
     var SIGNES = { plein: "✓", partiel: "◐", vide: "○" };
+    var phaseRecueil = !ici && courante === "brief" && VUE_BRIEF.estContextuel(p);
+    var titre = !courante ? "Vue d’ensemble" : phaseRecueil ? "Demande d’origine" : nomSection(courante);
 
-    return el("nav.pj-nav", { "aria-label": "Les temps du dossier" },
-      /* Les trois temps. Toujours les mêmes, toujours au même endroit : le
-       * sélecteur de mode du Studio, qui porte en plus son avancement. */
-      el("div.pj-phases", {}, phs.map(function (x, i) {
-        var amont = phs.slice(0, i).filter(function (y) { return y.etat !== "fait"; });
-        return el("button.pj-phase." + x.etat + (x === ici ? ".active" : ""), {
-          type: "button", "aria-pressed": x === ici ? "true" : "false",
-          title: x.ph.quoi + (amont.length ? "  —  " + x.ph.sans : ""),
-          onclick: function () { location.hash = "#/projets/" + p.id + "/" + premierUtile(x); },
-        },
-          el("span.pjp-tete", {},
-            el("span.pjp-n", {}, (i + 1) + " · " + x.ph.nom),
-            el("span.studio-compte", {}, x.pleins + "/" + x.total)),
-          el("span.pjp-q", {}, x.etat === "fait" ? x.ph.quoi
-            : x.bloque ? nomSection(x.bloque.cle) + " · " + x.bloque.e.texte
-            : x.ph.quoi),
-          el("span.pjp-b", { "aria-hidden": "true" }, el("i", { style: { width: Math.round((x.pleins / x.total) * 100) + "%" } }))
-        );
-      })),
-
-      /* Les étapes du temps où l'on est : une sous-navigation en texte. */
-      el("div.pj-etapes", {}, ici.etats.map(function (x) {
-        return el("button.pj-etape." + x.e.classe + (x.cle === courante ? ".active" : ""), {
-          type: "button", "aria-current": x.cle === courante ? "page" : null,
-          onclick: function () { location.hash = "#/projets/" + p.id + "/" + x.cle; },
-        },
-          el("span.pje-n", {}, el("span.pje-s", { "aria-hidden": "true" }, SIGNES[x.e.classe] || "○"), nomSection(x.cle)),
-          el("span.pje-e", {}, x.e.texte));
-      })),
-
-      /* Le document qui fait passer au temps suivant. */
-      (function () {
-        var doc = ici.ph.cle === "cadrer" ? "cadrage" : ici.ph.cle === "concevoir" ? "conception" : null;
-        if (!doc) return null;
-        var d = COMPILATEUR.DOCS[doc];
-        var m = COMPILATEUR.controles(p, doc).filter(function (c) { return !c.ok; }).length;
-        return el("div.pj-ligne.f-" + (m ? "attente" : "vert"), {},
-          el("div.pjl-t", {},
-            el("b", {}, d.nom),
-            el("span", {}, m
-              ? m + (m > 1 ? " manques — " : " manque — ") + d.sans
-              : "Complet — " + d.ouvre + " peut s'ouvrir.")),
-          el("button" + (m ? ".studio-lien" : ".b.or"), { type: "button",
-            onclick: function () { COMPILATEUR.ouvrir(p, doc, function () { projet(hote, p.id, courante); }); } },
-            "Ouvrir le document"));
-      })(),
-
-      /* Ce que ce temps coûte s'il démarre sans que l'amont soit fait. */
-      (function () {
-        var amont = phs.slice(0, rang).filter(function (y) { return y.etat !== "fait"; });
-        if (!amont.length) return null;
-        var noms = amont.map(function (y) { return y.ph.nom.toLowerCase(); }).join(" et ");
-        return el("div.pj-ligne.f-alerte", {},
-          el("div.pjl-t", {},
-            el("b", {}, noms.charAt(0).toUpperCase() + noms.slice(1)
-              + (amont.length > 1 ? " ne sont pas finis" : " n'est pas fini")),
-            el("span", {}, ici.ph.sans)));
-      })()
+    return el("div.pj-nav",
+      el("div.pj-position",
+        el("p.pj-position-titre", {}, ici ? el("span", {}, ici.ph.nom) : null, el("strong", {}, titre)),
+        el("details.pj-parcours", { open: parcoursOuvert[p.id], ontoggle: function (e) {
+          parcoursOuvert[p.id] = e.target.open;
+        } },
+          el("summary", {}, "Parcours du dossier"),
+          el("nav", { "aria-label": "Étapes du projet" },
+            el("div.pj-phases", { role: "group", "aria-label": "Phases" },
+              el("a.pj-phase", { href: lien, "aria-current": courante ? null : "page" }, "Vue d’ensemble"),
+              phs.map(function (x) {
+                return el("a.pj-phase", {
+                  href: lien + "/" + premierUtile(x),
+                  "aria-current": x === ici ? "step" : null,
+                }, x.ph.nom);
+              })
+            ),
+            ici ? el("div.pj-etapes", { role: "group", "aria-label": "Sections" }, ici.etats.map(function (x) {
+              var etiquette = nomSection(x.cle);
+              return el("a.pj-etape." + x.e.classe, {
+                href: lien + "/" + x.cle,
+                "aria-current": x.cle === courante ? "page" : null,
+                "aria-label": etiquette + " : " + x.e.texte,
+                title: x.e.texte,
+              }, el("span.pje-s", { "aria-hidden": "true" }, SIGNES[x.e.classe]), etiquette);
+            })) : null
+          )
+        )
+      )
     );
   }
 
+  function transitionDossier(p, phs, courante, rafraichir) {
+    var rang = phs.findIndex(function (x) { return x.cles.indexOf(courante) !== -1; });
+    if (rang < 0) return null;
+    var ici = phs[rang];
+    var amont = phs.slice(0, rang).filter(function (x) { return x.etat !== "fait"; });
+    var doc = { cadrer: "cadrage", concevoir: "conception" }[ici.ph.cle];
+    if (!doc && !amont.length) return null;
+    var d = doc && COMPILATEUR.DOCS[doc];
+    var manque = d && COMPILATEUR.controles(p, doc).filter(function (c) { return !c.ok; }).length;
+    return el("div.pj-transition", {},
+      amont.length ? el("div.pj-condition", {},
+        el("p", {}, UI.icone("alerte", 17),
+          el("span", {},
+            el("strong", {}, "Phases en amont à compléter"),
+            " · " + amont.map(function (x) { return x.ph.nom; }).join(", "))),
+        el("details.pj-details-condition", { "data-pj-detail": "condition" },
+          el("summary", {}, "Conséquence"),
+          el("p", {}, ici.ph.sans))) : null,
+      d ? el("div.pj-document", {},
+        el("span.pj-document-etat", {}, UI.icone("fichier", 16),
+          manque ? manque + (manque === 1 ? " contrôle à compléter" : " contrôles à compléter") : "Document complet"),
+        el("button.studio-lien", { type: "button", title: manque ? d.sans : d.ouvre,
+          onclick: function () { COMPILATEUR.ouvrir(p, doc, rafraichir); } }, d.nom)) : null);
+  }
+
   function premierUtile(x) {
-    var b = x.etats.filter(function (y) { return y.e.classe !== "plein"; })[0];
-    return b ? b.cle : x.cles[0];
+    return x.bloque ? x.bloque.cle : x.cles[0];
   }
 
   /* La campagne du projet, et ses frères : un projet n'est presque jamais
@@ -1429,9 +1460,9 @@ window.VUE_PROJETS = (function () {
     return el("p.pj-cmp", {},
       c ? [el("span.pj-cmp-e", {}, "Campagne"), " ", el("a", { href: "#/projets/" + c.id }, c.nom),
           n ? " · avec " + n + (n > 1 ? " autres projets" : " autre projet") : " · seul projet à ce jour"]
-        : [el("span.pj-cmp-e", {}, "Campagne"), " ", el("span.pj-cmp-v", {}, "aucune — à quel temps fort appartient-il ?")],
+        : [el("span.pj-cmp-e", {}, "Campagne"), " ", el("span.pj-cmp-v", {}, "Aucune campagne liée")],
       el("button.studio-lien", { type: "button", onclick: function () { CAMPAGNE.choisir(p, rafraichir); } },
-        c ? "Changer" : "Ranger dans une campagne"));
+        c ? "Changer de campagne" : "Associer une campagne"));
   }
 
   function meta(t, v) {
@@ -1540,10 +1571,13 @@ window.VUE_PROJETS = (function () {
   function corpsSection(p, cle, rafraichir) {
     var corps = corpsPropre(p, cle, rafraichir);
     var bandes = [INFERENCE.bande(p, rafraichir, cle),
-      VALIDATION.OBJETS[cle] ? el("div", { style: { "margin-bottom": ".9rem" } },
+      VALIDATION.OBJETS[cle] && !(cle === "brief" && VUE_BRIEF.estContextuel(p)) ? el("div", { style: { "margin-bottom": ".9rem" } },
         VALIDATION.bande(p, cle, objetValidable(p, cle), rafraichir)) : null];
     /* La big idea et les pistes se lisent d'abord : leur contenu passe devant
      * les bandes de procédure (refonte du 07/10/2026). */
+    if (cle === "brief") return el("div", {}, corps, el("details.bf-options",
+      el("summary", {}, "Suivi des confirmations et versions"),
+      el("div.se-proc", {}, bandes)));
     if (cle === "bigidea" || cle === "pistes") return el("div", {}, corps, el("div.se-proc", {}, bandes));
     return el("div", {}, bandes, corps);
   }
@@ -1627,6 +1661,9 @@ window.VUE_PROJETS = (function () {
     var pe = qui ? DEPOT.trouve("personnes", qui.personne) : null;
 
     return el("div.id", {},
+      VUE_BRIEF.estContextuel(p) ? el("p",
+        el("a.b", { href: "#/projets/" + p.id + "/brief" },
+          (NATURE.de(p) || {}).cle === "pitch" ? "Ouvrir le brief du pitch" : "Ouvrir la demande d’origine")) : null,
       el("h3.id-t", {}, inferes.length
         ? inferes.length + (inferes.length > 1 ? " champs restent à confirmer" : " champ reste à confirmer")
           + ", " + recus.length + " sont renseignés"
@@ -1839,12 +1876,19 @@ window.VUE_PROJETS = (function () {
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           FORM.appliquer(f, function () { return p.sections[cle] || {}; }, function (changements) {
-            if (INFERENCE.corriger(p, cle, changements)) DEPOT.tracer("saisie", "projets", p.id, def.nom + " · " + c.nom);
+            if (corrigerChamps(p, cle, changements)) DEPOT.tracer("saisie", "projets", p.id, def.nom + " · " + c.nom);
             DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
           });
         } }, "Enregistrer"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
     ));
+  }
+
+  function corrigerChamps(p, cle, changements) {
+    if (cle === "brief" && window.VUE_BRIEF && Object.keys(changements).some(function (c) {
+      return JSON.stringify((p.sections.brief || {})[c]) !== JSON.stringify(changements[c]);
+    })) VUE_BRIEF.preparerRevision(p);
+    return INFERENCE.corriger(p, cle, changements);
   }
 
   function editer(p, cle, def, rafraichir) {
@@ -1859,13 +1903,13 @@ window.VUE_PROJETS = (function () {
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           FORM.appliquer(f, function () { return p.sections[cle] || {}; }, function (changements) {
-            if (INFERENCE.corriger(p, cle, changements)) DEPOT.tracer("saisie", "projets", p.id, def.nom);
+            if (corrigerChamps(p, cle, changements)) DEPOT.tracer("saisie", "projets", p.id, def.nom);
             DEPOT.enregistrer(); PANNEAU.fermer(); rafraichir();
           });
         } }, "Enregistrer"),
         !monPoste ? el("button.b", { type: "button", onclick: function () {
           FORM.appliquer(f, function () { return p.sections[cle] || {}; }, function (changements) {
-            if (INFERENCE.corriger(p, cle, changements)) DEPOT.tracer("saisie", "projets", p.id, def.nom);
+            if (corrigerChamps(p, cle, changements)) DEPOT.tracer("saisie", "projets", p.id, def.nom);
             DEPOT.enregistrer(); PANNEAU.fermer();
             RENVOI.ouvrir({ quoi: def.nom + " — demande de confirmation", projet: p.ref, projetId: p.id, objet: cle });
           });

@@ -173,6 +173,13 @@ window.DISQUE = (function () {
 
   function ecran(z) {
     var sp = sansPlace(), rs = porteurs();
+    if (!sp.length && !rs.length) {
+      z.appendChild(el("p.rien", {}, "Aucun fichier relevé au disque."));
+      return;
+    }
+    z.appendChild(el("p.pilotage-meta", {}, local
+      ? "Fichiers lus depuis les exports de ce poste."
+      : "Aperçus en ligne. Les originaux restent sur le disque de l’agence."));
     if (sp.length) {
       z.appendChild(el("div.section-titre", {}, "Sans place au dépôt", el("span.taille", {}, "· " + sp.reduce(function (s, r) { return s + r.xs.length; }, 0))));
       sp.forEach(function (r) { var g = groupe(r); if (g) z.appendChild(g); });

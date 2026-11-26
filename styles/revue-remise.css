@@ -1,0 +1,62 @@
+.decisions-travail .dc-tete { margin-bottom: 18px; }
+.decisions-travail .st-modes-q { display: none; }
+.decisions-travail .dx-scene { overflow-wrap: anywhere; }
+.decisions-travail .studio-file .studio-piece { min-height: 44px; }
+.decisions-travail .dx-action { margin: 12px 0; padding-top: 10px; }
+.decisions-travail .dx-action h4 { margin-bottom: 4px; }
+.decisions-travail .dx-visuel { max-width: 300px; }
+.decisions-travail .du-ligne { overflow-wrap: anywhere; }
+.decisions-travail .du-ligne .studio-lien,
+.decisions-travail .du-bascules .studio-lien { display: inline-flex; align-items: center; min-height: 44px; }
+
+.asset-page,
+.remise-suivi { min-width: 0; overflow-wrap: anywhere; }
+.asset-page .as-tete { align-items: center; margin-bottom: 16px; }
+.asset-page .ast-c,
+.as-revue .ast-c { min-width: 0; }
+.as-revue .ast-v .vignette,
+.asset-page .ast-v .vignette { max-height: 230px; }
+.as-revue .ast-v .vignette img,
+.asset-page .ast-v .vignette img { object-fit: contain; }
+.as-revue .rc-verdicts { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }
+.as-revue .rc-v { min-height: 44px; }
+.as-revue .revue-premier-critere { padding: 10px 12px; border-inline-start: 3px solid var(--accent); }
+.as-revue .revue-criteres details > summary,
+.as-revue > div > div > details > summary { min-height: 44px; padding-block: 9px; cursor: pointer; }
+
+.remise-suivi { display: grid; align-items: start; gap: 12px; padding: clamp(12px, 3vw, 23px); }
+.plv > .remise-suivi { border: 1px solid var(--trait); border-radius: 8px; margin-bottom: 12px; }
+.remise-tete { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 14px; }
+.remise-tete h2, .remise-tete h3, .remise-suivi p { margin: 0; }
+.remise-suivi .b { justify-self: start; width: fit-content; min-height: 44px; white-space: normal; }
+.remise-suivi dl { display: grid; grid-template-columns: minmax(72px, auto) 1fr; gap: 7px 12px; margin: 0; }
+.remise-suivi dd { margin: 0; }
+.remise-suivi summary { cursor: pointer; padding-block: 10px; min-height: 44px; }
+.remise-preuve { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; background: var(--surface-4); border-radius: 6px; }
+.remise-preuve span { color: var(--clair-terne); }
+.remise-ecriture { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.remise-form fieldset { min-width: 0; border: 1px solid var(--trait); }
+.remise-form legend { font-weight: 600; }
+.remise-form .remise-choix { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.remise-choix input[type="checkbox"] { width: 20px; height: 20px; flex-shrink: 0; }
+.remise-choix small, .remise-suivi li small { display: block; color: var(--clair-terne); }
+.remise-form input:not([type="checkbox"]) { width: 100%; min-height: 44px; }
+.remise-erreur:not(:empty) { color: var(--alerte); }
+.retour-message { white-space: pre-wrap; margin-bottom: 10px; }
+body:has(.asset-page, .remise-suivi) .avis-pile .avis { pointer-events: none; }
+body:has(.asset-page, .remise-suivi) .avis-pile .avis-x { pointer-events: auto; }
+
+@media (max-width: 640px) {
+  .decisions-travail .dx .studio-file,
+  .decisions-travail .du .studio-file { display: grid; grid-template-columns: minmax(0, 1fr); max-height: 13rem; overflow: auto; }
+  .decisions-travail .studio-file .studio-piece { width: 100%; min-width: 0; padding: 9px; }
+  .decisions-travail .du-ligne { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .decisions-travail .du-ligne .dul-gestes { justify-content: flex-start; }
+  .as-revue .ast-v,
+  .asset-page .ast-v { max-width: 100%; }
+  .as-revue .ast-v .vignette,
+  .asset-page .ast-v .vignette { height: auto; min-height: 0; max-height: 185px; }
+  .as-revue .ast-v .vignette img,
+  .asset-page .ast-v .vignette img { max-height: 185px; }
+  .remise-suivi .form-actions { flex-wrap: wrap; }
+}

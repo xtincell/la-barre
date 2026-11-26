@@ -6,103 +6,60 @@ window.VUE_STUDIO = (function () {
   var projet = "";
 
   function rendre(hote) {
-    hote.className = "zone studio";
+    hote.className = "zone studio lb-bureau";
     O.vider(hote);
     var projets = DEPOT.liste("projets").filter(function (p) { return !CLOTURE.est(p) && !p.fusionne; });
-    if (projet && !projets.some(function (p) { return p.id === projet; })) projet = "";
-    var toutes = VUE_REVUE.pieces();
-    var pieces = toutes.filter(function (p) { return !projet || p.projet.id === projet; });
-    var active = pieces.filter(function (p) { return p.projet.id + "/" + p.id === selection; })[0] || pieces[0];
-    selection = active ? active.projet.id + "/" + active.id : null;
-    var refresh = function () { rendre(hote); };
-    var choix = el("select", { id: "studio-projet", onchange: function (e) { projet = e.target.value; selection = null; refresh(); } },
-      el("option", { value: "" }, "Tous les projets"),
-      projets.map(function (p) { return el("option", { value: p.id }, p.nom); }));
+    if (!projets.some(function (p) { return p.id === projet; })) projet = "";
+    var pieces = VUE_REVUE.pieces().filter(function (x) { return !projet || x.projet.id === projet; });
+    function cle(x) { return x.projet.id + "/" + x.id; }
+    var active = pieces.find(function (x) { return cle(x) === selection; }) || pieces[0];
+    selection = active ? cle(active) : null;
+    var choix = el("select", { id:"studio-projet", onchange:function () {
+      projet = choix.value; selection = null; rendre(hote);
+      var menu = hote.querySelector(".lb-file"); menu.open = true; menu.querySelector("select").focus();
+    } }, el("option", {value:""}, "Tous les projets"), projets.map(function (p) { return el("option", {value:p.id}, p.nom); }));
     choix.value = projet;
-    var provenance = DEPOT.provenance();
-    hote.appendChild(el("header.studio-entete", {},
-      el("div", {},
-        el("p.studio-date", {}, new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())),
-        el("h1", {}, "L'œil sur la création."),
-        el("p.studio-intro", {}, toutes.length ? toutes.length + (toutes.length > 1 ? " pièces à regarder. " : " pièce à regarder. ") + "Le contexte à côté. La décision à portée de main." : "Vos projets, vos créations et la prochaine décision, au même endroit.")),
-      el("button.b.or", { type: "button", onclick: VUE_PROJETS.nouveau }, "+ Nouveau projet")));
-    if (provenance.cle === "exemple") {
-      hote.appendChild(el("div.studio-demo", { role: "status" },
-        el("span", {}, "Espace de démonstration", el("small", {}, "Explorez le parcours avec les dossiers d'exemple.")),
-        el("a", { href: "#/referentiel/parametres" }, "Importer mon travail")));
+    hote.appendChild(el("header.studio-entete", {}, el("div", {},
+      el("p.studio-date", {}, new Intl.DateTimeFormat("fr-FR", {weekday:"long",day:"numeric",month:"long"}).format(new Date())),
+      el("h1", {}, "Sur la table"))));
+    if (DEPOT.provenance().cle === "exemple") hote.appendChild(el("div.studio-demo", {role:"status"},
+      el("span", {}, "Données d’exemple"), el("a", {href:"#/referentiel/parametres"}, "Importer mon travail")));
+    if (active) {
+      var p = active.projet, o = active.objet;
+      var piste = active.type === "piste", versions = o.versions || [], derniere = versions[versions.length-1];
+      var marche = o.marche && DEPOT.trouve("marches",o.marche);
+      var chemin = VUE_REVUE.lienPiece(active);
+      var version = derniere && derniere.n || o.version;
+      var meta = [marche && marche.nom, version ? "V" + version : null].filter(Boolean).join(" · ");
+      var intention = o.concept || o.signature;
+      hote.appendChild(el("article.lb-piece" + (!o.vignette && !intention ? ".sans-visuel" : ""), {},
+        el("div.lb-piece-texte", {},
+          el("p.lb-etat", {}, el("span", { "aria-hidden":"true" }, "◐"), piste ? "Piste à arbitrer" : "Verdict attendu"),
+          el("p.lb-piece-projet", {}, el("a", {href:APP.adresse("projets",p.id)}, p.nom)),
+          el("h2", {}, o.titre || o.nom || active.titre),
+          meta ? el("p.lb-piece-meta",{}, meta) : null,
+          el("a.b.or", {href:chemin}, piste ? "Examiner cette piste" : version ? "Examiner la V" + version : "Examiner la pièce")),
+        o.vignette ? el("div.lb-piece-image", {}, IMAGE.vignette(o,"planche")) : intention ?
+          el("blockquote.studio-intention.lb-intention",{}, intention) : null));
+    } else {
+      var sujets = FILE.tout();
+      var t = projet ? "Ce projet n'attend pas de verdict." : "Aucune pièce en attente de verdict.";
+      hote.appendChild(el("section.studio-vide.lb-vide", {},
+        el("h2",{},t), sujets.length ? el("a.b.or",{href:"#/valider/file"},"Ouvrir les décisions") :
+        el("a.b",{href:"#/projets"},"Voir les projets")));
     }
-    hote.appendChild(el("section.studio-revue", { "aria-label": "Revue créative" },
-      el("div.studio-section-tete", {},
-        el("h2", {}, "Sur la table", el("span.studio-compte", {}, String(pieces.length))),
-        el("div.studio-filtre", {}, el("label", { for: "studio-projet" }, "Projet"), choix)),
-      active ? el("div.studio-table", {},
-        el("div.studio-file", { "aria-label": "Pièces à regarder" }, pieces.map(function (p) {
-          var key = p.projet.id + "/" + p.id;
-          var bouton = el("button.studio-piece" + (key === selection ? ".active" : ""), {
-            type: "button", "aria-pressed": key === selection ? "true" : "false",
-            onclick: function () { selection = key; refresh(); hote.querySelector('[data-piece="' + CSS.escape(key) + '"]').focus(); },
-            "data-piece": key },
-            el("span.studio-piece-ref", {}, p.projet.ref || "Projet"),
-            el("strong", {}, p.titre),
-            el("span", {}, p.type === "piste" ? "Piste créative" : "Livrable"),
-            p.depuis ? el("small", {}, "Soumis le " + O.joli(p.depuis)) : el("small", {}, "Date de soumission à préciser"));
-          return bouton;
-        })),
-        scene(active, refresh), contexte(active)) : el("div.studio-vide", {},
-          el("div.studio-vide-signe", { "aria-hidden": "true" }, "✓"),
-          el("h3", {}, projet ? "Ce projet n'attend pas de verdict." : "La table est libre."),
-          el("p", {}, "Les pistes proposées et les versions sans verdict apparaissent ici. Retrouvez les retours client et les arbitrages dans Décisions."),
-          el("a.b", { href: "#/valider" }, "Voir les décisions"))));
-    hote.appendChild(el("section.studio-dossiers", { "aria-label": "Projets en cours" },
-      el("div.studio-section-tete", {}, el("h2", {}, "L'atelier en cours", el("span.studio-compte", {}, String(projets.length))), el("a", { href: "#/projets" }, "Tous les projets ↗")),
-      projets.length ? el("div.studio-projets", {}, projets.slice(0, 6).map(dossier)) : el("div.studio-vide", {},
-        el("h3", {}, "Tout commence par un brief."), el("p", {}, "Un client, un nom de projet. Le reste se précise en travaillant."),
-        el("button.b.or", { type: "button", onclick: VUE_PROJETS.nouveau }, "Créer mon premier projet"))));
-    var actions = FILE.tout();
-    if (actions.length) hote.appendChild(el("section.studio-suite", {},
-      el("div", {}, el("h2", {}, "Et autour de la création ?"), el("p", {}, "Retours client, arbitrages de pistes, responsabilités et engagements.")),
-      el("a.b", { href: "#/valider" }, "Voir les " + actions.length + " sujets à traiter")));
-  }
-
-  function scene(piece, refresh) {
-    var o = piece.objet, p = piece.projet;
-    var versions = o.versions || [];
-    var version = versions.length ? versions[versions.length - 1].n : o.version || 1;
-    var idee = o.concept || o.signature || o.titre || o.nom;
-    var ouvrir = function () {
-      if (piece.type === "livrable") VUE_ASSET.ouvrir(p, o, refresh, "juger");
-      else GESTE.ouvrir("pistes", { p: p });
-    };
-    return el("article.studio-scene", {},
-      el("div.studio-scene-tete", {}, el("span", {}, piece.type === "piste" ? "Piste à arbitrer" : "Version à examiner"), el("span", {}, "V" + version)),
-      el("div.studio-visuel", {}, o.vignette ? IMAGE.vignette(o, "planche") : el("div.studio-intention", {},
-        el("span", {}, "L'intention"), el("blockquote", {}, idee || "Une création à préciser"),
-        el("small", {}, "Aucun visuel joint à cette pièce"))),
-      el("div.studio-legende", {}, el("h3", {}, piece.titre), el("p", {}, piece.contexte)),
-      el("div.studio-actions", {},
-        el("button.b.or", { type: "button", onclick: ouvrir }, piece.type === "piste" ? "Examiner cette piste" : "Examiner et décider"),
-        el("a.b.nu", { href: "#/projets/" + p.id + (piece.type === "piste" ? "/pistes" : "/livrables") }, "Ouvrir le dossier")));
-  }
-
-  function contexte(piece) {
-    var p = piece.projet, s = p.sections || {}, brief = s.brief || {};
-    var auteur = piece.auteur && DEPOT.trouve("personnes", piece.auteur);
-    var criteres = MAISON.criteresDe(piece.criteres);
-    var details = el("details.studio-criteres", {}, el("summary", {}, "Critères de revue", el("span", {}, String(criteres.length))),
-      el("p", {}, "Points de refus à vérifier, sans verdict automatique."), el("ul", {}, criteres.map(function (c) { return el("li", {}, c); })));
-    details.open = false;
-    var objet = piece.objet;
-    return el("aside.studio-contexte", { "aria-label": "Contexte de la pièce sélectionnée" },
-      el("h3", {}, "Garder le cap"),
-      el("a.studio-contexte-projet", { href: "#/projets/" + p.id }, p.nom),
-      el("dl", {},
-        el("dt", {}, "Responsable"), el("dd", {}, auteur ? auteur.nom : "À attribuer"),
-        el("dt", {}, "Échéance du projet"), el("dd", {}, (s.identite || {}).echeance ? O.joli(s.identite.echeance) : "À définir")),
-      el("div.studio-brief", {}, el("h4", {}, "Le brief"),
-        el("p", {}, brief.probleme || brief.objectif || "Le cadrage se consulte dans le brief du projet."),
-        el("a", { href: "#/projets/" + p.id + "/brief" }, "Lire le brief ↗")),
-      details,
-      piece.type === "livrable" ? el("p.studio-contexte-note", {}, (objet.versions || []).length + " version(s) au dossier. Un verdict porte sur une version précise.") : el("p.studio-contexte-note", {}, "Retenir une piste ne vaut pas accord de mise en production."));
+    var file = el("details.lb-file", {}, el("summary", {}, "File de revue", el("span.studio-compte",{},String(pieces.length))),
+      el("div.studio-filtre",{},el("label",{for:"studio-projet"},"Projet"),choix),
+      el("div.lb-file-lignes", {}, pieces.map(function (x) {
+        return el("button.studio-piece" + (active === x ? ".active":""), {type:"button","aria-pressed":String(active === x),onclick:function () {
+          selection = cle(x); rendre(hote); var lien = hote.querySelector(".lb-piece .b"); if (lien) lien.focus();
+        }}, el("strong",{},x.titre),el("span",{},x.projet.nom));
+      })));
+    hote.appendChild(file);
+    hote.appendChild(el("section.studio-dossiers", { "aria-label":"Dossiers en cours" },
+      el("div.studio-section-tete",{}, el("h2",{},"Dossiers en cours"), el("a",{href:"#/projets"},"Tous les projets ↗")),
+      projets.length ? el("div.lb-dossiers",{}, projets.slice(0,4).map(dossier)) :
+        el("div.studio-vide",{},el("button.b.or",{type:"button",onclick:VUE_PROJETS.nouveau},"Créer mon premier projet"))));
   }
 
   function dossier(p) {
@@ -122,8 +79,8 @@ window.VUE_STUDIO = (function () {
         el("p", {}, livrables.length + " livrables", el("span", {}, blocs.length ? blocs.length + " points à résoudre" : "Aucun blocage")))) ;
   }
   var recherche = "";
-  var archives = false;
-  function projets(hote) {
+  function projets(hote, archives) {
+    archives = !!archives;
     hote.className = "zone studio studio-index";
     O.vider(hote);
     var tous = DEPOT.liste("projets").filter(function (p) { return !p.fusionne; });
@@ -153,15 +110,14 @@ window.VUE_STUDIO = (function () {
         !archives && !recherche ? el("button.b.or", { type: "button", onclick: VUE_PROJETS.nouveau }, "Créer un projet") : null));
     }
     champ.addEventListener("input", function () { recherche = champ.value; filtrer(); });
-    hote.appendChild(el("header.studio-entete", {}, el("div", {}, el("p.studio-date", {}, "Le travail, dans son ensemble"),
-      el("h1", {}, "Vos projets."), el("p.studio-intro", {}, "Du premier brief à la dernière livraison. Les échéances les plus proches passent devant.")),
-      el("button.b.or", { type: "button", onclick: VUE_PROJETS.nouveau }, "+ Nouveau projet")));
-    hote.appendChild(el("div.studio-index-outils", {}, el("div.studio-statuts", { "aria-label": "État des projets" },
-      [false, true].map(function (etat) { return el("button" + (archives === etat ? ".active" : ""), {
-        type: "button", "aria-pressed": archives === etat ? "true" : "false", onclick: function () { archives = etat; projets(hote); }
-      }, etat ? "Archives" : "En cours"); })), champ, el("a", { href: "#/projets/marques" }, "Vue par marque"), el("a", { href: "#/galerie" }, "La galerie")));
+    hote.appendChild(el("header.studio-entete", {}, el("div", {}, el("h1", {}, "Projets")),
+      el("button.b.or", { type:"button", onclick:VUE_PROJETS.nouveau }, "+ Nouveau projet")));
+    hote.appendChild(el("div.studio-index-outils", {}, el("nav.studio-statuts.lb-vues-projets", { "aria-label":"Vues des projets" },
+      el("a", { href:"#/projets", "aria-current":!archives ? "page" : null }, "En cours"),
+      el("a", { href:"#/projets/archives", "aria-current":archives ? "page" : null }, "Archives"),
+      el("a", { href:"#/projets/marques" }, "Par marque"), el("a", { href:"#/projets/galerie" }, "Galerie")), champ));
     /* Matanga, UPgraders, Friends Studio : trois structures, une seule liste — filtrable. */
-    if (window.STRUCTURE) hote.appendChild(STRUCTURE.puces(tous, function () { projets(hote); }));
+    if (window.STRUCTURE) hote.appendChild(STRUCTURE.puces(tous, function () { projets(hote,archives); }));
     hote.appendChild(compte);
     hote.appendChild(liste);
     filtrer();

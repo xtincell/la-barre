@@ -44,6 +44,7 @@ window.VUE_LIVRAISON = (function () {
     var pleins = ls.filter(function (l) { return !!l.vignette; });
 
     var noeud = el("div.plv", {},
+      mode === "livraison" && window.REMISE && ls.length ? REMISE.suiviLot(p, ls, rafraichir) : null,
       bande(p, ls, pleins, familles, rafraichir),
       tete(p, ls, pleins, rafraichir),
       !familles.length
@@ -55,7 +56,7 @@ window.VUE_LIVRAISON = (function () {
         : (mode === "presentation" && !pleins.length)
         ? el("p.rien", {}, "Rien à présenter : aucune des " + ls.length
             + " cases ne porte de visuel. Passe en livraison et dépose les rendus — "
-            + "la planche de séance se compose de ce qui est effectivement livré.")
+            + "la planche de séance se compose des visuels au dossier.")
         : el("div.plv-familles", {}, familles.map(function (f, i) {
             return famille(p, f, rafraichir, i);
           }))
@@ -104,7 +105,7 @@ window.VUE_LIVRAISON = (function () {
             + "Tire le dossier de rendus n'importe où sur la planche.")),
       el("div.plv-modes.studio-statuts", { role: "group", "aria-label": "Mode de la planche" }, [
         { cle: "livraison", nom: "Livraison", quoi: "Tout, les trous compris" },
-        { cle: "presentation", nom: "Présentation", quoi: "Ce qui est livré, imprimable" },
+        { cle: "presentation", nom: "Présentation", quoi: "Les visuels au dossier, imprimables" },
       ].map(function (m) {
         return el("button" + (mode === m.cle ? ".active" : ""), { type: "button",
           title: m.quoi, "aria-pressed": mode === m.cle ? "true" : "false",
@@ -167,6 +168,8 @@ window.VUE_LIVRAISON = (function () {
 
   function case_(p, l, rafraichir) {
     var t = TRACE.de(l);
+    var recu = window.REMISE && REMISE.preuveCourante(p, l);
+    var suivi = window.REMISE && REMISE.etatPiece(l);
     var noeud = el("button.plvc" + (l.vignette ? ".pleine" : ".vide")
       + (t.cle === "trace" ? ".tracee" : ""), {
       type: "button", title: l.nom,
@@ -177,6 +180,7 @@ window.VUE_LIVRAISON = (function () {
         el("span.plvc-m", {}, [
           "V" + (l.version || 1),
           (l.fichiers || []).length ? (l.fichiers || []).length + " fichiers" : null,
+          recu ? "Remise justifiée" : suivi && suivi.cle !== "validation" ? suivi.nom : null,
           l.responsable ? null : "sans responsable",
         ].filter(Boolean).join(" · "))));
 

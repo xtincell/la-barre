@@ -28,7 +28,7 @@ window.VUE_REVUE = (function () {
      * pièces sont livrées, et les faire remonter au verdict, c'est demander
      * d'approuver ce qui est déjà chez le client. */
     DEPOT.liste("projets").filter(function (p) {
-      return !(window.CLOTURE && CLOTURE.est(p));
+      return !p.fusionne && !(window.CLOTURE && CLOTURE.est(p));
     }).forEach(function (p) {
       (p.sections.pistes || []).forEach(function (pi) {
         if (pi.statut !== "proposee") return;
@@ -41,13 +41,14 @@ window.VUE_REVUE = (function () {
       });
       (p.livrables || []).forEach(function (l) {
         if (l.annule) return;
-        var v = (l.versions || [])[l.versions.length - 1];
-        if (!v || v.verdict) return;
+        var version = REMISE.versionCourante(l);
+        if (!version || version.objet.verdict) return;
+        var v = version.objet;
         var s = DEPOT.trouve("supports", l.support);
         var m = DEPOT.trouve("marches", l.marche);
         liste.push({
-          type: "livrable", id: l.id, projet: p, objet: l,
-          titre: l.nom + " — V" + v.n,
+          type: "livrable", id: l.id, projet: p, objet: l, version: version.numero,
+          titre: l.nom + " — V" + version.numero,
           contexte: p.ref + (s ? " · " + s.nom : "") + (m ? " · " + m.nom : ""),
           depuis: v.soumis_le, criteres: "livrable", etape: 3,
           auteur: l.responsable, semaine: PLATEAU.semaineDe(PLATEAU.echeanceDe(p, l)),
@@ -55,6 +56,13 @@ window.VUE_REVUE = (function () {
       });
     });
     return liste.sort(function (a, b) { return new Date(a.depuis) - new Date(b.depuis); });
+  }
+
+  function lienPiece(piece) {
+    var dossier = "#/projets/" + encodeURIComponent(piece.projet.id);
+    return piece.type === "livrable" ? dossier + "/livrables/" + encodeURIComponent(piece.id) + "/juger"
+      + (piece.version ? "/" + encodeURIComponent(piece.version) : "")
+      : dossier + "/pistes/" + encodeURIComponent(piece.id);
   }
 
   /* ————————————————————— L'écran ————————————————————— */
@@ -326,5 +334,5 @@ window.VUE_REVUE = (function () {
     );
   }
 
-  return { rendre: rendre, titre: "Revue", pieces: pieces };
+  return { rendre: rendre, titre: "Revue", pieces: pieces, lienPiece: lienPiece };
 })();

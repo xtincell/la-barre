@@ -24,9 +24,11 @@ window.VUE_JURISPRUDENCE = (function () {
      * le seul endroit du produit où le référentiel se complète tout seul. Le
      * corpus vient après, en matière de consultation. */
     return el("div.ju", {},
-      bande(e),
       aEcrire(e, rafraichir),
       parCritere(rafraichir),
+      el("details.pilotage-contexte", {},
+        el("summary", {}, "Vérifier la solidité du recueil"),
+        bande(e)),
       el("div.ju-fil", {},
         el("button.b.nu", { type: "button",
           onclick: function () { toutLeFil = !toutLeFil; rafraichir(); } },
@@ -62,7 +64,7 @@ window.VUE_JURISPRUDENCE = (function () {
 
   function parCritere(rafraichir) {
     var lignes = JURISPRUDENCE.parCritere();
-    var titre = el("h2.jue-t", {}, "Le corpus · comment j'ai tranché");
+    var titre = el("h2.jue-t", {}, "Arbitrages par critère");
     var servis = lignes.filter(function (x) { return x.cas.length; });
     var jamais = lignes.filter(function (x) { return !x.cas.length; });
 
@@ -73,8 +75,8 @@ window.VUE_JURISPRUDENCE = (function () {
             + "ils entrent au recueil au premier refus qui s'y adosse."),
 
       jamais.length
-        ? el("div.ju-jamais", {},
-            el("h3.jub-t", {}, "Jamais invoqués",
+        ? el("details.ju-jamais", {},
+            el("summary.jub-t", {}, "Critères jamais invoqués",
               el("span", {}, jamais.length + " sur " + lignes.length)),
             el("p.jum", {}, "Un critère qui ne sert jamais est soit inutile, soit oublié au "
               + "moment de refuser. Les deux se corrigent — l'un en le retirant, l'autre en "

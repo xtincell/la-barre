@@ -16,36 +16,43 @@ window.VUE_CONSTATER = (function () {
   var mode = "indicateurs";
 
   var MODES = [
-    { cle: "indicateurs", nom: "Indicateurs", quoi: "ce sur quoi je suis évalué" },
-    { cle: "reprises", nom: "Reprises", quoi: "ce que les retours hors périmètre ont coûté, et à qui" },
-    { cle: "equipe", nom: "Évaluation", quoi: "ce qu'ils ont produit, et ce que je leur ai dit" },
-    { cle: "bilan", nom: "Bilan mensuel", quoi: "ce qui sort, compilé sans ressaisie" },
-    { cle: "arbitrages", nom: "Arbitrages", quoi: "comment j'ai tranché, et sur quel critère" },
+    { cle: "indicateurs", nom: "Indicateurs" },
+    { cle: "reprises", nom: "Reprises" },
+    { cle: "equipe", nom: "Évaluation" },
+    { cle: "bilan", nom: "Bilan mensuel" },
+    { cle: "arbitrages", nom: "Arbitrages" },
   ];
 
   function rendre(hote, arg) {
-    if (arg && MODES.some(function (m) { return m.cle === arg; })) mode = arg;
+    if (arguments.length > 1) {
+      mode = MODES.some(function (m) { return m.cle === arg; }) ? arg : MODES[0].cle;
+    }
 
     hote.className = "zone studio";
     O.vider(hote);
 
     var s = standardChiffres();
+    var courant = MODES.find(function (m) { return m.cle === mode; });
+    var p = pire(s);
 
-    /* Le même en-tête que Décisions et Planning : le titre dit le pire état du
-     * mode regardé, le sélecteur vient dessous. */
-    hote.appendChild(el("div.dc", {},
+    hote.appendChild(el("div.dc.pilotage", {},
       el("header.studio-entete.dc-tete", {},
         el("div", {},
-          el("h1", {}, titre(s)),
-          el("p.studio-intro", {}, sousTitre(s)))),
-      UI.modes(MODES, mode, function (cle) { mode = cle; rendre(hote); }, { titre: "Modes du Bilan" }),
+          el("p.pilotage-parent", {}, "Bilan"),
+          el("h1", {}, courant.nom))),
+      UI.modes(MODES, mode, function (cle) { location.hash = "#/reporting/" + cle; }, {
+        titre: "Vues du bilan", route: "reporting",
+      }),
 
       el("div.dc-corps", {},
         mode === "indicateurs" ? standard(s, hote)
           : mode === "equipe" ? VUE_EQUIPE.rendre(hote, function () { rendre(hote); })
           : mode === "bilan" ? VUE_FINDEMOIS.rendre(hote, function () { rendre(hote); })
           : mode === "arbitrages" ? VUE_JURISPRUDENCE.rendre(hote, function () { rendre(hote); })
-          : bouscule(hote))
+          : bouscule(hote),
+        el("details.pilotage-contexte.pilotage-synthese", {},
+          el("summary", {}, p.t),
+          el("p", {}, p.q)))
     ));
   }
 
@@ -260,9 +267,6 @@ window.VUE_CONSTATER = (function () {
         + "tout seul." };
   }
 
-  function titre(s) { return pire(s).t; }
-  function sousTitre(s) { return pire(s).q; }
-
   /* ————————————————————— Mon standard ————————————————————— */
 
   /* Les chiffres vivent dans BILAN : la fin de mois et Mon standard lisent la
@@ -345,18 +349,13 @@ window.VUE_CONSTATER = (function () {
     return el("div", {},
       /* Le nombre reste à l'encre : l'état se dit par le filet et le signe. */
       el("section.sd-gros" + (gros.ko ? ".ko" : gros.creux ? ".creux" : ".ok"), {},
-        el("p.sdg-r", {},
-          el("span.sd-signe", { "aria-hidden": "true" }, gros.ko ? "● " : gros.creux ? "◐ " : "✓ "),
-          gros.ko ? "L'indicateur qui décroche · 1 sur 6"
-            : gros.creux ? "L'indicateur qui ne se calcule pas · 1 sur 6"
-            : "Mon standard · 1 sur 6"),
         el("div.sdg-h", {},
           el("span.sdg-v", {}, gros.v),
           el("span.sdg-n", {}, gros.nom)),
         el("p.sdg-q", {}, gros.quoi),
         gros.pourquoi
-          ? el("div.sdg-p", {},
-              el("span", {}, "Pourquoi ça compte"),
+          ? el("details.pilotage-contexte", {},
+              el("summary", {}, "Critère d’évaluation"),
               el("p", {}, gros.pourquoi))
           : null,
         gros.geste
@@ -375,25 +374,27 @@ window.VUE_CONSTATER = (function () {
 
       /* L'exigence par compte et par marché : la ligne « constante y compris sur
        * les petits projets » de la grille d'évaluation. */
-      ventilation("Par compte", s.parCompte),
-      ventilation("Par marché", s.parMarche),
+      el("details.pilotage-contexte", {},
+        el("summary", {}, "Périmètre et sources"),
+        el("p", {}, "Indicateurs cumulés sur le dépôt ouvert. Le délai inclut les versions soumises encore en attente. "
+          + s.decisions + " verdicts ont des dates exploitables."),
+        ventilation("Par compte", s.parCompte),
+        ventilation("Par marché", s.parMarche)),
 
       s.depassements
         ? el("section.cs-bloc", {},
             el("h3.csb-t", {}, "Au-delà du périmètre vendu"),
             UI.banniere("rouge", s.depassements
               + (s.depassements > 1 ? " livrables ont consommé" : " livrable a consommé")
-              + " plus d'allers-retours que ce qui a été vendu — soit "
-              + s.joursDepasses + " jours. C'est ce chiffre qui rend la clause de reprise "
-              + "crédible en négociation, pas le paragraphe du contrat."),
+              + " plus d’allers-retours que prévu, soit "
+              + s.joursDepasses + " jours estimés."),
             el("div.form-actions", {},
               GESTE.bouton("reprises", {}, "Voir qui les a demandés")))
         : null,
 
       el("div.sd-cibles", {},
         el("button.studio-lien", { type: "button", onclick: function () { cibles(hote); } },
-          "Mes cibles"),
-        el("span", {}, "Ce que je vise sur ces six lignes — modifiable"))
+          "Consulter mes cibles"))
     );
   }
 
@@ -419,22 +420,22 @@ window.VUE_CONSTATER = (function () {
   function ventilation(t, m) {
     var cles = Object.keys(m);
     if (!cles.length) return null;
-    var max = cles.reduce(function (n, k) {
-      var r = m[k].n ? m[k].r / m[k].n : 0; return Math.max(n, r); }, 0) || 1;
+    function taux(k) { return m[k].n ? m[k].r / m[k].n : -1; }
+    var max = cles.reduce(function (n, k) { return Math.max(n, taux(k)); }, 0) || 1;
 
     return el("section.cs-bloc", {},
       el("h3.csb-t", {}, t),
-      el("div.cs-v", {}, cles.sort(function (a, b) {
-        return (m[b].r / m[b].n) - (m[a].r / m[a].n);
-      }).map(function (k) {
-        var part = m[k].n ? Math.round((m[k].r / m[k].n) * 100) : 0;
+      el("div.cs-v", {}, cles.sort(function (a, b) { return taux(b) - taux(a); }).map(function (k) {
+        var compte = m[k];
+        var part = compte.n ? Math.round((compte.r / compte.n) * 100) : null;
         return el("div.cs-l", {},
           el("span.csl-n", {}, k),
-          el("span.csl-b", {}, el("i", {
+          el("span.csl-b", { "aria-hidden": "true" }, part === null ? null : el("i", {
             style: { width: Math.round((part / (max * 100)) * 100) + "%" } })),
           el("span.csl-c" + (part > 20 ? ".alerte" : ""), {},
             part > 20 ? el("span.sd-signe", { "aria-hidden": "true" }, "● ") : null,
-            part + " % · " + m[k].r + " sur " + m[k].n));
+            part === null ? "Non calculable" : part + " % · " + compte.r + " sur " + compte.n,
+            compte.sansHistorique ? " · " + compte.sansHistorique + " sans historique" : ""));
       })));
   }
 
@@ -509,16 +510,12 @@ window.VUE_CONSTATER = (function () {
       el("div.gl-t", {},
         el("span.glt-c", {}, O.decimal(chiffre)
           + (chiffre > 1 ? " jours " : " jour ") + (suspendu ? "en suspens" : "absorbés")),
-        el("span.glt-m", {}, "soit " + O.milliers(chiffre * jourFCFA) + " FCFA"),
-        el("p", {}, suspendu
-          ? "Ni absorbés ni facturés : le travail est fait, la dépense est réelle, et "
-            + "personne n'a dit qui la porte. Le grand livre n'affiche pas zéro parce que "
-            + "rien n'a coûté — il l'affiche parce que rien n'a été tranché."
-            + (abs ? "  " + O.decimal(abs) + " jours sont déjà absorbés par ailleurs." : "")
-          : "Payés par l'agence cette année, contre "
-            + O.decimal(fac) + (fac > 1 ? " jours facturés" : " jour facturé") + ". "
-            + "C'est ce chiffre qui rend la clause de reprise crédible en négociation — "
-            + "pas le paragraphe du contrat.")),
+        el("span.glt-m", {}, O.milliers(chiffre * jourFCFA) + " FCFA estimés"),
+        el("p", {}, O.decimal(abs) + " j absorbés · " + O.decimal(fac) + " j facturés"),
+        el("details.pilotage-contexte", {},
+          el("summary", {}, "Calcul de l’estimation"),
+          el("p", {}, "Conversion à " + O.milliers(jourFCFA) + " FCFA par jour. "
+            + "Les jours en suspens restent à affecter à l’agence ou au client."))),
 
       el("div.gl-h", {},
         el("span.glh-a", {}, "Absorbé par l'agence"),
