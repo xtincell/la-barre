@@ -294,9 +294,8 @@ window.VUE_LIVRABLE = (function () {
           : null,
         ann.length
           ? el("div", {}, ann.slice(0, 6).map(function (a, i) {
-              var pers = a.auteur ? DEPOT.trouve("personnes", a.auteur) : null;
               return UI.fileItem(null, (i + 1) + " · " + a.texte,
-                (pers ? pers.nom : "client") + " · " + O.joli(a.quand) + " · V" + a.version,
+                ANNOT.auteur(a) + " · " + O.joli(a.quand) + " · V" + a.version,
                 UI.eti(ANNOT.ETATS[a.statut].nom, a.statut === "aTraiter" ? "alerte" : "terne"));
             }))
           : el("p.rien", {}, "Aucun retour posé sur ce livrable. Un retour qui vit dans un message ne se traite jamais."),

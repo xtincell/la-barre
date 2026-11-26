@@ -213,7 +213,7 @@ window.ECARTS = (function () {
         var qui = a.auteur ? DEPOT.trouve("personnes", a.auteur) : null;
         pousser(out, p, l, a.reprise ? "donneur" : "agence",
           a.texte.slice(0, 90) + (a.texte.length > 90 ? "…" : ""),
-          (qui ? qui.nom : "client") + " · " + O.joli(a.quand)
+          (qui ? qui.nom : a.auteurLibre || "client") + " · " + O.joli(a.quand)
             + (a.reprise ? " · après validation : c'est une reprise" : ""), "da");
       });
     });

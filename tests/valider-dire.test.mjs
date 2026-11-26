@@ -56,3 +56,60 @@ test('KV.titre dit la pièce en clair et garde le code en surtitre, sans toucher
     assert.equal(JSON.stringify(l), avant, 'le nom enregistré ne change pas');
   }
 });
+
+/* ————— L'auteur d'un retour posé sur l'image ————— */
+
+const { bac: bacDecisions, semer, projet, livrable, PERSONNES, bouton, saisie, cliquer } = await import('./decisions-scenarios.mjs');
+const APP = new URL('../app/', import.meta.url).pathname;
+function trouver(n, test) {
+  if (!n || typeof n !== 'object') return null;
+  if (test(n)) return n;
+  for (const e of n.childNodes || []) { const r = trouver(e, test); if (r) return r; }
+  return null;
+}
+
+async function annoter(choisir) {
+  const s = await bacDecisions(APP, 31);
+  await s.charger('annotation');
+  semer(s.ctx, { personnes: PERSONNES, projets: [projet('AN', { livrables: [livrable('L-an')] })] });
+  choisir(s.ctx.ACTEUR);
+  const p = s.ctx.DEPOT.trouve('projets', 'AN');
+  const l = p.livrables[0];
+  s.ctx.ANNOT.nouvelle(p, l, 40, 30, () => {}, null, null);
+  const panneau = s.dernier();
+  const auteur = trouver(panneau, n => n.tagName === 'SELECT');
+  const options = (auteur.childNodes || []).map(o => [o.getAttribute('value'), o.textContent]);
+  return { s, l, panneau, auteur, options,
+    poser(texte, valeur) {
+      if (valeur !== undefined) auteur.value = valeur;
+      saisie(panneau).value = texte;
+      cliquer(bouton(panneau, 'Poser'));
+      return l.annotations[l.annotations.length - 1];
+    } };
+}
+
+test('un retour posé sur l’image est d’abord celui de la personne du poste ; le client est un choix explicite', async () => {
+  const a = await annoter(() => {});
+  assert.equal(a.auteur.value, 'P-recette', 'la personne déclarée sur ce poste est choisie d’avance');
+  assert.ok(a.options.some(([v, t]) => v === 'client' && t === 'Le client'), '« Le client » reste proposé');
+  assert.ok(!a.options.some(([, t]) => /— le client —/.test(t)));
+  const r = a.poser('Agrandir le logo');
+  assert.equal(r.auteur, 'P-recette');
+  assert.equal('auteurLibre' in r, false);
+  assert.equal(a.s.ctx.ANNOT.auteur(r), 'Personne de recette');
+
+  const c = await annoter(() => {});
+  const rc = c.poser('Le client veut du rouge', 'client');
+  assert.equal(rc.auteur, null);
+  assert.equal(c.s.ctx.ANNOT.auteur(rc), 'client', 'choisi explicitement, le retour est celui du client');
+});
+
+test('sans personne déclarée, le retour porte le nom du poste, pas celui du client', async () => {
+  const a = await annoter(ACTEUR => ACTEUR.choisir(null));
+  assert.equal(a.auteur.value, '');
+  assert.match(a.options[0][1], /^Moi · /);
+  const r = a.poser('Le titre est trop long');
+  assert.equal(r.auteur, null);
+  assert.equal(r.auteurLibre, a.s.ctx.ACTEUR.nom());
+  assert.notEqual(a.s.ctx.ANNOT.auteur(r), 'client');
+});
