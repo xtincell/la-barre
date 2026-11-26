@@ -52,7 +52,7 @@ try {
   assert.equal(await page.locator('.studio-piece[aria-pressed="true"]').count(), 1);
   await listeRevue.locator('summary').click();
   await page.getByLabel('Projet', { exact: true }).selectOption('PRJ-demo-2');
-  await page.getByText("Ce projet n'attend pas de verdict.").waitFor();
+  await page.getByText("Rien à valider dans ce projet.").waitFor();
   await page.getByLabel('Projet', { exact: true }).selectOption('');
   await page.locator('.studio-piece').filter({ hasText: 'Affiche de lancement' }).click();
   await page.getByRole('link', { name: 'Examiner la V1', exact: true }).click();

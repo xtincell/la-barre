@@ -52,7 +52,7 @@ window.FILE = (function () {
     VUE_REVUE.pieces().forEach(function (p) {
       var lien = VUE_REVUE.lienPiece(p);
       var libelle = p.type === "livrable" ? "Examiner et décider" : "Examiner la piste";
-      out.push(item("trancher", p.contexte, "Un verdict est attendu.", 105, lien,
+      out.push(item("trancher", p.contexte, "Une version attend votre décision.", 105, lien,
         p.objet && p.objet.vignette ? [p.objet] : [],
         { chiffre: p.titre, depuis: p.depuis ? O.depuis(p.depuis) : 0,
           trancher: "Ouvrir les critères de la pièce avant de trancher.",

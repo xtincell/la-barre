@@ -517,7 +517,7 @@ window.VUE_LIVRABLE = (function () {
       el("div.form-actions", {},
         el("button.b.or", { type: "submit" }, demande.bouton),
         el("button.b.nu", { type: "button", onclick: fermer }, "Annuler")));
-    (enDessus ? PANNEAU.sur : PANNEAU.ouvrir)(verdict.geste || verdict.nom, l.nom, formulaire);
+    (enDessus ? PANNEAU.sur : PANNEAU.ouvrir)(verdict.geste || verdict.nom, window.KV && KV.titre ? KV.titre(l) : l.nom, formulaire);
   }
 
   /* ————— Valider, avec le temps de se reprendre —————

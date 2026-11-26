@@ -15,7 +15,7 @@ window.VUE_ASSET = (function () {
   function ouvrir(p, l, rafraichir, mode) {
     onglet = mode || "poser";
     function apres() { PANNEAU.fermer(); ouvrir(p, l, rafraichir, onglet); if (rafraichir) rafraichir(); }
-    PANNEAU.ouvrir(l.nom, "V" + (l.version || 1), rendre(p, l, apres));
+    PANNEAU.ouvrir(KV.titre(l), "V" + (l.version || 1), rendre(p, l, apres));
     DEPOT.lu("livrables", l.id);
   }
 
@@ -159,7 +159,7 @@ window.VUE_ASSET = (function () {
       onclick: function () { ANNOT.ouvrir(p, l, apres, numero); } }, "Annoter le visuel") : null;
     return el("div.rvp", {},
       el("div.rvp-plan", {},
-        toile(l, l.nom + " — V" + numero),
+        toile(l, KV.titre(l) + " — V" + numero),
         el("div.rvp-pupitre", {},
           el("div.rvp-portee", {},
             el("p.rvp-meta", {}, (marche ? marche.nom : "Marché non renseigné") + " · V" + numero),
@@ -235,8 +235,9 @@ window.VUE_ASSET = (function () {
     return el("div.as-tete", {},
       el("div.ast-v", {}, IMAGE.vignette(l, "planche")),
       el("div.ast-c", {},
-        el("div.ast-n", {}, l.nom),
+        el("div.ast-n", {}, KV.titre(l)),
         el("div.ast-m", {},
+          KV.surtitre(l) ? el("span", {}, KV.surtitre(l)) : null,
           UI.eti(KV.NIVEAUX[KV.niveau(l)].nom, "terne"),
           m ? el("span", {}, UI.drapeau(m), " ", m.nom) : null,
           s ? el("span", {}, s.nom) : null,

@@ -116,6 +116,37 @@ window.KV = (function () {
     });
   }
 
+  /* ————— Le titre d'une pièce à l'écran —————
+   *
+   * L'outil nommait les pièces par leurs codes : « KV · GH · Orvelle », « Post
+   * social 1:1 · CI ». Le studio dit « Key visual — Ghana ». Quand le nom suit
+   * ce motif, l'écran compose le support et le marché en clair, et le code passe
+   * en surtitre ; un nom écrit par l'équipe reste tel quel. Rien n'est réécrit
+   * dans la base. */
+  function nomDeCode(l) {
+    var nom = l && typeof l.nom === "string" ? l.nom.trim() : "";
+    if (!nom) return false;
+    if (/^KV master commun( · .+)?$/.test(nom)) return true;
+    var m = l.marche ? DEPOT.trouve("marches", l.marche) : null;
+    if (!m || !m.code) return false;
+    var s = l.support ? DEPOT.trouve("supports", l.support) : null;
+    return ["KV"].concat(s ? [s.nom, s.code] : []).filter(Boolean).some(function (x) {
+      var debut = x + " · " + m.code;
+      return nom === debut || nom.indexOf(debut + " · ") === 0;
+    });
+  }
+
+  function titre(l) {
+    if (!l) return "";
+    if (!nomDeCode(l)) return l.nom || "Pièce sans nom";
+    var s = l.support ? DEPOT.trouve("supports", l.support) : null;
+    var m = l.marche ? DEPOT.trouve("marches", l.marche) : null;
+    var support = (s && s.nom) || "Key visual";
+    return m ? support + " — " + (m.nom || m.code) : support + " master";
+  }
+
+  function surtitre(l) { return nomDeCode(l) ? l.nom.trim() : null; }
+
   function creer(p, marcheId, base, niveauVoulu) {
     var cible = niveauVoulu || (marcheId ? "adaptation" : "maitre");
     if (cible !== "maitre" && cible !== "adaptation") throw new Error("Niveau de KV inconnu.");
@@ -137,7 +168,7 @@ window.KV = (function () {
       id: DEPOT.identifiant("KV"), cree_le: new Date().toISOString(), niveau: cible,
       voletId: base && base.voletId ? base.voletId : null,
       support: support.id, marche: marcheId || null,
-      nom: m ? "KV · " + m.code : "KV master commun",
+      nom: (support.nom || "Key visual") + (m ? " — " + (m.nom || m.code) : " master"),
       responsable: null,   /* posé juste après, selon le niveau */
       origine: "prevu", pisteId: base ? base.pisteId : pisteRetenue(p),
       maitre: cible === "adaptation" ? base.id : null,
@@ -365,5 +396,5 @@ window.KV = (function () {
     descendance: descendance, parMarche: parMarche,
     creer: creer, reprendreReference: reprendreReference, daDePiste: daDePiste, adaptationsMalPortees: adaptationsMalPortees,
     conformite: conformite, conforme: conforme, pireEcart: pireEcart, grille: grille,
-    skuNonDistribues: skuNonDistribues };
+    skuNonDistribues: skuNonDistribues, titre: titre, surtitre: surtitre, nomDeCode: nomDeCode };
 })();

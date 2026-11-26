@@ -48,7 +48,9 @@ window.VUE_REVUE = (function () {
         var m = DEPOT.trouve("marches", l.marche);
         liste.push({
           type: "livrable", id: l.id, projet: p, objet: l, version: version.numero,
-          titre: l.nom + " — V" + version.numero,
+          titre: (window.KV && KV.titre ? KV.titre(l) : l.nom) + " — V" + version.numero,
+          /* La décision garde le nom enregistré : c'est ce qu'elle a toujours écrit. */
+          nomDecision: l.nom + " — V" + version.numero,
           contexte: p.ref + (s ? " · " + s.nom : "") + (m ? " · " + m.nom : ""),
           depuis: v.soumis_le, criteres: "livrable", etape: 3,
           auteur: l.responsable, semaine: PLATEAU.semaineDe(PLATEAU.echeanceDe(p, l)),
@@ -291,7 +293,7 @@ window.VUE_REVUE = (function () {
     var quand = new Date().toISOString();
     DECISION.poser({
       objet: pc.id, type: pc.type, projet: pc.projet.id, verdict: v.cle,
-      motif: motif, quand: quand, qui: MAISON.titulaire, titre: pc.titre,
+      motif: motif, quand: quand, qui: MAISON.titulaire, titre: pc.nomDecision || pc.titre,
     });
 
     if (pc.type === "piste") {

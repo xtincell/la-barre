@@ -48,6 +48,7 @@ test('une adaptation créée garde son point de départ : le master et le réfé
   const avant = JSON.stringify(master);
   const a = KV.creer(p, 'M-GH', master, 'adaptation');
   assert.equal(JSON.stringify(master), avant, 'le commun ne bouge pas');
+  assert.deepEqual([master.nom, a.nom], ['Key visual master', 'Key visual — Ghana'], 'un KV neuf porte un nom de travail, pas un code');
   const d = copie(a.depart);
   assert.equal(d.maitre, master.id); assert.equal(d.versionMaitre, 2);
   assert.ok(!Number.isNaN(Date.parse(d.le)));

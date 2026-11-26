@@ -171,8 +171,13 @@ window.APP = (function () {
     if (estPiste || r.mode === "juger" || r.mode === "remise") zone.classList.add("lb-zone-revue");
     zone.appendChild(retour(p ? adresse("projets", p.id, r.sous) : "#/projets"));
     if (!objet) { zone.appendChild(el("h1", {}, "Pièce introuvable")); return; }
+    /* Une pièce se titre par ce qu'elle est (« Key visual — Ghana ») ; son code
+     * de production passe en surtitre (kv-modele.js, KV.titre). */
+    var code = !estPiste && window.KV && KV.surtitre ? KV.surtitre(objet) : null;
+    var titre = estPiste ? objet.titre || objet.nom || "Pièce"
+      : window.KV && KV.titre ? KV.titre(objet) : objet.nom || "Pièce";
     zone.appendChild(el("header.studio-entete", {}, el("div", {}, el("p.studio-date", {},
-      el("a", { href: adresse("projets", p.id) }, p.nom)), el("h1", {}, objet.titre || objet.nom || "Pièce"))));
+      el("a", { href: adresse("projets", p.id) }, p.nom), code ? " · " + code : null), el("h1", {}, titre))));
     var scene = el("div.lb-detail-piece"); zone.appendChild(scene);
     if (estPiste) {
       function relire() { O.vider(scene); scene.appendChild(VUE_ROUTE.rendre(p, objet, relire, true)); }

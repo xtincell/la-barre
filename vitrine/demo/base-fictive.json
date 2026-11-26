@@ -1990,7 +1990,7 @@
    "action": "création",
    "type": "kv",
    "id": "PRJ-zeste",
-   "detail": "KV master commun"
+   "detail": "Key visual master"
   },
   {
    "quand": "2026-10-24T17:00:01.000Z",
@@ -2070,7 +2070,7 @@
    "action": "création",
    "type": "kv",
    "id": "PRJ-zeste",
-   "detail": "KV · CI"
+   "detail": "Key visual — Côte d’Ivoire"
   },
   {
    "quand": "2026-11-02T09:00:05.000Z",
@@ -2086,7 +2086,7 @@
    "action": "création",
    "type": "kv",
    "id": "PRJ-zeste",
-   "detail": "KV · SN"
+   "detail": "Key visual — Sénégal"
   },
   {
    "quand": "2026-11-02T09:00:08.000Z",
@@ -2102,7 +2102,7 @@
    "action": "création",
    "type": "kv",
    "id": "PRJ-zeste",
-   "detail": "KV · GH"
+   "detail": "Key visual — Ghana"
   },
   {
    "quand": "2026-11-04T16:00:01.000Z",

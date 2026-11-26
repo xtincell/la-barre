@@ -63,16 +63,17 @@ window.VUE_STUDIO = (function () {
       var intention = o.concept || o.signature;
       table.appendChild(el("article.lb-piece" + (!o.vignette && !intention ? ".sans-visuel" : ""), {},
         el("div.lb-piece-texte", {},
-          el("p.lb-etat", {}, el("span", { "aria-hidden":"true" }, "◐"), piste ? "Piste à arbitrer" : "Verdict attendu"),
+          el("p.lb-etat", {}, el("span", { "aria-hidden":"true" }, "◐"), piste ? "Piste à arbitrer" : "À valider"),
           el("p.lb-piece-projet", {}, el("a", {href:APP.adresse("projets",p.id)}, p.nom)),
-          el("h2", {}, o.titre || o.nom || active.titre),
+          !piste && KV.surtitre(o) ? el("p.lb-piece-meta", {}, KV.surtitre(o)) : null,
+          el("h2", {}, piste ? o.titre || o.nom || active.titre : KV.titre(o)),
           meta ? el("p.lb-piece-meta",{}, meta) : null,
           el("a.b.or", {href:chemin}, piste ? "Examiner cette piste" : version ? "Examiner la V" + version : "Examiner la pièce")),
         o.vignette ? el("div.lb-piece-image", {}, IMAGE.vignette(o,"planche")) : intention ?
           el("blockquote.studio-intention.lb-intention",{}, intention) : null));
     } else {
       var sujet = !projet && FILE.tout()[0];
-      var t = projet ? "Ce projet n'attend pas de verdict." : "Aucune pièce en attente de verdict.";
+      var t = projet ? "Rien à valider dans ce projet." : "Aucune pièce à valider.";
       table.appendChild(el("section.studio-vide.lb-vide", {},
         el("h2",{},t), sujet ? el("p",{}, sujet.chiffre || sujet.quoi) : null,
         sujet ? el("a.b.or",{href:"#/valider/file"},"Ouvrir les décisions") :

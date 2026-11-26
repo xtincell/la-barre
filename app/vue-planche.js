@@ -244,7 +244,8 @@ window.VUE_PLANCHE = (function () {
             if (Object.keys(changements).length) {
               VERSION.ouvrir(l, "interne", "Correction du KV : " + Object.keys(changements).join(", "), null, { complet: true });
               l.kv = Object.assign({}, l.kv || {}, changements);
-              l.nom = (KV.estMaitre(l) && !l.marche ? "KV master commun" : "KV · " + (m ? m.code : "?")) + (l.kv.marque ? " · " + l.kv.marque : "");
+              /* Un nom de code suit la marque ; un nom de travail ne bouge pas. */
+              if (KV.nomDeCode(l)) l.nom = (KV.estMaitre(l) && !l.marche ? "KV master commun" : "KV · " + (m ? m.code : "?")) + (l.kv.marque ? " · " + l.kv.marque : "");
               DEPOT.tracer("modification", "kv", p.id, l.nom);
               DEPOT.enregistrer();
             }
