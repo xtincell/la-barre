@@ -126,7 +126,9 @@ window.ECARTS_MARCHE = (function () {
   var SANS_ARTICLE = ["madagascar", "maurice", "cuba", "haïti", "djibouti", "singapour", "malte", "chypre", "israël",
     "oman", "bahreïn", "monaco", "sao tomé-et-principe"];
   var PLURIELS = ["états-unis", "pays-bas", "émirats arabes unis", "comores", "seychelles", "philippines", "maldives"];
-  var MASCULINS = ["mozambique", "cambodge", "mexique", "zimbabwe", "belize", "suriname"];
+  /* Comparés au nom entier comme à son premier mot : « Royaume-Uni » se lit
+   * sur « royaume », qui finit par -e et passerait pour un féminin. */
+  var MASCULINS = ["mozambique", "cambodge", "mexique", "zimbabwe", "belize", "suriname", "royaume-uni", "royaume"];
   var FEMININS = ["rdc", "rca", "sierra leone"];
   var H_ASPIRE = ["hongrie", "honduras"];
   function pourLe(m) {
@@ -137,7 +139,7 @@ window.ECARTS_MARCHE = (function () {
     if (PLURIELS.indexOf(n) !== -1) return "pour les " + nom;
     if (FEMININS.indexOf(n) !== -1) return "pour la " + nom;
     if (/^[aeiouyhâàéèêîïôœ]/.test(n) && H_ASPIRE.indexOf(premier) === -1) return "pour l’" + nom;
-    if (MASCULINS.indexOf(n) !== -1 || !/e$/.test(premier)) return "pour le " + nom;
+    if (MASCULINS.indexOf(n) !== -1 || MASCULINS.indexOf(premier) !== -1 || !/e$/.test(premier)) return "pour le " + nom;
     return "pour la " + nom;
   }
 

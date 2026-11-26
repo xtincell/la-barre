@@ -242,6 +242,8 @@ test('le changement se dit en clair, avec l’article du marché', async () => {
     'pour la Guinée équatoriale', 'pour Madagascar', 'pour les États-Unis', 'pour le Mozambique', 'pour la RDC', 'pour GH']);
   assert.deepEqual(['Guinée-Bissau', 'Hongrie', 'Honduras', 'Haïti', 'Inde'].map(pour),
     ['pour la Guinée-Bissau', 'pour la Hongrie', 'pour le Honduras', 'pour Haïti', 'pour l’Inde']);
+  assert.deepEqual(['Royaume-Uni', 'Royaume du Maroc', 'Mexique'].map(pour),
+    ['pour le Royaume-Uni', 'pour le Royaume du Maroc', 'pour le Mexique'], 'un masculin composé se lit sur son premier mot');
   assert.equal(E.enClair(['langue']), 'la langue a changé');
   assert.equal(E.enClair(['reglementaire']), 'les mentions réglementaires ont changé');
   assert.equal(E.enClair(['marque', 'langue', 'produit']), 'la langue, la marque et le produit (SKU) ont changé');
