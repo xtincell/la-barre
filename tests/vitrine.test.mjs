@@ -262,3 +262,42 @@ test('la vitrine du dépôt se distribue telle quelle : chaque fichier appelé e
   assert.ok(Object.hasOwn(manifest.files, 'vitrine/demo/maison.js'));
   assert.ok(Object.keys(manifest.files).every(n => n === 'index.html' || /^(vitrine|app|styles)\/|^LICENSE$/.test(n)));
 });
+
+/* ————— Sous la charte UPgraders ————— */
+
+/* Reprend, pour le CSS de la vitrine, les clauses couleur et police de la règle
+ * d'adhérence de la charte (ADVE-project, docs/design-system/upgraders/_adherence.oxlintrc.json).
+ * charte-upgraders.css est la copie des jetons : elle seule porte des valeurs. */
+const POLICE = /^(?:var\(--font-(?:display|sans|mono)\)|inherit)$/;
+function ecartsCharte(css) {
+  const ecarts = [];
+  css = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const m of css.matchAll(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(|:\s*(?:white|black)\b/gi)) ecarts.push('couleur ' + m[0]);
+  for (const m of css.matchAll(/font-family\s*:\s*([^;}]+)/gi)) if (!POLICE.test(m[1].trim())) ecarts.push('police ' + m[1].trim());
+  for (const m of css.matchAll(/(?<![-\w])font\s*:\s*([^;}]+)/gi)) if (!POLICE.test(m[1].trim().split(/\s+/).pop())) ecarts.push('police ' + m[1].trim());
+  return ecarts;
+}
+
+test('la vitrine lit les jetons de la charte UPgraders : aucune couleur en dur ni police hors charte', async () => {
+  const vitrine = await lire('vitrine/index.html');
+  const enLigne = [...vitrine.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>|\sstyle="([^"]*)"/gi)].map(m => m[1] || m[2]).join('\n');
+  for (const [nom, css] of [['vitrine.css', await lire('vitrine/vitrine.css')], ['cadre-upgraders.css', await lire('vitrine/cadre-upgraders.css')], ['index.html', enLigne]]) {
+    assert.deepEqual(ecartsCharte(css), [], nom);
+  }
+  assert.deepEqual(feuilles(vitrine).filter(f => !/^https:/.test(f)), ['charte-upgraders.css', 'cadre-upgraders.css', 'vitrine.css']);
+  const charte = await lire('vitrine/charte-upgraders.css');
+  for (const jeton of [/--up-red:\s*#e56458;/, /--accent:\s*var\(--up-red\);/, /--up-ink-2:\s*#151515;/, /--surface-card:\s*var\(--up-ink-2\);/,
+    /--text-primary:\s*var\(--up-bone\);/, /--font-display:\s*"Clash Display"/, /--font-sans:\s*"Satoshi"/]) assert.match(charte, jeton);
+});
+
+test('le bandeau et le pied UPgraders ramènent à powerupgraders.com et aux autres outils', async () => {
+  const vitrine = await lire('vitrine/index.html');
+  for (const cadre of [/<nav class="upg-barre"[\s\S]*?<\/nav>/, /<div class="upg-pied">[\s\S]*?<\/nav>/]) {
+    const bloc = vitrine.match(cadre);
+    assert.ok(bloc, 'cadre absent : ' + cadre);
+    for (const url of ['https://powerupgraders.com/', 'https://xtincell.github.io/indice-maturite/', 'https://galahad.powerupgraders.com/']) {
+      assert.ok(bloc[0].includes(`href="${url}"`), url);
+    }
+    assert.match(bloc[0], /href="https:\/\/la-barre-vitrine\.powerupgraders\.com\/" aria-current="page"/);
+  }
+});
