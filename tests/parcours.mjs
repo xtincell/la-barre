@@ -765,6 +765,21 @@ try {
     await principal.goto(adresse + '/#/projets/PRJ-demo/livrables/L-demo/poser');
     await principal.locator('.ptff', { hasText: 'Fichiers finaux · V3' }).getByText('Fichiers envoyés sur clé USB').waitFor();
     assert.equal(await principal.getByText('Emplacement non dit').count(), 0);
+    // L'historique d'une version ouvre ses documents servis et dit les
+    // déclarations : le BAT, nommé comme tel, sa photo posée et le PDF joint ;
+    // les fichiers remis ; la remise déclarée.
+    await principal.evaluate(() => {
+      const l = DEPOT.trouve('projets', 'PRJ-demo').livrables[0];
+      l.versions.push({ n: 4, soumis_le: new Date().toISOString(), verdict: null }); l.version = 4;
+    });
+    await principal.goto(adresse + '/#/projets/PRJ-demo/livrables/L-demo/juger/3');
+    const archive = principal.locator('.rvp-archive');
+    await archive.getByRole('heading', { name: 'Version 3 · historique' }).waitFor();
+    assert.equal(await archive.getByRole('link', { name: 'BAT · bon-signe.png', exact: true }).getAttribute('href'), batPose[0].emplacement);
+    assert.equal(await archive.getByRole('link', { name: 'pièce jointe', exact: true }).getAttribute('href'), preuveBat);
+    await archive.locator('.rvp-docs li', { hasText: 'Fichiers finaux · V3' }).waitFor();
+    await archive.locator('summary', { hasText: 'Justificatifs de remise de la V3' }).click();
+    await archive.getByText('Remise déclarée · déclaré : « Fichiers envoyés sur clé USB »').waitFor();
     await navigateur.close();
   } finally {
     if (servi && servi.exitCode === null) { servi.kill(); await once(servi, 'exit'); }

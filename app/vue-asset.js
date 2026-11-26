@@ -125,17 +125,26 @@ window.VUE_ASSET = (function () {
   /* Un document de la version : il s'ouvre s'il a une adresse (un lien
    * https, une photo ou un PDF que La Barre sert), et le mot qui l'accompagne
    * se lit à côté ; une déclaration dit ses mots. Les anciens chemins locaux
-   * restent lisibles, sans lien. */
+   * restent lisibles, sans lien.
+   *
+   * Un BAT porte le nom du fichier envoyé (« IMG-20261126-WA0012.jpg ») :
+   * rien ne disait que c'était le BAT. Il se nomme « BAT · », le nom du
+   * fichier en second. Posé à son étage puis complété d'une pièce jointe, il
+   * a deux adresses : la seconde s'ouvre aussi. */
   function dossier(f) {
     var nom = f.nom || "Document";
+    if (f.type === "bat" && !/^BAT\b/i.test(nom)) nom = "BAT · " + nom;
     var preuve = REMISE.preuveValide(f.preuve);
     var lien = REMISE.preuveValide({ type: "lien", url: f.emplacement });
-    var chemin = REMISE.fichierServi(f.emplacement);
-    if (!lien && !chemin && preuve && preuve.type === "lien") lien = preuve;
-    if (!lien && !chemin && preuve && preuve.type === "fichier") chemin = preuve.chemin;
-    var ouvre = lien ? el("a", { href: lien.url, target: "_blank", rel: "noopener noreferrer" }, nom)
-      : chemin ? el("a", { href: chemin, target: "_blank", rel: "noopener" }, nom) : null;
-    if (ouvre) return preuve && preuve.texte ? [ouvre, " · « " + preuve.texte + " »"] : ouvre;
+    var adresse = lien ? lien.url : REMISE.fichierServi(f.emplacement);
+    var jointe = preuve && preuve.type === "lien" ? preuve.url : preuve && preuve.type === "fichier" ? preuve.chemin : null;
+    if (!adresse) { adresse = jointe; jointe = null; }
+    if (jointe === adresse) jointe = null;
+    function ancre(url, texte) {
+      return el("a", { href: url, target: "_blank", rel: /^https:/.test(url) ? "noopener noreferrer" : "noopener" }, texte);
+    }
+    if (adresse) return [ancre(adresse, nom), jointe ? [" · ", ancre(jointe, "pièce jointe")] : null,
+      preuve && preuve.texte ? " · « " + preuve.texte + " »" : null];
     if (preuve) return el("span", {}, nom + " · " + (preuve.texte ? "déclaré : « " + preuve.texte + " »" : "déclaré, sans pièce jointe"));
     return el("span", {}, nom);
   }
