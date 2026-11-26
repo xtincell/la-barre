@@ -797,3 +797,20 @@ test('l’étiquette d’une pièce validée depuis un autre onglet dit « Valid
   assert.deepEqual({ ...etat({ n: 1 }, false, true) }, { texte: 'Validé', ton: 'vert' });
   assert.deepEqual({ ...etat({ n: 1 }, true, false) }, { texte: 'Validation en cours', ton: 'vert' });
 });
+
+test('une page passée à l’arrière-plan avant l’échéance dit que la validation attendra la prochaine ouverture', async () => {
+  const v = await validation(66);
+  const ecoute = {}, texte = { textContent: 'V1 validée.' };
+  v.s.ctx.addEventListener = () => {};
+  v.s.ctx.document.addEventListener = (type, f) => { ecoute[type] = f; };
+  v.s.ctx.AVIS.action = t => { v.avis.push(['action', t]); return { querySelector: s => (s === '.avis-t' ? texte : null) }; };
+  cliquer(bouton(v.s.ctx.VUE_LIVRABLE.decider(v.p, v.l, () => {}), 'Valider la V1'));
+  v.s.ctx.document.visibilityState = 'visible';
+  ecoute.visibilitychange();
+  assert.equal(texte.textContent, 'V1 validée.');
+  v.s.ctx.document.visibilityState = 'hidden';
+  ecoute.visibilitychange();
+  assert.equal(texte.textContent, 'V1 validée. Si cette page se ferme maintenant, elle s\'enregistrera à votre prochaine ouverture de La Barre.');
+  v.minuteries[0]();
+  assert.equal(v.l.versions[0].verdict, 'approuve', 'revenue à temps, la page l’écrit à l’échéance');
+});

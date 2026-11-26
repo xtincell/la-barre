@@ -749,6 +749,17 @@ window.VUE_LIVRABLE = (function () {
     window.addEventListener("pageshow", function (ev) {
       var ids = notees(); if (ev && ev.persisted && ids.length) marquer(ids, false);
     });
+    /* Une page passée à l'arrière-plan avant l'échéance peut être fermée, ou
+     * gelée par un téléphone, sans rien écrire : sa validation attend alors la
+     * prochaine ouverture. L'avis le dit, pour qui revient le lire. */
+    if (window.document && document.addEventListener) document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState !== "hidden") return;
+      engagements.forEach(function (e) {
+        var t = e.note && e.avis && e.avis.querySelector ? e.avis.querySelector(".avis-t") : null;
+        if (t) t.textContent = "V" + e.numero + " validée. Si cette page se ferme maintenant, "
+          + "elle s'enregistrera à votre prochaine ouverture de La Barre.";
+      });
+    });
   }
 
   /* À l'ouverture, une fois la base de référence lue (application.js) : les

@@ -305,7 +305,11 @@ donc jamais une validation retirée. Dès le clic, la validation engagée est
 notée dans le `localStorage` (`la-barre-validations`) ; une page fermée avant
 l'échéance la marque à rejouer (`pagehide`), et la page suivante l'écrit une
 fois la base de référence lue, avec la même garde de version, ou l'abandonne
-en le disant si la pièce a changé.
+en le disant si la pièce a changé. Rien ne s'écrit sur le serveur pendant
+`pagehide` (la sauvegarde part 900 ms après le geste) : une page passée à
+l'arrière-plan avant l'échéance le dit dans son avis (« elle s'enregistrera à
+votre prochaine ouverture de La Barre »). L'écriture immédiate à la fermeture
+(envoi `keepalive`) reste à faire, avec l'écran de revue.
 « Demander des modifs » tient en un panneau, « Ce qu'il faut changer »,
 prérempli par les retours posés sur l'image. Elle se rattache à un projet, à une campagne ou à une marque. Passent
 par lui : la big idea, la piste ou l'idée retenue ou écartée, la référence
