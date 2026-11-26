@@ -15,7 +15,9 @@ window.ANNOT = (function () {
     ecarte: { nom: "écarté", ton: "terne" },
   };
 
-  function liste(l) { return (l.annotations || []).slice(); }
+  function liste(l, numero) {
+    return (l.annotations || []).filter(function (a) { return !numero || Number(a.version || 1) === Number(numero); });
+  }
 
   function ouvertes(l) {
     return liste(l).filter(function (a) { return a.statut === "aTraiter"; });
@@ -57,7 +59,7 @@ window.ANNOT = (function () {
 
   /* ————————————————————— L'écran d'annotation ————————————————————— */
 
-  function ouvrir(p, l, apres) {
+  function ouvrir(p, l, apres, numero) {
     var choisie = null;
     var boite = el("div.an-scene");
     var cote = el("div.an-cote");
@@ -69,8 +71,11 @@ window.ANNOT = (function () {
       /* Un livrable qui dure ne s'annote pas au même endroit qu'une image :
        * un point à 50 % / 50 % sur un film ne veut rien dire, un instant si.
        * Le lecteur reste le juge — on annote là où il est arrêté. */
-      var medium = IMAGE.media(l, "toile");
+      var source = numero && IMAGE.source(l);
+      var objet = source && !IMAGE.estVideo(source) ? Object.assign({}, l, { vignette: source }) : l;
+      var medium = IMAGE.media(objet, "toile");
       var film = medium.video || null;
+      var ann = liste(l, numero);
 
       var toile = el("div.an-toile" + (film ? ".film" : ""), film ? {} : {
         onclick: function (e) {
@@ -78,12 +83,12 @@ window.ANNOT = (function () {
           var r = toile.getBoundingClientRect();
           var x = Math.round(((e.clientX - r.left) / r.width) * 1000) / 10;
           var y = Math.round(((e.clientY - r.top) / r.height) * 1000) / 10;
-          nouvelle(p, l, x, y, function () { dessiner(); if (apres) apres(); });
+          nouvelle(p, l, x, y, function () { dessiner(); if (apres) apres(); }, null, numero);
         },
       }, medium);
 
       if (!film) {
-        liste(l).forEach(function (a, i) {
+        ann.forEach(function (a, i) {
           if (a.instant !== null && a.instant !== undefined) return;
           toile.appendChild(el("button.an-point." + ETATS[a.statut].ton
             + (choisie === a.id ? ".actif" : ""), {
@@ -101,16 +106,19 @@ window.ANNOT = (function () {
           el("button.b.or", { type: "button", onclick: function () {
             film.pause();
             nouvelle(p, l, null, null, function () { dessiner(); if (apres) apres(); },
-              film.currentTime);
+              film.currentTime, numero);
           } }, "Noter cet instant"),
           el("span.anf-a", {}, "Le film s'arrête, et le retour porte le temps où il "
             + "s'est arrêté. « à 0:12 » se retrouve ; « au milieu » ne se retrouve pas.")));
       } else {
-        boite.appendChild(el("div.an-aide", {}, "Cliquer sur le visuel pose un point."));
+        boite.appendChild(el("div.an-aide", {}, numero
+          ? el("button.b.nu", { type: "button", onclick: function () {
+            nouvelle(p, l, 50, 50, function () { dessiner(); if (apres) apres(); }, null, numero);
+          } }, "Annoter le centre du visuel") : null,
+          el("span", {}, "Cliquer sur le visuel pose un point.")));
       }
 
       /* La colonne des retours */
-      var ann = liste(l);
       var ouvertesN = ann.filter(function (a) { return a.statut === "aTraiter"; }).length;
       var reprises = ann.filter(function (a) { return a.reprise && a.statut === "aTraiter"; }).length;
 
@@ -175,12 +183,12 @@ window.ANNOT = (function () {
     PANNEAU.ouvrir(l.nom, "annoter", el("div.an", {}, boite, cote));
   }
 
-  function nouvelle(p, l, x, y, apres, instant) {
-    var champ = el("textarea", { rows: 2,
+  function nouvelle(p, l, x, y, apres, instant, numero) {
+    var champ = el("textarea", { id: "annotation-texte", rows: 2,
       placeholder: instant !== null && instant !== undefined
         ? "Ce qui ne va pas à " + tc(instant) + ", en une phrase"
         : "Ce qui ne va pas, en une phrase" });
-    var selAuteur = el("select", {});
+    var selAuteur = el("select", { id: "annotation-auteur" });
     selAuteur.appendChild(el("option", { value: "" }, "— le client —"));
     DEPOT.liste("personnes").forEach(function (pe) {
       selAuteur.appendChild(el("option", { value: pe.id }, pe.nom));
@@ -195,11 +203,12 @@ window.ANNOT = (function () {
         ? UI.banniere("rouge", "Ce livrable a déjà été validé. Ce retour ouvrira une reprise — il sera compté, pas absorbé en silence.")
         : null,
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Le retour"), champ),
-        el("div.champ", {}, el("label", {}, "De qui"), selAuteur)),
+        el("div.champ", {}, el("label", { for: "annotation-texte" }, "Le retour"), champ),
+        el("div.champ", {}, el("label", { for: "annotation-auteur" }, "De qui"), selAuteur)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           if (!champ.value.trim()) { AVIS.refus("Un retour sans texte n'est pas un retour."); return; }
+          if (numero && Number(l.version || 1) !== Number(numero)) { AVIS.refus("La version du visuel a changé. Rouvrez la revue."); return; }
           poser(l, x, y, champ.value.trim(), selAuteur.value || null, instant);
           DEPOT.tracer("annotation", "livrables", p.id,
             l.nom + (instant !== null && instant !== undefined ? " à " + tc(instant) : "")

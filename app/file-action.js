@@ -195,151 +195,61 @@ window.FILE = (function () {
     return o;
   }
 
-  /* ————————————————————— La salle de tri ————————————————————— */
-
-  /* Une liste fait lire sept lignes pour choisir par où commencer. Or le
-   * système connaît déjà l'ordre du coût : il n'a aucune raison de faire
-   * refaire ce tri à la main.
-   *
-   * Il présente donc UNE décision, en entier, prête à être rendue, et réduit
-   * la file à une colonne de coûts qui sert à naviguer — pas à lire.
-   *
-   * C'est aussi ce qui absorbe l'ancien mode « une à une » : parcourir et
-   * faire étaient deux moitiés du même geste. */
-
-  var courant = 0;
   var famille = "";
 
   function salle(rafraichir) {
     var tous = tout();
-    if (!tous.length) return vide();
+    if (!tous.length) return el("section.decisions-file", { "aria-label": "Sujets à traiter" },
+      el("p", {}, "Aucun sujet ne demande de décision."));
+
     var items = tous.filter(function (x) { return !famille || x.famille === famille; });
     if (!items.length) { famille = ""; items = tous; }
-    if (courant >= items.length) courant = 0;
-    var x = items[courant];
-
-    /* La grammaire du Bureau, reprise telle quelle : une section, sa tête, et
-     * la table en trois colonnes — la file, la scène, le contexte. Décider et
-     * regarder sont le même geste ; ils ne doivent pas avoir deux dessins. */
     var filtre = el("select", { id: "file-famille", onchange: function (e) {
-      famille = e.target.value; courant = 0; rafraichir();
-      document.getElementById("file-famille").focus(); } },
-      el("option", { value: "" }, "Tous les gestes"),
-      Object.keys(FAMILLES).map(function (key) { return el("option", { value: key }, FAMILLES[key].nom); }));
+      famille = e.target.value; rafraichir(); document.getElementById("file-famille").focus();
+    } }, el("option", { value: "" }, "Tous les gestes"),
+      Object.keys(FAMILLES).filter(function (key) {
+        return tous.some(function (x) { return x.famille === key; });
+      }).map(function (key) { return el("option", { value: key }, FAMILLES[key].nom); }));
     filtre.value = famille;
 
-    return el("section.studio-revue.dx", { "aria-label": "Sujets à traiter" },
-      el("div.studio-section-tete", {},
-        el("h2", {}, famille ? FAMILLES[famille].nom : "Dans l'ordre du coût",
-          el("span.studio-compte", {}, String(items.length))),
-        el("div.studio-filtre", {}, el("label", { for: "file-famille" }, "Geste"), filtre)),
-      el("div.studio-table", {},
-        spine(items, rafraichir),
-        O.arrive(decision(x, items.length, rafraichir)),
-        preuve(x)));
+    return el("section.decisions-file", { "aria-label": "Sujets à traiter" },
+      el("header.decisions-file-tete", {},
+        el("h2", {}, famille ? FAMILLES[famille].nom : "Par priorité", el("span.studio-compte", {}, String(items.length))),
+        el("div.decisions-file-filtre", {}, el("label", { for: "file-famille" }, "Geste"), filtre)),
+      el("ul.decisions-file-liste", {}, items.map(ligne)));
   }
 
-  function vide() {
-    return el("div.studio-revue", {}, el("div.studio-vide", {},
-      el("div.studio-vide-signe", { "aria-hidden": "true" }, "✓"),
-      el("h3", {}, "Rien n'attend de décision."),
-      el("p", {}, "C'est le seul moment où l'on peut faire mûrir une piste spéculative — "
-        + "celles qui sont mûres se valident plus souvent."),
-      GESTE.bouton("ordre", {}, "Voir ce qui peut mûrir")));
+  function ligne(x) {
+    var famille = FAMILLES[x.famille];
+    var gestes = x.gestes || [];
+    var direct = x.direct && gestes.find(function (g) { return g.href; });
+    var image = x.visuels && x.visuels[0];
+    var temps = x.depuis ? "Depuis " + x.depuis + (x.depuis > 1 ? " jours" : " jour") : "";
+    var sujet = el("span.decisions-sujet", {},
+      el("strong", {}, x.chiffre),
+      el("span.decisions-meta", {}, direct ? x.quoi : famille.nom, temps ? " · " + temps : ""));
+    if (direct) return el("li", {},
+      el("a.decisions-ligne", { href: direct.href },
+        image ? el("span.decisions-miniature", { "aria-hidden": "true" }, IMAGE.vignette(image, "mini")) : null,
+        sujet, el("span.decisions-fleche", { "aria-hidden": "true" }, "›")));
+
+    var personne = x.verbatimPar && (DEPOT.trouve("personnes", x.verbatimPar) || DEPOT.trouve("contacts", x.verbatimPar));
+    return el("li", {},
+      el("details.decisions-detail", {},
+        el("summary.decisions-ligne", {}, sujet),
+        el("div.decisions-suite", {},
+          x.quoi !== x.chiffre ? el("p", {}, x.quoi) : null,
+          x.trancher || x.cout ? el("p", {}, x.trancher || x.cout) : null,
+          x.verbatim ? el("blockquote", {}, el("p", {}, x.verbatim),
+            el("footer", {}, [personne && personne.nom, x.verbatimLe && O.joli(x.verbatimLe)].filter(Boolean).join(" · "))) : null,
+          el("div.form-actions", {},
+            gestes.map(function (g) {
+              return g.href ? el("a.b", { href: g.href }, g.nom)
+                : el("button.b" + (g.fort ? ".or" : ".nu"), { type: "button", onclick: g.quand }, g.nom);
+            }),
+            GESTE.lien(x.ou, gestes.length ? "Ouvrir le dossier" : famille.nom,
+              gestes.length ? "b.nu" : "b.or", { quoi: x.quoi, cout: x.trancher || x.cout })))));
   }
 
-  function age(x) {
-    return x.depuis ? "depuis " + x.depuis + (x.depuis > 1 ? " jours" : " jour") : null;
-  }
-
-  /* La file, réduite à ce qui diffère d'une ligne à l'autre : le geste, le
-   * sujet, l'âge. Le filet de gauche prend le ton de la famille — on voit les
-   * bandes avant de lire les mots. Le rang n'est plus écrit : l'ordre le dit. */
-  function spine(items, rafraichir) {
-    return el("div.studio-file.dx-file", { "aria-label": "Sujets" }, items.map(function (x, n) {
-      var f = FAMILLES[x.famille] || {};
-      return el("button.studio-piece.dx-i" + (n === courant ? ".active" : "")
-        + (f.ton ? ".f-" + f.ton : ""), { type: "button",
-        "aria-pressed": n === courant ? "true" : "false",
-        onclick: function () { courant = n; rafraichir();
-          var actif = document.querySelector(".dx-i[aria-pressed='true']");
-          if (actif) actif.focus(); } },
-        el("span.studio-piece-ref", {}, f.nom || x.famille),
-        el("strong", {}, x.chiffre),
-        age(x) ? el("small.dx-age", {}, age(x)) : null);
-    }));
-  }
-
-  /* La décision elle-même. Le chiffre domine : c'est lui qui justifie le rang. */
-  function decision(x, total, rafraichir) {
-    var d = FAMILLES[x.famille] || {};
-    return el("div.studio-scene.dx-scene", {},
-      el("div.studio-scene-tete", {},
-        el("span", {}, "Sujet " + (courant + 1) + " sur " + total
-          + (courant === 0 ? " · priorité proposée" : "")),
-        age(x) ? el("span.dx-depuis.f-" + (d.ton || "or"), {}, age(x)) : null),
-
-      el("h3.dx-titre", {}, x.chiffre),
-      el("p.dx-quoi", {}, x.quoi),
-
-      x.visuels && x.visuels.length
-        ? el("div.dx-visuels", {}, x.visuels.slice(0, 2).map(function (v) {
-            return el("figure.dx-visuel", {}, IMAGE.vignette(v, "planche"),
-              el("figcaption", {}, v.nom || ""));
-          }))
-        : null,
-
-      el("div.dx-action", {},
-        el("h4", {}, "La prochaine action"),
-        el("p", {}, x.trancher || x.cout)),
-
-      el("div.studio-actions", {},
-        /* Le geste rendu : la carte se retire avant que la suivante arrive.
-         * Sur un écran où l'on tranche vingt-trois fois de suite, c'est la
-         * seule chose qui dit que le clic a porté. Si l'animation n'a pas
-         * lieu, le geste part quand même — O.sortir le garantit. */
-        (x.gestes || []).map(function (g) {
-          if (g.href) return el("a.b.or", { href: g.href }, g.nom);
-          return el(g.fort ? "button.b.or" : "button.studio-lien", { type: "button",
-            onclick: function () {
-              var carte = document.querySelector(".dx-scene");
-              O.sortir(carte, g.quand);
-            } }, g.nom);
-        }),
-        /* Le lien nu de la file d'action était le plus coûteux du produit :
-         * c'est l'écran où l'assistant passe sa journée, et il envoyait
-         * ailleurs sans dire quoi y faire. L'item sait déjà ce qui attend et
-         * ce que ça coûte — la modale se monte avec. */
-        x.direct ? null : GESTE.lien(x.ou,
-          (x.gestes || []).length ? "Ouvrir le dossier" : d.nom || "Ouvrir",
-          (x.gestes || []).length ? "studio-lien" : "b.or",
-          { quoi: x.quoi, cout: x.trancher || x.cout }),
-        total > 1 ? el("button.studio-lien", { type: "button", onclick: function () {
-          var carte = document.querySelector(".dx-scene");
-          O.sortir(carte, function () {
-            courant = (courant + 1) % total; rafraichir();
-          });
-        } }, "Sujet suivant") : null));
-  }
-
-  /* Ce qu'il faut avoir sous les yeux pour trancher — et rien de plus. Le
-   * panneau de contexte du Bureau : le retour client est ce qu'un humain a
-   * écrit, il prend l'aplat d'intention ; le pourquoi reste en texte second. */
-  function preuve(x) {
-    var d = FAMILLES[x.famille] || {};
-    var pe = x.verbatimPar ? DEPOT.trouve("personnes", x.verbatimPar) : null;
-    var ct = x.verbatimPar ? DEPOT.trouve("contacts", x.verbatimPar) : null;
-    return el("aside.studio-contexte.dx-contexte", {},
-      el("h3", {}, "Pourquoi agir"),
-      d.quoi ? el("p.dx-pourquoi", {}, d.quoi.charAt(0).toUpperCase() + d.quoi.slice(1) + ".") : null,
-      x.verbatim ? el("div.dx-verbatim", {},
-        el("h4", {}, "Le retour client"),
-        el("blockquote", {}, "« " + x.verbatim + " »"),
-        el("small", {}, (pe || ct ? (pe || ct).nom : "auteur non nommé")
-          + (x.verbatimLe ? " · " + O.joli(x.verbatimLe) : ""))) : null,
-      el("p.studio-contexte-note", {}, "Consulter un sujet ou passer au suivant ne le résout pas."));
-  }
-
-  return { FAMILLES: FAMILLES, tout: tout, salle: salle,
-    ou: function () { return courant; }, aller: function (n) { courant = n; } };
+  return { FAMILLES: FAMILLES, tout: tout, salle: salle };
 })();

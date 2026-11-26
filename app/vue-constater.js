@@ -35,7 +35,7 @@ window.VUE_CONSTATER = (function () {
     var courant = MODES.find(function (m) { return m.cle === mode; });
     var p = pire(s);
 
-    hote.appendChild(el("div.dc.pilotage", {},
+    hote.appendChild(el("div.dc.pilotage.pilotage-bilan", {},
       el("header.studio-entete.dc-tete", {},
         el("div", {},
           el("p.pilotage-parent", {}, "Bilan"),
@@ -45,14 +45,14 @@ window.VUE_CONSTATER = (function () {
       }),
 
       el("div.dc-corps", {},
-        mode === "indicateurs" ? standard(s, hote)
+        mode === "indicateurs" ? standard(s, hote, p)
           : mode === "equipe" ? VUE_EQUIPE.rendre(hote, function () { rendre(hote); })
           : mode === "bilan" ? VUE_FINDEMOIS.rendre(hote, function () { rendre(hote); })
           : mode === "arbitrages" ? VUE_JURISPRUDENCE.rendre(hote, function () { rendre(hote); })
           : bouscule(hote),
-        el("details.pilotage-contexte.pilotage-synthese", {},
+        mode !== "indicateurs" ? el("details.pilotage-contexte.pilotage-synthese", {},
           el("summary", {}, p.t),
-          el("p", {}, p.q)))
+          el("p", {}, p.q)) : null)
     ));
   }
 
@@ -242,9 +242,10 @@ window.VUE_CONSTATER = (function () {
     if (s.projets - s.traites) {
       var n = s.projets - s.traites;
       return { cle: "briefs",
-        t: n + (n > 1 ? " briefs sans go final" : " brief sans go final"),
+        t: "Contreseings à vérifier",
         q: "Je suis évalué sur les briefs traités. Sans contreseing de la Clientèle, "
-          + "un brief mis en forme n'engage personne — et ne compte pas comme traité." };
+          + "un brief mis en forme n'engage personne. Il reste au moins "
+          + n + (n === 1 ? " dossier ouvert à vérifier." : " dossiers ouverts à vérifier.") };
     }
     if (s.idees - s.retenues) {
       var m = s.idees - s.retenues;
@@ -282,39 +283,46 @@ window.VUE_CONSTATER = (function () {
    * une ligne — ils restent lisibles, ils ne réclament rien. */
   function indicateurs(s) {
     var lus = BILAN.indicateurs(s);
+    var verdictsDates = s.decisions;
     var reprise = lus.filter(function (m) { return m.nom === "livrables repris"; })[0];
     var delai = lus.filter(function (m) { return m.nom === "mon délai de verdict"; })[0];
     return [
-      { cle: "briefs", v: s.traites + " / " + s.projets, nom: "briefs traités",
+      { cle: "briefs", v: String(s.traites), nom: "Briefs contresignés",
+        source: "Contreseings enregistrés · " + s.projets + (s.projets === 1 ? " dossier ouvert" : " dossiers ouverts"),
         ko: s.projets > 0 && s.traites < s.projets,
-        quoi: s.projets - s.traites
-          ? (s.projets - s.traites) + (s.projets - s.traites > 1 ? " sans go final : ils n'engagent" : " sans go final : il n'engage") + " la Clientèle sur rien"
-          : "tous contresignés",
-        pourquoi: "Sans contreseing de la Clientèle, un brief mis en forme ne compte pas comme traité — et c'est la première ligne sur laquelle je suis évalué.",
+        quoi: "Le nombre de contreseings inclut ceux des dossiers clos. Les dossiers ouverts sont comptés à part.",
+        pourquoi: "Un brief traité porte le contreseing de la Clientèle.",
         geste: { nom: "Réclamer le contreseing", ou: "#/valider/du" } },
 
-      { cle: "idees", v: s.retenues + " / " + s.idees, nom: "big ideas retenues",
+      { cle: "arbitrage", v: s.idees ? s.retenues + " / " + s.idees : "—", nom: "Big ideas retenues",
+        source: "Arbitrages sur " + s.idees + (s.idees === 1 ? " idée" : " idées"),
+        creux: !s.idees,
         ko: s.retenues < s.idees,
         quoi: s.alignees + (s.alignees > 1 ? " alignées" : " alignée") + " à un brief accepté",
         pourquoi: "Une idée sans piste arbitrée ne produit rien de mesurable.",
         geste: { nom: "Arbitrer les pistes", ou: "#/valider/file" } },
 
-      { cle: "args", v: s.avecArg + " / " + s.props, nom: "propositions argumentées",
+      { cle: "propositions", v: s.props ? s.avecArg + " / " + s.props : "—", nom: "Propositions argumentées",
+        source: "Contenu de " + s.props + (s.props === 1 ? " proposition" : " propositions"),
+        creux: !s.props,
         ko: s.avecArg < s.props,
-        quoi: s.props - s.avecArg
+        quoi: !s.props ? "Aucune proposition enregistrée." : s.props - s.avecArg
           ? (s.props - s.avecArg) + " sans sacrifice ou sans argument — refusables au §8"
           : "toutes défendables",
         pourquoi: "Sans sacrifice ni argument écrits, une proposition ne se défend que par le goût.",
         geste: null },
 
-      { cle: "premier", v: String(s.premiere), nom: "retenues au premier tour",
+      { cle: "premier", v: s.props ? String(s.premiere) : "—", nom: "Retenues au premier tour",
+        source: "Verdicts sur " + s.props + (s.props === 1 ? " proposition" : " propositions"),
+        creux: !s.props,
         ko: false,
         quoi: s.props ? Math.round((s.premiere / s.props) * 100) + " % des propositions"
           : "aucune proposition présentée",
         pourquoi: "", geste: null },
 
       { cle: "verdict", v: s.verdict === null ? "—" : s.verdict + " j",
-        nom: "mon délai de verdict",
+        nom: "Délai de verdict",
+        source: verdictsDates + (verdictsDates === 1 ? " verdict avec délai connu" : " verdicts avec délai connu") + " · attente incluse",
         ko: s.verdict !== null && s.verdict > s.cibleVerdict,
         creux: s.verdict === null,
         quoi: s.verdict === null
@@ -327,7 +335,8 @@ window.VUE_CONSTATER = (function () {
         geste: { nom: "Trancher ce qui attend", ou: "#/valider/file" } },
 
       { cle: "reprise", v: s.reprise === null ? "—" : s.reprise + " %",
-        nom: "livrables repris",
+        nom: "Livrables repris",
+        source: "Historique de " + s.avecVersions + " / " + s.pieces + (s.pieces === 1 ? " livrable" : " livrables"),
         ko: s.reprise !== null && s.reprise > 20,
         creux: s.reprise === null,
         quoi: s.reprise === null
@@ -337,45 +346,45 @@ window.VUE_CONSTATER = (function () {
     ];
   }
 
-  function standard(s, hote) {
+  function standard(s, hote, priorite) {
     var ind = indicateurs(s);
-    /* Celui qui décroche prend l'écran. À défaut, le premier qui n'a pas
-     * d'assise — un registre vide se corrige aussi. */
-    var gros = ind.filter(function (i) { return i.ko; })[0]
-      || ind.filter(function (i) { return i.creux; })[0]
+    var gros = ind.find(function (i) { return i.cle === priorite.cle; })
+      || ind.find(function (i) { return i.ko; })
+      || ind.find(function (i) { return i.creux; })
       || ind[0];
-    var autres = ind.filter(function (i) { return i !== gros; });
+    var ordonnes = [gros].concat(ind.filter(function (i) { return i !== gros; }));
 
     return el("div", {},
-      /* Le nombre reste à l'encre : l'état se dit par le filet et le signe. */
-      el("section.sd-gros" + (gros.ko ? ".ko" : gros.creux ? ".creux" : ".ok"), {},
-        el("div.sdg-h", {},
-          el("span.sdg-v", {}, gros.v),
-          el("span.sdg-n", {}, gros.nom)),
-        el("p.sdg-q", {}, gros.quoi),
-        gros.pourquoi
-          ? el("details.pilotage-contexte", {},
-              el("summary", {}, "Critère d’évaluation"),
-              el("p", {}, gros.pourquoi))
-          : null,
-        gros.geste
-          ? el("div.sdg-g", {}, GESTE.lien(gros.geste.ou,
-              gros.geste.nom.replace(/\s*→\s*$/, ""), "b.or",
-              { quoi: gros.quoi, cout: gros.pourquoi }))
-          : null),
+      el("section.pilotage-rapport", {},
+        el("header.pilotage-rapport-entete", {},
+          el("h2", {}, "Activité du dépôt"),
+          el("p.pilotage-meta", {}, "Toutes les périodes · données enregistrées")),
+        el("div.pilotage-liste", {}, ordonnes.map(function (i) {
+          return el("div.pilotage-mesure" + (i.ko ? ".a-suivre" : ""), {},
+            el("span", {},
+              el("strong", {}, i.nom),
+              el("small", {}, i.source)),
+            el("span.pilotage-mesure-valeur", {},
+              el("b", i.creux ? { "aria-hidden": "true" } : {}, i.v),
+              i.ko ? el("small", {}, "À suivre") : i.creux ? el("small", {}, "Non calculable") : null));
+        })),
+        gros.ko && gros.geste ? el("div.form-actions", {},
+          GESTE.lien(gros.geste.ou, gros.geste.nom, "b.or", { quoi: gros.quoi, cout: gros.pourquoi })) : null),
 
-      /* Les cinq autres : lisibles, sans rien réclamer. */
-      el("section.sd-cinq", {}, autres.map(function (i) {
-        return el("div.sd-c" + (i.creux ? ".creux" : i.ko ? ".ko" : ""), {},
-          el("span.sdc-v", {}, i.v),
-          el("span.sdc-n", {}, i.ko ? el("span.sd-signe", { "aria-hidden": "true" }, "● ") : null, i.nom),
-          el("span.sdc-q", {}, i.quoi));
-      })),
+      el("details.pilotage-contexte", {},
+        el("summary", {}, "Lecture des indicateurs"),
+        el("p", {}, priorite.q),
+        el("dl.pilotage-definitions", {}, ind.map(function (i) {
+          return [el("dt", {}, i.nom),
+            el("dd", {}, i.quoi, i.pourquoi ? el("p", {}, i.pourquoi) : null,
+              i.geste && (i !== gros || !gros.ko) ? GESTE.lien(i.geste.ou, i.geste.nom, "b.nu",
+                { quoi: i.quoi, cout: i.pourquoi }) : null)];
+        }))),
 
       /* L'exigence par compte et par marché : la ligne « constante y compris sur
        * les petits projets » de la grille d'évaluation. */
       el("details.pilotage-contexte", {},
-        el("summary", {}, "Périmètre et sources"),
+        el("summary", {}, "Périmètre et reprises par compte ou marché"),
         el("p", {}, "Indicateurs cumulés sur le dépôt ouvert. Le délai inclut les versions soumises encore en attente. "
           + s.decisions + " verdicts ont des dates exploitables."),
         ventilation("Par compte", s.parCompte),

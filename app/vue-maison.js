@@ -10,8 +10,9 @@
 
 window.VUE_MAISON = (function () {
   var el = O.el;
-  var mode = "marques";
+  var mode = null;
   var cible = null;
+  var recherche = "";
   var registres = MAISON.registres || {};
 
   var MODES = [
@@ -33,14 +34,89 @@ window.VUE_MAISON = (function () {
     { cle: "parametres", nom: "Paramètres" },
   ];
 
+  var FAMILLES = [
+    { nom: "Référentiels", liens: {
+      marques: "Plateformes et packs de marque",
+      marches: "Contraintes, supports et fichiers",
+      disque: "Fichiers locaux et exports"
+    } },
+    { nom: "Registres et demandes", liens: {
+      people: "Projets associés et correspondances",
+      radar: "Briefs associés et écarts",
+      intake: "Demandes reçues et à qualifier"
+    } },
+    { nom: "Règles et sauvegarde", liens: {
+      doctrine: "Documents et règles de production",
+      parametres: "Dépôt, sauvegardes et réglages"
+    } }
+  ];
+
+  function indexRessources() {
+    var champ = el("input", { type: "search", id: "recherche-ressources", value: recherche,
+      placeholder: "Marque, marché, support ou fichier", autocomplete: "off" });
+    var retour = el("p.pilotage-meta", { role: "status" });
+    var liste = el("ul.pilotage-liste.pilotage-resultats", { "aria-label": "Ressources trouvées" });
+    var types = { Marque: "Marque", marche: "Marché", support: "Support", asset: "Fichier" };
+
+    function afficher() {
+      var texte = champ.value.trim();
+      recherche = champ.value;
+      O.vider(liste);
+      liste.hidden = true;
+      retour.textContent = "";
+      if (!texte) return;
+      if (texte.length < 2) {
+        retour.textContent = "Saisir au moins deux caractères.";
+        return;
+      }
+      var ressources = APP.chercher(texte).filter(function (x) { return Object.hasOwn(types, x.ou); });
+      var limite = 10;
+      retour.textContent = ressources.length > limite ? limite + " résultats sur " + ressources.length + ". Précisez votre recherche."
+        : ressources.length ? ressources.length + (ressources.length === 1 ? " résultat" : " résultats") : "Aucune ressource trouvée.";
+      liste.hidden = !ressources.length;
+      ressources.slice(0, limite).forEach(function (x) {
+        liste.appendChild(el("li", {}, el("a.pilotage-ligne", { href: x.lien },
+          el("strong", {}, x.quoi), el("small.pilotage-etat", {}, types[x.ou]))));
+      });
+    }
+
+    champ.addEventListener("input", afficher);
+    afficher();
+
+    return el("div.dc.pilotage.pilotage-ressources.pilotage-ressources-index", {},
+      el("header.studio-entete.dc-tete", {}, el("h1", {}, "Ressources")),
+      el("form.pilotage-recherche-ressource", { role: "search", "aria-label": "Ressources",
+        onsubmit: function (e) {
+          e.preventDefault();
+          var premier = liste.querySelector("a");
+          if (premier) premier.click();
+        } },
+        el("label", { for: champ.id }, "Rechercher une ressource"), champ, retour, liste),
+      el("div.pilotage-familles", {}, FAMILLES.map(function (famille) {
+        return el("section.pilotage-famille", {},
+          el("h2", {}, famille.nom),
+          el("ul.pilotage-liste", {}, Object.keys(famille.liens).map(function (cle) {
+            var entree = MODES.find(function (m) { return m.cle === cle; });
+            return el("li", {}, el("a.pilotage-ligne", { href: APP.adresse("referentiel", cle) },
+              el("span", {}, el("strong", {}, entree.nom), el("small", {}, famille.liens[cle])),
+              el("span.pilotage-chevron", { "aria-hidden": "true" }, "→")));
+          })));
+      }))
+    );
+  }
+
   function rendre(hote, arg, sous, id) {
     if (arguments.length > 1) {
-      mode = MODES.some(function (m) { return m.cle === arg; }) ? arg : MODES[0].cle;
+      mode = MODES.some(function (m) { return m.cle === arg; }) ? arg : null;
       cible = mode === "marches" && sous ? { type: sous, id: id } : null;
     }
 
     hote.className = "zone studio";
     O.vider(hote);
+    if (!mode) {
+      hote.appendChild(indexRessources());
+      return;
+    }
 
     var trous = 0;
     DEPOT.liste("marches").forEach(function (m) {
@@ -53,10 +129,10 @@ window.VUE_MAISON = (function () {
     var p = mode === "parametres" ? null : pire(mode, { trous: trous, vides: vides });
     var courant = MODES.find(function (m) { return m.cle === mode; });
 
-    hote.appendChild(el("div.dc.pilotage", {},
+    hote.appendChild(el("div.dc.pilotage.pilotage-ressources", {},
       el("header.studio-entete.dc-tete", {},
         el("div", {},
-          el("p.pilotage-parent", {}, "Ressources"),
+          el("p.pilotage-parent", {}, el("a", { href: APP.adresse("referentiel") }, "Ressources")),
           el("h1", {}, courant.nom))),
       UI.modes(MODES, mode, function (cle) { location.hash = "#/referentiel/" + cle; }, {
         titre: "Vues des ressources", route: "referentiel",

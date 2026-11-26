@@ -44,8 +44,9 @@ window.VUE_LIVRAISON = (function () {
     var pleins = ls.filter(function (l) { return !!l.vignette; });
 
     var noeud = el("div.plv", {},
-      mode === "livraison" && window.REMISE && ls.length ? REMISE.suiviLot(p, ls, rafraichir) : null,
-      bande(p, ls, pleins, familles, rafraichir),
+      el("header.pj-travail-entete", {}, el("h2", {}, "Planche de livraison"),
+        el("button.b.or", { type: "button", onclick: function () { choisirLot(p, ls, rafraichir); } },
+          "Déposer un dossier de rendus")),
       tete(p, ls, pleins, rafraichir),
       !familles.length
         ? el("p.rien", {}, "Aucun livrable à ce dossier. La planche se remplit "
@@ -59,7 +60,11 @@ window.VUE_LIVRAISON = (function () {
             + "la planche de séance se compose des visuels au dossier.")
         : el("div.plv-familles", {}, familles.map(function (f, i) {
             return famille(p, f, rafraichir, i);
-          }))
+          })),
+      el("details.pj-procedure.pj-detail", { "data-pj-detail": "livraison-controles" },
+        el("summary", {}, "Contrôles et suivi de la remise"),
+        el("div.pj-procedure-corps", {}, bande(ls, pleins, familles),
+          mode === "livraison" && window.REMISE && ls.length ? REMISE.suiviLot(p, ls, rafraichir) : null))
     );
 
     /* Le dossier entier se lâche sur la planche. C'est le geste qui remplace
@@ -71,7 +76,7 @@ window.VUE_LIVRAISON = (function () {
 
   /* ————————————————————— La recevabilité ————————————————————— */
 
-  function bande(p, ls, pleins, familles, rafraichir) {
+  function bande(ls, pleins, familles) {
     var manquants = ls.length - pleins.length;
     var sansQui = ls.filter(function (l) { return !l.responsable; }).length;
     var ment = ls.filter(function (l) {
@@ -90,9 +95,7 @@ window.VUE_LIVRAISON = (function () {
         cout: "sans famille, la planche est une liste de cinquante-neuf lignes à plat" },
     ];
 
-    return UI.recevabilite("Cette planche peut-elle se montrer ?", controles, null,
-      [{ nom: "Déposer un dossier de rendus", fort: manquants > 0,
-         quand: function () { choisirLot(p, ls, rafraichir); } }]);
+    return UI.recevabilite("Préparation de la planche", controles);
   }
 
   function tete(p, ls, pleins, rafraichir) {
