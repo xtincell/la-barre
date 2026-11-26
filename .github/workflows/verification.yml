@@ -31,6 +31,7 @@ jobs:
       - run: npm run test:radar
       - run: node outils/vitrine-base.mjs --check
       - run: npm run test:vitrine
+      - run: npm run test:recette
       - name: Parcours du poste sur une base fictive
         run: |
           npm ci --no-audit --no-fund
