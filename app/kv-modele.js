@@ -192,6 +192,28 @@ window.KV = (function () {
 
   function surtitre(l) { return nomDeCode(l) ? l.nom.trim() : null; }
 
+  /* La forme de code d'une pièce dont l'outil a posé le nom : « KV · GH ·
+   * Orvelle », « KV master commun · Orvelle ». L'écran ne la montre plus en
+   * titre, mais l'agence nomme ses fichiers (« KV_GH_Orvelle_V3.jpg ») et
+   * cherche ses pièces (« KV GH ») ainsi : c'est la clé de rapprochement. Un
+   * KV né avec un nom de travail (« Key visual — Ghana · Orvelle ») la reçoit
+   * comme un KV nommé par son code. null pour un nom écrit par l'équipe. */
+  function code(l) {
+    if (!l) return null;
+    if (nomDeCode(l)) return l.nom.trim();
+    if (!estKV(l)) return null;
+    var nom = typeof l.nom === "string" ? l.nom.trim() : "";
+    var base = composer(l, ""), suite;
+    if (nom === base) suite = "";
+    else if (nom.indexOf(base + " · ") === 0) suite = nom.slice(base.length + 3);
+    else return null;
+    var r = referentiel(l);
+    var tete = !l.marche ? (estMaitre(l) ? "KV master commun" : null) : (r.m && r.m.code ? "KV · " + r.m.code : null);
+    if (!tete) return null;
+    suite = suite || marqueDe(l);
+    return tete + (suite ? " · " + suite : "");
+  }
+
   function creer(p, marcheId, base, niveauVoulu) {
     var cible = niveauVoulu || (marcheId ? "adaptation" : "maitre");
     if (cible !== "maitre" && cible !== "adaptation") throw new Error("Niveau de KV inconnu.");
@@ -442,6 +464,6 @@ window.KV = (function () {
     descendance: descendance, parMarche: parMarche,
     creer: creer, reprendreReference: reprendreReference, daDePiste: daDePiste, adaptationsMalPortees: adaptationsMalPortees,
     conformite: conformite, conforme: conforme, pireEcart: pireEcart, grille: grille,
-    skuNonDistribues: skuNonDistribues, titre: titre, surtitre: surtitre, nomDeCode: nomDeCode,
+    skuNonDistribues: skuNonDistribues, titre: titre, surtitre: surtitre, nomDeCode: nomDeCode, code: code,
     nomDeTravail: nomDeTravail, suivreMarque: suivreMarque };
 })();

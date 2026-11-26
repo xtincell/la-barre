@@ -407,13 +407,17 @@ window.IMAGE = (function () {
   function mots(x) { return APPARIER.mots(x); }
 
   /* Ce sous quoi un livrable se reconnaît : le nom que le tableau annonce
-   * d'abord, le nom du livrable ensuite. Les deux comptent — le fichier peut
-   * porter l'un ou l'autre. */
+   * d'abord, le nom du livrable ensuite, et son code. Tous comptent — le
+   * fichier peut porter l'un ou l'autre. Un KV nommé en clair (« Key visual —
+   * Ghana · Orvelle ») se reconnaît encore à « KV_GH_Orvelle_V3.jpg » : sans
+   * son code, « GH » ne désignerait plus que l'affiche du même marché, et un
+   * artwork rangé sous la mauvaise pièce s'imprime. */
   function motsDe(l) {
     var a = mots((l.releve || {}).fichier);
     var b = mots(l.nom);
+    var c = window.KV && KV.code ? mots(KV.code(l)) : [];
     var vus = {};
-    return a.concat(b).filter(function (m) {
+    return a.concat(b, c).filter(function (m) {
       if (vus[m]) return false; vus[m] = 1; return true;
     });
   }

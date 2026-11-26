@@ -544,3 +544,68 @@ test('la recherche dit le référentiel en mots, pas par sa clé', async () => {
   assert.deepEqual(ou, ['Ghana — Marché', 'Logo Ghana — Visuel de marque']);
   assert.deepEqual([...s.ctx.APP.chercher('Post social')].map(r => r.ou), ['Support']);
 });
+
+/* ————— Le code reste la clé de rapprochement —————
+ *
+ * Un KV neuf s'appelle « Key visual — Ghana · Orvelle », mais l'agence nomme
+ * ses fichiers par code : « KV_GH_Orvelle_V3.jpg ». Sans le code dans les mots
+ * du KV, « GH » ne désignait plus que l'affiche du Ghana, et le rendu du KV
+ * allait « sûr » sous l'affiche : cette erreur-là s'imprime. */
+
+async function dossierDeRendus(nommer) {
+  const s = await bacDecisions(APP, 91);
+  for (const nom of ['kv-modele', 'apparier', 'image']) await s.charger(nom);
+  semer(s.ctx, { personnes: PERSONNES, projets: [projet('OR')],
+    marches: [{ id: 'M-gh', code: 'GH', nom: 'Ghana', langues: ['en'] }, { id: 'M-ci', code: 'CI', nom: 'Côte d’Ivoire', langues: ['fr'] },
+      { id: 'M-sn', code: 'SN', nom: 'Sénégal', langues: ['fr'] }],
+    supports: [{ id: 'S-kv', code: 'kv', nom: 'Key visual', type: 'kv' }, { id: 'S-aff', code: 'affiche', nom: 'Affiche 4×3' },
+      { id: 'S-so', code: 'social', nom: 'Post social 1:1' }] });
+  const { KV, DEPOT } = s.ctx;
+  const p = DEPOT.trouve('projets', 'OR');
+  const master = KV.creer(p, null, null, 'maitre');
+  master.kv.marque = 'Orvelle'; master.nom = KV.nomDeTravail(master);   // comme la planche
+  const kvs = ['M-gh', 'M-ci', 'M-sn'].map(m => KV.creer(p, m, master, 'adaptation'));
+  if (nommer) nommer([master, ...kvs]);
+  p.livrables.push({ id: 'F-aff', nom: 'Affiche 4×3 · GH', support: 'S-aff', marche: 'M-gh', maitre: kvs[0].id, niveau: 'declinaison' });
+  p.livrables.push({ id: 'F-so', nom: 'Post social 1:1 · CI', support: 'S-so', marche: 'M-ci', maitre: kvs[1].id, niveau: 'declinaison' });
+  return { s, p, KV, master, kvs, apparier: noms => s.ctx.IMAGE.apparier(p.livrables, noms.map(name => ({ name }))) };
+}
+
+test('KV.code redonne le code d’un KV nommé en clair ; un nom écrit par l’équipe n’en a pas', async () => {
+  const d = await dossierDeRendus();
+  assert.deepEqual([d.master, ...d.kvs].map(l => [l.nom, d.KV.code(l)]), [
+    ['Key visual master · Orvelle', 'KV master commun · Orvelle'],
+    ['Key visual — Ghana · Orvelle', 'KV · GH · Orvelle'],
+    ['Key visual — Côte d’Ivoire · Orvelle', 'KV · CI · Orvelle'],
+    ['Key visual — Sénégal · Orvelle', 'KV · SN · Orvelle']]);
+  assert.equal(d.KV.code({ nom: 'KV · GH · Orvelle', support: 'S-kv', marche: 'M-gh', kv: {} }), 'KV · GH · Orvelle');
+  assert.equal(d.KV.code({ nom: 'Affiche 4×3 · GH', support: 'S-aff', marche: 'M-gh' }), 'Affiche 4×3 · GH');
+  assert.equal(d.KV.code({ nom: 'Affiche de lancement', support: 'S-kv', marche: 'M-gh', kv: {} }), null);
+  assert.equal(d.KV.code({ nom: 'Post de la semaine', support: 'S-so', marche: 'M-ci' }), null);
+});
+
+test('un rendu nommé par code va sûr sur son KV nommé en clair, jamais sur l’affiche du même marché', async () => {
+  const d = await dossierDeRendus();
+  const [gh, ci, sn] = d.kvs;
+  for (const [fichier, attendu] of [['KV-GH-Orvelle.png', gh], ['KV_GH_Orvelle_V3.jpg', gh], ['KV_CI_Orvelle_V3.jpg', ci],
+    ['KV_SN_Orvelle_V3.jpg', sn], ['Orvelle KV CI V2.jpg', ci], ['KV Ghana Orvelle.png', gh], ['KV_master_Orvelle.jpg', d.master]]) {
+    const [r] = d.apparier([fichier]);
+    assert.equal(r.etat, 'sur', fichier + ' : ' + r.etat + ' ' + r.score.toFixed(2));
+    assert.equal(r.l, attendu, fichier + ' va sous ' + (r.l && r.l.nom));
+  }
+  const [affiche] = d.apparier(['Affiche_4x3_GH.jpg']);
+  assert.equal(affiche.l.id, 'F-aff');
+
+  /* Un dossier entier : chaque KV reçoit le sien, l'affiche n'en reçoit aucun. */
+  const lot = d.apparier(['KV_GH_Orvelle_V3.jpg', 'KV_CI_Orvelle_V3.jpg', 'KV_SN_Orvelle_V3.jpg']);
+  assert.deepEqual(lot.map(r => [r.etat, r.l && r.l.id]), [['sur', gh.id], ['sur', ci.id], ['sur', sn.id]]);
+});
+
+test('les KV nommés par code, d’avant ce lot, se rapprochent comme avant', async () => {
+  const d = await dossierDeRendus(ls => {
+    ls[0].nom = 'KV master commun · Orvelle';
+    ['GH', 'CI', 'SN'].forEach((c, i) => { ls[i + 1].nom = 'KV · ' + c + ' · Orvelle'; });
+  });
+  const lot = d.apparier(['KV_GH_Orvelle_V3.jpg', 'KV_CI_Orvelle_V3.jpg', 'KV_SN_Orvelle_V3.jpg', 'KV-GH-Orvelle.png']);
+  assert.deepEqual(lot.slice(0, 3).map(r => [r.etat, r.l && r.l.id, r.score]), d.kvs.map(l => ['sur', l.id, 1]));
+});
