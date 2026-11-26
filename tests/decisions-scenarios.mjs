@@ -233,9 +233,10 @@ export const ECRIVAINS = {
     const verdict = cle => s.ctx.MAISON.verdicts.find(v => v.cle === cle);
     s.ctx.VALIDATION.rendre(pr, 'brief', pr.sections.brief, verdict('reserve'), () => {});
     cliquer(bouton(s.dernier(), s.ctx.MAISON.criteresDe('brief')[0]));
-    cliquer(bouton(s.dernier(), verdict('reserve').nom));
+    // Le bouton dit le geste (« Valider avec réserves ») ; avant, le nom de l'état.
+    cliquer(bouton(s.dernier(), verdict('reserve').geste || verdict('reserve').nom));
     s.ctx.VALIDATION.rendre(pr, 'socle', pr.sections.socle, verdict('approuve'), () => {});
-    cliquer(bouton(s.dernier(), verdict('approuve').nom));
+    cliquer(bouton(s.dernier(), verdict('approuve').geste || verdict('approuve').nom));
   },
 
   /* vue-atelier.js — trancher deux idées : l'une retenue, l'autre écartée. */

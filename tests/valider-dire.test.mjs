@@ -249,3 +249,36 @@ test('« Autre décision » exige son motif : des réserves ou un refus sans tex
     assert.equal(v.l.versions[0].motif, motif);
   }
 });
+
+/* ————— Valider un document (brief, plateforme, stratégie, big idea) ————— */
+
+test('la validation d’un document : des boutons qui disent le geste, des refus qui disent quoi écrire', async () => {
+  const s = await bacDecisions(APP, 61);
+  await s.charger('validation');
+  const el = s.ctx.O.el;
+  s.ctx.UI = new Proxy({ banniere: (ton, t) => el('div', {}, t), eti: t => el('span', {}, t), stat: (a, b, c) => el('div', {}, a, ' ', b, ' ', c) },
+    { get: (t, k) => t[k] || (() => el('div')) });
+  semer(s.ctx, { personnes: PERSONNES, projets: [projet('DO')] });
+  const p = s.ctx.DEPOT.trouve('projets', 'DO');
+  const bande = s.ctx.VALIDATION.bande(p, 'brief', p.sections.brief, () => {});
+  const b = boutons(bande);
+  for (const g of ['✓ Valider', '◐ Valider avec réserves', '↩ Demander des modifs', '✕ Refuser : hors périmètre']) {
+    assert.ok(b.includes(g), g + ' dans ' + b.join(' | '));
+  }
+  assert.doesNotMatch(textes(bande), /Validé avec réserves|Modifs demandées|hors brief|verdict/);
+
+  const verdict = cle => s.ctx.MAISON.verdicts.find(v => v.cle === cle);
+  s.ctx.VALIDATION.rendre(p, 'brief', p.sections.brief, verdict('hors'), () => {});
+  const refus = s.dernier();
+  cliquer(bouton(refus, 'Refuser : hors périmètre'));
+  assert.match(textes(refus), /Choisissez un critère ou écrivez pourquoi vous refusez\./);
+  assert.doesNotMatch(textes(refus), /verdict|par goût|hors brief/i);
+  assert.equal(p.sections.brief.validation, undefined, 'sans motif, rien n’est écrit');
+
+  s.ctx.VALIDATION.rendre(p, 'brief', p.sections.brief, verdict('approuve'), () => {});
+  cliquer(bouton(s.dernier(), 'Valider'));
+  assert.equal(p.sections.brief.validation.verdict, 'approuve');
+  const apres = textes(s.ctx.VALIDATION.bande(p, 'brief', p.sections.brief, () => {}));
+  assert.match(apres, /Validé le \d+ [a-zé]+\. Le travail créatif peut commencer\./);
+  assert.doesNotMatch(apres, /\.\./, 'un seul point après la date');
+});
