@@ -451,17 +451,11 @@ window.VUE_ASSET = (function () {
               el("span", {}, mk.contexte || "Sans contexte"));
           }))
         : null,
-      el("div.ptf-a", {},
-        el("button.b.nu", { type: "button",
-          onclick: function () { IMAGE.importer(l, apres, e.cle); } }, "+ Remplacer"),
-        decrire(p, l, apres)));
-  }
-
-  /* Le second geste de chaque étage : dire où est un fichier qu'on ne dépose
-   * pas (un master sur le Drive, un lien de transfert). */
-  function decrire(p, l, apres) {
-    return el("button.studio-lien", { type: "button",
-      onclick: function () { PRODUCTION.ajouter(p, l, apres); } }, "Décrire un fichier sans le déposer");
+      /* Décrire un fichier qu'on ne dépose pas (un master sur le Drive) reste
+       * un geste du bloc « Que manque-t-il pour produire ? », une seule fois
+       * à l'écran, pas sous chaque étage. */
+      el("button.b.nu", { type: "button",
+        onclick: function () { IMAGE.importer(l, apres, e.cle); } }, "+ Remplacer"));
   }
 
   /* L'étage où l'on est. C'est le seul qui prend de la place, et il porte tout
@@ -491,7 +485,6 @@ window.VUE_ASSET = (function () {
         onclick: function () { IMAGE.importer(l, apres, e.cle); } },
         el("span.ptoz-p", {}, "+"),
         el("span.ptoz-t", {}, "Poser " + minuscule(e.def.nom))),
-      decrire(p, l, apres),
 
       el("div.pto-c", {}, el("b", {}, "Sans lui"), PRODUCTION.coutDe(l, e.cle)),
       !retenue && e.def.signable
