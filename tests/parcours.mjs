@@ -138,15 +138,28 @@ try {
     const x = document.querySelector('.avis-pile .avis.refus .avis-x').getBoundingClientRect();
     AVIS.fait('Réussi');
     const apres = document.querySelectorAll('.avis-pile .avis.refus').length;
-    // Sur téléphone, un avis grave se tient en haut, loin des gestes du bas ;
-    // « Annuler » se touche au doigt.
-    const grave = AVIS.grave('Grave').getBoundingClientRect();
-    const annuler = AVIS.action('Engagé', 'Annuler', null, 0).querySelector('.avis-a').getBoundingClientRect();
-    document.querySelectorAll('.avis-pile .avis').forEach(n => n.remove());
-    return { refus, apres, x: [Math.round(x.width), Math.round(x.height)],
-      graveEnHaut: grave.top < 60, annuler: Math.round(annuler.height) };
+    // Sur téléphone, un avis grave se tient en haut, loin des gestes du bas.
+    // Deux avis graves s'empilent sans se recouvrir, et la page descend
+    // d'autant : le titre reste visible.
+    scrollTo(0, 0);
+    window.__graves = [AVIS.grave('Grave'),
+      AVIS.grave('La validation de la V1 n’a pas été enregistrée : la pièce a changé depuis. Relisez-la, et validez-la de nouveau si c’est toujours votre décision.')];
+    return { refus, apres, x: [Math.round(x.width), Math.round(x.height)] };
   });
-  assert.deepEqual(pile, { refus: 1, apres: 0, x: [44, 44], graveEnHaut: true, annuler: 44 });
+  // La page descend sans animation, mais le mouvement réduit garde une
+  // transition de 0,01 ms que l'horloge simulée ne fait pas avancer d'elle-même.
+  await page.waitForFunction(() => getComputedStyle(document.body).paddingTop === document.body.style.paddingTop, null, { polling: 50 });
+  const graves = await page.evaluate(() => {
+    const [premier, second] = window.__graves.map(n => n.getBoundingClientRect());
+    const titre = document.querySelector('#corps h1').getBoundingClientRect();
+    // « Annuler » se touche au doigt.
+    const annuler = AVIS.action('Engagé', 'Annuler', null, 0).querySelector('.avis-a').getBoundingClientRect();
+    document.querySelectorAll('.avis-pile .avis').forEach(n => AVIS.retirer(n));
+    return { graveEnHaut: premier.top < 60, empiles: second.top >= premier.bottom, titreVisible: titre.top >= second.bottom,
+      decalage: document.body.style.paddingTop, annuler: Math.round(annuler.height) };
+  });
+  assert.deepEqual({ ...pile, ...graves }, { refus: 1, apres: 0, x: [44, 44], graveEnHaut: true, empiles: true, titreVisible: true,
+    decalage: '', annuler: 44 });
   await page.goBack();
   await page.setViewportSize({ width:1440, height:1050 });
   await page.getByRole('heading', {name:'Sur la table'}).waitFor();

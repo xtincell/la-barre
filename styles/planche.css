@@ -692,6 +692,8 @@
 
 .avis-pile { position: fixed; right: 1rem; bottom: 1rem; z-index: 120;
   display: grid; gap: .4rem; max-width: min(30rem, calc(100vw - 2rem)); }
+.avis-graves { display: grid; gap: .4rem; }
+.avis-graves:empty { display: none; }
 .avis { display: flex; gap: .6rem; align-items: flex-start;
   background: var(--nuit-relief); border: 1px solid var(--trait-clair);
   border-left: 3px solid var(--clair-terne); padding: .65rem .75rem;

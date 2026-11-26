@@ -27,10 +27,33 @@ window.AVIS = (function () {
     return empiler(n, duree || 5200);
   }
 
+  /* Les avis graves ont leur propre colonne, en tête de la pile. Sur
+   * téléphone, elle se tient en haut de l'écran : deux avis graves s'y
+   * empilent au lieu de se recouvrir, et la page descend d'autant pour que le
+   * titre et « ← Retour » restent visibles. */
+  function graves() {
+    var z = zone(), g = z.querySelector(".avis-graves");
+    if (!g) { g = el("div.avis-graves"); z.insertBefore(g, z.firstChild); }
+    return g;
+  }
+  var TELEPHONE = "(max-width: 800px)";
+  function decaler() {
+    var g = pile && pile.querySelector(".avis-graves");
+    var haut = g && g.children.length && window.matchMedia && matchMedia(TELEPHONE).matches;
+    document.body.style.paddingTop = haut ? Math.ceil(g.getBoundingClientRect().height) + 14 + "px" : "";
+    /* Sans cela, le navigateur garderait la page où elle était (ancrage du
+     * défilement) et l'avis recouvrirait encore le titre. */
+    document.body.style.overflowAnchor = haut ? "none" : "";
+  }
+
   function empiler(n, duree) {
-    zone().appendChild(n);
-    /* Une pile qui s'allonge indéfiniment devient un mur : trois au plus. */
-    while (zone().children.length > 3) zone().removeChild(zone().firstChild);
+    var z = zone(), grave = n.classList.contains("grave"), cible = grave ? graves() : z;
+    cible.appendChild(n);
+    /* Une pile qui s'allonge indéfiniment devient un mur : trois au plus,
+     * de chaque sorte. */
+    var autres = [].filter.call(cible.children, function (x) { return !x.classList.contains("avis-graves"); });
+    while (autres.length > 3) cible.removeChild(autres.shift());
+    if (grave) decaler();
     if (duree !== 0) setTimeout(function () { retirer(n); }, duree);
     return n;
   }
@@ -48,6 +71,7 @@ window.AVIS = (function () {
 
   function retirer(n) {
     if (n && n.parentNode) n.parentNode.removeChild(n);
+    if (n && n.classList && n.classList.contains("grave")) decaler();
   }
 
   /* Un refus corrigé ne reste pas à l'écran : un nouveau refus, ou ce qui a
