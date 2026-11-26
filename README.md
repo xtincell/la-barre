@@ -52,7 +52,10 @@ n'utilise que les modules natifs de Node.
 La navigation (`app/application.js`) compte six entrées : Bureau, Projets,
 Décisions, Planning, Bilan et Ressources. Chaque mode a sa propre adresse, par
 exemple `#/referentiel/parametres`. Les anciennes adresses (`#/reglages`,
-`#/attentes`, `#/decider`, `#/galerie`…) mènent au mode correspondant.
+`#/attentes`, `#/decider`, `#/galerie`…) mènent au mode correspondant, par une
+seule table (`APP.ALIAS`) que la barre latérale et les liens des écrans
+partagent. Un bouton qui mène ailleurs (`app/geste.js`) est un lien : il part
+d'un clic, et dit au survol ce qu'on trouve à l'arrivée.
 
 | Entrée | Adresse | Ce qu'on y trouve | Fichiers de `app/` |
 |---|---|---|---|

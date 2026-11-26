@@ -245,6 +245,14 @@ try {
   await saisie.fill('support');
   await saisie.press('Escape');
   assert.equal(await rechercheGlobale.count(),0);
+  // Un lien de Décisions mène à sa destination d'un clic, sans panneau qui
+  // s'intercale ; une ligne sur une date manquante ouvre le plan de charge.
+  await page.goto(url + '/#/valider/file');
+  const ligneSansDate = page.locator('.decisions-detail').filter({ hasText: 'sans date de remise' });
+  await ligneSansDate.locator('summary').click();
+  await ligneSansDate.getByRole('link').click();
+  await page.waitForURL('**/#/planning/charge');
+  assert.equal(await page.locator('dialog[open], .panneau[role=dialog]').count(), 0, 'Aucun panneau ne s’intercale avant la destination');
   await page.setViewportSize({width:320,height:700});
   await page.getByRole('navigation',{name:'Navigation mobile'}).getByRole('link',{name:'Plus'}).click();
   await page.locator('.lb-liste-liens').getByRole('link',{name:'Planning'}).click();

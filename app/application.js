@@ -16,7 +16,11 @@ window.APP = (function () {
     { cle: "reporting", ico: "standard", nom: "Bilan", vue: function () { return VUE_CONSTATER; } },
     { cle: "referentiel", ico: "referentiel", nom: "Ressources", vue: function () { return VUE_MAISON; } }
   ];
-  var ANCIENNES = {
+  /* Les anciennes adresses, et leur adresse actuelle. Une seule table : la
+   * barre latérale, la file de Décisions et les liens de chaque écran
+   * (geste.js) les traduisent de la même façon. Il y en avait deux, et
+   * « #/pipeline » ne menait pas au même écran selon le chemin. */
+  var ALIAS = {
     decider: ["valider", "file"], placer: ["planning", "ordre"],
     constater: ["reporting", "indicateurs"], maison: ["referentiel", "marches"],
     direction: ["valider", "file"], revue: ["valider", "file"], attentes: ["valider", "du"],
@@ -24,6 +28,12 @@ window.APP = (function () {
     pipeline: ["planning", "ordre"], reglages: ["referentiel", "parametres"], people: ["referentiel", "people"],
     galerie: ["projets", "galerie"]
   };
+  function ancienne(cle) { return Object.prototype.hasOwnProperty.call(ALIAS, cle); }
+  /* « #/attentes/A-1 » → « #/valider/du/A-1 » ; une adresse actuelle reste telle quelle. */
+  function actuelle(ou) {
+    var m = String(ou || "").match(/^#\/?([^/?#]*)(.*)$/);
+    return m && ancienne(m[1]) ? "#/" + ALIAS[m[1]].join("/") + m[2] : ou;
+  }
   function segments() {
     return location.hash.replace(/^#\/?/, "").split("/").map(function (s) {
       try { return decodeURIComponent(s); } catch (_) { return s; }
@@ -32,7 +42,7 @@ window.APP = (function () {
   function adresse() { return "#/" + Array.from(arguments).map(encodeURIComponent).join("/"); }
   function piste() {
     var m = segments();
-    if (Object.prototype.hasOwnProperty.call(ANCIENNES, m[0])) m = ANCIENNES[m[0]].concat(m.slice(1));
+    if (ancienne(m[0])) m = ALIAS[m[0]].concat(m.slice(1));
     var cle = m[0] || "bureau";
     return { vue: VUES.find(function (v) { return v.cle === cle; }), cle: cle,
       arg: m[1], sous: m[2], objet: m[3], mode: m[4], version: m[5] };
@@ -406,7 +416,7 @@ window.APP = (function () {
     rendre();
   }
   return { demarrer: demarrer, rendre: rendre, chercher: chercher, moi: moi, adresse: adresse, retour: retour,
-    remplacerVue: remplacerVue };
+    remplacerVue: remplacerVue, ALIAS: ALIAS, actuelle: actuelle };
 })();
 
 /* ————————————————————— La capture rapide ————————————————————— */
