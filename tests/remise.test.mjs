@@ -162,3 +162,85 @@ test('un changement de portée pendant le dialogue empêche de rendre le verdict
   assert.equal(ci.versions[0].verdict, null);
   assert.equal(s.ctx.DEPOT.liste('decisions').length, 0);
 });
+
+/* ————— Les preuves souples : un BAT reçu sur WhatsApp, des fichiers partis
+ * par WeTransfer, une remise déclarée. ————— */
+
+test('une preuve est un lien https, un fichier déposé ou une déclaration ; sans type, c’est un lien', async () => {
+  const { R } = await installation();
+  const v = x => JSON.parse(JSON.stringify(R.preuveValide(x)));
+  assert.deepEqual(v({ url: 'https://documents.example.test/bat.pdf' }), { type: 'lien', url: 'https://documents.example.test/bat.pdf' });
+  assert.deepEqual(v({ type: 'fichier', chemin: 'assets/review/preuves/preuve-x1.jpg' }), { type: 'fichier', chemin: 'assets/review/preuves/preuve-x1.jpg' });
+  assert.deepEqual(v({ type: 'declaration', texte: 'OK par WhatsApp', contact: 'Imprimerie', date: '2026-11-08' }),
+    { type: 'declaration', texte: 'OK par WhatsApp', contact: 'Imprimerie', date: '2026-11-08' });
+  for (const faux of [null, {}, { url: 'http://documents.example.test/x' }, { type: 'lien', url: 'javascript:alert(1)' },
+    { type: 'fichier', chemin: 'assets/review/livrables/revue.jpg' }, { type: 'fichier', chemin: 'assets/review/preuves/../depots/base.json' },
+    { type: 'fichier', chemin: 'https://documents.example.test/x.jpg' }, { type: 'declaration', contact: 'Imprimerie' },
+    { type: 'declaration', date: '2026-11-08' }, { type: 'declaration', contact: 'Imprimerie', date: '2026-02-30' }, { type: 'autre' }]) {
+    assert.equal(R.preuveValide(faux), null, JSON.stringify(faux));
+  }
+});
+
+test('la déclaration seule vaut BAT, la photo aussi ; sans signataire ni date, rien ne vaut', async () => {
+  const { ci, sn, R } = await installation();
+  ci.fichiers = [{ id: 'B-1', type: 'bat', version: 2, nom: 'BAT accordé par Imprimerie', emplacement: '', signataire: 'Imprimerie',
+    signe_le: '2026-11-08', preuve: { type: 'declaration', texte: 'OK par WhatsApp', contact: 'Imprimerie', date: '2026-11-08' } }];
+  assert.equal(R.etatPiece(ci).cle, 'sortie', 'BAT reçu de X le D');
+  ci.fichiers = [{ id: 'B-2', type: 'bat', version: 2, nom: 'BAT', emplacement: '', signataire: 'Imprimerie', signe_le: '2026-11-08' }];
+  assert.equal(R.etatPiece(ci).cle, 'sortie', 'signataire et date, sans emplacement');
+  ci.fichiers = [{ id: 'B-3', type: 'bat', version: 2, nom: 'BAT', emplacement: '', signataire: '', signe_le: '2026-11-08' }];
+  assert.equal(R.etatPiece(ci).cle, 'bat', 'sans signataire, pas de BAT');
+  sn.fichiers = [{ id: 'B-4', type: 'bat', version: 2, nom: 'bon-signe.jpg', emplacement: 'assets/review/preuves/preuve-b4.jpg',
+    signataire: 'Imprimerie', signe_le: '2026-11-08', preuve: { type: 'fichier', chemin: 'assets/review/preuves/preuve-b4.jpg' } }];
+  assert.equal(R.etatPiece(sn).cle, 'sortie', 'la photo du bon signé');
+  sn.fichiers[0].version = 1;
+  assert.equal(R.etatPiece(sn).cle, 'bat', 'le BAT d’une autre version ne vaut pas');
+});
+
+test('des fichiers partis par WeTransfer ou sur le Drive valent sortie, lien facultatif', async () => {
+  const { ci, R } = await installation();
+  ci.fichiers = [{ id: 'B-1', type: 'bat', version: 2, nom: 'BAT', emplacement: '', signataire: 'Imprimerie', signe_le: '2026-11-08' },
+    { id: 'S-1', type: 'asset', role: 'sortie', version: 2, nom: 'Fichiers finaux · V2', emplacement: '', canal: 'WeTransfer' }];
+  assert.equal(R.etatPiece(ci).cle, 'preuve');
+  ci.fichiers[1].canal = '';
+  assert.equal(R.etatPiece(ci).cle, 'sortie', 'sans canal ni emplacement, rien n’est parti');
+  ci.fichiers[1].emplacement = 'https://drive.example.test/finaux';
+  assert.equal(R.etatPiece(ci).cle, 'preuve');
+});
+
+test('la remise se déclare : « remis à X le D », datée, attribuée, et rejouée sans doublon', async () => {
+  const { s, p, ci, R } = await installation();
+  preparer(ci, 'CI');
+  const piece = R.empreintePiece(ci, R.etatPiece(ci));
+  const saisieDeclaree = { destinataire: 'Chargée de production', quand: '2026-11-09', preuve: { type: 'declaration', texte: 'Remis en main propre' } };
+  const ecrit = R.consigner(p.id, [piece], saisieDeclaree);
+  assert.ok(ecrit.recu, ecrit.erreur);
+  assert.deepEqual(JSON.parse(JSON.stringify(ecrit.recu.preuve)),
+    { nom: 'Remise déclarée', type: 'declaration', texte: 'Remis en main propre', contact: 'Chargée de production', date: '2026-11-09' });
+  assert.equal(ecrit.recu.acteur.personneId, 'P-recette', 'la remise porte celui qui l’écrit');
+  assert.equal(R.preuveCourante(p, ci), ecrit.recu);
+  assert.equal(R.consigner(p.id, [piece], saisieDeclaree).deja, true);
+  assert.equal(p.preuvesRemise.length, 1);
+  assert.match(R.consigner(p.id, [piece], { ...saisieDeclaree, destinataire: '' }).erreur, /à qui/);
+  assert.match(R.consigner(p.id, [piece], { ...saisieDeclaree, quand: '2099-01-01' }).erreur, /date passée/);
+  const photo = R.consigner(p.id, [piece], { destinataire: 'Imprimerie', quand: '2026-11-09',
+    preuve: { type: 'fichier', chemin: 'assets/review/preuves/preuve-bl.pdf' } });
+  assert.equal(photo.recu.preuve.type, 'fichier');
+  /* Une nouvelle version invalide la preuve, comme pour un lien. */
+  ci.versions.push(version(3, null)); ci.version = 3;
+  assert.equal(R.preuveCourante(p, ci), null);
+  void s;
+});
+
+test('les reçus et les BAT écrits avant les preuves souples se relisent à l’identique', async () => {
+  const { p, ci, R } = await installation();
+  preparer(ci, 'CI');
+  const piece = R.empreintePiece(ci, R.etatPiece(ci));
+  /* La forme d'avant : une preuve sans type, un BAT sans preuve, une sortie sans canal. */
+  p.preuvesRemise = [{ id: 'REM-ancien', remis_le: '2026-11-09', destinataire: 'Chargée de production',
+    preuve: { nom: 'Accusé', url: 'https://documents.example.test/remises/42.pdf' }, pieces: [piece] }];
+  assert.equal(R.preuveCourante(p, ci).id, 'REM-ancien');
+  assert.equal(R.etatPiece(ci).cle, 'preuve');
+  p.preuvesRemise[0].preuve.url = 'http://documents.example.test/remises/42.pdf';
+  assert.equal(R.preuveCourante(p, ci), null, 'un lien qui n’est pas https ne devient pas valide');
+});

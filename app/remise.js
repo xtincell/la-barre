@@ -23,7 +23,7 @@ window.REMISE = (function () {
 
   function texte(v) { return typeof v === "string" ? v.trim() : ""; }
 
-  /* Le document reste dans son système d'origine, avec les mêmes droits. */
+  /* Un lien reste dans son système d'origine, avec les mêmes droits. */
   function urlPreuve(v) {
     var s = texte(v);
     if (!s || /[\u0000-\u001f\u007f]/.test(s)) return null;
@@ -31,6 +31,50 @@ window.REMISE = (function () {
       var u = new URL(s);
       return u.protocol === "https:" && !u.username && !u.password ? u.href : null;
     } catch (e) { return null; }
+  }
+
+  /* Un fichier déposé ici : la photo d'un BAT signé, la capture d'un accord
+   * reçu par message, le PDF d'un bon de livraison (IMAGE.deposerPreuve). */
+  function cheminPreuve(v) {
+    var s = texte(v);
+    return /^assets\/review\/preuves\/[A-Za-z0-9_-]+\.(jpe?g|png|webp|pdf)$/i.test(s) ? s : null;
+  }
+
+  /* Une date lue : jour valide du calendrier. L'écriture, elle, refuse aussi
+   * l'avenir (dater). */
+  function jourValide(s) {
+    s = texte(s);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+    var d = new Date(s + "T00:00:00Z");
+    return !isNaN(d) && d.toISOString().slice(0, 10) === s ? s : null;
+  }
+
+  /* Ce qui vaut preuve, d'un BAT comme d'une remise. Dans la vraie vie, un BAT
+   * est souvent un « OK » sur WhatsApp ou la photo d'un bon signé, et le
+   * fichier part par WeTransfer ou sur une clé : exiger un lien HTTPS, c'était
+   * laisser la remise « à joindre » pour toujours. Trois formes, chacune
+   * datée et attribuée par celui qui l'écrit :
+   *   { type: "lien", url }                       un lien https ;
+   *   { type: "fichier", chemin }                  une photo, une capture ou un PDF déposés ;
+   *   { type: "declaration", texte, contact, date } « BAT reçu de X le D ».
+   * Une preuve sans type est un lien : c'est la forme des reçus déjà écrits.
+   * Rend la preuve normalisée, ou null. */
+  function preuveValide(preuve) {
+    if (!preuve || typeof preuve !== "object") return null;
+    var type = preuve.type || "lien";
+    if (type === "lien") {
+      var url = urlPreuve(preuve.url);
+      return url ? { type: "lien", url: url } : null;
+    }
+    if (type === "fichier") {
+      var chemin = cheminPreuve(preuve.chemin);
+      return chemin ? { type: "fichier", chemin: chemin } : null;
+    }
+    if (type === "declaration") {
+      var contact = texte(preuve.contact), date = jourValide(preuve.date);
+      return contact && date ? { type: "declaration", texte: texte(preuve.texte), contact: contact, date: date } : null;
+    }
+    return null;
   }
 
   function versionCourante(l) {
@@ -47,18 +91,25 @@ window.REMISE = (function () {
 
   function fichierDeVersion(f, n) { return Number(f.version || 1) === n; }
 
+  /* Un BAT vaut signé quand on sait qui l'a accordé et ce qui le prouve : son
+   * emplacement (les BAT déjà rattachés), une preuve valide, ou à défaut la
+   * date de l'accord — le BAT déclaré, reçu oralement ou par message. */
   function batSigne(l, n) {
     return (l.fichiers || []).slice().reverse().find(function (f) {
-      return f.type === "bat" && fichierDeVersion(f, n) && texte(f.nom)
-        && texte(f.signataire) && texte(f.emplacement);
+      return f.type === "bat" && fichierDeVersion(f, n) && texte(f.nom) && texte(f.signataire)
+        && (texte(f.emplacement) || preuveValide(f.preuve) || jourValide(f.signe_le));
     }) || null;
   }
 
+  /* Le fichier qui part : rattaché par son emplacement, ou déclaré par le
+   * canal qui l'a porté (WeTransfer, Drive, clé…), lien facultatif. Un visuel
+   * de revue compressé n'en est jamais un. */
   function fichiersSortie(l, n) {
     return (l.fichiers || []).filter(function (f) {
       var lieu = texte(f.emplacement);
-      return f.type === "asset" && fichierDeVersion(f, n) && texte(f.nom) && lieu
-        && (f.role === "sortie" || !/(^|\/)assets\/review\//i.test(lieu));
+      if (f.type !== "asset" || !fichierDeVersion(f, n) || !texte(f.nom)) return false;
+      if (f.role === "sortie" && texte(f.canal)) return true;
+      return !!lieu && (f.role === "sortie" || !/(^|\/)assets\/review\//i.test(lieu));
     });
   }
 
@@ -80,8 +131,13 @@ window.REMISE = (function () {
   function empreintePiece(l, etat) {
     var v = versionCourante(l).objet;
     var fichiers = etat.fichiers.map(function (f) { return { id: f.id, nom: f.nom }; });
-    var identiteFichiers = etat.fichiers.map(function (f) { return JSON.stringify([f.id, f.nom, f.emplacement]); }).sort();
-    var bat = etat.bat ? [etat.bat.id, etat.bat.nom, etat.bat.signataire, etat.bat.emplacement, etat.bat.signe_le] : null;
+    /* Le canal et la preuve ne s'ajoutent qu'aux pièces qui les portent : les
+     * reçus écrits avant eux gardent leur empreinte. */
+    var identiteFichiers = etat.fichiers.map(function (f) {
+      return JSON.stringify([f.id, f.nom, f.emplacement].concat(f.canal ? [f.canal] : []));
+    }).sort();
+    var bat = etat.bat ? [etat.bat.id, etat.bat.nom, etat.bat.signataire, etat.bat.emplacement, etat.bat.signe_le]
+      .concat(etat.bat.preuve ? [preuveValide(etat.bat.preuve)] : []) : null;
     return {
       id: l.id, version: etat.version, marche: l.marche || null, support: l.support || null,
       empreinte: JSON.stringify([v.soumis_le, v.juge_le, bat, identiteFichiers]),
@@ -102,7 +158,7 @@ window.REMISE = (function () {
     if (e.cle !== "preuve") return null;
     var cible = empreintePiece(l, e);
     return preuves(p).slice().reverse().find(function (r) {
-      return r && r.preuve && urlPreuve(r.preuve.url) && Array.isArray(r.pieces)
+      return r && preuveValide(r.preuve) && Array.isArray(r.pieces)
         && r.pieces.some(function (x) { return identique(x, cible); });
     }) || null;
   }
@@ -112,9 +168,8 @@ window.REMISE = (function () {
   }
 
   function dater(s) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
-    var d = new Date(s + "T00:00:00Z");
-    return !isNaN(d) && d.toISOString().slice(0, 10) === s && s <= O.jour() ? s : null;
+    var j = jourValide(s);
+    return j && j <= O.jour() ? j : null;
   }
 
   function relirePieces(projetId, cibles) {
@@ -137,14 +192,22 @@ window.REMISE = (function () {
     var p = relirePieces(projetId, cibles);
     if (!p) return { erreur: "La sélection a changé. Relisez les versions et leurs BAT avant de continuer." };
     if (p.refDemandee) return { erreur: "La référence du projet est encore provisoire." };
-    var url = urlPreuve(saisie.url);
-    var nom = texte(saisie.nom);
     var personne = texte(saisie.destinataire);
     var quand = dater(texte(saisie.quand));
-    if (!url || !nom || !personne || !quand)
-      return { erreur: "Indiquez le nom de la preuve, son lien HTTPS, le destinataire et une date de remise passée ou du jour." };
+    if (!personne || !quand)
+      return { erreur: "Indiquez à qui la livraison a été remise, et une date passée ou du jour." };
+    /* La preuve : un lien, un fichier déposé, ou la déclaration de la remise
+     * elle-même (« remis à X le D »). L'ancienne saisie (`url`) reste un lien. */
+    var brute = saisie.preuve || (saisie.url !== undefined ? { type: "lien", url: saisie.url } : null);
+    if (brute && brute.type === "declaration")
+      brute = Object.assign({}, brute, { contact: brute.contact || personne, date: brute.date || quand });
+    var preuve = preuveValide(brute);
+    if (!preuve)
+      return { erreur: "Le justificatif doit être un lien HTTPS, une photo ou un PDF déposés, ou la remise déclarée." };
+    var nom = texte(saisie.nom) || (preuve.type === "declaration" ? "Remise déclarée" : "Justificatif de remise");
+    var cle = JSON.stringify(preuve);
     var doublon = preuves(p).find(function (r) {
-      return r && r.preuve && r.preuve.url === url && r.destinataire === personne && r.remis_le === quand
+      return r && JSON.stringify(preuveValide(r.preuve)) === cle && r.destinataire === personne && r.remis_le === quand
         && Array.isArray(r.pieces) && r.pieces.length === cibles.length
         && cibles.every(function (x) { return r.pieces.some(function (y) { return identique(x, y); }); });
     });
@@ -154,7 +217,7 @@ window.REMISE = (function () {
       return preuves(p).some(function (r) { return r.id === x; });
     });
     if (!id) return { erreur: "Impossible d’attribuer une référence à la remise. Réessayez." };
-    var recu = { id: id, remis_le: quand, destinataire: personne, preuve: { nom: nom, url: url },
+    var recu = { id: id, remis_le: quand, destinataire: personne, preuve: Object.assign({ nom: nom }, preuve),
       pieces: cibles.map(function (x) { return Object.assign({}, x); }),
       quand: new Date().toISOString(), acteur: window.ACTEUR ? ACTEUR.trace() : null };
     p.preuvesRemise = preuves(p).concat(recu);
@@ -610,5 +673,6 @@ window.REMISE = (function () {
   return { convention: convention, nomAttendu: nomAttendu, piece: piece, lot: lot,
     etat: etat, ouvrir: ouvrir, droits: droits, mentions: mentions, etatPiece: etatPiece,
     empreintePiece: empreintePiece, preuveCourante: preuveCourante, consigner: consigner,
-    suiviPiece: suiviPiece, suiviLot: suiviLot, versionCourante: versionCourante };
+    suiviPiece: suiviPiece, suiviLot: suiviLot, versionCourante: versionCourante,
+    preuveValide: preuveValide };
 })();
