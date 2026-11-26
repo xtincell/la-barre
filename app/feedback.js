@@ -222,8 +222,8 @@ window.FEEDBACK = (function () {
     });
     if (apresValidation.length) {
       out.push({ cle: "valide", quoi: "Il arrive après une validation",
-        detail: apresValidation.length + (apresValidation.length > 1 ? " livrables avaient" : " livrable avait")
-          + " été approuvée — ce n'est pas une correction, c'est une reprise",
+        detail: (apresValidation.length > 1 ? apresValidation.length + " livrables avaient été validés" : "1 livrable avait été validé")
+          + " : ce n'est pas une correction, c'est une reprise",
         force: 5 });
     }
 
