@@ -41,7 +41,7 @@ function parRang(r) {
  * journal d'une validation de document recopie le nom affiché au moment du
  * geste : on lit la capture avec les noms d'aujourd'hui, et rien d'autre. */
 const NOMS_RENOMMES = [['Approuvé sous réserve', 'Validé avec réserves'], ['Retour dans le périmètre', 'Modifs demandées'],
-  ['Hors périmètre', 'Refusé : hors brief'], ['Approuvé', 'Validé']];
+  ['Hors périmètre', 'Refusé : hors périmètre'], ['Approuvé', 'Validé']];
 function nomsActuels(r) {
   const c = copie(r);
   for (const e of c.base.journal || []) {

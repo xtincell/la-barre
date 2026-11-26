@@ -192,7 +192,7 @@ window.VALIDATION = (function () {
             verdict: verdict.cle, motif: motif || null, quand: objet.validation.quand,
             qui: MAISON.titulaire, acteur: objet.validation.acteur, version: objet.validation.version,
             portee: objet.validation.portee, titre: def.nom });
-          DEPOT.tracer("verdict", cle, p.id, verdict.nom + (motif ? " — " + motif : ""));
+          DEPOT.tracer("verdict", cle, p.id, nomDe(verdict) + (motif ? " — " + motif : ""));
           DEPOT.enregistrer(); PANNEAU.fermerSur(); if (rafraichir) rafraichir();
         } }, gesteDe(verdict)),
         verdict.cle !== "approuve"

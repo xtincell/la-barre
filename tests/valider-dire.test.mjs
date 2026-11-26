@@ -440,6 +440,12 @@ test('la validation d’un document : des boutons qui disent le geste, des refus
   assert.match(textes(refus), /Choisissez un critère ou écrivez pourquoi vous refusez\./);
   assert.doesNotMatch(textes(refus), /verdict|par goût|hors brief/i);
   assert.equal(p.sections.brief.validation, undefined, 'sans motif, rien n’est écrit');
+  saisie(refus).value = 'Le brief demande un second marché';
+  cliquer(bouton(refus, 'Refuser : hors périmètre'));
+  assert.equal(p.sections.brief.validation.verdict, 'hors');
+  const trace = s.ctx.DEPOT.tout().journal.filter(e => e.action === 'verdict').pop();
+  assert.equal(trace.detail, 'Refusé : hors périmètre — Le brief demande un second marché', 'le journal dit ce que l’écran a dit');
+  delete p.sections.brief.validation;
 
   s.ctx.VALIDATION.rendre(p, 'brief', p.sections.brief, verdict('approuve'), () => {});
   cliquer(bouton(s.dernier(), 'Valider'));
