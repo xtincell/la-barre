@@ -559,7 +559,7 @@ window.VUE_ASSET = (function () {
 
     return el("div.as-bloc", {},
       el("div.asb-t", {}, "Ce que le client en a dit",
-        el("span", {}, (fbs.length + annots.length) + " retours")),
+        el("span", {}, O.pluriel(fbs.length + annots.length, "retour"))),
 
       fbs.map(function (f) {
         var i = FEEDBACK.impact(f);
