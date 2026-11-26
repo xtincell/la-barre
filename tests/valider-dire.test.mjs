@@ -472,6 +472,27 @@ test('la validation d’un document : des boutons qui disent le geste, des refus
   assert.doesNotMatch(apres, /\.\./, 'un seul point après la date');
   assert.ok(!boutons(bandeApres).includes('✓ Valider'), 'une version validée ne se repropose pas à valider');
   assert.ok(boutons(bandeApres).includes('↩ Demander des modifs'));
+  /* Sous « Validé le … », les autres décisions se rangent sous « Changer la
+   * décision », comme sur la page d'une pièce : pas de clic par mégarde. */
+  const gestesDirects = n => {
+    const out = [];
+    (function voir(x) { if (!x || typeof x !== 'object' || x.tagName === 'DETAILS') return;
+      if (x.tagName === 'BUTTON' && x.getAttribute('data-geste')) out.push(x.textContent.trim()); (x.childNodes || []).forEach(voir); })(n);
+    return out;
+  };
+  assert.deepEqual(gestesDirects(bandeApres), [], 'aucune décision proposée à découvert sous « Validé le … »');
+  const changer = trouver(bandeApres, n => n.tagName === 'DETAILS');
+  assert.equal(trouver(changer, n => n.tagName === 'SUMMARY').textContent, 'Changer la décision');
+  assert.deepEqual(boutons(changer), ['◐ Valider avec réserves', '↩ Demander des modifs', '✕ Refuser : hors périmètre']);
+  assert.deepEqual(gestesDirects(bande), ['✓ Valider', '◐ Valider avec réserves', '↩ Demander des modifs', '✕ Refuser : hors périmètre'],
+    'sans décision, les quatre gestes restent à découvert');
+
+  /* Une validation « pour travail » reste à confirmer : « Valider » reste à
+   * découvert, le reste sous « Changer la décision ». */
+  p.sections.brief.validation.portee = 'travail';
+  const pourTravail = s.ctx.VALIDATION.bande(p, 'brief', p.sections.brief, () => {});
+  assert.deepEqual(gestesDirects(pourTravail), ['✓ Valider']);
+  assert.deepEqual(boutons(trouver(pourTravail, n => n.tagName === 'DETAILS')), ['◐ Valider avec réserves', '↩ Demander des modifs', '✕ Refuser : hors périmètre']);
 });
 
 /* ————— Enregistrer un retour client ————— */

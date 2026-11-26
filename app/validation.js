@@ -100,20 +100,29 @@ window.VALIDATION = (function () {
         + " à confirmer : une approbation permet de travailler, elle ne consigne pas ces confirmations."));
     }
 
+    /* La décision qui couvre déjà cette version ne se repropose pas sous
+     * elle (« Validé le 3 oct. » puis « Valider ») ; une validation « pour
+     * travail » reste à confirmer, son bouton reste. Une fois la version
+     * décidée, les autres décisions se rangent sous « Changer la décision »,
+     * comme sur la page d'une pièce : on n'en change pas par mégarde. */
+    var decidee = e.cle !== "aucun" && !vieux;
+    var aConfirmer = decidee && e.cle === "approuve" && e.ton !== "vert";
+    function geste(v) {
+      return el("button.b" + (v.cle === "approuve" ? ".vert" : ""), { type: "button", "data-geste": v.cle,
+        onclick: function () { rendre(p, cle, objet, v, rafraichir); } },
+        el("span", { "aria-hidden": "true" }, v.signe), " " + gesteDe(v));
+    }
+    var proposes = MAISON.verdicts.filter(function (v) {
+      return vieux || v.cle !== e.cle || (v.cle === "approuve" && e.ton !== "vert");
+    });
+    var directs = proposes.filter(function (v) { return !decidee || (aConfirmer && v.cle === "approuve"); });
+    var changer = proposes.filter(function (v) { return directs.indexOf(v) === -1; });
+
     return el("div.vd", {},
       lignes,
       el("div.vd-gestes", {},
         el("span.vd-v", {}, "V" + VERSION.num(objet)),
-        /* La décision qui couvre déjà cette version ne se repropose pas sous
-         * elle (« Validé le 3 oct. » puis « Valider ») ; une validation « pour
-         * travail » reste à confirmer, son bouton reste. */
-        MAISON.verdicts.filter(function (v) {
-          return vieux || v.cle !== e.cle || (v.cle === "approuve" && e.ton !== "vert");
-        }).map(function (v) {
-          return el("button.b" + (v.cle === "approuve" ? ".vert" : ""), { type: "button",
-            onclick: function () { rendre(p, cle, objet, v, rafraichir); } },
-            el("span", { "aria-hidden": "true" }, v.signe), " " + gesteDe(v));
-        }),
+        directs.map(geste),
         el("button.b.nu", { type: "button", onclick: function () {
           VERSION.nouvelle(objet, def.nom, rafraichir, {
             quand: function () { if (objet.validation) objet.validation.perime = true; },
@@ -124,7 +133,12 @@ window.VALIDATION = (function () {
               PANNEAU.ouvrir("Versions — " + def.nom, p.ref, VERSION.fil(objet));
             } }, VERSION.historique(objet).length + (VERSION.historique(objet).length > 1 ? " versions" : " version"))
           : null
-      ));
+      ),
+      changer.length
+        ? el("details.rvp-autre.vd-autre", {}, el("summary", {}, "Changer la décision"),
+            el("p.rvp-note", {}, "La nouvelle décision s'ajoute à l'historique de la V" + VERSION.num(objet) + "."),
+            el("div.vd-gestes", {}, changer.map(geste)))
+        : null);
   }
 
   /* ————————————————————— Décider ————————————————————— */
