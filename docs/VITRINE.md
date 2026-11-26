@@ -122,7 +122,8 @@ Le dossier produit contient `vitrine/`, `app/` sans `app/maison.js` ni
 `vitrine/index.html`, et `distribution.json` (commit et empreinte de chaque
 fichier). Il ne contient ni `servir.mjs`, ni `depots/`, ni `assets/`, ni
 `sources/`, `documents/`, `extraits/`, `kit-ordi-dedie/`, `outils/`, `profils/`
-ou `tests/`. Le vérificateur refuse un fichier non listé, un fichier appelé par
+ou `tests/`, ni `vitrine/demo/sources/` (les deux photographies d'où dérivent
+les visuels : elles servent à les refaire, pas à les montrer). Le vérificateur refuse un fichier non listé, un fichier appelé par
 une des deux pages et absent, ou un marqueur de l'installation historique dans
 `vitrine/`.
 

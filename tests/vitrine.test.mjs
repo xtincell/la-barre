@@ -271,6 +271,7 @@ test('la distribution de la vitrine ne porte ni serveur, ni base, ni profil hist
     'LICENSE': 'Licence', 'app/maison.js': sonde, 'app/amorce.js': sonde, 'servir.mjs': sonde, 'index.html': sonde,
     'depots/client.json': sonde, 'assets/review/x.png': sonde, 'sources/brief.md': sonde, 'documents/x.md': sonde,
     'extraits/x.md': sonde, 'kit-ordi-dedie/x.txt': sonde, 'outils/x.mjs': sonde, 'profils/entreprise/maison.js': sonde,
+    'vitrine/demo/sources/photo.jpg': sonde,
   });
   const destination = path.join(source, 'distribution');
   const manifest = await distribuer({ source, commit: commit(source), destination });
@@ -301,5 +302,8 @@ test('la vitrine du dépôt se distribue telle quelle : chaque fichier appelé e
   const manifest = await distribuer({ source, commit: commit(source), destination });
   assert.ok(!Object.hasOwn(manifest.files, 'app/maison.js') && !Object.hasOwn(manifest.files, 'app/amorce.js'));
   assert.ok(Object.hasOwn(manifest.files, 'vitrine/demo/maison.js'));
+  assert.ok(!Object.keys(manifest.files).some(n => n.startsWith('vitrine/demo/sources/')), 'les photographies sources ne partent pas');
+  for (const v of Object.keys(JSON.parse(await readFile(path.join(RACINE, 'vitrine/demo/visuels/LISEZMOI.json'), 'utf8')).visuels))
+    assert.ok(Object.hasOwn(manifest.files, 'vitrine/demo/visuels/' + v), 'visuel distribué : ' + v);
   assert.ok(Object.keys(manifest.files).every(n => n === 'index.html' || /^(vitrine|app|styles)\/|^LICENSE$/.test(n)));
 });

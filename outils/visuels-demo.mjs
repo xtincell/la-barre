@@ -133,8 +133,12 @@ export const DECLINAISONS = [
     langue: 'fr', marche: 'CI', textes: { ...CARRE_FR, legal: LEGAL.CI }, quoi: 'Post social 1:1, Côte d’Ivoire' },
   { fichier: 'social-gh.jpg', source: 'orvelle', format: '1:1', largeur: 800, hauteur: 800, cadre: CARRE, mise: 'cote',
     langue: 'en', marche: 'GH', textes: { ...CARRE_EN, legal: LEGAL.GH }, quoi: 'Post social 1:1, Ghana' },
-  { fichier: 'noro-invitation.jpg', source: 'atelier', format: '3:2', largeur: 1200, hauteur: 800, cadre: PLEIN, mise: 'aucune',
-    langue: 'fr', marche: 'CM', textes: null, quoi: 'L’invitation d’Atelier Noro telle qu’elle existe, à décliner' },
+  /* La photographie telle quelle, recopiée à l'octet : la distribution
+   * publique ne porte pas vitrine/demo/sources/, et la démo montre
+   * l'invitation à décliner. Le manifeste le dit, --check le vérifie. */
+  { fichier: 'noro-invitation.jpg', source: 'atelier', copie: true, format: '3:2', largeur: 1200, hauteur: 800, cadre: PLEIN, mise: 'aucune',
+    langue: 'fr', marche: 'CM', textes: null,
+    quoi: 'L’invitation d’Atelier Noro telle qu’elle existe, à décliner : la photographie source, recopiée telle quelle' },
   { fichier: 'noro-story.jpg', source: 'atelier', format: '9:16', largeur: 540, hauteur: 960, cadre: { x: 375, y: 0, l: 450, h: 800 },
     mise: 'story', langue: 'fr', marche: 'CM',
     textes: { haut: 'Atelier Noro vous invite', bas: ['Vernissage · jeudi 10 décembre', '19 h · Douala'] },
@@ -277,7 +281,7 @@ export async function generer() {
     });
     for (const v of DECLINAISONS) {
       let octets;
-      if (v.mise === 'aucune' && v.cadre === PLEIN && !v.grade) {
+      if (v.copie) {
         octets = sources[v.source];
       } else {
         const donnees = 'data:image/jpeg;base64,' + sources[v.source].toString('base64');
@@ -303,7 +307,7 @@ export async function generer() {
 async function composerManifeste(sources) {
   const visuels = {};
   for (const v of DECLINAISONS) {
-    visuels[v.fichier] = { fictif: true, source: v.source + '.jpg', format: v.format,
+    visuels[v.fichier] = { fictif: true, source: v.source + '.jpg', ...(v.copie ? { copie: true } : {}), format: v.format,
       largeur: v.largeur, hauteur: v.hauteur, langue: v.textes ? v.langue : null, marche: v.marche, quoi: v.quoi };
   }
   Object.assign(visuels, AUTRES);
@@ -340,7 +344,9 @@ export async function verifier() {
     if (!presents.includes(n)) { fautes.push('visuel déclaré absent : ' + n); continue; }
     if (v.source && !Object.hasOwn(manifeste.sources, v.source)) fautes.push('source inconnue pour ' + n);
     if (/\.jpe?g$/.test(n)) {
-      const d = dimensionsJpeg(await readFile(join(VISUELS, n)));
+      const octets = await readFile(join(VISUELS, n));
+      if (v.copie && empreinte(octets) !== (manifeste.sources[v.source] || {}).sha256) fautes.push('copie différente de sa source : ' + n);
+      const d = dimensionsJpeg(octets);
       if (!d || d.largeur !== v.largeur || d.hauteur !== v.hauteur) fautes.push('dimensions de ' + n + ' : ' + JSON.stringify(d));
     }
   }

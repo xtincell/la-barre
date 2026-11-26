@@ -105,12 +105,13 @@
   "noro-invitation.jpg": {
    "fictif": true,
    "source": "atelier.jpg",
+   "copie": true,
    "format": "3:2",
    "largeur": 1200,
    "hauteur": 800,
    "langue": null,
    "marche": "CM",
-   "quoi": "L’invitation d’Atelier Noro telle qu’elle existe, à décliner"
+   "quoi": "L’invitation d’Atelier Noro telle qu’elle existe, à décliner : la photographie source, recopiée telle quelle"
   },
   "noro-story.jpg": {
    "fictif": true,
