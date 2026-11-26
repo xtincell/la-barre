@@ -60,10 +60,10 @@ base, avec l'outil de la branche :
 
 ```bash
 base=<commit de base du lot>     # par exemple : git merge-base HEAD origin/main
-export=$(mktemp -d) && git archive "$base" | tar -x -C "$export"
-cp outils/recette-captures.mjs outils/termes-interdits.mjs "$export/outils/"
-ln -s "$PWD/node_modules" "$export/node_modules"
-BROWSER_CHANNEL=chrome node "$export/outils/recette-captures.mjs" --avant \
+copie=$(mktemp -d) && git archive "$base" | tar -x -C "$copie"
+cp outils/recette-captures.mjs outils/termes-interdits.mjs "$copie/outils/"
+ln -s "$PWD/node_modules" "$copie/node_modules"
+BROWSER_CHANNEL=chrome node "$copie/outils/recette-captures.mjs" --avant \
   --commit "$(git rev-parse --short "$base")" --sortie "$(node outils/recette-captures.mjs --ou)" \
   --horloge 2026-11-26T09:00:00
 ```
