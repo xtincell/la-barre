@@ -696,8 +696,12 @@
 .avis.grave { border-left-color: var(--bloquant-txt); background: var(--nuit-carte); }
 .avis-t { flex: 1; font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; }
 .avis.grave .avis-t { color: var(--bloquant-txt); }
+/* Le ✕ se touche au doigt : 44 px de côté, repris sur la marge de l'avis
+ * pour ne pas le grandir, et assez loin d'« Annuler ». */
 .avis-x { background: none; border: 0; color: var(--clair-terne); font: inherit;
-  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); cursor: pointer; padding: 0 .2rem; }
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); cursor: pointer; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  min-width: 44px; min-height: 44px; margin: -.65rem -.75rem -.65rem 0; }
 .avis-x:hover { color: var(--clair); }
 .avis-a { background: none; border: 1px solid var(--trait-clair); color: var(--clair); font: inherit;
   font-size: var(--t-meta); font-weight: 600; min-height: 32px; padding: 0 .7rem; cursor: pointer; }

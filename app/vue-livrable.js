@@ -734,13 +734,14 @@ window.VUE_LIVRABLE = (function () {
     if (meme && version.objet.verdict === x.verdict) return;
     var contexte = meme ? etatPourVerdict(l, version.objet) : null;
     if (!verdict || !contexte || version.objet.verdict || empreinte(contexte) !== x.empreinte) {
-      if (window.AVIS) AVIS.refus("La validation de " + nom + " n'a pas été enregistrée : la pièce a changé depuis. "
+      /* Un avis qui reste : la personne croyait cette validation enregistrée. */
+      if (window.AVIS) AVIS.grave("La validation de " + nom + " n'a pas été enregistrée : la pièce a changé depuis. "
         + "Relisez-la, et validez-la de nouveau si c'est toujours votre décision.");
       return;
     }
     var erreur = poser(x.projetId, x.livrableId, contexte, verdict, "");
     if (window.AVIS) {
-      if (erreur) AVIS.refus("La validation de " + nom + " n'a pas été enregistrée. " + erreur);
+      if (erreur) AVIS.grave("La validation de " + nom + " n'a pas été enregistrée. " + erreur);
       else AVIS.fait("Validation de " + nom + " enregistrée.");
     }
   }

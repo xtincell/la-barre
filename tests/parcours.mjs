@@ -129,6 +129,18 @@ try {
   await page.getByRole('link', { name:'Suivre le BAT et la remise' }).waitFor();
   assert.equal(await valider.count(), 0, 'La décision enregistrée reste en lecture seule');
   assert.equal(await avis.count(), 0, 'L’avis d’annulation part avec l’échéance');
+  // Un refus corrigé ne s'empile pas : le suivant, ou un succès, le remplace.
+  // Le ✕ d'un avis se touche au doigt : 44 px de côté.
+  const pile = await page.evaluate(() => {
+    AVIS.refus('Premier refus'); AVIS.refus('Second refus');
+    const refus = document.querySelectorAll('.avis-pile .avis.refus').length;
+    const x = document.querySelector('.avis-pile .avis.refus .avis-x').getBoundingClientRect();
+    AVIS.fait('Réussi');
+    const apres = document.querySelectorAll('.avis-pile .avis.refus').length;
+    document.querySelectorAll('.avis-pile .avis').forEach(n => n.remove());
+    return { refus, apres, x: [Math.round(x.width), Math.round(x.height)] };
+  });
+  assert.deepEqual(pile, { refus: 1, apres: 0, x: [44, 44] });
   await page.goBack();
   await page.setViewportSize({ width:1440, height:1050 });
   await page.getByRole('heading', {name:'Sur la table'}).waitFor();

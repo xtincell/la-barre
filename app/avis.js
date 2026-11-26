@@ -50,8 +50,17 @@ window.AVIS = (function () {
     if (n && n.parentNode) n.parentNode.removeChild(n);
   }
 
-  function refus(texte) { return poser(texte, "refus"); }
-  function fait(texte) { return poser(texte, "fait"); }
+  /* Un refus corrigé ne reste pas à l'écran : un nouveau refus, ou ce qui a
+   * réussi, remplace les refus précédents au lieu de s'empiler sur eux. */
+  function oublierRefus() {
+    if (!pile) return;
+    [].slice.call(pile.children).forEach(function (n) {
+      if (n.classList && n.classList.contains("refus")) retirer(n);
+    });
+  }
+
+  function refus(texte) { oublierRefus(); return poser(texte, "refus"); }
+  function fait(texte) { oublierRefus(); return poser(texte, "fait"); }
   function grave(texte) { return poser(texte, "grave", 0); }
 
   return { poser: poser, action: action, refus: refus, fait: fait, grave: grave, retirer: retirer };

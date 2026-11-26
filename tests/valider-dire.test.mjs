@@ -130,7 +130,7 @@ async function validation(graine, stockage) {
   semer(s.ctx, { personnes: PERSONNES, projets: [projet('VA', { livrables: [livrable('L-va', { nom: 'Affiche · CM' })] })] });
   const minuteries = [], avis = [];
   s.ctx.setTimeout = f => { minuteries.push(f); return minuteries.length; };
-  s.ctx.AVIS = { refus: m => avis.push(['refus', m]), fait: m => avis.push(['fait', m]), grave() {},
+  s.ctx.AVIS = { refus: m => avis.push(['refus', m]), fait: m => avis.push(['fait', m]), grave: m => avis.push(['grave', m]),
     action: t => { avis.push(['action', t]); return {}; }, retirer() {} };
   const p = s.ctx.DEPOT.trouve('projets', 'VA');
   return { s, p, l: p.livrables[0], minuteries, avis, notes: () => JSON.parse(s.ctx.localStorage.getItem('la-barre-validations') || '[]') };
@@ -188,6 +188,7 @@ test('une page fermée avant l’échéance : la note se rejoue à la réouvertu
   changee.s.ctx.VUE_LIVRABLE.reprendreValidations();
   assert.equal(changee.l.versions[0].verdict, undefined, 'une pièce changée n’est pas validée à l’aveugle');
   assert.equal(changee.s.ctx.DEPOT.liste('decisions').length, 0);
+  assert.deepEqual(changee.avis.map(a => a[0]), ['grave'], 'un avis qui reste');
   assert.match(changee.avis[0][1], /n'a pas été enregistrée : la pièce a changé depuis/);
   assert.deepEqual(changee.notes(), []);
 
