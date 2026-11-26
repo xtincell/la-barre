@@ -1,0 +1,146 @@
+{
+ "mention": "Démonstration — données fictives",
+ "note": "Visuels de la démonstration publique : marques, campagnes, lieux et textes inventés. Dérivés par outils/visuels-demo.mjs des deux photographies fictives de vitrine/demo/sources/. La mention de démonstration est portée par la coque de l’application, pas par les images.",
+ "sources": {
+  "orvelle.jpg": {
+   "sha256": "cbffee0c9e9b89abc9bc7cc80c17bf775ff670c8c028db51c52563e29d7ea985",
+   "largeur": 1200,
+   "hauteur": 800,
+   "quoi": "Canette fictive Orvelle, citron vert et feuilles, sur fond cobalt (photographie générée, marque inventée)"
+  },
+  "atelier.jpg": {
+   "sha256": "4c4ea3f41be3b60622332f4017887590c394f9a7e04dd8569ee2a5135c5b5488",
+   "largeur": 1200,
+   "hauteur": 800,
+   "quoi": "Carton d’invitation fictif « Atelier Noro » sur une enveloppe corail (photographie générée, atelier inventé)"
+  }
+ },
+ "visuels": {
+  "affiche-ci.jpg": {
+   "fictif": true,
+   "source": "orvelle.jpg",
+   "format": "4:3",
+   "largeur": 1200,
+   "hauteur": 900,
+   "langue": "fr",
+   "marche": "CI",
+   "quoi": "Affiche 4×3, Côte d’Ivoire"
+  },
+  "affiche-sn.jpg": {
+   "fictif": true,
+   "source": "orvelle.jpg",
+   "format": "4:3",
+   "largeur": 1200,
+   "hauteur": 900,
+   "langue": "fr",
+   "marche": "SN",
+   "quoi": "Affiche 4×3, Sénégal"
+  },
+  "kv-ci.jpg": {
+   "fictif": true,
+   "source": "orvelle.jpg",
+   "format": "3:2",
+   "largeur": 1200,
+   "hauteur": 800,
+   "langue": "fr",
+   "marche": "CI",
+   "quoi": "KV adapté à la Côte d’Ivoire"
+  },
+  "kv-gh.jpg": {
+   "fictif": true,
+   "source": "orvelle.jpg",
+   "format": "3:2",
+   "largeur": 1200,
+   "hauteur": 800,
+   "langue": "en",
+   "marche": "GH",
+   "quoi": "KV adapté au Ghana, titraille traduite en anglais"
+  },
+  "kv-master-v1.jpg": {
+   "fictif": true,
+   "source": "orvelle.jpg",
+   "format": "3:2",
+   "largeur": 1200,
+   "hauteur": 800,
+   "langue": "fr",
+   "marche": null,
+   "quoi": "KV master, V1 : la canette est dans l’ombre et floue, le pack ne se lit pas (défaut voulu, corrigé en V2)"
+  },
+  "kv-master.jpg": {
+   "fictif": true,
+   "source": "orvelle.jpg",
+   "format": "3:2",
+   "largeur": 1200,
+   "hauteur": 800,
+   "langue": "fr",
+   "marche": null,
+   "quoi": "KV master, V2 : la canette se lit à trois mètres"
+  },
+  "kv-sn.jpg": {
+   "fictif": true,
+   "source": "orvelle.jpg",
+   "format": "3:2",
+   "largeur": 1200,
+   "hauteur": 800,
+   "langue": "fr",
+   "marche": "SN",
+   "quoi": "KV adapté au Sénégal, avec la mention imposée"
+  },
+  "kv-source-2026.jpg": {
+   "fictif": true,
+   "source": "orvelle.jpg",
+   "format": "3:2",
+   "largeur": 1200,
+   "hauteur": 800,
+   "langue": "fr",
+   "marche": "CI · SN",
+   "quoi": "KV de la campagne précédente, Orvelle Source 2026"
+  },
+  "logo-orvelle.svg": {
+   "fictif": true,
+   "source": null,
+   "format": null,
+   "quoi": "Logo de la marque fictive Orvelle"
+  },
+  "noro-invitation.jpg": {
+   "fictif": true,
+   "source": "atelier.jpg",
+   "format": "3:2",
+   "largeur": 1200,
+   "hauteur": 800,
+   "langue": null,
+   "marche": "CM",
+   "quoi": "L’invitation d’Atelier Noro telle qu’elle existe, à décliner"
+  },
+  "noro-story.jpg": {
+   "fictif": true,
+   "source": "atelier.jpg",
+   "format": "9:16",
+   "largeur": 540,
+   "hauteur": 960,
+   "langue": "fr",
+   "marche": "CM",
+   "quoi": "Story 9:16 de l’invitation d’Atelier Noro"
+  },
+  "social-ci.jpg": {
+   "fictif": true,
+   "source": "orvelle.jpg",
+   "format": "1:1",
+   "largeur": 800,
+   "hauteur": 800,
+   "langue": "fr",
+   "marche": "CI",
+   "quoi": "Post social 1:1, Côte d’Ivoire"
+  },
+  "social-gh.jpg": {
+   "fictif": true,
+   "source": "orvelle.jpg",
+   "format": "1:1",
+   "largeur": 800,
+   "hauteur": 800,
+   "langue": "en",
+   "marche": "GH",
+   "quoi": "Post social 1:1, Ghana"
+  }
+ }
+}

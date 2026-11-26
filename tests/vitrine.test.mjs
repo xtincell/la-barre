@@ -8,6 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { construire, serialiser, SORTIE } from '../outils/vitrine-base.mjs';
 import { distribuer, verifier, MARQUEURS } from '../outils/distribuer-vitrine.mjs';
+import { verifier as verifierVisuels } from '../outils/visuels-demo.mjs';
 
 /* La vitrine publique (LB6) : une page qui raconte le brief-au-BAT, et une
  * démonstration qui fait tourner l'application elle-même sur une base fictive.
@@ -168,13 +169,48 @@ test('chaque surface publique dit « Démonstration — données fictives »', a
   const vitrine = await lire('vitrine/index.html');
   assert.ok((vitrine.match(/Démonstration — données fictives/g) || []).length >= 2, 'le ruban et le pied de la vitrine');
   assert.match(await lire('vitrine/demo/index.html'), /données fictives/);
-  assert.match(await lire('app/application.js'), /"Démonstration — données fictives\."/);
-  assert.match(await lire('app/application.js'), /"Démonstration — données fictives"/);
-  const visuels = await readdir(path.join(RACINE, 'vitrine/demo/visuels'));
-  assert.ok(visuels.length >= 5);
-  for (const v of visuels) assert.match(await lire('vitrine/demo/visuels/' + v), /DÉMONSTRATION — DONNÉES FICTIVES|MARQUE FICTIVE/, v);
   assert.doesNotMatch(vitrine, MARQUEURS);
   assert.doesNotMatch(vitrine, /gain de temps de|\d+ ?% (de temps|plus rapide)/, 'aucune mesure revendiquée');
+});
+
+/* Dans la démonstration, la mention vit à un seul endroit : le bandeau
+ * repliable de la coque, sur chaque écran. Les visuels ne la portent pas, ce
+ * sont des créations qu'on juge ; leur manifeste les déclare fictifs. */
+test('la coque porte le bandeau de démonstration sur chaque écran, et seulement en démonstration', async () => {
+  const application = await lire('app/application.js');
+  assert.match(application, /"Démonstration — données fictives\."/);
+  assert.match(application, /"Démonstration — données fictives"/);
+  const appels = [...application.matchAll(/if \(DEPOT\.estDemonstration\(\)\) corps\.appendChild\(bandeauDemonstration\(\)\)/g)];
+  assert.ok(appels.length >= 2, 'le bandeau se pose au rendu de chaque écran et pendant le chargement');
+  assert.match(application, /function bandeauDemonstration\(\) \{[\s\S]*?el\("details\.demo-bandeau/, 'un bandeau repliable');
+});
+
+test('chaque visuel de la démonstration est déclaré fictif à son manifeste, sans mention gravée dans l’image', async () => {
+  const { fautes, manifeste } = await verifierVisuels();
+  assert.deepEqual(fautes, []);
+  assert.match(manifeste.mention, /^Démonstration — données fictives$/);
+  const visuels = (await readdir(path.join(RACINE, 'vitrine/demo/visuels'))).filter(n => n !== 'LISEZMOI.json');
+  assert.ok(visuels.length >= 5, 'au moins cinq visuels');
+  assert.ok(visuels.every(v => manifeste.visuels[v] && manifeste.visuels[v].fictif === true));
+  assert.deepEqual(visuels.filter(v => v.endsWith('.svg')), ['logo-orvelle.svg'], 'plus aucun gabarit dessiné, sauf le logo');
+  for (const v of visuels.filter(n => n.endsWith('.svg'))) {
+    assert.doesNotMatch(await lire('vitrine/demo/visuels/' + v), /DÉMONSTRATION — DONNÉES FICTIVES/, v);
+  }
+  /* Ce que la base désigne existe, et rien d'autre n'est désigné. */
+  const base = await readFile(SORTIE, 'utf8');
+  const designes = [...new Set([...base.matchAll(/"visuels\/([^"]+)"/g)].map(m => m[1]))];
+  for (const v of designes) assert.ok(visuels.includes(v), 'la base désigne un visuel absent : ' + v);
+  const vitrine = await lire('vitrine/index.html');
+  for (const m of vitrine.matchAll(/src="demo\/visuels\/([^"]+)"/g)) assert.ok(visuels.includes(m[1]), m[1]);
+  /* Les déclinaisons diffèrent vraiment : formats, langues, et la V1 au
+   * défaut voulu que la V2 corrige. */
+  const formats = new Set(Object.values(manifeste.visuels).map(v => v.format).filter(Boolean));
+  for (const f of ['3:2', '4:3', '1:1', '9:16']) assert.ok(formats.has(f), f);
+  assert.equal(manifeste.visuels['kv-gh.jpg'].langue, 'en');
+  assert.equal(manifeste.visuels['kv-ci.jpg'].langue, 'fr');
+  const master = JSON.parse(base).projets.find(p => p.id === 'PRJ-zeste').livrables.find(l => l.niveau === 'maitre');
+  assert.equal(master.vignette, 'visuels/kv-master.jpg');
+  assert.equal(master.versions[0].etat.vignette, 'visuels/kv-master-v1.jpg', 'la V1 garde son visuel, celui que le retour vise');
 });
 
 test('les liens de la vitrine ouvrent des écrans et des dossiers qui existent dans la démonstration', async () => {

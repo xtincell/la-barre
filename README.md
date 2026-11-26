@@ -713,6 +713,7 @@ node --test tests/approches.test.mjs
 node --test tests/entreprise.test.mjs
 npm run test:radar
 node outils/vitrine-base.mjs --check
+node outils/visuels-demo.mjs --check
 npm run test:vitrine
 npm run test:recette
 ```
@@ -748,6 +749,7 @@ Les scripts de `package.json` :
 | `npm run test:radar` | `node --test tests/radar-decisions.test.mjs` |
 | `npm run test:vitrine` | `node --test tests/vitrine.test.mjs` |
 | `npm run vitrine:base` | `node outils/vitrine-base.mjs` (réécrit la base fictive de la démonstration) |
+| `npm run vitrine:visuels` | `node outils/visuels-demo.mjs` (réécrit les visuels de la démonstration depuis ses deux photographies) |
 | `npm run test:recette` | `node --test tests/usage-reel.test.mjs tests/recette-captures.test.mjs tests/recette-mesure.test.mjs` |
 | `npm run usage:reel` | `node outils/usage-reel.mjs` (relevé d'usage sur une copie de la base, en lecture seule) |
 | `npm run recette:captures` | `node outils/recette-captures.mjs` (captures de tous les espaces, hors du dépôt) |

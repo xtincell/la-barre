@@ -360,7 +360,7 @@
      "estime": 3,
      "reel": 4,
      "remise": "2026-02-20",
-     "vignette": "visuels/kv-source-2026.svg",
+     "vignette": "visuels/kv-source-2026.jpg",
      "origine": "prevu",
      "versions": [
       {
@@ -868,7 +868,10 @@
        "soumis_le": "2026-10-24T17:00:00.000Z",
        "verdict": "retour",
        "motif": "La canette ne se lit pas à trois mètres : un critère écrit de la big idea.",
-       "juge_le": "2026-10-26T09:00:00.000Z"
+       "juge_le": "2026-10-26T09:00:00.000Z",
+       "etat": {
+        "vignette": "visuels/kv-master-v1.jpg"
+       }
       },
       {
        "n": 2,
@@ -909,7 +912,7 @@
       "geste": "La main ouvre la canette",
       "lumiere": "Le premier rayon, avant sept heures"
      },
-     "vignette": "visuels/kv-master.svg",
+     "vignette": "visuels/kv-master.jpg",
      "remise": "2026-10-28",
      "echeance": "2026-10-29"
     },
@@ -986,7 +989,7 @@
        "restrictions": []
       }
      },
-     "vignette": "visuels/kv-ci.svg",
+     "vignette": "visuels/kv-ci.jpg",
      "remise": "2026-11-06",
      "echeance": "2026-11-07"
     },
@@ -1064,7 +1067,7 @@
        "restrictions": []
       }
      },
-     "vignette": "visuels/kv-sn.svg",
+     "vignette": "visuels/kv-sn.jpg",
      "remise": "2026-11-06",
      "echeance": "2026-11-07"
     },
@@ -1139,7 +1142,7 @@
        "restrictions": []
       }
      },
-     "vignette": "visuels/kv-gh.svg",
+     "vignette": "visuels/kv-gh.jpg",
      "remise": "2026-11-06",
      "echeance": "2026-11-07"
     },
@@ -1188,7 +1191,7 @@
       "local": "attente",
       "final": "attente"
      },
-     "vignette": "visuels/affiche-ci.svg",
+     "vignette": "visuels/affiche-ci.jpg",
      "fichiers": [
       {
        "id": "F-zkfm92",
@@ -1253,7 +1256,7 @@
       "local": "attente",
       "final": "attente"
      },
-     "vignette": "visuels/social-ci.svg"
+     "vignette": "visuels/social-ci.jpg"
     },
     {
      "id": "L-c3ih-1eb7ymdcbd5q",
@@ -1300,7 +1303,7 @@
       "local": "attente",
       "final": "attente"
      },
-     "vignette": "visuels/affiche-sn.svg",
+     "vignette": "visuels/affiche-sn.jpg",
      "fichiers": [
       {
        "id": "F-729t8y",
@@ -1350,7 +1353,7 @@
       "local": "attente",
       "final": "attente"
      },
-     "vignette": "visuels/social-gh.svg"
+     "vignette": "visuels/social-gh.jpg"
     }
    ],
    "demandes": [

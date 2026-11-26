@@ -11,7 +11,9 @@
 //                                           celui que rejouent les modules actuels
 //
 // Aucune personne, marque, client ni campagne réels. Rien n'est lu dans
-// depots/ ni ailleurs : la base part de zéro.
+// depots/ ni ailleurs : la base part de zéro. Les visuels qu'elle désigne
+// (visuels/*.jpg) dérivent de deux photographies fictives par
+// outils/visuels-demo.mjs.
 
 import vm from 'node:vm';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -241,6 +243,15 @@ function soumettre(c, l, quand) {
   l.version = n;
   c.ctx.DEPOT.tracer('soumission', 'livrables', 'PRJ-zeste', l.nom + ' V' + n);
 }
+
+/* Une nouvelle version remplace le visuel de la pièce ; l'ancien reste sur sa
+ * version, où l'historique de la pièce le montre (vue-asset.js, archive). */
+function nouveauVisuel(l, vignette) {
+  const derniere = l.versions[l.versions.length - 1];
+  if (derniere && l.vignette) derniere.etat = { vignette: l.vignette };
+  l.vignette = vignette;
+}
+
 function juger(c, p, l, verdict, motif, quand) {
   c.Date.aller(quand);
   const v = l.versions[l.versions.length - 1];
@@ -314,7 +325,7 @@ export async function construire() {
       motif: 'Elle porte la source sans la nommer.', arbitre_le: '2026-02-10T09:00:00.000Z' }] },
     livrables: [{ id: 'L-source-kv', niveau: 'maitre', nom: 'KV master commun · Orvelle', support: 'S-kv', marche: null,
       pisteId: 'PI-source', maitre: null, versionMaitre: null, version: 1, responsable: 'PE-ilan', estime: 3, reel: 4,
-      remise: '2026-02-20', vignette: 'visuels/kv-source-2026.svg', origine: 'prevu',
+      remise: '2026-02-20', vignette: 'visuels/kv-source-2026.jpg', origine: 'prevu',
       versions: [{ n: 1, soumis_le: '2026-02-18T09:00:00.000Z', verdict: 'approuve', motif: '', juge_le: '2026-02-19T09:00:00.000Z' }],
       kv: { marque: 'Orvelle', copy: 'L’eau qui pétille d’ici', langue: 'fr', sku: ['Bouteille 50 cl'], mentions: [], restrictions: [] },
       points: points(ctx, 'pret'), assets: [], entrees: [], annotations: [], mockups: [] }],
@@ -444,9 +455,12 @@ export async function construire() {
   Object.assign(master.kv, { marque: 'Orvelle', copy: 'Le premier zeste du jour', langue: 'fr', sku: ['Canette 33 cl'],
     restrictions: [], geste: 'La main ouvre la canette', lumiere: 'Le premier rayon, avant sept heures' });
   master.nom = 'KV master commun · Orvelle';
-  Object.assign(master, { vignette: 'visuels/kv-master.svg', estime: 4, remise: '2026-10-28', echeance: '2026-10-29' });
+  /* La V1 a le défaut que le retour nomme : la canette, dans l'ombre, ne se
+   * lit pas. La V2 la remet au net. */
+  Object.assign(master, { vignette: 'visuels/kv-master-v1.jpg', estime: 4, remise: '2026-10-28', echeance: '2026-10-29' });
   soumettre(c, master, '2026-10-24T17:00:00.000Z');
   juger(c, p, master, 'retour', 'La canette ne se lit pas à trois mètres : un critère écrit de la big idea.', '2026-10-26T09:00:00.000Z');
+  nouveauVisuel(master, 'visuels/kv-master.jpg');
   soumettre(c, master, '2026-10-28T17:00:00.000Z');
   juger(c, p, master, 'approuve', '', '2026-10-29T10:00:00.000Z');
 
@@ -457,7 +471,7 @@ export async function construire() {
   const gh = KV.creer(p, 'M-gh', master, 'adaptation');
   for (const [a, code] of [[ci, 'CI'], [sn, 'SN'], [gh, 'GH']]) {
     a.nom = 'KV · ' + code + ' · Orvelle';
-    Object.assign(a, { vignette: 'visuels/kv-' + code.toLowerCase() + '.svg', estime: 2, remise: '2026-11-06', echeance: '2026-11-07' });
+    Object.assign(a, { vignette: 'visuels/kv-' + code.toLowerCase() + '.jpg', estime: 2, remise: '2026-11-06', echeance: '2026-11-07' });
   }
   sn.kv.mentions = sn.kv.mentions.concat(['Boisson aromatisée — sans sucres ajoutés']);
   gh.kv.sku = ['Can 33 cl'];
@@ -470,10 +484,10 @@ export async function construire() {
 
   /* Les formats, et le BAT. */
   Date.aller('2026-11-06T10:00:00.000Z');
-  const afficheCi = format(c, p, ci, 'S-affiche', 'Affiche 4×3', { vignette: 'visuels/affiche-ci.svg', remise: '2026-11-09', echeance: '2026-11-10' });
-  const socialCi = format(c, p, ci, 'S-social', 'Post social 1:1', { vignette: 'visuels/social-ci.svg', remise: '2026-11-12', echeance: '2026-11-13' });
-  const afficheSn = format(c, p, sn, 'S-affiche', 'Affiche 4×3', { vignette: 'visuels/affiche-sn.svg', remise: '2026-11-10', echeance: '2026-11-11' });
-  format(c, p, gh, 'S-social', 'Post social 1:1', { vignette: 'visuels/social-gh.svg', remise: '2026-11-16', echeance: '2026-11-17' });
+  const afficheCi = format(c, p, ci, 'S-affiche', 'Affiche 4×3', { vignette: 'visuels/affiche-ci.jpg', remise: '2026-11-09', echeance: '2026-11-10' });
+  const socialCi = format(c, p, ci, 'S-social', 'Post social 1:1', { vignette: 'visuels/social-ci.jpg', remise: '2026-11-12', echeance: '2026-11-13' });
+  const afficheSn = format(c, p, sn, 'S-affiche', 'Affiche 4×3', { vignette: 'visuels/affiche-sn.jpg', remise: '2026-11-10', echeance: '2026-11-11' });
+  format(c, p, gh, 'S-social', 'Post social 1:1', { vignette: 'visuels/social-gh.jpg', remise: '2026-11-16', echeance: '2026-11-17' });
   soumettre(c, afficheCi, '2026-11-07T15:00:00.000Z');
   juger(c, p, afficheCi, 'approuve', '', '2026-11-08T09:00:00.000Z');
   Date.aller('2026-11-09T11:00:00.000Z');
@@ -484,6 +498,7 @@ export async function construire() {
   juger(c, p, afficheSn, 'approuve', '', '2026-11-10T09:00:00.000Z');
   Date.aller('2026-11-10T14:00:00.000Z');
   PRODUCTION.poser(afficheSn, 'bat', 'ORV-2027-01_affiche-4x3_SN_V1_BAT.pdf', 'Dossier de production (fictif)');
+
   soumettre(c, socialCi, '2026-11-11T15:00:00.000Z');
 
   Date.aller('2026-11-11T18:00:00.000Z');
