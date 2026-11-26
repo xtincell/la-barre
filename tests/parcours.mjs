@@ -760,6 +760,11 @@ try {
       assert.ok(i < 79, 'Le BAT accordé est dans le fichier');
       await new Promise(r => setTimeout(r, 100));
     }
+    // Les fichiers remis déclarés n'ont pas d'emplacement : à leur étage, ils
+    // disent par où ils sont partis.
+    await principal.goto(adresse + '/#/projets/PRJ-demo/livrables/L-demo/poser');
+    await principal.locator('.ptff', { hasText: 'Fichiers finaux · V3' }).getByText('Fichiers envoyés sur clé USB').waitFor();
+    assert.equal(await principal.getByText('Emplacement non dit').count(), 0);
     await navigateur.close();
   } finally {
     if (servi && servi.exitCode === null) { servi.kill(); await once(servi, 'exit'); }

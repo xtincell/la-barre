@@ -440,7 +440,9 @@ window.VUE_ASSET = (function () {
       el("div.ptf-fs", {}, e.fichiers.map(function (f) {
         return el("div.ptff", {},
           el("span.ptff-n", {}, f.nom),
-          el("span.ptff-m", {}, (f.emplacement || "Emplacement non dit")
+          /* Des fichiers remis déclarés n'ont pas d'emplacement : ils disent
+           * par où ils sont partis. */
+          el("span.ptff-m", {}, (f.emplacement || (f.canal && REMISE.envoi(f.canal)) || "Emplacement non dit")
             + (f.signataire ? " · signé " + f.signataire : e.def.signable ? " · non signé" : "")),
           el("button.b.nu", { type: "button", onclick: function () {
             if (!window.confirm("Retirer « " + f.nom + " » ?")) return;

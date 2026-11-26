@@ -545,7 +545,8 @@ window.REMISE = (function () {
 
   var CANAUX = ["WeTransfer", "Drive", "Clé USB", "Courriel", "WhatsApp", "Autre"];
   var PAR = { "WeTransfer": "par WeTransfer", "Drive": "par le Drive", "Clé USB": "sur clé USB",
-    "Courriel": "par courriel", "WhatsApp": "par WhatsApp" };
+    "Courriel": "par courriel", "WhatsApp": "par WhatsApp", "Autre": "par un autre moyen" };
+  /* Ce que dit un fichier remis déclaré, à la place d'un emplacement. */
   function envoi(canal) { return PAR[canal] ? "Fichiers envoyés " + PAR[canal] : ""; }
 
   /* Une pièce jointe facultative : un fichier déposé, ou un lien. Les noms
@@ -941,5 +942,5 @@ window.REMISE = (function () {
     etat: etat, ouvrir: ouvrir, droits: droits, mentions: mentions, etatPiece: etatPiece,
     empreintePiece: empreintePiece, preuveCourante: preuveCourante, consigner: consigner,
     suiviPiece: suiviPiece, suiviLot: suiviLot, versionCourante: versionCourante,
-    preuveValide: preuveValide, fichierServi: fichierServi, marquerLivre: marquerLivre };
+    preuveValide: preuveValide, fichierServi: fichierServi, marquerLivre: marquerLivre, envoi: envoi };
 })();

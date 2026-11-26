@@ -665,3 +665,10 @@ test('« Poser le BAT » range la photo à l’étage du BAT, sans remplacer le 
   assert.equal(visuel.type, 'asset');
   assert.equal(ci.vignette, visuel.emplacement);
 });
+
+test('des fichiers remis déclarés disent par où ils sont partis, « Autre » compris', async () => {
+  const { R } = await installation();
+  assert.equal(R.envoi('WeTransfer'), 'Fichiers envoyés par WeTransfer');
+  assert.equal(R.envoi('Autre'), 'Fichiers envoyés par un autre moyen');
+  assert.equal(R.envoi(''), '');
+});
