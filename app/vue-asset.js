@@ -123,17 +123,19 @@ window.VUE_ASSET = (function () {
   }
 
   /* Un document de la version : il s'ouvre s'il a une adresse (un lien
-   * https, une photo ou un PDF que La Barre sert), et une déclaration dit ses
-   * mots. Les anciens chemins locaux restent lisibles, sans lien. */
+   * https, une photo ou un PDF que La Barre sert), et le mot qui l'accompagne
+   * se lit à côté ; une déclaration dit ses mots. Les anciens chemins locaux
+   * restent lisibles, sans lien. */
   function dossier(f) {
     var nom = f.nom || "Document";
+    var preuve = REMISE.preuveValide(f.preuve);
     var lien = REMISE.preuveValide({ type: "lien", url: f.emplacement });
     var chemin = REMISE.fichierServi(f.emplacement);
-    var preuve = !lien && !chemin ? REMISE.preuveValide(f.preuve) : null;
-    if (preuve && preuve.type === "lien") lien = preuve;
-    if (preuve && preuve.type === "fichier") chemin = preuve.chemin;
-    if (lien) return el("a", { href: lien.url, target: "_blank", rel: "noopener noreferrer" }, nom);
-    if (chemin) return el("a", { href: chemin, target: "_blank", rel: "noopener" }, nom);
+    if (!lien && !chemin && preuve && preuve.type === "lien") lien = preuve;
+    if (!lien && !chemin && preuve && preuve.type === "fichier") chemin = preuve.chemin;
+    var ouvre = lien ? el("a", { href: lien.url, target: "_blank", rel: "noopener noreferrer" }, nom)
+      : chemin ? el("a", { href: chemin, target: "_blank", rel: "noopener" }, nom) : null;
+    if (ouvre) return preuve && preuve.texte ? [ouvre, " · « " + preuve.texte + " »"] : ouvre;
     if (preuve) return el("span", {}, nom + " · " + (preuve.texte ? "déclaré : « " + preuve.texte + " »" : "déclaré, sans pièce jointe"));
     return el("span", {}, nom);
   }

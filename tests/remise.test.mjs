@@ -173,6 +173,11 @@ test('une preuve est un lien https, un fichier déposé ou une déclaration ; sa
   assert.deepEqual(v({ type: 'fichier', chemin: 'assets/review/preuves/preuve-x1.jpg' }), { type: 'fichier', chemin: 'assets/review/preuves/preuve-x1.jpg' });
   assert.deepEqual(v({ type: 'declaration', texte: 'OK par WhatsApp', contact: 'Imprimerie', date: '2026-11-08' }),
     { type: 'declaration', texte: 'OK par WhatsApp', contact: 'Imprimerie', date: '2026-11-08' });
+  /* Le mot dit avec une pièce jointe la suit ; vide, il n'existe pas. */
+  assert.deepEqual(v({ type: 'fichier', chemin: 'assets/review/preuves/preuve-x1.jpg', texte: ' OK WhatsApp de Paul ' }),
+    { type: 'fichier', chemin: 'assets/review/preuves/preuve-x1.jpg', texte: 'OK WhatsApp de Paul' });
+  assert.deepEqual(v({ type: 'lien', url: 'https://documents.example.test/bat.pdf', texte: '' }),
+    { type: 'lien', url: 'https://documents.example.test/bat.pdf' });
   for (const faux of [null, {}, { url: 'http://documents.example.test/x' }, { type: 'lien', url: 'javascript:alert(1)' },
     { type: 'fichier', chemin: 'assets/review/livrables/revue.jpg' }, { type: 'fichier', chemin: 'assets/review/preuves/../depots/base.json' },
     { type: 'fichier', chemin: 'https://documents.example.test/x.jpg' }, { type: 'declaration', contact: 'Imprimerie' },
@@ -355,7 +360,43 @@ test('« Marquer comme livré » joint la photo du BAT et le PDF de la remise qu
   const bat = ci.fichiers.find(f => f.type === 'bat');
   assert.deepEqual([bat.nom, bat.emplacement, bat.preuve.type], ['bon-signe.jpg', 'assets/review/preuves/preuve-1.jpg', 'fichier']);
   const recu = R.preuveCourante(p, ci);
-  assert.deepEqual([recu.preuve.nom, recu.preuve.type, recu.preuve.chemin], ['bon-de-livraison.pdf', 'fichier', 'assets/review/preuves/preuve-2.jpg']);
+  assert.deepEqual([recu.preuve.nom, recu.preuve.type, recu.preuve.chemin, recu.preuve.texte],
+    ['bon-de-livraison.pdf', 'fichier', 'assets/review/preuves/preuve-2.jpg', 'Fichiers envoyés sur clé USB'],
+    'le bon de livraison garde par où les fichiers sont partis');
+});
+
+test('le mot dit avec la photo du BAT n’est pas perdu : il suit la pièce jointe et se lit à côté', async () => {
+  const { s, p, ci, R, depots } = await geste();
+  R.marquerLivre(p, ci, () => {});
+  remplir(s.dernier(), { 'bat-par': 'Imprimerie', 'bat-comment': 'OK WhatsApp de Paul', 'bat-fichier': { name: 'bon.jpg', size: 2048 },
+    canal: 'WeTransfer', destinataire: 'Imprimerie' });
+  envoyer(s.dernier());
+  await laisserFiler();
+  assert.deepEqual(depots, ['bon.jpg']);
+  const bat = ci.fichiers.find(f => f.type === 'bat');
+  assert.deepEqual(JSON.parse(JSON.stringify(bat.preuve)),
+    { type: 'fichier', chemin: 'assets/review/preuves/preuve-1.jpg', texte: 'OK WhatsApp de Paul' });
+  const suivi = R.suiviPiece(p, ci, () => {});
+  assert.match(suivi.textContent, /BAT signé · V2.*Ouvrir le BAT« OK WhatsApp de Paul »/);
+});
+
+test('une photo et un lien joints ensemble sont refusés avant tout dépôt : aucun des deux n’est perdu en silence', async () => {
+  const { s, p, ci, R, depots } = await geste();
+  R.marquerLivre(p, ci, () => {});
+  const form = s.dernier();
+  remplir(form, { 'bat-par': 'Imprimerie', 'bat-fichier': { name: 'bon.jpg', size: 2048 }, 'bat-lien': 'https://documents.example.test/bat',
+    canal: 'Drive', destinataire: 'Imprimerie' });
+  envoyer(form);
+  await laisserFiler();
+  assert.match(erreur(form), /Pour le BAT, joignez une photo ou un PDF, ou bien un lien : pas les deux/);
+  /* Le justificatif de remise aussi, et le BAT n'est pas monté pour rien. */
+  remplir(form, { 'bat-lien': '', 'remise-fichier': { name: 'bl.pdf', size: 10 }, 'remise-lien': 'https://documents.example.test/bl' });
+  envoyer(form);
+  await laisserFiler();
+  assert.match(erreur(form), /Pour le justificatif, joignez/);
+  assert.deepEqual(depots, [], 'rien n’est monté sur le disque');
+  assert.equal((ci.fichiers || []).length, 0);
+  assert.equal(p.preuvesRemise, undefined);
 });
 
 test('un lien invalide ou une pièce qui change pendant le geste n’écrivent rien', async () => {

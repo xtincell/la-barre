@@ -54,21 +54,30 @@ window.REMISE = (function () {
    * fichier part par WeTransfer ou sur une clé : exiger un lien HTTPS, c'était
    * laisser la remise « à joindre » pour toujours. Trois formes, chacune
    * datée et attribuée par celui qui l'écrit :
-   *   { type: "lien", url }                       un lien https ;
-   *   { type: "fichier", chemin }                  une photo, une capture ou un PDF déposés ;
+   *   { type: "lien", url, texte? }               un lien https ;
+   *   { type: "fichier", chemin, texte? }          une photo, une capture ou un PDF déposés ;
    *   { type: "declaration", texte, contact, date } « BAT reçu de X le D ».
+   * Le mot qui accompagne une pièce jointe (« OK WhatsApp, bon signé ») la
+   * suit ; il n'existe que s'il a été dit, si bien que les preuves écrites
+   * avant lui gardent leur forme, et les reçus leur empreinte.
    * Une preuve sans type est un lien : c'est la forme des reçus déjà écrits.
    * Rend la preuve normalisée, ou null. */
+  function avecMot(x, preuve) {
+    var mot = texte(preuve.texte);
+    if (mot) x.texte = mot;
+    return x;
+  }
+
   function preuveValide(preuve) {
     if (!preuve || typeof preuve !== "object") return null;
     var type = preuve.type || "lien";
     if (type === "lien") {
       var url = urlPreuve(preuve.url);
-      return url ? { type: "lien", url: url } : null;
+      return url ? avecMot({ type: "lien", url: url }, preuve) : null;
     }
     if (type === "fichier") {
       var chemin = cheminPreuve(preuve.chemin);
-      return chemin ? { type: "fichier", chemin: chemin } : null;
+      return chemin ? avecMot({ type: "fichier", chemin: chemin }, preuve) : null;
     }
     if (type === "declaration") {
       var contact = texte(preuve.contact), date = jourValide(preuve.date);
@@ -421,6 +430,11 @@ window.REMISE = (function () {
     return el("span", {}, x.texte ? "Déclaré : « " + x.texte + " »" : "Déclaré, sans pièce jointe");
   }
 
+  /* Le mot dit avec une pièce jointe, à côté du lien qui l'ouvre. */
+  function motJoint(x) {
+    return x && x.type !== "declaration" && x.texte ? el("span", {}, "« " + x.texte + " »") : null;
+  }
+
   function lienFichier(chemin, libelle) {
     return el("a.b", { href: chemin, target: "_blank", rel: "noopener" }, libelle);
   }
@@ -537,24 +551,37 @@ window.REMISE = (function () {
     ];
   }
 
-  /* Monte la pièce jointe si elle existe et rend la preuve : fichier, lien,
-   * ou la déclaration donnée. Rend { erreur } si le lien est invalide ou si
-   * le dépôt échoue. */
-  function preuveSaisie(data, prefixe, declaration) {
+  /* Ce qui est joint à un bloc, lu et vérifié avant tout dépôt : une photo
+   * ou un PDF, ou bien un lien. Les deux à la fois, l'un serait perdu sans
+   * que personne le sache : on le dit au lieu de choisir. Rend { erreur }, ou
+   * { fichier, lien } (l'un, l'autre ou aucun). */
+  function jointe(data, prefixe, quoi) {
     var fichier = data.get(prefixe + "-fichier");
     var lien = texte(data.get(prefixe + "-lien"));
-    if (fichier && fichier.size) {
+    fichier = fichier && fichier.size ? fichier : null;
+    if (fichier && lien)
+      return { erreur: "Pour " + quoi + ", joignez une photo ou un PDF, ou bien un lien : pas les deux." };
+    if (lien && !urlPreuve(lien))
+      return { erreur: "Le lien " + (quoi === "le BAT" ? "du BAT" : "du justificatif")
+        + " doit commencer par https://, ou laissez-le vide." };
+    return { fichier: fichier, lien: lien ? urlPreuve(lien) : "" };
+  }
+
+  /* Monte la pièce jointe lue par `jointe`, s'il y en a une, et rend la
+   * preuve : le fichier ou le lien, qui garde le mot de la déclaration
+   * (« OK WhatsApp, bon signé »), ou la déclaration seule. Rend { erreur } si
+   * le dépôt échoue. */
+  function preuveSaisie(j, declaration) {
+    function avec(x) { return avecMot(x, declaration); }
+    if (j.fichier) {
       return new Promise(function (resoudre) {
-        IMAGE.deposerPreuve(fichier, function (chemin) {
-          resoudre(chemin ? { preuve: { type: "fichier", chemin: chemin }, nom: fichier.name }
+        IMAGE.deposerPreuve(j.fichier, function (chemin) {
+          resoudre(chemin ? { preuve: avec({ type: "fichier", chemin: chemin }), nom: j.fichier.name }
             : { erreur: "La pièce jointe n’a pas été déposée : rien n’a été enregistré." });
         });
       });
     }
-    if (lien) {
-      return Promise.resolve(urlPreuve(lien) ? { preuve: { type: "lien", url: urlPreuve(lien) } }
-        : { erreur: "Le lien doit commencer par https://, ou laissez-le vide." });
-    }
+    if (j.lien) return Promise.resolve({ preuve: avec({ type: "lien", url: j.lien }) });
     return Promise.resolve({ preuve: declaration });
   }
 
@@ -619,12 +646,18 @@ window.REMISE = (function () {
           return { erreur: "Le lien de téléchargement doit commencer par https://, ou laissez-le vide." };
         if (!batSeul && (!destinataire || !remisLe))
           return { erreur: "Dites à qui la livraison a été remise, et une date passée ou du jour." };
+        /* Les pièces jointes des deux blocs sont vérifiées avant d'en monter
+         * aucune : un refus du second ne laisse pas le premier sur le disque. */
+        var jBat = demandeBat ? jointe(data, "bat", "le BAT") : {};
+        if (jBat.erreur) return jBat;
+        var jRemise = batSeul ? {} : jointe(data, "remise", "le justificatif");
+        if (jRemise.erreur) return jRemise;
         var comment = texte(data.get("bat-comment"));
         var batDeclare = { type: "declaration", texte: comment, contact: par, date: batLe };
-        return (demandeBat ? preuveSaisie(data, "bat", batDeclare) : Promise.resolve({}))
+        return (demandeBat ? preuveSaisie(jBat, batDeclare) : Promise.resolve({}))
           .then(function (bat) {
             if (bat.erreur) return bat;
-            return (batSeul ? Promise.resolve({}) : preuveSaisie(data, "remise",
+            return (batSeul ? Promise.resolve({}) : preuveSaisie(jRemise,
               { type: "declaration", texte: envoi(canal), contact: destinataire, date: remisLe }))
               .then(function (remise) {
                 if (remise.erreur) return remise;
@@ -703,7 +736,9 @@ window.REMISE = (function () {
       var destinataire = texte(data.get("destinataire")), quand = texte(data.get("remis-le"));
       if (!selection.length) return { erreur: "Choisissez au moins une pièce." };
       if (!destinataire || !dater(quand)) return { erreur: "Dites à qui le lot a été remis, et une date passée ou du jour." };
-      return preuveSaisie(data, "remise", { type: "declaration", texte: "", contact: destinataire, date: quand })
+      var j = jointe(data, "remise", "le justificatif");
+      if (j.erreur) return j;
+      return preuveSaisie(j, { type: "declaration", texte: "", contact: destinataire, date: quand })
         .then(function (r) {
           if (r.erreur) return r;
           return consigner(p.id, selection, { nom: r.nom, destinataire: destinataire, quand: quand, preuve: r.preuve });
@@ -717,7 +752,8 @@ window.REMISE = (function () {
       el("strong", {}, r.preuve.nom || "Justificatif de remise"),
       el("span", {}, [r.id, O.joli(r.remis_le), r.destinataire,
         r.acteur && r.acteur.nom ? "noté par " + r.acteur.nom : null].filter(Boolean).join(" · ")),
-      x && x.type !== "declaration" ? lienPreuve(x, "Ouvrir le justificatif") : x ? lienPreuve(x) : null);
+      x && x.type !== "declaration" ? lienPreuve(x, "Ouvrir le justificatif") : x ? lienPreuve(x) : null,
+      motJoint(x));
   }
 
   function sauvegarde() {
@@ -753,6 +789,7 @@ window.REMISE = (function () {
         el("span", {}, bat.nom + " · " + bat.signataire
           + (bat.signe_le ? " · " + O.joli(bat.signe_le) : "")),
         ouvrirBat,
+        motJoint(preuveBat),
         preuveBat && preuveBat.type === "declaration" && (preuveBat.texte || !ouvrirBat) ? lienPreuve(preuveBat) : null) : null,
       recu ? cartePreuve(recu) : null,
       recu ? sauvegarde() : null,
