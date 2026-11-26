@@ -591,16 +591,58 @@ function serveur(racines) {
 
 /* ————— La capture ————— */
 
-async function stabiliser(page) {
-  await page.evaluate(async () => {
+/* Deux passes du même code doivent donner la même photo. Avant de mesurer, on
+ * attend donc que la page soit au repos :
+ *   - plus aucune mutation depuis 120 ms : les minuteries courtes de
+ *     l'application (un champ qui prend le focus à 30 ou 40 ms, une classe
+ *     d'arrivée retirée à 400 ms) sont passées, quelle que soit la vitesse du
+ *     poste ;
+ *   - la mise en page faite, puis les polices qu'elle a demandées chargées
+ *     (`document.fonts.ready` ne connaît que les polices déjà demandées) ;
+ *   - les images de toute la page chargées ou en erreur (au plus 1,5 s), les
+ *     images différées (`loading="lazy"`) comprises : sinon, celles du bas
+ *     de la page se chargeraient ou non selon le moment de la photo ; puis
+ *     deux images peintes. */
+export const REPOS = { calme: 120, plafond: 1500 };
+export async function stabiliser(page) {
+  await page.evaluate(async ({ calme, plafond }) => {
+    document.querySelectorAll('img[loading=lazy]').forEach(i => { i.loading = 'eager'; });
+    await new Promise(fin => {
+      let minuteur = null, limite = null;
+      const observateur = new MutationObserver(() => { clearTimeout(minuteur); minuteur = setTimeout(finir, calme); });
+      function finir() { observateur.disconnect(); clearTimeout(minuteur); clearTimeout(limite); fin(); }
+      observateur.observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
+      minuteur = setTimeout(finir, calme);
+      limite = setTimeout(finir, plafond);
+    });
+    void document.body.offsetHeight;
     await document.fonts.ready;
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    const visibles = [...document.images].filter(i => { const b = i.getBoundingClientRect(); return b.width && b.bottom > 0 && b.top < innerHeight; });
+    const images = [...document.images].filter(i => i.getClientRects().length && i.getAttribute('src'));
     await Promise.race([
-      Promise.all(visibles.map(i => (i.complete ? null : new Promise(r => { i.addEventListener('load', r, { once: true }); i.addEventListener('error', r, { once: true }); })))),
+      Promise.all(images.map(i => (i.complete ? null : new Promise(r => { i.addEventListener('load', r, { once: true }); i.addEventListener('error', r, { once: true }); })))),
       new Promise(r => setTimeout(r, 1500)),
     ]);
-  });
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  }, REPOS);
+}
+
+/* Ce qui, dans la page, dépend du moment et non du code, retiré avant la
+ * photo :
+ *   - les avis passagers (AVIS.fait, AVIS.refus : ils disparaissent seuls au
+ *     bout de 5,2 s) ; un avis grave, qui reste, est gardé ;
+ *   - le focus posé par un script sur un bouton, un lien ou une liste : son
+ *     anneau dépend de la dernière touche pressée dans la passe (l'heuristique
+ *     :focus-visible du navigateur), donc de l'ordre des routes. La photo
+ *     montre l'écran tel qu'un doigt ou une souris l'ouvre, sans anneau. Un
+ *     champ de saisie garde son focus : il l'affiche toujours de la même façon.
+ * Exécuté dans le navigateur. */
+export function apaiserLaPage() {
+  document.querySelectorAll('.avis:not(.grave)').forEach(n => n.remove());
+  const a = document.activeElement;
+  const saisie = a && (a.isContentEditable || a.tagName === 'TEXTAREA'
+    || (a.tagName === 'INPUT' && !/^(button|submit|reset|checkbox|radio|range|color|file|image)$/i.test(a.type)));
+  if (a && a !== document.body && a !== document.documentElement && !saisie && typeof a.blur === 'function') a.blur();
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
 }
 
 async function fermer(page) {
@@ -756,7 +798,10 @@ export function mesurerDansLaPage() {
  * Chaque pixel qui change, même d'un point sur 255, est compté, à part selon
  * qu'il tombe dans une zone d'image (`zones`, en px CSS, multipliées par la
  * `densite` de l'écran) ou hors d'elles :
- *   { pixels, total, part, max, hors: { pixels, max }, images: { pixels, max } }
+ *   { pixels, total, part, max, cadre, hors: { pixels, max, cadre }, images: { pixels, max, cadre } }
+ * `cadre` est le rectangle qui contient les pixels changés, [gauche, haut,
+ * droite, bas] en px CSS (null si rien ne change) : il dit où regarder, et si
+ * le changement est dans le premier écran ou plus bas.
  * Deux tailles différentes : { pixels: null }. */
 export async function ecartDePixels({ a, b, zones = [], densite = 1 }) {
   const charger = async s => { const i = new Image(); i.src = 'data:image/png;base64,' + s; await i.decode(); return i; };
@@ -771,16 +816,23 @@ export async function ecartDePixels({ a, b, zones = [], densite = 1 }) {
     const y0 = Math.max(0, Math.floor(zy * densite)), y1 = Math.min(h, Math.ceil((zy + zh) * densite));
     if (x1 > x0) for (let j = y0; j < y1; j++) masque.fill(1, j * w + x0, j * w + x1);
   }
-  const hors = { pixels: 0, max: 0 }, images = { pixels: 0, max: 0 };
+  const zone = () => ({ pixels: 0, max: 0, x0: w, y0: h, x1: -1, y1: -1 });
+  const hors = zone(), images = zone();
   for (let k = 0, i = 0; k < p.length; k += 4, i++) {
     const d = Math.max(Math.abs(p[k] - q[k]), Math.abs(p[k + 1] - q[k + 1]), Math.abs(p[k + 2] - q[k + 2]), Math.abs(p[k + 3] - q[k + 3]));
     if (!d) continue;
     const z = masque[i] ? images : hors;
     z.pixels++;
     if (d > z.max) z.max = d;
+    const x = i % w, y = (i - x) / w;
+    if (x < z.x0) z.x0 = x; if (x > z.x1) z.x1 = x; if (y < z.y0) z.y0 = y; if (y > z.y1) z.y1 = y;
   }
+  /* En px CSS, arrondi vers l'extérieur. */
+  const cadre = z => (z.x1 < 0 ? null : [Math.floor(z.x0 / densite), Math.floor(z.y0 / densite), Math.ceil((z.x1 + 1) / densite), Math.ceil((z.y1 + 1) / densite)]);
+  const net = z => ({ pixels: z.pixels, max: z.max, cadre: cadre(z) });
+  const tout = { x0: Math.min(hors.x0, images.x0), y0: Math.min(hors.y0, images.y0), x1: Math.max(hors.x1, images.x1), y1: Math.max(hors.y1, images.y1) };
   const pixels = hors.pixels + images.pixels;
-  return { pixels, total: w * h, part: pixels / (w * h), max: Math.max(hors.max, images.max), hors, images };
+  return { pixels, total: w * h, part: pixels / (w * h), max: Math.max(hors.max, images.max), cadre: cadre(tout), hors: net(hors), images: net(images) };
 }
 
 /* Quand un écart reste « identique à l'œil ». Deux passes du même code
@@ -913,6 +965,10 @@ async function principal() {
         try { DEPOT.importer(t); APP.rendre(); return null; } catch (e) { return e.message; }
       }, texte);
       if (recu) throw new Error('La base n’a pas pu être importée : ' + recu);
+      /* Toutes les polices tout de suite, sous-ensembles compris : aucune ne
+       * se charge en retard, pendant une photo, parce qu'un écran en demande
+       * une variante pour la première fois. */
+      await page.evaluate(() => Promise.all([...document.fonts].map(f => f.load().catch(() => null))));
       return page;
     }
     const pages = new Map();
@@ -940,8 +996,9 @@ async function principal() {
             if (route.action === 'recherche') await ouvrirRecherche(page, inv.recherche);
             if (route.action === 'nouveau-projet') await page.evaluate(() => VUE_PROJETS.nouveau());
             if (route.action === 'demande') await page.evaluate(id => DEMANDE.editer(DEPOT.trouve('projets', id), null, () => {}), route.cible);
-            await page.evaluate(() => window.scrollTo(0, 0));
+            await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }));
             await stabiliser(page);
+            await page.evaluate(apaiserLaPage);
             const m = await page.evaluate(mesurerDansLaPage);
             const tampon = await page.screenshot({ path: join(o.dossier, c.fichier), fullPage: o.pleinePage, animations: 'disabled', caret: 'hide' });
             Object.assign(c, depouiller(m), { empreinte: empreinte(tampon) });

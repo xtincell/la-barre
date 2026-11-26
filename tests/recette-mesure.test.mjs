@@ -5,15 +5,18 @@
 //
 // Demande Playwright et un navigateur (BROWSER_CHANNEL=chrome pour Google
 // Chrome). Sans eux, le test est sauté, sauf en CI où il doit tourner.
+//
+// Si RECETTE_TEMOIN nomme un dossier, les passes du test de bout en bout y
+// sont gardées quand il échoue.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, cp } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { mesurerDansLaPage, depouiller, ecartDePixels, aLOeil, versionMesure } from '../outils/recette-captures.mjs';
+import { mesurerDansLaPage, depouiller, ecartDePixels, aLOeil, versionMesure, stabiliser, apaiserLaPage } from '../outils/recette-captures.mjs';
 
 const OUTIL = fileURLToPath(new URL('../outils/recette-captures.mjs', import.meta.url));
 const executer = promisify(execFile);
@@ -99,17 +102,24 @@ test('deux captures se comparent au pixel, et seules les zones d’image pardonn
   });
   const meme = await p.evaluate(ecartDePixels, { a, b: a });
   assert.equal(meme.pixels, 0);
+  assert.equal(meme.cadre, null);
   assert.equal(aLOeil(meme), true);
   // Une nuance de 12/255 sur un bloc de 100 pixels, hors de toute image : modifiée.
   const nuance = await p.evaluate(ecartDePixels, { a, b });
   assert.deepEqual([nuance.pixels, nuance.max, nuance.hors.pixels], [100, 12, 100]);
   assert.equal(aLOeil(nuance), false);
+  // Le rectangle du changement dit où regarder : [gauche, haut, droite, bas].
+  assert.deepEqual(nuance.cadre, [10, 10, 20, 20]);
+  assert.deepEqual([nuance.hors.cadre, nuance.images.cadre], [[10, 10, 20, 20], null]);
   // La même nuance dans une zone d'image (le lissage d'une vignette) : identique à l'œil.
   const lissage = await p.evaluate(ecartDePixels, { a, b, zones: [[5, 5, 20, 20]] });
   assert.deepEqual([lissage.hors.pixels, lissage.images.pixels, lissage.images.max], [0, 100, 12]);
   assert.equal(aLOeil(lissage), true);
-  // Les zones sont en px CSS : sur un écran de densité 2, la zone [5, 5, 10, 10] couvre le bloc.
-  assert.equal((await p.evaluate(ecartDePixels, { a, b, zones: [[5, 5, 10, 10]], densite: 2 })).hors.pixels, 0);
+  // Les zones et le rectangle sont en px CSS : sur un écran de densité 2, la
+  // zone [5, 5, 10, 10] couvre le bloc, qui est en [5, 5, 10, 10].
+  const dense = await p.evaluate(ecartDePixels, { a, b, zones: [[5, 5, 10, 10]], densite: 2 });
+  assert.equal(dense.hors.pixels, 0);
+  assert.deepEqual(dense.cadre, [5, 5, 10, 10]);
   // Un bloc déplacé de 4 px : 2 × 4 × 10 pixels changent.
   assert.equal((await p.evaluate(ecartDePixels, { a, b: c })).pixels, 80);
   // Une autre taille : modifiée, sans compte de pixels.
@@ -117,6 +127,51 @@ test('deux captures se comparent au pixel, et seules les zones d’image pardonn
   assert.equal(taille.pixels, null);
   assert.equal(aLOeil(taille), false);
   await p.close();
+});
+
+test('la photo ne dépend ni du moment ni de l’ordre des routes : focus posé par script, avis passager, minuterie courte', sauter, async () => {
+  const PAGE = `<!doctype html><html lang="fr"><body style="margin:0;font:16px sans-serif"><main id="contenu" style="padding:24px">
+    <h1>Nouvelle demande</h1>
+    <button id="fermer" style="width:44px;height:44px">✕</button> <button id="autre" style="width:120px;height:44px">+ demande</button>
+    <input id="champ" class="champ" placeholder="Titre" style="width:240px;border:1px solid #ccc">
+    <div class="avis-pile" style="position:fixed;right:16px;bottom:16px"><div class="avis fait">Enregistré.</div><div class="avis grave">Sauvegarde impossible.</div></div>
+    <style>:focus-visible{outline:3px solid #2856cb;outline-offset:4px}.champ:focus{border-color:#c7501f!important}</style>
+  </main></body></html>`;
+  const photo = async (avantFocus) => {
+    const p = await navigateur.newPage({ viewport: { width: 390, height: 300 } });
+    await p.setContent(PAGE);
+    if (avantFocus) await avantFocus(p);
+    // Le panneau pose le focus sur sa croix, par script, comme PANNEAU.ouvrir.
+    await p.evaluate(() => document.getElementById('fermer').focus());
+    const brute = await p.screenshot({ animations: 'disabled', caret: 'hide' });
+    await p.evaluate(apaiserLaPage);
+    const image = await p.screenshot({ animations: 'disabled', caret: 'hide' });
+    const etat = await p.evaluate(() => ({ actif: document.activeElement.id || document.activeElement.tagName,
+      avis: [...document.querySelectorAll('.avis')].map(x => x.className) }));
+    await p.close();
+    return { brute: brute.toString('base64'), image: image.toString('base64'), etat };
+  };
+  // Un clic plus tôt dans la passe éteint l'anneau d'un focus posé par script ;
+  // une touche pressée (la recherche ouverte au clavier) le rallume. Sans
+  // apaisement, les deux photos diffèrent ; après, elles sont les mêmes.
+  const clavier = await photo(p => p.keyboard.press('Shift'));
+  const clic = await photo(async p => { await p.locator('#autre').click(); await p.mouse.move(380, 290); });
+  assert.deepEqual(clavier.etat, { actif: 'BODY', avis: ['avis grave'] });
+  assert.deepEqual(clic.etat, clavier.etat);
+  const p = await page('<!doctype html><body></body>');
+  assert.ok((await p.evaluate(ecartDePixels, { a: clavier.brute, b: clic.brute })).pixels > 0, 'l’anneau dépend bien de la dernière touche');
+  assert.equal((await p.evaluate(ecartDePixels, { a: clavier.image, b: clic.image })).pixels, 0);
+  await p.close();
+
+  // Un champ qui prend le focus 40 ms après l'ouverture : la page attend qu'il
+  // l'ait pris, et le champ le garde (il l'affiche toujours de la même façon).
+  const q = await navigateur.newPage({ viewport: { width: 390, height: 300 } });
+  await q.setContent(PAGE);
+  await q.evaluate(() => setTimeout(() => document.getElementById('champ').focus(), 40));
+  await stabiliser(q);
+  await q.evaluate(apaiserLaPage);
+  assert.equal(await q.evaluate(() => document.activeElement.id), 'champ');
+  await q.close();
 });
 
 /* Une page d'agence ordinaire : une carte bordée, un texte, une vignette. */
@@ -167,6 +222,7 @@ test('l’outil entier tourne sur la base fictive : bureau, recherche, nouveau p
   const options = ['--sortie', dossier, '--routes', '^(bureau|recherche|nouveau-projet|demande|partage)$', '--largeurs', '390,1440',
     '--horloge', '2026-11-26T09:00:00', '--commit', 'abc1234'];
   const env = { ...process.env };
+  let reussi = false;
   try {
     await executer(process.execPath, [OUTIL, '--avant', ...options], { env, timeout: 120000 });
     const { stdout, stderr } = await executer(process.execPath, [OUTIL, '--apres', ...options], { env, timeout: 120000 });
@@ -192,12 +248,18 @@ test('l’outil entier tourne sur la base fictive : bureau, recherche, nouveau p
     // Deux passes du même code : rien de modifié, la même mesure, aucune alerte nouvelle.
     const cmp = r.comparaison;
     assert.equal(cmp.mesure.identique, true);
-    assert.deepEqual(cmp.modifiees, [], JSON.stringify(r.captures.filter(c => c.ecart).map(c => [c.id, c.largeur, c.ecart])));
+    assert.deepEqual(cmp.modifiees, [], JSON.stringify(r.captures.filter(c => c.ecart).map(c => [c.id, c.largeur, c.ecart]))
+      + (process.env.RECETTE_TEMOIN ? ' (passes gardées dans ' + process.env.RECETTE_TEMOIN + ')' : ''));
     assert.equal(cmp.identiques + cmp.identiquesALOeil, 10);
     for (const champ of ['exceptionsNouvelles', 'debordementsNouveaux', 'coupesNouvelles', 'horsEcranNouveaux', 'valeursNouvelles'])
       assert.deepEqual(cmp[champ], [], champ);
     assert.equal(cmp.termes.avant, cmp.termes.apres);
     assert.match(stdout, /"modifiees": 0/);
     assert.match(await readFile(join(dossier, 'apres', 'index.html'), 'utf8'), /Ce qui a changé depuis la passe/);
-  } finally { await rm(dossier, { recursive: true, force: true }); }
+    reussi = true;
+  } finally {
+    /* Un échec garde ses deux passes, pour voir ce qui a bougé. */
+    if (!reussi && process.env.RECETTE_TEMOIN) await cp(dossier, join(process.env.RECETTE_TEMOIN, 'bout-en-bout'), { recursive: true }).catch(() => null);
+    await rm(dossier, { recursive: true, force: true });
+  }
 });
