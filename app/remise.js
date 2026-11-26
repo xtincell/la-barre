@@ -101,6 +101,15 @@ window.REMISE = (function () {
     }) || null;
   }
 
+  /* Le BAT posé à son étage (« Poser le BAT ») et que personne n'a encore dit
+   * accordé : c'est lui que « Marquer comme livré » complète, au lieu d'en
+   * écrire un second à côté. */
+  function batEnAttente(l, n) {
+    return (l.fichiers || []).slice().reverse().find(function (f) {
+      return f.type === "bat" && fichierDeVersion(f, n) && texte(f.nom) && !texte(f.signataire);
+    }) || null;
+  }
+
   /* Le fichier qui part : rattaché par son emplacement, ou déclaré par le
    * canal qui l'a porté (WeTransfer, Drive, clé…), lien facultatif. Un visuel
    * de revue compressé n'en est jamais un. */
@@ -562,12 +571,14 @@ window.REMISE = (function () {
     if (!batSeul && !DEPOT.exigerReference(p, "La livraison")) return;
     var demandeBat = depart.cle === "bat";
     var demandeSortie = !batSeul && !fichiersSortie(l, v.numero).length;
+    var pose = demandeBat ? batEnAttente(l, v.numero) : null;
     var f = "livre";
     var enfants = [
       demandeBat ? el("fieldset.remise-bloc", {}, el("legend", {}, "Le BAT de la V" + v.numero),
+        pose ? el("p.remise-note", {}, "« " + pose.nom + " » est déjà posé : il devient le BAT accordé.") : null,
         champ(f, "bat-par", "BAT accordé par", "text", null, { exemple: "Nom ou imprimeur" }),
         champ(f, "bat-le", "Date du BAT", "date", O.jour()),
-        repli("Joindre une photo, un PDF, un lien ou un mot", [
+        repli(pose ? "Ajouter une photo, un PDF, un lien ou un mot" : "Joindre une photo, un PDF, un lien ou un mot", [
           champ(f, "bat-comment", "Comment", "text", null, { facultatif: true, exemple: "OK WhatsApp, bon signé…" }),
           pieceJointe(f, "bat", "du BAT")])) : null,
       demandeSortie ? el("fieldset.remise-bloc", {}, el("legend", {}, "Les fichiers remis"),
@@ -606,7 +617,10 @@ window.REMISE = (function () {
                 var trace = window.ACTEUR ? ACTEUR.trace() : null;
                 if (demandeBat) {
                   var preuveBat = preuveValide(bat.preuve);
-                  var fb = PRODUCTION.poser(la.l, "bat", bat.nom || (preuveBat.type === "declaration"
+                  /* Le BAT déjà posé à son étage est complété ; sinon on l'écrit. */
+                  var fb = batEnAttente(la.l, v.numero);
+                  if (fb) fb.signataire = par;
+                  else fb = PRODUCTION.poser(la.l, "bat", bat.nom || (preuveBat.type === "declaration"
                     ? "BAT déclaré" : "BAT signé · V" + v.numero),
                     preuveBat.type === "lien" ? preuveBat.url : preuveBat.type === "fichier" ? preuveBat.chemin : "", par);
                   fb.version = v.numero; fb.signe_le = batLe; fb.preuve = preuveBat; fb.acteur = trace;

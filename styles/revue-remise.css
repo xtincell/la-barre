@@ -111,6 +111,7 @@
 .remise-choix small, .remise-suivi li small { display: block; color: var(--clair-terne); }
 .remise-form input:not([type="checkbox"], [type="file"]), .remise-form select { width: 100%; min-height: 44px; }
 .remise-form .form-actions .b { min-height: 44px; }
+.remise-note { color: var(--clair-terne); font-size: 13px; line-height: 1.45; }
 .remise-joindre > summary { min-height: 44px; padding-block: 11px; cursor: pointer; color: var(--accent); }
 .remise-joindre-corps { display: grid; gap: 10px; padding-block: 2px 4px; }
 .remise-form .remise-joint { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; position: relative; }

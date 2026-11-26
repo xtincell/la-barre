@@ -339,6 +339,25 @@ test('un lien invalide ou une pièce qui change pendant le geste n’écrivent r
   assert.equal(p.preuvesRemise, undefined);
 });
 
+test('un BAT posé à son étage, sans signataire, est complété : il n’y a jamais deux BAT', async () => {
+  const { s, p, ci, R } = await geste();
+  /* « Poser le BAT » : la photo du bon est rangée, personne n'a encore dit qui l'a accordé. */
+  ci.fichiers = [{ id: 'F-pose', type: 'bat', version: 2, nom: 'bon-signe.jpg', emplacement: 'assets/review/livrables/L-ci-f1.jpg',
+    signataire: null, quand: '2026-11-09T10:00:00.000Z' }];
+  assert.equal(R.etatPiece(ci).cle, 'bat', 'un BAT sans signataire ne vaut pas');
+  R.marquerLivre(p, ci, () => {});
+  const form = s.dernier();
+  assert.match(form.textContent, /« bon-signe\.jpg » est déjà posé/);
+  remplir(form, { 'bat-par': 'Imprimerie du port', canal: 'Drive', destinataire: 'Chargée de production' });
+  envoyer(form);
+  await laisserFiler();
+  const bats = ci.fichiers.filter(f => f.type === 'bat');
+  assert.equal(bats.length, 1, 'le BAT posé est complété, pas doublé');
+  assert.deepEqual([bats[0].id, bats[0].signataire, bats[0].signe_le, bats[0].emplacement, bats[0].preuve.type],
+    ['F-pose', 'Imprimerie du port', '2026-11-10', 'assets/review/livrables/L-ci-f1.jpg', 'declaration']);
+  assert.ok(R.preuveCourante(p, ci), 'la pièce est livrée');
+});
+
 test('« Enregistrer seulement le BAT » pose le BAT sans marquer la pièce livrée', async () => {
   const { s, p, ci, R } = await geste();
   R.marquerLivre(p, ci, () => {}, { batSeul: true });
