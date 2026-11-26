@@ -3067,6 +3067,7 @@ ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; wid
 .fb-st.a-faire { color: var(--arbitrage); font-weight: 600; }
 .fb-perso { display: block; width: 100%; max-width: 760px; height: auto; margin: var(--e2) 0; background: #fff; border-radius: var(--r-s); }
 .fb-sons { display: grid; gap: var(--e2); margin: var(--e2) 0; }
+.fb-note { margin: 0 0 var(--e3); color: var(--clair-doux); font-size: var(--t-meta); line-height: 1.45; }
 .fb-son { display: grid; gap: var(--e1); font-size: var(--t-meta); }
 .fb-son audio { width: 100%; max-width: 520px; }
 .fb-film.vertical { aspect-ratio: 9 / 16; width: auto; height: min(70vh, 640px); max-width: 100%; }

@@ -286,3 +286,48 @@ test('la validation d’un document : des boutons qui disent le geste, des refus
   assert.match(apres, /Validé le \d+ [a-zé]+\. Le travail créatif peut commencer\./);
   assert.doesNotMatch(apres, /\.\./, 'un seul point après la date');
 });
+
+/* ————— Enregistrer un retour client ————— */
+
+test('un retour WhatsApp s’enregistre sans bannière rouge, étiquettes reliées, un refus à la fois dit sur place', async () => {
+  const s = await bacDecisions(APP, 71);
+  await s.charger('kv-modele');
+  await s.charger('feedback');
+  s.ctx.PRODUCTION.ouverte = () => false;
+  const el = s.ctx.O.el, bannieres = [];
+  s.ctx.UI = new Proxy({ banniere: (ton, t) => { bannieres.push([ton, t]); return el('div', {}, t); },
+    stat: (a, b, c) => el('div', {}, a, ' ', b, ' ', c) }, { get: (t, k) => t[k] || (() => el('div')) });
+  semer(s.ctx, { personnes: PERSONNES, ...REFERENTIEL,
+    projets: [projet('FB', { livrables: [livrable('L-fb', { nom: 'KV · GH · Orvelle', support: 'S-kv', marche: 'M-gh' })] })] });
+  s.ctx.FEEDBACK.ouvrir('FB', ['L-fb'], () => {});
+  const panneau = s.dernier();
+  const tous = (n, f, out = []) => { if (n && typeof n === 'object') { if (f(n)) out.push(n); (n.childNodes || []).forEach(c => tous(c, f, out)); } return out; };
+
+  const canal = tous(panneau, n => n.getAttribute && n.getAttribute('id') === 'fb-canal')[0];
+  canal.value = 'message';
+  (canal.ecouteurs.change || []).forEach(f => f());
+  assert.deepEqual(bannieres.filter(([ton]) => ton === 'rouge'), [], 'aucune bannière rouge sur le canal messagerie');
+  assert.doesNotMatch(textes(panneau), /WhatsApp n'a pas de version|n'existe pas|comptable/);
+  assert.match(textes(panneau), /Notez le retour tel qu'il a été dit ou écrit, même sur WhatsApp/);
+  assert.match(textes(panneau), /Rien d'autre ne bouge\. Se traite en dernier/, 'le niveau se dit avec une majuscule');
+
+  const labels = tous(panneau, n => n.tagName === 'LABEL');
+  assert.ok(labels.length >= 5);
+  for (const l of labels) {
+    const cible = l.getAttribute('for');
+    assert.ok(cible, 'l’étiquette « ' + l.textContent + ' » a un for');
+    assert.equal(tous(panneau, n => n.getAttribute && n.getAttribute('id') === cible).length, 1, cible);
+  }
+  const puce = tous(panneau, n => n.tagName === 'BUTTON' && /chip/.test(n.className))[0];
+  assert.equal(puce.textContent, 'Key visual — Ghana');
+  assert.equal(puce.getAttribute('title'), 'KV · GH · Orvelle', 'le code reste en info-bulle');
+
+  cliquer(bouton(panneau, 'Enregistrer'));
+  assert.match(textes(panneau), /Écrivez ce qui est demandé avant d'enregistrer\./);
+  saisie(panneau).value = 'Le logo plus grand';
+  cliquer(bouton(panneau, 'Enregistrer'));
+  assert.match(textes(panneau), /Dites qui a formulé ce retour/);
+  assert.doesNotMatch(textes(panneau), /Écrivez ce qui est demandé/, 'le refus corrigé ne reste pas');
+  assert.deepEqual(s.refus, []);
+  assert.equal(s.ctx.DEPOT.liste('feedbacks').length, 0);
+});

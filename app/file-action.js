@@ -16,7 +16,7 @@ window.FILE = (function () {
 
   /* Les familles, par ce qu'elles coûtent quand on les laisse. */
   var FAMILLES = {
-    trancher: { nom: "Trancher", ton: "alerte", ou: "revue",
+    trancher: { nom: "À décider", ton: "alerte", ou: "revue",
       quoi: "tant que je n'ai pas tranché, l'équipe attend et le client aussi" },
     ordre: { nom: "Remettre en ordre", ton: "alerte", ou: "pipeline",
       quoi: "quelqu'un travaille sur du spéculatif pendant qu'un engagement traîne" },

@@ -321,8 +321,10 @@ window.FEEDBACK = (function () {
         i.enProduction ? UI.stat("Déjà en production", String(i.enProduction),
           "BAT signé — les rappeler coûte", "alerte") : null
       ));
-      apercu.appendChild(UI.banniere(dn.ton === "alerte" ? "rouge" : "",
-        dn.onde + ".  " + dn.avant));
+      /* Seuls l'idée et le KV master alertent : le reste se dit sur un ton
+       * neutre, sans triangle. */
+      var onde = dn.onde.charAt(0).toUpperCase() + dn.onde.slice(1) + ". " + dn.avant;
+      apercu.appendChild(dn.ton === "alerte" ? UI.banniere("rouge", onde) : el("p.fb-note", {}, onde));
       if (i.aVenir) apercu.appendChild(UI.banniere("",
         "Une règle de déclinaison s'applique aussi à ce qui n'existe pas encore : les formats à venir la porteront sans qu'on ait à y penser."));
     }
@@ -333,8 +335,9 @@ window.FEEDBACK = (function () {
     choixRoutes.surChangement(dessiner);
     dessiner();
 
+    var erreur = el("p.remise-erreur", { role: "alert" }, "");
     PANNEAU.ouvrir("Enregistrer un retour", p.ref, el("div", {},
-      UI.banniere("", "Notez le retour tel qu'il a été dit ou écrit, même sur WhatsApp : il sera daté et rattaché aux pièces qu'il touche."),
+      el("p.fb-note", {}, "Notez le retour tel qu'il a été dit ou écrit, même sur WhatsApp : il sera daté et rattaché aux pièces qu'il touche."),
       el("div.form", {},
         el("div.champ", {}, el("label", { for: "fb-texte" }, "Ce qui est demandé"), champ),
         el("div.champ", {}, el("label", { for: "fb-auteur" }, "Par qui"), selAuteur),
@@ -343,10 +346,12 @@ window.FEEDBACK = (function () {
         el("div.champ", {}, el("label", { for: "fb-niveau" }, "À quel niveau il s'applique"), selPortee, aideN)),
       zoneCibles,
       el("div.sousbloc", {}, el("h3", {}, "Ce que ça touche"), apercu),
+      erreur,
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          if (!champ.value.trim()) { AVIS.refus("Écrivez ce qui est demandé avant d'enregistrer."); champ.focus(); return; }
-          if (!selAuteur.value) { AVIS.refus("Dites qui a formulé ce retour : il sera rattaché à cette personne."); selAuteur.focus(); return; }
+          /* Le manque se dit sur place, et le suivant remplace le précédent. */
+          if (!champ.value.trim()) { erreur.textContent = "Écrivez ce qui est demandé avant d'enregistrer."; champ.focus(); return; }
+          if (!selAuteur.value) { erreur.textContent = "Dites qui a formulé ce retour : il sera rattaché à cette personne."; selAuteur.focus(); return; }
           var f = Object.assign(brouillon(), {
             id: O.id("FB"), texte: champ.value.trim(), auteur: selAuteur.value,
             canal: selCanal.value, quand: champDate.value,
@@ -387,19 +392,20 @@ window.FEEDBACK = (function () {
       surChangement: function (f) { ecouteurs.push(f); } };
   }
 
-  /* ————————————————————— Trancher un retour ————————————————————— */
+  /* ————————————————————— Décider d'un retour ————————————————————— */
 
   function trancher(f, apres) {
     var p = DEPOT.trouve("projets", f.projet);
     var i = impact(f);
     var motifs = motifsDeRefus(f);
-    var selI = el("select", {});
+    var selI = el("select", { id: "fb-issue" });
     ["facture", "absorbe", "refuse"].forEach(function (k) {
       selI.appendChild(el("option", { value: k }, ISSUES[k].nom));
     });
     var aide = el("div.indice", {}, ISSUES.facture.quoi);
     selI.addEventListener("change", function () { aide.textContent = ISSUES[selI.value].quoi; });
-    var champ = el("textarea", { rows: 2, placeholder: "Le motif, en une phrase" });
+    var champ = el("textarea", { id: "fb-motif", rows: 2, placeholder: "Le motif, en une phrase" });
+    var erreur = el("p.remise-erreur", { role: "alert" }, "");
 
     var choisi = null;
     var listeM = el("div.motifs");
@@ -413,7 +419,7 @@ window.FEEDBACK = (function () {
       listeM.appendChild(b);
     });
 
-    PANNEAU.ouvrir("Trancher — " + O.joli(f.quand), p ? p.ref : "", el("div", {},
+    PANNEAU.ouvrir("Décider de ce retour", (p ? p.ref + " · " : "") + O.joli(f.quand), el("div", {},
       el("div.fb-texte", {}, f.texte),
       el("div.stats", {},
         UI.stat("Livrables", String(i.assets), O.pluriel(i.marches.length, "marché"), ""),
@@ -429,20 +435,21 @@ window.FEEDBACK = (function () {
         : UI.banniere("", "Rien à discuter : ce retour arrive avant validation, dans les allers-retours prévus au devis et sur le périmètre prévu. Il se traite."),
 
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "L'issue"), selI, aide),
-        el("div.champ", {}, el("label", {}, "Le motif"), champ)),
+        el("div.champ", {}, el("label", { for: "fb-issue" }, "L'issue"), selI, aide),
+        el("div.champ", {}, el("label", { for: "fb-motif" }, "Le motif"), champ)),
+      erreur,
 
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           if (ISSUES[selI.value].motifRequis && !champ.value.trim()) {
-            AVIS.refus("Cette issue exige un motif écrit."); return;
+            erreur.textContent = "Écrivez le motif : cette issue le demande."; champ.focus(); return;
           }
           f.issue = selI.value; f.motif = champ.value.trim();
           f.tranche_le = new Date().toISOString(); f.tranche_par = MAISON.titulaire;
           if (selI.value !== "refuse") appliquer(f, i);
           DEPOT.tracer("retour tranché", "feedback", f.projet, ISSUES[selI.value].nom);
           DEPOT.enregistrer(); PANNEAU.fermer(); if (apres) apres();
-        } }, "Trancher"),
+        } }, "Décider"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
     ));
   }

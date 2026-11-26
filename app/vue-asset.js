@@ -560,7 +560,7 @@ window.VUE_ASSET = (function () {
             el("span", {}, i.assets + (i.assets > 1 ? " livrables touchés" : " livrable touché")),
             UI.eti(iss.nom, iss.ton)),
           f.issue === "ouvert" && !lecture
-            ? el("button.b.nu", { type: "button", onclick: function () { FEEDBACK.trancher(f, apres); } }, "Trancher")
+            ? el("button.b.nu", { type: "button", onclick: function () { FEEDBACK.trancher(f, apres); } }, "Décider")
             : f.motif ? el("div.asfb-mo", {}, f.motif) : null);
       }),
 
