@@ -33,7 +33,7 @@ try {
   await page.clock.install();
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.evaluate(data => { DEPOT.importer(data); APP.rendre(); }, fixture);
-  await page.getByRole('heading', { name: "Sur la table" }).waitFor();
+  await page.getByRole('heading', { name: "À valider aujourd’hui" }).waitFor();
   // Un écran de studio très large doit commencer au même endroit que sur un portable.
   await page.setViewportSize({width: 3200, height: 1694});
   const bureau = await page.locator('#contenu h1').boundingBox();
@@ -44,17 +44,61 @@ try {
   assert.ok(dossiersBureau.x >= pieceBureau.x + pieceBureau.width && dossiersBureau.y < pieceBureau.y + 10,
     'Les dossiers sont accessibles à côté de la pièce sur un grand écran');
   await page.setViewportSize({width: 1440, height: 1050});
+  // La file de revue est dépliée : chaque pièce se voit sans un clic, en
+  // vignette d'au moins 160 px. « + Nouveau projet » est sur le Bureau.
   assert.equal(await page.locator('.studio-piece').count(), 3);
-  const listeRevue = page.locator('.lb-file');
-  await listeRevue.locator('summary').click();
+  assert.equal(await page.locator('.lb-file summary, details.lb-file').count(), 0, 'La file n’est plus repliée');
+  const vignettes = await page.locator('.lb-file-lignes .studio-piece').evaluateAll(ns => ns.map(n => n.getBoundingClientRect().width));
+  assert.ok(vignettes.every(l => l >= 160) && await page.locator('.studio-piece').first().isVisible(), `Vignettes de la file : ${vignettes}`);
+  // « + Nouveau projet » ouvre, depuis le Bureau, le panneau de création.
+  await page.getByRole('button', { name: '+ Nouveau projet', exact: true }).click();
+  const creation = page.getByRole('dialog', { name: 'Nouveau projet' });
+  await creation.getByLabel('Nom du projet', { exact: true }).waitFor();
+  // L'avertissement d'un mot que la marque ne dit jamais se lit : texte à
+  // l'encre sur un fond opaque, contraste d'au moins 4,5:1.
+  const lisible = await page.evaluate(() => {
+    const a = document.querySelector('#contenu').appendChild(document.createElement('div'));
+    a.className = 'avertissement'; a.textContent = '« lourd » fait partie de ce que la marque ne dit jamais.';
+    const s = getComputedStyle(a), rgba = c => c.match(/[\d.]+/g).map(Number);
+    const lum = c => { const [r, g, b] = rgba(c).slice(0, 3).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
+      return .2126 * r + .7152 * g + .0722 * b; };
+    const [clair, sombre] = [lum(s.color), lum(s.backgroundColor)].sort((x, y) => y - x);
+    const opaque = (rgba(s.backgroundColor)[3] ?? 1) === 1;
+    a.remove();
+    return { contraste: (clair + .05) / (sombre + .05), opaque };
+  });
+  assert.ok(lisible.opaque && lisible.contraste >= 4.5, 'Avertissement lisible : ' + JSON.stringify(lisible));
+  await page.keyboard.press('Escape');
+  await creation.waitFor({ state: 'detached' });
   await page.locator('.studio-piece').nth(1).click();
   assert.match(await page.locator('.studio-intention').innerText(), /Plus d’attachement/);
   assert.equal(await page.locator('.studio-piece[aria-pressed="true"]').count(), 1);
-  await listeRevue.locator('summary').click();
   await page.getByLabel('Projet', { exact: true }).selectOption('PRJ-demo-2');
   await page.getByText("Rien à valider dans ce projet.").waitFor();
   await page.getByLabel('Projet', { exact: true }).selectOption('');
   await page.locator('.studio-piece').filter({ hasText: 'Affiche de lancement' }).click();
+  // De quoi juger sans ouvrir le dossier : qui en répond, pour quand, le
+  // brief en extrait et le critère principal.
+  const contexte = await page.locator('.lb-piece .lb-contexte').innerText();
+  for (const attendu of ['Responsable', 'Sacha Martin', 'Échéance', '15 oct.', 'Une maison d’objets', 'Un seul objet au centre de la composition'])
+    assert.ok(contexte.includes(attendu), `Le Bureau dit « ${attendu} » : ${contexte}`);
+  // Le 15 octobre est passé : l'échéance le dit, dans le ton qui bloque, avec
+  // le même compte de jours que Planning > Livraisons.
+  const retard = await page.locator('.lb-piece .lb-delai').evaluate(s => {
+    const jours = Math.floor((Date.now() - new Date(PLATEAU.echeanceDe(DEPOT.trouve('projets', 'PRJ-demo'),
+      DEPOT.trouve('projets', 'PRJ-demo').livrables[0]))) / 86400000);
+    const temoin = document.body.appendChild(document.createElement('span'));
+    temoin.style.color = 'var(--bloquant-txt)';
+    const bloquant = getComputedStyle(temoin).color; temoin.remove();
+    return { texte: s.textContent.replace(/\u00a0/g, ' '), attendu: 'dépassée de ' + jours + ' j',
+      retard: s.classList.contains('retard'), couleur: getComputedStyle(s).color, bloquant };
+  });
+  assert.equal(retard.texte, retard.attendu);
+  assert.ok(retard.retard && retard.couleur === retard.bloquant, 'Échéance dépassée dans le ton qui bloque : ' + retard.couleur);
+  await page.locator('.lb-piece').getByRole('link', { name: 'Lire le brief' }).waitFor();
+  // Les guillemets de l'extrait tiennent à leur texte : espaces fines insécables.
+  assert.equal(await page.locator('.lb-piece .lb-contexte q').evaluate(q => getComputedStyle(q).quotes),
+    '"«\u202f" "\u202f»" "“" "”"');
   await page.getByRole('link', { name: 'Examiner la V1', exact: true }).click();
   await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo/juger/1');
   await page.setViewportSize({ width: 390, height: 650 });
@@ -162,7 +206,7 @@ try {
     decalage: '', annuler: 44 });
   await page.goBack();
   await page.setViewportSize({ width:1440, height:1050 });
-  await page.getByRole('heading', {name:'Sur la table'}).waitFor();
+  await page.getByRole('heading', {name:'À valider aujourd’hui'}).waitFor();
   assert.equal(await page.locator('.studio-piece').count(), 2, 'La pièce validée sort de la revue');
   // Un lien de décision partagé continue à viser la même version après une nouvelle soumission.
   await page.evaluate(() => {
@@ -232,7 +276,8 @@ try {
   assert.ok(!Number.isNaN(Date.parse(cree.cree_le)));
   await page.getByRole('heading', {level:1,name:'Projet de contrôle'}).waitFor();
   // La recherche conserve le résultat au clavier et ouvre le livrable identifié.
-  await page.keyboard.press('Control+f');
+  // Elle s'ouvre sur ⌘K ou Ctrl K, comme dans les outils de l'équipe.
+  await page.keyboard.press('Control+k');
   const rechercheGlobale = page.getByRole('dialog', { name:'Rechercher' });
   const saisie = rechercheGlobale.getByRole('searchbox');
   await saisie.fill('Affiche de lancement');
@@ -241,19 +286,97 @@ try {
   await page.keyboard.press('Enter');
   await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo');
   await page.getByRole('heading',{level:1,name:'Affiche de lancement'}).waitFor();
-  await page.keyboard.press('Control+f');
+  await page.keyboard.press('Meta+k');
   await saisie.fill('support');
   await saisie.press('Escape');
   assert.equal(await rechercheGlobale.count(),0);
+  // ⌘F et Ctrl F restent au navigateur : La Barre ne les intercepte plus.
+  await page.evaluate(() => { window.__toucheF = []; window.addEventListener('keydown', e => { if (e.code === 'KeyF') window.__toucheF.push(e.defaultPrevented); }); });
+  await page.keyboard.press('Meta+f');
+  await page.keyboard.press('Control+f');
+  assert.deepEqual(await page.evaluate(() => window.__toucheF), [false, false], '⌘F et Ctrl F ne sont pas interceptés');
+  assert.equal(await rechercheGlobale.count(), 0);
+  // La note rapide est en accès direct dans la barre, et sur Alt N hors d'un champ.
+  const note = page.getByRole('dialog', { name:'Prendre une note' });
+  // Au téléphone, elle n'est qu'une icône : un crayon, pas l'appareil photo
+  // qu'on lisait « photo » ou « capture ».
+  assert.equal(await page.locator('.lb-noter svg path').getAttribute('d'),
+    await page.evaluate(() => UI.icone('note').querySelector('path').getAttribute('d')));
+  await page.locator('.lb-rail').getByRole('button', { name:'Note rapide', exact:true }).click();
+  await note.waitFor();
+  await page.keyboard.press('Escape');
+  assert.equal(await note.count(), 0);
+  await page.locator('#contenu h1').click();
+  await page.keyboard.press('Alt+KeyN');
+  await note.waitFor();
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Control+k');
+  await saisie.waitFor();
+  await saisie.press('Alt+KeyN');
+  assert.equal(await note.count(), 0, 'Dans un champ, Alt N reste à la saisie');
+  await saisie.press('Escape');
+  // Un lien de Décisions mène à sa destination d'un clic, sans panneau qui
+  // s'intercale ; une ligne sur une date manquante ouvre le plan de charge.
+  await page.goto(url + '/#/valider/file');
+  const ligneSansDate = page.locator('.decisions-detail').filter({ hasText: 'sans date de remise' });
+  await ligneSansDate.locator('summary').click();
+  await ligneSansDate.getByRole('link').click();
+  await page.waitForURL('**/#/planning/charge');
+  assert.equal(await page.locator('dialog[open], .panneau[role=dialog]').count(), 0, 'Aucun panneau ne s’intercale avant la destination');
   await page.setViewportSize({width:320,height:700});
   await page.getByRole('navigation',{name:'Navigation mobile'}).getByRole('link',{name:'Plus'}).click();
   await page.locator('.lb-liste-liens').getByRole('link',{name:'Planning'}).click();
-  await page.locator('.lb-modes summary').click();
-  await page.locator('.lb-modes a[href="#/planning/charge"]').click();
+  // Les vues ne se replient jamais : sur téléphone, une ligne qui défile,
+  // la vue active en vue, sans élargir la page.
+  const vuesPlanning = page.getByRole('group', { name:'Vues du planning' });
+  assert.equal(await page.locator('.st-modes summary').count(), 0, 'Aucune vue repliée derrière « Vue »');
+  await vuesPlanning.locator('a[href="#/planning/charge"]').click();
   await page.waitForURL('**/#/planning/charge');
   await page.reload({waitUntil:'networkidle'});
-  await page.locator('.lb-modes summary').click();
-  assert.match(await page.locator('.lb-modes [aria-current="page"]').innerText(),/Plan de charge/);
+  assert.match(await vuesPlanning.locator('[aria-current="page"]').innerText(),/Plan de charge/);
+  const ligneVues = await vuesPlanning.evaluate(g => {
+    const hauts = [...g.children].map(a => Math.round(a.getBoundingClientRect().top));
+    const actif = g.querySelector('[aria-current]').getBoundingClientRect(), cadre = g.getBoundingClientRect();
+    return { lignes: new Set(hauts).size, defile: g.scrollWidth > g.clientWidth,
+      actifVisible: actif.left >= cadre.left - 1 && actif.right <= cadre.right + 1,
+      page: document.documentElement.scrollWidth <= innerWidth };
+  });
+  assert.deepEqual(ligneVues, { lignes: 1, defile: true, actifVisible: true, page: true });
+  // La ligne dit qu'elle continue : la vue active au milieu, ses voisines qui
+  // dépassent, et un fondu sur chaque bord qui cache encore des vues.
+  const bordsVues = async (groupe) => {
+    await page.waitForFunction(n => {
+      const g = document.querySelector('[role=group][aria-label="' + n + '"]');
+      return g && /deborde-/.test(g.parentElement.className);
+    }, await groupe.getAttribute('aria-label'));
+    return groupe.evaluate(g => {
+      const cadre = g.getBoundingClientRect(), vues = [...g.children];
+      const i = vues.findIndex(a => a.hasAttribute('aria-current'));
+      const voit = a => { const r = a.getBoundingClientRect(); return Math.min(r.right, cadre.right) - Math.max(r.left, cadre.left) >= 24; };
+      const s = getComputedStyle(g);
+      return { avant: i > 0 && voit(vues[i - 1]), apres: i < vues.length - 1 && voit(vues[i + 1]),
+        gauche: g.parentElement.classList.contains('deborde-gauche'),
+        droite: g.parentElement.classList.contains('deborde-droite'),
+        fondu: /gradient/.test(s.maskImage || s.webkitMaskImage || '') };
+    });
+  };
+  assert.deepEqual(await bordsVues(vuesPlanning), { avant: true, apres: true, gauche: true, droite: true, fondu: true },
+    'Plan de charge au milieu de la ligne, Priorités et Équipe en partie visibles');
+  await page.goto(url + '/#/referentiel/parametres');
+  const vuesRessources = page.getByRole('group', { name:'Vues des ressources' });
+  await vuesRessources.waitFor();
+  assert.deepEqual(await bordsVues(vuesRessources), { avant: true, apres: false, gauche: true, droite: false, fondu: true },
+    'Paramètres, dernière vue : la précédente se voit, le fondu reste à gauche');
+  // Sur ordinateur, les huit vues de Ressources se voient toutes, sans repli ni fondu.
+  await page.setViewportSize({width:1440,height:1050});
+  const vuesOrdinateur = await vuesRessources.evaluate(g => {
+    const cadre = g.getBoundingClientRect(), s = getComputedStyle(g);
+    return { vues: [...g.querySelectorAll('a')].filter(a => { const r = a.getBoundingClientRect();
+        return r.width > 0 && r.left >= cadre.left - 1 && r.right <= cadre.right + 1; }).length,
+      fondu: /gradient/.test(s.maskImage || s.webkitMaskImage || '') };
+  });
+  assert.deepEqual(vuesOrdinateur, { vues: 8, fondu: false }, 'Les huit vues de Ressources à 1440 px');
+  assert.equal(await page.locator('.st-modes summary, .st-modes details').count(), 0, 'Aucune vue repliée sur ordinateur');
   // À 320 et 360 px, le titre d'une pièce longue (« Key visual — Côte
   // d'Ivoire · Orvelle ») passe sous celui du panneau : la croix reste entière
   // dans l'écran, et « Demander des modifs » tient sur une ligne.
@@ -288,7 +411,6 @@ try {
   // Sur le Bureau, la carte « À valider » de ce KV tient son titre en deux
   // lignes et ne redit ni son code ni son marché.
   await page.goto(url + '/#/bureau');
-  await page.locator('.lb-file summary').click();
   await page.locator('.studio-piece').filter({ hasText: 'Côte d’Ivoire' }).first().click();
   const carteKV = await page.locator('.lb-piece').evaluate(c => {
     const h2 = c.querySelector('h2');
@@ -311,6 +433,29 @@ try {
   }, kvCI);
   assert.deepEqual(repere, [22, true, true, true, true], 'Cible d’un repère d’annotation');
   await page.keyboard.press('Escape');
+  // L'évaluation d'équipe n'est plus une vue du Bilan ; son adresse mène aux indicateurs.
+  await page.goto(url + '/#/reporting/equipe');
+  await page.getByRole('heading', { level:1, name:'Indicateurs' }).waitFor();
+  assert.equal(await page.evaluate(() => location.hash), '#/reporting/indicateurs');
+  assert.equal(await page.getByRole('group', { name:'Vues du bilan' }).getByText('Évaluation').count(), 0);
+  // La planche de livraison se lit d'une seule façon : plus de bascule
+  // « Livraison | Présentation ». Imprimée, elle sort entière, toutes familles
+  // ouvertes, puis chaque famille reprend l'état où on l'avait laissée.
+  await page.goto(url + '/#/projets/PRJ-demo/livraison');
+  await page.getByRole('heading', { name:'Planche de livraison' }).waitFor();
+  assert.equal(await page.locator('.plv-modes').count(), 0, 'Plus de bascule Livraison | Présentation');
+  const impression = await page.evaluate(() => {
+    const familles = () => [...document.querySelectorAll('details.plv-f')];
+    familles()[0].open = false;
+    const avant = familles().map(d => d.open);
+    dispatchEvent(new Event('beforeprint'));
+    const pendant = familles().map(d => d.open);
+    dispatchEvent(new Event('afterprint'));
+    return { n: avant.length, avant, pendant, apres: familles().map(d => d.open) };
+  });
+  assert.ok(impression.n >= 1 && impression.avant[0] === false, 'Une famille repliée avant l’impression');
+  assert.ok(impression.pendant.every(Boolean), 'Toutes les familles ouvertes à l’impression : ' + impression.pendant);
+  assert.deepEqual(impression.apres, impression.avant, 'Chaque famille reprend son état après l’impression');
   // Aucun ancien lien ne doit provoquer d'erreur de rendu.
   for (const route of ['bureau','valider','planning','reporting','projets','projets/marques','referentiel','attentes','reglages']) {
     await page.goto(url + '/#/' + route);
@@ -320,7 +465,6 @@ try {
   // Captures reproductibles de la refonte : uniquement la fixture fictive.
   await page.evaluate(data => { DEPOT.importer(data); }, fixture);
   await page.goto(url + '/#/bureau');
-  await page.locator('.lb-file summary').click();
   await page.getByLabel('Projet', { exact:true }).selectOption('');
   await page.locator('.studio-piece').first().click();
   if (process.env.SCREENSHOT_DIR) {
@@ -338,6 +482,45 @@ try {
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Pas de débordement ${route} à ${width}px`);
     }
   }
+  // Bureau au téléphone : la pièce, son visuel et « Examiner » tiennent dans
+  // le premier écran, au-dessus de la barre du bas ; le visuel mène à la pièce ;
+  // « + Nouveau projet » se range sur la ligne de la date.
+  await page.evaluate(() => {
+    const l = DEPOT.trouve('projets', 'PRJ-demo').livrables.find(x => x.id === 'L-demo');
+    l.vignette = 'vitrine/demo/visuels/social-gh.svg';
+  });
+  for (const [width, height] of [[390, 844], [320, 700]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto(url + '/#/bureau');
+    await page.locator('.studio-piece').filter({ hasText: 'Affiche de lancement' }).click();
+    await page.locator('.lb-piece-image img').evaluate(i => i.complete || new Promise(r => { i.onload = i.onerror = r; }));
+    const tel = await page.evaluate(() => {
+      scrollTo(0, 0);
+      const r = s => document.querySelector(s).getBoundingClientRect();
+      const examiner = document.querySelector('.lb-piece a.b.or'), visuel = document.querySelector('.lb-piece a.lb-piece-image');
+      return { examinerAuDessus: r('.lb-piece a.b.or').bottom <= r('.lb-mobile').top,
+        visuel: visuel && visuel.getAttribute('href') === examiner.getAttribute('href'),
+        nouveauSurLaDate: Math.abs(r('.studio-entete > .b').top - r('.studio-date').top) < 30 && r('.studio-entete > .b').bottom <= r('.studio-entete h1').top + 4,
+        page: document.documentElement.scrollWidth <= innerWidth };
+    });
+    assert.deepEqual(tel, { examinerAuDessus: true, visuel: true, nouveauSurLaDate: true, page: true }, `Bureau à ${width} px`);
+  }
+  await page.setViewportSize({ width: 1440, height: 1050 });
+  // Dans la file, une vignette est un bouton sans bloc : l'image seule,
+  // recadrée par le haut pour garder le bandeau d'un format carré.
+  await page.goto(url + '/#/bureau');
+  const tuile = await page.locator('.lb-file-lignes .studio-piece').filter({ hasText: 'Affiche de lancement' }).evaluate(b => ({
+    blocs: b.querySelectorAll('div, p, section, article, blockquote').length,
+    image: !!b.querySelector('.lb-file-visuel > img'), haut: getComputedStyle(b.querySelector('img')).objectPosition }));
+  assert.deepEqual(tuile, { blocs: 0, image: true, haut: '50% 0px' }, 'Vignette de la file');
+  // Chaque vignette dit qui en répond et pour quand, sans ouvrir la pièce.
+  const suivis = await page.locator('.lb-file-lignes .studio-piece').evaluateAll(bs => bs.map(b => {
+    const s = b.querySelector('.lb-file-suivi');
+    return s && s.textContent.replace(/\u00a0/g, ' ');
+  }));
+  const joursDemo = await page.evaluate(() => Math.floor((Date.now() - new Date(DEPOT.trouve('projets', 'PRJ-demo').sections.identite.echeance)) / 86400000));
+  assert.ok(suivis.length === 3 && suivis.every(Boolean), 'Une ligne de suivi par vignette : ' + suivis);
+  assert.ok(suivis.includes('Sacha Martin · échéance dépassée de ' + joursDemo + ' j'), 'Suivi de « Affiche de lancement » : ' + suivis);
   // La décision rendue plus haut porte le code de ce poste, tiré par crypto et
   // gardé dans le navigateur. Réimporter la base ne double aucune décision ;
   // une décision d'un autre poste sous le même identifiant est renommée et tracée.

@@ -37,7 +37,9 @@ window.UI = (function () {
     standard: "M4 20h16M6 20V9M11 20V4M16 20v-8M21 20v-5",
     cahier: "M5 3h11l4 4v14H5zM16 3v4h4",
     renvoi: "M9 14L4 9l5-5M4 9h11a5 5 0 015 5v6",
-    capture: "M3 7h4l2-3h6l2 3h4v13H3zM12 17a4 4 0 100-8 4 4 0 000 8z",
+    /* Un crayon, pas un appareil photo : au téléphone, la note rapide n'est
+     * plus qu'une icône, et l'appareil se lisait « photo » ou « capture ». */
+    note: "M4 20l1-4.5L15.5 4a2.1 2.1 0 013 3L8 17.5zM13.5 6l3 3M12 20h8",
     recherche: "M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3",
     imprimer: "M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z",
     alerte: "M12 3l9 17H3zM12 9v5M12 17h.01",
@@ -316,7 +318,15 @@ window.UI = (function () {
    *
    * `compte(m)` rend un nombre ou rien ; `alerte(m)` colore la pastille du
    * mode qui porte l'urgence. Si tout est rouge, la priorité cesse d'être
-   * rare : c'est à l'appelant de n'en désigner qu'un. */
+   * rare : c'est à l'appelant de n'en désigner qu'un.
+   *
+   * Les modes restent visibles, quel que soit leur nombre. Repliés derrière
+   * « Vue ▸ », les sept rubriques de Ressources et les vues du Bilan ne se
+   * trouvaient plus (constat forme-systeme-css-4). Sur ordinateur, ils vont à
+   * la ligne ; sur téléphone, ils tiennent sur une ligne qui défile, le mode
+   * actif au milieu, ses voisins en partie visibles. Un fondu sur chaque bord
+   * qui cache encore des vues dit que la ligne continue : la barre de
+   * défilement, elle, ne se voit pas sur iOS ni sur Android. */
   function modes(liste, courant, quand, opts) {
     opts = opts || {};
     var actif = liste.filter(function (m) { return m.cle === courant; })[0] || liste[0];
@@ -332,8 +342,22 @@ window.UI = (function () {
       });
     }
     var choix = el("div.studio-statuts", { role: "group", "aria-label": opts.titre || "Vues" }, contenu());
-    if (liste.length <= 2) return el("div.st-modes", {}, choix);
-    return el("details.st-modes.lb-modes", {}, el("summary", {}, "Vue", el("strong", {}, actif.nom)), choix);
+    var cadre = el("div.st-modes", {}, choix);
+    /* Les classes disent quel bord cache des vues ; le fondu ne se dessine
+     * qu'au téléphone (parcours.css), là où la ligne défile. */
+    function bords() {
+      var reste = choix.scrollWidth - choix.clientWidth;
+      cadre.classList.toggle("deborde-gauche", reste > 1 && choix.scrollLeft > 1);
+      cadre.classList.toggle("deborde-droite", reste > 1 && choix.scrollLeft < reste - 1);
+    }
+    choix.addEventListener("scroll", bords, { passive: true });
+    if (window.requestAnimationFrame) requestAnimationFrame(function () {
+      var a = choix.querySelector(".active");
+      if (a && choix.scrollWidth > choix.clientWidth)
+        choix.scrollLeft = Math.max(0, a.offsetLeft - choix.offsetLeft - (choix.clientWidth - a.offsetWidth) / 2);
+      bords();
+    });
+    return cadre;
   }
 
   /* ————————————————————— 17 · La bande de recevabilité ————————————————————— */

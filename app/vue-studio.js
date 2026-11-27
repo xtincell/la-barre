@@ -30,6 +30,11 @@ window.VUE_STUDIO = (function () {
     }));
   }
 
+  /* Le Bureau du matin : la pièce à regarder d'abord, avec de quoi la juger
+   * sans ouvrir le dossier (qui en répond, pour quand, ce que dit le brief, ce
+   * qu'il faut vérifier) ; puis toute la file, dépliée. Elle était repliée
+   * sous « File de revue » et le DC ignorait ce qui l'attendait (constats
+   * ia-navigation-5, friction-parcours-9). */
   function rendre(hote) {
     hote.className = "zone studio lb-bureau";
     O.vider(hote);
@@ -41,12 +46,13 @@ window.VUE_STUDIO = (function () {
     selection = active ? cle(active) : null;
     var choix = el("select", { id:"studio-projet", onchange:function () {
       projet = choix.value; selection = null; rendre(hote);
-      var menu = hote.querySelector(".lb-file"); menu.open = true; menu.querySelector("select").focus();
+      var filtre = hote.querySelector("#studio-projet"); if (filtre) filtre.focus();
     } }, el("option", {value:""}, "Tous les projets"), projets.map(function (p) { return el("option", {value:p.id}, p.nom); }));
     choix.value = projet;
     hote.appendChild(el("header.studio-entete", {}, el("div", {},
       el("p.studio-date", {}, new Intl.DateTimeFormat("fr-FR", {weekday:"long",day:"numeric",month:"long"}).format(new Date())),
-      el("h1", {}, "Sur la table"))));
+      el("h1", {}, "À valider aujourd’hui")),
+      el("button.b", { type:"button", onclick:VUE_PROJETS.nouveau }, "+ Nouveau projet")));
     if (DEPOT.provenance().cle === "exemple") hote.appendChild(el("div.studio-demo", {role:"status"},
       el("span", {}, "Données d’exemple"), el("a", {href:"#/referentiel/parametres"}, "Importer mon travail")));
     var travail = el("div.lb-travail");
@@ -66,14 +72,18 @@ window.VUE_STUDIO = (function () {
       var dit = String(titre).replace(/\u00a0/g, " ");
       var meta = [marche && dit.indexOf(marche.nom) === -1 ? marche.nom : null, version ? "V" + version : null].filter(Boolean).join(" · ");
       var intention = o.concept || o.signature;
+      /* Le geste suit le titre, avant le contexte : au téléphone, il reste
+       * dans le premier écran sous le visuel. Le visuel mène aussi à la pièce ;
+       * le lien qui se lit et se tabule reste « Examiner ». */
       table.appendChild(el("article.lb-piece" + (!o.vignette && !intention ? ".sans-visuel" : ""), {},
         el("div.lb-piece-texte", {},
           el("p.lb-etat", {}, el("span", { "aria-hidden":"true" }, "◐"), piste ? "Piste à arbitrer" : "À valider"),
           el("p.lb-piece-projet", {}, el("a", {href:APP.adresse("projets",p.id)}, p.nom)),
           el("h2", {}, titre),
           meta ? el("p.lb-piece-meta",{}, meta) : null,
-          el("a.b.or", {href:chemin}, piste ? "Examiner cette piste" : version ? "Examiner la V" + version : "Examiner la pièce")),
-        o.vignette ? el("div.lb-piece-image", {}, IMAGE.vignette(o,"planche")) : intention ?
+          el("a.b.or", {href:chemin}, piste ? "Examiner cette piste" : version ? "Examiner la V" + version : "Examiner la pièce"),
+          contexte(active)),
+        o.vignette ? el("a.lb-piece-image", { href:chemin, tabindex:"-1", "aria-hidden":"true" }, IMAGE.vignette(o,"planche")) : intention ?
           el("blockquote.studio-intention.lb-intention",{}, intention) : null));
     } else {
       var sujet = !projet && FILE.tout()[0];
@@ -83,14 +93,15 @@ window.VUE_STUDIO = (function () {
         sujet ? el("a.b.or",{href:"#/valider/file"},"Ouvrir les décisions") :
         el("a.b",{href:projet ? APP.adresse("projets",projet) : "#/projets"},projet ? "Ouvrir le dossier" : "Voir les projets")));
     }
-    var file = el("details.lb-file", {}, el("summary", {}, "File de revue", el("span.studio-compte",{},String(pieces.length))),
-      el("div.studio-filtre",{},el("label",{for:"studio-projet"},"Projet"),choix),
+    if (pieces.length || projet) table.appendChild(el("section.lb-file", { "aria-labelledby":"lb-file-titre" },
+      el("div.lb-file-tete", {},
+        el("h2", { id:"lb-file-titre" }, "File de revue", el("span.studio-compte",{},String(pieces.length))),
+        el("div.studio-filtre",{},el("label",{for:"studio-projet"},"Projet"),choix)),
       el("div.lb-file-lignes", {}, pieces.map(function (x) {
         return el("button.studio-piece" + (active === x ? ".active":""), {type:"button","aria-pressed":String(active === x),onclick:function () {
-          selection = cle(x); rendre(hote); var lien = hote.querySelector(".lb-piece .b"); if (lien) lien.focus();
-        }}, el("strong",{},x.titre),el("span",{},x.projet.nom));
-      })));
-    table.appendChild(file);
+          selection = cle(x); rendre(hote); var lien = hote.querySelector(".lb-piece .b.or"); if (lien) lien.focus();
+        }}, apercu(x), el("strong",{},x.titre), el("span",{},x.projet.nom), suivi(x));
+      }))));
     var reprise = rubriqueRecente(projets);
     var proches = projets.slice().sort(function (a,b) {
       if (reprise && a.id !== b.id) {
@@ -105,6 +116,82 @@ window.VUE_STUDIO = (function () {
         return dossier(p, reprise && p.id === reprise.projet ? reprise.rubrique : null);
       })) :
         el("div.studio-vide",{},el("button.b.or",{type:"button",onclick:VUE_PROJETS.nouveau},"Créer mon premier projet"))));
+  }
+
+  /* Ce qu'il faut pour juger sans ouvrir le dossier. Le critère est celui que
+   * la page de la pièce affiche à côté des décisions (vue-asset.js). */
+  function contexte(piece) {
+    var p = piece.projet, o = piece.objet, s = p.sections || {};
+    var brief = s.brief || {};
+    var qui = piece.auteur && DEPOT.trouve("personnes", piece.auteur);
+    var echeance = echeanceDe(piece);
+    var reste = delai(echeance);
+    var criteres = ((s.bigidea || {}).criteres || []).filter(Boolean);
+    var critere = criteres[0] || (piece.type === "livrable" ? (REGLES.grille("livrable", o)[0] || {}).texte : null);
+    var demande = extrait(brief.probleme || brief.objectif_com || brief.objectif, 160);
+    var lireBrief = NATURE.aSection(p, "brief") ? el("a", { href:APP.adresse("projets", p.id, "brief") }, "Lire le brief") : null;
+    return el("dl.lb-contexte", {},
+      el("div", {}, el("dt", {}, "Responsable"), el("dd", {}, qui ? qui.nom : "À attribuer")),
+      el("div", {}, el("dt", {}, "Échéance"), el("dd", {}, echeance ? O.joli(echeance) : "À définir",
+        reste ? ["\u00a0· ", el("span.lb-delai" + (reste.retard ? ".retard" : ""), {}, reste.texte)] : null)),
+      demande || lireBrief ? el("div.lb-contexte-large", {}, el("dt", {}, "Le brief"), el("dd", {}, demande ? [el("q", {}, demande), " "] : null, lireBrief)) : null,
+      critere ? el("div.lb-contexte-large", {}, el("dt", {}, "À vérifier"), el("dd", {}, critere)) : null);
+  }
+
+  /* Sous chaque vignette de la file : qui en répond, et pour quand ; sans
+   * échéance, depuis quand elle attend (constat ia-navigation-5). */
+  function suivi(x) {
+    var qui = x.auteur && DEPOT.trouve("personnes", x.auteur);
+    var reste = delai(echeanceDe(x));
+    var attente = x.depuis ? O.depuis(x.depuis) : null;
+    var quand = reste ? el("span.lb-delai" + (reste.retard ? ".retard" : ""), {}, "échéance " + reste.texte)
+      : attente === null ? null : attente ? "en attente depuis " + attente + "\u00a0j" : "déposée aujourd’hui";
+    return el("span.lb-file-suivi", {}, qui ? qui.nom : "à attribuer", quand ? ["\u00a0· ", quand] : null);
+  }
+
+  /* La date qui compte pour une pièce : celle du livrable, sinon celle du projet. */
+  function echeanceDe(piece) {
+    return piece.type === "livrable" ? PLATEAU.echeanceDe(piece.projet, piece.objet)
+      : ((piece.projet.sections || {}).identite || {}).echeance || null;
+  }
+
+  /* Où en est une échéance, selon la règle de Planning > Livraisons
+   * (TRACE.souffrance) : passée d'au moins un jour, elle est dépassée. Une
+   * échéance dépassée qui s'affichait comme les autres trompait la priorité. */
+  function delai(echeance, maintenant) {
+    var d = echeance ? new Date(echeance) : null;
+    if (!d || isNaN(d)) return null;
+    var jours = Math.floor(((maintenant || O.auj()) - d) / 86400000);
+    if (jours > 0) return { texte: "dépassée de " + jours + "\u00a0j", retard: true };
+    if (jours === 0) return { texte: "aujourd’hui", retard: false };
+    return { texte: "dans " + (-jours) + "\u00a0j", retard: false };
+  }
+
+  /* Un extrait d'environ n caractères, coupé à la fin d'un mot. Seules les
+   * espaces ordinaires se réduisent : une espace insécable tient « : » ou
+   * « » » à son mot. Celles qu'une saisie a omises devant : ; ! ? et dans les
+   * guillemets se posent ici, pour que la ligne ne coupe pas avant le signe. */
+  function extrait(texte, n) {
+    texte = String(texte || "").replace(/[ \t\n\r\f\v]+/g, " ").trim()
+      .replace(/ :/g, "\u00a0:").replace(/ ([;!?»])/g, "\u202f$1").replace(/« /g, "«\u202f");
+    if (texte.length <= n) return texte;
+    var coupe = texte.slice(0, n + 1);
+    var espace = coupe.lastIndexOf(" ");
+    return (espace > n * 0.6 ? coupe.slice(0, espace) : texte.slice(0, n)).replace(/[\s,;:.—–-]+$/, "") + "…";
+  }
+
+  /* La vignette d'une pièce dans la file : son visuel, ou son intention. Elle
+   * vit dans un bouton, qui n'admet pas de bloc : on y met l'image seule, sans
+   * le cadre <div> d'IMAGE.vignette. */
+  function apercu(x) {
+    var o = x.objet;
+    var image = o.vignette ? IMAGE.vignette(o, "ligne").querySelector("img") : null;
+    if (image) {
+      image.alt = ""; image.loading = "lazy";
+      return el("span.lb-file-visuel", { "aria-hidden":"true" }, image);
+    }
+    var mot = o.concept || o.signature || o.titre || o.nom || "";
+    return el("span.lb-file-visuel.lb-file-texte", { "aria-hidden":"true" }, extrait(mot, 90));
   }
 
   function dossier(p, rubrique) {
@@ -174,5 +261,5 @@ window.VUE_STUDIO = (function () {
     hote.appendChild(liste);
     filtrer();
   }
-  return { rendre: rendre, projets: projets, navProjets: navProjets, noterRubrique: noterRubrique };
+  return { rendre: rendre, projets: projets, navProjets: navProjets, noterRubrique: noterRubrique, extrait: extrait, delai: delai, suivi: suivi };
 })();

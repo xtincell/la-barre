@@ -602,8 +602,12 @@ body {
 .champ.critique label::after { content: " · critique"; color: var(--bloquant-txt); font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); }
 .form-actions { display: flex; gap: .45rem; margin-top: .7rem; flex-wrap: wrap; align-items: center; }
 
-.avertissement { border-left: 3px solid var(--alerte); background: rgba(217,83,74,.1);
-  color: #eaa9a3; padding: .5rem .7rem; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); margin: .4rem 0; }
+/* Le mot que la marque ne dit jamais : fond blanc, filet, texte à l'encre. Le
+ * rose sur rose du thème sombre ne se lisait pas (1,6:1, constat
+ * forme-systeme-css-7). */
+.avertissement { border: 1px solid var(--trait); border-left: 3px solid var(--bloquant); border-radius: 6px;
+  background: var(--surface-1); color: var(--clair);
+  padding: .5rem .7rem; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); margin: .4rem 0; }
 
 /* ————————————————————— Capture ————————————————————— */
 

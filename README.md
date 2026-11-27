@@ -52,14 +52,21 @@ n'utilise que les modules natifs de Node.
 La navigation (`app/application.js`) compte six entrées : Bureau, Projets,
 Décisions, Planning, Bilan et Ressources. Chaque mode a sa propre adresse, par
 exemple `#/referentiel/parametres`. Les anciennes adresses (`#/reglages`,
-`#/attentes`, `#/decider`, `#/galerie`…) mènent au mode correspondant.
+`#/attentes`, `#/decider`, `#/galerie`…) mènent au mode correspondant, par une
+seule table (`APP.ALIAS`) que la barre latérale et les liens des écrans
+partagent. Un bouton qui mène ailleurs (`app/geste.js`) est un lien : il part
+d'un clic, et dit au survol ce qu'on trouve à l'arrivée.
+
+La recherche s'ouvre sur ⌘K (Ctrl K) ; ⌘F reste au navigateur. La note rapide
+est en tête de la barre latérale, et sur Alt N hors d'un champ de saisie. Le
+reste (demander un retour, imprimer, paramètres, export) est sous « Outils ».
 
 | Entrée | Adresse | Ce qu'on y trouve | Fichiers de `app/` |
 |---|---|---|---|
-| Bureau | `#/bureau` | Les créations à regarder et les projets en cours. Un livrable à examiner s'ouvre en panneau. | `vue-studio.js`, `vue-revue.js`, `vue-asset.js` |
+| Bureau | `#/bureau` | « À valider aujourd’hui » : la pièce à regarder d'abord, avec son responsable, son échéance (dépassée de N j, ou dans N j), un extrait du brief et le critère principal ; toute la file de revue, dépliée en vignettes qui disent qui en répond et pour quand ; les dossiers en cours et « + Nouveau projet ». | `vue-studio.js`, `vue-revue.js`, `vue-asset.js` |
 | Décisions | `#/valider` | À traiter · Retours attendus | `vue-decider.js`, `file-action.js`, `vue-attentes.js` |
 | Planning | `#/planning` | Priorités · Plan de charge · Équipe · Livraisons | `vue-placer.js`, `vue-pipeline.js`, `vue-direction.js`, `vue-livraisons.js` |
-| Bilan | `#/reporting` | Indicateurs · Reprises · Évaluation · Bilan mensuel · Arbitrages | `vue-constater.js`, `bilan.js`, `vue-equipe.js`, `vue-findemois.js`, `vue-jurisprudence.js` |
+| Bilan | `#/reporting` | Indicateurs · Reprises · Bilan mensuel · Arbitrages. L'ancienne adresse de l'évaluation d'équipe (`#/reporting/equipe`) mène aux indicateurs : `vue-equipe.js` reste, hors de la navigation. | `vue-constater.js`, `bilan.js`, `vue-findemois.js`, `vue-jurisprudence.js` |
 | Projets | `#/projets` | La liste des projets, leur lecture par marque, l'écran d'une marque ou d'une campagne (avec son bilan), puis le dossier d'un projet. | `vue-projets.js`, `vue-studio.js` |
 | Galerie (vue de Projets) | `#/projets/galerie` | Les campagnes et leur structure, en images, par année. | `vue-galerie.js` |
 | Ressources | `#/referentiel` | Marques · Marchés et supports · Registre des projets · Registre des briefs · Boîte d'entrée · Le disque · Doctrine · Paramètres | `vue-maison.js`, `vue-vault.js`, `vue-referentiel.js`, `registre-people.js`, `registre-radar.js`, `intake.js`, `disque.js`, `vue-doctrine.js`, `vue-reglages.js` |

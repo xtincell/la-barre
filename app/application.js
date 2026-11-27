@@ -16,7 +16,11 @@ window.APP = (function () {
     { cle: "reporting", ico: "standard", nom: "Bilan", vue: function () { return VUE_CONSTATER; } },
     { cle: "referentiel", ico: "referentiel", nom: "Ressources", vue: function () { return VUE_MAISON; } }
   ];
-  var ANCIENNES = {
+  /* Les anciennes adresses, et leur adresse actuelle. Une seule table : la
+   * barre latérale, la file de Décisions et les liens de chaque écran
+   * (geste.js) les traduisent de la même façon. Il y en avait deux, et
+   * « #/pipeline » ne menait pas au même écran selon le chemin. */
+  var ALIAS = {
     decider: ["valider", "file"], placer: ["planning", "ordre"],
     constater: ["reporting", "indicateurs"], maison: ["referentiel", "marches"],
     direction: ["valider", "file"], revue: ["valider", "file"], attentes: ["valider", "du"],
@@ -24,6 +28,12 @@ window.APP = (function () {
     pipeline: ["planning", "ordre"], reglages: ["referentiel", "parametres"], people: ["referentiel", "people"],
     galerie: ["projets", "galerie"]
   };
+  function ancienne(cle) { return Object.prototype.hasOwnProperty.call(ALIAS, cle); }
+  /* « #/attentes/A-1 » → « #/valider/du/A-1 » ; une adresse actuelle reste telle quelle. */
+  function actuelle(ou) {
+    var m = String(ou || "").match(/^#\/?([^/?#]*)(.*)$/);
+    return m && ancienne(m[1]) ? "#/" + ALIAS[m[1]].join("/") + m[2] : ou;
+  }
   function segments() {
     return location.hash.replace(/^#\/?/, "").split("/").map(function (s) {
       try { return decodeURIComponent(s); } catch (_) { return s; }
@@ -32,7 +42,7 @@ window.APP = (function () {
   function adresse() { return "#/" + Array.from(arguments).map(encodeURIComponent).join("/"); }
   function piste() {
     var m = segments();
-    if (Object.prototype.hasOwnProperty.call(ANCIENNES, m[0])) m = ANCIENNES[m[0]].concat(m.slice(1));
+    if (ancienne(m[0])) m = ALIAS[m[0]].concat(m.slice(1));
     var cle = m[0] || "bureau";
     return { vue: VUES.find(function (v) { return v.cle === cle; }), cle: cle,
       arg: m[1], sous: m[2], objet: m[3], mode: m[4], version: m[5] };
@@ -47,11 +57,15 @@ window.APP = (function () {
     return el("a", { href: adresse(v.cle), "aria-current": cle === v.cle ? "page" : null },
       UI.icone(v.ico, 20), el("span", {}, v.nom));
   }
-  function raccourci() { return /Mac|iPhone|iPad/.test(navigator.platform || "") ? "⌘" : "Ctrl"; }
+  /* Les raccourcis suivent les habitudes prises ailleurs (Linear, Notion,
+   * Slack, Figma) : ⌘K cherche, ⌘F reste au navigateur. La note rapide passe
+   * sur Alt N (constat benchmark-adoption-11, décision D14). */
+  function mac() { return /Mac|iPhone|iPad/.test(navigator.platform || ""); }
+  function raccourci() { return mac() ? "⌘" : "Ctrl"; }
+  function option() { return mac() ? "⌥" : "Alt"; }
   function outils() {
     var age = DEPOT.ageSauvegarde();
     return el("div.lb-outils", {},
-      el("button", { type: "button", onclick: CAPTURE.ouvrir }, UI.icone("capture"), "Prendre une note"),
       el("button", { type: "button", onclick: function () { RENVOI.ouvrir({}); } }, UI.icone("renvoi"), "Demander un retour"),
       el("button", { type: "button", onclick: function () { window.print(); } }, UI.icone("imprimer"), "Imprimer"),
       el("a", { href: "#/referentiel/parametres" }, UI.icone("reglages"), "Paramètres"),
@@ -70,10 +84,13 @@ window.APP = (function () {
     }
     return el("aside.rail.lb-rail", { "aria-label": DEPOT.estDemonstration() ? "Démonstration — données fictives" : "Espace de travail" },
       el("div.lb-entete-rail", {}, marque(),
-        el("button.lb-chercher", { type: "button", "aria-label": "Rechercher", onclick: ouvrirRecherche },
-          UI.icone("recherche", 20), el("span", {}, "Rechercher"), el("kbd", {}, raccourci() + " F"))),
+        el("div.lb-raccourcis", {},
+          el("button.lb-chercher", { type: "button", "aria-label": "Rechercher", "aria-keyshortcuts": "Meta+K Control+K", onclick: function () { ouvrirRecherche(); } },
+            UI.icone("recherche", 20), el("span", {}, "Rechercher"), el("kbd", {}, raccourci() + " K")),
+          el("button.lb-noter", { type: "button", "aria-label": "Note rapide", title: "Prendre une note", "aria-keyshortcuts": "Alt+N", onclick: CAPTURE.ouvrir },
+            UI.icone("note", 20), el("span", {}, "Note rapide"), el("kbd", {}, option() + " N")))),
       el("nav.rail-nav.lb-nav", { "aria-label": "Navigation principale" }, VUES.map(function (v) { return navigation(v, espace); })),
-      el("details.lb-commande", {}, el("summary", {}, UI.icone("reglages", 18), "Outils du poste"), outils()),
+      el("details.lb-commande", {}, el("summary", {}, UI.icone("reglages", 18), "Outils"), outils()),
       el("nav.lb-mobile", { "aria-label": "Navigation mobile" }, VUES.slice(0, 3).map(function (v) { return navigation(v, espace); }),
         navigation({ cle: "plus", ico: "plus", nom: "Plus" }, principales.indexOf(espace) < 0 ? "plus" : espace)));
   }
@@ -81,7 +98,7 @@ window.APP = (function () {
     zone.appendChild(el("header.studio-entete", {}, el("h1", {}, "Plus")));
     zone.appendChild(el("nav.lb-liste-liens", { "aria-label": "Autres espaces" },
       VUES.slice(3).map(function (v) { return navigation(v, ""); })));
-    zone.appendChild(el("details.lb-outils-mobile", {}, el("summary", {}, "Outils du poste"), outils()));
+    zone.appendChild(el("details.lb-outils-mobile", {}, el("summary", {}, "Outils"), outils()));
   }
 
   function ouvrirRecherche(reprise) {
@@ -290,6 +307,9 @@ window.APP = (function () {
       .catch(function (e) { dire("La base de démonstration n'a pas pu être lue (" + (e && e.message) + ")."); });
   }
 
+  function saisie(n) {
+    return !!n && (n.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(n.tagName || ""));
+  }
   function ecouter() {
     document.addEventListener("click", function (e) {
       var lien = e.target.closest("a[href^='#/']");
@@ -304,11 +324,12 @@ window.APP = (function () {
       rendre();
     });
     document.addEventListener("keydown", function (e) {
-      if (!(e.metaKey || e.ctrlKey) || segments()[0] === "partage" || document.querySelector("dialog[open], .panneau[role=dialog]")) return;
-      var k = e.key.toLowerCase();
-      if (k === "k") { e.preventDefault(); CAPTURE.ouvrir(); }
-
-      if (k === "f") { e.preventDefault(); ouvrirRecherche(); }
+      if (segments()[0] === "partage" || document.querySelector("dialog[open], .panneau[role=dialog]")) return;
+      var k = String(e.key || "").toLowerCase();
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && k === "k") { e.preventDefault(); ouvrirRecherche(); return; }
+      /* Alt N par la touche, pas par le caractère : sur Mac, ⌥N compose un
+       * tilde. Dans un champ, la touche reste à la saisie. */
+      if (e.altKey && !e.metaKey && !e.ctrlKey && e.code === "KeyN" && !saisie(e.target)) { e.preventDefault(); CAPTURE.ouvrir(); }
     });
   }
 
@@ -406,7 +427,7 @@ window.APP = (function () {
     rendre();
   }
   return { demarrer: demarrer, rendre: rendre, chercher: chercher, moi: moi, adresse: adresse, retour: retour,
-    remplacerVue: remplacerVue };
+    remplacerVue: remplacerVue, ALIAS: ALIAS, actuelle: actuelle };
 })();
 
 /* ————————————————————— La capture rapide ————————————————————— */

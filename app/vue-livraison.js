@@ -1,4 +1,4 @@
-/* vue-livraison.js — la planche de présentation, et la planche de livraison.
+/* vue-livraison.js — la planche de livraison.
  *
  * Pourquoi elle n'existait pas, et pourquoi il fallait forcer le workflow.
  *
@@ -28,17 +28,36 @@
  *   dessus, chaque fichier trouve sa case, et ce qui hésite se tranche
  *   à la main plutôt que de se ranger tout seul sous le mauvais SKU.
  *
- * Deux lectures d'une même planche, et c'est la même donnée :
- *
- *   LIVRAISON     tout, les trous compris — l'écran de travail
- *   PRÉSENTATION  ce qui est livré, imprimable — l'écran de séance
+ * La planche se lit d'une seule façon : tout, les trous compris. Ce qui se
+ * montre au client vit dans la rubrique Présentation du dossier ; une bascule
+ * « Livraison | Présentation » ici doublait cet onglet sur le même écran.
  */
 
 window.VUE_LIVRAISON = (function () {
   var el = O.el;
-  var mode = "livraison";
+
+  /* Imprimer la planche, c'est l'imprimer entière : une grande famille
+   * repliée n'aurait donné que son en-tête. Elles s'ouvrent le temps de
+   * l'impression, puis reprennent l'état où on les avait laissées. Les deux
+   * écouteurs se posent au premier affichage, jamais au chargement. */
+  var impression = false;
+  function preparerImpression() {
+    if (impression || !window.addEventListener) return;
+    impression = true;
+    window.addEventListener("beforeprint", function () {
+      document.querySelectorAll("details.plv-f:not([open])").forEach(function (d) {
+        d.setAttribute("data-plv-imprime", ""); d.open = true;
+      });
+    });
+    window.addEventListener("afterprint", function () {
+      document.querySelectorAll("details.plv-f[data-plv-imprime]").forEach(function (d) {
+        d.removeAttribute("data-plv-imprime"); d.open = false;
+      });
+    });
+  }
 
   function rendre(p, rafraichir) {
+    preparerImpression();
     var ls = (p.livrables || []).filter(function (l) { return !l.annule; });
     var familles = grouper(p, ls);
     var pleins = ls.filter(function (l) { return !!l.vignette; });
@@ -51,20 +70,13 @@ window.VUE_LIVRAISON = (function () {
       !familles.length
         ? el("p.rien", {}, "Aucun livrable à ce dossier. La planche se remplit "
             + "quand les livrables existent — elle ne les invente pas.")
-        /* Une planche de présentation vide ne se rend pas silencieusement :
-         * elle dit qu'il n'y a rien à montrer, et pourquoi. Un écran blanc
-         * laisserait croire à une panne. */
-        : (mode === "presentation" && !pleins.length)
-        ? el("p.rien", {}, "Rien à présenter : aucune des " + ls.length
-            + " cases ne porte de visuel. Passe en livraison et dépose les rendus — "
-            + "la planche de séance se compose des visuels au dossier.")
         : el("div.plv-familles", {}, familles.map(function (f, i) {
             return famille(p, f, rafraichir, i);
           })),
       el("details.pj-procedure.pj-detail", { "data-pj-detail": "livraison-controles" },
         el("summary", {}, "Contrôles et suivi de la remise"),
         el("div.pj-procedure-corps", {}, bande(ls, pleins, familles),
-          mode === "livraison" && window.REMISE && ls.length ? REMISE.suiviLot(p, ls, rafraichir) : null))
+          window.REMISE && ls.length ? REMISE.suiviLot(p, ls, rafraichir) : null))
     );
 
     /* Le dossier entier se lâche sur la planche. C'est le geste qui remplace
@@ -105,15 +117,7 @@ window.VUE_LIVRAISON = (function () {
         el("span.plv-q", {}, pleins.length === ls.length
           ? "La planche est complète — elle se montre telle quelle."
           : O.pluriel(ls.length - pleins.length, "visuel manquant", "visuels manquants") + ". "
-            + "Glissez le dossier des rendus n'importe où sur la planche.")),
-      el("div.plv-modes.studio-statuts", { role: "group", "aria-label": "Mode de la planche" }, [
-        { cle: "livraison", nom: "Livraison", quoi: "Tout, les trous compris" },
-        { cle: "presentation", nom: "Présentation", quoi: "Les visuels au dossier, imprimables" },
-      ].map(function (m) {
-        return el("button" + (mode === m.cle ? ".active" : ""), { type: "button",
-          title: m.quoi, "aria-pressed": mode === m.cle ? "true" : "false",
-          onclick: function () { mode = m.cle; rafraichir(); } }, m.nom);
-      })));
+            + "Glissez le dossier des rendus n'importe où sur la planche.")));
   }
 
   /* ————————————————————— Les familles ————————————————————— */
@@ -141,30 +145,22 @@ window.VUE_LIVRAISON = (function () {
 
   function famille(p, f, rafraichir, i) {
     var pleins = f.ls.filter(function (l) { return !!l.vignette; });
-    var montres = mode === "presentation" ? pleins : f.ls;
-    if (mode === "presentation" && !montres.length) return null;
 
-    /* En livraison, une famille se replie : cent quatre-vingt-neuf cases à plat
-     * faisaient onze mille pixels. On ouvre la première, et toute famille assez
-     * courte pour se lire d'un coup. En présentation — la planche qu'on imprime —
-     * tout reste déplié. */
-    var repliable = mode !== "presentation";
-    var noeud = el((repliable ? "details" : "section") + ".plv-f",
-      repliable ? { open: (i === 0 || f.ls.length <= 24) ? "" : null } : {},
-      el((repliable ? "summary" : "div") + ".plvf-tete", {},
+    /* Une famille se replie : cent quatre-vingt-neuf cases à plat faisaient
+     * onze mille pixels. On ouvre la première, et toute famille assez courte
+     * pour se lire d'un coup. */
+    var noeud = el("details.plv-f", { open: (i === 0 || f.ls.length <= 24) ? "" : null },
+      el("summary.plvf-tete", {},
         el("h3", {}, f.nom),
         f.volet ? el("span.plvf-v", {}, f.volet) : null,
-        el("span.plvf-n", {}, mode === "presentation"
-          ? montres.length + (montres.length > 1 ? " visuels" : " visuel")
-          : pleins.length + " / " + f.ls.length)),
-      el("div.plvf-mur", {}, montres.map(function (l) {
+        el("span.plvf-n", {}, pleins.length + " / " + f.ls.length)),
+      el("div.plvf-mur", {}, f.ls.map(function (l) {
         return case_(p, l, rafraichir);
       })));
 
     /* Une famille aussi accepte un lot : c'est le dossier d'une marque qu'on
      * reçoit, rarement les cinquante-neuf d'un coup. */
-    return mode === "presentation" ? noeud
-      : zoneDepot(noeud, p, f.ls, rafraichir, f.nom);
+    return zoneDepot(noeud, p, f.ls, rafraichir, f.nom);
   }
 
   /* ————————————————————— Une case ————————————————————— */
@@ -187,22 +183,19 @@ window.VUE_LIVRAISON = (function () {
           l.responsable ? null : "sans responsable",
         ].filter(Boolean).join(" · "))));
 
-    return mode === "presentation" ? noeud
-      : IMAGE.accepterDepot(noeud, l, rafraichir);
+    return IMAGE.accepterDepot(noeud, l, rafraichir);
   }
 
   /* ————————————————————— Le dépôt d'un lot ————————————————————— */
 
   function zoneDepot(noeud, p, ls, rafraichir, ou) {
     noeud.addEventListener("dragover", function (e) {
-      if (mode === "presentation") return;
       e.preventDefault(); noeud.classList.add("survol-lot");
     });
     noeud.addEventListener("dragleave", function (e) {
       if (e.target === noeud) noeud.classList.remove("survol-lot");
     });
     noeud.addEventListener("drop", function (e) {
-      if (mode === "presentation") return;
       noeud.classList.remove("survol-lot");
       var fs = e.dataTransfer && e.dataTransfer.files;
       if (!fs || !fs.length) return;

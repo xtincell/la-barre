@@ -15,15 +15,21 @@ window.VUE_CONSTATER = (function () {
   var el = O.el;
   var mode = "indicateurs";
 
+  /* L'évaluation d'équipe (vue-equipe.js) n'est plus une vue du Bilan : un
+   * tableau qui compte, par personne, ce qui est retenu ou repris était ouvert
+   * à toute l'équipe (constats manque-1, historique-processus-4). Son ancienne
+   * adresse mène aux indicateurs. Le module reste, pour un espace réservé. */
   var MODES = [
     { cle: "indicateurs", nom: "Indicateurs" },
     { cle: "reprises", nom: "Reprises" },
-    { cle: "equipe", nom: "Évaluation" },
     { cle: "bilan", nom: "Bilan mensuel" },
     { cle: "arbitrages", nom: "Arbitrages" },
   ];
 
   function rendre(hote, arg) {
+    if (arg === "equipe") {
+      history.replaceState(history.state, "", "#/reporting/indicateurs");
+    }
     if (arguments.length > 1) {
       mode = MODES.some(function (m) { return m.cle === arg; }) ? arg : MODES[0].cle;
     }
@@ -46,7 +52,6 @@ window.VUE_CONSTATER = (function () {
 
       el("div.dc-corps", {},
         mode === "indicateurs" ? standard(s, hote, p)
-          : mode === "equipe" ? VUE_EQUIPE.rendre(hote, function () { rendre(hote); })
           : mode === "bilan" ? VUE_FINDEMOIS.rendre(hote, function () { rendre(hote); })
           : mode === "arbitrages" ? VUE_JURISPRUDENCE.rendre(hote, function () { rendre(hote); })
           : bouscule(hote),
@@ -69,7 +74,6 @@ window.VUE_CONSTATER = (function () {
    * l'appeler. */
   function pire(s) {
     if (mode === "reprises") return pireBouscule();
-    if (mode === "equipe") return pireEquipe();
     if (mode === "bilan") return pireFin();
     if (mode === "arbitrages") return pireJurisprudence();
     return pireStandard(s);
@@ -103,59 +107,6 @@ window.VUE_CONSTATER = (function () {
     return { cle: "tenuRetours", t: "Aucune reprise absorbée",
       q: "Tous les retours enregistrés ont trouvé leur issue. Le compteur ne se remet "
         + "pas à zéro d'une année sur l'autre : c'est ce qui lui donne son poids." };
-  }
-
-  /* Ce que mon équipe produit, et ce que sa fiche lui impose. Une casquette
-   * sans part déclarée fausse la charge : elle passe avant tout le reste. */
-  function pireEquipe() {
-    var gens = window.EQUIPE ? EQUIPE.encadres() : [];
-    if (!gens.length) {
-      return { cle: "sansEquipe", t: "Personne à encadrer à la base",
-        q: "Sans personnes déclarées, « progression mesurée des créatifs encadrés » "
-          + "n'a pas de sujet — et l'indicateur reste à zéro par construction." };
-    }
-    var sansPart = [], echus = [], jamais = [], vierges = [];
-    gens.forEach(function (pe) {
-      EQUIPE.cumuls(pe.id).forEach(function (c) {
-        if (c.etat === "sansPart") sansPart.push(pe);
-        else if (c.etat === "echue") echus.push(pe);
-      });
-      EQUIPE.engagements(pe.id).forEach(function (g) {
-        if (g.etat === "jamais") jamais.push(pe.nom);
-      });
-      var b = EQUIPE.bilan(pe.id);
-      if (b && b.jamaisSurUnePiste) vierges.push(pe.nom);
-    });
-
-    if (sansPart.length) {
-      return { cle: "sansPart",
-        t: sansPart.length + (sansPart.length > 1 ? " cumuls sans part déclarée" : " cumul sans part déclarée"),
-        q: "La charge de " + sansPart.map(function (p) { return p.nom.split(" ")[0]; }).join(", ")
-          + " est fausse tant que la part n'est pas écrite — donc l'affectation qui s'y "
-          + "appuie l'est aussi." };
-    }
-    if (echus.length) {
-      return { cle: "cumulEchu",
-        t: echus.length + (echus.length > 1 ? " cumuls échus" : " cumul échu"),
-        q: "Un cumul qu'on prolonge sans le dire est un poste que l'agence occupe sans "
-          + "l'avoir écrit. Trois issues : prolongé avec motif, transformé en poste, ou rendu." };
-    }
-    if (jamais.length) {
-      var n = jamais.length;
-      return { cle: "engagement",
-        t: n + (n > 1 ? " engagements jamais déposés" : " engagement jamais déposé"),
-        q: "Veilles, notes, démonstrations : évalués dans leur fiche, invisibles partout "
-          + "ailleurs — donc sacrifiés les premiers quand la production déborde." };
-    }
-    if (vierges.length) {
-      return { cle: "jamaisAffecte",
-        t: vierges.length + (vierges.length > 1 ? " créatifs sans piste confiée" : " créatif sans piste confiée"),
-        q: vierges.join(", ") + " — « détecter les talents et leur confier des "
-          + "responsabilités dès qu'ils sont prêts » ne se constate que par les pistes confiées." };
-    }
-    return { cle: "equipeTenue", t: "L'encadrement tient",
-      q: "Cumuls déclarés et à jour, engagements déposés, chacun a eu une piste. Le plan "
-        + "de progression trimestriel se compile sans rien reconstituer de mémoire." };
   }
 
   /* La feuille de fin de mois. Une mesure sans assise n'est pas un mauvais

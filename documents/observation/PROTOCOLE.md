@@ -117,7 +117,7 @@ passent par La Barre. `outils/usage-reel.mjs` le compte sur une copie de la
 base de production. Il ne fait que lire : pas d'écriture, pas de réseau.
 
 1. **Récupérer une copie de la base**, depuis une session ouverte sur La Barre :
-   - soit **Outils du poste → Exporter la sauvegarde** (ou **Ressources →
+   - soit **Outils → Exporter la sauvegarde** (ou **Ressources →
      Paramètres → Exporter la base**) : le navigateur télécharge
      `la-barre_<date>_<heure>.json` ;
    - soit, dans le même navigateur, ouvrir `/la-barre/depots/manifeste.json`,

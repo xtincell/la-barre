@@ -120,7 +120,7 @@ window.FILE = (function () {
         O.pluriel(x.speculatif.length, "livrable spéculatif", "livrables spéculatifs") + " pendant que "
           + O.pluriel(x.ferme.length, "livrable engagé est", "livrables engagés sont")
           + " en retard. Le spéculatif ne s'arrête pas : il passe après.",
-        85, "#/pipeline"));
+        85, "#/planning/ordre"));
     });
 
     /* 5 · Ce qu'on me doit, par origine. */
@@ -128,7 +128,7 @@ window.FILE = (function () {
     Object.keys(comptes).forEach(function (o) {
       var d = ECARTS.def(o);
       out.push(item("reclamer", comptes[o] + (comptes[o] > 1 ? " livrables" : " livrable") + " — " + d.nom.toLowerCase(),
-        d.quoi, o === "donneur" ? 70 : o === "brief" ? 75 : 60, "#/attentes"));
+        d.quoi, o === "donneur" ? 70 : o === "brief" ? 75 : 60, "#/valider/du"));
     });
 
     /* 6 · Les renvois sans retour, qui vieillissent. */
@@ -137,7 +137,7 @@ window.FILE = (function () {
     if (vieux.length) {
       out.push(item("reclamer", vieux.length + (vieux.length > 1 ? " renvois sans retour" : " renvoi sans retour") + " depuis plus de 5 jours",
         "Mon horloge est arrêtée dessus, pas la leur. C'est le seul endroit où le retard des autres est visible.",
-        65, "#/attentes"));
+        65, "#/valider/du"));
     }
 
     /* 7 · La chaîne d'entrée arrêtée. */
@@ -160,11 +160,11 @@ window.FILE = (function () {
       });
     });
     if (sansResp) out.push(item("placer", O.pluriel(sansResp, "livrable sans responsable", "livrables sans responsable"),
-      "Personne n'est en défaut le jour où ça n'avance pas.", 50, "#/pipeline"));
+      "Personne n'est en défaut le jour où ça n'avance pas.", 50, "#/planning/charge"));
     if (sansCharge) out.push(item("placer", O.pluriel(sansCharge, "livrable sans estimation", "livrables sans estimation"),
-      "Ils sont invisibles dans la charge : la semaine se calcule sans eux, et le mur arrive sans prévenir.", 45, "#/pipeline"));
+      "Ils sont invisibles dans la charge : la semaine se calcule sans eux, et le mur arrive sans prévenir.", 45, "#/planning/charge"));
     if (sansDate) out.push(item("placer", O.pluriel(sansDate, "livrable sans date de remise", "livrables sans date de remise"),
-      "Ni plaçables ni réclamables. Le rétroplanning ne les voit pas.", 40, "#/pipeline"));
+      "Ni plaçables ni réclamables. Le rétroplanning ne les voit pas.", 40, "#/planning/charge"));
 
     /* 9 · Ce qui tient sur une inférence. */
     projets.forEach(function (p) {
