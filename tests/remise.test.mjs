@@ -755,6 +755,24 @@ test('le PDF posé à l’étage du BAT monte sur le serveur comme celui joint �
   assert.doesNotMatch(suivi.textContent, /sans pièce jointe/);
 });
 
+test('le PDF posé à l’étage du BAT et refusé par le serveur entre par son nom, comme avant, et le dit', async () => {
+  const x = await televersement();
+  const { IMAGE, REMISE } = x.s.ctx;
+  const dits = [];
+  x.s.ctx.AVIS.fait = m => dits.push(m);
+  const { ci } = x;
+  x.reponse = { ok: false, status: 413, json: () => Promise.resolve({ ok: false }) };
+  const pdf = await new Promise(r => IMAGE.accueillir(ci, { name: 'BAT-imprimeur.pdf', size: 4096, donnee: 'data:application/pdf;base64,JVBERi0xLjQK' }, r, false, 'bat'));
+  assert.equal(x.envois.length, 1, 'le dépôt a été tenté');
+  assert.match(x.s.refus.at(-1), /pas été enregistré/, 'le refus du serveur est dit');
+  assert.deepEqual([pdf.type, pdf.nom, pdf.emplacement, pdf.signataire], ['bat', 'BAT-imprimeur.pdf', '', null]);
+  assert.match(dits.at(-1), /^« BAT-imprimeur\.pdf » est au dossier de .*Il n'a pas pu être déposé ici : seul son nom entre à la base\./);
+  assert.equal(REMISE.etatPiece(ci).cle, 'bat', 'posé sans signataire, le BAT reste à accorder');
+  /* Dans un lot apparié, le PDF refusé compte comme posé par son nom, pas comme « à poser ». */
+  const bilan = await new Promise(r => IMAGE.poserLot([{ l: ci, f: { name: 'BAT-v2.pdf', size: 10, donnee: 'data:application/pdf;base64,JVBE' } }], r));
+  assert.deepEqual({ ...bilan }, { faits: 1, refuses: 0 });
+});
+
 test('des fichiers remis déclarés disent par où ils sont partis, « Autre » compris', async () => {
   const { R } = await installation();
   assert.equal(R.envoi('WeTransfer'), 'Fichiers envoyés par WeTransfer');

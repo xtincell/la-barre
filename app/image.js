@@ -278,7 +278,7 @@ window.IMAGE = (function () {
         + "vérifiez que c'est bien le même livrable."
       : "";
 
-    function inscrire(chemin, regardable) {
+    function inscrire(chemin, regardable, nonDepose) {
       var fich = PRODUCTION.poser(l, etage, f.name, chemin || "", "");
       var visuel = regardable && etage === "asset";
       if (visuel) {
@@ -289,6 +289,7 @@ window.IMAGE = (function () {
         AVIS.fait("« " + f.name + " » est au dossier de " + l.nom + "."
           + (visuel ? "  Il se regarde depuis la carte."
             : regardable ? "  Il se range à côté de la pièce, sans remplacer son visuel."
+            : nonDepose ? "  Il n'a pas pu être déposé ici : seul son nom entre à la base. Posez-le de nouveau pour qu'il s'ouvre depuis la pièce."
             : "  Le fichier reste où il est : seul son nom entre à la base.")
           + ecart);
       }
@@ -298,11 +299,13 @@ window.IMAGE = (function () {
     /* Le PDF d'un BAT est la pièce elle-même, comme la photo d'un bon
      * signé : il monte avec les preuves (deposerPreuve) et s'ouvre depuis le
      * suivi, au lieu d'entrer par son seul nom. Trop lourd, en démonstration
-     * ou hors ligne, il entre par son nom, comme avant. */
+     * ou hors ligne, il entre par son nom, comme avant ; refusé par le
+     * serveur (réseau, taille, droits), aussi : le refus est dit, et le nom
+     * entre quand même, comme il entrait toujours avant. */
     if (etage === "bat" && ext === "pdf" && f.size <= PLAFOND_MO * 1024 * 1024 && !demonstration()
         && location.protocol !== "file:" && window.fetch) {
       deposerPreuve(f, function (chemin) {
-        if (chemin) inscrire(chemin, true); else if (apres) apres(false);
+        if (chemin) inscrire(chemin, true); else inscrire("", false, true);
       });
       return;
     }
