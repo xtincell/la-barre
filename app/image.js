@@ -507,7 +507,8 @@ window.IMAGE = (function () {
       if (!reste.length) {
         DEPOT.enregistrer();
         AVIS.fait(faits + (faits > 1 ? " fichiers sont" : " fichier est") + " au dossier"
-          + (refuses ? ", " + refuses + " ont été refusés — ils restent à poser" : "") + ".");
+          + (refuses > 1 ? ", " + refuses + " ont été refusés — ils restent à poser"
+            : refuses ? ", 1 a été refusé — il reste à poser" : "") + ".");
         if (apres) apres({ faits: faits, refuses: refuses });
         return;
       }

@@ -797,6 +797,19 @@ test('le PDF posé à l’étage du BAT et refusé par le serveur entre par son 
   assert.deepEqual({ ...bilan }, { faits: 1, refuses: 0 });
 });
 
+test('le bilan d’un lot posé s’accorde : « 1 a été refusé — il reste à poser »', async () => {
+  const x = await televersement();
+  const { IMAGE } = x.s.ctx;
+  const dits = [];
+  x.s.ctx.AVIS.fait = m => dits.push(m);
+  x.reponse = { ok: false, json: () => Promise.resolve({ ok: false }) };
+  const image = n => ({ l: x.ci, f: { name: n, size: 3000, donnee: 'data:image/jpeg;base64,/9j/' } });
+  await new Promise(r => IMAGE.poserLot([image('kv-gh.jpg')], r));
+  assert.equal(dits.at(-1), '0 fichier est au dossier, 1 a été refusé — il reste à poser.');
+  await new Promise(r => IMAGE.poserLot([image('kv-gh.jpg'), image('kv-ci.jpg')], r));
+  assert.equal(dits.at(-1), '0 fichier est au dossier, 2 ont été refusés — ils restent à poser.');
+});
+
 test('des fichiers remis déclarés disent par où ils sont partis, « Autre » compris', async () => {
   const { R } = await installation();
   assert.equal(R.envoi('WeTransfer'), 'Fichiers envoyés par WeTransfer');
