@@ -325,8 +325,10 @@ export function typographie(html) {
     .replace(/ »/g, '\u00a0»') + '<');
 }
 
-/* « 0 exception », « 1 exception », « 2 exceptions ». */
-export function pluriel(n, un, plusieurs = un + 's') { return n + ' ' + (n > 1 ? plusieurs : un); }
+/* « 0 exception », « 1 exception », « 2 exceptions », « 1 338 termes ». */
+export function pluriel(n, un, plusieurs = un + 's') { return chiffre(n) + ' ' + (n > 1 ? plusieurs : un); }
+/* Un nombre, avec l'espace des milliers. */
+export function chiffre(n) { return typeof n === 'number' ? n.toLocaleString('fr-FR') : String(n ?? ''); }
 function enumerer(t) { return t.length < 2 ? t.join('') : t.slice(0, -1).join(', ') + ' et ' + t[t.length - 1]; }
 function nombre(x) { return (x && x.nombre) || 0; }
 function occurrences(termes) { return (termes || []).reduce((n, t) => n + t.nombre, 0); }
@@ -462,7 +464,7 @@ export function precisionEcran(changements) {
  * l'image : deux par px CSS au téléphone. */
 export function decrireNuance(x) {
   const hors = x.hors || { pixels: x.pixels, max: x.max }, images = x.images || { pixels: 0, max: 0 };
-  const une = (z, ou) => 'nuance ' + z.max + '/255 sur ' + pluriel(z.pixels, 'pixel').replace(/^\d+/, z.pixels.toLocaleString('fr-FR')) + ', ' + ou;
+  const une = (z, ou) => 'nuance ' + z.max + '/255 sur ' + pluriel(z.pixels, 'pixel') + ', ' + ou;
   return [hors.pixels ? une(hors, 'hors des images') : '', images.pixels ? une(images, 'dans une image') : ''].filter(Boolean).join(' ; ');
 }
 
@@ -476,7 +478,7 @@ function libelleEtat(e, c, a) {
       if (x.taille[0] !== x.taille[2]) return 'modifiée · autre largeur';
       return [h0 === h1 ? 'modifiée · la page change de hauteur' : 'modifiée · la page passe de ' + h0.toLocaleString('fr-FR') + ' à ' + h1.toLocaleString('fr-FR') + ' px de haut', ou].filter(Boolean).join(', ');
     }
-    if (x && x.pixels) return ['modifiée · ' + pluriel(x.pixels, 'pixel').replace(/^\d+/, x.pixels.toLocaleString('fr-FR')) + (x.part ? ' (' + pourcent(x.part) + ')' : ''), ou].filter(Boolean).join(', ');
+    if (x && x.pixels) return ['modifiée · ' + pluriel(x.pixels, 'pixel') + (x.part ? ' (' + pourcent(x.part) + ')' : ''), ou].filter(Boolean).join(', ');
     return 'modifiée';
   }
   if (e === 'quasi' && x && x.max) return 'identique à l’œil · ' + decrireNuance(x);
@@ -536,7 +538,8 @@ function blocComparaison(cmp, noms, captures, pleinePage, avantParCle = new Map(
   const routes = t => (t.length ? t.map(ecran).join(', ') : 'aucun');
   const captureDe = k => { const [id, l] = k.split('@'); return ecran(id) + ' à ' + l + ' px'; };
   const listeCaptures = (t, aucun = 'aucun') => (t === null ? 'non mesuré avant' : t.length ? t.map(captureDe).join(', ') : aucun);
-  const avantApres = x => (x.avant === null || x.avant === undefined ? 'non mesuré avant → ' + x.apres : x.avant + ' → ' + x.apres);
+  /* « 1 338 → 1 338 » : la flèche ne quitte pas ses nombres en fin de ligne. */
+  const avantApres = x => (x.avant === null || x.avant === undefined ? 'non mesuré avant' : chiffre(x.avant)) + '\u00a0→\u00a0' + chiffre(x.apres);
   const parCle = new Map((captures || []).map(c => [c.id + '@' + c.largeur, c]));
   const comparable = !cmp.mesure || cmp.mesure.identique;
   /* Les écrans touchés, et pour chacun ce qui change à ses largeurs

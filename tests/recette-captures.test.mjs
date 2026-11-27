@@ -255,7 +255,8 @@ test('une passe « avant » d’une version plus ancienne : ce qu’elle ne mesu
   assert.match(html, /Écrans touchés\u00a0: non comparés/);
   assert.match(html, /Textes coupés nouveaux\u00a0: non mesuré avant\. Contrôles hors écran nouveaux\u00a0: non mesuré avant\. Valeurs techniques nouvelles\u00a0: non mesuré avant\./);
   assert.match(html, /badge etat inconnue">non comparée/);
-  assert.match(html, /1 → 3\u202f; dans un bloc replié ou une bulle\u00a0: non mesuré avant → 0 <i>\(à refaire/);
+  // La flèche ne quitte pas ses nombres en fin de ligne.
+  assert.match(html, /1\u00a0→\u00a03\u202f; dans un bloc replié ou une bulle\u00a0: non mesuré avant\u00a0→\u00a00 <i>\(à refaire/);
   // Une autre version notée, ou un autre poste de capture : même refus.
   const autre = comparer({ ...avant, mesure: { ...MESURE, version: 'v-ancienne' } }, apres);
   assert.deepEqual(autre.mesure, { avant: 'v-ancienne', apres: 'v-test', identique: false, version: false, contexte: true, horloge: true });
@@ -523,6 +524,7 @@ test('la version de la mesure est l’empreinte de l’outil et de la liste des 
 test('la planche montre la planche cible assez grande, et les pluriels justes', () => {
   assert.equal(pluriel(0, 'exception'), '0 exception');
   assert.equal(pluriel(2, 'texte coupé', 'textes coupés'), '2 textes coupés');
+  assert.equal(pluriel(1338, 'terme'), '1\u202f338 termes', 'l’espace des milliers, comme les pixels');
   assert.equal(dateLisible('2026-11-26'), '26 novembre 2026');
   const r = { quand: '2026-11-26', largeurs: [320], base: { fichier: 'copie.json', projets: 1, livrables: 3 }, manquantes: [], captures: [capture('bureau', 320)],
     resume: { routes: 1, captures: 1, exceptions: 0, debordements: 0, termes: 0, introuvables: 0, imagesCassees: 0 } };
