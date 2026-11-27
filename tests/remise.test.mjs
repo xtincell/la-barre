@@ -361,8 +361,35 @@ test('« Marquer comme livré » joint la photo du BAT et le PDF de la remise qu
   assert.deepEqual([bat.nom, bat.emplacement, bat.preuve.type], ['bon-signe.jpg', 'assets/review/preuves/preuve-1.jpg', 'fichier']);
   const recu = R.preuveCourante(p, ci);
   assert.deepEqual([recu.preuve.nom, recu.preuve.type, recu.preuve.chemin, recu.preuve.texte],
-    ['bon-de-livraison.pdf', 'fichier', 'assets/review/preuves/preuve-2.jpg', 'Fichiers envoyés sur clé USB'],
-    'le bon de livraison garde par où les fichiers sont partis');
+    ['bon-de-livraison.pdf', 'fichier', 'assets/review/preuves/preuve-2.jpg', undefined],
+    'le bon de livraison ne porte pas, comme un mot, la phrase que l’outil tire du moyen d’envoi');
+  /* Le moyen d'envoi se dit une fois, sous « Fichiers remis », sans guillemets. */
+  const suivi = R.suiviPiece(p, ci, () => {});
+  assert.doesNotMatch(suivi.textContent, /« Fichiers envoyés/);
+  assert.match(suivi.textContent, /Fichiers remis.*Fichiers envoyés sur clé USB/);
+});
+
+test('les guillemets citent quelqu’un : la phrase que l’outil tire du moyen d’envoi se lit sans eux', async () => {
+  const { s, p, ci, R } = await geste();
+  R.marquerLivre(p, ci, () => {});
+  remplir(s.dernier(), { 'bat-par': 'Imprimerie', 'bat-comment': 'OK WhatsApp de Paul', canal: 'WeTransfer', destinataire: 'Imprimerie' });
+  envoyer(s.dernier());
+  await laisserFiler();
+  const suivi = R.suiviPiece(p, ci, () => {});
+  assert.match(suivi.textContent, /Déclaré : « OK WhatsApp de Paul »/, 'le mot du BAT est cité');
+  assert.match(suivi.textContent, /Remise déclarée.*Déclaré · Fichiers envoyés par WeTransfer/, 'la remise déclarée dit le moyen, sans le citer');
+  assert.doesNotMatch(suivi.textContent, /« Fichiers envoyés/);
+  assert.equal(R.ditParLOutil('Fichiers envoyés par WeTransfer'), true);
+  assert.equal(R.ditParLOutil('OK WhatsApp de Paul'), false);
+  assert.equal(R.ditParLOutil(''), false);
+  /* Une pièce jointe écrite avant ce correctif, avec la phrase de l'outil
+   * pour mot : la phrase se tait au lieu d'être citée. */
+  const ancien = { id: 'REM-ancien', remis_le: '2026-11-09', destinataire: 'Imprimerie', pieces: [],
+    preuve: { nom: 'bon.pdf', type: 'fichier', chemin: 'assets/review/preuves/preuve-9.jpg', texte: 'Fichiers envoyés sur clé USB' } };
+  p.preuvesRemise.push(ancien);
+  const lot = R.suiviLot(p, p.livrables, () => {});
+  assert.match(lot.textContent, /bon\.pdf/);
+  assert.doesNotMatch(lot.textContent, /« Fichiers envoyés/);
 });
 
 test('le mot dit avec la photo du BAT n’est pas perdu : il suit la pièce jointe et se lit à côté', async () => {

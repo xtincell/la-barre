@@ -427,12 +427,25 @@ window.REMISE = (function () {
     if (!x) return null;
     if (x.type === "lien") return lienExterne(x.url, libelle);
     if (x.type === "fichier") return lienFichier(x.chemin, libelle);
-    return el("span", {}, x.texte ? "Déclaré : « " + x.texte + " »" : "Déclaré, sans pièce jointe");
+    return el("span", {}, !x.texte ? "Déclaré, sans pièce jointe"
+      : ditParLOutil(x.texte) ? "Déclaré · " + x.texte : "Déclaré : « " + x.texte + " »");
   }
 
-  /* Le mot dit avec une pièce jointe, à côté du lien qui l'ouvre. */
+  /* Les guillemets citent quelqu'un : « OK WhatsApp de Paul ». La phrase que
+   * La Barre écrit elle-même à partir du moyen d'envoi (« Fichiers envoyés
+   * par WeTransfer ») n'est le mot de personne : elle se lit sans guillemets,
+   * et ne s'attache jamais comme mot à une pièce jointe (preuveSaisie). */
+  function ditParLOutil(s) {
+    s = texte(s);
+    return !!s && Object.keys(PAR).some(function (canal) { return envoi(canal) === s; });
+  }
+
+  /* Le mot dit avec une pièce jointe, à côté du lien qui l'ouvre. Une phrase
+   * de l'outil laissée par une version antérieure se tait : les fichiers
+   * remis disent déjà par où ils sont partis. */
   function motJoint(x) {
-    return x && x.type !== "declaration" && x.texte ? el("span", {}, "« " + x.texte + " »") : null;
+    return x && x.type !== "declaration" && x.texte && !ditParLOutil(x.texte)
+      ? el("span", {}, "« " + x.texte + " »") : null;
   }
 
   function lienFichier(chemin, libelle) {
@@ -576,11 +589,11 @@ window.REMISE = (function () {
   }
 
   /* Monte la pièce jointe lue par `jointe`, s'il y en a une, et rend la
-   * preuve : le fichier ou le lien, qui garde le mot de la déclaration
-   * (« OK WhatsApp, bon signé »), ou la déclaration seule. Rend { erreur } si
-   * le dépôt échoue. */
-  function preuveSaisie(j, declaration) {
-    function avec(x) { return avecMot(x, declaration); }
+   * preuve : le fichier ou le lien, qui garde le mot que la personne a écrit
+   * (`mot` : « OK WhatsApp, bon signé »), ou la déclaration seule. Rend
+   * { erreur } si le dépôt échoue. */
+  function preuveSaisie(j, declaration, mot) {
+    function avec(x) { return avecMot(x, { texte: mot }); }
     if (j.fichier) {
       return new Promise(function (resoudre) {
         IMAGE.deposerPreuve(j.fichier, function (chemin) {
@@ -676,15 +689,17 @@ window.REMISE = (function () {
         if (jRemise.erreur) return jRemise;
         var comment = texte(data.get("bat-comment"));
         var batDeclare = { type: "declaration", texte: comment, contact: par, date: batLe };
-        return (demandeBat ? preuveSaisie(jBat, batDeclare) : Promise.resolve({}))
+        return (demandeBat ? preuveSaisie(jBat, batDeclare, comment) : Promise.resolve({}))
           .then(function (bat) {
             if (bat.erreur) return bat;
             /* Rouvert après un refus, la pièce jointe déjà déposée reste
-             * jointe, sauf si une autre la remplace. */
+             * jointe, sauf si une autre la remplace. Personne n'écrit de mot
+             * pour la remise : la déclaration dit par où les fichiers sont
+             * partis, une pièce jointe n'en porte aucun. */
             var texteRemise = envoi(canal) || texte(saisi.mot);
             return (batSeul ? Promise.resolve({})
               : !jRemise.fichier && !jRemise.lien && saisi.deja ? Promise.resolve(saisi.deja)
-              : preuveSaisie(jRemise, { type: "declaration", texte: texteRemise, contact: destinataire, date: remisLe }))
+              : preuveSaisie(jRemise, { type: "declaration", texte: texteRemise, contact: destinataire, date: remisLe }, ""))
               .then(function (remise) {
                 if (remise.erreur) return remise;
                 /* Après le dépôt, la pièce a pu bouger : on relit avant d'écrire. */
@@ -768,7 +783,7 @@ window.REMISE = (function () {
       if (!destinataire || !dater(quand)) return { erreur: "Dites à qui le lot a été remis, et une date passée ou du jour." };
       var j = jointe(data, "remise", "le justificatif");
       if (j.erreur) return j;
-      return preuveSaisie(j, { type: "declaration", texte: "", contact: destinataire, date: quand })
+      return preuveSaisie(j, { type: "declaration", texte: "", contact: destinataire, date: quand }, "")
         .then(function (r) {
           if (r.erreur) return r;
           return consigner(p.id, selection, { nom: r.nom, destinataire: destinataire, quand: quand, preuve: r.preuve });
@@ -947,5 +962,6 @@ window.REMISE = (function () {
     etat: etat, ouvrir: ouvrir, droits: droits, mentions: mentions, etatPiece: etatPiece,
     empreintePiece: empreintePiece, preuveCourante: preuveCourante, consigner: consigner,
     suiviPiece: suiviPiece, suiviLot: suiviLot, versionCourante: versionCourante,
-    preuveValide: preuveValide, fichierServi: fichierServi, marquerLivre: marquerLivre, envoi: envoi };
+    preuveValide: preuveValide, fichierServi: fichierServi, marquerLivre: marquerLivre, envoi: envoi,
+    ditParLOutil: ditParLOutil };
 })();

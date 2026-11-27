@@ -143,9 +143,13 @@ window.VUE_ASSET = (function () {
     function ancre(url, texte) {
       return el("a", { href: url, target: "_blank", rel: /^https:/.test(url) ? "noopener noreferrer" : "noopener" }, texte);
     }
+    /* Les guillemets citent quelqu'un ; la phrase que l'outil écrit du moyen
+     * d'envoi se lit telle quelle (REMISE.ditParLOutil). */
+    var outil = preuve && REMISE.ditParLOutil(preuve.texte);
     if (adresse) return [ancre(adresse, nom), jointe ? [" · ", ancre(jointe, "pièce jointe")] : null,
-      preuve && preuve.texte ? " · « " + preuve.texte + " »" : null];
-    if (preuve) return el("span", {}, nom + " · " + (preuve.texte ? "déclaré : « " + preuve.texte + " »" : "déclaré, sans pièce jointe"));
+      preuve && preuve.texte && !outil ? " · « " + preuve.texte + " »" : null];
+    if (preuve) return el("span", {}, nom + " · " + (!preuve.texte ? "déclaré, sans pièce jointe"
+      : outil ? preuve.texte : "déclaré : « " + preuve.texte + " »"));
     return el("span", {}, nom);
   }
 

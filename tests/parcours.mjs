@@ -796,7 +796,7 @@ try {
     assert.equal(await archive.getByRole('link', { name: 'pièce jointe', exact: true }).getAttribute('href'), preuveBat);
     await archive.locator('.rvp-docs li', { hasText: 'Fichiers finaux · V3' }).waitFor();
     await archive.locator('summary', { hasText: 'Justificatifs de remise de la V3' }).click();
-    await archive.getByText('Remise déclarée · déclaré : « Fichiers envoyés sur clé USB »').waitFor();
+    await archive.getByText('Remise déclarée · Fichiers envoyés sur clé USB', { exact: true }).waitFor();
     await navigateur.close();
   } finally {
     if (servi && servi.exitCode === null) { servi.kill(); await once(servi, 'exit'); }
