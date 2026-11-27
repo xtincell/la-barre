@@ -471,13 +471,23 @@ window.REMISE = (function () {
    * mais au clavier ; son étiquette est le bouton qu'on touche, et le nom du
    * fichier choisi s'écrit à côté. L'intitulé et « (facultatif) » tiennent
    * dans un seul élément : à 320 px, ils coulent comme une phrase au lieu de
-   * former deux colonnes. */
+   * former deux colonnes. Un fichier choisi par erreur se retire : annuler
+   * le sélecteur ne le vide pas toujours, sur téléphone. */
   function fichierJoint(id, cle, titre, options) {
     var nom = el("span.remise-joint-nom", { "aria-live": "polite" }, "");
+    var retirer = el("button.b.nu.remise-joint-retirer", { type: "button", onclick: function () {
+      entree.value = "";
+      nom.textContent = "";
+      retirer.remove();
+      entree.focus();
+    } }, "Retirer");
     var entree = el("input.remise-joint-entree", { id: id, name: cle, type: "file", accept: options.accept || null,
       onchange: function () {
         var f = entree.files && entree.files[0];
         nom.textContent = f ? f.name : "";
+        if (!f) { retirer.remove(); return; }
+        retirer.setAttribute("aria-label", "Retirer « " + f.name + " »");
+        nom.after(retirer);
       } });
     return el("div.champ.remise-joint", {}, entree, el("label.b", { for: id }, el("span", {}, titre,
       options.facultatif ? el("span.remise-facultatif", {}, " (facultatif)") : null)), nom);

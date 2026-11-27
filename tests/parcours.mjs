@@ -211,6 +211,15 @@ try {
   const livrer = page.getByRole('dialog', { name:'Marquer comme livré' });
   assert.equal(await livrer.locator('input[type="url"][required]').count(), 0, 'Aucun lien HTTPS n’est exigé');
   await livrer.getByLabel('BAT accordé par').fill('Imprimerie de recette');
+  // Une photo choisie par erreur se retire, sans rouvrir le sélecteur.
+  await livrer.locator('summary', { hasText: /une photo, un PDF, un lien ou un mot/ }).click();
+  const photoBat = livrer.locator('input[name="bat-fichier"]');
+  await photoBat.setInputFiles({ name: 'photo-par-erreur.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('recette') });
+  await livrer.locator('.remise-joint-nom', { hasText: 'photo-par-erreur.jpg' }).waitFor();
+  await livrer.getByRole('button', { name: 'Retirer « photo-par-erreur.jpg »' }).click();
+  assert.equal(await photoBat.evaluate(i => i.files.length), 0, 'La photo retirée ne part pas');
+  assert.equal(await livrer.getByText('photo-par-erreur.jpg').count(), 0);
+  assert.equal(await livrer.getByRole('button', { name: /^Retirer/ }).count(), 0);
   await livrer.getByLabel('Moyen d’envoi').selectOption('WeTransfer');
   await livrer.getByLabel('Remis à').fill('Production de recette');
   await livrer.getByRole('button', { name:'Marquer comme livré', exact:true }).click();
