@@ -549,8 +549,11 @@ export async function construire() {
   soumettre(c, socialCi, '2026-11-11T15:00:00.000Z');
 
   /* La story du Ghana, en anglais comme son KV : la décli 9:16 d'Orvelle,
-   * posée, pas encore soumise. */
-  format(c, p, gh, 'S-story', 'Story 9:16', { vignette: 'visuels/story-gh.jpg', remise: '2026-12-02', echeance: '2026-12-03' });
+   * posée, pas encore soumise. Son fichier est au dossier : sans lui, la
+   * story s'ajoutait aux livraisons « À tracer » (un visuel, aucun fichier),
+   * une alerte que la démonstration n'a pas à porter. */
+  const storyGh = format(c, p, gh, 'S-story', 'Story 9:16', { vignette: 'visuels/story-gh.jpg', remise: '2026-12-02', echeance: '2026-12-03' });
+  PRODUCTION.poser(storyGh, 'asset', 'ORV-2027-01_story-9x16_GH_EN_V1.jpg', 'Dossier de production (fictif)');
 
   Date.aller('2026-11-11T18:00:00.000Z');
   DEPOT.enregistrer();

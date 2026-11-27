@@ -1439,7 +1439,18 @@
       "local": "attente",
       "final": "attente"
      },
-     "vignette": "visuels/story-gh.jpg"
+     "vignette": "visuels/story-gh.jpg",
+     "fichiers": [
+      {
+       "id": "F-euc48r",
+       "type": "asset",
+       "nom": "ORV-2027-01_story-9x16_GH_EN_V1.jpg",
+       "emplacement": "Dossier de production (fictif)",
+       "signataire": null,
+       "quand": "2026-11-11T15:00:04.000Z",
+       "version": 1
+      }
+     ]
     }
    ],
    "demandes": [
