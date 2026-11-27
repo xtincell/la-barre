@@ -63,6 +63,19 @@ try {
   const contexte = await page.locator('.lb-piece .lb-contexte').innerText();
   for (const attendu of ['Responsable', 'Sacha Martin', 'Échéance', '15 oct.', 'Une maison d’objets', 'Un seul objet au centre de la composition'])
     assert.ok(contexte.includes(attendu), `Le Bureau dit « ${attendu} » : ${contexte}`);
+  // Le 15 octobre est passé : l'échéance le dit, dans le ton qui bloque, avec
+  // le même compte de jours que Planning > Livraisons.
+  const retard = await page.locator('.lb-piece .lb-delai').evaluate(s => {
+    const jours = Math.floor((Date.now() - new Date(PLATEAU.echeanceDe(DEPOT.trouve('projets', 'PRJ-demo'),
+      DEPOT.trouve('projets', 'PRJ-demo').livrables[0]))) / 86400000);
+    const temoin = document.body.appendChild(document.createElement('span'));
+    temoin.style.color = 'var(--bloquant-txt)';
+    const bloquant = getComputedStyle(temoin).color; temoin.remove();
+    return { texte: s.textContent.replace(/\u00a0/g, ' '), attendu: 'dépassée de ' + jours + ' j',
+      retard: s.classList.contains('retard'), couleur: getComputedStyle(s).color, bloquant };
+  });
+  assert.equal(retard.texte, retard.attendu);
+  assert.ok(retard.retard && retard.couleur === retard.bloquant, 'Échéance dépassée dans le ton qui bloque : ' + retard.couleur);
   await page.locator('.lb-piece').getByRole('link', { name: 'Lire le brief' }).waitFor();
   await page.getByRole('link', { name: 'Examiner la V1', exact: true }).click();
   await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo/juger/1');

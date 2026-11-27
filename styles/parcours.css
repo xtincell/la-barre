@@ -65,6 +65,8 @@
 .lb-contexte q{quotes:"« " " »" "“" "”"}
 .lb-contexte dd a{color:var(--studio-bleu);font-weight:550;text-decoration:none;white-space:nowrap}
 .lb-contexte dd a:hover{text-decoration:underline}
+/* Une échéance passée se dit dans le ton qui bloque, comme dans Planning > Livraisons. */
+.lb-delai.retard{color:var(--bloquant-txt);font-weight:550}
 /* La file de revue, dépliée : une vignette d'au moins 160 px par pièce. */
 .lb-file{margin:clamp(20px,2.2vw,32px) 0 0;min-width:0}
 .lb-file-tete{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-bottom:12px}

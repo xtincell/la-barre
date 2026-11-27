@@ -124,16 +124,36 @@ window.VUE_STUDIO = (function () {
     var p = piece.projet, o = piece.objet, s = p.sections || {};
     var brief = s.brief || {};
     var qui = piece.auteur && DEPOT.trouve("personnes", piece.auteur);
-    var echeance = piece.type === "livrable" ? PLATEAU.echeanceDe(p, o) : (s.identite || {}).echeance;
+    var echeance = echeanceDe(piece);
+    var reste = delai(echeance);
     var criteres = ((s.bigidea || {}).criteres || []).filter(Boolean);
     var critere = criteres[0] || (piece.type === "livrable" ? (REGLES.grille("livrable", o)[0] || {}).texte : null);
     var demande = extrait(brief.probleme || brief.objectif_com || brief.objectif, 160);
     var lireBrief = NATURE.aSection(p, "brief") ? el("a", { href:APP.adresse("projets", p.id, "brief") }, "Lire le brief") : null;
     return el("dl.lb-contexte", {},
       el("div", {}, el("dt", {}, "Responsable"), el("dd", {}, qui ? qui.nom : "À attribuer")),
-      el("div", {}, el("dt", {}, "Échéance"), el("dd", {}, echeance ? O.joli(echeance) : "À définir")),
+      el("div", {}, el("dt", {}, "Échéance"), el("dd", {}, echeance ? O.joli(echeance) : "À définir",
+        reste ? ["\u00a0· ", el("span.lb-delai" + (reste.retard ? ".retard" : ""), {}, reste.texte)] : null)),
       demande || lireBrief ? el("div.lb-contexte-large", {}, el("dt", {}, "Le brief"), el("dd", {}, demande ? [el("q", {}, demande), " "] : null, lireBrief)) : null,
       critere ? el("div.lb-contexte-large", {}, el("dt", {}, "À vérifier"), el("dd", {}, critere)) : null);
+  }
+
+  /* La date qui compte pour une pièce : celle du livrable, sinon celle du projet. */
+  function echeanceDe(piece) {
+    return piece.type === "livrable" ? PLATEAU.echeanceDe(piece.projet, piece.objet)
+      : ((piece.projet.sections || {}).identite || {}).echeance || null;
+  }
+
+  /* Où en est une échéance, selon la règle de Planning > Livraisons
+   * (TRACE.souffrance) : passée d'au moins un jour, elle est dépassée. Une
+   * échéance dépassée qui s'affichait comme les autres trompait la priorité. */
+  function delai(echeance, maintenant) {
+    var d = echeance ? new Date(echeance) : null;
+    if (!d || isNaN(d)) return null;
+    var jours = Math.floor(((maintenant || O.auj()) - d) / 86400000);
+    if (jours > 0) return { texte: "dépassée de " + jours + "\u00a0j", retard: true };
+    if (jours === 0) return { texte: "aujourd’hui", retard: false };
+    return { texte: "dans " + (-jours) + "\u00a0j", retard: false };
   }
 
   /* Un extrait d'environ n caractères, coupé à la fin d'un mot. */
@@ -220,5 +240,5 @@ window.VUE_STUDIO = (function () {
     hote.appendChild(liste);
     filtrer();
   }
-  return { rendre: rendre, projets: projets, navProjets: navProjets, noterRubrique: noterRubrique, extrait: extrait };
+  return { rendre: rendre, projets: projets, navProjets: navProjets, noterRubrique: noterRubrique, extrait: extrait, delai: delai };
 })();

@@ -63,7 +63,7 @@ reste (demander un retour, imprimer, paramètres, export) est sous « Outils ».
 
 | Entrée | Adresse | Ce qu'on y trouve | Fichiers de `app/` |
 |---|---|---|---|
-| Bureau | `#/bureau` | « À valider aujourd’hui » : la pièce à regarder d'abord, avec son responsable, son échéance, un extrait du brief et le critère principal ; toute la file de revue, dépliée en vignettes ; les dossiers en cours et « + Nouveau projet ». | `vue-studio.js`, `vue-revue.js`, `vue-asset.js` |
+| Bureau | `#/bureau` | « À valider aujourd’hui » : la pièce à regarder d'abord, avec son responsable, son échéance (dépassée de N j, ou dans N j), un extrait du brief et le critère principal ; toute la file de revue, dépliée en vignettes ; les dossiers en cours et « + Nouveau projet ». | `vue-studio.js`, `vue-revue.js`, `vue-asset.js` |
 | Décisions | `#/valider` | À traiter · Retours attendus | `vue-decider.js`, `file-action.js`, `vue-attentes.js` |
 | Planning | `#/planning` | Priorités · Plan de charge · Équipe · Livraisons | `vue-placer.js`, `vue-pipeline.js`, `vue-direction.js`, `vue-livraisons.js` |
 | Bilan | `#/reporting` | Indicateurs · Reprises · Bilan mensuel · Arbitrages. L'ancienne adresse de l'évaluation d'équipe (`#/reporting/equipe`) mène aux indicateurs : `vue-equipe.js` reste, hors de la navigation. | `vue-constater.js`, `bilan.js`, `vue-findemois.js`, `vue-jurisprudence.js` |

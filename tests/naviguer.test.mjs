@@ -137,3 +137,21 @@ test('le Bureau coupe l’extrait du brief à la fin d’un mot, vers 160 caract
   assert.ok(/\p{L}…$/u.test(court), 'coupé après un mot, sans ponctuation pendante');
   assert.equal(extrait(null, 160), '');
 });
+
+test('le Bureau dit une échéance dépassée, comme Planning > Livraisons', async () => {
+  const { ctx } = await bac();
+  vm.runInContext(await lire('vue-studio'), ctx, { filename: 'vue-studio.js' });
+  const { delai } = ctx.VUE_STUDIO;
+  const maintenant = new Date('2026-11-26T09:00:00Z');
+  const dit = e => { const d = delai(e, maintenant); return d && { texte: d.texte.replace(/\u00a0/g, ' '), retard: d.retard }; };
+  // La remise du KV GH, le 6 novembre : vingt jours de retard au 26.
+  assert.deepEqual(dit('2026-11-06'), { texte: 'dépassée de 20 j', retard: true });
+  assert.deepEqual(dit('2026-11-25'), { texte: 'dépassée de 1 j', retard: true });
+  assert.deepEqual(dit('2026-11-26'), { texte: 'aujourd’hui', retard: false });
+  assert.deepEqual(dit('2026-11-27'), { texte: 'dans 1 j', retard: false });
+  assert.deepEqual(dit('2026-11-30'), { texte: 'dans 4 j', retard: false });
+  assert.equal(delai(null, maintenant), null);
+  assert.equal(delai('à définir', maintenant), null);
+  // Le nombre et son unité ne se séparent pas en fin de ligne.
+  assert.match(delai('2026-11-06', maintenant).texte, /20\u00a0j$/);
+});
