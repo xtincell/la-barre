@@ -553,8 +553,20 @@ function blocComparaison(cmp, noms, captures, pleinePage, avantParCle = new Map(
   const ecransTouches = [...touches].map(([id, t]) => { const p = precisionEcran(t); return ecran(id) + (p ? ' (' + p + ')' : ''); }).join(', ');
   const sur = comparable ? '' : ' <i>(à refaire : l’avant n’a pas été pris dans les mêmes conditions)</i>';
   const nuancees = (cmp.nuancees || []).map(x => captureDe(x.capture) + ' (' + decrireNuance(x) + ')');
-  const textes = (cmp.textes || []).slice(0, 12).map(x => captureDe(x.capture) + ' : '
-    + (x.ajoute ? '<q>' + echapper(x.ajoute) + '</q>' : 'une ligne en moins') + (x.retire ? ' au lieu de <q>' + echapper(x.retire) + '</q>' : ''));
+  /* Le même changement de texte à plusieurs largeurs d'un écran : une fois,
+   * avec ses largeurs. */
+  const groupes = new Map();
+  for (const x of cmp.textes || []) {
+    const [id, l] = x.capture.split('@');
+    const k = JSON.stringify([id, x.ajoute, x.retire]);
+    if (!groupes.has(k)) groupes.set(k, { id, ajoute: x.ajoute, retire: x.retire, largeurs: [] });
+    groupes.get(k).largeurs.push(l);
+  }
+  const q = t => '<q>' + echapper(t) + '</q>';
+  const tousTextes = [...groupes.values()].map(g => ecran(g.id) + ' à ' + enumerer(g.largeurs) + ' px : '
+    + (g.ajoute && g.retire ? q(g.ajoute) + ' au lieu de ' + q(g.retire) : g.ajoute ? q(g.ajoute) + ' en plus' : g.retire ? q(g.retire) + ' en moins'
+      : 'une ligne répétée une fois de plus ou de moins, ou une ligne longue changée plus loin que l’extrait gardé'));
+  const textes = tousTextes.slice(0, 12);
   const seuils = `le lissage d’une image (jusqu’à ${ECART.image}/255, dans les images) et le crénelage de quelques bords (au plus ${ECART.bruit}/255, sur moins de ${pourcent(ECART.partBruit).replace('moins de ', '')} de la photo, hors des images)`;
   const filtres = cmp.filtres && (cmp.filtres.avant || cmp.filtres.apres)
     ? `<p class="meta">Comparaison limitée aux routes ${[['avant', cmp.filtres.avant], ['après', cmp.filtres.apres]].filter(x => x[1]).map(([t, f]) => '<code>' + echapper(f) + '</code> (' + t + ')').join(' et ')}.${filtresDifferents(cmp)
@@ -564,7 +576,7 @@ function blocComparaison(cmp, noms, captures, pleinePage, avantParCle = new Map(
 <ul>
 <li><b>${pluriel(cmp.modifiees.length, 'capture modifiée', 'captures modifiées')}</b>, ${pluriel(cmp.identiques + cmp.identiquesALOeil, 'identique', 'identiques')}${cmp.identiquesALOeil ? ' (dont ' + cmp.identiquesALOeil + ' à l’œil seulement : le lissage d’une image ou le crénelage de quelques bords, listées ci-dessous)' : ''}${cmp.nonComparees ? ', ' + pluriel(cmp.nonComparees, 'non comparée', 'non comparées') : ''}. Écrans touchés : ${comparable ? ecransTouches || 'aucun' : 'non comparés (voir l’avertissement en tête)'}.</li>
 ${nuancees.length ? `<li>Identiques à l’œil, à vérifier d’un regard : ${nuancees.join(', ')}. Seuls sont pardonnés ${seuils} ; tout autre écart rend la capture « modifiée ».</li>` : ''}
-${textes.length ? `<li>Textes changés : ${textes.join(' ; ')}${(cmp.textes || []).length > textes.length ? ' ; et ' + ((cmp.textes || []).length - textes.length) + ' autres' : ''}.</li>` : ''}
+${textes.length ? `<li>Textes changés : ${textes.join(' ; ')}${tousTextes.length > textes.length ? ' ; et ' + pluriel(tousTextes.length - textes.length, 'autre') : ''}.</li>` : ''}
 <li>Écrans nouveaux : ${routes(cmp.routesNouvelles)}. Écrans disparus : ${cmp.routesDisparues.length ? cmp.routesDisparues.map(id => echapper(nom(id))).join(', ') : 'aucun'}.${horsFiltre.length ? ' Écrans hors du filtre de la passe « avant », donc non comparés : ' + routes(horsFiltre) + '.' : ''}</li>
 <li>Termes interdits visibles : ${avantApres(cmp.termes)} ; dans un bloc replié ou une bulle : ${avantApres(cmp.termesReplies)}${sur}.</li>
 <li>Exceptions nouvelles : ${listeCaptures(cmp.exceptionsNouvelles, 'aucune')}. Débordements nouveaux : ${listeCaptures(cmp.debordementsNouveaux)}.</li>
@@ -1151,18 +1163,26 @@ export function aLOeil(e) {
   return hors.max <= ECART.bruit && hors.pixels <= ECART.partBruit * (e.total || 0) && images.max <= ECART.image;
 }
 
+/* Une ligne de plus de `n` caractères, coupée entre deux mots, avec « … ». */
+export function couper(l, n) {
+  if (l.length <= n) return l;
+  const c = l.slice(0, n), i = c.lastIndexOf(' ');
+  return (i > n * 0.6 ? c.slice(0, i) : c).replace(/[\s,;:.]+$/, '') + '…';
+}
+
 /* Le texte de toute la page : ce qui est visible, de haut en bas (pas le
  * seul premier écran), le texte d'exemple des champs vides, les blocs repliés
  * et les bulles d'aide. Deux passes du même code le donnent à l'identique ; il
  * change dès qu'un mot change, même hors de la photo : dans un bloc replié,
  * dans une liste qui défile à l'intérieur d'une fenêtre. `lignes` le garde
- * ligne à ligne, sans doublon, pour montrer ce qui a changé. */
+ * ligne à ligne, sans doublon, pour montrer ce qui a changé ; une ligne longue
+ * y est coupée entre deux mots, vers 200 caractères. */
 export function texteDeLaPage(m) {
   const tout = String(m.texte || '') + '\n' + String(m.texteReplie || '');
   const lignes = [], vues = new Set();
   for (const brute of tout.split('\n')) {
-    const l = brute.replace(/\s+/g, ' ').trim();
-    if (l && !vues.has(l) && lignes.length < 800) { vues.add(l); lignes.push(l.slice(0, 200)); }
+    const l = couper(brute.replace(/\s+/g, ' ').trim(), 200);
+    if (l && !vues.has(l) && lignes.length < 800) { vues.add(l); lignes.push(l); }
   }
   const normal = tout.split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
   return { empreinteTexte: createHash('sha256').update(normal).digest('hex').slice(0, 16), lignes };

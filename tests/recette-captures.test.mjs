@@ -10,7 +10,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { routesDe, lireArguments, planche, comparer, restreindre, problemes, preparerSortie, pluriel, dateLisible,
   sortieParDefaut, typographie, aLOeil, versionMesure, causes, remede, heureDuPoste, texteDeLaPage, ouChange, decrireNuance,
-  changement, precisionEcran, MODES_ATTENDUS, LARGEURS, MARQUE, OUTIL, ECART, ONGLETS_PIECE, lancement } from '../outils/recette-captures.mjs';
+  changement, precisionEcran, couper, MODES_ATTENDUS, LARGEURS, MARQUE, OUTIL, ECART, ONGLETS_PIECE, lancement } from '../outils/recette-captures.mjs';
 import { relever, extrait, VALEURS_TECHNIQUES } from '../outils/termes-interdits.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -372,7 +372,9 @@ test('une photo identique dont le texte change, ou un changement sous le premier
     ecranTouche('plus', 'Plus') + ' \\(la page change de hauteur\\)',
     ecranTouche('reporting/equipe', 'Bilan · Évaluation') + ' \\(sous le premier écran, la page change de hauteur\\)',
     ecranTouche('planning/charge', 'Planning · Plan de charge') + '\\.'].join(', ')));
-  assert.match(html, /Textes changés\u00a0: <a href="#reporting\/bilan" title="reporting\/bilan">Bilan · Bilan mensuel<\/a> à 320\u00a0px\u00a0: <q>AUCUNE CRITIQUE ÉCRITE<\/q> au lieu de <q>aucune critique écrite sur la période<\/q>/);
+  // Le même texte changé à deux largeurs : une seule phrase, avec ses largeurs.
+  assert.match(html, /Textes changés\u00a0: <a href="#reporting\/bilan" title="reporting\/bilan">Bilan · Bilan mensuel<\/a> à 320 et 1440\u00a0px\u00a0: <q>AUCUNE CRITIQUE ÉCRITE<\/q> au lieu de <q>aucune critique écrite sur la période<\/q>\u202f; <a href="#planning\/charge" title="planning\/charge">Planning · Plan de charge<\/a> à 1440\u00a0px\u00a0: <q>Semaine 48<\/q> en plus\./);
+  assert.equal((html.match(/AUCUNE CRITIQUE ÉCRITE/g) || []).length, 1);
   // Au premier écran seulement, la planche le dit.
   assert.match(planche({ ...apres, pleinePage: false }, { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' }),
     /On compare le premier écran seulement, au pixel, et tout le texte de la page, blocs repliés et bulles d’aide compris\u00a0: un changement plus bas qui ne touche pas le texte ne se voit pas\./);
@@ -551,6 +553,14 @@ test('le texte de la page a une empreinte stable, et ses lignes sans doublon', (
   assert.deepEqual(a.lignes, ['Bureau', 'Valider la V2', 'Critères']);
   // Une occurrence de plus change l'empreinte, même si les lignes sans doublon sont les mêmes.
   assert.notEqual(texteDeLaPage({ texte: 'Bureau\nValider la V2', texteReplie: 'Critères' }).empreinteTexte, a.empreinteTexte);
+  // Une ligne longue est coupée entre deux mots, avec des points de suspension.
+  const longue = 'Le bilan se lit à toutes les largeurs, au téléphone comme au bureau, '.repeat(4).trim();
+  const [l] = texteDeLaPage({ texte: longue, texteReplie: '' }).lignes;
+  const garde = l.slice(0, -1);
+  assert.ok(l.length <= 201 && l.endsWith('…') && longue.startsWith(garde), l);
+  assert.match(longue.slice(garde.length), /^[ ,]/, 'coupée entre deux mots : ' + l);
+  assert.equal(couper('au téléphone comme au bureau', 200), 'au téléphone comme au bureau');
+  assert.equal(couper('un deux trois quatre cinq six', 16), 'un deux trois…');
 });
 
 test('une nuance dit où elle est : hors des images ou dans une image', () => {

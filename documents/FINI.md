@@ -125,8 +125,9 @@ BROWSER_CHANNEL=chrome node "$copie/outils/recette-captures.mjs" --avant \
     « (sous le premier écran) » quand tout ce qui change dans les photos est
     plus bas, « (la page change de hauteur) » quand elle s'allonge ou
     raccourcit à une largeur au moins, « (texte seulement) » quand aucune
-    photo ne change. « Textes changés » montre, capture par capture, la
-    première ligne apparue et celle qu'elle remplace ;
+    photo ne change. « Textes changés » montre, écran par écran, la première
+    ligne apparue et celle qu'elle remplace, une fois pour toutes les
+    largeurs où le même changement se voit ;
   - une route que la passe « avant » n'a pas prise, parce qu'elle a été
     lancée avec un autre `--routes`, est « hors de la comparaison (autre
     filtre) », et le résumé la nomme : elle n'est ni nouvelle ni comparée ;
