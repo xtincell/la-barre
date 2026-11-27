@@ -1,0 +1,306 @@
+// Le relevé d'usage réel : il compte juste, sur les bases fictives des tests,
+// et ne fait que lire (ni écriture, ni réseau).
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile, writeFile, mkdtemp, rm, stat } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import { mesurer, enMarkdown, enCsv, lireArguments, auteur, mediane, dateDuReleve, TYPES_DECISION } from '../outils/usage-reel.mjs';
+
+const RACINE = fileURLToPath(new URL('../', import.meta.url));
+const OUTIL = join(RACINE, 'outils', 'usage-reel.mjs');
+const executer = promisify(execFile);
+const lire = async nom => JSON.parse(await readFile(join(RACINE, 'tests', 'fixtures', nom), 'utf8'));
+
+test('studio.json : une version soumise en attente, deux projets saisis, aucune décision', async () => {
+  const r = mesurer(await lire('studio.json'));
+  assert.equal(r.totaux.decisions, 0);
+  assert.equal(r.totaux.versionsSoumises, 1);
+  assert.equal(r.totaux.versionsJugees, 0);
+  assert.equal(r.totaux.versionsEnAttente, 1);
+  assert.equal(r.totaux.delaiMedianHeures, null);
+  assert.equal(r.totaux.projets, 2);
+  assert.equal(r.totaux.projetsSaisis, 2);
+  assert.equal(r.totaux.personnesAttestees, 0);
+  assert.deepEqual(r.parMois.map(x => x.mois), ['2026-09']);
+  assert.equal(r.volume.livrables, 1);
+});
+
+test('decisions-avant.json : décisions par type et résultat, délai médian, auteur au poste', async () => {
+  const capture = await lire('decisions-avant.json');
+  const base = capture.ecrivains['vue-livrable'].base;
+  const r = mesurer(base);
+  assert.equal(r.totaux.decisions, 2);
+  assert.deepEqual(r.decisionsParType.map(x => [x.type, x.resultat, x.nombre]),
+    [['livrable', 'approuve', 1], ['livrable', 'retour', 1]]);
+  assert.equal(r.totaux.versionsSoumises, 2);
+  assert.equal(r.totaux.versionsJugees, 2);
+  // Soumises le 3 novembre à 8 h, jugées le 10 à 9 h (et 9 h 00 min 05 s).
+  assert.ok(Math.abs(r.totaux.delaiMedianHeures - 169) < 0.01, String(r.totaux.delaiMedianHeures));
+  // Ces décisions ne portent que `qui` : le poste titulaire, qui ne désigne personne.
+  assert.deepEqual(r.decisionsParAuteur, [{ auteur: 'poste direction-generale', identite: 'poste', nombre: 2, poste: 'direction-generale' }]);
+  assert.match(enMarkdown(r), /\| Poste Direction générale \(titulaire de l’installation\) \| non identifiée \| 2 \|/);
+  // Le journal, lui, déclare la personne du poste : elle est active, mais non attestée.
+  assert.equal(r.totaux.personnesDeclarees, 1);
+  assert.equal(r.totaux.personnesAttestees, 0);
+  assert.match(enMarkdown(r), /169,0 h|7,0 j/);
+  // Toutes les bases de la capture se lisent, et chaque décision est comptée une fois.
+  for (const [nom, e] of Object.entries(capture.ecrivains)) {
+    const x = mesurer(e.base);
+    assert.equal(x.totaux.decisions, (e.base.decisions || []).length, nom);
+  }
+});
+
+const ALICE = { par: 'la-fusee', userId: 'user-alice', nom: 'Alice Martin', at: '2026-10-02T10:00:00.000Z', empreinte: 'e'.repeat(64), sceau: 's'.repeat(64) };
+function baseComplete() {
+  return {
+    schema: 5,
+    personnes: [{ id: 'P-da', nom: 'Sacha Martin', poste: 'da' }],
+    feedbacks: [
+      { id: 'FB-1', canal: 'message', quand: '2026-10-03' },
+      { id: 'FB-2', canal: 'message', quand: '2026-10-04' },
+      { id: 'FB-3', canal: 'seance', quand: '2026-08-30' },
+      { id: 'FB-4', quand: '2026-10-05' },
+    ],
+    projets: [
+      { id: 'PRO-a', cree_le: '2026-10-01T08:00:00.000Z',
+        partages: { cadrage: { jeton: 'a'.repeat(24), cree_le: '2026-10-02T08:00:00.000Z' } },
+        partagesRevoques: [{ doc: 'cadrage', jeton: 'b'.repeat(24), cree_le: '2026-09-20T08:00:00.000Z', revoque_le: '2026-10-02T07:59:00.000Z' }],
+        preuvesRemise: [{ id: 'REM-1', remis_le: '2026-10-09', quand: '2026-10-10T08:00:00.000Z' }],
+        livrables: [{ id: 'L-a', version: 2,
+          versions: [
+            { n: 1, soumis_le: '2026-10-01T08:00:00.000Z', verdict: 'retour', juge_le: '2026-10-01T10:00:00.000Z' },
+            { n: 2, soumis_le: '2026-10-02T08:00:00.000Z', verdict: 'approuve', juge_le: '2026-10-02T14:00:00.000Z' },
+          ],
+          annotations: [{ id: 'AN-1', quand: '2026-10-01T09:00:00.000Z' }],
+          fichiers: [{ id: 'F-1', type: 'bat', quand: '2026-10-05T09:00:00.000Z' }, { id: 'F-2', type: 'asset', quand: '2026-10-05T09:00:00.000Z' }] }] },
+      { id: 'PRJ-XC-001', cree_le: '2026-09-15T08:00:00.000Z', releve: { source: 'corpus' },
+        livrables: [{ id: 'L-b', versions: [{ n: 1, soumis_le: '2026-09-15T08:00:00.000Z' }] }] },
+    ],
+    decisions: [
+      { id: 'DEC-1', type: 'livrable', verdict: 'retour', quand: '2026-10-01T10:00:00.000Z', qui: 'creation', acteur: { personneId: null, nom: 'Alice Martin' }, attestation: ALICE },
+      { id: 'DEC-2', type: 'livrable', verdict: 'approuve', quand: '2026-10-02T14:00:00.000Z', qui: 'creation', acteur: { personneId: 'P-da', nom: 'Sacha Martin' } },
+      { id: 'DEC-3', type: 'piste', verdict: 'hors', quand: '2026-08-01T14:00:00.000Z', qui: 'creation' },
+    ],
+    journal: [
+      { quand: '2026-10-01T10:00:01.000Z', qui: 'creation', action: 'création', attestation: ALICE },
+      { quand: '2026-10-02T10:00:01.000Z', qui: 'creation', action: 'modification', acteur: { personneId: 'P-da', nom: 'Sacha Martin' } },
+      { quand: '2026-10-02T11:00:01.000Z', qui: 'creation', action: 'modification' },
+    ],
+    // Toujours le titulaire : ne mesure rien, n'est pas compté.
+    lectures: [{ type: 'projets', id: 'PRO-a', qui: 'creation', quand: '2026-10-02T09:00:00.000Z' }],
+  };
+}
+
+test('une base complète : canaux, annotations, fichiers, liens, remises, personnes attestées et déclarées', () => {
+  const r = mesurer(baseComplete());
+  assert.equal(r.totaux.decisions, 3);
+  assert.equal(r.totaux.versionsSoumises, 3);
+  assert.equal(r.totaux.versionsJugees, 2);
+  assert.equal(r.totaux.versionsEnAttente, 1);
+  assert.equal(r.totaux.delaiMedianHeures, 4); // 2 h et 6 h
+  assert.deepEqual(r.retoursParCanal.map(x => [x.canal, x.nombre]), [['message', 2], ['non renseigné', 1], ['seance', 1]]);
+  assert.equal(r.totaux.annotations, 1);
+  assert.deepEqual(r.fichiersParType.map(x => [x.type, x.nombre]), [['asset', 1], ['bat', 1]]);
+  assert.equal(r.totaux.liens, 2, 'le lien actif et le lien révoqué');
+  assert.equal(r.totaux.remises, 1);
+  assert.equal(r.totaux.projets, 2);
+  assert.equal(r.totaux.projetsSaisis, 1);
+  assert.equal(r.volume.projetsReleves, 1);
+  assert.deepEqual(r.decisionsParAuteur.map(x => [x.auteur, x.identite, x.nombre]),
+    [['Alice Martin', 'attestée', 1], ['poste creation', 'poste', 1], ['Sacha Martin', 'déclarée', 1]]);
+  assert.equal(r.totaux.personnesAttestees, 1);
+  assert.equal(r.totaux.personnesDeclarees, 1);
+  const octobre = r.parMois.find(x => x.mois === '2026-10');
+  assert.equal(octobre.personnesAttestees, 1);
+  assert.equal(octobre.personnesDeclarees, 1);
+  assert.equal(octobre.gestesJournal, 3);
+  assert.equal(r.volume.lectures, 1);
+  assert.ok(!JSON.stringify(r.parMois).includes('lectures'));
+});
+
+test('un projet fusionné n’est pas compté deux fois', () => {
+  // outils/renommer-projets-2026.py recopie les livrables du doublon dans le
+  // dossier gardé et laisse le doublon dans la base, marqué `fusionne`.
+  const livrable = () => ({ id: 'L-1', versions: [{ n: 1, soumis_le: '2026-10-01T08:00:00.000Z', verdict: 'approuve', juge_le: '2026-10-01T12:00:00.000Z' }],
+    annotations: [{ id: 'AN-1', quand: '2026-10-01T09:00:00.000Z' }], fichiers: [{ id: 'F-1', type: 'bat', quand: '2026-10-01T09:00:00.000Z' }] });
+  const base = { schema: 5, projets: [
+    { id: 'PRO-garde', cree_le: '2026-09-01T08:00:00.000Z', livrables: [livrable()], preuvesRemise: [{ id: 'R-1', quand: '2026-10-02T08:00:00.000Z' }] },
+    { id: 'PRO-doublon', cree_le: '2026-09-02T08:00:00.000Z', fusionne: { dans: 'PRO-garde', quand: '2026-10-05T08:00:00.000Z', motif: 'doublon' },
+      livrables: [livrable()], preuvesRemise: [{ id: 'R-1', quand: '2026-10-02T08:00:00.000Z' }] },
+  ] };
+  const r = mesurer(base);
+  assert.equal(r.totaux.projets, 1);
+  assert.equal(r.volume.projets, 1);
+  assert.equal(r.volume.projetsFusionnes, 1);
+  assert.equal(r.volume.livrables, 1);
+  assert.equal(r.totaux.versionsSoumises, 1);
+  assert.equal(r.totaux.versionsJugees, 1);
+  assert.equal(r.totaux.annotations, 1);
+  assert.equal(r.totaux.fichiers, 1);
+  assert.equal(r.totaux.remises, 1);
+  assert.match(enMarkdown(r), /1 projet fusionné dans un autre dossier est écarté/);
+});
+
+test('l’attente se compte comme le Bilan : dernière version, hors annulé et hors dossier clos', () => {
+  const v = (n, extra = {}) => ({ n, soumis_le: '2026-10-0' + n + 'T08:00:00.000Z', ...extra });
+  const base = { schema: 5, projets: [
+    { id: 'PRO-ouvert', cree_le: '2026-10-01', livrables: [
+      // V1 dépassée sans décision, V2 en attente : une seule pièce attend.
+      { id: 'L-1', versions: [v(1), v(2)] },
+      // V1 sans décision, V2 validée : plus rien n'attend.
+      { id: 'L-2', versions: [v(1), v(2, { verdict: 'approuve', juge_le: '2026-10-03T08:00:00.000Z' })] },
+      // Annulé : n'attend plus.
+      { id: 'L-3', annule: true, versions: [v(1)] },
+      // Dernière version jamais soumise : n'attend pas encore.
+      { id: 'L-4', versions: [{ n: 1 }] },
+    ] },
+    { id: 'PRO-clos', cree_le: '2026-10-01', cloture: { le: '2026-10-09', bilan: '' }, livrables: [{ id: 'L-5', versions: [v(1)] }] },
+  ] };
+  const r = mesurer(base);
+  assert.equal(r.totaux.versionsEnAttente, 1);
+  assert.equal(r.totaux.versionsSoumises, 6);
+  assert.match(enMarkdown(r), /Pièces en attente de décision \(dernière version, dossiers ouverts, toutes structures\) \| 1 \|/);
+  // Une seule structure : pas de détail par structure.
+  assert.doesNotMatch(enMarkdown(r), /par structure/);
+});
+
+test('l’attente est comptée dans toutes les structures, et détaillée pour retrouver le chiffre du Bilan', () => {
+  const v = { n: 1, soumis_le: '2026-10-01T08:00:00.000Z' };
+  const piece = id => ({ id, versions: [{ ...v }] });
+  const base = { schema: 5, projets: [
+    // Sans structure : la structure principale de l'installation, que le Bilan compte.
+    { id: 'PRO-a', cree_le: '2026-10-01', livrables: [piece('L-1'), piece('L-2')] },
+    // La structure principale nommée : le Bilan la compte aussi.
+    { id: 'PRO-b', cree_le: '2026-10-01', structure: 'agence', livrables: [piece('L-3')] },
+    // Une autre structure : le Bilan ne la compte pas, le relevé si.
+    { id: 'PRO-c', cree_le: '2026-10-01', structure: 'studio-partenaire', livrables: [piece('L-4'), piece('L-5'), piece('L-6')] },
+    // Fusionné : écarté partout.
+    { id: 'PRO-d', cree_le: '2026-10-01', structure: 'studio-partenaire', fusionne: { dans: 'PRO-c' }, livrables: [piece('L-7')] },
+  ] };
+  const r = mesurer(base);
+  assert.equal(r.totaux.versionsEnAttente, 6);
+  assert.deepEqual(r.enAttenteParStructure, [
+    { structure: 'studio-partenaire', nombre: 3 }, { structure: 'agence', nombre: 1 }, { structure: null, nombre: 2 }]);
+  const md = enMarkdown(r);
+  assert.match(md, /## Pièces en attente, par structure/);
+  assert.match(md, /\| sans structure \(la structure principale de l’installation\) \| 2 \|/);
+  assert.match(md, /\| studio-partenaire \| 3 \|/);
+  assert.match(md, /Le Bilan, lui, ne compte que la structure principale/);
+  assert.match(enCsv(r), /\nen_attente_par_structure,tout,sans-structure,2\n/);
+});
+
+test('le relevé parle la langue de l’agence et accorde ses pluriels', () => {
+  const base = baseComplete();
+  base.decisions.push(
+    { id: 'DEC-4', type: 'bigidea', verdict: 'approuve', quand: '2026-10-06T10:00:00.000Z', qui: 'creation' },
+    { id: 'DEC-5', type: 'recevabilite', verdict: 'retour', quand: '2026-10-06T10:00:00.000Z', qui: 'creation' },
+    { id: 'DEC-6', type: 'bilan-campagne', verdict: 'approuve', quand: '2026-10-06T10:00:00.000Z', qui: 'creation' });
+  const r = mesurer(base);
+  const md = enMarkdown(r);
+  assert.match(md, /\| big idea \|/);
+  assert.match(md, /\| feu vert sur le brief \|/);
+  assert.match(md, /\| bilan de campagne \|/);
+  assert.match(md, /\| BAT \| 1 \|/);
+  // Des mots d'agence, pas des clés de programme : les clés restent dans le CSV.
+  assert.match(md, /\| visuel \| 1 \|/);
+  assert.doesNotMatch(md, /\| asset \|/);
+  assert.match(md, /\| 2026-10 \| big idea \| Validé \| 1 \|/);
+  assert.match(md, /\| Modifs demandées \|/);
+  assert.match(md, /\| 2026-08 \| piste créative \| Refusé \(hors brief\) \| 1 \|/);
+  assert.doesNotMatch(md, /\| (approuve|retour|hors) /);
+  assert.match(md, /\| Poste Création \(titulaire de l’installation\) \| non identifiée \| /);
+  assert.doesNotMatch(md, /poste creation/);
+  assert.match(enCsv(r), /decisions_par_auteur,tout,poste creation \(poste\),/);
+  assert.match(enCsv(r), /decisions_par_type,2026-08,piste\/hors,1/);
+  // Un zéro se dit en clair.
+  assert.match(md, /Aucune version jugée n’est sans date de décision/);
+  assert.match(md, /la lecture enregistrée ne dit pas qui a regardé\. Elle n’est pas comptée\./);
+  const vide = enMarkdown(mesurer({ schema: 5, projets: [] }));
+  assert.match(vide, /Cette copie n’en contient aucune\./);
+  // Ce que le relevé écrit lui-même : une seule apostrophe, la typographique, et aucun mot de tribunal.
+  assert.doesNotMatch(md + vide, /[A-Za-zÀ-ÿ]'[A-Za-zÀ-ÿ]/);
+  assert.doesNotMatch(md, /recevab|tranch/i);
+  assert.equal(TYPES_DECISION.idee, 'idée choisie à l’atelier');
+  assert.match(vide, /Tous les éléments sont datés\./);
+  assert.doesNotMatch(vide, /\b0 (version porte|lectures enregistrées)/);
+  assert.doesNotMatch(md, /\(s\)/);
+  // Décisions et journal en deux colonnes : leur somme ne se lit plus comme un seul nombre.
+  assert.match(md, /\| Personne \| Identité \| Décisions \| Lignes de journal \|/);
+  assert.match(md, /\| Alice Martin \| attestée \| 1 \| 1 \|/);
+  // Le CSV garde les clés, pour les recoupements.
+  assert.match(enCsv(r), /decisions_par_type,2026-10,bigidea\/approuve,1/);
+  // Le tableau des décisions se lit dans l'ordre des mots affichés, pas des clés :
+  // « feu vert sur le brief » (recevabilite) avant « livrable », dans le même mois.
+  const types = [...md.matchAll(/^\| 2026-10 \| ([^|]+) \|/gm)].map(x => x[1].trim());
+  assert.ok(types.includes('feu vert sur le brief'), types.join(', '));
+  assert.deepEqual(types, types.slice().sort((a, b) => a.localeCompare(b, 'fr')));
+  // La date du relevé, en clair et à l'heure du poste : lancé à 0 h 51 le 27, il dit le 27.
+  assert.equal(dateDuReleve(undefined, new Date(2026, 10, 27, 0, 51)), '27 novembre 2026');
+  assert.equal(dateDuReleve('2026-11-26'), '26 novembre 2026');
+  assert.match(md, /- Relevé fait le \d{1,2} [a-zéû]+ \d{4}, en lecture seule/);
+  assert.doesNotMatch(md, /Relevé fait le \d{4}-/);
+});
+
+test('--depuis écarte ce qui est plus ancien, et le dit', () => {
+  const r = mesurer(baseComplete(), { depuis: '2026-10-01' });
+  assert.equal(r.totaux.decisions, 2);
+  assert.equal(r.totaux.versionsSoumises, 2);
+  assert.equal(r.totaux.retours, 3);
+  assert.equal(r.totaux.liens, 1);
+  assert.equal(r.totaux.projets, 1);
+  assert.ok(r.ecartees.avant >= 5);
+  assert.deepEqual(r.parMois.map(x => x.mois), ['2026-10']);
+  assert.match(enMarkdown(r), /depuis le 2026-10-01/);
+  assert.throws(() => mesurer(baseComplete(), { depuis: '2026-13-01' }), /AAAA-MM-JJ/);
+});
+
+test('--anonyme remplace chaque nom par un rang, partout', () => {
+  const r = mesurer(baseComplete(), { anonyme: true });
+  const texte = enMarkdown(r) + enCsv(r);
+  assert.doesNotMatch(texte, /Alice|Sacha/);
+  assert.match(texte, /Personne 1/);
+  assert.match(texte, /Personne 2/);
+});
+
+test('auteur : attestation, puis acteur déclaré, puis poste seul', () => {
+  assert.equal(auteur({ attestation: ALICE, acteur: { nom: 'Autre' } }).identite, 'attestée');
+  assert.equal(auteur({ attestation: { par: 'navigateur', userId: 'x' }, acteur: { nom: 'Camille' } }).identite, 'déclarée');
+  assert.equal(auteur({ qui: 'creation' }).identite, 'poste');
+  assert.equal(mediane([3, 1, 2]), 2);
+  assert.equal(mediane([]), null);
+});
+
+test('la ligne de commande refuse d’écrire et laisse la copie intacte', async () => {
+  assert.throws(() => lireArguments(['base.json', '--sortie', 'x.md']), /n’écrit aucun fichier/);
+  assert.throws(() => lireArguments(['base.json', '-o', 'x.md']), /n’écrit aucun fichier/);
+  assert.throws(() => lireArguments(['base.json', '--format', 'xlsx']), /md ou csv/);
+  assert.throws(() => lireArguments(['base.json', '--inconnue']), /Option inconnue/);
+  const dossier = await mkdtemp(join(tmpdir(), 'usage-reel-'));
+  try {
+    const copie = join(dossier, 'copie.json');
+    const texte = JSON.stringify(baseComplete());
+    await writeFile(copie, texte);
+    const avant = await stat(copie);
+    const { stdout } = await executer(process.execPath, [OUTIL, copie, '--format', 'csv', '--depuis', '2026-09-01']);
+    assert.match(stdout, /^mesure,mois,cle,valeur\n/);
+    assert.match(stdout, /\ndecisions,tout,,2\n/);
+    const md = await executer(process.execPath, [OUTIL, copie]);
+    assert.match(md.stdout, /^# Usage réel de La Barre/);
+    assert.match(md.stdout, /lectures\[\]\.qui/);
+    const apres = await stat(copie);
+    assert.equal(apres.mtimeMs, avant.mtimeMs);
+    assert.equal(createHash('sha256').update(await readFile(copie)).digest('hex'), createHash('sha256').update(texte).digest('hex'));
+    await assert.rejects(executer(process.execPath, [OUTIL, copie, '--ecrire']), e => e.code === 2 && /n’écrit aucun fichier/.test(e.stderr));
+  } finally { await rm(dossier, { recursive: true, force: true }); }
+});
+
+test('le relevé n’emploie ni le réseau ni l’écriture', async () => {
+  const source = await readFile(OUTIL, 'utf8');
+  for (const interdit of [/node:(http|https|net|dgram|tls)/, /\bfetch\s*\(/, /writeFile|appendFile|createWriteStream|openSync|mkdir|rmSync|unlink/])
+    assert.doesNotMatch(source, interdit);
+});
