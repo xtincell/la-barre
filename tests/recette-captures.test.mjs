@@ -10,7 +10,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { routesDe, lireArguments, planche, comparer, restreindre, problemes, preparerSortie, pluriel, dateLisible,
   sortieParDefaut, typographie, aLOeil, versionMesure, causes, heureDuPoste, texteDeLaPage, ouChange, decrireNuance,
-  MODES_ATTENDUS, LARGEURS, MARQUE, OUTIL, ECART, ONGLETS_PIECE, lancement } from '../outils/recette-captures.mjs';
+  changement, precisionEcran, MODES_ATTENDUS, LARGEURS, MARQUE, OUTIL, ECART, ONGLETS_PIECE, lancement } from '../outils/recette-captures.mjs';
 import { relever, extrait, VALEURS_TECHNIQUES } from '../outils/termes-interdits.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -302,31 +302,60 @@ test('une photo identique dont le texte change, ou un changement sous le premier
   const lignesApres = ['Bilan mensuel', 'AUCUNE CRITIQUE ÉCRITE', 'Ilan Corbeau'];
   const t = l => texteDeLaPage({ texte: l.join('\n'), texteReplie: '' });
   const avant = { quand: '2026-11-26', mesure: MESURE, captures: [
-    capture('reporting/bilan', 320, t(lignesAvant)), capture('bureau', 1440, t(['Bureau'])), capture('plus', 390, { ...t(['Plus']), empreinte: 'p' })] };
+    capture('reporting/bilan', 320, t(lignesAvant)), capture('reporting/bilan', 1440, t(lignesAvant)), capture('bureau', 1440, t(['Bureau'])),
+    capture('plus', 390, { ...t(['Plus']), empreinte: 'p' }), capture('reporting/equipe', 320, t(['Évaluation'])),
+    capture('planning/charge', 1440, t(['Plan de charge']))] };
   const apres = { quand: '2026-11-26', temps: 'apres', mesure: MESURE, largeurs: [320, 390, 1440], pleinePage: true,
-    base: { fichier: 'b.json', projets: 1, livrables: 1 }, manquantes: [], resume: { routes: 3, captures: 3, exceptions: 0, debordements: 0, termes: 0, introuvables: 0, imagesCassees: 0 },
+    base: { fichier: 'b.json', projets: 1, livrables: 1 }, manquantes: [], resume: { routes: 5, captures: 6, exceptions: 0, debordements: 0, termes: 0, introuvables: 0, imagesCassees: 0 },
     captures: [
-      // La photo n'a pas changé (le texte est replié, ou dans une liste qui défile) : modifiée par le texte.
+      // La photo n'a pas changé (le texte est replié, ou dans une liste qui défile) : modifiée par le texte, à deux largeurs.
       capture('reporting/bilan', 320, { nom: 'Bilan · Bilan mensuel', ...t(lignesApres) }),
+      capture('reporting/bilan', 1440, { nom: 'Bilan · Bilan mensuel', ...t(lignesApres) }),
       // Un changement à 1 000 px de haut, sur un écran de 900 : sous le premier écran.
       capture('bureau', 1440, { nom: 'Bureau', ...t(['Bureau']), empreinte: 'autre', hauteurEcran: 900, hauteurPhoto: 2000,
         ecart: { ...ecart({ pixels: 400, max: 120 }), cadre: [10, 1000, 200, 1030] } }),
-      // Une page qui s'allonge : la photo n'a plus la même taille.
+      // Une page qui s'allonge, sans aucun changement de texte : la photo n'a plus la même taille.
       capture('plus', 390, { nom: 'Plus', ...t(['Plus']), empreinte: 'q', densite: 2, hauteurEcran: 844, hauteurPhoto: 2850,
-        ecart: { pixels: null, taille: [780, 5656, 780, 5700] } })] };
+        ecart: { pixels: null, taille: [780, 5656, 780, 5700] } }),
+      // Une page qui s'allonge à partir de 1 500 px, sur un écran de 700 : sous le premier écran.
+      capture('reporting/equipe', 320, { nom: 'Bilan · Évaluation', ...t(['Évaluation']), empreinte: 'r', densite: 2, hauteurEcran: 700, hauteurPhoto: 2050,
+        ecart: { pixels: null, taille: [640, 4000, 640, 4100], debut: 1500 } }),
+      // Une photo qui change, dont l'écart n'a pas pu être lu, et un texte qui change : ni « texte seulement », ni précision.
+      capture('planning/charge', 1440, { nom: 'Planning · Plan de charge', ...t(['Plan de charge', 'Semaine 48']), empreinte: 's', hauteurPhoto: 1200 })] };
   const c = comparer(avant, apres);
-  assert.deepEqual(c.modifiees, ['reporting/bilan@320', 'bureau@1440', 'plus@390']);
-  assert.deepEqual(c.textes, [{ capture: 'reporting/bilan@320', ajoute: 'AUCUNE CRITIQUE ÉCRITE', retire: 'aucune critique écrite sur la période' }]);
-  assert.equal(ouChange(apres.captures[1]), 'sous le premier écran');
-  assert.equal(ouChange({ ...apres.captures[1], ecart: { ...apres.captures[1].ecart, cadre: [0, 850, 10, 950] } }), 'dès le premier écran');
-  assert.equal(ouChange({ ...apres.captures[1], hauteurPhoto: undefined }), '', 'au premier écran seulement, la question ne se pose pas');
+  assert.deepEqual(c.modifiees, ['reporting/bilan@320', 'reporting/bilan@1440', 'bureau@1440', 'plus@390', 'reporting/equipe@320', 'planning/charge@1440']);
+  assert.deepEqual(c.textes, [{ capture: 'reporting/bilan@320', ajoute: 'AUCUNE CRITIQUE ÉCRITE', retire: 'aucune critique écrite sur la période' },
+    { capture: 'reporting/bilan@1440', ajoute: 'AUCUNE CRITIQUE ÉCRITE', retire: 'aucune critique écrite sur la période' },
+    { capture: 'planning/charge@1440', ajoute: 'Semaine 48', retire: null }]);
+  assert.equal(ouChange(apres.captures[2]), 'sous le premier écran');
+  assert.equal(ouChange({ ...apres.captures[2], ecart: { ...apres.captures[2].ecart, cadre: [0, 850, 10, 950] } }), 'dès le premier écran');
+  assert.equal(ouChange({ ...apres.captures[2], hauteurPhoto: undefined }), '', 'au premier écran seulement, la question ne se pose pas');
+  // La page change de hauteur : le changement part de la première rangée qui diffère.
+  assert.equal(ouChange(apres.captures[4]), 'sous le premier écran');
+  assert.equal(ouChange({ ...apres.captures[4], ecart: { ...apres.captures[4].ecart, debut: 300 } }), 'dès le premier écran');
+  assert.equal(ouChange(apres.captures[3]), '', 'sans première rangée connue, on ne dit pas où');
+  // Ce qui change, capture par capture : seul un écart lu dit où ; une photo identique, c'est le texte.
+  const ch = k => changement(apres.captures[k], avant.captures.find(a => a.id === apres.captures[k].id && a.largeur === apres.captures[k].largeur));
+  assert.deepEqual([0, 2, 3, 4, 5].map(ch), [{ sorte: 'texte', ou: '' }, { sorte: 'photo', ou: 'sous le premier écran' },
+    { sorte: 'hauteur', ou: '' }, { sorte: 'hauteur', ou: 'sous le premier écran' }, { sorte: 'photo', ou: '' }]);
+  assert.equal(precisionEcran([{ sorte: 'texte', ou: '' }, { sorte: 'photo', ou: 'sous le premier écran' }]), 'sous le premier écran');
+  assert.equal(precisionEcran([{ sorte: 'hauteur', ou: 'dès le premier écran' }, { sorte: 'photo', ou: 'dans le premier écran' }]), 'la page change de hauteur');
   const html = planche(apres, { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' });
   assert.match(html, /On compare la page entière, de haut en bas, au pixel, et tout le texte de la page, blocs repliés et bulles d’aide compris\./);
   assert.match(html, /Photos de la page entière/);
   assert.match(html, /badge etat modifiee">modifiée · texte seulement \(replié ou hors de la photo\)/);
   assert.match(html, /badge etat modifiee">modifiée · 400\u00a0pixels \(moins de 0,1\u202f%\), sous le premier écran/);
-  assert.match(html, /badge etat modifiee">modifiée · la page passe de 2\u202f828 à 2\u202f850\u00a0px de haut/);
-  assert.match(html, /Écrans touchés\u00a0: <a href="#reporting\/bilan" title="reporting\/bilan">Bilan · Bilan mensuel<\/a> \(texte seulement\), <a href="#bureau" title="bureau">Bureau<\/a> \(sous le premier écran\), <a href="#plus"/);
+  assert.match(html, /badge etat modifiee">modifiée · la page passe de 2\u202f828 à 2\u202f850\u00a0px de haut</);
+  assert.match(html, /badge etat modifiee">modifiée · la page passe de 2\u202f000 à 2\u202f050\u00a0px de haut, sous le premier écran</);
+  assert.match(html, /badge etat modifiee">modifiée</);
+  // Chaque écran touché, avec sa précision : jamais « texte seulement » quand la photo change.
+  const ecranTouche = (id, nom) => '<a href="#' + id.replace('/', '\\/') + '" title="' + id.replace('/', '\\/') + '">' + nom + '<\\/a>';
+  assert.match(html, new RegExp('Écrans touchés\\u00a0: ' + [
+    ecranTouche('reporting/bilan', 'Bilan · Bilan mensuel') + ' \\(texte seulement\\)',
+    ecranTouche('bureau', 'Bureau') + ' \\(sous le premier écran\\)',
+    ecranTouche('plus', 'Plus') + ' \\(la page change de hauteur\\)',
+    ecranTouche('reporting/equipe', 'Bilan · Évaluation') + ' \\(sous le premier écran, la page change de hauteur\\)',
+    ecranTouche('planning/charge', 'Planning · Plan de charge') + '\\.'].join(', ')));
   assert.match(html, /Textes changés\u00a0: <a href="#reporting\/bilan" title="reporting\/bilan">Bilan · Bilan mensuel<\/a> à 320\u00a0px\u00a0: <q>AUCUNE CRITIQUE ÉCRITE<\/q> au lieu de <q>aucune critique écrite sur la période<\/q>/);
   // Au premier écran seulement, la planche le dit.
   assert.match(planche({ ...apres, pleinePage: false }, { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' }),

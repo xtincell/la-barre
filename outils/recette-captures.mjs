@@ -412,14 +412,47 @@ function etat(c, a, memeMesure = true) {
 const ETATS = { nouvelle: 'nouvelle', inconnue: 'non comparée', identique: 'identique', quasi: 'identique à l’œil', modifiee: 'modifiée' };
 
 /* Où le changement se voit, dans une photo de la page entière : le
- * rectangle des pixels changés, rapporté à la hauteur de l'écran. */
+ * rectangle des pixels changés, rapporté à la hauteur de l'écran. Quand la
+ * page change de hauteur, tout ce qui suit la première rangée changée bouge :
+ * le changement part de là jusqu'en bas. */
 export function ouChange(c) {
   const x = c && c.ecart;
-  if (!x || !x.cadre || !c.hauteurPhoto) return '';
+  if (!x || !c.hauteurPhoto) return '';
   const h = c.hauteurEcran || HAUTEURS[c.largeur] || 900;
+  if (x.pixels === null) return typeof x.debut === 'number' ? (x.debut >= h ? 'sous le premier écran' : 'dès le premier écran') : '';
+  if (!x.cadre) return '';
   if (x.cadre[1] >= h) return 'sous le premier écran';
   if (x.cadre[3] <= h) return 'dans le premier écran';
   return 'dès le premier écran';
+}
+
+/* Ce qui change dans une capture modifiée :
+ *   'texte'    la photo est la même (même empreinte, ou pas un pixel de
+ *              différent) : seul le texte a changé, replié ou hors de la photo ;
+ *   'hauteur'  la page a changé de hauteur (ou de largeur) ;
+ *   'photo'    des pixels changent, à la même taille.
+ * `ou` dit où, quand on le sait (ouChange). Un écart qui n'a pas pu être lu
+ * donne 'photo', sans précision : on ne sait pas où regarder. */
+export function changement(c, a) {
+  const x = c && c.ecart;
+  if ((a && a.empreinte && c.empreinte === a.empreinte) || (x && x.pixels === 0)) return { sorte: 'texte', ou: '' };
+  if (x && x.pixels === null && x.taille) return { sorte: 'hauteur', ou: ouChange(c) };
+  if (x && x.pixels) return { sorte: 'photo', ou: ouChange(c) };
+  return { sorte: 'photo', ou: '' };
+}
+
+/* La précision d'un écran touché, d'après ce qui change à chaque largeur :
+ * « texte seulement » si aucune photo ne change ; « sous le premier écran »
+ * si tout ce qui change dans les photos est plus bas ; « la page change de
+ * hauteur » si elle s'allonge ou raccourcit à une largeur au moins. */
+export function precisionEcran(changements) {
+  if (!changements.length) return '';
+  if (changements.every(x => x.sorte === 'texte')) return 'texte seulement';
+  const photos = changements.filter(x => x.sorte !== 'texte');
+  const t = [];
+  if (photos.every(x => x.ou === 'sous le premier écran')) t.push('sous le premier écran');
+  if (photos.some(x => x.sorte === 'hauteur')) t.push('la page change de hauteur');
+  return t.join(', ');
 }
 
 /* « nuance 1/255 sur 52 pixels, hors des images ». Les pixels sont ceux de
@@ -433,12 +466,14 @@ export function decrireNuance(x) {
 function libelleEtat(e, c, a) {
   const x = c.ecart;
   if (e === 'modifiee') {
-    if (x && x.pixels) return ['modifiée · ' + pluriel(x.pixels, 'pixel').replace(/^\d+/, x.pixels.toLocaleString('fr-FR')) + (x.part ? ' (' + pourcent(x.part) + ')' : ''), ouChange(c)].filter(Boolean).join(', ');
-    if (x && x.pixels === null && x.taille) {
+    const { sorte, ou } = changement(c, a);
+    if (sorte === 'texte') return 'modifiée · texte seulement (replié ou hors de la photo)';
+    if (sorte === 'hauteur') {
       const d = c.densite || 1, h0 = Math.round(x.taille[1] / d), h1 = Math.round(x.taille[3] / d);
-      return h0 === h1 ? 'modifiée · autre largeur' : 'modifiée · la page passe de ' + h0.toLocaleString('fr-FR') + ' à ' + h1.toLocaleString('fr-FR') + ' px de haut';
+      if (x.taille[0] !== x.taille[2]) return 'modifiée · autre largeur';
+      return [h0 === h1 ? 'modifiée · la page change de hauteur' : 'modifiée · la page passe de ' + h0.toLocaleString('fr-FR') + ' à ' + h1.toLocaleString('fr-FR') + ' px de haut', ou].filter(Boolean).join(', ');
     }
-    if (texteChange(c, a)) return 'modifiée · texte seulement (replié ou hors de la photo)';
+    if (x && x.pixels) return ['modifiée · ' + pluriel(x.pixels, 'pixel').replace(/^\d+/, x.pixels.toLocaleString('fr-FR')) + (x.part ? ' (' + pourcent(x.part) + ')' : ''), ou].filter(Boolean).join(', ');
     return 'modifiée';
   }
   if (e === 'quasi' && x && x.max) return 'identique à l’œil · ' + decrireNuance(x);
@@ -481,7 +516,7 @@ function alerteVersion(cmp) {
  * différer sans que le code ait changé. */
 export function filtresDifferents(cmp) { return !!(cmp && cmp.filtres && (cmp.filtres.avant || null) !== (cmp.filtres.apres || null)); }
 
-function blocComparaison(cmp, noms, captures, pleinePage) {
+function blocComparaison(cmp, noms, captures, pleinePage, avantParCle = new Map()) {
   const nom = id => noms.get(id) || id;
   const ecran = id => `<a href="#${echapper(id)}" title="${echapper(id)}">${echapper(nom(id))}</a>`;
   const routes = t => (t.length ? t.map(ecran).join(', ') : 'aucun');
@@ -490,19 +525,18 @@ function blocComparaison(cmp, noms, captures, pleinePage) {
   const avantApres = x => (x.avant === null || x.avant === undefined ? 'non mesuré avant → ' + x.apres : x.avant + ' → ' + x.apres);
   const parCle = new Map((captures || []).map(c => [c.id + '@' + c.largeur, c]));
   const comparable = !cmp.mesure || cmp.mesure.identique;
-  /* Les écrans touchés, et pour chacun, si tout ce qui change est plus bas
-   * que le premier écran ou dans le texte seulement. */
+  /* Les écrans touchés, et pour chacun ce qui change à ses largeurs
+   * (precisionEcran) : plus bas que le premier écran, la hauteur de la page,
+   * ou le texte seulement. */
   const touches = new Map();
   for (const k of cmp.modifiees) {
     const id = k.split('@')[0];
     if (!noms.has(id)) continue;
     const c = parCle.get(k);
-    const ou = c ? (c.ecart && c.ecart.pixels ? ouChange(c) || 'photo' : 'texte') : 'photo';
-    if (!touches.has(id)) touches.set(id, new Set());
-    touches.get(id).add(ou);
+    if (!touches.has(id)) touches.set(id, []);
+    touches.get(id).push(c ? changement(c, avantParCle.get(k)) : { sorte: 'photo', ou: '' });
   }
-  const ecransTouches = [...touches].map(([id, ou]) => ecran(id) + (ou.size === 1 && ou.has('sous le premier écran') ? ' (sous le premier écran)'
-    : ou.size === 1 && ou.has('texte') ? ' (texte seulement)' : '')).join(', ');
+  const ecransTouches = [...touches].map(([id, t]) => { const p = precisionEcran(t); return ecran(id) + (p ? ' (' + p + ')' : ''); }).join(', ');
   const sur = comparable ? '' : ' <i>(à refaire : l’avant n’a pas été pris dans les mêmes conditions)</i>';
   const nuancees = (cmp.nuancees || []).map(x => captureDe(x.capture) + ' (' + decrireNuance(x) + ')');
   const textes = (cmp.textes || []).slice(0, 12).map(x => captureDe(x.capture) + ' : '
@@ -581,7 +615,7 @@ ${r.filtre ? `<p class="meta">Routes limitées à <code>${echapper(r.filtre)}</c
 <p class="meta">${r.pleinePage ? 'Photos de la page entière, de haut en bas : ce qui est fixé à l’écran (barre d’onglets, colonne latérale, panneau ouvert) y est posé sur la page. Les vignettes en montrent le haut ; un clic ouvre la page entière.' : 'Photos du premier écran seulement (--premier-ecran) : ce qui est plus bas n’y est pas.'}</p>
 ${r.manquantes.length ? `<p class="meta">Absentes de cette base, donc non capturées : ${r.manquantes.map(echapper).join(', ')}.</p>` : ''}
 ${avant ? `<p class="meta">Comparaison avec <a href="${echapper(lien(dossier, join(avantDossier, 'index.html')))}">la passe « avant »</a> du ${echapper(dateLisible(avant.quand))}, commit ${echapper(avant.commit || 'inconnu')}.</p>` : ''}
-${cmp ? blocComparaison(cmp, noms, r.captures, !!r.pleinePage) : ''}
+${cmp ? blocComparaison(cmp, noms, r.captures, !!r.pleinePage, parCle) : ''}
 ${liste ? `<details><summary>Alertes, écran par écran : ${pluriel(regarder.size, 'écran')} (${enumerer(sortesDAlertes(regarder))})</summary><ul>${liste}</ul></details>` : '<p>Aucune exception, aucun débordement, aucun texte coupé, aucune valeur technique, aucun terme interdit.</p>'}
 ${sections}`;
   return `<!doctype html>
@@ -1030,13 +1064,24 @@ export function mesurerDansLaPage() {
  * `cadre` est le rectangle qui contient les pixels changés, [gauche, haut,
  * droite, bas] en px CSS (null si rien ne change) : il dit où regarder, et si
  * le changement est dans le premier écran ou plus bas.
- * Deux tailles différentes : { pixels: null }. */
+ * Deux tailles différentes : { pixels: null, taille: [l, h, l', h'] } (en
+ * pixels de l'image). À la même largeur, la page s'allonge ou raccourcit :
+ * `debut` est alors la première rangée qui change, en px CSS, sur la hauteur
+ * commune ; si toute la hauteur commune est la même, le changement part du
+ * bas de la plus courte. */
 export async function ecartDePixels({ a, b, zones = [], densite = 1 }) {
   const charger = async s => { const i = new Image(); i.src = 'data:image/png;base64,' + s; await i.decode(); return i; };
   const [x, y] = await Promise.all([charger(a), charger(b)]);
-  if (x.width !== y.width || x.height !== y.height) return { pixels: null, taille: [x.width, x.height, y.width, y.height] };
   const lire = i => { const t = document.createElement('canvas'); t.width = i.width; t.height = i.height;
     const g = t.getContext('2d'); g.drawImage(i, 0, 0); return g.getImageData(0, 0, i.width, i.height).data; };
+  if (x.width !== y.width || x.height !== y.height) {
+    const taille = [x.width, x.height, y.width, y.height];
+    if (x.width !== y.width) return { pixels: null, taille };
+    const p = lire(x), q = lire(y), commune = Math.min(x.height, y.height) * x.width * 4;
+    let k = 0;
+    while (k < commune && p[k] === q[k]) k++;
+    return { pixels: null, taille, debut: Math.floor(Math.floor(k / (x.width * 4)) / densite) };
+  }
   const p = lire(x), q = lire(y), w = x.width, h = x.height;
   const masque = new Uint8Array(w * h);
   for (const [zx, zy, zw, zh] of zones) {

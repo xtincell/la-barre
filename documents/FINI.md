@@ -113,13 +113,17 @@ BROWSER_CHANNEL=chrome node "$copie/outils/recette-captures.mjs" --avant \
   - chaque capture porte « modifiée », « identique » ou « identique à
     l'œil ». Une capture modifiée dit combien de pixels changent (ceux de
     l'image : deux par px CSS au téléphone) et où : « dans le premier
-    écran », « dès le premier écran » ou « sous le premier écran » ; ou bien
-    « texte seulement », quand la photo est la même mais qu'un mot replié ou
-    hors de la photo a changé ;
-  - « Écrans touchés » nomme chaque écran modifié, avec « (sous le premier
-    écran) » ou « (texte seulement) » quand c'est tout ce qui change, et
-    « Textes changés » montre, capture par capture, la première ligne
-    apparue et celle qu'elle remplace ;
+    écran », « dès le premier écran » ou « sous le premier écran ». Si la
+    page s'allonge ou raccourcit, elle dit « la page passe de 2 739 à
+    2 883 px de haut », et d'où part le changement (la première rangée qui
+    diffère). « Texte seulement » veut dire que la photo est la même, au
+    pixel, et qu'un mot replié ou hors de la photo a changé ;
+  - « Écrans touchés » nomme chaque écran modifié, avec sa précision :
+    « (sous le premier écran) » quand tout ce qui change dans les photos est
+    plus bas, « (la page change de hauteur) » quand elle s'allonge ou
+    raccourcit à une largeur au moins, « (texte seulement) » quand aucune
+    photo ne change. « Textes changés » montre, capture par capture, la
+    première ligne apparue et celle qu'elle remplace ;
   - la case « N'afficher que les captures à regarder » ne garde que les
     modifiées, nouvelles, nuancées ou non comparées (ou dit qu'il n'y en a
     aucune). Le bloc replié « Alertes, écran par écran » est autre chose : les

@@ -96,14 +96,15 @@ test('un texte coupé et un contrôle hors écran sont relevés, sans compter ce
 
 test('deux captures se comparent au pixel, et seules les zones d’image pardonnent une nuance', sauter, async () => {
   const p = await page('<!doctype html><body></body>');
-  const [a, b, c, d] = await p.evaluate(() => {
-    const dessiner = (couleur, x, largeur = 40) => {
-      const t = document.createElement('canvas'); t.width = largeur; t.height = 40;
-      const g = t.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, largeur, 40);
-      g.fillStyle = couleur; g.fillRect(x, 10, 10, 10);
+  const [a, b, c, d, plusLongue, decalee] = await p.evaluate(() => {
+    const dessiner = (couleur, x, largeur = 40, hauteur = 40, y = 10) => {
+      const t = document.createElement('canvas'); t.width = largeur; t.height = hauteur;
+      const g = t.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, largeur, hauteur);
+      g.fillStyle = couleur; g.fillRect(x, y, 10, 10);
       return t.toDataURL('image/png').split(',')[1];
     };
-    return [dessiner('rgb(0,0,0)', 10), dessiner('rgb(12,12,12)', 10), dessiner('rgb(0,0,0)', 14), dessiner('rgb(0,0,0)', 10, 50)];
+    return [dessiner('rgb(0,0,0)', 10), dessiner('rgb(12,12,12)', 10), dessiner('rgb(0,0,0)', 14), dessiner('rgb(0,0,0)', 10, 50),
+      dessiner('rgb(0,0,0)', 10, 40, 60), dessiner('rgb(0,0,0)', 10, 40, 60, 24)];
   });
   const meme = await p.evaluate(ecartDePixels, { a, b: a });
   assert.equal(meme.pixels, 0);
@@ -127,10 +128,18 @@ test('deux captures se comparent au pixel, et seules les zones d’image pardonn
   assert.deepEqual(dense.cadre, [5, 5, 10, 10]);
   // Un bloc déplacé de 4 px : 2 × 4 × 10 pixels changent.
   assert.equal((await p.evaluate(ecartDePixels, { a, b: c })).pixels, 80);
-  // Une autre taille : modifiée, sans compte de pixels.
+  // Une autre largeur : modifiée, sans compte de pixels ni première rangée.
   const taille = await p.evaluate(ecartDePixels, { a, b: d });
   assert.equal(taille.pixels, null);
+  assert.equal(taille.debut, undefined);
   assert.equal(aLOeil(taille), false);
+  // Une page qui s'allonge par le bas : rien ne change sur la hauteur commune,
+  // le changement part du bas de la plus courte (40 px).
+  assert.deepEqual(await p.evaluate(ecartDePixels, { a, b: plusLongue }), { pixels: null, taille: [40, 40, 40, 60], debut: 40 });
+  // Un bloc descendu de 14 px dans une page plus longue : le changement part
+  // de sa première rangée, en px CSS (deux pixels par px à densité 2).
+  assert.equal((await p.evaluate(ecartDePixels, { a, b: decalee })).debut, 10);
+  assert.equal((await p.evaluate(ecartDePixels, { a, b: decalee, densite: 2 })).debut, 5);
   await p.close();
 });
 
