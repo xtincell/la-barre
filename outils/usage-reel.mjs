@@ -330,12 +330,20 @@ function tableau(entetes, lignes) {
     .concat(lignes.map(l => '| ' + l.map(cellule).join(' | ') + ' |')).join('\n') + '\n';
 }
 
+/* La date du relevé, en clair et à l'heure du poste : « 27 novembre 2026 ».
+ * Une date AAAA-MM-JJ donnée est lue telle quelle. */
+export function dateDuReleve(le, maintenant = new Date()) {
+  const jour = typeof le === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(le);
+  const d = jour ? new Date(le + 'T00:00:00Z') : le instanceof Date ? le : maintenant;
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', ...(jour ? { timeZone: 'UTC' } : {}) });
+}
+
 export function enMarkdown(r, meta = {}) {
   const t = r.totaux, v = r.volume;
   const out = [];
   out.push('# Usage réel de La Barre', '');
   out.push(`- Base lue : \`${meta.fichier || 'base'}\`${meta.empreinte ? ` · empreinte \`${meta.empreinte}\`` : ''} · schéma ${v.schema ?? '—'}`);
-  out.push(`- Relevé fait le ${meta.le || new Date().toISOString().slice(0, 10)}, en lecture seule (aucune écriture, aucun appel réseau).`);
+  out.push(`- Relevé fait le ${dateDuReleve(meta.le)}, en lecture seule (aucune écriture, aucun appel réseau).`);
   out.push(r.depuis
     ? `- Période : depuis le ${r.depuis}. Écartés : ${accorder(r.ecartees.avant, 'élément plus ancien', 'éléments plus anciens')} et ${accorder(r.ecartees.sansDate, 'élément sans date', 'éléments sans date')}.`
     : `- Période : toute la base. ${r.ecartees.sansDate === 0 ? 'Tous les éléments sont datés.' : (r.ecartees.sansDate > 1 ? r.ecartees.sansDate + ' éléments sans date sont comptés' : '1 élément sans date est compté') + ' à part (« sans date »).'}`);
@@ -371,8 +379,11 @@ export function enMarkdown(r, meta = {}) {
   r.parMois.map(x => [x.mois, x.decisions, x.versionsSoumises, x.versionsJugees, heures(x.delaiMedianHeures), x.retours,
     x.annotations, x.fichiers, x.projets, x.liens, x.remises, x.gestesJournal, x.personnesAttestees, x.personnesDeclarees])));
   out.push('## Décisions par mois, type et résultat', '');
-  out.push(tableau(['Mois', 'Type', 'Résultat', 'Nombre'],
-    r.decisionsParMoisEtType.map(x => [x.mois, TYPES_DECISION[x.type] || x.type, RESULTATS[x.resultat] || x.resultat, x.nombre])));
+  /* Triées comme on les lit : par mois, puis par type et résultat affichés
+   * (le CSV garde l'ordre des clés). */
+  const lignesDecisions = r.decisionsParMoisEtType.map(x => [x.mois, TYPES_DECISION[x.type] || x.type, RESULTATS[x.resultat] || x.resultat, x.nombre])
+    .sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1], 'fr') || a[2].localeCompare(b[2], 'fr'));
+  out.push(tableau(['Mois', 'Type', 'Résultat', 'Nombre'], lignesDecisions));
   out.push('## Décisions par auteur', '');
   out.push(tableau(['Auteur', 'Identité', 'Décisions'], r.decisionsParAuteur.map(x => [nomAuteur(x), IDENTITES[x.identite] || x.identite, x.nombre])));
   out.push('## Retours par canal', '');

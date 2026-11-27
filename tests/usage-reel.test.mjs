@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { mesurer, enMarkdown, enCsv, lireArguments, auteur, mediane, TYPES_DECISION } from '../outils/usage-reel.mjs';
+import { mesurer, enMarkdown, enCsv, lireArguments, auteur, mediane, dateDuReleve, TYPES_DECISION } from '../outils/usage-reel.mjs';
 
 const RACINE = fileURLToPath(new URL('../', import.meta.url));
 const OUTIL = join(RACINE, 'outils', 'usage-reel.mjs');
@@ -234,6 +234,16 @@ test('le relevé parle la langue de l’agence et accorde ses pluriels', () => {
   assert.match(md, /\| Alice Martin \| attestée \| 1 \| 1 \|/);
   // Le CSV garde les clés, pour les recoupements.
   assert.match(enCsv(r), /decisions_par_type,2026-10,bigidea\/approuve,1/);
+  // Le tableau des décisions se lit dans l'ordre des mots affichés, pas des clés :
+  // « feu vert sur le brief » (recevabilite) avant « livrable », dans le même mois.
+  const types = [...md.matchAll(/^\| 2026-10 \| ([^|]+) \|/gm)].map(x => x[1].trim());
+  assert.ok(types.includes('feu vert sur le brief'), types.join(', '));
+  assert.deepEqual(types, types.slice().sort((a, b) => a.localeCompare(b, 'fr')));
+  // La date du relevé, en clair et à l'heure du poste : lancé à 0 h 51 le 27, il dit le 27.
+  assert.equal(dateDuReleve(undefined, new Date(2026, 10, 27, 0, 51)), '27 novembre 2026');
+  assert.equal(dateDuReleve('2026-11-26'), '26 novembre 2026');
+  assert.match(md, /- Relevé fait le \d{1,2} [a-zéû]+ \d{4}, en lecture seule/);
+  assert.doesNotMatch(md, /Relevé fait le \d{4}-/);
 });
 
 test('--depuis écarte ce qui est plus ancien, et le dit', () => {
