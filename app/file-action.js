@@ -144,8 +144,10 @@ window.FILE = (function () {
     projets.forEach(function (p) {
       var a = CHAINE_BRIEF.avancement(p);
       if (!a.prochain) return;
-      out.push(item("traiter", "« " + p.nom + " » : " + a.prochain.nom.toLowerCase() + " à faire",
-        a.prochain.quoi + "  ·  " + a.faits + " étapes sur " + a.total + ".",
+      /* « brief à accepter », « demande au DA à envoyer » : le geste qui
+       * reste, pas « brief accepté à faire ». */
+      out.push(item("traiter", "« " + p.nom + " » : " + a.prochain.afaire,
+        a.prochain.quoi + "  ·  " + O.pluriel(a.faits, "étape", "étapes") + " sur " + a.total + ".",
         55 - a.faits, "#/projets/" + p.id + "/" + a.prochain.section));
     });
 

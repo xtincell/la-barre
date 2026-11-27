@@ -10,18 +10,23 @@ Elle tient en deux pages :
   démonstration, sur une base fictive.
 
 La marque (Orvelle), son client, ses personnes, ses campagnes, ses relevés et
-ses chiffres sont inventés. Chaque écran le dit : un ruban en tête de la
-vitrine et de chaque écran de la démonstration, une mention dans le rail, et
-« DÉMONSTRATION — DONNÉES FICTIVES » dans chaque visuel.
+ses chiffres sont inventés. Chaque écran le dit, une fois : un ruban en tête de
+la vitrine, et dans la démonstration le bandeau repliable de la coque, sur
+chaque écran. Les visuels ne portent aucune mention gravée : ce sont les
+créations qu'on juge, et leur manifeste (`vitrine/demo/visuels/LISEZMOI.json`)
+les déclare fictifs.
 
 ## Ce que montre la démonstration
 
 Le dossier « Orvelle Zeste — lancement » (ORV-2027-01) suit un lancement sur
 trois marchés : brief accepté et brief-back écrit, plateforme de marque et big
 idea validées, idée d'atelier retenue, trois pistes arbitrées par écrit, KV
-master revenu en V1 puis approuvé en V2, adaptations par marché, formats, un
-BAT signé et un BAT sans signataire. La campagne précédente, close, porte son
-bilan arrêté (version figée, empreinte) que cite le brief. Sa version compte les
+master revenu en V1 (la canette ne s'y lit pas) puis approuvé en V2,
+adaptations par marché, formats, un BAT signé et un BAT sans signataire. À
+côté, une demande simple (« Atelier Noro — invitation en story »,
+NOR-2026-01) attend la décision sur sa première version. La campagne
+précédente, close, porte son bilan arrêté (version figée, empreinte) que cite
+le brief. Sa version compte les
 reprises du relevé à l'arrêt : aucune facturable au client, une à la charge de
 l'agence (son dossier n'a déclaré aucun axe de direction artistique, ce que le
 contrôle du KV relève).
@@ -72,6 +77,25 @@ node outils/vitrine-base.mjs          # réécrit la base
 node outils/vitrine-base.mjs --check  # ce que fait la CI
 ```
 
+## Les visuels
+
+Les visuels de `vitrine/demo/visuels/` ne sont pas dessinés à la main non plus.
+Ils dérivent de deux photographies fictives versionnées dans
+`vitrine/demo/sources/` (la canette Orvelle, l'invitation d'Atelier Noro) :
+`outils/visuels-demo.mjs` les recadre par format (3:2, 4:3, 1:1, 9:16), pose
+la titraille dans la langue du marché (anglais pour le Ghana, français
+ailleurs) et produit pour le KV master une V1 au pack illisible, que la V2
+corrige.
+
+```bash
+BROWSER_CHANNEL=chrome node outils/visuels-demo.mjs   # réécrit les visuels et LISEZMOI.json
+node outils/visuels-demo.mjs --check                  # ce que fait la CI : manifeste et sources
+```
+
+Le rendu passe par le canevas du navigateur : il se rejoue à l'identique sur
+un même moteur. `--check` vérifie le manifeste (chaque fichier déclaré fictif,
+présent, aux dimensions dites) et l'empreinte des deux sources.
+
 ## Voir la vitrine en local
 
 ```bash
@@ -98,7 +122,8 @@ Le dossier produit contient `vitrine/`, `app/` sans `app/maison.js` ni
 `vitrine/index.html`, et `distribution.json` (commit et empreinte de chaque
 fichier). Il ne contient ni `servir.mjs`, ni `depots/`, ni `assets/`, ni
 `sources/`, `documents/`, `extraits/`, `kit-ordi-dedie/`, `outils/`, `profils/`
-ou `tests/`. Le vérificateur refuse un fichier non listé, un fichier appelé par
+ou `tests/`, ni `vitrine/demo/sources/` (les deux photographies d'où dérivent
+les visuels : elles servent à les refaire, pas à les montrer). Le vérificateur refuse un fichier non listé, un fichier appelé par
 une des deux pages et absent, ou un marqueur de l'installation historique dans
 `vitrine/`.
 

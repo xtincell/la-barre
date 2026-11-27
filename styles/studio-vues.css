@@ -175,10 +175,12 @@
 .eti.attente::before { content: "◐"; font-size: .9em; }
 .eti.vert::before { content: "✓"; font-size: .9em; }
 
-/* La vignette (`IMAGE.vignette`) : l'aplat pâle des couvertures du Bureau. */
+/* La vignette (`IMAGE.vignette`) : l'aplat pâle des couvertures du Bureau.
+ * L'image y tient entière : rognée au cadre, elle perdait sa titraille, ce qui
+ * distingue justement une décli d'une autre. */
 .vignette { background: var(--surface-3); border: 0; border-radius: 4px; display: flex; align-items: center;
   justify-content: center; overflow: hidden; flex: 0 0 auto; position: relative; }
-.vignette img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vignette img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .vignette .absente { font-size: 11px; line-height: 1.4; color: var(--clair-terne); text-align: center; padding: 6px; }
 .vignette.v-ligne { width: 100%; max-width: 118px; height: 74px; }
 .vignette.v-carte { width: 100%; height: 128px; }
@@ -1383,9 +1385,10 @@ button.st-e:hover { background: var(--surface-4); }
   font: inherit; color: inherit; text-align: left; }
 .plc-visuel:hover { border-color: var(--trait-clair); box-shadow: inset 0 3px 0 var(--ton), var(--elev-1); }
 .plc-visuel > .vignette { width: 100%; height: auto; aspect-ratio: 4 / 3; border-radius: 0; }
-.plc-visuel > .vignette img { height: 100%; object-fit: cover; }
-.plc-visuel > .vignette.vide.attente { padding-top: 30px; align-content: start; }
-.plc-haut { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 6px 0; pointer-events: none; }
+.plc-visuel > .vignette img { height: 100%; object-fit: contain; }
+/* Le marché et les pastilles ont leur bande, au-dessus de l'image : posés
+ * dessus, ils cachaient la titraille. */
+.plc-haut { order: -1; display: flex; justify-content: space-between; align-items: center; padding: 8px 8px 6px; pointer-events: none; }
 .plc-marche { font: 550 11px var(--affichage); padding: 2px 6px; border-radius: 4px; background: var(--surface-1); color: var(--clair); }
 .plc-droite { display: flex; gap: 4px; }
 .plc-retours, .plc-pastille { min-width: 20px; height: 20px; display: grid; place-items: center; padding: 0 6px; border-radius: 10px; font: 550 11px var(--affichage); }
@@ -1596,10 +1599,12 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
   box-shadow: inset 0 3px 0 var(--ton); font: inherit; color: inherit; text-align: left; }
 .plvc.tracee { --ton: var(--succes); }
 .plvc:hover { border-color: var(--trait-clair); box-shadow: inset 0 3px 0 var(--ton), var(--elev-1); }
-.plvc.pleine { aspect-ratio: 4 / 3; }
-.plvc.pleine .plvc-bas { position: absolute; left: 0; right: 0; bottom: 0; }
+/* L'image a son cadre 4:3, et la légende vient dessous : posée dessus, elle
+ * cachait le bas de la création (la signature, les mentions). */
 .plvc .vignette { height: 100%; border-radius: 0; }
-.plvc .vignette img { height: 100%; object-fit: cover; }
+.plvc.pleine { grid-template-rows: auto 1fr; }
+.plvc.pleine .vignette { height: auto; aspect-ratio: 4 / 3; }
+.plvc .vignette img { height: 100%; object-fit: contain; }
 .plvc.vide .vignette.vide.attente { align-content: start; }
 .plvc-bas { display: grid; gap: 1px; padding: 6px 8px 7px; background: var(--surface-1); border-top: 1px solid var(--trait); }
 /* Deux lignes réservées au titre de chaque carte : un titre long (« Key visual
@@ -2924,6 +2929,10 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .gal-carte:focus-visible { outline: 2px solid var(--info); outline-offset: 4px; }
 .gal-visuel { aspect-ratio: 4 / 3; border-radius: var(--r-m); overflow: hidden; background: var(--surface-3); }
 .gal-visuel .vignette { width: 100%; height: 100%; border: 0; border-radius: 0; }
+/* Une création se montre entière à la Galerie : recadrée, elle perdait sa
+ * titraille et sa signature. La mosaïque d'un cycle et le logo gardent leur
+ * mise. */
+.gal-visuel .vignette.couv:not(.couv-mos, .couv-mq) > img { object-fit: contain; }
 .gal-carte:hover .gal-visuel { box-shadow: var(--elev-2); }
 @media (prefers-reduced-motion: no-preference) {
   .gal-visuel { transition: box-shadow var(--tr-standard) var(--easing, ease); }

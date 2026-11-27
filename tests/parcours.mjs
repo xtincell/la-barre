@@ -204,6 +204,26 @@ try {
   });
   assert.deepEqual({ ...pile, ...graves }, { refus: 1, apres: 0, x: [44, 44], graveEnHaut: true, empiles: true, titreVisible: true,
     decalage: '', annuler: 44 });
+  // Livrer, c'est un seul geste, sans lien HTTPS : qui a accordé le BAT, par
+  // où les fichiers sont partis, à qui ils ont été remis.
+  await page.getByRole('link', { name:'Suivre le BAT et la remise' }).click();
+  await page.getByRole('button', { name:'Marquer comme livré', exact:true }).click();
+  const livrer = page.getByRole('dialog', { name:'Marquer comme livré' });
+  assert.equal(await livrer.locator('input[type="url"][required]').count(), 0, 'Aucun lien HTTPS n’est exigé');
+  await livrer.getByLabel('BAT accordé par').fill('Imprimerie de recette');
+  // Une photo choisie par erreur se retire, sans rouvrir le sélecteur.
+  await livrer.locator('summary', { hasText: /une photo, un PDF, un lien ou un mot/ }).click();
+  const photoBat = livrer.locator('input[name="bat-fichier"]');
+  await photoBat.setInputFiles({ name: 'photo-par-erreur.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('recette') });
+  await livrer.locator('.remise-joint-nom', { hasText: 'photo-par-erreur.jpg' }).waitFor();
+  await livrer.getByRole('button', { name: 'Retirer « photo-par-erreur.jpg »' }).click();
+  assert.equal(await photoBat.evaluate(i => i.files.length), 0, 'La photo retirée ne part pas');
+  assert.equal(await livrer.getByText('photo-par-erreur.jpg').count(), 0);
+  assert.equal(await livrer.getByRole('button', { name: /^Retirer/ }).count(), 0);
+  await livrer.getByLabel('Moyen d’envoi').selectOption('WeTransfer');
+  await livrer.getByLabel('Remis à').fill('Production de recette');
+  await livrer.getByRole('button', { name:'Marquer comme livré', exact:true }).click();
+  await page.locator('.remise-tete').getByText('Remise justifiée').waitFor();
   await page.goBack();
   await page.setViewportSize({ width:1440, height:1050 });
   await page.getByRole('heading', {name:'À valider aujourd’hui'}).waitFor();
@@ -286,6 +306,17 @@ try {
   await page.keyboard.press('Enter');
   await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo');
   await page.getByRole('heading',{level:1,name:'Affiche de lancement'}).waitFor();
+  // « Poser un fichier » ouvre le sélecteur du système, pas un formulaire ;
+  // décrire un fichier resté sur le Drive est le geste second.
+  const [selecteur] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.getByRole('button', { name:'Poser un fichier', exact:true }).click(),
+  ]);
+  assert.equal(selecteur.isMultiple(), false);
+  assert.equal(await page.getByRole('dialog', { name:'Décrire un fichier' }).count(), 0, 'Aucun formulaire de description ne s’ouvre');
+  const decrire = page.getByRole('button', { name:'Décrire un fichier sans le déposer' });
+  await decrire.first().waitFor();
+  assert.equal(await decrire.count(), 1, '« Décrire un fichier sans le déposer » n’est proposé qu’une fois');
   await page.keyboard.press('Meta+k');
   await saisie.fill('support');
   await saisie.press('Escape');
@@ -685,13 +716,110 @@ try {
       'Le champ garde son focus et sa saisie');
     assert.deepEqual(await surDisque(3), { verdict: 'approuve', decisions: 3 }, 'L’onglet resté ouvert a écrit la validation');
     assert.equal(await principal.evaluate(() => localStorage.getItem('la-barre-validations')), null);
+    // De vrais fichiers, sur le serveur : l'asset devient le visuel de la
+    // pièce ; la photo du BAT se range à son étage sans le remplacer ; le PDF
+    // joint au BAT monte dans assets/review/preuves/, s'ouvre depuis le suivi,
+    // et la pièce se livre en un geste.
+    const adresse = 'http://127.0.0.1:' + port;
+    const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+    const livrableServi = () => principal.evaluate(() => JSON.parse(JSON.stringify(DEPOT.trouve('projets', 'PRJ-demo').livrables[0])));
+    const telecharger = async chemin => { const r = await fetch(adresse + '/' + chemin); return { statut: r.status, type: r.headers.get('content-type'), octets: Buffer.from(await r.arrayBuffer()) }; };
+    // La piste retenue engage la pièce : après l'asset, l'étage du BAT s'ouvre.
+    await principal.evaluate(() => { DEPOT.trouve('projets', 'PRJ-demo').sections.pistes[0].statut = 'retenue'; DEPOT.enregistrer(); });
+    await principal.goto(adresse + '/#/projets/PRJ-demo/livrables/L-demo/poser');
+    const poserEtage = async (nom, fichier) => {
+      const [choix] = await Promise.all([principal.waitForEvent('filechooser'), principal.getByRole('button', { name: nom }).click()]);
+      await choix.setFiles(fichier);
+      await principal.getByText('« ' + fichier.name + ' » est au dossier').waitFor();
+    };
+    await poserEtage(/Poser l'asset/, { name: 'kv-recette.png', mimeType: 'image/png', buffer: PNG });
+    const visuel = (await livrableServi()).vignette;
+    assert.match(visuel, /^assets\/review\/livrables\/L-demo-f-[a-z0-9]+\.jpg$/);
+    assert.equal((await telecharger(visuel)).statut, 200);
+    await poserEtage(/Poser le BAT/, { name: 'bon-signe.png', mimeType: 'image/png', buffer: PNG });
+    const avecBat = await livrableServi();
+    const batPose = avecBat.fichiers.filter(f => f.type === 'bat');
+    assert.equal(avecBat.vignette, visuel, 'La photo du BAT ne remplace pas le visuel de la pièce');
+    assert.deepEqual(batPose.map(f => [f.nom, f.signataire]), [['bon-signe.png', null]]);
+    assert.equal((await telecharger(batPose[0].emplacement)).statut, 200);
+    await principal.goto(adresse + '/#/projets/PRJ-demo/livrables/L-demo/remise');
+    await principal.getByRole('button', { name: 'Marquer comme livré', exact: true }).click();
+    const livraison = principal.getByRole('dialog', { name: 'Marquer comme livré' });
+    await livraison.getByText('« bon-signe.png » est déjà posé').waitFor();
+    await livraison.getByLabel('BAT accordé par').fill('Imprimerie de recette');
+    await livraison.locator('summary', { hasText: 'Ajouter une photo, un PDF' }).click();
+    await livraison.getByLabel('Photo ou PDF du BAT').setInputFiles({ name: 'bat-signe.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n% recette\n') });
+    await livraison.locator('.remise-joint-nom', { hasText: 'bat-signe.pdf' }).waitFor();
+    await livraison.getByLabel('Moyen d’envoi').selectOption('Clé USB');
+    await livraison.getByLabel('Remis à').fill('Production de recette');
+    await livraison.getByRole('button', { name: 'Marquer comme livré', exact: true }).click();
+    await principal.locator('.remise-tete').getByText('Remise justifiée').waitFor();
+    await principal.getByText('BAT signé · V3').waitFor();
+    // « Ouvrir le BAT » ouvre le fichier posé à son étage ; la pièce jointe
+    // donnée en le marquant accordé s'ouvre à côté.
+    assert.equal(await principal.getByRole('link', { name: 'Ouvrir le BAT', exact: true }).getAttribute('href'), batPose[0].emplacement);
+    const preuveBat = await principal.getByRole('link', { name: 'Ouvrir la pièce jointe', exact: true }).getAttribute('href');
+    assert.match(preuveBat, /^assets\/review\/preuves\/preuve-[a-z0-9]+\.pdf$/);
+    const pdf = await telecharger(preuveBat);
+    assert.deepEqual([pdf.statut, pdf.type, pdf.octets.toString('latin1', 0, 5)], [200, 'application/pdf', '%PDF-']);
+    assert.equal(String(await readFile(join(racine, preuveBat))).slice(0, 5), '%PDF-', 'Le PDF est sur le disque du serveur');
+    for (let i = 0; i < 80; i++) {
+      const l = JSON.parse(await readFile(join(racine, 'depots', 'parcours.json'), 'utf8')).projets.find(p => p.id === 'PRJ-demo').livrables[0];
+      const bats = (l.fichiers || []).filter(f => f.type === 'bat');
+      if (bats.some(f => f.signataire)) {
+        assert.deepEqual(bats.map(f => [f.nom, f.signataire, f.preuve && f.preuve.chemin]), [['bon-signe.png', 'Imprimerie de recette', preuveBat]],
+          'Un seul BAT au fichier : celui posé à l’étage, complété');
+        break;
+      }
+      assert.ok(i < 79, 'Le BAT accordé est dans le fichier');
+      await new Promise(r => setTimeout(r, 100));
+    }
+    // Les fichiers remis déclarés n'ont pas d'emplacement : à leur étage, ils
+    // disent par où ils sont partis.
+    await principal.goto(adresse + '/#/projets/PRJ-demo/livrables/L-demo/poser');
+    await principal.locator('.ptff', { hasText: 'Fichiers finaux · V3' }).getByText('Fichiers envoyés sur clé USB').waitFor();
+    assert.equal(await principal.getByText('Emplacement non dit').count(), 0);
+    // Un fichier déposé ici dit « Déposé ici » et s'ouvre, sans chemin technique.
+    assert.equal(await principal.locator('.ptff', { hasText: 'bon-signe.png' }).getByRole('link', { name: 'Ouvrir', exact: true })
+      .getAttribute('href'), batPose[0].emplacement);
+    assert.equal(await principal.locator('.ptff-m', { hasText: 'assets/review/' }).count(), 0, 'Aucun chemin technique à l’étage');
+    // Rien de l'interface ne se pose sur l'image : elle s'agrandit d'un clic,
+    // ou par « Agrandir le visuel », dans la barre des gestes.
+    await principal.goto(adresse + '/#/projets/PRJ-demo/livrables/L-demo/juger/3');
+    const toile = principal.locator('.rvp-plan .rvp-toile');
+    await toile.locator('img').waitFor();
+    assert.equal(await toile.locator('button').count(), 0, 'Aucun bouton posé sur la création');
+    const apercu = principal.getByRole('dialog', { name: 'Aperçu du visuel' });
+    await principal.locator('.rvp-liens').getByRole('button', { name: 'Agrandir le visuel', exact: true }).click();
+    await apercu.locator('img').waitFor();
+    await principal.keyboard.press('Escape');
+    await apercu.waitFor({ state: 'detached' });
+    await toile.locator('img').click();
+    await apercu.locator('img').waitFor();
+    await principal.keyboard.press('Escape');
+    await apercu.waitFor({ state: 'detached' });
+    // L'historique d'une version ouvre ses documents servis et dit les
+    // déclarations : le BAT, nommé comme tel, sa photo posée et le PDF joint ;
+    // les fichiers remis ; la remise déclarée.
+    await principal.evaluate(() => {
+      const l = DEPOT.trouve('projets', 'PRJ-demo').livrables[0];
+      l.versions.push({ n: 4, soumis_le: new Date().toISOString(), verdict: null }); l.version = 4;
+      APP.rendre();
+    });
+    const archive = principal.locator('.rvp-archive');
+    await archive.getByRole('heading', { name: 'Version 3 · historique' }).waitFor();
+    assert.equal(await archive.getByRole('link', { name: 'BAT · bon-signe.png', exact: true }).getAttribute('href'), batPose[0].emplacement);
+    assert.equal(await archive.getByRole('link', { name: 'pièce jointe', exact: true }).getAttribute('href'), preuveBat);
+    await archive.locator('.rvp-docs li', { hasText: 'Fichiers finaux · V3' }).waitFor();
+    await archive.locator('summary', { hasText: 'Justificatifs de remise de la V3' }).click();
+    await archive.getByText('Remise déclarée · Fichiers envoyés sur clé USB', { exact: true }).waitFor();
     await navigateur.close();
   } finally {
     if (servi && servi.exitCode === null) { servi.kill(); await once(servi, 'exit'); }
     await rm(racine, { recursive: true, force: true });
   }
   assert.deepEqual(errors, []);
-  console.log('PASS — revue, validation en un clic avec annulation (échéance, écran rouvert, page fermée en poste seul et en base servie, reprise par un onglet resté ouvert, Décisions à jour à l’échéance), demande de modifs, décision persistante, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide.');
+  console.log('PASS — revue, validation en un clic avec annulation (échéance, écran rouvert, page fermée en poste seul et en base servie, reprise par un onglet resté ouvert, Décisions à jour à l’échéance), demande de modifs, décision persistante, retours distincts, recherche, création, identifiant et référence du projet (poste seul et base servie), 9 routes, clavier, 3 formats, identifiant de décision et import, base vide, fichiers posés et pièce jointe du BAT sur le serveur, loupe hors de l’image, documents d’une version.');
 } finally {
   if (browser) await browser.close();
   await new Promise(r => server.close(r));

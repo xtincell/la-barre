@@ -30,6 +30,7 @@ jobs:
       - run: node --test tests/entreprise.test.mjs
       - run: npm run test:radar
       - run: node outils/vitrine-base.mjs --check
+      - run: node outils/visuels-demo.mjs --check
       - run: npm run test:vitrine
       - run: npm run test:recette
       - name: Parcours du poste sur une base fictive

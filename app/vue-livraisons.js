@@ -34,9 +34,11 @@ window.VUE_LIVRAISONS = (function () {
 
   var FILTRES = [
     { cle: "tout", nom: "Tout", quoi: "dépôts, BAT et preuves à vérifier" },
-    { cle: "bat", nom: "BAT à signer", quoi: "versions approuvées sans BAT signé exploitable" },
-    { cle: "sortie", nom: "Fichier à rattacher", quoi: "versions approuvées dont le fichier final manque" },
-    { cle: "preuve", nom: "Preuve à joindre", quoi: "versions approuvées dont la remise reste à justifier" },
+    /* Les noms de l'état de la pièce (REMISE.etatPiece) : un même état ne
+     * porte pas deux noms sur un même écran. */
+    { cle: "bat", nom: "BAT attendu", quoi: "versions approuvées dont le BAT n’est pas encore enregistré" },
+    { cle: "sortie", nom: "Fichiers à remettre", quoi: "versions approuvées dont on ne sait pas par où les fichiers partent" },
+    { cle: "preuve", nom: "Livraison à enregistrer", quoi: "versions approuvées dont la remise reste à enregistrer" },
     { cle: "dement", nom: "Annonce sans fichier", quoi: "annoncé fait, rien au dossier" },
     { cle: "depasse", nom: "En retard", quoi: "la remise est passée" },
     { cle: "sansTrace", nom: "Sans trace", quoi: "rien, nulle part" },

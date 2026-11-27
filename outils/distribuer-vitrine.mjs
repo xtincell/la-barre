@@ -14,7 +14,9 @@
 // historique (app/maison.js, app/amorce.js : la démonstration charge les siens),
 // styles/ et LICENSE, plus un index.html racine qui mène à la vitrine. Ce qui ne
 // part jamais : servir.mjs, depots/, assets/, sources/, documents/, extraits/,
-// kit-ordi-dedie/, outils/, profils/, tests/.
+// kit-ordi-dedie/, outils/, profils/, tests/, ni vitrine/demo/sources/ (les deux
+// photographies d'où outils/visuels-demo.mjs dérive les visuels : elles servent à
+// les refaire, pas à les montrer).
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -28,6 +30,8 @@ const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 export const PROFIL = 'vitrine-v1';
 export const RETENUS = ['vitrine', 'app', 'styles', 'LICENSE'];
 export const EXCLUS = ['app/maison.js', 'app/amorce.js'];
+export const DOSSIERS_EXCLUS = ['vitrine/demo/sources/'];
+const exclu = name => EXCLUS.includes(name) || DOSSIERS_EXCLUS.some(d => name.startsWith(d));
 /* Ce que la vitrine ne doit jamais porter : les marqueurs de l'installation
  * historique, que ses propres fichiers et son profil ne nomment pas. */
 export const MARQUEURS = /MATANGA|Matanga|P-alex|MT-0020|MT-0031|Djengue|Friesland|Bonnet Rouge|Beignet/;
@@ -58,6 +62,7 @@ export async function verifier(destination) {
     assert.ok(!path.isAbsolute(name) && !name.split('/').includes('..'), name);
     assert.ok(name === 'index.html' || RETENUS.some(r => name === r || name.startsWith(r + '/')), 'Hors de la vitrine : ' + name);
     assert.ok(!EXCLUS.includes(name), 'Profil historique distribué : ' + name);
+    assert.ok(!exclu(name), 'Source de fabrication distribuée : ' + name);
     assert.equal(hash(await readFile(path.join(destination, name))), expected, name);
   }
   /* La vitrine et la démonstration trouvent tout ce qu'elles appellent. */
@@ -78,12 +83,12 @@ export async function verifier(destination) {
 export async function distribuer({ destination, commit, source = root }) {
   assert.match(commit, /^[a-f0-9]{40}$/, 'Un commit Git complet est requis.');
   const names = execFileSync('git', ['-C', source, 'ls-tree', '-r', '--name-only', '-z', commit, '--', ...RETENUS])
-    .toString().split('\0').filter(Boolean).filter(n => !EXCLUS.includes(n));
+    .toString().split('\0').filter(Boolean).filter(n => !exclu(n));
   // Une destination existante n'est jamais nettoyée, recouverte ni remplacée.
   await mkdir(destination, { recursive: false, mode: 0o755 });
   const manifest = { schema: 1, profile: PROFIL, repository: 'xtincell/la-barre', commit,
     notice: 'Static showcase. Fictitious demo base, no server, no depot, no historic profile or example.',
-    exclus: EXCLUS.slice(), files: {} };
+    exclus: EXCLUS.concat(DOSSIERS_EXCLUS), files: {} };
   for (const name of names) {
     const bytes = execFileSync('git', ['-C', source, 'show', `${commit}:${name}`]);
     await mkdir(path.dirname(path.join(destination, name)), { recursive: true });

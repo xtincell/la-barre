@@ -58,6 +58,11 @@
    "nom": "Sources d’Orvelle",
    "interne": false,
    "nommage": "{marque}_{campagne}_{marche}_{support}_{langue}_{version}"
+  },
+  {
+   "id": "CL-noro",
+   "nom": "Atelier Noro",
+   "interne": false
   }
  ],
  "marques": [
@@ -90,6 +95,16 @@
      "Le zeste",
      "Le premier rayon"
     ]
+   }
+  },
+  {
+   "id": "MQ-noro",
+   "clientId": "CL-noro",
+   "nom": "Atelier Noro",
+   "secteur": "Design et objets",
+   "note": "Marque fictive, inventée pour la démonstration.",
+   "vault": {
+    "couleur": "#E8563A"
    }
   }
  ],
@@ -140,6 +155,17 @@
    "mentions": [
     "Best before end"
    ]
+  },
+  {
+   "id": "M-cm",
+   "code": "CM",
+   "nom": "Cameroun",
+   "langues": [
+    "fr"
+   ],
+   "zone": "CEMAC",
+   "sku": [],
+   "mentions": []
   }
  ],
  "supports": [
@@ -160,6 +186,12 @@
    "code": "social",
    "nom": "Post social 1:1",
    "type": "social"
+  },
+  {
+   "id": "S-story",
+   "code": "story",
+   "nom": "Story 9:16",
+   "type": "social"
   }
  ],
  "contacts": [
@@ -168,6 +200,12 @@
    "clientId": "CL-orvelle",
    "nom": "Margaux Tilleul",
    "role": "Directrice marketing (fictive)"
+  },
+  {
+   "id": "CT-noro",
+   "clientId": "CL-noro",
+   "nom": "Suzanne Noro",
+   "role": "Fondatrice de l’atelier (fictive)"
   }
  ],
  "feedbacks": [],
@@ -285,6 +323,14 @@
    "role": "logo",
    "vignette": "visuels/logo-orvelle.svg",
    "cree_le": "2026-02-02T08:00:00.000Z"
+  },
+  {
+   "id": "AS-noro-invitation",
+   "nom": "Invitation Atelier Noro, telle qu’imprimée",
+   "marque": "MQ-noro",
+   "role": "reference",
+   "vignette": "visuels/noro-invitation.jpg",
+   "cree_le": "2026-11-02T08:00:00.000Z"
   }
  ],
  "projets": [
@@ -360,7 +406,7 @@
      "estime": 3,
      "reel": 4,
      "remise": "2026-02-20",
-     "vignette": "visuels/kv-source-2026.svg",
+     "vignette": "visuels/kv-source-2026.jpg",
      "origine": "prevu",
      "versions": [
       {
@@ -455,7 +501,8 @@
     "supports": [
      "S-kv",
      "S-affiche",
-     "S-social"
+     "S-social",
+     "S-story"
     ],
     "marches": [
      "M-ci",
@@ -868,7 +915,10 @@
        "soumis_le": "2026-10-24T17:00:00.000Z",
        "verdict": "retour",
        "motif": "La canette ne se lit pas à trois mètres : un critère écrit de la big idea.",
-       "juge_le": "2026-10-26T09:00:00.000Z"
+       "juge_le": "2026-10-26T09:00:00.000Z",
+       "etat": {
+        "vignette": "visuels/kv-master-v1.jpg"
+       }
       },
       {
        "n": 2,
@@ -909,7 +959,7 @@
       "geste": "La main ouvre la canette",
       "lumiere": "Le premier rayon, avant sept heures"
      },
-     "vignette": "visuels/kv-master.svg",
+     "vignette": "visuels/kv-master.jpg",
      "remise": "2026-10-28",
      "echeance": "2026-10-29"
     },
@@ -986,7 +1036,7 @@
        "restrictions": []
       }
      },
-     "vignette": "visuels/kv-ci.svg",
+     "vignette": "visuels/kv-ci.jpg",
      "remise": "2026-11-06",
      "echeance": "2026-11-07"
     },
@@ -1064,7 +1114,7 @@
        "restrictions": []
       }
      },
-     "vignette": "visuels/kv-sn.svg",
+     "vignette": "visuels/kv-sn.jpg",
      "remise": "2026-11-06",
      "echeance": "2026-11-07"
     },
@@ -1139,7 +1189,7 @@
        "restrictions": []
       }
      },
-     "vignette": "visuels/kv-gh.svg",
+     "vignette": "visuels/kv-gh.jpg",
      "remise": "2026-11-06",
      "echeance": "2026-11-07"
     },
@@ -1188,7 +1238,7 @@
       "local": "attente",
       "final": "attente"
      },
-     "vignette": "visuels/affiche-ci.svg",
+     "vignette": "visuels/affiche-ci.jpg",
      "fichiers": [
       {
        "id": "F-zkfm92",
@@ -1253,7 +1303,7 @@
       "local": "attente",
       "final": "attente"
      },
-     "vignette": "visuels/social-ci.svg"
+     "vignette": "visuels/social-ci.jpg"
     },
     {
      "id": "L-c3ih-1eb7ymdcbd5q",
@@ -1300,7 +1350,7 @@
       "local": "attente",
       "final": "attente"
      },
-     "vignette": "visuels/affiche-sn.svg",
+     "vignette": "visuels/affiche-sn.jpg",
      "fichiers": [
       {
        "id": "F-729t8y",
@@ -1350,7 +1400,57 @@
       "local": "attente",
       "final": "attente"
      },
-     "vignette": "visuels/social-gh.svg"
+     "vignette": "visuels/social-gh.jpg"
+    },
+    {
+     "id": "L-c3ih-sqpu5q7k0aep",
+     "cree_le": "2026-11-11T15:00:02.000Z",
+     "niveau": "declinaison",
+     "voletId": null,
+     "support": "S-story",
+     "marche": "M-gh",
+     "nom": "Story 9:16 · GH",
+     "responsable": "PE-yao",
+     "origine": "prevu",
+     "pisteId": "PI-zeste",
+     "maitre": "KV-c3ih-sv7u0cl4jb32",
+     "versionMaitre": 1,
+     "version": 1,
+     "versions": [],
+     "estime": 1,
+     "reel": null,
+     "toursVendus": 2,
+     "remise": "2026-12-02",
+     "echeance": "2026-12-03",
+     "publication": null,
+     "assets": [],
+     "entrees": [],
+     "annotations": [],
+     "mockups": [],
+     "points": {
+      "concept": "attente",
+      "copy": "attente",
+      "asset": "attente",
+      "design": "attente",
+      "technique": "attente",
+      "droits": "attente",
+      "langue": "attente",
+      "central": "attente",
+      "local": "attente",
+      "final": "attente"
+     },
+     "vignette": "visuels/story-gh.jpg",
+     "fichiers": [
+      {
+       "id": "F-euc48r",
+       "type": "asset",
+       "nom": "ORV-2027-01_story-9x16_GH_EN_V1.jpg",
+       "emplacement": "Dossier de production (fictif)",
+       "signataire": null,
+       "quand": "2026-11-11T15:00:04.000Z",
+       "version": 1
+      }
+     ]
     }
    ],
    "demandes": [
@@ -1396,6 +1496,126 @@
      "arbitre_le": "2026-10-12T16:00:00.000Z"
     }
    ]
+  },
+  {
+   "id": "PRJ-noro",
+   "ref": "NOR-2026-01",
+   "nom": "Atelier Noro — invitation en story",
+   "nature": "demande",
+   "gabarit": "demande",
+   "statut": "production",
+   "cree_le": "2026-11-10T15:00:00.000Z",
+   "equipe": [
+    {
+     "personne": "PE-ilan",
+     "poste": "da"
+    },
+    {
+     "personne": "PE-yao",
+     "poste": "graphic"
+    }
+   ],
+   "perimetre": {
+    "supports": [
+     "S-story"
+    ],
+    "marches": [
+     "M-cm"
+    ]
+   },
+   "volets": [],
+   "sections": {
+    "identite": {
+     "client": "Atelier Noro",
+     "clientId": "CL-noro",
+     "marqueIds": [
+      "MQ-noro"
+     ],
+     "type": "Demande simple",
+     "debut": "2026-11-10",
+     "echeance": "2026-12-08",
+     "decideurId": "CT-noro",
+     "decideur": "Suzanne Noro, fondatrice (fictive)",
+     "tueur": "Personne d’autre : la fondatrice décide seule (fictif)",
+     "fenetre": "Du 1er au 10 décembre 2026, jusqu’au vernissage",
+     "objectif": "Décliner l’invitation imprimée en story, pour annoncer le vernissage du 10 décembre (fictif)."
+    },
+    "bigidea": {
+     "criteres": [
+      "Le nom de l’atelier tient dans la zone sûre de la story"
+     ]
+    },
+    "pistes": [
+     {
+      "id": "PI-noro",
+      "titre": "L’invitation telle qu’imprimée",
+      "statut": "retenue",
+      "auteurDA": "PE-ilan",
+      "version": 1,
+      "motif": "La story reprend l’invitation imprimée : rien à réinventer.",
+      "arbitre_le": "2026-11-10T15:00:00.000Z",
+      "sacrifice": "Une animation pensée pour la story : l’invitation reste fixe.",
+      "argument": "Les invités reconnaissent dans la story le carton qu’ils ont reçu.",
+      "axe_directrice": "L’invitation imprimée, remise à la verticale.",
+      "axe_ton": "Chaleureux, artisanal",
+      "axe_univers": "Le corail de l’enveloppe, le carton crème, le nom tracé à la main.",
+      "axe_valeurs": [
+       "Savoir-faire",
+       "Accueil"
+      ]
+     }
+    ]
+   },
+   "livrables": [
+    {
+     "id": "L-c3ih-e1wujxrutku5",
+     "cree_le": "2026-11-10T15:00:02.000Z",
+     "niveau": "declinaison",
+     "voletId": null,
+     "support": "S-story",
+     "marche": "M-cm",
+     "nom": "Invitation · story · CM",
+     "responsable": "PE-yao",
+     "origine": "prevu",
+     "pisteId": "PI-noro",
+     "maitre": null,
+     "versionMaitre": null,
+     "version": 1,
+     "versions": [
+      {
+       "n": 1,
+       "soumis_le": "2026-11-10T16:00:00.000Z",
+       "verdict": null
+      }
+     ],
+     "estime": 1,
+     "reel": null,
+     "toursVendus": 1,
+     "remise": "2026-12-04",
+     "echeance": "2026-12-05",
+     "publication": null,
+     "assets": [
+      "AS-noro-invitation"
+     ],
+     "entrees": [],
+     "annotations": [],
+     "mockups": [],
+     "points": {
+      "concept": "attente",
+      "copy": "attente",
+      "asset": "attente",
+      "design": "attente",
+      "technique": "attente",
+      "droits": "attente",
+      "langue": "attente",
+      "central": "attente",
+      "local": "attente",
+      "final": "attente"
+     },
+     "vignette": "visuels/noro-story.jpg"
+    }
+   ],
+   "idees": []
   }
  ],
  "attentes": [],
@@ -2329,6 +2549,54 @@
    "detail": "Affiche 4×3 · SN"
   },
   {
+   "quand": "2026-11-10T15:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "projets",
+   "id": "PRJ-noro",
+   "detail": "Atelier Noro — invitation en story"
+  },
+  {
+   "quand": "2026-11-10T15:00:03.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "création",
+   "type": "livrables",
+   "id": "PRJ-noro",
+   "detail": "Invitation · story · CM"
+  },
+  {
+   "quand": "2026-11-10T16:00:01.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "soumission",
+   "type": "livrables",
+   "id": "PRJ-noro",
+   "detail": "Invitation · story · CM V1"
+  },
+  {
    "quand": "2026-11-11T15:00:01.000Z",
    "qui": "creation",
    "acteur": {
@@ -2343,6 +2611,22 @@
    "type": "livrables",
    "id": "PRJ-zeste",
    "detail": "Post social 1:1 · CI V1"
+  },
+  {
+   "quand": "2026-11-11T15:00:03.000Z",
+   "qui": "creation",
+   "acteur": {
+    "personneId": "PE-clemence",
+    "nom": "Clémence Ardoise",
+    "poste": "creation",
+    "postes": [
+     "creation"
+    ]
+   },
+   "action": "déclinaison",
+   "type": "kv",
+   "id": "PRJ-zeste",
+   "detail": "1 format depuis KV · GH · Orvelle"
   }
  ],
  "rattachement2": true

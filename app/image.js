@@ -46,10 +46,10 @@ window.IMAGE = (function () {
     entree.click();
   }
 
-  function reduire(source, apres) {
+  function reduire(source, apres, largeur) {
     var img = new Image();
     img.onload = function () {
-      var ratio = Math.min(1, LARGEUR / img.width);
+      var ratio = Math.min(1, (largeur || LARGEUR) / img.width);
       var c = document.createElement("canvas");
       c.width = Math.round(img.width * ratio);
       c.height = Math.round(img.height * ratio);
@@ -264,18 +264,23 @@ window.IMAGE = (function () {
   }
 
   /* Le geste, quel que soit son point d'entrée : le sélecteur, ou un fichier
-   * lâché sur une carte. `apres(fichier)` reçoit l'entrée posée au dossier. */
-  function accueillir(l, f, apres, muet) {
+   * lâché sur une carte. `apres(fichier)` reçoit l'entrée posée au dossier.
+   * `type` force l'étage quand l'écran le connaît (« Poser le BAT ») ; sans
+   * lui, l'extension le propose. Seul l'asset devient le visuel de la pièce :
+   * la photo d'un BAT ou d'une mise en situation se range à côté. */
+  function accueillir(l, f, apres, muet, type) {
     if (!f) { if (apres) apres(false); return; }
     var ext = extension(f.name);
+    var etage = type && PRODUCTION.TYPES[type] ? type : etageDe(ext);
     var annonce = (l.releve || {}).fichier || null;
     var ecart = annonce && !proche(f.name, annonce)
       ? "  Le tableau annonçait « " + annonce + " » : les deux noms ne se ressemblent pas — "
         + "vérifiez que c'est bien le même livrable."
       : "";
 
-    function inscrire(chemin, visuel) {
-      var fich = PRODUCTION.poser(l, etageDe(ext), f.name, chemin || "", "");
+    function inscrire(chemin, regardable, nonDepose) {
+      var fich = PRODUCTION.poser(l, etage, f.name, chemin || "", "");
+      var visuel = regardable && etage === "asset";
       if (visuel) {
         if (estVideo(chemin)) l.review = chemin; else l.vignette = chemin;
       }
@@ -283,10 +288,26 @@ window.IMAGE = (function () {
         DEPOT.enregistrer();
         AVIS.fait("« " + f.name + " » est au dossier de " + l.nom + "."
           + (visuel ? "  Il se regarde depuis la carte."
-            : "  Le fichier reste où il est : seul son nom et son chemin entrent à la base.")
+            : regardable ? "  Il se range à côté de la pièce, sans remplacer son visuel."
+            : nonDepose ? "  Il n'a pas pu être déposé ici : seul son nom entre à la base. Posez-le de nouveau pour qu'il s'ouvre depuis la pièce."
+            : "  Le fichier reste où il est : seul son nom entre à la base.")
           + ecart);
       }
       if (apres) apres(fich || true);
+    }
+
+    /* Le PDF d'un BAT est la pièce elle-même, comme la photo d'un bon
+     * signé : il monte avec les preuves (deposerPreuve) et s'ouvre depuis le
+     * suivi, au lieu d'entrer par son seul nom. Trop lourd, en démonstration
+     * ou hors ligne, il entre par son nom, comme avant ; refusé par le
+     * serveur (réseau, taille, droits), aussi : le refus est dit, et le nom
+     * entre quand même, comme il entrait toujours avant. */
+    if (etage === "bat" && ext === "pdf" && f.size <= PLAFOND_MO * 1024 * 1024 && !demonstration()
+        && location.protocol !== "file:" && window.fetch) {
+      deposerPreuve(f, function (chemin) {
+        if (chemin) inscrire(chemin, true); else inscrire("", false, true);
+      });
+      return;
     }
 
     /* Ce qui ne se regarde pas n'a rien à faire sur ce disque. */
@@ -337,12 +358,45 @@ window.IMAGE = (function () {
       });
   }
 
-  /* Le sélecteur de fichier, pour un livrable. */
-  function importer(l, apres) {
+  /* Une preuve qui n'a pas d'adresse : la photo d'un BAT signé, la capture
+   * d'un accord reçu par message, le PDF d'un bon de livraison. Elle se range
+   * dans assets/review/preuves/, et la base n'en garde que le chemin. Une
+   * photo est réduite pour rester lisible sans peser ; un PDF part tel quel.
+   * `apres(chemin)` reçoit null quand rien n'a été rangé : le refus est dit. */
+  var PREUVES = { jpg: 1, jpeg: 1, png: 1, webp: 1, pdf: 1 };
+  function deposerPreuve(f, apres) {
+    var ext = extension(f && f.name);
+    if (!f || !PREUVES[ext]) {
+      AVIS.refus("Joignez une photo, une capture ou un PDF.");
+      apres(null); return;
+    }
+    if (f.size > PLAFOND_MO * 1024 * 1024) {
+      AVIS.refus("« " + f.name + " » pèse " + Math.round(f.size / 1048576) + " Mo. Au-delà de "
+        + PLAFOND_MO + " Mo, joignez plutôt son lien.");
+      apres(null); return;
+    }
+    var lecteur = new FileReader();
+    lecteur.onerror = function () { AVIS.refus("Fichier illisible."); apres(null); };
+    lecteur.onload = function () {
+      var donnee = String(lecteur.result);
+      var base = "assets/review/preuves/" + O.id("preuve");
+      function poser(chemin, d) { monter(chemin, d, function (c) { apres(c); }, function () { apres(null); }); }
+      if (ext === "pdf") { poser(base + ".pdf", donnee.replace(/^data:[^;,]*/, "data:application/pdf")); return; }
+      reduire(donnee, function (reduite) {
+        if (!reduite) { AVIS.refus("Image illisible."); apres(null); return; }
+        poser(base + ".jpg", reduite);
+      }, 1800);
+    };
+    lecteur.readAsDataURL(f);
+  }
+
+  /* Le sélecteur de fichier, pour un livrable. `type` : l'étage, quand
+   * l'écran le connaît. */
+  function importer(l, apres, type) {
     var entree = document.createElement("input");
     entree.type = "file";
     entree.addEventListener("change", function () {
-      accueillir(l, entree.files[0], apres);
+      accueillir(l, entree.files[0], apres, false, type);
     });
     entree.click();
   }
@@ -453,7 +507,8 @@ window.IMAGE = (function () {
       if (!reste.length) {
         DEPOT.enregistrer();
         AVIS.fait(faits + (faits > 1 ? " fichiers sont" : " fichier est") + " au dossier"
-          + (refuses ? ", " + refuses + " ont été refusés — ils restent à poser" : "") + ".");
+          + (refuses > 1 ? ", " + refuses + " ont été refusés — ils restent à poser"
+            : refuses ? ", 1 a été refusé — il reste à poser" : "") + ".");
         if (apres) apres({ faits: faits, refuses: refuses });
         return;
       }
@@ -502,7 +557,7 @@ window.IMAGE = (function () {
   return { choisir: choisir, ranger: ranger, poser: poser, estFichier: estFichier,
     estVideo: estVideo, source: source, media: media,
     vignette: vignette, bouton: bouton, poids: poids, parcourir: parcourir,
-    importer: importer, accueillir: accueillir, accepterDepot: accepterDepot,
+    importer: importer, accueillir: accueillir, accepterDepot: accepterDepot, deposerPreuve: deposerPreuve,
     boutonImport: boutonImport, proche: proche, extension: extension,
     apparier: apparier, poserLot: poserLot, mots: mots };
 })();

@@ -846,6 +846,49 @@ test('la version précédente ne dit pas « Fermée par : undefined » quand ell
   assert.match(texteDe(s.interne['vue-asset'].precedente(projet('PR'), close)), /Fermée par : Retour client\|Le logo plus grand\|3 nov\./);
 });
 
+test('un BAT se nomme « BAT · » parmi les documents d’une version, sauf si son nom le dit déjà', async () => {
+  const s = await bacDecisions(APP, 103);
+  await s.charger('vue-asset', ['dossier']);
+  const nom = n => texteDe(s.interne['vue-asset'].dossier({ type: 'bat', nom: n })).replace(/\|/g, '');
+  for (const n of ['BAT-imprimeur.pdf', 'BAT_imprimeur.pdf', 'BATv2.pdf', 'BAT2.pdf', 'bat signé.pdf', 'BAT · V3', 'BAT'])
+    assert.equal(nom(n), n, n);
+  for (const n of ['IMG-20261126-WA0012.jpg', 'Bateau.jpg', 'Batterie-finale.pdf', 'bon-signe.png'])
+    assert.equal(nom(n), 'BAT · ' + n, n);
+  assert.equal(texteDe(s.interne['vue-asset'].dossier({ type: 'asset', nom: 'Bateau.jpg' })), 'Bateau.jpg', 'un autre document garde son nom');
+});
+
+test('un fichier posé dit où il est sans chemin technique : déposé ici et ouvrable, ou noté par son nom', async () => {
+  const s = await bacDecisions(APP, 104);
+  await s.charger('image');
+  await s.charger('vue-asset', ['lieuPose', 'adresseServie', 'franchi']);
+  const { lieuPose: dire, adresseServie } = s.interne['vue-asset'];
+  for (const chemin of ['assets/review/preuves/preuve-8onk82.pdf', 'assets/review/livrables/L-demo-f-abc.jpg', 'assets/review/livrables/L-demo-f-abc.mp4']) {
+    assert.equal(dire({ nom: 'fichier', emplacement: chemin }), 'Déposé ici', chemin);
+    assert.equal(adresseServie({ emplacement: chemin }), chemin);
+  }
+  assert.equal(dire({ nom: 'BAT-imprimeur.ai', emplacement: '' }), 'Noté par son nom, pas déposé ici');
+  assert.equal(dire({ nom: 'Fichiers finaux · V3', emplacement: '', canal: 'Clé USB' }), 'Fichiers envoyés sur clé USB');
+  assert.equal(dire({ nom: 'Master', emplacement: 'Drive/Orvelle/KV.psd' }), 'Drive/Orvelle/KV.psd', 'un emplacement écrit se lit tel quel');
+  assert.equal(dire({ nom: 'BAT déclaré', emplacement: '', preuve: { type: 'declaration', texte: '', contact: 'Imprimerie', date: '2026-11-09' } }),
+    'Accord déclaré, sans fichier', 'un BAT accordé par message n’est pas accusé d’un emplacement non dit');
+  assert.equal(dire({ nom: 'Fichier final', emplacement: '' }), 'Emplacement non dit');
+  assert.equal(dire({ nom: 'x.jpg', emplacement: 'assets/review/../servir.mjs' }), 'assets/review/../servir.mjs');
+  assert.equal(adresseServie({ emplacement: 'assets/review/../servir.mjs' }), null, 'rien hors du disque de revue ne s’ouvre');
+  /* À l'étage du BAT : « signé » quand une pièce le montre, « accordé par » sinon, comme le suivi ;
+   * un fichier déposé ici s'ouvre à côté de « Retirer ». */
+  const etage = f => s.interne['vue-asset'].franchi(projet('ET'), livrable('L-et'),
+    { cle: 'bat', def: { nom: 'Le BAT', signable: true }, n: 1, exige: true, fichiers: [f] }, () => {});
+  const ligne = f => texteDe(etage(f)).replace(/\|/g, '');
+  const pdf = { nom: 'BAT-imprimeur.pdf', emplacement: 'assets/review/preuves/preuve-1.pdf', signataire: null };
+  assert.match(ligne(pdf), /BAT-imprimeur\.pdfDéposé ici · non signéOuvrirRetirer/);
+  const ouvrir = trouver(etage(pdf), n => n.tagName === 'A' && n.textContent === 'Ouvrir');
+  assert.equal(ouvrir.getAttribute('href'), 'assets/review/preuves/preuve-1.pdf');
+  assert.match(ligne({ ...pdf, signataire: 'Imprimerie' }), /Déposé ici · signé Imprimerie/);
+  assert.match(ligne({ nom: 'BAT déclaré', emplacement: '', signataire: 'Imprimerie',
+    preuve: { type: 'declaration', texte: '', contact: 'Imprimerie', date: '2026-11-09' } }), /Accord déclaré, sans fichier · accordé par ImprimerieRetirer/);
+  assert.match(ligne({ nom: 'BAT-imprimeur.ai', emplacement: '', signataire: null }), /Noté par son nom, pas déposé ici · non signéRetirer/);
+});
+
 test('l’étiquette d’une pièce validée depuis un autre onglet dit « Validé », pas « À examiner »', async () => {
   const s = await bacDecisions(APP, 99);
   await s.charger('vue-asset', ['etatVerdict']);
@@ -914,4 +957,90 @@ test('« Demander un retour », « Décrire un fichier » et « Nouveau KV » re
 
   s.ctx.VUE_PLANCHE.ajouter(p, () => {});
   etiquettesReliees(s.dernier(), ['Niveau du KV', 'Marque', 'Piste du master', 'Master de référence', 'Marché de destination']);
+});
+
+/* La file de Décider et le dossier disent la même chose : la file ne réclame
+ * que les gestes dont la section existe pour la nature du dossier, et une
+ * ligne de la chaîne dit le geste qui reste, pas « brief accepté à faire ». */
+async function chaine() {
+  const ctx = await bac();
+  Object.assign(ctx, { MAISON: ctx.MAISON_BASE.creer({}), VALIDATION: { valide: o => !!(o && o.validation) },
+    VUE_ATELIER: { idees: () => [] }, DEMANDE: { toutes: () => [] } });
+  for (const nom of ['nature', 'chaine-brief']) vm.runInContext(await lire(nom), ctx, { filename: nom + '.js' });
+  const gestes = p => Array.from(ctx.CHAINE_BRIEF.etapes(p), c => c.afaire);
+  return { ctx, gestes, avancement: p => JSON.parse(JSON.stringify(ctx.CHAINE_BRIEF.avancement(p))) };
+}
+
+test('la chaîne du brief ne réclame rien à une demande simple, et nomme le geste qui reste', async () => {
+  const { ctx, avancement } = await chaine();
+  const demande = { nature: 'demande', sections: {} };
+  assert.deepEqual(avancement(demande), { faits: 0, total: 0, prochain: null });
+  const campagne = { nature: 'campagne', sections: {} };
+  assert.equal(ctx.CHAINE_BRIEF.avancement(campagne).prochain.afaire, 'brief à accepter');
+  campagne.sections.brief = { validation: { verdict: 'approuve' } };
+  assert.equal(ctx.CHAINE_BRIEF.avancement(campagne).prochain.afaire, 'plateforme de marque à établir');
+  assert.equal(ctx.CHAINE_BRIEF.avancement(campagne).total, 6);
+  assert.deepEqual(Array.from(ctx.CHAINE_BRIEF.CHAINE, c => c.afaire), ['brief à accepter', 'plateforme de marque à établir',
+    'stratégie à définir', 'atelier à tenir', 'big idea à définir', 'demande au DA à envoyer']);
+});
+
+test('un pitch garde sa stratégie, son atelier, sa big idea et sa demande au DA, sans brief à accepter', async () => {
+  const { ctx, gestes, avancement } = await chaine();
+  const pitch = { nature: 'pitch', sections: {} };
+  assert.deepEqual(gestes(pitch), ['stratégie à définir', 'atelier à tenir', 'big idea à définir', 'demande au DA à envoyer']);
+  const a = avancement(pitch);
+  assert.deepEqual([a.faits, a.total, a.prochain.afaire, a.prochain.section], [0, 4, 'stratégie à définir', 'strategie']);
+  pitch.sections.strategie = { territoire: 'La rue' };
+  assert.equal(ctx.CHAINE_BRIEF.avancement(pitch).prochain.afaire, 'atelier à tenir');
+  assert.equal(ctx.CHAINE_BRIEF.avancement(pitch).faits, 1);
+});
+
+test('un packaging au brief accepté n’a plus rien à faire : la plateforme de marque n’est pas dans son dossier', async () => {
+  const { ctx, gestes, avancement } = await chaine();
+  for (const nature of ['packaging', 'plv', 'edition']) {
+    const p = { nature, sections: {} };
+    assert.deepEqual(gestes(p), ['brief à accepter'], nature);
+    assert.equal(ctx.CHAINE_BRIEF.avancement(p).prochain.afaire, 'brief à accepter', nature);
+    p.sections.brief = { validation: { verdict: 'approuve' } };
+    assert.deepEqual(avancement(p), { faits: 1, total: 1, prochain: null }, nature);
+  }
+  const conseil = { nature: 'conseil', sections: { brief: { validation: { verdict: 'approuve' } } } };
+  assert.deepEqual(gestes(conseil), ['brief à accepter', 'stratégie à définir']);
+  assert.equal(ctx.CHAINE_BRIEF.avancement(conseil).prochain.afaire, 'stratégie à définir');
+  for (const nature of ['film', 'digital']) {
+    const p = { nature, sections: { brief: { validation: { verdict: 'approuve' } } } };
+    assert.deepEqual(gestes(p), ['brief à accepter', 'big idea à définir', 'demande au DA à envoyer'], nature);
+    assert.equal(ctx.CHAINE_BRIEF.avancement(p).prochain.afaire, 'big idea à définir', nature);
+  }
+});
+
+test('pour chaque nature, la chaîne ne nomme qu’une section que son dossier affiche', async () => {
+  const { ctx } = await chaine();
+  const natures = [...ctx.MAISON.natures];
+  assert.ok(natures.length >= 11, natures.length + ' natures');
+  for (const n of natures) {
+    const p = { nature: n.cle, sections: {} };
+    for (const c of ctx.CHAINE_BRIEF.etapes(p)) assert.ok(n.sections.includes(c.section), n.cle + ' → ' + c.section);
+    const a = ctx.CHAINE_BRIEF.avancement(p);
+    if (a.prochain) assert.ok(n.sections.includes(a.prochain.section), n.cle);
+  }
+});
+
+test('la file de Décider envoie le pitch à sa stratégie et ne réclame rien au packaging au brief accepté', async () => {
+  const s = await bacDecisions(APP, 102);
+  Object.assign(s.ctx, {
+    VUE_REVUE: { pieces: () => [] }, FEEDBACK: { ouverts: () => [] }, ECARTS: { compte: () => ({}) },
+    RENVOI: { ouvertes: () => [] }, PRIORITE: { conflits: () => ({ conflits: [] }) },
+    VALIDATION: { valide: o => !!(o && o.validation) }, VUE_ATELIER: { idees: () => [] }, DEMANDE: { toutes: () => [] },
+  });
+  for (const nom of ['nature', 'chaine-brief', 'file-action']) await s.charger(nom);
+  const accepte = { validation: { verdict: 'approuve' } };
+  semer(s.ctx, { personnes: PERSONNES, projets: [
+    projet('PI', { nom: 'Pitch de recette', nature: 'pitch', sections: { identite: { marque: 'Marque de recette' } } }),
+    projet('PK', { nom: 'Packaging de recette', nature: 'packaging', sections: { brief: accepte } }),
+    projet('DS', { nom: 'Demande de recette', nature: 'demande', sections: {} })] });
+  const lignes = [...s.ctx.FILE.tout()].filter(x => x.famille === 'traiter').map(x => [x.quoi, x.ou, x.cout.split('  ·  ')[1]]);
+  assert.deepEqual(lignes, [['« Pitch de recette » : stratégie à définir', '#/projets/PI/strategie', '0 étape sur 4.']]);
+  s.ctx.DEPOT.trouve('projets', 'PI').sections.strategie = { territoire: 'La rue' };
+  assert.ok([...s.ctx.FILE.tout()].some(x => x.quoi === '« Pitch de recette » : atelier à tenir' && / · {2}1 étape sur 4\.$/.test(x.cout)));
 });

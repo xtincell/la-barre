@@ -101,21 +101,58 @@ window.VUE_ASSET = (function () {
     return medium;
   }
 
-  function toile(objet, nom) {
+  /* La loupe posée sur l'image en cachait le coin bas à droite : celui où une
+   * affiche porte sa signature ou son logo. Rien de l'interface ne se pose
+   * plus sur la création : l'image s'agrandit d'un clic, et le bouton
+   * « Agrandir le visuel » vit dans la barre des gestes, sous la décision. */
+  function zoomable(objet) {
     var source = IMAGE.source(objet);
-    var zoom = source && !IMAGE.estVideo(source) ? el("button.b.rvp-agrandir", { type: "button", "aria-label": "Agrandir le visuel",
-      onclick: function () { PANNEAU.ouvrir("Aperçu du visuel", nom, el("div.rvp-zoom", {}, mediaRevue(objet, nom))); } },
-    UI.icone("recherche", 16)) : null;
-    return el("figure.rvp-toile", {}, mediaRevue(objet, nom), zoom);
+    return !!source && !IMAGE.estVideo(source);
   }
 
+  function agrandir(objet, nom) {
+    return function () { PANNEAU.ouvrir("Aperçu du visuel", nom, el("div.rvp-zoom", {}, mediaRevue(objet, nom))); };
+  }
+
+  function toile(objet, nom) {
+    if (!zoomable(objet)) return el("figure.rvp-toile", {}, mediaRevue(objet, nom));
+    var ouvrir = agrandir(objet, nom);
+    return el("figure.rvp-toile.rvp-zoomable", { title: "Agrandir le visuel", onclick: function (e) {
+      if (e.currentTarget.querySelector("img")) ouvrir();
+    } }, mediaRevue(objet, nom));
+  }
+
+  /* Un document de la version : il s'ouvre s'il a une adresse (un lien
+   * https, une photo ou un PDF que La Barre sert), et le mot qui l'accompagne
+   * se lit à côté ; une déclaration dit ses mots. Les anciens chemins locaux
+   * restent lisibles, sans lien.
+   *
+   * Un BAT porte le nom du fichier envoyé (« IMG-20261126-WA0012.jpg ») :
+   * rien ne disait que c'était le BAT. Il se nomme « BAT · », le nom du
+   * fichier en second. Posé à son étage puis complété d'une pièce jointe, il
+   * a deux adresses : la seconde s'ouvre aussi. Un nom qui commence déjà
+   * par BAT (« BAT-imprimeur.pdf », « BAT_imprimeur.pdf », « BATv2.pdf »)
+   * ne le redit pas ; « Bateau.jpg », si. */
   function dossier(f) {
-    try {
-      var u = new URL(f.emplacement);
-      if (u.protocol === "https:" && !u.username && !u.password)
-        return el("a", { href: u.href, target: "_blank", rel: "noopener noreferrer" }, f.nom || "Document");
-    } catch (e) { /* Les anciens chemins locaux restent lisibles dans le dossier. */ }
-    return el("span", {}, f.nom || "Document");
+    var nom = f.nom || "Document";
+    if (f.type === "bat" && !/^BAT(?=$|[^a-zà-ÿ]|v\d)/i.test(nom)) nom = "BAT · " + nom;
+    var preuve = REMISE.preuveValide(f.preuve);
+    var lien = REMISE.preuveValide({ type: "lien", url: f.emplacement });
+    var adresse = lien ? lien.url : REMISE.fichierServi(f.emplacement);
+    var jointe = preuve && preuve.type === "lien" ? preuve.url : preuve && preuve.type === "fichier" ? preuve.chemin : null;
+    if (!adresse) { adresse = jointe; jointe = null; }
+    if (jointe === adresse) jointe = null;
+    function ancre(url, texte) {
+      return el("a", { href: url, target: "_blank", rel: /^https:/.test(url) ? "noopener noreferrer" : "noopener" }, texte);
+    }
+    /* Les guillemets citent quelqu'un ; la phrase que l'outil écrit du moyen
+     * d'envoi se lit telle quelle (REMISE.ditParLOutil). */
+    var outil = preuve && REMISE.ditParLOutil(preuve.texte);
+    if (adresse) return [ancre(adresse, nom), jointe ? [" · ", ancre(jointe, "pièce jointe")] : null,
+      preuve && preuve.texte && !outil ? " · « " + preuve.texte + " »" : null];
+    if (preuve) return el("span", {}, nom + " · " + (!preuve.texte ? "déclaré, sans pièce jointe"
+      : outil ? preuve.texte : "déclaré : « " + preuve.texte + " »"));
+    return el("span", {}, nom);
   }
 
   function fichiersRevue(l, numero) {
@@ -146,7 +183,7 @@ window.VUE_ASSET = (function () {
       fichiersRevue(l, numero),
       preuves.length ? el("details", {}, el("summary", {}, "Justificatifs de remise de la V" + numero),
         el("ul.rvp-docs", {}, preuves.map(function (r) {
-          return el("li", {}, dossier({ nom: r.preuve.nom, emplacement: r.preuve.url }), " · ", r.id, " · ", O.joli(r.remis_le));
+          return el("li", {}, dossier({ nom: r.preuve.nom, preuve: r.preuve }), " · ", r.id, " · ", O.joli(r.remis_le));
         }))) : null,
       motive && motive !== ancienne ? el("p.rvp-meta", {}, "Motif du passage à la version suivante « " + motive.motif + " »") : null);
   }
@@ -170,9 +207,11 @@ window.VUE_ASSET = (function () {
     var documents = fichiersRevue(l, numero);
     var annotation = !lecture && IMAGE.source(l) ? el("button.b.nu", { type: "button",
       onclick: function () { ANNOT.ouvrir(p, l, apres, numero); } }, "Annoter le visuel") : null;
+    var titre = KV.titre(l) + " — V" + numero;
+    var zoom = zoomable(l) ? el("button.b.nu", { type: "button", onclick: agrandir(l, titre) }, "Agrandir le visuel") : null;
     return el("div.rvp", {},
       el("div.rvp-plan", {},
-        toile(l, KV.titre(l) + " — V" + numero),
+        toile(l, titre),
         el("div.rvp-pupitre", {},
           el("div.rvp-portee", {},
             el("p.rvp-meta", {}, (marche ? marche.nom : "Marché non renseigné") + " · V" + numero),
@@ -191,7 +230,7 @@ window.VUE_ASSET = (function () {
           el("ul.rvp-docs", {}, historique.map(function (n) {
             return el("li", {}, ongletLien(lien, "juger", "rvp-lien", "Version " + n, n));
           }))) : null,
-        el("nav.rvp-liens", { "aria-label": "Autres actions du livrable" }, annotation,
+        el("nav.rvp-liens", { "aria-label": "Autres actions du livrable" }, zoom, annotation,
           ongletLien(lien, "poser", "b.nu", "Visuels et fichiers"),
           ongletLien(lien, "origine", "b.nu", "Origine et dépendances"))));
   }
@@ -308,7 +347,11 @@ window.VUE_ASSET = (function () {
     return UI.recevabilite("Que manque-t-il pour produire ?",
       PRODUCTION.porte(p, l), null,
       [
-        { nom: "Poser un fichier", fort: true, quand: function () { PRODUCTION.ajouter(p, l, apres); } },
+        /* Poser, c'est choisir le fichier : le sélecteur s'ouvre tout de
+         * suite. Décrire un fichier resté sur le Drive reste possible, en
+         * second. */
+        { nom: "Poser un fichier", fort: true, quand: function () { IMAGE.importer(l, apres); } },
+        { nom: "Décrire un fichier sans le déposer", doux: true, quand: function () { PRODUCTION.ajouter(p, l, apres); } },
         { nom: "Enregistrer un retour", quand: function () { FEEDBACK.ouvrir(p.id, [l.id], apres, voirRetours); } },
         { nom: "Nouvelle version", doux: true, quand: function () {
             VERSION.nouvelle(l, l.nom, apres, { perime: function () { return KV.descendance(p, l.id); } });
@@ -400,6 +443,34 @@ window.VUE_ASSET = (function () {
       el("span.ptl-s", {}, "Un BAT signé part en fabrication — aucune correction sans tout refaire."));
   }
 
+  /* Où est un fichier posé, dit sans chemin technique. Déposé sur ce
+   * serveur, il s'ouvre (« assets/review/preuves/preuve-8onk82.pdf » ne
+   * disait rien à personne) ; parti par un canal déclaré, il le dit ; posé
+   * sans pouvoir être déposé (un .ai, un .psd), il n'est noté que par son
+   * nom, comme le dit le suivi du BAT ; un BAT accordé de vive voix ou par
+   * message n'a pas de fichier ; sinon, son emplacement tel qu'il a été
+   * écrit (« Drive/Orvelle/KV.psd »). */
+  function accordDeclare(f) {
+    var x = REMISE.preuveValide(f.preuve);
+    return !String(f.emplacement || "").trim() && !!x && x.type === "declaration";
+  }
+
+  function adresseServie(f) {
+    var lieu = String(f.emplacement || "").trim();
+    return REMISE.fichierServi(lieu)
+      || (IMAGE.estVideo(lieu) && /^assets\/review\/[A-Za-z0-9_-]+\/[A-Za-z0-9_.-]+$/.test(lieu) && lieu.indexOf("..") === -1 ? lieu : null);
+  }
+
+  function lieuPose(f) {
+    var lieu = String(f.emplacement || "").trim();
+    if (adresseServie(f)) return "Déposé ici";
+    if (lieu) return lieu;
+    if (f.canal && REMISE.envoi(f.canal)) return REMISE.envoi(f.canal);
+    if (/\.[a-z0-9]{2,5}$/i.test(String(f.nom || "").trim())) return "Noté par son nom, pas déposé ici";
+    if (accordDeclare(f)) return "Accord déclaré, sans fichier";
+    return "Emplacement non dit";
+  }
+
   /* Un étage franchi n'a plus besoin de place : son fichier, son emplacement,
    * et de quoi le remplacer. */
   function franchi(p, l, e, apres) {
@@ -412,8 +483,13 @@ window.VUE_ASSET = (function () {
       el("div.ptf-fs", {}, e.fichiers.map(function (f) {
         return el("div.ptff", {},
           el("span.ptff-n", {}, f.nom),
-          el("span.ptff-m", {}, (f.emplacement || "Emplacement non dit")
-            + (f.signataire ? " · signé " + f.signataire : e.def.signable ? " · non signé" : "")),
+          /* Accordé sans pièce, un BAT n'est pas « signé » : le suivi dit
+           * « BAT accordé », l'étage aussi. */
+          el("span.ptff-m", {}, lieuPose(f),
+            f.signataire ? (accordDeclare(f) ? " · accordé par " : " · signé ") + f.signataire
+              : e.def.signable ? " · non signé" : null),
+          /* Déposé ici, il s'ouvre, à côté de « Retirer » et comme lui. */
+          adresseServie(f) ? el("a.b.nu", { href: adresseServie(f), target: "_blank", rel: "noopener" }, "Ouvrir") : null,
           el("button.b.nu", { type: "button", onclick: function () {
             if (!window.confirm("Retirer « " + f.nom + " » ?")) return;
             PRODUCTION.retirer(l, f.id); DEPOT.enregistrer(); apres();
@@ -425,8 +501,11 @@ window.VUE_ASSET = (function () {
               el("span", {}, mk.contexte || "Sans contexte"));
           }))
         : null,
+      /* Décrire un fichier qu'on ne dépose pas (un master sur le Drive) reste
+       * un geste du bloc « Que manque-t-il pour produire ? », une seule fois
+       * à l'écran, pas sous chaque étage. */
       el("button.b.nu", { type: "button",
-        onclick: function () { PRODUCTION.ajouter(p, l, apres); } }, "+ Remplacer"));
+        onclick: function () { IMAGE.importer(l, apres, e.cle); } }, "+ Remplacer"));
   }
 
   /* L'étage où l'on est. C'est le seul qui prend de la place, et il porte tout
@@ -453,7 +532,7 @@ window.VUE_ASSET = (function () {
               (m.langues || []).map(O.langue).join(", ")) : null),
 
       el("button.pto-z", { type: "button",
-        onclick: function () { PRODUCTION.ajouter(p, l, apres); } },
+        onclick: function () { IMAGE.importer(l, apres, e.cle); } },
         el("span.ptoz-p", {}, "+"),
         el("span.ptoz-t", {}, "Poser " + minuscule(e.def.nom))),
 
