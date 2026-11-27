@@ -130,10 +130,12 @@ window.VUE_ASSET = (function () {
    * Un BAT porte le nom du fichier envoyé (« IMG-20261126-WA0012.jpg ») :
    * rien ne disait que c'était le BAT. Il se nomme « BAT · », le nom du
    * fichier en second. Posé à son étage puis complété d'une pièce jointe, il
-   * a deux adresses : la seconde s'ouvre aussi. */
+   * a deux adresses : la seconde s'ouvre aussi. Un nom qui commence déjà
+   * par BAT (« BAT-imprimeur.pdf », « BAT_imprimeur.pdf », « BATv2.pdf »)
+   * ne le redit pas ; « Bateau.jpg », si. */
   function dossier(f) {
     var nom = f.nom || "Document";
-    if (f.type === "bat" && !/^BAT\b/i.test(nom)) nom = "BAT · " + nom;
+    if (f.type === "bat" && !/^BAT(?=$|[^a-zà-ÿ]|v\d)/i.test(nom)) nom = "BAT · " + nom;
     var preuve = REMISE.preuveValide(f.preuve);
     var lien = REMISE.preuveValide({ type: "lien", url: f.emplacement });
     var adresse = lien ? lien.url : REMISE.fichierServi(f.emplacement);

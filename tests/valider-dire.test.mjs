@@ -846,6 +846,17 @@ test('la version précédente ne dit pas « Fermée par : undefined » quand ell
   assert.match(texteDe(s.interne['vue-asset'].precedente(projet('PR'), close)), /Fermée par : Retour client\|Le logo plus grand\|3 nov\./);
 });
 
+test('un BAT se nomme « BAT · » parmi les documents d’une version, sauf si son nom le dit déjà', async () => {
+  const s = await bacDecisions(APP, 103);
+  await s.charger('vue-asset', ['dossier']);
+  const nom = n => texteDe(s.interne['vue-asset'].dossier({ type: 'bat', nom: n })).replace(/\|/g, '');
+  for (const n of ['BAT-imprimeur.pdf', 'BAT_imprimeur.pdf', 'BATv2.pdf', 'BAT2.pdf', 'bat signé.pdf', 'BAT · V3', 'BAT'])
+    assert.equal(nom(n), n, n);
+  for (const n of ['IMG-20261126-WA0012.jpg', 'Bateau.jpg', 'Batterie-finale.pdf', 'bon-signe.png'])
+    assert.equal(nom(n), 'BAT · ' + n, n);
+  assert.equal(texteDe(s.interne['vue-asset'].dossier({ type: 'asset', nom: 'Bateau.jpg' })), 'Bateau.jpg', 'un autre document garde son nom');
+});
+
 test('l’étiquette d’une pièce validée depuis un autre onglet dit « Validé », pas « À examiner »', async () => {
   const s = await bacDecisions(APP, 99);
   await s.charger('vue-asset', ['etatVerdict']);
