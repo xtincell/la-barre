@@ -997,5 +997,7 @@ test('la file de Décider envoie le pitch à sa stratégie et ne réclame rien a
     projet('PK', { nom: 'Packaging de recette', nature: 'packaging', sections: { brief: accepte } }),
     projet('DS', { nom: 'Demande de recette', nature: 'demande', sections: {} })] });
   const lignes = [...s.ctx.FILE.tout()].filter(x => x.famille === 'traiter').map(x => [x.quoi, x.ou, x.cout.split('  ·  ')[1]]);
-  assert.deepEqual(lignes, [['« Pitch de recette » : stratégie à définir', '#/projets/PI/strategie', '0 étapes sur 4.']]);
+  assert.deepEqual(lignes, [['« Pitch de recette » : stratégie à définir', '#/projets/PI/strategie', '0 étape sur 4.']]);
+  s.ctx.DEPOT.trouve('projets', 'PI').sections.strategie = { territoire: 'La rue' };
+  assert.ok([...s.ctx.FILE.tout()].some(x => x.quoi === '« Pitch de recette » : atelier à tenir' && / · {2}1 étape sur 4\.$/.test(x.cout)));
 });
