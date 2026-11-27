@@ -38,17 +38,24 @@ window.CHAINE_BRIEF = (function () {
       fait: function (p) { return DEMANDE.toutes(p).some(function (d) { return d.etat !== "brouillon"; }); } },
   ];
 
-  /* Une demande simple n'a pas de brief à traiter : sa nature n'a pas de
-   * section brief, et son dossier n'annonce rien à faire. La file de Décider
-   * ne lui réclame donc rien non plus : le dossier et la file disent la même
-   * chose. */
-  function avancement(p) {
-    if (window.NATURE && !NATURE.aSection(p, "brief")) return { faits: 0, total: 0, prochain: null };
-    var faits = CHAINE.filter(function (c) { return c.fait(p); });
-    var bloque = CHAINE.filter(function (c) { return !c.fait(c === null ? p : p); })[0];
-    return { faits: faits.length, total: CHAINE.length,
-      prochain: CHAINE.filter(function (c) { return !c.fait(p); })[0] || null };
+  /* Les gestes que la nature du dossier porte. Un geste dont la section
+   * n'existe pas pour elle ne se réclame pas : son dossier ne l'affiche nulle
+   * part, et la ligne de la file ne pourrait jamais se lever. Un pitch n'a ni
+   * brief à accepter ni plateforme de marque, mais il a sa stratégie, son
+   * atelier, sa big idea et sa demande au DA. Un packaging n'a que son brief.
+   * Une demande simple n'en a aucun : la file ne lui réclame rien, comme son
+   * dossier. */
+  function etapes(p) {
+    if (!window.NATURE) return CHAINE;
+    return CHAINE.filter(function (c) { return NATURE.aSection(p, c.section); });
   }
 
-  return { CHAINE: CHAINE, avancement: avancement };
+  function avancement(p) {
+    var es = etapes(p);
+    var faits = es.filter(function (c) { return c.fait(p); });
+    return { faits: faits.length, total: es.length,
+      prochain: es.filter(function (c) { return !c.fait(p); })[0] || null };
+  }
+
+  return { CHAINE: CHAINE, etapes: etapes, avancement: avancement };
 })();

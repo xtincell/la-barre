@@ -916,20 +916,86 @@ test('« Demander un retour », « Décrire un fichier » et « Nouveau KV » re
   etiquettesReliees(s.dernier(), ['Niveau du KV', 'Marque', 'Piste du master', 'Master de référence', 'Marché de destination']);
 });
 
-/* La file de Décider et le dossier disent la même chose : une demande simple
- * n'a pas de brief à traiter (sa nature n'a pas de section brief), et une
+/* La file de Décider et le dossier disent la même chose : la file ne réclame
+ * que les gestes dont la section existe pour la nature du dossier, et une
  * ligne de la chaîne dit le geste qui reste, pas « brief accepté à faire ». */
-test('la chaîne du brief ne réclame rien à une demande simple, et nomme le geste qui reste', async () => {
+async function chaine() {
   const ctx = await bac();
   Object.assign(ctx, { MAISON: ctx.MAISON_BASE.creer({}), VALIDATION: { valide: o => !!(o && o.validation) },
     VUE_ATELIER: { idees: () => [] }, DEMANDE: { toutes: () => [] } });
   for (const nom of ['nature', 'chaine-brief']) vm.runInContext(await lire(nom), ctx, { filename: nom + '.js' });
+  const gestes = p => Array.from(ctx.CHAINE_BRIEF.etapes(p), c => c.afaire);
+  return { ctx, gestes, avancement: p => JSON.parse(JSON.stringify(ctx.CHAINE_BRIEF.avancement(p))) };
+}
+
+test('la chaîne du brief ne réclame rien à une demande simple, et nomme le geste qui reste', async () => {
+  const { ctx, avancement } = await chaine();
   const demande = { nature: 'demande', sections: {} };
-  assert.deepEqual(JSON.parse(JSON.stringify(ctx.CHAINE_BRIEF.avancement(demande))), { faits: 0, total: 0, prochain: null });
+  assert.deepEqual(avancement(demande), { faits: 0, total: 0, prochain: null });
   const campagne = { nature: 'campagne', sections: {} };
   assert.equal(ctx.CHAINE_BRIEF.avancement(campagne).prochain.afaire, 'brief à accepter');
   campagne.sections.brief = { validation: { verdict: 'approuve' } };
   assert.equal(ctx.CHAINE_BRIEF.avancement(campagne).prochain.afaire, 'plateforme de marque à établir');
+  assert.equal(ctx.CHAINE_BRIEF.avancement(campagne).total, 6);
   assert.deepEqual(Array.from(ctx.CHAINE_BRIEF.CHAINE, c => c.afaire), ['brief à accepter', 'plateforme de marque à établir',
     'stratégie à définir', 'atelier à tenir', 'big idea à définir', 'demande au DA à envoyer']);
+});
+
+test('un pitch garde sa stratégie, son atelier, sa big idea et sa demande au DA, sans brief à accepter', async () => {
+  const { ctx, gestes, avancement } = await chaine();
+  const pitch = { nature: 'pitch', sections: {} };
+  assert.deepEqual(gestes(pitch), ['stratégie à définir', 'atelier à tenir', 'big idea à définir', 'demande au DA à envoyer']);
+  const a = avancement(pitch);
+  assert.deepEqual([a.faits, a.total, a.prochain.afaire, a.prochain.section], [0, 4, 'stratégie à définir', 'strategie']);
+  pitch.sections.strategie = { territoire: 'La rue' };
+  assert.equal(ctx.CHAINE_BRIEF.avancement(pitch).prochain.afaire, 'atelier à tenir');
+  assert.equal(ctx.CHAINE_BRIEF.avancement(pitch).faits, 1);
+});
+
+test('un packaging au brief accepté n’a plus rien à faire : la plateforme de marque n’est pas dans son dossier', async () => {
+  const { ctx, gestes, avancement } = await chaine();
+  for (const nature of ['packaging', 'plv', 'edition']) {
+    const p = { nature, sections: {} };
+    assert.deepEqual(gestes(p), ['brief à accepter'], nature);
+    assert.equal(ctx.CHAINE_BRIEF.avancement(p).prochain.afaire, 'brief à accepter', nature);
+    p.sections.brief = { validation: { verdict: 'approuve' } };
+    assert.deepEqual(avancement(p), { faits: 1, total: 1, prochain: null }, nature);
+  }
+  const conseil = { nature: 'conseil', sections: { brief: { validation: { verdict: 'approuve' } } } };
+  assert.deepEqual(gestes(conseil), ['brief à accepter', 'stratégie à définir']);
+  assert.equal(ctx.CHAINE_BRIEF.avancement(conseil).prochain.afaire, 'stratégie à définir');
+  for (const nature of ['film', 'digital']) {
+    const p = { nature, sections: { brief: { validation: { verdict: 'approuve' } } } };
+    assert.deepEqual(gestes(p), ['brief à accepter', 'big idea à définir', 'demande au DA à envoyer'], nature);
+    assert.equal(ctx.CHAINE_BRIEF.avancement(p).prochain.afaire, 'big idea à définir', nature);
+  }
+});
+
+test('pour chaque nature, la chaîne ne nomme qu’une section que son dossier affiche', async () => {
+  const { ctx } = await chaine();
+  const natures = [...ctx.MAISON.natures];
+  assert.ok(natures.length >= 11, natures.length + ' natures');
+  for (const n of natures) {
+    const p = { nature: n.cle, sections: {} };
+    for (const c of ctx.CHAINE_BRIEF.etapes(p)) assert.ok(n.sections.includes(c.section), n.cle + ' → ' + c.section);
+    const a = ctx.CHAINE_BRIEF.avancement(p);
+    if (a.prochain) assert.ok(n.sections.includes(a.prochain.section), n.cle);
+  }
+});
+
+test('la file de Décider envoie le pitch à sa stratégie et ne réclame rien au packaging au brief accepté', async () => {
+  const s = await bacDecisions(APP, 102);
+  Object.assign(s.ctx, {
+    VUE_REVUE: { pieces: () => [] }, FEEDBACK: { ouverts: () => [] }, ECARTS: { compte: () => ({}) },
+    RENVOI: { ouvertes: () => [] }, PRIORITE: { conflits: () => ({ conflits: [] }) },
+    VALIDATION: { valide: o => !!(o && o.validation) }, VUE_ATELIER: { idees: () => [] }, DEMANDE: { toutes: () => [] },
+  });
+  for (const nom of ['nature', 'chaine-brief', 'file-action']) await s.charger(nom);
+  const accepte = { validation: { verdict: 'approuve' } };
+  semer(s.ctx, { personnes: PERSONNES, projets: [
+    projet('PI', { nom: 'Pitch de recette', nature: 'pitch', sections: { identite: { marque: 'Marque de recette' } } }),
+    projet('PK', { nom: 'Packaging de recette', nature: 'packaging', sections: { brief: accepte } }),
+    projet('DS', { nom: 'Demande de recette', nature: 'demande', sections: {} })] });
+  const lignes = [...s.ctx.FILE.tout()].filter(x => x.famille === 'traiter').map(x => [x.quoi, x.ou, x.cout.split('  ·  ')[1]]);
+  assert.deepEqual(lignes, [['« Pitch de recette » : stratégie à définir', '#/projets/PI/strategie', '0 étapes sur 4.']]);
 });
