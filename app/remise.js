@@ -482,9 +482,10 @@ window.REMISE = (function () {
   }
 
   /* Ce qui est facultatif se replie : le panneau ne montre d'abord que ce qui
-   * est demandé, et le bouton d'envoi reste à portée de pouce. */
-  function repli(titre, enfants) {
-    return el("details.remise-joindre", {}, el("summary", {}, titre), el("div.remise-joindre-corps", {}, enfants));
+   * est demandé, et le bouton d'envoi reste à portée de pouce. Un repli qui
+   * contient déjà une valeur s'ouvre : ce qui est joint se voit. */
+  function repli(titre, enfants, ouvert) {
+    return el("details.remise-joindre", { open: !!ouvert }, el("summary", {}, titre), el("div.remise-joindre-corps", {}, enfants));
   }
 
   /* Un formulaire de remise. `valider` rend un résultat, ou une promesse
@@ -625,9 +626,13 @@ window.REMISE = (function () {
     return el("fieldset.remise-bloc", {}, el("legend", {}, "La remise"),
       saisi.deja ? el("p.remise-note", {}, "« " + saisi.deja.nom + " » est déjà déposé : il reste joint, "
         + "sauf si vous en joignez un autre.") : null,
+      /* Le lien déjà donné est repris dans son champ : on le montre, sinon
+       * une photo choisie ensuite serait refusée à cause d'un lien invisible. */
+      saisi.lien ? el("p.remise-note", {}, "Le lien déjà donné reste joint : videz-le pour joindre "
+        + "une photo ou un PDF à la place.") : null,
       champ(f, "destinataire", "Remis à", "text", saisi.destinataire, { exemple: "Qui a reçu" }),
       champ(f, "remis-le", "Date de remise", "date", saisi.remisLe || O.jour()),
-      repli("Joindre un justificatif : photo, PDF ou lien", pieceJointe(f, "remise", "du justificatif", saisi.lien)));
+      repli("Joindre un justificatif : photo, PDF ou lien", pieceJointe(f, "remise", "du justificatif", saisi.lien), !!saisi.lien));
   }
 
   /* Un refus repris après les deux-points commence par une minuscule, sauf

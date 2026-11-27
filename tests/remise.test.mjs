@@ -512,6 +512,31 @@ test('rouvert après un refus, le justificatif déjà déposé reste joint au li
   assert.deepEqual([recu.preuve.nom, recu.preuve.type, recu.preuve.chemin], ['bon-de-livraison.pdf', 'fichier', 'assets/review/preuves/preuve-1.jpg']);
 });
 
+test('rouvert après un refus, le lien de justificatif déjà donné se voit : son repli est ouvert et une note le dit', async () => {
+  const { s, p, ci, R, depots } = await geste();
+  const attribuer = s.ctx.O.identifiantUnique;
+  s.ctx.O.identifiantUnique = () => null;
+  R.marquerLivre(p, ci, () => {});
+  const premier = s.dernier();
+  const repliDe = form => noeuds(form, n => n.tagName === 'DETAILS' && /remise-joindre/.test(n.className))
+    .find(d => /justificatif/.test(d.textContent));
+  assert.equal(repliDe(premier).getAttribute('open'), null, 'sans rien de joint, le repli reste fermé');
+  remplir(premier, { 'bat-par': 'Imprimerie', canal: 'Drive', destinataire: 'Imprimerie', 'remise-lien': 'https://documents.example.test/bl' });
+  envoyer(premier);
+  await laisserFiler();
+  const rouvert = s.dernier();
+  assert.notEqual(rouvert, premier);
+  assert.notEqual(repliDe(rouvert).getAttribute('open'), null, 'le repli qui porte le lien est ouvert');
+  assert.match(rouvert.textContent, /Le lien déjà donné reste joint : videz-le pour joindre une photo ou un PDF à la place\./);
+  assert.equal(champs(rouvert).find(c => c.getAttribute('name') === 'remise-lien').getAttribute('value'), 'https://documents.example.test/bl');
+  s.ctx.O.identifiantUnique = attribuer;
+  envoyer(rouvert);
+  await laisserFiler();
+  const recu = R.preuveCourante(p, ci);
+  assert.deepEqual([recu.preuve.type, recu.preuve.url], ['lien', 'https://documents.example.test/bl']);
+  assert.deepEqual(depots, []);
+});
+
 test('une erreur imprévue ne laisse jamais le bouton désactivé, et ne prétend pas que rien n’est écrit', async () => {
   const { s, p, ci, R } = await geste();
   const Lu = s.ctx.FormData;
