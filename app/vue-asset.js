@@ -443,6 +443,34 @@ window.VUE_ASSET = (function () {
       el("span.ptl-s", {}, "Un BAT signé part en fabrication — aucune correction sans tout refaire."));
   }
 
+  /* Où est un fichier posé, dit sans chemin technique. Déposé sur ce
+   * serveur, il s'ouvre (« assets/review/preuves/preuve-8onk82.pdf » ne
+   * disait rien à personne) ; parti par un canal déclaré, il le dit ; posé
+   * sans pouvoir être déposé (un .ai, un .psd), il n'est noté que par son
+   * nom, comme le dit le suivi du BAT ; un BAT accordé de vive voix ou par
+   * message n'a pas de fichier ; sinon, son emplacement tel qu'il a été
+   * écrit (« Drive/Orvelle/KV.psd »). */
+  function accordDeclare(f) {
+    var x = REMISE.preuveValide(f.preuve);
+    return !String(f.emplacement || "").trim() && !!x && x.type === "declaration";
+  }
+
+  function adresseServie(f) {
+    var lieu = String(f.emplacement || "").trim();
+    return REMISE.fichierServi(lieu)
+      || (IMAGE.estVideo(lieu) && /^assets\/review\/[A-Za-z0-9_-]+\/[A-Za-z0-9_.-]+$/.test(lieu) && lieu.indexOf("..") === -1 ? lieu : null);
+  }
+
+  function lieuPose(f) {
+    var lieu = String(f.emplacement || "").trim();
+    if (adresseServie(f)) return "Déposé ici";
+    if (lieu) return lieu;
+    if (f.canal && REMISE.envoi(f.canal)) return REMISE.envoi(f.canal);
+    if (/\.[a-z0-9]{2,5}$/i.test(String(f.nom || "").trim())) return "Noté par son nom, pas déposé ici";
+    if (accordDeclare(f)) return "Accord déclaré, sans fichier";
+    return "Emplacement non dit";
+  }
+
   /* Un étage franchi n'a plus besoin de place : son fichier, son emplacement,
    * et de quoi le remplacer. */
   function franchi(p, l, e, apres) {
@@ -455,10 +483,13 @@ window.VUE_ASSET = (function () {
       el("div.ptf-fs", {}, e.fichiers.map(function (f) {
         return el("div.ptff", {},
           el("span.ptff-n", {}, f.nom),
-          /* Des fichiers remis déclarés n'ont pas d'emplacement : ils disent
-           * par où ils sont partis. */
-          el("span.ptff-m", {}, (f.emplacement || (f.canal && REMISE.envoi(f.canal)) || "Emplacement non dit")
-            + (f.signataire ? " · signé " + f.signataire : e.def.signable ? " · non signé" : "")),
+          /* Accordé sans pièce, un BAT n'est pas « signé » : le suivi dit
+           * « BAT accordé », l'étage aussi. */
+          el("span.ptff-m", {}, lieuPose(f),
+            f.signataire ? (accordDeclare(f) ? " · accordé par " : " · signé ") + f.signataire
+              : e.def.signable ? " · non signé" : null),
+          /* Déposé ici, il s'ouvre, à côté de « Retirer » et comme lui. */
+          adresseServie(f) ? el("a.b.nu", { href: adresseServie(f), target: "_blank", rel: "noopener" }, "Ouvrir") : null,
           el("button.b.nu", { type: "button", onclick: function () {
             if (!window.confirm("Retirer « " + f.nom + " » ?")) return;
             PRODUCTION.retirer(l, f.id); DEPOT.enregistrer(); apres();

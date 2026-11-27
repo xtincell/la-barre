@@ -779,6 +779,10 @@ try {
     await principal.goto(adresse + '/#/projets/PRJ-demo/livrables/L-demo/poser');
     await principal.locator('.ptff', { hasText: 'Fichiers finaux · V3' }).getByText('Fichiers envoyés sur clé USB').waitFor();
     assert.equal(await principal.getByText('Emplacement non dit').count(), 0);
+    // Un fichier déposé ici dit « Déposé ici » et s'ouvre, sans chemin technique.
+    assert.equal(await principal.locator('.ptff', { hasText: 'bon-signe.png' }).getByRole('link', { name: 'Ouvrir', exact: true })
+      .getAttribute('href'), batPose[0].emplacement);
+    assert.equal(await principal.locator('.ptff-m', { hasText: 'assets/review/' }).count(), 0, 'Aucun chemin technique à l’étage');
     // Rien de l'interface ne se pose sur l'image : elle s'agrandit d'un clic,
     // ou par « Agrandir le visuel », dans la barre des gestes.
     await principal.goto(adresse + '/#/projets/PRJ-demo/livrables/L-demo/juger/3');

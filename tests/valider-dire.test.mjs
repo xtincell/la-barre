@@ -857,6 +857,38 @@ test('un BAT se nomme « BAT · » parmi les documents d’une version, sauf si 
   assert.equal(texteDe(s.interne['vue-asset'].dossier({ type: 'asset', nom: 'Bateau.jpg' })), 'Bateau.jpg', 'un autre document garde son nom');
 });
 
+test('un fichier posé dit où il est sans chemin technique : déposé ici et ouvrable, ou noté par son nom', async () => {
+  const s = await bacDecisions(APP, 104);
+  await s.charger('image');
+  await s.charger('vue-asset', ['lieuPose', 'adresseServie', 'franchi']);
+  const { lieuPose: dire, adresseServie } = s.interne['vue-asset'];
+  for (const chemin of ['assets/review/preuves/preuve-8onk82.pdf', 'assets/review/livrables/L-demo-f-abc.jpg', 'assets/review/livrables/L-demo-f-abc.mp4']) {
+    assert.equal(dire({ nom: 'fichier', emplacement: chemin }), 'Déposé ici', chemin);
+    assert.equal(adresseServie({ emplacement: chemin }), chemin);
+  }
+  assert.equal(dire({ nom: 'BAT-imprimeur.ai', emplacement: '' }), 'Noté par son nom, pas déposé ici');
+  assert.equal(dire({ nom: 'Fichiers finaux · V3', emplacement: '', canal: 'Clé USB' }), 'Fichiers envoyés sur clé USB');
+  assert.equal(dire({ nom: 'Master', emplacement: 'Drive/Orvelle/KV.psd' }), 'Drive/Orvelle/KV.psd', 'un emplacement écrit se lit tel quel');
+  assert.equal(dire({ nom: 'BAT déclaré', emplacement: '', preuve: { type: 'declaration', texte: '', contact: 'Imprimerie', date: '2026-11-09' } }),
+    'Accord déclaré, sans fichier', 'un BAT accordé par message n’est pas accusé d’un emplacement non dit');
+  assert.equal(dire({ nom: 'Fichier final', emplacement: '' }), 'Emplacement non dit');
+  assert.equal(dire({ nom: 'x.jpg', emplacement: 'assets/review/../servir.mjs' }), 'assets/review/../servir.mjs');
+  assert.equal(adresseServie({ emplacement: 'assets/review/../servir.mjs' }), null, 'rien hors du disque de revue ne s’ouvre');
+  /* À l'étage du BAT : « signé » quand une pièce le montre, « accordé par » sinon, comme le suivi ;
+   * un fichier déposé ici s'ouvre à côté de « Retirer ». */
+  const etage = f => s.interne['vue-asset'].franchi(projet('ET'), livrable('L-et'),
+    { cle: 'bat', def: { nom: 'Le BAT', signable: true }, n: 1, exige: true, fichiers: [f] }, () => {});
+  const ligne = f => texteDe(etage(f)).replace(/\|/g, '');
+  const pdf = { nom: 'BAT-imprimeur.pdf', emplacement: 'assets/review/preuves/preuve-1.pdf', signataire: null };
+  assert.match(ligne(pdf), /BAT-imprimeur\.pdfDéposé ici · non signéOuvrirRetirer/);
+  const ouvrir = trouver(etage(pdf), n => n.tagName === 'A' && n.textContent === 'Ouvrir');
+  assert.equal(ouvrir.getAttribute('href'), 'assets/review/preuves/preuve-1.pdf');
+  assert.match(ligne({ ...pdf, signataire: 'Imprimerie' }), /Déposé ici · signé Imprimerie/);
+  assert.match(ligne({ nom: 'BAT déclaré', emplacement: '', signataire: 'Imprimerie',
+    preuve: { type: 'declaration', texte: '', contact: 'Imprimerie', date: '2026-11-09' } }), /Accord déclaré, sans fichier · accordé par ImprimerieRetirer/);
+  assert.match(ligne({ nom: 'BAT-imprimeur.ai', emplacement: '', signataire: null }), /Noté par son nom, pas déposé ici · non signéRetirer/);
+});
+
 test('l’étiquette d’une pièce validée depuis un autre onglet dit « Validé », pas « À examiner »', async () => {
   const s = await bacDecisions(APP, 99);
   await s.charger('vue-asset', ['etatVerdict']);
