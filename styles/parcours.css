@@ -53,7 +53,7 @@
 /* Le visuel occupe tout son cadre, sur le blanc de la carte : plus de bande
    grise autour d'une création (constats forme-visuel-1 et -11). Il n'est pas
    rogné : un KV dont on couperait l'accroche ne se juge plus d'un coup d'œil. */
-.lb-piece-image{position:relative;min-height:clamp(240px,25vw,425px);overflow:hidden;background:white}
+.lb-piece-image{display:block;position:relative;min-height:clamp(240px,25vw,425px);overflow:hidden;background:white}
 .lb-piece-image>.vignette{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:0;background:white}
 .lb-piece-image img,.lb-piece-image video{width:100%;height:100%;position:absolute;inset:0;object-fit:contain;max-height:none}
 .lb-intention.studio-intention{justify-content:center;margin:0;padding:clamp(20px,4vw,60px);font:500 clamp(22px,2.4vw,38px)/1.25 var(--affichage);overflow-wrap:anywhere}
@@ -98,10 +98,20 @@ body[data-vue=partage]{display:block}
  .avis-pile .avis-graves{position:fixed;top:calc(8px + env(safe-area-inset-top));left:8px;right:8px;display:grid;gap:6px;max-height:60vh;overflow-y:auto}.avis-a{min-height:44px}
  .aller-contenu{left:8px}
  .zone,.zone.studio{padding:18px 14px 24px;min-width:0}.zone .studio-entete h1{overflow-wrap:anywhere}
+ /* « + Nouveau projet » se range, compact, sur la ligne de la date : la pièce
+    à valider et son geste restent dans le premier écran, même sous l'avis
+    « Données d'exemple » d'une première ouverture. */
+ .lb-bureau .studio-entete{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:0 12px}
+ .lb-bureau .studio-entete>div{display:contents}
+ .lb-bureau .studio-entete .studio-date{grid-area:1/1;margin:0}
+ .lb-bureau .studio-entete h1{grid-area:2/1/3/3;font-size:clamp(30px,9.5vw,38px)}
+ .lb-bureau .studio-entete>.b{grid-area:1/2;min-height:44px;padding:8px 12px;font-size:13px}
+ .lb-bureau .studio-demo{flex-direction:row;flex-wrap:wrap;align-items:center;gap:0 12px;padding:4px 12px;margin-bottom:14px}
+ .lb-bureau .studio-demo a{display:inline-flex;align-items:center;min-height:44px}
  .lb-piece{grid-template-columns:1fr}
  .lb-piece-texte{padding:16px 16px 18px}.lb-etat{font-size:13px}.lb-piece-projet{margin:6px 0 0}.lb-piece-projet a{font-size:14px}
  .lb-piece h2{font-size:clamp(23px,5.7vw,30px)}.lb-piece-meta{margin:5px 0;font-size:14px}.lb-piece .b{margin-top:8px;min-height:44px}
- .lb-piece-image{order:-1;min-height:0;aspect-ratio:4/3}.lb-intention.studio-intention{order:-1;font-size:17px;padding:16px;max-height:180px;overflow:auto}
+ .lb-piece-image{order:-1;min-height:0;aspect-ratio:16/10}.lb-intention.studio-intention{order:-1;font-size:17px;padding:16px;max-height:180px;overflow:auto}
  .lb-dossiers{padding:0 14px 8px}.lb-dossiers .studio-couverture{width:42px;height:40px}
  .studio-index-outils .lb-vues-projets{gap:0}.studio-index-outils .lb-vues-projets a{padding:6px 8px}
  .lb-detail-piece{padding:12px}.lb-bureau .studio-section-tete{padding:12px 14px;gap:8px}.lb-bureau .studio-section-tete h2{font-size:18px}

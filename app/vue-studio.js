@@ -72,15 +72,18 @@ window.VUE_STUDIO = (function () {
       var dit = String(titre).replace(/\u00a0/g, " ");
       var meta = [marche && dit.indexOf(marche.nom) === -1 ? marche.nom : null, version ? "V" + version : null].filter(Boolean).join(" · ");
       var intention = o.concept || o.signature;
+      /* Le geste suit le titre, avant le contexte : au téléphone, il reste
+       * dans le premier écran sous le visuel. Le visuel mène aussi à la pièce ;
+       * le lien qui se lit et se tabule reste « Examiner ». */
       table.appendChild(el("article.lb-piece" + (!o.vignette && !intention ? ".sans-visuel" : ""), {},
         el("div.lb-piece-texte", {},
           el("p.lb-etat", {}, el("span", { "aria-hidden":"true" }, "◐"), piste ? "Piste à arbitrer" : "À valider"),
           el("p.lb-piece-projet", {}, el("a", {href:APP.adresse("projets",p.id)}, p.nom)),
           el("h2", {}, titre),
           meta ? el("p.lb-piece-meta",{}, meta) : null,
-          contexte(active),
-          el("a.b.or", {href:chemin}, piste ? "Examiner cette piste" : version ? "Examiner la V" + version : "Examiner la pièce")),
-        o.vignette ? el("div.lb-piece-image", {}, IMAGE.vignette(o,"planche")) : intention ?
+          el("a.b.or", {href:chemin}, piste ? "Examiner cette piste" : version ? "Examiner la V" + version : "Examiner la pièce"),
+          contexte(active)),
+        o.vignette ? el("a.lb-piece-image", { href:chemin, tabindex:"-1", "aria-hidden":"true" }, IMAGE.vignette(o,"planche")) : intention ?
           el("blockquote.studio-intention.lb-intention",{}, intention) : null));
     } else {
       var sujet = !projet && FILE.tout()[0];

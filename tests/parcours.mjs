@@ -443,6 +443,30 @@ try {
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Pas de débordement ${route} à ${width}px`);
     }
   }
+  // Bureau au téléphone : la pièce, son visuel et « Examiner » tiennent dans
+  // le premier écran, au-dessus de la barre du bas ; le visuel mène à la pièce ;
+  // « + Nouveau projet » se range sur la ligne de la date.
+  await page.evaluate(() => {
+    const l = DEPOT.trouve('projets', 'PRJ-demo').livrables.find(x => x.id === 'L-demo');
+    l.vignette = 'vitrine/demo/visuels/social-gh.svg';
+  });
+  for (const [width, height] of [[390, 844], [320, 700]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto(url + '/#/bureau');
+    await page.locator('.studio-piece').filter({ hasText: 'Affiche de lancement' }).click();
+    await page.locator('.lb-piece-image img').evaluate(i => i.complete || new Promise(r => { i.onload = i.onerror = r; }));
+    const tel = await page.evaluate(() => {
+      scrollTo(0, 0);
+      const r = s => document.querySelector(s).getBoundingClientRect();
+      const examiner = document.querySelector('.lb-piece a.b.or'), visuel = document.querySelector('.lb-piece a.lb-piece-image');
+      return { examinerAuDessus: r('.lb-piece a.b.or').bottom <= r('.lb-mobile').top,
+        visuel: visuel && visuel.getAttribute('href') === examiner.getAttribute('href'),
+        nouveauSurLaDate: Math.abs(r('.studio-entete > .b').top - r('.studio-date').top) < 30 && r('.studio-entete > .b').bottom <= r('.studio-entete h1').top + 4,
+        page: document.documentElement.scrollWidth <= innerWidth };
+    });
+    assert.deepEqual(tel, { examinerAuDessus: true, visuel: true, nouveauSurLaDate: true, page: true }, `Bureau à ${width} px`);
+  }
+  await page.setViewportSize({ width: 1440, height: 1050 });
   // La décision rendue plus haut porte le code de ce poste, tiré par crypto et
   // gardé dans le navigateur. Réimporter la base ne double aucune décision ;
   // une décision d'un autre poste sous le même identifiant est renommée et tracée.
