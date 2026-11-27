@@ -50,7 +50,26 @@ try {
   assert.equal(await page.locator('.lb-file summary, details.lb-file').count(), 0, 'La file n’est plus repliée');
   const vignettes = await page.locator('.lb-file-lignes .studio-piece').evaluateAll(ns => ns.map(n => n.getBoundingClientRect().width));
   assert.ok(vignettes.every(l => l >= 160) && await page.locator('.studio-piece').first().isVisible(), `Vignettes de la file : ${vignettes}`);
-  await page.getByRole('button', { name: '+ Nouveau projet', exact: true }).waitFor();
+  // « + Nouveau projet » ouvre, depuis le Bureau, le panneau de création.
+  await page.getByRole('button', { name: '+ Nouveau projet', exact: true }).click();
+  const creation = page.getByRole('dialog', { name: 'Nouveau projet' });
+  await creation.getByLabel('Nom du projet', { exact: true }).waitFor();
+  // L'avertissement d'un mot que la marque ne dit jamais se lit : texte à
+  // l'encre sur un fond opaque, contraste d'au moins 4,5:1.
+  const lisible = await page.evaluate(() => {
+    const a = document.querySelector('#contenu').appendChild(document.createElement('div'));
+    a.className = 'avertissement'; a.textContent = '« lourd » fait partie de ce que la marque ne dit jamais.';
+    const s = getComputedStyle(a), rgba = c => c.match(/[\d.]+/g).map(Number);
+    const lum = c => { const [r, g, b] = rgba(c).slice(0, 3).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; });
+      return .2126 * r + .7152 * g + .0722 * b; };
+    const [clair, sombre] = [lum(s.color), lum(s.backgroundColor)].sort((x, y) => y - x);
+    const opaque = (rgba(s.backgroundColor)[3] ?? 1) === 1;
+    a.remove();
+    return { contraste: (clair + .05) / (sombre + .05), opaque };
+  });
+  assert.ok(lisible.opaque && lisible.contraste >= 4.5, 'Avertissement lisible : ' + JSON.stringify(lisible));
+  await page.keyboard.press('Escape');
+  await creation.waitFor({ state: 'detached' });
   await page.locator('.studio-piece').nth(1).click();
   assert.match(await page.locator('.studio-intention').innerText(), /Plus d’attachement/);
   assert.equal(await page.locator('.studio-piece[aria-pressed="true"]').count(), 1);
