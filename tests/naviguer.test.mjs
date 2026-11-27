@@ -133,7 +133,7 @@ test('le Bureau coupe l’extrait du brief à la fin d’un mot, vers 160 caract
   const long = 'Orvelle est connue comme l’eau du déjeuner. Le citron l’emmène ailleurs : il faut lui trouver un moment à elle, sans renier la marque, ni son public, ni ses prix.';
   const court = extrait(long, 160);
   assert.ok(court.length <= 161 && court.endsWith('…'), court);
-  assert.ok(long.startsWith(court.slice(0, -1)), 'l’extrait reprend le début du texte');
+  assert.ok(long.startsWith(court.slice(0, -1).replace(/[\u00a0\u202f]/g, ' ')), 'l’extrait reprend le début du texte');
   assert.ok(/\p{L}…$/u.test(court), 'coupé après un mot, sans ponctuation pendante');
   assert.equal(extrait(null, 160), '');
 });
@@ -174,4 +174,23 @@ test('une vignette de la file dit qui en répond, et pour quand ou depuis quand'
   assert.equal(dit({ type: 'piste', projet: sansDate, objet: {}, auteur: null, depuis: il_y_a(3) }), 'à attribuer · en attente depuis 3 j');
   assert.equal(dit({ type: 'piste', projet: sansDate, objet: {}, auteur: 'P-da', depuis: new Date().toISOString() }), 'Sacha Martin · déposée aujourd’hui');
   assert.equal(dit({ type: 'piste', projet: sansDate, objet: {}, auteur: 'P-da' }), 'Sacha Martin');
+});
+
+test('l’extrait du brief garde ses espaces insécables et pose celles qui manquent', async () => {
+  const { ctx } = await bac();
+  vm.runInContext(await lire('vue-studio'), ctx, { filename: 'vue-studio.js' });
+  const { extrait } = ctx.VUE_STUDIO;
+  // Une espace insécable saisie reste insécable.
+  assert.equal(extrait('Le citron : un moment à elle', 160), 'Le citron : un moment à elle');
+  assert.equal(extrait('Un mot', 160), 'Un mot');
+  // Celles qui manquent se posent : rien ne coupe avant « : », « ; », « ? »,
+  // ni à l'intérieur des guillemets.
+  assert.equal(extrait('Ailleurs : il faut « vite » ! Pourquoi ? Ici ; là', 160),
+    'Ailleurs : il faut « vite » ! Pourquoi ? Ici ; là');
+  // La coupe ne sépare jamais un mot de son deux-points.
+  const long = 'Orvelle est connue comme l’eau du déjeuner. Le citron l’emmène ailleurs : il faut lui trouver un moment à elle, sans renier la marque, ni son public, ni ses prix.';
+  for (let n = 60; n <= 160; n += 7) {
+    const court = extrait(long, n);
+    assert.ok(!/ [:;!?»]/.test(court) && !/« /.test(court), n + ' : ' + court);
+  }
 });

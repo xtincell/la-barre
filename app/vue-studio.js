@@ -167,9 +167,13 @@ window.VUE_STUDIO = (function () {
     return { texte: "dans " + (-jours) + "\u00a0j", retard: false };
   }
 
-  /* Un extrait d'environ n caractères, coupé à la fin d'un mot. */
+  /* Un extrait d'environ n caractères, coupé à la fin d'un mot. Seules les
+   * espaces ordinaires se réduisent : une espace insécable tient « : » ou
+   * « » » à son mot. Celles qu'une saisie a omises devant : ; ! ? et dans les
+   * guillemets se posent ici, pour que la ligne ne coupe pas avant le signe. */
   function extrait(texte, n) {
-    texte = String(texte || "").replace(/\s+/g, " ").trim();
+    texte = String(texte || "").replace(/[ \t\n\r\f\v]+/g, " ").trim()
+      .replace(/ :/g, "\u00a0:").replace(/ ([;!?»])/g, "\u202f$1").replace(/« /g, "«\u202f");
     if (texte.length <= n) return texte;
     var coupe = texte.slice(0, n + 1);
     var espace = coupe.lastIndexOf(" ");

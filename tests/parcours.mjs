@@ -77,6 +77,9 @@ try {
   assert.equal(retard.texte, retard.attendu);
   assert.ok(retard.retard && retard.couleur === retard.bloquant, 'Échéance dépassée dans le ton qui bloque : ' + retard.couleur);
   await page.locator('.lb-piece').getByRole('link', { name: 'Lire le brief' }).waitFor();
+  // Les guillemets de l'extrait tiennent à leur texte : espaces fines insécables.
+  assert.equal(await page.locator('.lb-piece .lb-contexte q').evaluate(q => getComputedStyle(q).quotes),
+    '"«\u202f" "\u202f»" "“" "”"');
   await page.getByRole('link', { name: 'Examiner la V1', exact: true }).click();
   await page.waitForURL('**/#/projets/PRJ-demo/livrables/L-demo/juger/1');
   await page.setViewportSize({ width: 390, height: 650 });
