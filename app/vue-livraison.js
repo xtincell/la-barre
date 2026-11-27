@@ -36,7 +36,28 @@
 window.VUE_LIVRAISON = (function () {
   var el = O.el;
 
+  /* Imprimer la planche, c'est l'imprimer entière : une grande famille
+   * repliée n'aurait donné que son en-tête. Elles s'ouvrent le temps de
+   * l'impression, puis reprennent l'état où on les avait laissées. Les deux
+   * écouteurs se posent au premier affichage, jamais au chargement. */
+  var impression = false;
+  function preparerImpression() {
+    if (impression || !window.addEventListener) return;
+    impression = true;
+    window.addEventListener("beforeprint", function () {
+      document.querySelectorAll("details.plv-f:not([open])").forEach(function (d) {
+        d.setAttribute("data-plv-imprime", ""); d.open = true;
+      });
+    });
+    window.addEventListener("afterprint", function () {
+      document.querySelectorAll("details.plv-f[data-plv-imprime]").forEach(function (d) {
+        d.removeAttribute("data-plv-imprime"); d.open = false;
+      });
+    });
+  }
+
   function rendre(p, rafraichir) {
+    preparerImpression();
     var ls = (p.livrables || []).filter(function (l) { return !l.annule; });
     var familles = grouper(p, ls);
     var pleins = ls.filter(function (l) { return !!l.vignette; });

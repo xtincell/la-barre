@@ -399,6 +399,24 @@ try {
   await page.getByRole('heading', { level:1, name:'Indicateurs' }).waitFor();
   assert.equal(await page.evaluate(() => location.hash), '#/reporting/indicateurs');
   assert.equal(await page.getByRole('group', { name:'Vues du bilan' }).getByText('Évaluation').count(), 0);
+  // La planche de livraison se lit d'une seule façon : plus de bascule
+  // « Livraison | Présentation ». Imprimée, elle sort entière, toutes familles
+  // ouvertes, puis chaque famille reprend l'état où on l'avait laissée.
+  await page.goto(url + '/#/projets/PRJ-demo/livraison');
+  await page.getByRole('heading', { name:'Planche de livraison' }).waitFor();
+  assert.equal(await page.locator('.plv-modes').count(), 0, 'Plus de bascule Livraison | Présentation');
+  const impression = await page.evaluate(() => {
+    const familles = () => [...document.querySelectorAll('details.plv-f')];
+    familles()[0].open = false;
+    const avant = familles().map(d => d.open);
+    dispatchEvent(new Event('beforeprint'));
+    const pendant = familles().map(d => d.open);
+    dispatchEvent(new Event('afterprint'));
+    return { n: avant.length, avant, pendant, apres: familles().map(d => d.open) };
+  });
+  assert.ok(impression.n >= 1 && impression.avant[0] === false, 'Une famille repliée avant l’impression');
+  assert.ok(impression.pendant.every(Boolean), 'Toutes les familles ouvertes à l’impression : ' + impression.pendant);
+  assert.deepEqual(impression.apres, impression.avant, 'Chaque famille reprend son état après l’impression');
   // Aucun ancien lien ne doit provoquer d'erreur de rendu.
   for (const route of ['bureau','valider','planning','reporting','projets','projets/marques','referentiel','attentes','reglages']) {
     await page.goto(url + '/#/' + route);
