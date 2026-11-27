@@ -107,6 +107,12 @@ body[data-vue=partage]{display:block}
  .lb-detail-piece{padding:12px}.lb-bureau .studio-section-tete{padding:12px 14px;gap:8px}.lb-bureau .studio-section-tete h2{font-size:18px}
  .st-modes .studio-statuts{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
  .st-modes .studio-statuts>*{flex:none}
+ /* Le bord qui cache encore des vues s'efface en fondu : la ligne continue. */
+ .st-modes{--fondu-g:#000;--fondu-d:#000}
+ .st-modes.deborde-gauche{--fondu-g:transparent}.st-modes.deborde-droite{--fondu-d:transparent}
+ .st-modes.deborde-gauche .studio-statuts,.st-modes.deborde-droite .studio-statuts{
+  -webkit-mask-image:linear-gradient(to right,var(--fondu-g),#000 40px,#000 calc(100% - 40px),var(--fondu-d));
+  mask-image:linear-gradient(to right,var(--fondu-g),#000 40px,#000 calc(100% - 40px),var(--fondu-d))}
 }
 @media print{.lb-rail,.lb-file,.lb-retour,.lb-recherche{display:none!important}body{display:block}.corps{padding:0}}
 .lb-filtres-galerie summary{min-height:44px;align-content:center;cursor:pointer;font:550 14px/1.3 var(--affichage)}

@@ -322,7 +322,9 @@ window.UI = (function () {
    * « Vue ▸ », les sept rubriques de Ressources et les vues du Bilan ne se
    * trouvaient plus (constat forme-systeme-css-4). Sur ordinateur, ils vont à
    * la ligne ; sur téléphone, ils tiennent sur une ligne qui défile, le mode
-   * actif en vue. */
+   * actif au milieu, ses voisins en partie visibles. Un fondu sur chaque bord
+   * qui cache encore des vues dit que la ligne continue : la barre de
+   * défilement, elle, ne se voit pas sur iOS ni sur Android. */
   function modes(liste, courant, quand, opts) {
     opts = opts || {};
     var actif = liste.filter(function (m) { return m.cle === courant; })[0] || liste[0];
@@ -338,11 +340,22 @@ window.UI = (function () {
       });
     }
     var choix = el("div.studio-statuts", { role: "group", "aria-label": opts.titre || "Vues" }, contenu());
+    var cadre = el("div.st-modes", {}, choix);
+    /* Les classes disent quel bord cache des vues ; le fondu ne se dessine
+     * qu'au téléphone (parcours.css), là où la ligne défile. */
+    function bords() {
+      var reste = choix.scrollWidth - choix.clientWidth;
+      cadre.classList.toggle("deborde-gauche", reste > 1 && choix.scrollLeft > 1);
+      cadre.classList.toggle("deborde-droite", reste > 1 && choix.scrollLeft < reste - 1);
+    }
+    choix.addEventListener("scroll", bords, { passive: true });
     if (window.requestAnimationFrame) requestAnimationFrame(function () {
       var a = choix.querySelector(".active");
-      if (a && choix.scrollWidth > choix.clientWidth) choix.scrollLeft = Math.max(0, a.offsetLeft - choix.offsetLeft - 16);
+      if (a && choix.scrollWidth > choix.clientWidth)
+        choix.scrollLeft = Math.max(0, a.offsetLeft - choix.offsetLeft - (choix.clientWidth - a.offsetWidth) / 2);
+      bords();
     });
-    return el("div.st-modes", {}, choix);
+    return cadre;
   }
 
   /* ————————————————————— 17 · La bande de recevabilité ————————————————————— */

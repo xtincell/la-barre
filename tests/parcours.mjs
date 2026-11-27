@@ -303,6 +303,41 @@ try {
       page: document.documentElement.scrollWidth <= innerWidth };
   });
   assert.deepEqual(ligneVues, { lignes: 1, defile: true, actifVisible: true, page: true });
+  // La ligne dit qu'elle continue : la vue active au milieu, ses voisines qui
+  // dépassent, et un fondu sur chaque bord qui cache encore des vues.
+  const bordsVues = async (groupe) => {
+    await page.waitForFunction(n => {
+      const g = document.querySelector('[role=group][aria-label="' + n + '"]');
+      return g && /deborde-/.test(g.parentElement.className);
+    }, await groupe.getAttribute('aria-label'));
+    return groupe.evaluate(g => {
+      const cadre = g.getBoundingClientRect(), vues = [...g.children];
+      const i = vues.findIndex(a => a.hasAttribute('aria-current'));
+      const voit = a => { const r = a.getBoundingClientRect(); return Math.min(r.right, cadre.right) - Math.max(r.left, cadre.left) >= 24; };
+      const s = getComputedStyle(g);
+      return { avant: i > 0 && voit(vues[i - 1]), apres: i < vues.length - 1 && voit(vues[i + 1]),
+        gauche: g.parentElement.classList.contains('deborde-gauche'),
+        droite: g.parentElement.classList.contains('deborde-droite'),
+        fondu: /gradient/.test(s.maskImage || s.webkitMaskImage || '') };
+    });
+  };
+  assert.deepEqual(await bordsVues(vuesPlanning), { avant: true, apres: true, gauche: true, droite: true, fondu: true },
+    'Plan de charge au milieu de la ligne, Priorités et Équipe en partie visibles');
+  await page.goto(url + '/#/referentiel/parametres');
+  const vuesRessources = page.getByRole('group', { name:'Vues des ressources' });
+  await vuesRessources.waitFor();
+  assert.deepEqual(await bordsVues(vuesRessources), { avant: true, apres: false, gauche: true, droite: false, fondu: true },
+    'Paramètres, dernière vue : la précédente se voit, le fondu reste à gauche');
+  // Sur ordinateur, les huit vues de Ressources se voient toutes, sans repli ni fondu.
+  await page.setViewportSize({width:1440,height:1050});
+  const vuesOrdinateur = await vuesRessources.evaluate(g => {
+    const cadre = g.getBoundingClientRect(), s = getComputedStyle(g);
+    return { vues: [...g.querySelectorAll('a')].filter(a => { const r = a.getBoundingClientRect();
+        return r.width > 0 && r.left >= cadre.left - 1 && r.right <= cadre.right + 1; }).length,
+      fondu: /gradient/.test(s.maskImage || s.webkitMaskImage || '') };
+  });
+  assert.deepEqual(vuesOrdinateur, { vues: 8, fondu: false }, 'Les huit vues de Ressources à 1440 px');
+  assert.equal(await page.locator('.st-modes summary, .st-modes details').count(), 0, 'Aucune vue repliée sur ordinateur');
   // À 320 et 360 px, le titre d'une pièce longue (« Key visual — Côte
   // d'Ivoire · Orvelle ») passe sous celui du panneau : la croix reste entière
   // dans l'écran, et « Demander des modifs » tient sur une ligne.
