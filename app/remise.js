@@ -836,10 +836,19 @@ window.REMISE = (function () {
     var ouvert = enregistrementPermis() && !l.annule && !p.fusionne && !(window.CLOTURE && CLOTURE.est(p));
     var bat = etat.bat;
     var preuveBat = bat ? preuveValide(bat.preuve) || preuveValide({ type: "lien", url: bat.emplacement }) : null;
-    /* Ce qui s'ouvre : la pièce jointe, sinon le fichier posé à l'étage. Le
-     * mot de la déclaration se dit à côté. */
-    var ouvrirBat = !bat ? null : preuveBat && preuveBat.type !== "declaration" ? lienPreuve(preuveBat, "Ouvrir le BAT")
-      : fichierServi(bat.emplacement) ? lienFichier(fichierServi(bat.emplacement), "Ouvrir le BAT") : null;
+    /* Ce qui s'ouvre, comme dans les documents de la version : « Ouvrir le
+     * BAT » ouvre le fichier posé à son étage (le PDF de l'imprimeur), et la
+     * pièce jointe donnée en le marquant accordé (la photo du « OK »), si
+     * elle est autre, s'ouvre à côté. Sans fichier posé, c'est la pièce
+     * jointe qui est le BAT. Le mot de la déclaration se dit ensuite. */
+    var posee = bat ? urlPreuve(bat.emplacement) || fichierServi(bat.emplacement) : null;
+    var jointe = preuveBat && preuveBat.type === "lien" ? preuveBat.url
+      : preuveBat && preuveBat.type === "fichier" ? preuveBat.chemin : null;
+    if (!posee) { posee = jointe; jointe = null; }
+    if (jointe === posee) jointe = null;
+    function ouvrirAdresse(url, libelle) { return urlPreuve(url) ? lienExterne(url, libelle) : lienFichier(url, libelle); }
+    var ouvrirBat = posee ? ouvrirAdresse(posee, "Ouvrir le BAT") : null;
+    var ouvrirJointe = jointe ? ouvrirAdresse(jointe, "Ouvrir la pièce jointe") : null;
     /* « Signé » quand une pièce le montre ; un accord oral ou par message est
      * un BAT accordé. */
     var batPiece = !!ouvrirBat || !!texte(bat && bat.emplacement);
@@ -855,6 +864,7 @@ window.REMISE = (function () {
         el("span", {}, bat.nom + " · " + bat.signataire
           + (bat.signe_le ? " · " + O.joli(bat.signe_le) : "")),
         ouvrirBat,
+        ouvrirJointe,
         motJoint(preuveBat),
         preuveBat && preuveBat.type === "declaration" && (preuveBat.texte || (!ouvrirBat && !nomSeul)) ? lienPreuve(preuveBat) : null,
         nomSeul ? el("span", {}, "Fichier noté par son nom : il n’est pas déposé ici") : null) : null,

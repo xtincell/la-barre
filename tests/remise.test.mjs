@@ -472,6 +472,30 @@ test('un BAT posé à son étage, sans signataire, est complété : il n’y a j
   assert.ok(R.preuveCourante(p, ci), 'la pièce est livrée');
 });
 
+test('le PDF posé à l’étage puis complété d’une photo : « Ouvrir le BAT » ouvre le PDF, la photo s’ouvre à côté', async () => {
+  const { s, p, ci, R } = await geste();
+  ci.fichiers = [{ id: 'F-pdf', type: 'bat', version: 2, nom: 'BAT-imprimeur.pdf', emplacement: 'assets/review/preuves/preuve-pose.pdf',
+    signataire: null, quand: '2026-11-09T10:00:00.000Z' }];
+  R.marquerLivre(p, ci, () => {});
+  remplir(s.dernier(), { 'bat-par': 'Imprimerie', 'bat-comment': 'OK WhatsApp de Paul', 'bat-fichier': { name: 'ok.jpg', size: 2048 },
+    canal: 'Drive', destinataire: 'Imprimerie' });
+  envoyer(s.dernier());
+  await laisserFiler();
+  const suivi = R.suiviPiece(p, ci, () => {});
+  const liens = noeuds(suivi, n => n.tagName === 'A').map(a => [a.textContent, a.getAttribute('href')]);
+  assert.deepEqual(liens.slice(0, 2), [['Ouvrir le BAT', 'assets/review/preuves/preuve-pose.pdf'],
+    ['Ouvrir la pièce jointe', 'assets/review/preuves/preuve-1.jpg']]);
+  assert.match(suivi.textContent, /BAT-imprimeur\.pdf · Imprimerie.*Ouvrir le BATOuvrir la pièce jointe« OK WhatsApp de Paul »/);
+  /* Sans fichier posé, la pièce jointe est le BAT : un seul lien. */
+  const seul = await geste();
+  seul.R.marquerLivre(seul.p, seul.ci, () => {});
+  remplir(seul.s.dernier(), { 'bat-par': 'Imprimerie', 'bat-fichier': { name: 'ok.jpg', size: 2048 }, canal: 'Drive', destinataire: 'Imprimerie' });
+  envoyer(seul.s.dernier());
+  await laisserFiler();
+  const un = noeuds(seul.R.suiviPiece(seul.p, seul.ci, () => {}), n => n.tagName === 'A' && /^Ouvrir (le BAT|la pièce jointe)$/.test(n.textContent));
+  assert.deepEqual(un.map(a => [a.textContent, a.getAttribute('href')]), [['Ouvrir le BAT', 'assets/review/preuves/preuve-1.jpg']]);
+});
+
 test('une remise refusée après l’écriture du BAT rouvre le geste sur l’état atteint, qui ne demande plus que la remise', async () => {
   const { s, p, ci, R } = await geste();
   const attribuer = s.ctx.O.identifiantUnique;

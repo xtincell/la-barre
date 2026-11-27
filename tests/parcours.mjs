@@ -755,7 +755,10 @@ try {
     await livraison.getByRole('button', { name: 'Marquer comme livré', exact: true }).click();
     await principal.locator('.remise-tete').getByText('Remise justifiée').waitFor();
     await principal.getByText('BAT signé · V3').waitFor();
-    const preuveBat = await principal.getByRole('link', { name: 'Ouvrir le BAT' }).getAttribute('href');
+    // « Ouvrir le BAT » ouvre le fichier posé à son étage ; la pièce jointe
+    // donnée en le marquant accordé s'ouvre à côté.
+    assert.equal(await principal.getByRole('link', { name: 'Ouvrir le BAT', exact: true }).getAttribute('href'), batPose[0].emplacement);
+    const preuveBat = await principal.getByRole('link', { name: 'Ouvrir la pièce jointe', exact: true }).getAttribute('href');
     assert.match(preuveBat, /^assets\/review\/preuves\/preuve-[a-z0-9]+\.pdf$/);
     const pdf = await telecharger(preuveBat);
     assert.deepEqual([pdf.statut, pdf.type, pdf.octets.toString('latin1', 0, 5)], [200, 'application/pdf', '%PDF-']);
