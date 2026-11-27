@@ -19,9 +19,11 @@ import { mkdtemp, readFile, writeFile, rm, cp } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { mesurerDansLaPage, depouiller, ecartDePixels, aLOeil, versionMesure, stabiliser, apaiserLaPage, deplierLaPage, replierLaPage, lancement } from '../outils/recette-captures.mjs';
+import { mesurerDansLaPage, depouiller, ecartDePixels, aLOeil, versionMesure, stabiliser, apaiserLaPage, deplierLaPage, replierLaPage, lancement,
+  ouChange, changement } from '../outils/recette-captures.mjs';
 
 const OUTIL = fileURLToPath(new URL('../outils/recette-captures.mjs', import.meta.url));
+const RACINE = fileURLToPath(new URL('../', import.meta.url));
 const executer = promisify(execFile);
 const EXIGE = process.env.RECETTE_NAVIGATEUR === 'exige';
 
@@ -295,9 +297,9 @@ test('la ligne de commande prévient : pas de passe « avant », horloge reprise
 /* La largeur d'un PNG, lue dans son en-tête. */
 async function largeurPng(fichier) { return (await readFile(fichier)).readUInt32BE(16); }
 
-test('l’outil entier tourne sur la base fictive : bureau, recherche, nouveau projet, demande et page partagée, au bureau et au téléphone', { ...sauter, timeout: 240000 }, async () => {
+test('l’outil entier tourne sur la base fictive : bureau, recherche, nouveau projet, demande, page partagée et bilan, au bureau et au téléphone', { ...sauter, timeout: 300000 }, async () => {
   const dossier = await mkdtemp(join(tmpdir(), 'recette-bout-en-bout-'));
-  const options = ['--sortie', dossier, '--routes', '^(bureau|recherche|nouveau-projet|demande|partage)$', '--largeurs', '390,1440',
+  const options = ['--sortie', dossier, '--routes', '^(bureau|recherche|nouveau-projet|demande|partage|reporting/bilan)$', '--largeurs', '390,1440',
     '--horloge', '2026-11-26T09:00:00', '--commit', 'abc1234'];
   const env = { ...process.env };
   let reussi = false;
@@ -309,8 +311,8 @@ test('l’outil entier tourne sur la base fictive : bureau, recherche, nouveau p
     // Toutes les actions de l'outil trouvent encore ce qu'elles appellent dans l'application.
     assert.deepEqual(r.captures.flatMap(c => c.exceptions.map(e => c.id + '@' + c.largeur + ' : ' + e)), []);
     assert.equal(r.horsCapture.length, 0, r.horsCapture.join('\n'));
-    assert.deepEqual([...new Set(r.captures.map(c => c.id))].sort(), ['bureau', 'demande', 'nouveau-projet', 'partage', 'recherche']);
-    assert.equal(r.captures.length, 10);
+    assert.deepEqual([...new Set(r.captures.map(c => c.id))].sort(), ['bureau', 'demande', 'nouveau-projet', 'partage', 'recherche', 'reporting/bilan']);
+    assert.equal(r.captures.length, 12);
     assert.equal(r.commit, 'abc1234');
     assert.equal(r.mesure.version, versionMesure());
     // Peinte par le processeur, pas par la carte graphique : le poste de capture le dit.
@@ -330,12 +332,42 @@ test('l’outil entier tourne sur la base fictive : bureau, recherche, nouveau p
     assert.equal(cmp.mesure.identique, true);
     assert.deepEqual(cmp.modifiees, [], JSON.stringify(r.captures.filter(c => c.ecart).map(c => [c.id, c.largeur, c.ecart]))
       + (process.env.RECETTE_TEMOIN ? ' (passes gardées dans ' + process.env.RECETTE_TEMOIN + ')' : ''));
-    assert.equal(cmp.identiques + cmp.identiquesALOeil, 10);
+    assert.equal(cmp.identiques + cmp.identiquesALOeil, 12);
     for (const champ of ['exceptionsNouvelles', 'debordementsNouveaux', 'coupesNouvelles', 'horsEcranNouveaux', 'valeursNouvelles'])
       assert.deepEqual(cmp[champ], [], champ);
     assert.equal(cmp.termes.avant, cmp.termes.apres);
     assert.match(stdout, /"modifiees": 0/);
     assert.match(await readFile(join(dossier, 'apres', 'index.html'), 'utf8'), /Ce qui a changé depuis la passe/);
+
+    // Un vrai changement, plus bas que le premier écran : une copie de la base
+    // où un membre de l'équipe change de nom. Dans le Bilan mensuel, son nom ne
+    // se peint que dans « Mon équipe », en bas de la page : la capture est
+    // « modifiée », sous le premier écran, et le texte changé est montré. (La
+    // demande de proposition, qui liste l'équipe, change aussi.)
+    const base = join(dossier, 'base', 'base-fictive.json');
+    await cp(join(RACINE, 'vitrine', 'demo'), join(dossier, 'base'), { recursive: true });
+    const texte = await readFile(base, 'utf8');
+    assert.equal(texte.split('Nadia Sablier').length, 2, 'le nom n’est cité qu’une fois dans la base fictive');
+    await writeFile(base, texte.replace('Nadia Sablier', 'Nadia Sablon'));
+    const autre = await executer(process.execPath, [OUTIL, '--apres', ...options, '--base', base], { env, timeout: 120000 });
+    const s = JSON.parse(await readFile(join(dossier, 'apres', 'captures.json'), 'utf8'));
+    assert.equal(s.comparaison.base, false);
+    const ecarts = JSON.stringify(s.captures.filter(c => c.ecart).map(c => [c.id, c.largeur, c.ecart]));
+    assert.deepEqual(s.comparaison.modifiees.filter(k => k.startsWith('reporting/')), ['reporting/bilan@390', 'reporting/bilan@1440'], ecarts);
+    // Tout ce qui change vient du nom : chaque capture modifiée montre le nouveau.
+    for (const k of s.comparaison.modifiees)
+      assert.ok(s.comparaison.textes.some(x => x.capture === k && String(x.ajoute).includes('Nadia Sablon')), k + ' : ' + JSON.stringify(s.comparaison.textes));
+    for (const c of s.captures.filter(x => x.id === 'reporting/bilan')) {
+      assert.equal(ouChange(c), 'sous le premier écran', c.largeur + ' : ' + JSON.stringify(c.ecart));
+      assert.equal(changement(c, r.captures.find(x => x.id === c.id && x.largeur === c.largeur)).sorte === 'texte', false, 'la photo a changé');
+    }
+    assert.deepEqual(s.comparaison.textes.filter(x => x.capture.startsWith('reporting/')).map(x => [x.capture, x.ajoute, x.retire]),
+      [['reporting/bilan@390', 'Nadia Sablon', 'Nadia Sablier'], ['reporting/bilan@1440', 'Nadia Sablon', 'Nadia Sablier']]);
+    const html = await readFile(join(dossier, 'apres', 'index.html'), 'utf8');
+    assert.match(html, /Écrans touchés\u00a0: <a href="#reporting\/bilan" title="reporting\/bilan">Bilan · Bilan mensuel<\/a> \(sous le premier écran(, la page change de hauteur)?\)[,.]/);
+    assert.match(html, /à 390 et 1440\u00a0px\u00a0: <q>Nadia Sablon<\/q> au lieu de <q>Nadia Sablier<\/q>/);
+    assert.match(html, /La base n’est pas la même que celle de la passe/);
+    assert.match(autre.stdout, new RegExp('"modifiees": ' + s.comparaison.modifiees.length + '\\b'));
     reussi = true;
   } finally {
     /* Un échec garde ses deux passes, pour voir ce qui a bougé. */
