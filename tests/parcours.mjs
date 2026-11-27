@@ -480,6 +480,13 @@ try {
     assert.deepEqual(tel, { examinerAuDessus: true, visuel: true, nouveauSurLaDate: true, page: true }, `Bureau à ${width} px`);
   }
   await page.setViewportSize({ width: 1440, height: 1050 });
+  // Dans la file, une vignette est un bouton sans bloc : l'image seule,
+  // recadrée par le haut pour garder le bandeau d'un format carré.
+  await page.goto(url + '/#/bureau');
+  const tuile = await page.locator('.lb-file-lignes .studio-piece').filter({ hasText: 'Affiche de lancement' }).evaluate(b => ({
+    blocs: b.querySelectorAll('div, p, section, article, blockquote').length,
+    image: !!b.querySelector('.lb-file-visuel > img'), haut: getComputedStyle(b.querySelector('img')).objectPosition }));
+  assert.deepEqual(tuile, { blocs: 0, image: true, haut: '50% 0px' }, 'Vignette de la file');
   // La décision rendue plus haut porte le code de ce poste, tiré par crypto et
   // gardé dans le navigateur. Réimporter la base ne double aucune décision ;
   // une décision d'un autre poste sous le même identifiant est renommée et tracée.

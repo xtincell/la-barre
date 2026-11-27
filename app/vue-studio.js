@@ -165,10 +165,16 @@ window.VUE_STUDIO = (function () {
     return (espace > n * 0.6 ? coupe.slice(0, espace) : texte.slice(0, n)).replace(/[\s,;:.—–-]+$/, "") + "…";
   }
 
-  /* La vignette d'une pièce dans la file : son visuel, ou son intention. */
+  /* La vignette d'une pièce dans la file : son visuel, ou son intention. Elle
+   * vit dans un bouton, qui n'admet pas de bloc : on y met l'image seule, sans
+   * le cadre <div> d'IMAGE.vignette. */
   function apercu(x) {
     var o = x.objet;
-    if (o.vignette) return el("span.lb-file-visuel", { "aria-hidden":"true" }, IMAGE.vignette(o, "planche"));
+    var image = o.vignette ? IMAGE.vignette(o, "ligne").querySelector("img") : null;
+    if (image) {
+      image.alt = ""; image.loading = "lazy";
+      return el("span.lb-file-visuel", { "aria-hidden":"true" }, image);
+    }
     var mot = o.concept || o.signature || o.titre || o.nom || "";
     return el("span.lb-file-visuel.lb-file-texte", { "aria-hidden":"true" }, extrait(mot, 90));
   }
