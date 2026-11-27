@@ -100,8 +100,11 @@ BROWSER_CHANNEL=chrome node "$copie/outils/recette-captures.mjs" --avant \
   l'horloge. Deux passes ne se comparent que prises dans les mêmes
   conditions. Si l'une manque (autre version, autre poste ou autre cadrage,
   autre horloge), la planche dit laquelle en tête, la sortie d'erreur aussi,
-  et ce qu'il faut faire : refaire l'avant, ou relancer l'après sans
-  `--horloge`. En attendant, aucune capture n'est comptée comme modifiée
+  et ce qu'il faut faire pour chacune : refaire l'avant pour une autre
+  version ou un autre poste ; relancer l'après avec le cadrage de l'avant
+  (avec ou sans `--premier-ecran`) pour un autre cadrage ; relancer l'après
+  sans `--horloge` pour une autre horloge. Quand plusieurs manquent, il faut
+  tout faire. En attendant, aucune capture n'est comptée comme modifiée
   (elles sont « non comparées »), aucun écran n'est donné pour touché, et
   `comparaison.mesure.identique` vaut `false` (`comparaison.mesure.version`,
   `.contexte` et `.horloge` disent laquelle des conditions manque). Avec

@@ -494,13 +494,24 @@ export function causes(cmp) {
   }
   return t;
 }
-/* Ce qu'il faut faire, selon la cause. */
-function remede(cmp) {
-  const m = cmp.mesure || {};
+/* Ce qu'il faut faire : un remède par cause, tous à faire.
+ *   - autre version ou autre poste : refaire l'avant, avec cet outil et les
+ *     mêmes réglages (le cadrage compris) ;
+ *   - autre cadrage seulement : relancer l'après avec celui de l'avant ;
+ *   - autre horloge : relancer l'après sans --horloge, qui reprend celle de
+ *     l'avant. */
+export function remede(cmp) {
+  const m = (cmp && cmp.mesure) || {};
   const t = [];
-  if (m.version === false || m.contexte === false) t.push('refaites la passe « avant » avec cet outil et les mêmes réglages (documents/FINI.md, section 2)');
-  if (m.horloge === false) t.push('relancez la passe « après » sans --horloge : elle reprend celle de l’avant');
-  return t.join(', ou ');
+  const refaireAvant = m.version === false || (m.contexte === false && m.poste !== 'cadrage');
+  if (refaireAvant) t.push('refaites la passe « avant » avec cet outil et les mêmes réglages (documents/FINI.md, section 2)');
+  const options = [];
+  if (!refaireAvant && m.contexte === false && m.poste === 'cadrage')
+    options.push(m.cadrageAvant === 'premier-ecran' ? 'avec --premier-ecran' : 'sans --premier-ecran');
+  if (m.horloge === false) options.push('sans --horloge');
+  if (options.length) t.push('relancez la passe « après » ' + enumerer(options)
+    + (m.horloge === false ? ' : elle reprend alors l’horloge de l’avant' : ', comme l’avant'));
+  return t.join(' et ');
 }
 
 /* L'avertissement de tête : l'avant ne se compare pas à cette passe. */
@@ -665,8 +676,10 @@ ${typographie(corps)}
  * qui diffère n'est pas comptée comme modifiée (l'outil, le poste ou la date
  * ont pu changer, pas l'écran), `mesure.identique` vaut false et
  * `mesure.version`, `mesure.contexte`, `mesure.horloge` disent laquelle des
- * conditions manque. Un champ que la passe « avant » ne mesurait pas encore
- * vaut null, « non mesuré avant », jamais zéro. */
+ * conditions manque ; pour le poste, `mesure.poste` dit si c'est le cadrage
+ * (et `mesure.cadrageAvant`, celui de l'avant) ou le navigateur. Un champ que
+ * la passe « avant » ne mesurait pas encore vaut null, « non mesuré avant »,
+ * jamais zéro. */
 export function comparer(avant, apres) {
   const cle = c => c.id + '@' + c.largeur;
   const a = new Map(avant.captures.map(c => [cle(c), c]));
@@ -702,7 +715,8 @@ export function comparer(avant, apres) {
   const zone = z => (z ? { pixels: z.pixels, max: z.max } : { pixels: 0, max: 0 });
   return {
     mesure: { avant: version(avant), apres: version(apres), identique: memeMesure, version: memeVersion, contexte: memeContexte,
-      ...(memeContexte || contexte(avant) === null ? {} : { poste: cadrage(avant) !== cadrage(apres) ? 'cadrage' : 'navigateur' }), horloge: memeHorloge },
+      ...(memeContexte || contexte(avant) === null ? {} : cadrage(avant) !== cadrage(apres)
+        ? { poste: 'cadrage', cadrageAvant: cadrage(avant) ? 'page-entiere' : 'premier-ecran' } : { poste: 'navigateur' }), horloge: memeHorloge },
     base: empreinteBase(avant) && empreinteBase(apres) ? empreinteBase(avant) === empreinteBase(apres) : null,
     horloge: { avant: avant.horloge || null, apres: apres.horloge || null },
     routesNouvelles: ids(apres).filter(id => !ids(avant).includes(id)),

@@ -9,7 +9,7 @@ import { mkdtemp, mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promis
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { routesDe, lireArguments, planche, comparer, restreindre, problemes, preparerSortie, pluriel, dateLisible,
-  sortieParDefaut, typographie, aLOeil, versionMesure, causes, heureDuPoste, texteDeLaPage, ouChange, decrireNuance,
+  sortieParDefaut, typographie, aLOeil, versionMesure, causes, remede, heureDuPoste, texteDeLaPage, ouChange, decrireNuance,
   changement, precisionEcran, MODES_ATTENDUS, LARGEURS, MARQUE, OUTIL, ECART, ONGLETS_PIECE, lancement } from '../outils/recette-captures.mjs';
 import { relever, extrait, VALEURS_TECHNIQUES } from '../outils/termes-interdits.mjs';
 import { execFile } from 'node:child_process';
@@ -277,6 +277,17 @@ test('une passe « avant » prise autrement : la planche dit laquelle des condit
   let html = voir(cadrage);
   assert.match(html, /dans les mêmes conditions\u00a0: un autre cadrage \(page entière d’un côté, premier écran de l’autre\)\.<\/b>/);
   assert.doesNotMatch(html, /autre version/);
+  // Un cadrage seul : le remède le plus direct est de relancer l'après comme l'avant, pas de refaire l'avant.
+  assert.match(html, /Relancez la passe «\u00a0après\u00a0» sans --premier-ecran, comme l’avant\./);
+  assert.doesNotMatch(html, /Refaites la passe/);
+  const avantPremierEcran = comparer(avant, { ...apres, mesure: { ...MESURE, contexte: { ...MESURE.contexte, pleinePage: true } } });
+  assert.equal(remede(avantPremierEcran), 'relancez la passe « après » avec --premier-ecran, comme l’avant');
+  // Le cadrage et l'horloge : un remède pour chacun, joints par « et », jamais par « ou ».
+  const cadrageEtHorloge = { ...cadrage, horloge: '2026-11-25T09:00:00' };
+  assert.deepEqual(causes(comparer(cadrageEtHorloge, apres)).length, 2);
+  html = voir(cadrageEtHorloge);
+  assert.match(html, /Relancez la passe «\u00a0après\u00a0» sans --premier-ecran et sans --horloge\u00a0: elle reprend alors l’horloge de l’avant\./);
+  assert.doesNotMatch(html, /Refaites la passe|, ou relancez/);
   // Même version, autre densité d'écran : un autre poste de capture.
   const densite = { ...avant, mesure: { ...MESURE, contexte: { ...MESURE.contexte, postes: { telephone: { deviceScaleFactor: 3 } } } } };
   assert.deepEqual(causes(comparer(densite, apres)), ['un autre poste de capture (taille, densité ou réglages du navigateur)']);
@@ -284,6 +295,11 @@ test('une passe « avant » prise autrement : la planche dit laquelle des condit
   const lesDeux = { ...cadrage, mesure: { ...cadrage.mesure, version: 'v-ancienne' } };
   html = voir(lesDeux);
   assert.match(html, /une autre version de l’outil \(la v-ancienne\u202f; celle-ci est la v-test\) et un autre cadrage/);
+  // Une autre version : l'avant se refait, avec les mêmes réglages (le cadrage compris) ; l'après n'a rien à changer.
+  assert.match(html, /Refaites la passe «\u00a0avant\u00a0» avec cet outil et les mêmes réglages/);
+  assert.doesNotMatch(html, /Relancez/);
+  assert.equal(remede(comparer({ ...lesDeux, horloge: '2026-11-25T09:00:00' }, apres)),
+    'refaites la passe « avant » avec cet outil et les mêmes réglages (documents/FINI.md, section 2) et relancez la passe « après » sans --horloge : elle reprend alors l’horloge de l’avant');
   // Une autre horloge : pas de capture modifiée, aucun écran touché, et le remède dit quoi relancer.
   const horloge = { ...avant, horloge: '2026-11-25T09:00:00' };
   const c = comparer(horloge, apres);
