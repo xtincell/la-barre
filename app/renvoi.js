@@ -9,18 +9,18 @@ window.RENVOI = (function () {
 
   /* La table des souverainetés : à qui revient quoi. Source : processus §6. */
   var SOUVERAINETES = {
-    "brief-incomplet": { poste: "clientele", critere: "§8 — l'un des onze champs critiques est vide" },
-    "brief-concept": { poste: "clientele", critere: "§8 — le brief contient un concept, une accroche ou une piste visuelle" },
-    "territoire": { poste: "planning", critere: "§6 — le territoire et l'axe sont décidés par le Planning" },
-    "prix": { poste: "clientele", critere: "§6 — la Création ne s'engage sur aucun prix" },
+    "brief-incomplet": { poste: "clientele", critere: "L'un des onze champs critiques du brief est vide" },
+    "brief-concept": { poste: "clientele", critere: "Le brief contient déjà un concept, une accroche ou une piste visuelle" },
+    "territoire": { poste: "planning", critere: "Le territoire et l'axe se décident au Planning" },
+    "prix": { poste: "clientele", critere: "La Création ne s'engage sur aucun prix" },
     "modification-seance": { poste: "clientele", critere: "Face à une demande en séance, la réponse est un délai, jamais un accord immédiat" },
     "entree": { poste: null, critere: "L'élément d'entrée porte son fournisseur et sa date" },
     "perimetre": { poste: "clientele", critere: "Toute remise en cause d'un élément validé constitue un nouveau brief" },
-    "etage": { poste: "da", critere: "§8 — la proposition sort de l'étage autorisé" },
-    "sacrifice": { poste: "da", critere: "§8 — une piste ne porte pas son sacrifice et son argument" },
-    "egalite": { poste: "da", critere: "§8 — plusieurs pistes sont recommandées à égalité" },
-    "accroche": { poste: "da", critere: "§8 — une accroche dépasse cinq mots" },
-    "porteurs": { poste: "da", critere: "§8 — le livrable perd deux de ses trois porteurs de reconnaissance" },
+    "etage": { poste: "da", critere: "La proposition va au-delà du niveau autorisé" },
+    "sacrifice": { poste: "da", critere: "Une piste ne dit pas ce qu'elle sacrifie ni pourquoi" },
+    "egalite": { poste: "da", critere: "Plusieurs pistes sont recommandées à égalité" },
+    "accroche": { poste: "da", critere: "Une accroche dépasse cinq mots" },
+    "porteurs": { poste: "da", critere: "Le livrable perd deux de ses trois signes de reconnaissance" },
     "conformite": { poste: "graphic", critere: "Conformité technique des fichiers livrés" },
     "droits": { poste: "motion", critere: "Respect des droits : musiques, images, licences" },
     "sources": { poste: "graphic", critere: "Sources rangées et nommées selon la convention" },
@@ -49,12 +49,12 @@ window.RENVOI = (function () {
     var echeance = "";
     var apercu = el("div.attente-ligne");
 
-    var selMotif = el("select", {});
+    var selMotif = el("select", { id: "renvoi-motif" });
     motifs().forEach(function (m) {
       selMotif.appendChild(el("option", { value: m.cle }, m.critere || "Autre motif, à écrire"));
     });
 
-    var selQui = el("select", {});
+    var selQui = el("select", { id: "renvoi-qui" });
     function remplirQui(postePropose) {
       O.vider(selQui);
       selQui.appendChild(el("option", { value: "" }, "— destinataire —"));
@@ -66,9 +66,9 @@ window.RENVOI = (function () {
     }
     remplirQui(SOUVERAINETES[choix].poste);
 
-    var champAttendu = el("textarea", { rows: 2, placeholder: "Ce que j'attends en retour" });
-    var champEcheance = el("input", { type: "date" });
-    var champLibre = el("textarea", { rows: 2, placeholder: "Motif, si « autre »" });
+    var champAttendu = el("textarea", { id: "renvoi-attendu", rows: 2, placeholder: "Ce que j'attends en retour" });
+    var champEcheance = el("input", { id: "renvoi-echeance", type: "date" });
+    var champLibre = el("textarea", { id: "renvoi-libre", rows: 2, placeholder: "Motif, si « autre »" });
 
     function rafraichir() {
       var s = SOUVERAINETES[choix];
@@ -97,12 +97,12 @@ window.RENVOI = (function () {
       l.push("Objet : " + (contexte.quoi || "élément renvoyé") + (contexte.projet ? " — " + contexte.projet : ""));
       l.push("");
       l.push("Je te renvoie ce point : il relève de ton périmètre.");
-      if (s.critere) l.push("Critère opposé : " + s.critere + ".");
+      if (s.critere) l.push("Ce qui bloque : " + s.critere.charAt(0).toLowerCase() + s.critere.slice(1) + ".");
       if (choix === "autre" && champLibre.value) l.push("Motif : " + ponctuer(champLibre.value));
       if (champAttendu.value) l.push("Ce que j'attends : " + ponctuer(champAttendu.value));
-      if (echeance) l.push("Pour le " + O.joli(echeance) + ".");
+      if (echeance) l.push(O.finir("Pour le " + O.joli(echeance)));
       l.push("");
-      l.push("Tant que ce n'est pas revenu, l'avancement de ce point est suspendu de mon côté.");
+      l.push("Je reprends ce point dès qu'il me revient.");
       return l.join("\n");
     }
 
@@ -121,18 +121,18 @@ window.RENVOI = (function () {
 
     var corps = el("div", {},
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Sur quel critère"), selMotif),
-        el("div.champ", {}, el("label", {}, "À qui"), el("div.indice", {}, "Proposé par la table des souverainetés. Une personne, jamais une direction."), selQui),
-        el("div.champ", {}, el("label", {}, "Ce que j'attends"), champAttendu),
-        el("div.champ", {}, el("label", {}, "Pour quand"), champEcheance),
-        el("div.champ", {}, el("label", {}, "Si « autre motif »"), champLibre)
+        el("div.champ", {}, el("label", { for: "renvoi-motif" }, "Sur quel critère"), selMotif),
+        el("div.champ", {}, el("label", { for: "renvoi-qui" }, "À qui"), el("div.indice", {}, "Proposé par la table des souverainetés. Une personne, jamais une direction."), selQui),
+        el("div.champ", {}, el("label", { for: "renvoi-attendu" }, "Ce que j'attends"), champAttendu),
+        el("div.champ", {}, el("label", { for: "renvoi-echeance" }, "Pour quand"), champEcheance),
+        el("div.champ", {}, el("label", { for: "renvoi-libre" }, "Si « autre motif »"), champLibre)
       ),
       PANNEAU.sousbloc("Le message, prêt à porter", apercu),
       el("div.form-actions", {},
         el("button.bouton", {
           type: "button",
           onclick: function () {
-            if (!destinataire) { AVIS.refus("Nomme une personne : un renvoi ne s'adresse pas à une direction."); return; }
+            if (!destinataire) { AVIS.refus("Nommez une personne : un renvoi ne s'adresse pas à une direction."); return; }
             var s = SOUVERAINETES[choix];
             var neuve = DEPOT.ajoute("attentes", {
               quoi: contexte.quoi || "",

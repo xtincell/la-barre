@@ -117,7 +117,7 @@ window.INGESTEUR = (function () {
           var v = valeurs[c.cle];
           var ok = Array.isArray(v) ? v.length > 0 : !!String(v || "").trim();
           return { quoi: c.nom, ok: ok, poids: 4,
-            cout: "champ critique vide — motif de retour opposable au §8" };
+            cout: "champ critique vide : la demande peut être renvoyée" };
         }), null, []));
 
       def.champs.forEach(function (c) {

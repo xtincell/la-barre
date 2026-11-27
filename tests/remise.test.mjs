@@ -158,7 +158,7 @@ test('un changement de portée pendant le dialogue empêche de rendre le verdict
   saisie(s.dernier()).value = 'Ajouter la mention obligatoire.';
   ci.marche = 'SN';
   soumettre(s.dernier());
-  assert.match(s.dernier().textContent, /livrable a changé/);
+  assert.match(s.dernier().textContent, /pièce a changé pendant votre décision/);
   assert.equal(ci.versions[0].verdict, null);
   assert.equal(s.ctx.DEPOT.liste('decisions').length, 0);
 });

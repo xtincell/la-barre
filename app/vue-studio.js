@@ -59,20 +59,25 @@ window.VUE_STUDIO = (function () {
       var marche = o.marche && DEPOT.trouve("marches",o.marche);
       var chemin = VUE_REVUE.lienPiece(active);
       var version = active.version;
-      var meta = [marche && marche.nom, version ? "V" + version : null].filter(Boolean).join(" · ");
+      var titre = piste ? o.titre || o.nom || active.titre : KV.titre(o);
+      /* Le titre dit déjà la pièce et son marché (« Key visual — Ghana ·
+       * Orvelle ») : la carte ne redit ni son code ni le marché. Un nom écrit
+       * par l'équipe (« Affiche de lancement ») garde le marché à côté. */
+      var dit = String(titre).replace(/\u00a0/g, " ");
+      var meta = [marche && dit.indexOf(marche.nom) === -1 ? marche.nom : null, version ? "V" + version : null].filter(Boolean).join(" · ");
       var intention = o.concept || o.signature;
       table.appendChild(el("article.lb-piece" + (!o.vignette && !intention ? ".sans-visuel" : ""), {},
         el("div.lb-piece-texte", {},
-          el("p.lb-etat", {}, el("span", { "aria-hidden":"true" }, "◐"), piste ? "Piste à arbitrer" : "Verdict attendu"),
+          el("p.lb-etat", {}, el("span", { "aria-hidden":"true" }, "◐"), piste ? "Piste à arbitrer" : "À valider"),
           el("p.lb-piece-projet", {}, el("a", {href:APP.adresse("projets",p.id)}, p.nom)),
-          el("h2", {}, o.titre || o.nom || active.titre),
+          el("h2", {}, titre),
           meta ? el("p.lb-piece-meta",{}, meta) : null,
           el("a.b.or", {href:chemin}, piste ? "Examiner cette piste" : version ? "Examiner la V" + version : "Examiner la pièce")),
         o.vignette ? el("div.lb-piece-image", {}, IMAGE.vignette(o,"planche")) : intention ?
           el("blockquote.studio-intention.lb-intention",{}, intention) : null));
     } else {
       var sujet = !projet && FILE.tout()[0];
-      var t = projet ? "Ce projet n'attend pas de verdict." : "Aucune pièce en attente de verdict.";
+      var t = projet ? "Rien à valider dans ce projet." : "Aucune pièce à valider.";
       table.appendChild(el("section.studio-vide.lb-vide", {},
         el("h2",{},t), sujet ? el("p",{}, sujet.chiffre || sujet.quoi) : null,
         sujet ? el("a.b.or",{href:"#/valider/file"},"Ouvrir les décisions") :

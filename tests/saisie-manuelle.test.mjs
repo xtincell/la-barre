@@ -105,12 +105,14 @@ test('une approbation pour travail ne transforme pas les propositions en accord'
   assert.equal(s.ctx.INFERENCE.est(p,'brief','objectif_business'),true);
 });
 
-test('un verdict refuse de couvrir un document modifié après sa lecture',async()=>{
+test('une décision refuse de couvrir un document modifié après sa lecture, et le dit dans le panneau',async()=>{
   const s=await poste(),p=projet(),avant=clone(p.sections.brief.validation);
   s.ctx.VALIDATION.rendre(p,'brief',p.sections.brief,{cle:'approuve',nom:'Approuvé'},()=>{});
   p.sections.brief.cible='Modification concurrente';s.click('Approuvé');
   assert.deepEqual(p.sections.brief.validation,avant);
-  assert.match(s.ctx.erreur,/document a changé/);
+  const erreur=(function trouver(n){ if(!n||typeof n!=='object')return; if(n.tag==='p.remise-erreur')return n;
+    for(const c of n.children||[]){ const r=trouver(c); if(r)return r; } })(s.panel);
+  assert.match(erreur.textContent,/Le document a changé : relisez-le avant de décider\./);
 });
 
 test('un formulaire n’écrase pas un champ resté intact dans la saisie ni les métadonnées',async()=>{

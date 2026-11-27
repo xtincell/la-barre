@@ -15,10 +15,10 @@ window.FEEDBACK = (function () {
   var CANAUX = {
     seance: { nom: "En séance", trace: true },
     ecrit: { nom: "Par écrit", trace: true },
-    message: { nom: "Par messagerie", trace: false,
-      cout: "un retour WhatsApp n'a pas de version : on ne saura pas sur quoi il portait" },
-    oral: { nom: "À l'oral", trace: false,
-      cout: "aucune trace côté client : il pourra dire qu'il n'a jamais demandé ça" },
+    /* WhatsApp est le canal principal des clients : un retour reçu par
+     * messagerie s'enregistre comme les autres, sans avertissement. */
+    message: { nom: "Par messagerie", trace: false },
+    oral: { nom: "À l'oral", trace: false },
     /* Les retours relevés dans les commentaires de tâche de Matanga People. Ce
      * canal n'était dans aucune table : la fiche du livrable plantait dessus.
      * Il se relève, il ne se saisit pas — le formulaire ne le propose pas. */
@@ -50,7 +50,7 @@ window.FEEDBACK = (function () {
       onde: "elle s'applique à tous les formats, y compris ceux qui n'existent pas encore",
       avant: "À trancher avant de produire d'autres formats, sinon on décline deux fois." },
     declinaison: { rang: 4, nom: "Un format", ton: "terne",
-      quoi: "un livrable, et elle seule",
+      quoi: "un livrable, et lui seul",
       onde: "rien d'autre ne bouge",
       avant: "Se traite en dernier : c'est le seul niveau qui n'entraîne rien." },
   };
@@ -222,8 +222,8 @@ window.FEEDBACK = (function () {
     });
     if (apresValidation.length) {
       out.push({ cle: "valide", quoi: "Il arrive après une validation",
-        detail: apresValidation.length + (apresValidation.length > 1 ? " livrables avaient" : " livrable avait")
-          + " été approuvée — ce n'est pas une correction, c'est une reprise",
+        detail: (apresValidation.length > 1 ? apresValidation.length + " livrables avaient été validés" : "1 livrable avait été validé")
+          + " : ce n'est pas une correction, c'est une reprise",
         force: 5 });
     }
 
@@ -251,7 +251,8 @@ window.FEEDBACK = (function () {
     var crit = ((p.sections.bigidea || {}).criteres || []).length;
     if (crit) {
       out.push({ cle: "critere", quoi: "Il peut contredire un critère écrit",
-        detail: crit + " critères d'acceptation ont été posés avant : à confronter au retour",
+        detail: (crit > 1 ? crit + " critères d'acceptation ont été posés" : "1 critère d'acceptation a été posé")
+          + " avant : à confronter au retour",
         force: 3 });
     }
 
@@ -260,15 +261,17 @@ window.FEEDBACK = (function () {
 
   /* ————————————————————— Enregistrer un retour ————————————————————— */
 
-  function ouvrir(projetId, cibles, apres) {
+  /* `voir`, facultatif : ce qui mène au bloc des retours de la pièce. L'avis
+   * qui suit l'enregistrement le propose. */
+  function ouvrir(projetId, cibles, apres, voir) {
     var p = DEPOT.trouve("projets", projetId);
     if (!p) return;
 
-    var champ = el("textarea", { rows: 3, placeholder: "Ce que le client a demandé, dans ses mots" });
-    var selCanal = el("select", {});
+    var champ = el("textarea", { id: "fb-texte", rows: 3, placeholder: "Ce que le client a demandé, dans ses mots" });
+    var selCanal = el("select", { id: "fb-canal" });
     Object.keys(CANAUX).filter(function (k) { return !CANAUX[k].releve; })
       .forEach(function (k) { selCanal.appendChild(el("option", { value: k }, CANAUX[k].nom)); });
-    var selAuteur = el("select", {});
+    var selAuteur = el("select", { id: "fb-auteur" });
     selAuteur.appendChild(el("option", { value: "" }, "— qui l'a formulé —"));
     DEPOT.liste("contacts").filter(function (c) {
       return !c.clientId || c.clientId === clientDe(p);
@@ -278,19 +281,22 @@ window.FEEDBACK = (function () {
     DEPOT.liste("personnes").forEach(function (x) {
       selAuteur.appendChild(el("option", { value: "P:" + x.id }, x.nom + " · " + O.poste(x.poste).court));
     });
-    var champDate = el("input", { type: "date" });
+    var champDate = el("input", { type: "date", id: "fb-quand" });
     champDate.value = O.jour();
 
-    var selPortee = el("select", {});
+    var selPortee = el("select", { id: "fb-niveau" });
     Object.keys(NIVEAUX).forEach(function (k) {
       selPortee.appendChild(el("option", { value: k }, NIVEAUX[k].nom + " — " + NIVEAUX[k].quoi));
     });
     if (cibles && cibles.length) selPortee.value = "declinaison";
-    var aideN = el("div.indice", {}, NIVEAUX.idee.onde);
-    selPortee.addEventListener("change", function () { aideN.textContent = NIVEAUX[selPortee.value].onde; });
+    function phraseDe(t) { return t.charAt(0).toUpperCase() + t.slice(1) + "."; }
+    var aideN = el("div.indice", {}, phraseDe(NIVEAUX[selPortee.value].onde));
+    selPortee.addEventListener("change", function () { aideN.textContent = phraseDe(NIVEAUX[selPortee.value].onde); });
 
+    /* Les pièces par leur titre ; le code reste en info-bulle, pour départager
+     * deux pièces de même support et de même marché. */
     var choixCibles = coches((p.livrables || []).filter(function (l) { return !l.annule; })
-      .map(function (l) { return { id: l.id, nom: l.nom }; }), cibles || []);
+      .map(function (l) { var t = KV.titre(l); return { id: l.id, nom: t, titre: t !== l.nom ? l.nom : null }; }), cibles || []);
     var choixMarches = coches(DEPOT.liste("marches").map(function (m) { return { id: m.id, nom: m.nom }; }), []);
     var choixRoutes = coches((p.sections.pistes || []).map(function (x) { return { id: x.id, nom: x.titre }; }), []);
 
@@ -306,25 +312,25 @@ window.FEEDBACK = (function () {
     function dessiner() {
       O.vider(zoneCibles);
       var n = selPortee.value;
-      if (n === "declinaison" || n === "maitre") zoneCibles.appendChild(bloc("Quelles livrables", choixCibles.noeud));
+      if (n === "declinaison" || n === "maitre") zoneCibles.appendChild(bloc("Quels livrables", choixCibles.noeud));
       if (n === "adaptation" || n === "maniere") zoneCibles.appendChild(bloc("Quels marchés", choixMarches.noeud));
       if (n === "idee" || n === "maniere") zoneCibles.appendChild(bloc("Quelles pistes", choixRoutes.noeud));
 
       var i = impact(brouillon());
-      var c = CANAUX[selCanal.value];
       O.vider(apercu);
       var dn = NIVEAUX[selPortee.value];
       apercu.appendChild(el("div.stats", {},
-        UI.stat("Livrables touchés", String(i.assets), i.marches.length + " marchés", i.assets > 5 ? "alerte" : ""),
+        UI.stat("Livrables touchés", String(i.assets), O.pluriel(i.marches.length, "marché"), i.assets > 5 ? "alerte" : ""),
         UI.stat("COÛT ESTIMÉ", i.jours + " j", "à mi-estimation par livrable", i.jours > 5 ? "alerte" : ""),
         i.enProduction ? UI.stat("Déjà en production", String(i.enProduction),
           "BAT signé — les rappeler coûte", "alerte") : null
       ));
-      apercu.appendChild(UI.banniere(dn.ton === "alerte" ? "rouge" : "",
-        dn.onde + ".  " + dn.avant));
+      /* Seuls l'idée et le KV master alertent : le reste se dit sur un ton
+       * neutre, sans triangle. */
+      var onde = dn.onde.charAt(0).toUpperCase() + dn.onde.slice(1) + ". " + dn.avant;
+      apercu.appendChild(dn.ton === "alerte" ? UI.banniere("rouge", onde) : el("p.fb-note", {}, onde));
       if (i.aVenir) apercu.appendChild(UI.banniere("",
         "Une règle de déclinaison s'applique aussi à ce qui n'existe pas encore : les formats à venir la porteront sans qu'on ait à y penser."));
-      if (!c.trace) apercu.appendChild(UI.banniere("rouge", c.cout));
     }
     selPortee.addEventListener("change", dessiner);
     selCanal.addEventListener("change", dessiner);
@@ -333,20 +339,27 @@ window.FEEDBACK = (function () {
     choixRoutes.surChangement(dessiner);
     dessiner();
 
+    /* Le manque se dit sous le champ qui manque, et le suivant remplace le
+     * précédent : sur téléphone, il est là où le focus arrive. */
+    var manqueTexte = el("p.remise-erreur", { id: "fb-texte-erreur", role: "alert" }, "");
+    var manqueAuteur = el("p.remise-erreur", { id: "fb-auteur-erreur", role: "alert" }, "");
+    champ.setAttribute("aria-describedby", "fb-texte-erreur");
+    selAuteur.setAttribute("aria-describedby", "fb-auteur-erreur");
     PANNEAU.ouvrir("Enregistrer un retour", p.ref, el("div", {},
-      UI.banniere("", "Un retour non enregistré n'existe pas — et personne ne sera comptable de ce qu'il coûte."),
+      el("p.fb-note", {}, "Notez le retour tel qu'il a été dit ou écrit, même sur WhatsApp : il sera daté et rattaché aux pièces qu'il touche."),
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Ce qui est demandé"), champ),
-        el("div.champ", {}, el("label", {}, "Par qui"), selAuteur),
-        el("div.champ", {}, el("label", {}, "Quand"), champDate),
-        el("div.champ", {}, el("label", {}, "Par quel canal"), selCanal),
-        el("div.champ", {}, el("label", {}, "À quel niveau il s'applique"), selPortee, aideN)),
+        el("div.champ", {}, el("label", { for: "fb-texte" }, "Ce qui est demandé"), champ, manqueTexte),
+        el("div.champ", {}, el("label", { for: "fb-auteur" }, "Par qui"), selAuteur, manqueAuteur),
+        el("div.champ", {}, el("label", { for: "fb-quand" }, "Quand"), champDate),
+        el("div.champ", {}, el("label", { for: "fb-canal" }, "Par quel canal"), selCanal),
+        el("div.champ", {}, el("label", { for: "fb-niveau" }, "À quel niveau il s'applique"), selPortee, aideN)),
       zoneCibles,
       el("div.sousbloc", {}, el("h3", {}, "Ce que ça touche"), apercu),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          if (!champ.value.trim()) { AVIS.refus("Un retour sans texte n'est pas un retour."); return; }
-          if (!selAuteur.value) { AVIS.refus("Un retour sans auteur ne sera imputable à personne."); return; }
+          manqueTexte.textContent = ""; manqueAuteur.textContent = "";
+          if (!champ.value.trim()) { manqueTexte.textContent = "Écrivez ce qui est demandé avant d'enregistrer."; champ.focus(); return; }
+          if (!selAuteur.value) { manqueAuteur.textContent = "Dites qui a formulé ce retour : il sera rattaché à cette personne."; selAuteur.focus(); return; }
           var f = Object.assign(brouillon(), {
             id: O.id("FB"), texte: champ.value.trim(), auteur: selAuteur.value,
             canal: selCanal.value, quand: champDate.value,
@@ -355,6 +368,12 @@ window.FEEDBACK = (function () {
           DEPOT.ajoute("feedbacks", f);
           DEPOT.tracer("retour client", "feedback", projetId, champ.value.trim().slice(0, 50));
           DEPOT.enregistrer(); PANNEAU.fermer(); if (apres) apres();
+          /* Le panneau se fermait sans rien dire, et le retour n'était pas sur
+           * l'écran courant : l'avis dit où il est, et y mène. */
+          var touchees = impact(f).pieces;
+          var dit = touchees.length === 1 ? "Retour enregistré sur « " + KV.titre(touchees[0]) + " »."
+            : touchees.length ? "Retour enregistré sur " + O.pluriel(touchees.length, "pièce") + "." : "Retour enregistré.";
+          if (voir && AVIS.action) AVIS.action(dit, "Voir les retours", voir, 6000); else AVIS.fait(dit);
         } }, "Enregistrer"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
     ));
@@ -373,7 +392,7 @@ window.FEEDBACK = (function () {
     var ecouteurs = [];
     var boite = el("div.chips");
     liste.forEach(function (x) {
-      var b = el("button.chip", { type: "button",
+      var b = el("button.chip", { type: "button", title: x.titre || null,
         "aria-pressed": sel.indexOf(x.id) !== -1 ? "true" : null,
         onclick: function () {
           var i = sel.indexOf(x.id);
@@ -387,19 +406,20 @@ window.FEEDBACK = (function () {
       surChangement: function (f) { ecouteurs.push(f); } };
   }
 
-  /* ————————————————————— Trancher un retour ————————————————————— */
+  /* ————————————————————— Décider d'un retour ————————————————————— */
 
   function trancher(f, apres) {
     var p = DEPOT.trouve("projets", f.projet);
     var i = impact(f);
     var motifs = motifsDeRefus(f);
-    var selI = el("select", {});
+    var selI = el("select", { id: "fb-issue" });
     ["facture", "absorbe", "refuse"].forEach(function (k) {
       selI.appendChild(el("option", { value: k }, ISSUES[k].nom));
     });
     var aide = el("div.indice", {}, ISSUES.facture.quoi);
     selI.addEventListener("change", function () { aide.textContent = ISSUES[selI.value].quoi; });
-    var champ = el("textarea", { rows: 2, placeholder: "Le motif, en une phrase" });
+    var champ = el("textarea", { id: "fb-motif", rows: 2, placeholder: "Le motif, en une phrase" });
+    var erreur = el("p.remise-erreur", { role: "alert" }, "");
 
     var choisi = null;
     var listeM = el("div.motifs");
@@ -413,36 +433,37 @@ window.FEEDBACK = (function () {
       listeM.appendChild(b);
     });
 
-    PANNEAU.ouvrir("Trancher — " + O.joli(f.quand), p ? p.ref : "", el("div", {},
+    PANNEAU.ouvrir("Décider de ce retour", (p ? p.ref + " · " : "") + O.joli(f.quand), el("div", {},
       el("div.fb-texte", {}, f.texte),
       el("div.stats", {},
-        UI.stat("Livrables", String(i.assets), i.marches.length + " marchés", ""),
+        UI.stat("Livrables", String(i.assets), O.pluriel(i.marches.length, "marché"), ""),
         UI.stat("Coût", i.jours + " j", "de reprise estimée", i.jours > 5 ? "alerte" : ""),
         UI.stat("Versions", String(i.assets), "s'ouvriront si on l'applique", "")
       ),
 
       motifs.length
         ? el("div.sousbloc", {},
-            el("h3", {}, "Sur quoi je peux m'opposer",
-              el("span.droite", {}, motifs.length + (motifs.length > 1 ? " motifs opposables" : " motif opposable"))),
+            el("h3", {}, "Ce qui permet de discuter ce retour",
+              el("span.droite", {}, O.pluriel(motifs.length, "motif"))),
             listeM)
-        : UI.banniere("", "Aucun motif opposable : ce retour arrive avant validation, dans les allers-retours vendus, sur du périmètre prévu. Il se traite, il ne se conteste pas."),
+        : UI.banniere("", "Rien à discuter : ce retour arrive avant validation, dans les allers-retours prévus au devis et sur le périmètre prévu. Il se traite."),
 
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "L'issue"), selI, aide),
-        el("div.champ", {}, el("label", {}, "Le motif"), champ)),
+        el("div.champ", {}, el("label", { for: "fb-issue" }, "L'issue"), selI, aide),
+        el("div.champ", {}, el("label", { for: "fb-motif" }, "Le motif"), champ)),
+      erreur,
 
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           if (ISSUES[selI.value].motifRequis && !champ.value.trim()) {
-            AVIS.refus("Cette issue exige un motif écrit."); return;
+            erreur.textContent = "Écrivez le motif : cette issue le demande."; champ.focus(); return;
           }
           f.issue = selI.value; f.motif = champ.value.trim();
           f.tranche_le = new Date().toISOString(); f.tranche_par = MAISON.titulaire;
           if (selI.value !== "refuse") appliquer(f, i);
           DEPOT.tracer("retour tranché", "feedback", f.projet, ISSUES[selI.value].nom);
           DEPOT.enregistrer(); PANNEAU.fermer(); if (apres) apres();
-        } }, "Trancher"),
+        } }, "Décider"),
         el("button.b.nu", { type: "button", onclick: PANNEAU.fermer }, "Annuler"))
     ));
   }

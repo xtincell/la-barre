@@ -15,18 +15,25 @@ window.VUE_ASSET = (function () {
   function ouvrir(p, l, rafraichir, mode) {
     onglet = mode || "poser";
     function apres() { PANNEAU.fermer(); ouvrir(p, l, rafraichir, onglet); if (rafraichir) rafraichir(); }
-    PANNEAU.ouvrir(l.nom, "V" + (l.version || 1), rendre(p, l, apres));
+    PANNEAU.ouvrir(KV.titre(l), "V" + (l.version || 1), rendre(p, l, apres));
     DEPOT.lu("livrables", l.id);
   }
 
   /* Les vues d’un livrable séparent la création, son verdict et sa remise. */
   var ONGLETS = [
     { cle: "poser", nom: "Visuels et fichiers" },
-    { cle: "juger", nom: "Critères et verdict" },
+    { cle: "juger", nom: "Critères et décision" },
     { cle: "origine", nom: "Versions et dépendances" },
     { cle: "remise", nom: "BAT et remise" },
   ];
   var onglet = "poser";
+  /* La pièce dont le bloc des retours s'ouvre au prochain dessin, une fois. */
+  var retoursOuverts = null;
+  function retoursAOuvrir(l) {
+    if (retoursOuverts !== l.id) return null;
+    retoursOuverts = null;
+    return true;
+  }
 
   function page(p, l, apres, modeInitial, numero) {
     var mode = ONGLETS.some(function (x) { return x.cle === modeInitial; }) ? modeInitial : "poser";
@@ -71,10 +78,15 @@ window.VUE_ASSET = (function () {
     } }, nom);
   }
 
-  function etatVerdict(v) {
+  /* `ailleurs` : un autre onglet a écrit la validation de cette version, que
+   * la base de cette page n'a pas encore. L'étiquette dit « Validé », comme
+   * la ligne d'à côté, et pas « À examiner ». */
+  function etatVerdict(v, enCours, ailleurs) {
+    if (enCours) return UI.eti("Validation en cours", "vert");
+    if (ailleurs) return UI.eti(MAISON.verdicts.find(function (x) { return x.cle === "approuve"; }).nom, "vert");
     var def = v && MAISON.verdicts.find(function (x) { return x.cle === v.verdict; });
     var ton = v && v.verdict === "approuve" ? "vert" : "attente";
-    return def ? UI.eti(def.nom, ton) : v && v.verdict ? UI.eti("Verdict consigné", "terne") : UI.eti("À examiner", "attente");
+    return def ? UI.eti(def.nom, ton) : v && v.verdict ? UI.eti("Décision enregistrée", "terne") : UI.eti("À examiner", "attente");
   }
 
   function mediaRevue(objet, nom) {
@@ -127,7 +139,7 @@ window.VUE_ASSET = (function () {
       el("h2", {}, "Version " + numero + " · historique"),
       el("div.rvp-plan", {},
         el("figure.rvp-toile", {}, mediaRevue(media, l.nom + " — V" + numero)),
-        el("div.rvp-pupitre", {}, ancienne.verdict ? etatVerdict(ancienne) : el("p", {}, "Aucun verdict consigné."),
+        el("div.rvp-pupitre", {}, ancienne.verdict ? etatVerdict(ancienne) : el("p", {}, "Aucune décision enregistrée."),
           ancienne.juge_le ? el("p.rvp-meta", {}, O.joli(ancienne.juge_le)) : null,
           ancienne.motif ? el("p", {}, ancienne.motif) : null,
           ouverture)),
@@ -147,30 +159,33 @@ window.VUE_ASSET = (function () {
     var marche = l.marche && DEPOT.trouve("marches", l.marche);
     var b = p.sections.bigidea || {};
     var critere = (b.criteres || []).find(Boolean) || (REGLES.grille("livrable", l)[0] || {}).texte;
-    var action = !lecture && !verdict ? el("button.b.or.rvp-action", { type: "button",
-      onclick: function () { VUE_LIVRABLE.choisirVerdict(p, l, apres); } }, "Rendre un verdict")
+    var enCours = !lecture && !verdict && VUE_LIVRABLE.validationEnCours(l);
+    var ailleurs = !lecture && !verdict && !enCours && VUE_LIVRABLE.valideeAilleurs(l, numero);
+    var action = !lecture && !verdict ? VUE_LIVRABLE.decider(p, l, apres)
       : !lecture && verdict === "approuve" ? ongletLien(lien, "remise", "b.or.rvp-action", "Suivre le BAT et la remise") : null;
     var historique = Array.from(new Set((l.versions || []).map(function (ancienne) { return ancienne.n || ancienne.numero; })))
       .filter(function (n) { return n && Number(n) !== numero; }).reverse();
     var retours = retoursClient(p, l, apres, lecture, numero);
+    var ouvrirRetours = retoursAOuvrir(l);
     var documents = fichiersRevue(l, numero);
     var annotation = !lecture && IMAGE.source(l) ? el("button.b.nu", { type: "button",
       onclick: function () { ANNOT.ouvrir(p, l, apres, numero); } }, "Annoter le visuel") : null;
     return el("div.rvp", {},
       el("div.rvp-plan", {},
-        toile(l, l.nom + " — V" + numero),
+        toile(l, KV.titre(l) + " — V" + numero),
         el("div.rvp-pupitre", {},
           el("div.rvp-portee", {},
             el("p.rvp-meta", {}, (marche ? marche.nom : "Marché non renseigné") + " · V" + numero),
-            el("div.rvp-etat", { tabindex: "-1" }, verdict || !lecture ? etatVerdict(v)
+            el("div.rvp-etat", { tabindex: "-1" }, verdict || !lecture ? etatVerdict(v, enCours, ailleurs)
               : UI.eti(v ? "Consultation" : "Version à soumettre", "terne"))),
           !verdict && critere ? el("p.rvp-critere", {}, critere) : null,
           action,
-          verdict && v.motif ? el("p.rvp-motif", {}, v.motif) : null)),
+          verdict && v.motif ? el("p.rvp-motif", {}, v.motif) : null,
+          !lecture && verdict ? VUE_LIVRABLE.changerDecision(p, l, version, apres) : null)),
       el("div.rvp-annexes", {},
         horsEcart(p, l, apres, lecture),
         !lecture && !verdict ? el("details", {}, el("summary", {}, "Critères et contrôles"), VUE_LIVRABLE.controles(p, l)) : null,
-        retours ? el("details", {}, el("summary", {}, "Retours et annotations"), retours) : null,
+        retours ? el("details", { open: ouvrirRetours }, el("summary", {}, "Retours et annotations"), retours) : null,
         documents ? el("details", {}, el("summary", {}, "Documents de la V" + numero), documents) : null,
         historique.length ? el("details", {}, el("summary", {}, "Versions précédentes"),
           el("ul.rvp-docs", {}, historique.map(function (n) {
@@ -184,7 +199,7 @@ window.VUE_ASSET = (function () {
   function remise(p, l, lien, apres) {
     return el("div.rvp.rvp-remise", {}, REMISE.suiviPiece(p, l, apres),
       el("nav.rvp-liens", { "aria-label": "Autres vues du livrable" },
-        ongletLien(lien, "juger", "b.nu", "Revoir le verdict"),
+        ongletLien(lien, "juger", "b.nu", "Revoir la décision"),
         ongletLien(lien, "poser", "b.nu", "Visuels et fichiers")));
   }
 
@@ -198,19 +213,26 @@ window.VUE_ASSET = (function () {
         APP.remplacerVue(lien(cle));
       };
     }
+    /* Après un retour enregistré : l'onglet de la décision, son bloc de
+     * retours ouvert. */
+    function voirRetours() {
+      retoursOuverts = l.id;
+      if (lien && APP.remplacerVue) APP.remplacerVue(lien("juger")); else choisir("juger");
+    }
     var navigation = lien ? el("nav.onglets", { "aria-label": "Vues du livrable" }, ONGLETS.map(function (o) {
       return el("a.onglet", { href: lien(o.cle), onclick: naviguer(o.cle), "aria-current": o.cle === courant ? "page" : null }, o.nom);
     })) : UI.onglets(ONGLETS, courant, choisir);
     var retours = courant === "juger" ? retoursClient(p, l, apres) : null;
+    var ouvrirRetours = courant === "juger" ? retoursAOuvrir(l) : null;
     return el("div.as" + (courant === "juger" ? ".as-revue" : ""), {},
-      entete(p, l),
+      entete(p, l, !!lien),
       horsEcart(p, l, apres),
-      courant === "poser" ? bande(p, l, apres) : null,
+      courant === "poser" ? bande(p, l, apres, voirRetours) : null,
       navigation,
       el("div", { style: { "margin-top": "1rem" } },
         courant === "poser" ? el("div", {}, cases(p, l, apres), packsMontres(p, l, apres), MOCKUP.bloc(p, l, apres))
           : courant === "juger" ? el("div", {}, VUE_LIVRABLE.criteres(p, l, apres, true),
-              retours ? el("details", {}, el("summary", {}, "Retours client"), retours) : null,
+              retours ? el("details", { open: ouvrirRetours }, el("summary", {}, "Retours client"), retours) : null,
               REMISE.etatPiece(l).cle !== "validation" ? (lien
                 ? el("a.b.or", { href: lien("remise"), onclick: naviguer("remise") }, "Suivre le BAT et la remise")
                 : el("button.b.or", { type: "button", onclick: function () { choisir("remise"); } }, "Suivre le BAT et la remise")) : null)
@@ -223,8 +245,9 @@ window.VUE_ASSET = (function () {
 
   function vide(t) { return el("p.rien", {}, t); }
 
-  /* Ce qu'on voit avant de juger : le livrable, son niveau, son marché, son état. */
-  function entete(p, l) {
+  /* Ce qu'on voit avant de juger : le livrable, son niveau, son marché, son état.
+   * Sur la page, le code est déjà en surtitre : la ligne d'infos ne le redit pas. */
+  function entete(p, l, surPage) {
     var m = DEPOT.trouve("marches", l.marche);
     var s = DEPOT.trouve("supports", l.support);
     var resp = l.responsable ? DEPOT.trouve("personnes", l.responsable) : null;
@@ -234,8 +257,9 @@ window.VUE_ASSET = (function () {
     return el("div.as-tete", {},
       el("div.ast-v", {}, IMAGE.vignette(l, "planche")),
       el("div.ast-c", {},
-        el("div.ast-n", {}, l.nom),
+        el("div.ast-n", {}, KV.titre(l)),
         el("div.ast-m", {},
+          !surPage && KV.surtitre(l) ? el("span", {}, KV.surtitre(l)) : null,
           UI.eti(KV.NIVEAUX[KV.niveau(l)].nom, "terne"),
           m ? el("span", {}, UI.drapeau(m), " ", m.nom) : null,
           s ? el("span", {}, s.nom) : null,
@@ -261,28 +285,31 @@ window.VUE_ASSET = (function () {
         : el("span", {}, "au disque de l'agence"));
   }
 
-  /* Une adaptation hors de l'écart déclaré de son marché : elle se juge comme
-   * les autres — rien ne la bloque —, et le signal dit ce que la revue doit
-   * trancher à côté du verdict (ecarts-marche.js). */
+  /* Une adaptation qui change ce que son marché n'a pas prévu : elle se valide
+   * comme les autres — rien ne la bloque —, et la question est posée en clair à
+   * côté (ecarts-marche.js) : autoriser pour ce marché, ou faire corriger. */
   function horsEcart(p, l, apres, lecture) {
     var x = window.ECARTS_MARCHE ? ECARTS_MARCHE.etiquette(p, l) : null;
     if (!x) return null;
     if (lecture) return el("p.rvp-meta", {}, x.texte);
+    /* Le bandeau est le bouton qui ouvre le choix : il le dit (« Décider › »),
+     * sur téléphone aussi, où rien ne se survole. */
     return el("button.plc-hors.as-hors", { type: "button",
       onclick: function () { ECARTS_MARCHE.revoir(p, l, apres); } },
       el("span.plch-q", {}, x.texte),
-      el("span.plch-x", {}, x.revue ? "Retour décidé : l'adaptation revient à l'écart déclaré."
-        : "Corriger l'écart déclaré, ou corriger l'adaptation — ouvrir la revue."));
+      el("span.plch-x", {}, x.revue ? "Correction demandée : la décli revient à ce qui était prévu."
+        : x.question),
+      el("span.plch-a", {}, x.revue ? "Revoir" : "Décider", el("span", { "aria-hidden": "true" }, " ›")));
   }
 
   /* ————————————————————— La question ————————————————————— */
 
-  function bande(p, l, apres) {
+  function bande(p, l, apres, voirRetours) {
     return UI.recevabilite("Que manque-t-il pour produire ?",
       PRODUCTION.porte(p, l), null,
       [
         { nom: "Poser un fichier", fort: true, quand: function () { PRODUCTION.ajouter(p, l, apres); } },
-        { nom: "Enregistrer un retour", quand: function () { FEEDBACK.ouvrir(p.id, [l.id], apres); } },
+        { nom: "Enregistrer un retour", quand: function () { FEEDBACK.ouvrir(p.id, [l.id], apres, voirRetours); } },
         { nom: "Nouvelle version", doux: true, quand: function () {
             VERSION.nouvelle(l, l.nom, apres, { perime: function () { return KV.descendance(p, l.id); } });
           } },
@@ -333,7 +360,7 @@ window.VUE_ASSET = (function () {
        * fabrication, donc que rien n'est irréversible. */
       horsSujet.length
         ? el("p.pt-hs", {}, et.filter(function (e) { return e.exige; }).length === 1
-            ? "Un seul étage sur ce support : rien ne part en fabrication, "
+            ? "Une seule étape sur ce support : rien ne part en fabrication, "
               + "donc rien ne devient irréversible."
             : horsSujet.length === 1
               ? "Ce support ne demande pas de " + nu(horsSujet[0].def.nom) + "."
@@ -350,12 +377,11 @@ window.VUE_ASSET = (function () {
     var faits = exiges.filter(function (e) { return e.ok; }).length;
 
     return el("div.pt-c" + (retenue ? "" : ".hors"), {},
-      el("div.ptc-t", {}, "La porte"),
+      el("div.ptc-t", {}, "Avant le départ"),
       el("div.ptc-n", {}, faits + " sur " + exiges.length,
         el("span", {}, faits === exiges.length
-          ? "la porte est franchie : le livrable peut partir"
-          : exiges.length - faits === 1 ? "un étage reste à franchir"
-          : (exiges.length - faits) + " étages restent à franchir")),
+          ? "tout est prêt : le livrable peut partir"
+          : O.pluriel(exiges.length - faits, "étape reste à faire", "étapes restent à faire"))),
       retenue
         ? el("div.ptc-r", {}, "Sur la piste « " + piste.titre + " », arbitrée et retenue.")
         : el("div.ptc-r", {}, piste
@@ -540,7 +566,7 @@ window.VUE_ASSET = (function () {
 
     return el("div.as-bloc", {},
       el("div.asb-t", {}, "Ce que le client en a dit",
-        el("span", {}, (fbs.length + annots.length) + " retours")),
+        el("span", {}, O.pluriel(fbs.length + annots.length, "retour"))),
 
       fbs.map(function (f) {
         var i = FEEDBACK.impact(f);
@@ -556,13 +582,13 @@ window.VUE_ASSET = (function () {
             el("span", {}, i.assets + (i.assets > 1 ? " livrables touchés" : " livrable touché")),
             UI.eti(iss.nom, iss.ton)),
           f.issue === "ouvert" && !lecture
-            ? el("button.b.nu", { type: "button", onclick: function () { FEEDBACK.trancher(f, apres); } }, "Trancher")
+            ? el("button.b.nu", { type: "button", onclick: function () { FEEDBACK.trancher(f, apres); } }, "Décider")
             : f.motif ? el("div.asfb-mo", {}, f.motif) : null);
       }),
 
       annots.length && !lecture
         ? el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); ANNOT.ouvrir(p, l, apres, numero); } },
-            annots.length + " points posés sur le visuel →")
+            O.pluriel(annots.length, "point posé", "points posés") + " sur le visuel →")
         : null
     );
   }
@@ -573,6 +599,8 @@ window.VUE_ASSET = (function () {
     var h = VERSION.historique(l);
     if (!h.length) return null;
     var d = h[h.length - 1];
+    /* Une version reçue sans motif de clôture (une simple soumission) n'a pas
+     * d'origine : on n'écrit pas « Fermée par : undefined », on se tait. */
     var o = VERSION.ORIGINES[d.origine] || { nom: d.origine };
 
     return el("div.as-bloc", {},
@@ -582,9 +610,9 @@ window.VUE_ASSET = (function () {
           ? el("div.asp-v", {}, el("span", {}, "Le visuel de la V" + d.n + " n'est pas conservé — seul le dernier l'est."))
           : null,
         el("div.asp-c", {},
-          el("div.aspc-o", {}, "Fermée par : " + o.nom),
-          el("div.aspc-m", {}, d.motif),
-          el("div.aspc-q", {}, O.joli(d.close_le)),
+          o.nom ? el("div.aspc-o", {}, "Fermée par : " + o.nom) : null,
+          d.motif ? el("div.aspc-m", {}, d.motif) : null,
+          d.close_le ? el("div.aspc-q", {}, O.joli(d.close_le)) : null,
           d.etat && d.etat.kv && d.etat.kv.copy
             ? el("div.aspc-d", {}, "Accroche d'alors : « " + d.etat.kv.copy + " »")
             : null)

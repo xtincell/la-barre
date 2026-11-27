@@ -18,7 +18,7 @@ window.VALIDATION = (function () {
     socle: { nom: "la plateforme de marque", criteres: null, poste: "creation",
       apres: "Les campagnes pourront s'y rattacher." },
     strategie: { nom: "la stratégie", criteres: null, poste: "planning",
-      apres: "Le territoire devient opposable au DA." },
+      apres: "Le territoire devient la référence du DA." },
     bigidea: { nom: "la big idea", criteres: "bigidea", poste: "creation",
       apres: "La demande de proposition peut partir." },
     piste: { nom: "la piste créative", criteres: "proposition", poste: "da",
@@ -27,14 +27,27 @@ window.VALIDATION = (function () {
      * qui rend chaque publication opposable. Sans elle, chacune peut être
      * rediscutée le jour de sa parution — et un cycle ne se rattrape pas. */
     calendrier: { nom: "le calendrier du mois", criteres: null, poste: "clientele",
-      apres: "Les publications du mois deviennent opposables : on ne rediscute plus un livrable validé au calendrier." },
+      apres: "Les publications du mois sont arrêtées : on ne rediscute plus un livrable validé au calendrier." },
   };
+
+  /* Les mots d'une décision sur un document. Refuser « hors brief » n'a pas de
+   * sens sur le brief lui-même : la quatrième sortie se dit « hors périmètre ».
+   * Les boutons disent le geste (« Valider »), l'état dit ce qui a été décidé
+   * (« Validé »). La clé `hors` ne change pas. */
+  function nomDe(v) { return v.cle === "hors" ? "Refusé : hors périmètre" : v.nom; }
+  function gesteDe(v) { return v.cle === "hors" ? "Refuser : hors périmètre" : v.geste || v.nom; }
+  var MOTIF_VIDE = {
+    reserve: "Choisissez un critère ou écrivez vos réserves.",
+    retour: "Choisissez un critère ou écrivez ce qu'il faut changer.",
+    hors: "Choisissez un critère ou écrivez pourquoi vous refusez.",
+  };
+  var finir = O.finir;
 
   function etat(objet) {
     var d = objet && objet.validation;
     if (!d) return { cle: "aucun", nom: "non validé", ton: "attente" };
     var v = MAISON.verdicts.filter(function (x) { return x.cle === d.verdict; })[0];
-    return { cle: d.verdict, nom: (v ? v.nom : d.verdict) + (d.portee === "travail" ? " pour travail" : ""),
+    return { cle: d.verdict, nom: (v ? nomDe(v) : d.verdict) + (d.portee === "travail" ? " pour travail" : ""),
       ton: d.verdict === "approuve" && d.portee !== "travail" ? "vert" : d.verdict === "reserve" || d.portee === "travail" ? "attente" : "alerte",
       quand: d.quand, motif: d.motif, par: d.par, version: d.version };
   }
@@ -71,16 +84,15 @@ window.VALIDATION = (function () {
 
     var lignes = [];
     if (e.cle === "aucun") {
-      lignes.push(UI.banniere("", "Personne n'a rendu de verdict sur " + def.nom
-        + ". Tant qu'il n'y en a pas, l'aval travaille sans savoir si l'amont tient."));
+      lignes.push(UI.banniere("", "Personne n'a encore validé " + def.nom
+        + ". Tant que ce n'est pas fait, la suite avance sans savoir si ce qui précède tient."));
     } else if (vieux) {
       lignes.push(UI.banniere("rouge", e.nom + " — mais sur la V" + e.version
         + ", et on en est à la V" + VERSION.num(objet)
-        + ". Le verdict ne couvre plus ce qui est écrit."));
+        + ". Cette décision ne couvre plus ce qui est écrit."));
     } else {
-      lignes.push(UI.banniere(e.ton === "vert" ? "vert" : "",
-        e.nom + " le " + O.joli(e.quand) + (e.motif ? " — " + e.motif : "")
-        + (e.ton === "vert" ? ".  " + def.apres : "")));
+      var dit = e.nom + " le " + O.joli(e.quand) + (e.motif ? " — " + e.motif : "");
+      lignes.push(UI.banniere(e.ton === "vert" ? "vert" : "", e.ton === "vert" ? finir(dit) + " " + def.apres : dit));
     }
 
     if (infs) {
@@ -88,15 +100,29 @@ window.VALIDATION = (function () {
         + " à confirmer : une approbation permet de travailler, elle ne consigne pas ces confirmations."));
     }
 
+    /* La décision qui couvre déjà cette version ne se repropose pas sous
+     * elle (« Validé le 3 oct. » puis « Valider ») ; une validation « pour
+     * travail » reste à confirmer, son bouton reste. Une fois la version
+     * décidée, les autres décisions se rangent sous « Changer la décision »,
+     * comme sur la page d'une pièce : on n'en change pas par mégarde. */
+    var decidee = e.cle !== "aucun" && !vieux;
+    var aConfirmer = decidee && e.cle === "approuve" && e.ton !== "vert";
+    function geste(v) {
+      return el("button.b" + (v.cle === "approuve" ? ".vert" : ""), { type: "button", "data-geste": v.cle,
+        onclick: function () { rendre(p, cle, objet, v, rafraichir); } },
+        el("span", { "aria-hidden": "true" }, v.signe), " " + gesteDe(v));
+    }
+    var proposes = MAISON.verdicts.filter(function (v) {
+      return vieux || v.cle !== e.cle || (v.cle === "approuve" && e.ton !== "vert");
+    });
+    var directs = proposes.filter(function (v) { return !decidee || (aConfirmer && v.cle === "approuve"); });
+    var changer = proposes.filter(function (v) { return directs.indexOf(v) === -1; });
+
     return el("div.vd", {},
       lignes,
       el("div.vd-gestes", {},
         el("span.vd-v", {}, "V" + VERSION.num(objet)),
-        MAISON.verdicts.map(function (v) {
-          return el("button.b" + (v.cle === "approuve" ? ".vert" : ""), { type: "button",
-            title: v.nom, onclick: function () { rendre(p, cle, objet, v, rafraichir); } },
-            v.signe + "  " + v.nom);
-        }),
+        directs.map(geste),
         el("button.b.nu", { type: "button", onclick: function () {
           VERSION.nouvelle(objet, def.nom, rafraichir, {
             quand: function () { if (objet.validation) objet.validation.perime = true; },
@@ -107,10 +133,15 @@ window.VALIDATION = (function () {
               PANNEAU.ouvrir("Versions — " + def.nom, p.ref, VERSION.fil(objet));
             } }, VERSION.historique(objet).length + (VERSION.historique(objet).length > 1 ? " versions" : " version"))
           : null
-      ));
+      ),
+      changer.length
+        ? el("details.rvp-autre.vd-autre", {}, el("summary", {}, "Changer la décision"),
+            el("p.rvp-note", {}, "La nouvelle décision s'ajoute à l'historique de la V" + VERSION.num(objet) + "."),
+            el("div.vd-gestes", {}, changer.map(geste)))
+        : null);
   }
 
-  /* ————————————————————— Rendre le verdict ————————————————————— */
+  /* ————————————————————— Décider ————————————————————— */
 
   function rendre(p, cle, objet, verdict, rafraichir) {
     var contenuLu = JSON.stringify(objet);
@@ -131,8 +162,9 @@ window.VALIDATION = (function () {
 
     var suite = aval(p, cle, verdict);
     var enAttente = window.INFERENCE ? INFERENCE.liste(p, cle) : [];
+    var erreur = el("p.remise-erreur", { role: "alert" }, "");
 
-    PANNEAU.sur(verdict.nom + " — " + def.nom, "V" + VERSION.num(objet), el("div", {},
+    PANNEAU.sur(gesteDe(verdict), def.nom.charAt(0).toUpperCase() + def.nom.slice(1) + " · V" + VERSION.num(objet), el("div", {},
       suite.length
         ? el("div.stats", {}, suite.map(function (s) {
             return UI.stat(s.t, s.v, s.s, s.ton || "");
@@ -143,21 +175,25 @@ window.VALIDATION = (function () {
         ? el("div", {},
             criteres.length
               ? el("div.sousbloc", {}, el("h3", {}, "Le motif, d'abord dans les critères écrits"), liste)
-              : UI.banniere("", "Aucun critère écrit pour ce document : le refus ne pourra s'appuyer que sur du texte libre. C'est exactement la dérive que le §8 nomme."),
+              : UI.banniere("", "Aucun critère écrit pour ce document : le refus ne pourra s'appuyer que sur du texte libre. Écrivez d'abord les critères pour que la décision se fonde sur eux."),
             el("div.form", {}, el("div.champ", {},
               el("label", {}, criteres.length ? "Ou en toutes lettres" : "Le motif"), libre)))
         : UI.banniere(enAttente.length ? "" : "vert", enAttente.length
-          ? "L’approbation sera consignée pour travail. " + enAttente.length + " champs restent à confirmer ; ce verdict ne leur attribue aucun accord."
+          ? "La validation vaudra pour travailler. " + (enAttente.length > 1 ? enAttente.length + " champs restent" : "1 champ reste")
+            + " à confirmer : cette validation ne vaut pas accord sur ces champs."
           : def.apres),
+
+      erreur,
 
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           if (JSON.stringify(objet) !== contenuLu) {
-            AVIS.refus("Le document a changé depuis l’ouverture. Relisez sa version actuelle avant de rendre le verdict."); return;
+            erreur.textContent = "Le document a changé : relisez-le avant de décider."; return;
           }
           var motif = choisi || libre.value.trim();
           if (verdict.motifRequis && !motif) {
-            AVIS.refus("Ce verdict exige un motif. Refuser sans critère, c'est refuser par goût.");
+            erreur.textContent = MOTIF_VIDE[verdict.cle] || "Choisissez un critère ou écrivez le motif.";
+            libre.focus();
             return;
           }
           objet.validation = { verdict: verdict.cle, motif: motif || null,
@@ -170,9 +206,9 @@ window.VALIDATION = (function () {
             verdict: verdict.cle, motif: motif || null, quand: objet.validation.quand,
             qui: MAISON.titulaire, acteur: objet.validation.acteur, version: objet.validation.version,
             portee: objet.validation.portee, titre: def.nom });
-          DEPOT.tracer("verdict", cle, p.id, verdict.nom + (motif ? " — " + motif : ""));
+          DEPOT.tracer("verdict", cle, p.id, nomDe(verdict) + (motif ? " — " + motif : ""));
           DEPOT.enregistrer(); PANNEAU.fermerSur(); if (rafraichir) rafraichir();
-        } }, verdict.nom),
+        } }, gesteDe(verdict)),
         verdict.cle !== "approuve"
           ? el("button.b", { type: "button", onclick: function () {
               PANNEAU.fermerSur(); PANNEAU.fermer();

@@ -102,6 +102,52 @@ window.ECARTS_MARCHE = (function () {
     return ordonner(types).map(function (c) { return TYPES[ORDRE.indexOf(c)].nom; }).join(" + ");
   }
 
+  /* ————— Le changement dit en clair —————
+   *
+   * Une adaptation qui change ce que son marché n'a pas prévu se dit comme on
+   * le dirait en revue : « Ghana : la langue a changé sans que ce soit prévu. »,
+   * et la question est fermée : « Autoriser pour le Ghana, ou faire corriger la
+   * décli ? ». Les clés et les fonctions ne changent pas. */
+  var EN_CLAIR = { langue: "la langue", marque: "la marque", produit: "le produit (SKU)",
+    reglementaire: "les mentions réglementaires" };
+
+  function enClair(types) {
+    var mots = ordonner(types || []).map(function (c) { return EN_CLAIR[c]; });
+    if (!mots.length) return "";
+    var pluriel = mots.length > 1 || mots[0].indexOf("les ") === 0;
+    return (mots.length === 1 ? mots[0] : mots.slice(0, -1).join(", ") + " et " + mots[mots.length - 1])
+      + (pluriel ? " ont changé" : " a changé");
+  }
+
+  /* « pour le Ghana », « pour la Côte d’Ivoire », « pour l’Égypte » : l'article
+   * se lit sur le premier mot du nom (avant un tiret : « Guinée-Bissau »), avec
+   * les exceptions courantes. Un h aspiré se lit comme une consonne : « pour la
+   * Hongrie », « pour le Honduras ». */
+  var SANS_ARTICLE = ["madagascar", "maurice", "cuba", "haïti", "djibouti", "singapour", "malte", "chypre", "israël",
+    "oman", "bahreïn", "monaco", "sao tomé-et-principe"];
+  var PLURIELS = ["états-unis", "pays-bas", "émirats arabes unis", "comores", "seychelles", "philippines", "maldives"];
+  /* Comparés au nom entier comme à son premier mot : « Royaume-Uni » se lit
+   * sur « royaume », qui finit par -e et passerait pour un féminin. */
+  var MASCULINS = ["mozambique", "cambodge", "mexique", "zimbabwe", "belize", "suriname", "royaume-uni", "royaume"];
+  var FEMININS = ["rdc", "rca", "sierra leone"];
+  var H_ASPIRE = ["hongrie", "honduras"];
+  function pourLe(m) {
+    var nom = m && m.nom ? String(m.nom).trim() : "";
+    if (!nom) return "pour " + ((m && m.code) || "ce marché");
+    var n = nom.toLowerCase(), premier = n.split(/[\s-]/)[0];
+    if (SANS_ARTICLE.indexOf(n) !== -1) return "pour " + nom;
+    if (PLURIELS.indexOf(n) !== -1) return "pour les " + nom;
+    if (FEMININS.indexOf(n) !== -1) return "pour la " + nom;
+    if (/^[aeiouyhâàéèêîïôœ]/.test(n) && H_ASPIRE.indexOf(premier) === -1) return "pour l’" + nom;
+    if (MASCULINS.indexOf(n) !== -1 || MASCULINS.indexOf(premier) !== -1 || !/e$/.test(premier)) return "pour le " + nom;
+    return "pour la " + nom;
+  }
+
+  function nomDuMarche(m, l) { return (m && m.nom) || (m && m.code) || (l && l.marche) || "Ce marché"; }
+
+  function phrase(m, l, hors) { return nomDuMarche(m, l) + " : " + enClair(hors) + " sans que ce soit prévu."; }
+  function question(m) { return "Autoriser " + pourLe(m) + ", ou faire corriger la décli ?"; }
+
   /* ————————————————————— La déclaration d'un couple projet × marché ————————————————————— */
 
   function table(p) { return (p && p.perimetre && p.perimetre.ecarts) || {}; }
@@ -352,6 +398,7 @@ window.ECARTS_MARCHE = (function () {
         var m = DEPOT.trouve("marches", x.marche);
         out.push({ projet: p.id, ref: p.ref || p.id, nomProjet: p.nom, livrable: x.livrable,
           nom: l ? l.nom : x.livrable, marche: m ? m.code : x.marche, hors: x.hors.slice(),
+          texte: phrase(m, l, x.hors), question: question(m),
           declaration: x.declaration ? x.declaration.types.slice() : null,
           etat: x.revue ? "renvoyee" : "a-trancher", revue: x.revue,
           ouvrir: function (apres) { revoir(p, l, apres); } });
@@ -360,12 +407,14 @@ window.ECARTS_MARCHE = (function () {
     return out;
   }
 
-  /* Une ligne courte, pour une carte : le signal, et s'il est déjà tranché. */
+  /* Une ligne courte, pour une carte : ce qui a changé sans être prévu, la
+   * question à trancher, et si une correction est déjà demandée. */
   function etiquette(p, l) {
     var x = evaluer(p, l);
     if (x.etat !== "hors-ecart") return null;
-    return { texte: "Hors écart déclaré · " + libelle(x.hors), revue: x.revue,
-      suite: x.revue ? "retour décidé" : "à revoir" };
+    var m = DEPOT.trouve("marches", l.marche);
+    return { texte: phrase(m, l, x.hors), question: question(m), revue: x.revue,
+      suite: x.revue ? "correction demandée" : "à décider" };
   }
 
   /* ————————————————————— La revue tranche ————————————————————— */
@@ -418,10 +467,10 @@ window.ECARTS_MARCHE = (function () {
       d = DECISION.poser({ objet: l.id, type: "hors-ecart", projet: p.id, verdict: "retour",
         motif: typeof motif === "string" ? motif.trim() : "", quand: new Date().toISOString(),
         qui: MAISON.titulaire, acteur: DECISION.acteur(),
-        titre: (l.nom || "Adaptation") + " : hors écart déclaré (" + libelle(x.hors) + ")",
+        titre: (l.nom || "Adaptation") + " : changement non prévu à corriger (" + libelle(x.hors) + ")",
         marche: l.marche, types: x.hors.slice() });
     } catch (e) { return refusDe(e); }
-    DEPOT.tracer("adaptation renvoyée hors écart déclaré", "livrables", p.id, (l.nom || l.id) + " : " + libelle(x.hors));
+    DEPOT.tracer("correction de décli demandée", "livrables", p.id, (l.nom || l.id) + " : " + libelle(x.hors));
     DEPOT.enregistrer();
     return { ok: true, decision: d };
   }
@@ -436,40 +485,56 @@ window.ECARTS_MARCHE = (function () {
     return el("div.ligne", {}, el("span.etiq", {}, etiq), el("span.val", {}, valeur || "non renseigné"));
   }
 
+  /* Le titre d'une pièce à l'écran (kv-modele.js) : « Key visual — Ghana »
+   * plutôt que son code. */
+  function titreDe(l) {
+    return l && window.KV && KV.titre ? KV.titre(l) : (l && l.nom) || "Adaptation";
+  }
+
   /* Le panneau de revue : ce que le marché a déclaré, ce que l'adaptation
-   * change, ce qui sort, et les deux gestes. Le motif est exigé par la fabrique. */
+   * change, ce qui sort, et les deux gestes. Le motif est demandé sur place,
+   * avant tout geste ; la fabrique le vérifie aussi. */
   function revoir(p, l, apres) {
     var x = evaluer(p, l);
     var m = DEPOT.trouve("marches", l && l.marche) || { code: (l && l.marche) || "?", nom: "absent du référentiel" };
     if (x.etat !== "hors-ecart") { AVIS.refus(pasHors(x)); return; }
-    var zone = el("textarea", { id: "ecm-motif", rows: 3 });
+    var erreur = el("p.remise-erreur", { id: "ecm-motif-erreur", role: "alert" }, "");
+    var zone = el("textarea", { id: "ecm-motif", rows: 3, "aria-required": "true", "aria-describedby": "ecm-motif-erreur" });
     function geste(faire, fait) {
       return function () {
+        if (!zone.value.trim()) {
+          erreur.textContent = "Dites pourquoi vous autorisez ce changement " + pourLe(m) + ", ou ce qu'il faut corriger.";
+          zone.focus();
+          return;
+        }
         var r = faire(p, l, zone.value);
-        if (!r.ok) { AVIS.refus(r.erreur); return; }
+        if (!r.ok) { erreur.textContent = r.erreur; return; }
         PANNEAU.fermer();
         AVIS.fait(fait);
         if (apres) apres();
       };
     }
-    PANNEAU.ouvrir("Hors écart déclaré", (l.nom || "Adaptation") + " · " + m.nom, el("div", {},
-      el("p.meta", {}, "Cette adaptation change ce que " + m.code + " n'a pas déclaré. Elle n'est pas bloquée : "
-        + "la revue tranche. Corriger l'écart déclaré l'étend à ce que l'adaptation change ; corriger l'adaptation "
-        + "la renvoie à ce que le marché a déclaré."),
+    var titre = titreDe(l);
+    /* Un titre composé dit déjà le pays ; un nom écrit par l'équipe, pas toujours. */
+    var sous = window.KV && KV.surtitre && KV.surtitre(l) ? titre : titre + " · " + m.nom;
+    PANNEAU.ouvrir("Changement non prévu", sous, el("div", {},
+      el("p.meta", {}, phrase(m, l, x.hors) + " Rien n'est bloqué : autorisez ce changement " + pourLe(m)
+        + " sur ce projet, ou faites corriger la décli pour qu'elle revienne à ce qui était prévu."),
       el("div.form", {},
-        ligne("Déclaré pour " + m.code, x.declaration
-          ? libelle(x.declaration.types) + (x.declaration.detail ? " — " + x.declaration.detail : "")
-          : "non déclaré"),
-        ligne("L'adaptation change", x.change.map(function (t) {
+        ligne("Prévu " + pourLe(m), x.declaration
+          ? (x.declaration.types.length ? libelle(x.declaration.types) : "aucun changement")
+            + (x.declaration.detail ? " — " + x.declaration.detail : "")
+          : "rien n'a été prévu"),
+        ligne("La décli change", x.change.map(function (t) {
           return libelle([t]) + " (" + champsDe(x, t).join(", ") + ")"; }).join(" · ")),
-        ligne("Hors écart déclaré", libelle(x.hors)),
-        x.revue ? ligne("Retour décidé", O.joli(x.revue.quand) + " — " + x.revue.motif) : null,
-        el("div.champ", {}, el("label", { "for": "ecm-motif" }, "Pourquoi"), zone)),
+        ligne("Non prévu", libelle(x.hors)),
+        x.revue ? ligne("Correction demandée", O.joli(x.revue.quand) + " — " + x.revue.motif) : null,
+        el("div.champ", {}, el("label", { "for": "ecm-motif" }, "Pourquoi (obligatoire)"), zone, erreur)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: geste(corrigerDeclaration,
-          m.code + " : écart déclaré étendu à " + libelle(x.hors) + ".") }, "Corriger l'écart déclaré"),
+          "Changement autorisé " + pourLe(m) + " : " + libelle(x.hors).toLowerCase() + ".") }, "Autoriser " + pourLe(m)),
         el("button.b", { type: "button", onclick: geste(corrigerAdaptation,
-          (l.nom || "L'adaptation") + " renvoyée : elle revient à l'écart déclaré.") }, "Corriger l'adaptation"),
+          titre + " : correction demandée, elle revient à ce qui était prévu.") }, "Faire corriger la décli"),
         el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); } }, "Annuler"))));
   }
 
@@ -511,9 +576,9 @@ window.ECARTS_MARCHE = (function () {
         checked: !!(d && d.types.indexOf(t.code) !== -1) });
     });
     var zone = el("textarea", { id: "ecm-detail", rows: 2 }, d ? d.detail : "");
-    PANNEAU.ouvrir("L'écart de " + m.code, m.nom, el("div", {},
+    PANNEAU.ouvrir("Ce que " + m.code + " peut changer", m.nom, el("div", {},
       el("p.meta", {}, "Ce que ce marché a le droit de changer du master, pour ce projet. Aucune case cochée : "
-        + "le marché est déclaré sans écart. Tout autre écart se refuse, ou il se facture."),
+        + "rien de prévu pour ce marché. Tout autre changement se refuse, ou il se facture."),
       el("div.form", {},
         TYPES.map(function (t, i) {
           return el("label", { "for": "ecm-" + t.code }, cases[i], " ", el("b", {}, t.nom), " — " + t.change);
@@ -527,7 +592,7 @@ window.ECARTS_MARCHE = (function () {
           var r = declarer(p, m.id, types, zone.value);
           if (!r.ok) { AVIS.refus(r.erreur); return; }
           PANNEAU.fermer();
-          AVIS.fait(m.code + " : " + libelle(r.declaration.types) + ".");
+          AVIS.fait(m.code + " : " + prevu(r.declaration.types) + ".");
           if (apres) apres();
         } }, "Déclarer"),
         d ? el("button.b.nu", { type: "button", onclick: function () {
@@ -538,9 +603,14 @@ window.ECARTS_MARCHE = (function () {
         el("button.b.nu", { type: "button", onclick: function () { PANNEAU.fermer(); } }, "Annuler"))));
   }
 
+  /* À l'écran, une déclaration vide se dit « rien de prévu » ; `libelle` garde
+   * « aucun écart » pour le journal et les décisions déjà écrites. */
+  function prevu(types) { return types && types.length ? libelle(types) : "rien de prévu"; }
+
   /* Le bloc de la grille : un marché par ligne, sa déclaration, le geste, et
-   * ce que ses adaptations en font. Une adaptation hors écart déclaré se revoit
-   * d'ici ; une adaptation non évaluée se compte, sans signal. */
+   * ce que ses adaptations en font. Une adaptation qui change ce qui n'était
+   * pas prévu se revoit d'ici ; une adaptation non évaluée se compte, sans
+   * signal. */
   function bloc(p, rafraichir) {
     var lignes = marches(p);
     var declares = lignes.filter(function (x) { return x.declaration; }).length;
@@ -549,37 +619,39 @@ window.ECARTS_MARCHE = (function () {
     var nonEvaluees = evals.filter(function (e) { return e.x.etat === "non-evaluee"; }).length;
     function adaptationsDe(marcheId) {
       return evals.filter(function (e) { return e.l.marche === marcheId; }).map(function (e) {
-        var nom = e.l.nom || "adaptation";
+        var nom = titreDe(e.l);
         if (e.x.etat !== "hors-ecart") {
-          return el("span.ecm-ad", {}, nom + " : " + (e.x.etat === "non-evaluee" ? "non évaluée" : "dans l'écart"));
+          return el("span.ecm-ad", { title: e.l.nom || null }, nom + " : "
+            + (e.x.etat === "non-evaluee" ? "non évaluée" : "conforme à ce qui était prévu"));
         }
-        return el("button.b.nu.ecm-signal", { type: "button", title: "Revoir l'écart de " + nom,
+        return el("button.b.nu.ecm-signal", { type: "button", title: "Décider pour " + nom,
           onclick: function () { revoir(p, e.l, rafraichir); } },
-          nom + " : hors écart déclaré : " + libelle(e.x.hors) + (e.x.revue ? " · retour décidé" : " · à revoir"));
+          nom + " : changement non prévu (" + libelle(e.x.hors).toLowerCase() + ")"
+            + (e.x.revue ? " · correction demandée" : " · à décider"));
       });
     }
     return el("div.volet", {},
       el("div.volet-tete", {},
-        el("b", {}, "Écarts déclarés par marché"),
+        el("b", {}, "Ce que chaque marché peut changer"),
         el("span.age", {}, declares + " sur " + lignes.length + " marchés déclarés"),
-        hors ? el("span.ecm-compte", {}, hors + (hors > 1 ? " adaptations hors écart déclaré" : " adaptation hors écart déclaré")) : null,
+        hors ? el("span.ecm-compte", {}, hors + (hors > 1 ? " changements non prévus" : " changement non prévu")) : null,
         nonEvaluees ? el("span.age", {}, nonEvaluees + (nonEvaluees > 1 ? " adaptations non évaluées" : " adaptation non évaluée")) : null,
         el("button.b.nu", { type: "button", onclick: function () { telecharger(p); } }, "Exporter"),
         el("button.b.nu", { type: "button", onclick: function () { choisirFichier(p, rafraichir); } }, "Importer")),
       el("p.meta", { style: { padding: "0 .8rem .4rem" } },
         "Ce que chaque marché a le droit de changer du master, pour ce projet : langue, marque, produit / SKU, "
-        + "réglementaire. Un marché peut en porter plusieurs. « Non déclaré » n'est pas « aucun écart ». "
-        + "Une adaptation qui change autre chose passe, signalée « hors écart déclaré » : la revue tranche. "
-        + "L'import et l'export suivent le format ecarts-marche du Market Expansion System."),
+        + "réglementaire. Un marché peut en porter plusieurs. « Non déclaré » ne veut pas dire « rien de prévu ». "
+        + "Une adaptation qui change autre chose passe, signalée comme changement non prévu : on l'autorise "
+        + "pour le marché, ou on fait corriger la décli."),
       lignes.length
         ? el("div", { style: { overflow: "auto" } }, el("table.matrice", {}, el("tbody", {}, lignes.map(function (x) {
             var d = x.declaration;
             return el("tr", {},
               el("td.entete-ligne", {}, x.marche.code + " · " + x.marche.nom),
-              el("td", {}, d ? libelle(d.types) + (d.inconnus.length ? " · inconnus : " + d.inconnus.join(", ") : "") : "non déclaré"),
+              el("td", {}, d ? prevu(d.types) + (d.inconnus.length ? " · inconnus : " + d.inconnus.join(", ") : "") : "non déclaré"),
               el("td", {}, d ? d.detail : ""),
               el("td.ecm-adaptations", {}, adaptationsDe(x.marche.id)),
-              el("td", {}, el("button.b.nu", { type: "button", "aria-label": "Déclarer l’écart de " + x.marche.code,
+              el("td", {}, el("button.b.nu", { type: "button", "aria-label": "Déclarer ce que " + x.marche.code + " peut changer",
                 onclick: function () { dialogue(p, x.marche, rafraichir); } }, d ? "modifier" : "déclarer")));
           }))))
         : el("p.rien", { style: { padding: ".6rem .8rem" } }, "Aucun marché : le périmètre n'en promet encore aucun."));
@@ -590,5 +662,5 @@ window.ECARTS_MARCHE = (function () {
     exporter: exporter, lire: lire, importer: importer, bloc: bloc, dialogue: dialogue,
     CHAMPS: CHAMPS, changements: changements, evaluer: evaluer, signales: signales, aTrancher: aTrancher,
     etiquette: etiquette, corrigerDeclaration: corrigerDeclaration, corrigerAdaptation: corrigerAdaptation,
-    revoir: revoir };
+    revoir: revoir, enClair: enClair, pourLe: pourLe };
 })();

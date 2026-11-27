@@ -178,8 +178,8 @@ window.MAISON_BASE = (function () {
   etages: [
     { n: 0, nom: "Territoire", effort: 5, produit: "Travail écrit. Aucun visuel", ouvertPar: "Brief accepté" },
     { n: 1, nom: "Concept", effort: 15, produit: "3 pistes maximum, une planche d'intention par piste", ouvertPar: "Plateforme créative émise" },
-    { n: 2, nom: "Master", effort: 35, produit: "Le livrable master de la piste retenue, animatique", ouvertPar: "Fiche de validation étage 1 signée" },
-    { n: 3, nom: "Déploiement", effort: 100, produit: "Formats, déclinaisons, fichiers finaux", ouvertPar: "Fiche de validation étage 2 signée" },
+    { n: 2, nom: "Master", effort: 35, produit: "Le livrable master de la piste retenue, animatique", ouvertPar: "Fiche de validation du niveau 1 signée" },
+    { n: 3, nom: "Déploiement", effort: 100, produit: "Formats, déclinaisons, fichiers finaux", ouvertPar: "Fiche de validation du niveau 2 signée" },
   ],
 
   /* ————— Les critères de refus, écrits d'avance. Source : §8. ————— */
@@ -239,12 +239,15 @@ window.MAISON_BASE = (function () {
   motsInterdits: [],
   nomsRetires: [],
 
-  /* ————— Les quatre verdicts. ————— */
+  /* ————— Les quatre décisions. —————
+   * Les clés ne changent pas : Radar et les bilans les lisent. Seuls les mots
+   * affichés sont ceux d'une agence : `nom` dit l'état d'une pièce (« Validé »),
+   * `geste` le bouton qui le pose (« Valider »). */
   verdicts: [
-    { cle: "approuve", nom: "Approuvé", signe: "✓", couleur: "#2E7D4F", motifRequis: false },
-    { cle: "reserve", nom: "Approuvé sous réserve", signe: "◐", couleur: "#B07714", motifRequis: true },
-    { cle: "retour", nom: "Retour dans le périmètre", signe: "↩", couleur: "#C7501F", motifRequis: true },
-    { cle: "hors", nom: "Hors périmètre", signe: "✕", couleur: "#B02118", motifRequis: true },
+    { cle: "approuve", nom: "Validé", geste: "Valider", signe: "✓", couleur: "#2E7D4F", motifRequis: false },
+    { cle: "reserve", nom: "Validé avec réserves", geste: "Valider avec réserves", signe: "◐", couleur: "#B07714", motifRequis: true },
+    { cle: "retour", nom: "Modifs demandées", geste: "Demander des modifs", signe: "↩", couleur: "#C7501F", motifRequis: true },
+    { cle: "hors", nom: "Refusé : hors brief", geste: "Refuser : hors brief", signe: "✕", couleur: "#B02118", motifRequis: true },
   ],
 
   /* ————— Les dix axes de complétude d'un livrable. ————— */

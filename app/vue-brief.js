@@ -234,10 +234,10 @@ window.VUE_BRIEF = (function () {
       el("div.bf-reception-tete",
         el("h2", {}, titre), el("span.studio-compte", {}, "V" + accueil.version)),
       statut === "sous_reserve" && d.reserve ? el("p", {},
-        "Retourné le " + O.joli(d.reserve.quand) + ". Motif : " + d.reserve.motif) : null,
+        "Retourné le " + O.finir(O.joli(d.reserve.quand)) + " Motif : " + d.reserve.motif) : null,
       statut === "accepte" && d.accepte_le ? el("p", {},
-        "Accepté le " + O.joli(d.accepte_le) + (d.accepte_malgre
-          ? " avec " + d.accepte_malgre + (d.accepte_malgre === 1 ? " condition ouverte." : " conditions ouvertes.") : ".")) : null,
+        d.accepte_malgre ? "Accepté le " + O.joli(d.accepte_le) + " avec " + O.pluriel(d.accepte_malgre, "condition ouverte", "conditions ouvertes") + "."
+          : "Accepté le " + O.finir(O.joli(d.accepte_le))) : null,
       accueil.existe ? el("details.bf-controles",
         el("summary", {}, r.recevable ? "Conditions remplies" : "Conditions à vérifier"),
         el("ul", {}, r.controles.map(function (c) {

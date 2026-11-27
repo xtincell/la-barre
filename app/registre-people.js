@@ -231,7 +231,7 @@ function cap(t) { t = String(t || ""); return t.charAt(0).toUpperCase() + t.slic
             nature: selG.value,
             cree_le: new Date().toISOString(),
             people: { refs: [r.ref], nom: r.nom,
-              note: "Ouvert depuis le registre People du " + O.joli(r.releve_le) + "." },
+              note: O.finir("Ouvert depuis le registre People du " + O.joli(r.releve_le)) },
             sections: { identite: {
               echeance: r.fin || null,
               /* Ce que People sait, posé tel quel — jamais complété d'hypothèses. */

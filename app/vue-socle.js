@@ -10,7 +10,7 @@ window.VUE_SOCLE = (function () {
 
   var CARTES = [
     { n: 1, t: "Idée directrice", cle: "idee_directrice", forme: "phrase",
-      cout: "toute campagne pourra être refusée en revue sans recours" },
+      cout: "toute campagne pourra être refusée en revue sans qu'on puisse la défendre" },
     { n: 2, t: "Positionnement", cle: "positionnement", forme: "texte",
       cout: "rien ne dit contre quoi la marque se situe" },
     { n: 3, t: "Promesse", cle: "promesse", forme: "phrase",
@@ -231,7 +231,7 @@ window.VUE_SOCLE = (function () {
       el("span.svf-v", {}, vide
         ? (grand
             ? (c.cle === "idee_directrice"
-                ? "Non écrite — toute campagne de cette marque pourra être refusée sans recours."
+                ? "Non écrite — toute campagne de cette marque pourra être refusée sans qu'on puisse la défendre."
                 : "Non écrits — le contrôle de vocabulaire n'a rien à vérifier.")
             : (c.aide || "Non écrit"))
         : Array.isArray(h.valeur) ? h.valeur.join("  ·  ") : String(h.valeur)));

@@ -36,6 +36,22 @@ function parRang(r) {
     ? rangs.reduce((t, [id, rang]) => t.split(id).join(rang), v) : v)));
 }
 
+/* Les quatre décisions ont reçu des noms d'agence (« Validé », « Modifs
+ * demandées »…) ; leurs clés n'ont pas bougé, Radar les lit. Seule la ligne de
+ * journal d'une validation de document recopie le nom affiché au moment du
+ * geste : on lit la capture avec les noms d'aujourd'hui, et rien d'autre. */
+const NOMS_RENOMMES = [['Approuvé sous réserve', 'Validé avec réserves'], ['Retour dans le périmètre', 'Modifs demandées'],
+  ['Hors périmètre', 'Refusé : hors périmètre'], ['Approuvé', 'Validé']];
+function nomsActuels(r) {
+  const c = copie(r);
+  for (const e of c.base.journal || []) {
+    if (e.action !== 'verdict' || typeof e.detail !== 'string') continue;
+    const n = NOMS_RENOMMES.find(([ancien]) => e.detail === ancien || e.detail.startsWith(ancien + ' — '));
+    if (n) e.detail = n[1] + e.detail.slice(n[0].length);
+  }
+  return c;
+}
+
 for (const nom of Object.keys(ECRIVAINS)) {
   test(`${nom} : la décision est celle d'avant la fabrique, champ pour champ et dans le même ordre`, async () => {
     const avant = capture.ecrivains[nom], apres = await rejouer(APP, nom);
@@ -44,7 +60,7 @@ for (const nom of Object.keys(ECRIVAINS)) {
     for (const d of apres.decisions) assert.match(d.id, NEUVE);
     /* La chaîne JSON compare aussi l'ordre des champs : c'est ce qui part
      * dans le fichier, et ce qu'un relevé lirait. */
-    const a = parRang(apres), b = parRang(avant);
+    const a = parRang(apres), b = parRang(nomsActuels(avant));
     assert.equal(JSON.stringify(a.decisions), JSON.stringify(b.decisions));
     /* Et le reste de la base n'a pas bougé : journal, pièce jugée, sauvegarde. */
     assert.equal(JSON.stringify(a.base), JSON.stringify(b.base));
@@ -137,9 +153,10 @@ test('un verdict inconnu passé par un vrai écrivain n’atteint ni la base ni 
   await s.charger('vue-livrable', ['juger']);
   semer(s.ctx, { personnes: PERSONNES, projets: [projet('LI', { livrables: [livrable('L-1')] })] });
   const p = s.ctx.DEPOT.trouve('projets', 'LI');
+  /* Sans motif à écrire, la décision se pose d'un geste : le refus de la
+   * fabrique arrive en avis, et rien n'est écrit. */
   s.interne['vue-livrable'].juger(p, p.livrables[0], { cle: 'valide', nom: 'Validé', motifRequis: false }, () => {});
-  soumettre(s.dernier());
-  assert.match(s.dernier().textContent, /Verdict inconnu : « valide »/);
+  assert.match(s.refus.join(' '), /Verdict inconnu : « valide »/);
   assert.equal(s.ctx.DEPOT.liste('decisions').length, 0);
   assert.equal(s.ctx.DEPOT.tout().enregistre_le, null);
   assert.equal(s.ctx.localStorage.getItem('la-barre'), null);
@@ -354,8 +371,8 @@ test('la portée d’une déviation doit correspondre à l’objet visé', () =>
 
 test('une déviation porte un motif, nomme ce dont elle s’écarte et s’adosse à une référence existante', () => {
   const f = fabrique(DEPOT_ECARTS);
-  /* Même approuvée : s'écarter sans dire pourquoi, c'est s'écarter par goût. */
-  for (const motif of ['', '  ', null]) assert.throws(() => f.D.poser(ecartDeCampagne({ motif })), /déviation exige un motif/);
+  /* Même approuvée, une déviation dit pourquoi : sans motif, rien n'est écrit. */
+  for (const motif of ['', '  ', null]) assert.throws(() => f.D.poser(ecartDeCampagne({ motif })), /Dites pourquoi : sans motif écrit, ce changement n'est pas enregistré\./);
   for (const ecart of [null, 'reference-campagne', [], {}, { de: '' }, { de: 3 }]) {
     assert.throws(() => f.D.poser(ecartDeCampagne({ ecart })), /nomme ce dont elle s'écarte/, JSON.stringify(ecart));
   }

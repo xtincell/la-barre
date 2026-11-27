@@ -318,6 +318,8 @@ textarea { min-height: 44px; }
 /* Le sous-bloc d'une fiche ou d'un panneau : un titre 12 px, puis son contenu. */
 .sousbloc { margin-top: 16px; }
 .sousbloc h3 { font: 700 12px var(--affichage); color: var(--clair); letter-spacing: 0; text-transform: none; margin-bottom: 8px; }
+.sousbloc > h3:has(> .droite) { display: flex; align-items: baseline; gap: 8px; }
+.sousbloc > h3 > .droite { margin-left: auto; font-weight: 500; color: var(--clair-terne); }
 ul.puces { list-style: none; padding: 0; margin: 0; }
 ul.puces li { position: relative; padding: 3px 0 3px 14px; font-size: 13px; line-height: 1.5; color: var(--clair); }
 ul.puces li::before { content: ""; position: absolute; left: 2px; top: 11px; width: 5px; height: 5px; border-radius: 50%; background: var(--studio-bleu); }
@@ -1417,6 +1419,7 @@ button.st-e:hover { background: var(--surface-4); }
 .plc-hors:hover { background: var(--surface-3); }
 .plch-q { font: 550 13px var(--affichage); color: var(--arbitrage); }
 .plch-x { font-size: 12px; line-height: 1.45; color: var(--clair-terne); }
+.plch-a { font: 600 13px var(--affichage); color: var(--studio-bleu); }
 .plc-gestes { display: flex; gap: 0 4px; flex-wrap: wrap; align-items: center; margin-left: -8px; }
 .pl-grille.dense .plc-gestes { display: none; }
 .pl-grille.dense .pl-c:hover .plc-gestes, .pl-grille.dense .pl-c:focus-within .plc-gestes { display: flex; }
@@ -1599,7 +1602,9 @@ summary.plvf-tete::before { content: "›"; color: var(--clair-terne); font-size
 .plvc .vignette img { height: 100%; object-fit: cover; }
 .plvc.vide .vignette.vide.attente { align-content: start; }
 .plvc-bas { display: grid; gap: 1px; padding: 6px 8px 7px; background: var(--surface-1); border-top: 1px solid var(--trait); }
-.plvc-n { font: 550 12px/1.3 var(--affichage); color: var(--clair); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Deux lignes réservées au titre de chaque carte : un titre long (« Key visual
+ * — Côte d'Ivoire · Orvelle ») ne mange pas plus de vignette que son voisin. */
+.plvc-n { font: 550 12px/1.3 var(--affichage); color: var(--clair); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; min-height: calc(2 * 1.3em); }
 .plvc-m { font-size: 11px; color: var(--clair-terne); }
 @media print {
   .plv-modes, .plvc.vide { display: none !important; }
@@ -3066,6 +3071,7 @@ ul.bia-l li::before { content: ""; position: absolute; left: 2px; top: .7em; wid
 .fb-st.a-faire { color: var(--arbitrage); font-weight: 600; }
 .fb-perso { display: block; width: 100%; max-width: 760px; height: auto; margin: var(--e2) 0; background: #fff; border-radius: var(--r-s); }
 .fb-sons { display: grid; gap: var(--e2); margin: var(--e2) 0; }
+.fb-note { margin: 0 0 var(--e3); color: var(--clair-doux); font-size: var(--t-meta); line-height: 1.45; }
 .fb-son { display: grid; gap: var(--e1); font-size: var(--t-meta); }
 .fb-son audio { width: 100%; max-width: 520px; }
 .fb-film.vertical { aspect-ratio: 9 / 16; width: auto; height: min(70vh, 640px); max-width: 100%; }

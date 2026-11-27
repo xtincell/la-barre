@@ -70,7 +70,7 @@ window.GESTE = (function () {
       faire: [
         "Vérifier les champs critiques — un seul vide et le rétroplanning est faux dès le jour 1.",
         "Contrôler que le décideur final est nommé : sans lui, aucune validation ne prend effet.",
-        "Renvoyer à la Clientèle ce qui n'est pas de mon ressort, avec le critère du §8.",
+        "Renvoyer à la Clientèle ce qui n'est pas de mon ressort, en disant quel critère n'est pas tenu.",
       ],
       change: "Le brief contresigné devient opposable : ce qui arrive après et le contredit "
         + "est un nouveau périmètre, pas une correction.",

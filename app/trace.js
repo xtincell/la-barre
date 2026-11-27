@@ -94,9 +94,10 @@ window.TRACE = (function () {
       }
     } else {
       var t = de(l);
+      /* L'état de la case, pas un constat d'huissier : ce qui reste à faire. */
       quoi = t.cle === "vu" ? "un visuel existe, aucun fichier déposé"
-        : t.cle === "trace" ? "déposé, jamais regardé"
-        : "aucun fichier, aucune version";
+        : t.cle === "trace" ? "pas encore vu"
+        : "visuel à déposer";
     }
 
     return { fichier: r.fichier || null, nomme: !!r.fichier,

@@ -41,7 +41,7 @@ window.ETAT = (function () {
     if (pi.statut === "ecartee") {
       return { nom: "écartée", ton: "terne",
         quoi: pi.motif ? "le motif est écrit — elle ne consomme plus de ressource"
-          : "sans motif écrit — refusée par goût, donc indéfendable au §8" };
+          : "sans motif écrit : écrivez pourquoi elle est écartée" };
     }
 
     var autre = (p.sections.pistes || []).filter(function (x) {
@@ -96,7 +96,7 @@ window.ETAT = (function () {
     }
     if (d.etat === "recue") {
       return { nom: "proposition reçue", ton: "vert",
-        quoi: "l'horloge est passée de son côté au mien — elle attend mon verdict" };
+        quoi: "l'horloge est passée de son côté au mien — elle attend ma décision" };
     }
     return { nom: "close", ton: "terne", quoi: "close — elle ne demande plus rien" };
   }

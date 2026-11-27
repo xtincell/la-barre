@@ -18,6 +18,9 @@
   font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); display: grid; place-items: center;
   border: 2px solid var(--nuit); color: var(--nuit); background: var(--attente);
 }
+/* Le repère reste petit sur l'image, mais se touche au doigt : une zone
+ * invisible de 44 px l'entoure (DESIGN_SYSTEM, § 14). */
+.an-point::after { content: ""; position: absolute; inset: calc(50% - var(--cible) / 2); border-radius: 50%; }
 .an-point.vert { background: var(--vert); }
 .an-point.terne { background: var(--clair-terne); }
 .an-point.actif { border-color: var(--or); transform: translate(-50%, -50%) scale(1.15); }
@@ -223,6 +226,8 @@
   color: var(--clair-doux); font: inherit; font-size: var(--t-meta); line-height: var(--lh-meta); letter-spacing: var(--ls-meta); padding: .3rem .5rem; cursor: pointer; }
 .motif:hover { border-color: var(--trait-clair); }
 .motif.actif { border-color: var(--or); color: var(--clair); }
+.motif > b, .motif > span { display: block; }
+.motif > b { color: var(--clair); }
 
 /* ————————————————————— La comparaison des routes ————————————————————— */
 
@@ -687,6 +692,8 @@
 
 .avis-pile { position: fixed; right: 1rem; bottom: 1rem; z-index: 120;
   display: grid; gap: .4rem; max-width: min(30rem, calc(100vw - 2rem)); }
+.avis-graves { display: grid; gap: .4rem; }
+.avis-graves:empty { display: none; }
 .avis { display: flex; gap: .6rem; align-items: flex-start;
   background: var(--nuit-relief); border: 1px solid var(--trait-clair);
   border-left: 3px solid var(--clair-terne); padding: .65rem .75rem;
@@ -696,9 +703,16 @@
 .avis.grave { border-left-color: var(--bloquant-txt); background: var(--nuit-carte); }
 .avis-t { flex: 1; font-size: var(--t-meta); letter-spacing: var(--ls-meta); line-height: 1.45; }
 .avis.grave .avis-t { color: var(--bloquant-txt); }
+/* Le ✕ se touche au doigt : 44 px de côté, repris sur la marge de l'avis
+ * pour ne pas le grandir, et assez loin d'« Annuler ». */
 .avis-x { background: none; border: 0; color: var(--clair-terne); font: inherit;
-  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); cursor: pointer; padding: 0 .2rem; }
+  font-size: var(--t-eti); line-height: var(--lh-eti); letter-spacing: var(--ls-eti); cursor: pointer; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  min-width: 44px; min-height: 44px; margin: -.65rem -.75rem -.65rem 0; }
 .avis-x:hover { color: var(--clair); }
+.avis-a { background: none; border: 1px solid var(--trait-clair); color: var(--clair); font: inherit;
+  font-size: var(--t-meta); font-weight: 600; min-height: 32px; padding: 0 .7rem; cursor: pointer; }
+.avis-a:hover { border-color: var(--clair); }
 
 .rail-plein { display: block; font-size: var(--t-micro); line-height: var(--lh-micro); letter-spacing: var(--ls-micro); color: var(--attente);
   text-decoration: none; margin-top: .2rem; }

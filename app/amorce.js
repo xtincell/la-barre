@@ -211,7 +211,7 @@ window.AMORCE = (function () {
           points: { concept: "attente", copy: "attente", asset: "attente", design: "attente", technique: "attente", droits: "attente", langue: "attente", central: "attente", local: "attente", final: "attente" },
         },
       ],
-      notes: "L'ordre de fabrication transmis porte le concept de la piste 2, alors que la big idea en vigueur porte celui de la piste 1. La porte B n'est pas arbitrée.",
+      notes: "L'ordre de fabrication transmis porte le concept de la piste 2, alors que la big idea en vigueur porte celui de la piste 1. Il faut choisir laquelle fait foi.",
     };
 
     d.projets = [projet, campagneMarches()];

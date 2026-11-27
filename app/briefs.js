@@ -105,8 +105,8 @@ window.BRIEFS = (function () {
       cle: "proposition", nom: "Demande de proposition créative",
       porte: "projet", gabarits: ["campagne", "pitch"],
       emetteur: "creation", destinataire: "da",
-      fonde: "la proposition créative — l'étage autorisé et les critères d'acceptation",
-      boussole: "le verdict : les critères écrits sont les seuls éléments opposables",
+      fonde: "la proposition créative — le niveau autorisé et les critères d'acceptation",
+      boussole: "la décision : la proposition se juge sur les critères écrits",
       quoi: "Le seul document que j'émets vers mon équipe, et le processus impose "
           + "son ordre : on ferme d'abord, on ouvre ensuite.",
       module: "DEMANDE",
@@ -143,7 +143,7 @@ window.BRIEFS = (function () {
       fonde: "l'exécution d'un livrable — et ce que l'exécutant décide seul",
       boussole: "le contrôle avant remise : conforme à l'ordre, ou pas",
       quoi: "Une page, écrite et jamais générée. Quinze minutes à l'oral d'abord, "
-          + "la page ensuite — c'est le §9.3 du processus.",
+          + "la page ensuite.",
       champs: [
         { cle: "enUnePhrase", nom: "Le livrable en une phrase", type: "texte", critique: true,
           poste: "creation" },

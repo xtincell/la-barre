@@ -104,8 +104,8 @@ window.VUE_LIVRAISON = (function () {
         el("span.plv-n", {}, pleins.length + " / " + ls.length),
         el("span.plv-q", {}, pleins.length === ls.length
           ? "La planche est complète — elle se montre telle quelle."
-          : (ls.length - pleins.length) + " cases attendent leur visuel. "
-            + "Tire le dossier de rendus n'importe où sur la planche.")),
+          : O.pluriel(ls.length - pleins.length, "visuel manquant", "visuels manquants") + ". "
+            + "Glissez le dossier des rendus n'importe où sur la planche.")),
       el("div.plv-modes.studio-statuts", { role: "group", "aria-label": "Mode de la planche" }, [
         { cle: "livraison", nom: "Livraison", quoi: "Tout, les trous compris" },
         { cle: "presentation", nom: "Présentation", quoi: "Les visuels au dossier, imprimables" },
@@ -179,10 +179,10 @@ window.VUE_LIVRAISON = (function () {
       onclick: function () { VUE_LIVRABLE.ouvrir(p, l, rafraichir); } },
       IMAGE.vignette(l, "planche"),
       el("span.plvc-bas", {},
-        el("span.plvc-n", {}, l.nom),
+        el("span.plvc-n", {}, window.KV && KV.titre ? KV.titre(l) : l.nom),
         el("span.plvc-m", {}, [
           "V" + (l.version || 1),
-          (l.fichiers || []).length ? (l.fichiers || []).length + " fichiers" : null,
+          (l.fichiers || []).length ? O.pluriel(l.fichiers.length, "fichier") : null,
           recu ? "Remise justifiée" : suivi && suivi.cle !== "validation" ? suivi.nom : null,
           l.responsable ? null : "sans responsable",
         ].filter(Boolean).join(" · "))));

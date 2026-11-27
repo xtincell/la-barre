@@ -260,7 +260,7 @@ window.VUE_CONSTATER = (function () {
         t: k + (k > 1 ? " propositions sans argument" : " proposition sans argument"),
         q: "Je suis évalué sur la qualité des propositions de mon équipe. Sans sacrifice "
           + "ni argument écrits, elles ne se défendent que par le goût — et sont "
-          + "refusables au §8." };
+          + "à compléter avant la revue." };
     }
     return { cle: "tenu", t: "Le standard tient",
       q: "Délai de verdict tenu, reprises contenues, briefs contresignés, pistes "
@@ -307,7 +307,7 @@ window.VUE_CONSTATER = (function () {
         creux: !s.props,
         ko: s.avecArg < s.props,
         quoi: !s.props ? "Aucune proposition enregistrée." : s.props - s.avecArg
-          ? (s.props - s.avecArg) + " sans sacrifice ou sans argument — refusables au §8"
+          ? (s.props - s.avecArg) + " sans sacrifice ou sans argument : à compléter avant la revue"
           : "toutes défendables",
         pourquoi: "Sans sacrifice ni argument écrits, une proposition ne se défend que par le goût.",
         geste: null },

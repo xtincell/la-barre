@@ -38,7 +38,10 @@ window.ANNOT = (function () {
     return Math.floor(n / 60) + ":" + (n % 60 < 10 ? "0" : "") + (n % 60);
   }
 
-  function poser(l, x, y, texte, auteur, instant) {
+  /* `auteur` est une personne du référentiel. Sans elle, `auteurLibre` dit qui
+   * l'a posé (la personne connectée par La Fusée, ou le poste) ; sans l'un ni
+   * l'autre, le retour est celui du client, comme il l'a toujours été. */
+  function poser(l, x, y, texte, auteur, instant, auteurLibre) {
     if (!l.annotations) l.annotations = [];
     var quand = new Date().toISOString();
     var a = {
@@ -48,8 +51,15 @@ window.ANNOT = (function () {
       quand: quand, statut: "aTraiter", version: l.version || 1,
       reprise: estReprise(l, quand),
     };
+    if (!auteur && auteurLibre) a.auteurLibre = auteurLibre;
     l.annotations.push(a);
     return a;
+  }
+
+  /* Qui a posé un retour, tel qu'on le lit. */
+  function auteurDe(a) {
+    var pers = a && a.auteur ? DEPOT.trouve("personnes", a.auteur) : null;
+    return pers ? pers.nom : (a && a.auteurLibre) || "client";
   }
 
   function marquer(l, id, statut) {
@@ -134,7 +144,7 @@ window.ANNOT = (function () {
       }
 
       if (!ann.length) {
-        cote.appendChild(el("p.rien", {}, "Aucun retour. Clique sur le visuel pour en poser un."));
+        cote.appendChild(el("p.rien", {}, "Aucun retour. Cliquez sur le visuel pour en poser un."));
       }
 
       ann.forEach(function (a, i) {
@@ -155,7 +165,7 @@ window.ANNOT = (function () {
           ),
           el("div.anl-meta", {},
             pers ? UI.avatar(pers, 18) : null,
-            el("span", {}, (pers ? pers.nom : a.auteurLibre || "client") + " · " + O.joli(a.quand) + " · V" + a.version)
+            el("span", {}, auteurDe(a) + " · " + O.joli(a.quand) + " · V" + a.version)
           ),
           a.statut === "aTraiter"
             ? el("div.anl-gestes", {},
@@ -180,7 +190,7 @@ window.ANNOT = (function () {
     }
 
     dessiner();
-    PANNEAU.ouvrir(l.nom, "annoter", el("div.an", {}, boite, cote));
+    PANNEAU.ouvrir(window.KV && KV.titre ? KV.titre(l) : l.nom, "Annoter", el("div.an", {}, boite, cote));
   }
 
   function nouvelle(p, l, x, y, apres, instant, numero) {
@@ -188,16 +198,22 @@ window.ANNOT = (function () {
       placeholder: instant !== null && instant !== undefined
         ? "Ce qui ne va pas à " + tc(instant) + ", en une phrase"
         : "Ce qui ne va pas, en une phrase" });
+    /* Un retour posé ici est d'abord celui de qui le pose : la personne de ce
+     * poste, ou la personne connectée. « Le client » reste un choix explicite :
+     * oublier de changer ce champ n'attribue plus sa remarque au client. */
+    var moi = window.ACTEUR ? ACTEUR.personne() : null;
     var selAuteur = el("select", { id: "annotation-auteur" });
-    selAuteur.appendChild(el("option", { value: "" }, "— le client —"));
+    if (!moi) selAuteur.appendChild(el("option", { value: "" }, "Moi · " + (window.ACTEUR ? ACTEUR.nom() : "ce poste")));
     DEPOT.liste("personnes").forEach(function (pe) {
-      selAuteur.appendChild(el("option", { value: pe.id }, pe.nom));
+      selAuteur.appendChild(el("option", { value: pe.id }, pe.nom + (moi && moi.id === pe.id ? " (moi)" : "")));
     });
+    selAuteur.appendChild(el("option", { value: "client" }, "Le client"));
+    selAuteur.value = moi ? moi.id : "";
 
     var reprise = estReprise(l, new Date().toISOString());
 
     var sous = PANNEAU.sur("Poser un retour",
-      (instant !== null && instant !== undefined ? "à " + tc(instant) + "  ·  " : "") + l.nom,
+      (instant !== null && instant !== undefined ? "à " + tc(instant) + "  ·  " : "") + (window.KV && KV.titre ? KV.titre(l) : l.nom),
       el("div", {},
       reprise
         ? UI.banniere("rouge", "Ce livrable a déjà été validé. Ce retour ouvrira une reprise — il sera compté, pas absorbé en silence.")
@@ -207,9 +223,11 @@ window.ANNOT = (function () {
         el("div.champ", {}, el("label", { for: "annotation-auteur" }, "De qui"), selAuteur)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
-          if (!champ.value.trim()) { AVIS.refus("Un retour sans texte n'est pas un retour."); return; }
+          if (!champ.value.trim()) { AVIS.refus("Écrivez le retour avant de le poser."); champ.focus(); return; }
           if (numero && Number(l.version || 1) !== Number(numero)) { AVIS.refus("La version du visuel a changé. Rouvrez la revue."); return; }
-          poser(l, x, y, champ.value.trim(), selAuteur.value || null, instant);
+          var qui = selAuteur.value;
+          poser(l, x, y, champ.value.trim(), qui && qui !== "client" ? qui : null, instant,
+            qui ? null : window.ACTEUR ? ACTEUR.nom() : null);
           DEPOT.tracer("annotation", "livrables", p.id,
             l.nom + (instant !== null && instant !== undefined ? " à " + tc(instant) : "")
             + " — " + champ.value.trim().slice(0, 40));
@@ -232,5 +250,5 @@ window.ANNOT = (function () {
   }
 
   return { tc: tc, liste: liste, ouvertes: ouvertes, poser: poser, marquer: marquer,
-    ouvrir: ouvrir, total: total, ETATS: ETATS };
+    ouvrir: ouvrir, nouvelle: nouvelle, auteur: auteurDe, total: total, ETATS: ETATS };
 })();

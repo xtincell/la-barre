@@ -121,24 +121,41 @@ window.APP = (function () {
     (selection || champ).focus();
   }
 
+  /* « KV GH » trouve « KV · GH · Orvelle » : chaque mot cherché y est, dans
+   * n'importe quel ordre, et les séparateurs ne comptent pas. */
+  function tousLesMots(paille, q) {
+    var mots = String(q || "").split(/[\s·—–]+/).filter(Boolean);
+    return mots.length > 1 && mots.every(function (m) { return O.contient(paille, m); });
+  }
+
   function chercher(q) {
     var t = [];
     DEPOT.liste("projets").forEach(function (p) {
       if (O.contient(p.nom + " " + p.ref, q)) t.push({ quoi: p.nom, ou: p.ref, lien: adresse("projets", p.id) });
       (p.livrables || []).forEach(function (l) {
         var m = DEPOT.trouve("marches", l.marche);
-        if (O.contient(l.nom + " " + (m ? m.nom + " " + m.code : ""), q))
-          t.push({ quoi: l.nom + (m ? " · " + m.code : ""), ou: p.ref + " · livrable", lien: adresse("projets", p.id, "livrables", l.id) });
+        var s = DEPOT.trouve("supports", l.support);
+        /* La pièce par son titre (« Key visual — Ghana ») ; son code reste
+         * cherchable, même pour un KV né avec un nom en clair (« KV GH »), et
+         * se lit à côté du dossier. */
+        var titre = window.KV && KV.titre ? KV.titre(l) : l.nom;
+        var code = window.KV && KV.code ? KV.code(l) : null;
+        var paille = [l.nom, titre.replace(/\u00a0/g, " "), m ? m.nom + " " + m.code : "", s ? s.code || "" : "", code || ""].join(" ");
+        if (O.contient(paille, q) || tousLesMots(paille, q))
+          t.push({ quoi: titre + (m && !code ? " · " + m.code : ""), ou: p.ref + " · " + (code || "livrable"),
+            lien: adresse("projets", p.id, "livrables", l.id) });
       });
       (p.sections.pistes || []).forEach(function (pi) {
         if (O.contient(pi.titre + " " + (pi.concept || ""), q))
           t.push({ quoi: pi.titre, ou: p.ref + " · piste", lien: adresse("projets", p.id, "pistes", pi.id) });
       });
     });
-    ["marches", "supports", "assets"].forEach(function (type) {
+    /* Le référentiel se dit en mots : « Ghana — Marché », pas la clé « marche ». */
+    var TYPES = { marches: "Marché", supports: "Support", assets: "Visuel de marque" };
+    Object.keys(TYPES).forEach(function (type) {
       DEPOT.liste(type).forEach(function (x) {
         if (O.contient(x.nom + " " + (x.code || "") + " " + (x.source || ""), q))
-          t.push({ quoi: x.nom, ou: type.slice(0, -1), lien: adresse("referentiel", "marches", type.slice(0, -1), x.id) });
+          t.push({ quoi: x.nom, ou: TYPES[type], lien: adresse("referentiel", "marches", type.slice(0, -1), x.id) });
       });
     });
     DEPOT.liste("attentes").forEach(function (a) {
@@ -171,8 +188,13 @@ window.APP = (function () {
     if (estPiste || r.mode === "juger" || r.mode === "remise") zone.classList.add("lb-zone-revue");
     zone.appendChild(retour(p ? adresse("projets", p.id, r.sous) : "#/projets"));
     if (!objet) { zone.appendChild(el("h1", {}, "Pièce introuvable")); return; }
+    /* Une pièce se titre par ce qu'elle est (« Key visual — Ghana ») ; son code
+     * de production passe en surtitre (kv-modele.js, KV.titre). */
+    var code = !estPiste && window.KV && KV.surtitre ? KV.surtitre(objet) : null;
+    var titre = estPiste ? objet.titre || objet.nom || "Pièce"
+      : window.KV && KV.titre ? KV.titre(objet) : objet.nom || "Pièce";
     zone.appendChild(el("header.studio-entete", {}, el("div", {}, el("p.studio-date", {},
-      el("a", { href: adresse("projets", p.id) }, p.nom)), el("h1", {}, objet.titre || objet.nom || "Pièce"))));
+      el("a", { href: adresse("projets", p.id) }, p.nom), code ? " · " + code : null), el("h1", {}, titre))));
     var scene = el("div.lb-detail-piece"); zone.appendChild(scene);
     if (estPiste) {
       function relire() { O.vider(scene); scene.appendChild(VUE_ROUTE.rendre(p, objet, relire, true)); }
@@ -321,28 +343,62 @@ window.APP = (function () {
     }
     var surExemple = local && AMORCE.present();
     noter("local=" + local + " surExemple=" + surExemple);
+    /* Une validation engagée dans une page fermée avant son échéance s'écrit
+     * maintenant, une fois la base de référence lue (vue-livrable.js). */
+    function reprendreValidations() {
+      return window.VUE_LIVRABLE && VUE_LIVRABLE.reprendreValidations ? VUE_LIVRABLE.reprendreValidations() : 0;
+    }
 
-    if (local && !surExemple) DEPOT.rattacherAuFichier(function () { noter("rattaché"); actualiserReferences(); rendre(); });
+    if (local && !surExemple) DEPOT.rattacherAuFichier(function () {
+      noter("rattaché"); actualiserReferences(); reprendreValidations(); rendre();
+    });
 
     if (!local || surExemple) {
       DEPOT.referenceDisponible(function (m) {
         noter("manifeste=" + (m ? m.reference : "aucun"));
         if (!m) {
           /* Rien à côté : l'exemple fait office, et le dit. */
-          if (!local) { AMORCE.poser(); rendre(); }
+          if (!local) { AMORCE.poser(); rendre(); } else if (reprendreValidations()) rendre();
           return;
         }
         DEPOT.chargerReference(m, function (ok) {
           noter("référence chargée=" + ok);
           if (!ok && !local) AMORCE.poser();
-          actualiserReferences(); rendre();
+          actualiserReferences();
+          if (ok) reprendreValidations();
+          rendre();
         });
       });
       if (!local) { AMORCE.poser(); noter("exemple posé en attendant"); }
     }
 
+    /* Un autre onglet qui se ferme avant l'échéance d'une validation la marque
+     * à rejouer. Avec la base servie, un onglet resté ouvert l'écrit tout de
+     * suite plutôt qu'au prochain chargement : le client et Radar la voient
+     * sans attendre. Sans base servie, chaque onglet tient sa propre copie et
+     * l'écriture de celui-ci écraserait le travail de l'autre : la note attend
+     * la prochaine ouverture.
+     *
+     * Quelqu'un qui écrit dans un champ de cet onglet ne perd ni son focus ni
+     * sa saisie : l'avis dit la validation enregistrée, l'écran se redessinera
+     * au prochain geste. */
+    window.addEventListener("storage", function (e) {
+      if (e.key !== "la-barre-validations" || !e.newValue) return;
+      if (!DEPOT.fichierServi || !DEPOT.fichierServi()) return;
+      if (!window.VUE_LIVRABLE || !VUE_LIVRABLE.reprendreValidations) return;
+      if (VUE_LIVRABLE.reprendreValidations({ surPlace: true }) && !saisieEnCours()) {
+        var x = window.scrollX, y = window.scrollY; rendre(); window.scrollTo(x, y);
+      }
+    });
+
     ecouter();
     rendre();
+  }
+
+  /* Un champ a le focus : redessiner effacerait ce qu'on y écrit. */
+  function saisieEnCours() {
+    var actif = document.activeElement;
+    return !!actif && (/^(INPUT|TEXTAREA|SELECT)$/.test(actif.tagName || "") || actif.isContentEditable === true);
   }
 
   function remplacerVue(lien) {

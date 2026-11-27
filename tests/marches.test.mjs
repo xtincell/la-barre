@@ -15,7 +15,8 @@ async function atelier(marche) {
     };
     return node;
   }
-  const sb = { console, Date, O: { el, id: prefix => prefix + (++sequence), langue: x => x },
+  const sb = { console, Date, O: { el, id: prefix => prefix + (++sequence), langue: x => x,
+    pluriel: (n, s, p) => n + ' ' + (n >= 2 ? (p || s + 's') : s) },
     MAISON: { points: [{ cle: 'technique' }, { cle: 'central' }], titulaire: 'creation' },
     DEPOT: {
       trouve: (collection, id) => collection === 'marches' && marche?.id === id ? marche : supports.find(x => x.id === id),

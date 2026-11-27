@@ -139,9 +139,9 @@ window.VUE_PLANCHE = (function () {
         ),
 
         el("span.plc-bas", {},
-          el("span.plc-copy" + (k.copy ? "" : ".vide"), {}, k.copy || "Accroche non écrite"),
+          el("span.plc-copy" + (k.copy ? "" : ".vide"), {}, k.copy || "Accroche à écrire"),
           el("span.plc-sous", {}, [
-            KV.estMaitre(l) && l.nom ? l.nom : KV.NIVEAUX[KV.niveau(l)].nom.toLowerCase(),
+            KV.estMaitre(l) && l.nom ? KV.titre(l) : KV.NIVEAUX[KV.niveau(l)].nom.toLowerCase(),
             O.langue(k.langue) || "langue ?",
             decl ? decl + (decl > 1 ? " formats" : " format") : "aucun format",
             mks ? mks + " en situation" : null,
@@ -149,15 +149,13 @@ window.VUE_PLANCHE = (function () {
         )
       ),
 
-      /* Un « 3 » en pastille ne dit pas ce qui ne va pas. Les manquements se
-       * nomment, et chacun dit combien de déclinaisons héritent de l'erreur —
-       * c'est ce nombre-là qui décide si on corrige maintenant ou jamais. */
+      /* Un « 3 » en pastille ne dit pas ce qui ne va pas. Les points à régler
+       * se nomment, et la case dit combien de déclinaisons en héritent — c'est
+       * ce nombre-là qui décide si on corrige maintenant ou plus tard. */
       ecarts.length
         ? el("div.plc-m", {},
-            el("div.plcm-t", {}, ecarts.length
-              + (ecarts.length > 1 ? " manquements" : " manquement")
-              + (decl ? " · " + decl + (decl > 1 ? " formats en héritent" : " format en hérite")
-                      : " · aucun format n'en hérite encore")),
+            el("div.plcm-t", {}, O.pluriel(ecarts.length, "point à régler", "points à régler")
+              + (decl ? " · " + O.pluriel(decl, "format en hérite", "formats en héritent") : "")),
             el("div.plcm-l", {}, ecarts.slice(0, 4).map(function (c) {
               return el("button.plcm", { type: "button", title: c.cout,
                 onclick: function () { detail(p, l, rafraichir); } },
@@ -171,7 +169,7 @@ window.VUE_PLANCHE = (function () {
               : null)
         : null,
 
-      hors ? el("button.plc-hors", { type: "button", title: "Revoir ce que cette adaptation change hors de l'écart déclaré",
+      hors ? el("button.plc-hors", { type: "button", title: hors.question,
         onclick: function () { ECARTS_MARCHE.revoir(p, l, rafraichir); } },
         el("span.plch-q", {}, hors.texte), el("span.plch-x", {}, hors.suite)) : null,
 
@@ -243,8 +241,10 @@ window.VUE_PLANCHE = (function () {
           FORM.appliquer(f, function () { return l.kv || {}; }, function (changements) {
             if (Object.keys(changements).length) {
               VERSION.ouvrir(l, "interne", "Correction du KV : " + Object.keys(changements).join(", "), null, { complet: true });
+              var marqueAvant = (l.kv || {}).marque;
               l.kv = Object.assign({}, l.kv || {}, changements);
-              l.nom = (KV.estMaitre(l) && !l.marche ? "KV master commun" : "KV · " + (m ? m.code : "?")) + (l.kv.marque ? " · " + l.kv.marque : "");
+              /* Un nom posé par l'outil suit la marque ; un nom écrit par l'équipe ne bouge pas. */
+              KV.suivreMarque(l, marqueAvant);
               DEPOT.tracer("modification", "kv", p.id, l.nom);
               DEPOT.enregistrer();
             }
@@ -262,48 +262,49 @@ window.VUE_PLANCHE = (function () {
 
   function ajouter(p, rafraichir, piste, sur) {
     var maitres = KV.maitres(p).filter(function (l) { return !piste || l.pisteId === piste.id; });
-    var selType = el("select", { "aria-label": "Niveau du KV" });
+    var selType = el("select", { id: "kv-niveau", "aria-label": "Niveau du KV" });
     selType.appendChild(el("option", { value: "maitre" }, "Master commun"));
     selType.appendChild(el("option", { value: "adaptation" }, "Adaptation marché"));
     selType.value = maitres.length ? "adaptation" : "maitre";
-    var selBase = el("select", { "aria-label": "Master de référence" });
-    maitres.forEach(function (l) { selBase.appendChild(el("option", { value: l.id }, l.nom + " · V" + (l.version || 1))); });
-    var selM = el("select", { "aria-label": "Marché de destination" });
+    var selBase = el("select", { id: "kv-master", "aria-label": "Master de référence" });
+    /* Le master par son titre : un ancien (« KV master commun · Orvelle ») et
+     * un neuf (« Key visual master · Peak ») se lisent de la même façon. */
+    maitres.forEach(function (l) { selBase.appendChild(el("option", { value: l.id }, KV.titre(l) + " · V" + (l.version || 1))); });
+    var selM = el("select", { id: "kv-marche", "aria-label": "Marché de destination" });
     selM.appendChild(el("option", { value: "" }, "Choisir un marché"));
     DEPOT.liste("marches").forEach(function (m) {
       selM.appendChild(el("option", { value: m.id }, m.nom + " · " + (m.langues || []).map(O.langue).join(", ")));
     });
-    var champMarque = el("input", { type: "text", placeholder: "La marque que porte ce master" });
+    var champMarque = el("input", { id: "kv-marque", type: "text", placeholder: "La marque que porte ce master" });
     var commun = el("div", {},
       UI.banniere("", "Le master porte les choix communs. Il ne confirme ni marché ni réception client."),
-      el("div.champ", {}, el("label", {}, "Marque"), champMarque));
-    var selPiste = el("select", { "aria-label": "Piste du master" });
+      el("div.champ", {}, el("label", { for: "kv-marque" }, "Marque"), champMarque));
+    var selPiste = el("select", { id: "kv-piste", "aria-label": "Piste du master" });
     selPiste.appendChild(el("option", { value: "" }, "Piste à renseigner"));
     (p.sections.pistes || []).forEach(function (pi) { selPiste.appendChild(el("option", { value: pi.id }, pi.titre || "Piste sans titre")); });
     var retenues = (p.sections.pistes || []).filter(function (pi) { return pi.statut === "retenue"; });
     selPiste.value = piste ? piste.id : retenues.length === 1 ? retenues[0].id : "";
-    if (!piste) commun.appendChild(el("div.champ", {}, el("label", {}, "Piste du master"), selPiste));
+    if (!piste) commun.appendChild(el("div.champ", {}, el("label", { for: "kv-piste" }, "Piste du master"), selPiste));
     var adaptation = el("div", {},
-      el("div.champ", {}, el("label", {}, "Master de référence"), selBase),
-      el("div.champ", {}, el("label", {}, "Marché de destination"), selM),
+      el("div.champ", {}, el("label", { for: "kv-master" }, "Master de référence"), selBase),
+      el("div.champ", {}, el("label", { for: "kv-marche" }, "Marché de destination"), selM),
       UI.banniere("", "Le contenu de cette version du master est repris comme point de départ. Les écarts se règlent ensuite, sans modifier le commun."));
     function afficher() { commun.hidden = selType.value !== "maitre"; adaptation.hidden = selType.value !== "adaptation"; }
     selType.addEventListener("change", afficher); afficher();
     var fermer = sur ? PANNEAU.fermerSur : PANNEAU.fermer;
     (sur ? PANNEAU.sur : PANNEAU.ouvrir)("Nouveau KV", piste ? piste.titre : "Commun, puis différences", el("div", {},
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Niveau du KV"), selType), commun, adaptation),
+        el("div.champ", {}, el("label", { for: "kv-niveau" }, "Niveau du KV"), selType), commun, adaptation),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           var base = selType.value === "adaptation" ? maitres.filter(function (l) { return l.id === selBase.value; })[0] : null;
           if (selType.value === "adaptation" && (!base || base.annule || !DEPOT.trouve("marches", selM.value))) {
             AVIS.refus("Choisir un master commun et un marché renseigné. Les anciens KV restent conservés."); return;
           }
-          var l = KV.creer(p, selType.value === "adaptation" ? selM.value : null, base, selType.value);
+          var l = KV.creer(p, selType.value === "adaptation" ? selM.value : null, base, selType.value,
+            { marque: champMarque.value });
           if (piste) { l.pisteId = piste.id; if (l.niveau === "maitre") l.responsable = piste.auteurDA || null; }
           else if (l.niveau === "maitre") l.pisteId = selPiste.value || null;
-          if (l.niveau === "maitre") l.kv.marque = champMarque.value.trim();
-          l.nom += l.kv.marque ? " · " + l.kv.marque : "";
           DEPOT.enregistrer(); fermer(); rafraichir();
         } }, "Créer"),
         el("button.b.nu", { type: "button", onclick: fermer }, "Annuler"))
@@ -312,12 +313,13 @@ window.VUE_PLANCHE = (function () {
 
   /* Décliner : les formats naissent du KV, et le savent. */
   function decliner(p, g, rafraichir) {
-    var selKV = el("select", { "aria-label": "KV de référence" });
+    var selKV = el("select", { id: "decli-kv", "aria-label": "KV de référence" });
     g.kvs.forEach(function (l) {
       var m = DEPOT.trouve("marches", l.marche);
-      selKV.appendChild(el("option", { value: l.id }, l.nom + (m ? " · " + m.nom : "")));
+      var t = KV.titre(l);
+      selKV.appendChild(el("option", { value: l.id }, t + (m && t.indexOf(m.nom) === -1 ? " · " + m.nom : "")));
     });
-    var selM = el("select", { "aria-label": "Marché des formats" });
+    var selM = el("select", { id: "decli-marche", "aria-label": "Marché des formats" });
     selM.appendChild(el("option", { value: "" }, "Choisir un marché"));
     DEPOT.liste("marches").forEach(function (m) { selM.appendChild(el("option", { value: m.id }, m.nom)); });
     function destination() {
@@ -330,8 +332,8 @@ window.VUE_PLANCHE = (function () {
     PANNEAU.ouvrir("Décliner un KV", "les formats viennent après", el("div", {},
       UI.banniere("", "Chaque format créé porte ce KV comme maître. Si le KV repart en V2, ils basculent tous en « à regénérer » — et le nombre est écrit."),
       el("div.form", {},
-        el("div.champ", {}, el("label", {}, "Le KV de référence"), selKV),
-        el("div.champ", {}, el("label", {}, "Marché des formats"), selM),
+        el("div.champ", {}, el("label", { for: "decli-kv" }, "Le KV de référence"), selKV),
+        el("div.champ", {}, el("label", { for: "decli-marche" }, "Marché des formats"), selM),
         el("div.champ", {}, el("label", {}, "Les formats"), choix.noeud)),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {

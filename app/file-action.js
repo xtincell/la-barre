@@ -16,7 +16,7 @@ window.FILE = (function () {
 
   /* Les familles, par ce qu'elles coûtent quand on les laisse. */
   var FAMILLES = {
-    trancher: { nom: "Trancher", ton: "alerte", ou: "revue",
+    trancher: { nom: "À décider", ton: "alerte", ou: "revue",
       quoi: "tant que je n'ai pas tranché, l'équipe attend et le client aussi" },
     ordre: { nom: "Remettre en ordre", ton: "alerte", ou: "pipeline",
       quoi: "quelqu'un travaille sur du spéculatif pendant qu'un engagement traîne" },
@@ -52,35 +52,34 @@ window.FILE = (function () {
     VUE_REVUE.pieces().forEach(function (p) {
       var lien = VUE_REVUE.lienPiece(p);
       var libelle = p.type === "livrable" ? "Examiner et décider" : "Examiner la piste";
-      out.push(item("trancher", p.contexte, "Un verdict est attendu.", 105, lien,
+      out.push(item("trancher", p.contexte, "Une version attend votre décision.", 105, lien,
         p.objet && p.objet.vignette ? [p.objet] : [],
         { chiffre: p.titre, depuis: p.depuis ? O.depuis(p.depuis) : 0,
           trancher: "Ouvrir les critères de la pièce avant de trancher.",
           court: libelle, direct: true, gestes: [{ nom: libelle, href: lien, fort: true }] }));
     });
 
-    /* 1 bis · Les adaptations hors de l'écart déclaré de leur marché. Elles ne
-     * sont pas bloquées : la revue tranche — corriger l'écart déclaré, ou
-     * corriger l'adaptation. Une fois renvoyée, l'adaptation est due par son
-     * auteur : elle passe de « trancher » à « réclamer ». */
+    /* 1 bis · Les adaptations qui changent ce que leur marché n'a pas prévu.
+     * Elles ne sont pas bloquées : on autorise le changement pour ce marché, ou
+     * on fait corriger la décli. Une fois la correction demandée, la décli est
+     * due par son auteur : elle passe de « trancher » à « réclamer ». */
     if (window.ECARTS_MARCHE) ECARTS_MARCHE.aTrancher().forEach(function (x) {
       var p = DEPOT.trouve("projets", x.projet);
       var l = p ? (p.livrables || []).filter(function (y) { return y.id === x.livrable; })[0] : null;
       var hors = ECARTS_MARCHE.libelle(x.hors);
       var renvoyee = x.etat === "renvoyee";
       out.push(item(renvoyee ? "reclamer" : "trancher",
-        x.nom + " (" + x.ref + ") : hors écart déclaré — " + hors,
+        (l && window.KV && KV.titre ? KV.titre(l) : x.nom) + " (" + x.ref + ") : changement non prévu",
         renvoyee
-          ? "Renvoyée le " + O.joli(x.revue.quand) + " : l'adaptation revient à ce que " + x.marche + " a déclaré."
-          : (x.declaration ? x.marche + " a déclaré : " + ECARTS_MARCHE.libelle(x.declaration)
-              : x.marche + " n'a déclaré aucun écart") + " ; l'adaptation change aussi : " + hors.toLowerCase() + ".",
+          ? "Correction demandée le " + O.joli(x.revue.quand) + " : la décli revient à ce qui était prévu."
+          : x.texte,
         renvoyee ? 62 : 92, "#/projets/" + x.projet + "/livrables", l && l.vignette ? [l] : [],
-        { chiffre: x.marche + " · hors écart déclaré : " + hors,
+        { chiffre: renvoyee ? x.marche + " · correction demandée à la décli (" + hors.toLowerCase() + ")" : x.texte.replace(/\.$/, ""),
           depuis: renvoyee && x.revue.quand ? O.depuis(x.revue.quand) : 0,
           trancher: renvoyee
-            ? "Faire corriger l'adaptation par son auteur, ou revenir sur le retour en corrigeant l'écart déclaré."
-            : "Corriger l'écart déclaré, ou corriger l'adaptation. Elle n'est pas bloquée : la décision dit laquelle tient.",
-          gestes: [{ nom: "Revoir l'écart", fort: true, quand: function () { x.ouvrir(function () { APP.rendre(); }); } }] }));
+            ? "Faire corriger la décli par son auteur, ou autoriser finalement le changement pour ce marché."
+            : x.question,
+          gestes: [{ nom: renvoyee ? "Revoir la correction" : "Décider", fort: true, quand: function () { x.ouvrir(function () { APP.rendre(); }); } }] }));
     });
 
     /* 2 · Les retours client non tranchés : ils suspendent des livrables. */
@@ -109,7 +108,7 @@ window.FILE = (function () {
       if (pistes.length > 1 && !pistes.some(function (x) { return x.statut === "retenue"; })) {
         var n = (p.livrables || []).filter(function (l) { return !l.annule; }).length;
         out.push(item("trancher", "« " + p.nom + " » : " + pistes.length + " pistes, aucune retenue",
-          n + " livrables se fabriquent sans savoir quel concept fait autorité.",
+          O.pluriel(n, "livrable se fabrique", "livrables se fabriquent") + " sans savoir quel concept fait autorité.",
           90, "#/projets/" + p.id + "/pistes"));
       }
     });
@@ -118,8 +117,9 @@ window.FILE = (function () {
     var c = PRIORITE.conflits();
     c.conflits.forEach(function (x) {
       out.push(item("ordre", (x.personne ? x.personne.nom : "Quelqu'un") + " tient du spéculatif",
-        x.speculatif.length + " livrables spéculatifs pendant que " + x.ferme.length
-          + " livrables engagés sont en retard. Le spéculatif ne s'arrête pas : il passe après.",
+        O.pluriel(x.speculatif.length, "livrable spéculatif", "livrables spéculatifs") + " pendant que "
+          + O.pluriel(x.ferme.length, "livrable engagé est", "livrables engagés sont")
+          + " en retard. Le spéculatif ne s'arrête pas : il passe après.",
         85, "#/pipeline"));
     });
 
@@ -159,19 +159,19 @@ window.FILE = (function () {
         if (!l.remise) sansDate++;
       });
     });
-    if (sansResp) out.push(item("placer", sansResp + " livrables sans responsable",
+    if (sansResp) out.push(item("placer", O.pluriel(sansResp, "livrable sans responsable", "livrables sans responsable"),
       "Personne n'est en défaut le jour où ça n'avance pas.", 50, "#/pipeline"));
-    if (sansCharge) out.push(item("placer", sansCharge + " livrables sans estimation",
+    if (sansCharge) out.push(item("placer", O.pluriel(sansCharge, "livrable sans estimation", "livrables sans estimation"),
       "Ils sont invisibles dans la charge : la semaine se calcule sans eux, et le mur arrive sans prévenir.", 45, "#/pipeline"));
-    if (sansDate) out.push(item("placer", sansDate + " livrables sans date de remise",
+    if (sansDate) out.push(item("placer", O.pluriel(sansDate, "livrable sans date de remise", "livrables sans date de remise"),
       "Ni plaçables ni réclamables. Le rétroplanning ne les voit pas.", 40, "#/pipeline"));
 
     /* 9 · Ce qui tient sur une inférence. */
     projets.forEach(function (p) {
       var n = window.INFERENCE ? INFERENCE.compte(p) : 0;
       if (!n) return;
-      out.push(item("contresigner", n + " champs à confirmer sur « " + p.nom + " »",
-        "Utilisables pour travailler, pas opposables au client : le jour où il conteste, rien ne tient.",
+      out.push(item("contresigner", O.pluriel(n, "champ", "champs") + " à confirmer sur « " + p.nom + " »",
+        "Utilisables pour travailler, mais pas encore confirmés par le client : faites-les confirmer avant qu'il ne conteste.",
         35, "#/projets/" + p.id + "/identite"));
     });
 

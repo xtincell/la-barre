@@ -91,7 +91,7 @@ test('les cartes de deux maîtres montrent leur identité sans dépendre du titl
   m.sb.KV = { grille: () => ({ kvs: livrables, marques: ['Bonnet Rouge'] }),
     conforme: () => true, conformite: () => [], pireEcart: () => null,
     maitres: () => livrables, estMaitre: l => l.niveau === 'maitre', estAdaptation: () => false,
-    declinaisons: () => [], niveau: l => l.niveau, NIVEAUX: { maitre: { nom: 'KV master' } } };
+    declinaisons: () => [], niveau: l => l.niveau, titre: l => l.nom, NIVEAUX: { maitre: { nom: 'KV master' } } };
   vm.runInContext(sources['vue-planche'], m.context);
   const vue = m.sb.VUE_PLANCHE.rendre(p, () => {});
   const cartes = tous(vue).filter(n => n.tag === 'button.plc-visuel');

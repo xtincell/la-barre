@@ -183,8 +183,8 @@ window.INFERENCE = (function () {
       : l.length + " champs de cette section restent à confirmer";
     if (critiques && critiques < l.length) texte += ", dont " + critiques + " critique" + (critiques > 1 ? "s" : "");
     else if (critiques === l.length) texte += (l.length > 1 ? ", tous critiques" : ", critique");
-    texte += l.length > 1 ? " — utilisables pour travailler, pas opposables au client."
-      : " — utilisable pour travailler, pas opposable au client.";
+    texte += l.length > 1 ? " — utilisables pour travailler, pas encore un accord du client."
+      : " — utilisable pour travailler, pas encore un accord du client.";
     if (ailleurs) texte += "  " + ailleurs + " autre" + (ailleurs > 1 ? "s" : "") + " ailleurs dans le dossier.";
 
     return UI.banniere("", texte,

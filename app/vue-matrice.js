@@ -377,7 +377,7 @@ window.VUE_MATRICE = (function () {
        * identiques à l'œil : on nomme celui dont il s'agit. */
       var nom;
       if (!maitre) nom = m ? "Adaptation " + m.nom : "Sans marché";
-      else if (plusieursMaitres) nom = kv.nom.replace(/^KV master\s*·\s*/, "") + " — la référence";
+      else if (plusieursMaitres) nom = KV.titre(kv) + " — la référence";
       else nom = "La référence — aucun marché";
       return { kv: kv, code: maitre ? "Maître" : (m ? m.code : "?"), nom: nom,
         ls: reste.filter(function (l) { return l.maitre === kv.id; }) };
@@ -443,7 +443,7 @@ window.VUE_MATRICE = (function () {
                   + " · " + bloc.groupes.length + " KV"
                   + (sansVisuel ? " · " + sansVisuel + " sans visuel" : "")
                   + (bloques ? " · " + bloques + (bloques > 1 ? " bloquées" : " bloquée") : "")
-                  + (horsMq ? " · " + horsMq + " hors écart déclaré" : "")),
+                  + (horsMq ? " · " + horsMq + (horsMq > 1 ? " changements non prévus" : " changement non prévu") : "")),
                 el("span.mrmqt-x", {}, mqOuvert ? "−" : "+"))
             : null,
 
@@ -465,7 +465,7 @@ window.VUE_MATRICE = (function () {
               : KV.estMaitre(g.kv) ? "les formats naissent des adaptations" : "rien à imprimer")
               + (mu ? " · " + mu + " sans visuel" : "")
               + (bl ? " · " + bl + (bl > 1 ? " bloquées" : " bloquée") : "")
-              + (ho ? " · " + ho + " hors écart déclaré" : "")),
+              + (ho ? " · " + ho + (ho > 1 ? " changements non prévus" : " changement non prévu") : "")),
             el("span.mrg-x", {}, kvOuvert ? "−" : "+")),
 
           kvOuvert ? el("div.rt-mur", {},
@@ -937,7 +937,7 @@ window.VUE_MATRICE = (function () {
         MAISON.verdicts.forEach(function (x) { if (x.cle === v.verdict) vd = x; });
         return el("div.ligne", {},
           el("span.etiq", {}, "V" + v.n + " · " + O.joli(v.soumis_le)),
-          el("span.val", {}, vd ? vd.signe + " " + vd.nom + (v.motif ? " — " + v.motif : "") : "en attente de verdict")
+          el("span.val", {}, vd ? vd.signe + " " + vd.nom + (v.motif ? " — " + v.motif : "") : "en attente de décision")
         );
       }),
       l.toursVendus

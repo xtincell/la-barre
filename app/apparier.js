@@ -36,8 +36,13 @@
       .filter(function (m) { return m.length > 1; });
   }
 
-  /* candidats : [{ ref, mots: [] }]   ce à quoi on rattache
+  /* candidats : [{ ref, mots: [], formes: [[]] }]   ce à quoi on rattache
    * sujets    : [{ ref, mots: [] }]   ce qu'on rattache
+   *
+   * `formes`, facultatif : les noms sous lesquels un même candidat se
+   * reconnaît (« Key visual — Ghana · Orvelle », « KV · GH · Orvelle »). Le
+   * candidat garde le meilleur score de ses formes et de leur réunion (`mots`) :
+   * un fichier nommé par l'une n'est pas pénalisé par les mots de l'autre.
    *
    * opts.seuil  en dessous, on ne propose rien
    * opts.marge  deux candidats plus proches que ça : on hésite
@@ -67,8 +72,10 @@
     var N = cand.length;
     function poids(m) { return Math.log(N / (1 + (df[m] || 0))) + 1; }
 
+    function total(ms) { return ms.reduce(function (t, m) { return t + poids(m); }, 0) || 1; }
     cand.forEach(function (c) {
-      c._total = c.mots.reduce(function (t, m) { return t + poids(m); }, 0) || 1;
+      c._formes = [c.mots].concat((c.formes || []).filter(function (f) { return f && f.length; }))
+        .map(function (f) { return { mots: f, total: total(f) }; });
     });
 
     var vocabulaire = {};
@@ -80,11 +87,14 @@
       var totalS = connus.reduce(function (t, m) { return t + poids(m); }, 0) || 1;
 
       var scores = cand.map(function (c) {
-        var gagne = 0;
-        c.mots.forEach(function (m) { if (ms.indexOf(m) !== -1) gagne += poids(m); });
-        var rappel = gagne / c._total;    /* le candidat est-il couvert */
-        var precision = gagne / totalS;   /* le sujet est-il expliqué */
-        var v = (rappel + precision) ? (2 * rappel * precision) / (rappel + precision) : 0;
+        var v = 0;
+        c._formes.forEach(function (f) {
+          var gagne = 0;
+          f.mots.forEach(function (m) { if (ms.indexOf(m) !== -1) gagne += poids(m); });
+          var rappel = gagne / f.total;     /* le candidat est-il couvert */
+          var precision = gagne / totalS;   /* le sujet est-il expliqué */
+          v = Math.max(v, (rappel + precision) ? (2 * rappel * precision) / (rappel + precision) : 0);
+        });
         return { c: c, s: v };
       }).sort(function (a, b) { return b.s - a.s; });
 

@@ -35,7 +35,7 @@ window.JURISPRUDENCE = (function () {
     "ecart-campagne": { nom: "écart déclaré à la référence commune", famille: "proposition", poids: 4 },
     "bilan-campagne": { nom: "bilan de campagne arrêté", famille: "livrable", poids: 4 },
     "ecart-marche": { nom: "écart de marché corrigé en revue", famille: "livrable", poids: 4 },
-    "hors-ecart": { nom: "adaptation renvoyée hors écart déclaré", famille: "livrable", poids: 4 },
+    "hors-ecart": { nom: "décli à corriger : changement de marché non prévu", famille: "livrable", poids: 4 },
     revue: { nom: "dite en revue", famille: "proposition", poids: 2 },
     blocage: { nom: "blocage écarté", famille: "livrable", poids: 4 },
     ecart: { nom: "écart écarté ou repris", famille: "livrable", poids: 3 },

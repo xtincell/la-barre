@@ -1079,7 +1079,7 @@ window.VUE_PROJETS = (function () {
       el("div.champ", {}, el("label", { for: "nouveau-projet-nature" }, "Gabarit"),
         el("div.indice", {}, "Une demande simple n'a pas huit sections. Le gabarit se choisit maintenant et ne change plus."), selG),
       f.noeud,
-      el("div.champ", {}, el("label", { htmlFor: "nouveau-projet-marque" }, "Marque"), selMarque),
+      el("div.champ", {}, el("label", { for: "nouveau-projet-marque" }, "Marque"), selMarque),
       el("div.form-actions", {},
         el("button.b.or", { type: "button", onclick: function () {
           var d = f.valeurs();
@@ -1192,7 +1192,8 @@ window.VUE_PROJETS = (function () {
     if (archive) {
       var cle = sections.indexOf("livrables") !== -1 ? "livrables"
         : sections.indexOf("presentation") !== -1 ? "presentation" : "identite";
-      return action("Projet clos", CLOTURE.etat(p).quoi, cle, "Consulter " + nomSection(cle).toLowerCase());
+      return action("Projet clos", CLOTURE.etat(p).quoi, cle,
+        { livrables: "Consulter les livrables", presentation: "Consulter la présentation" }[cle] || "Consulter le dossier");
     }
 
     var recu = VUE_BRIEF.reception(p);

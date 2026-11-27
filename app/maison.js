@@ -1,7 +1,7 @@
 /* Profil de l’installation historique. Exclu de la distribution neutre. */
 window.MAISON = MAISON_BASE.creer({
   "nom": "MATANGA AGENCY",
-  "exempleDescription": "MT-0020 est chargé, avec ses trous : identité à 4 champs sur 9, porte B non arbitrée.",
+  "exempleDescription": "MT-0020 est chargé, avec ses trous : identité à 4 champs sur 9, deux pistes encore à départager.",
   "postes": [
     {
       "cle": "clientele",

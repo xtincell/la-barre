@@ -102,7 +102,7 @@ test('la grille montre les écarts déclarés de chaque marché du projet', asyn
   p.perimetre = { supports: [], marches: [], ecarts: { 'M-GH': { types: ['marque', 'langue'], detail: 'bascule' } } };
   s.grille(p);
   const texte = s.lecture(p);
-  assert.match(texte, /Écarts déclarés par marché/);
+  assert.match(texte, /Ce que chaque marché peut changer/);
   assert.match(texte, /1 sur 2 marchés déclarés/);
   assert.match(texte, /GH · Ghana Langue \+ Marque bascule/);
   assert.match(texte, /CI · Côte d’Ivoire non déclaré/);
