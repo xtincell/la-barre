@@ -487,6 +487,14 @@ try {
     blocs: b.querySelectorAll('div, p, section, article, blockquote').length,
     image: !!b.querySelector('.lb-file-visuel > img'), haut: getComputedStyle(b.querySelector('img')).objectPosition }));
   assert.deepEqual(tuile, { blocs: 0, image: true, haut: '50% 0px' }, 'Vignette de la file');
+  // Chaque vignette dit qui en répond et pour quand, sans ouvrir la pièce.
+  const suivis = await page.locator('.lb-file-lignes .studio-piece').evaluateAll(bs => bs.map(b => {
+    const s = b.querySelector('.lb-file-suivi');
+    return s && s.textContent.replace(/\u00a0/g, ' ');
+  }));
+  const joursDemo = await page.evaluate(() => Math.floor((Date.now() - new Date(DEPOT.trouve('projets', 'PRJ-demo').sections.identite.echeance)) / 86400000));
+  assert.ok(suivis.length === 3 && suivis.every(Boolean), 'Une ligne de suivi par vignette : ' + suivis);
+  assert.ok(suivis.includes('Sacha Martin · échéance dépassée de ' + joursDemo + ' j'), 'Suivi de « Affiche de lancement » : ' + suivis);
   // La décision rendue plus haut porte le code de ce poste, tiré par crypto et
   // gardé dans le navigateur. Réimporter la base ne double aucune décision ;
   // une décision d'un autre poste sous le même identifiant est renommée et tracée.

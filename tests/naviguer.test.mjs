@@ -155,3 +155,23 @@ test('le Bureau dit une échéance dépassée, comme Planning > Livraisons', asy
   // Le nombre et son unité ne se séparent pas en fin de ligne.
   assert.match(delai('2026-11-06', maintenant).texte, /20\u00a0j$/);
 });
+
+test('une vignette de la file dit qui en répond, et pour quand ou depuis quand', async () => {
+  const personnes = [{ id: 'P-da', nom: 'Sacha Martin' }];
+  const { ctx } = await bac();
+  ctx.DEPOT.trouve = (k, id) => k === 'personnes' ? personnes.find(p => p.id === id) || null : null;
+  ctx.PLATEAU = { echeanceDe: (p, l) => l.remise || null };
+  vm.runInContext(await lire('vue-studio'), ctx, { filename: 'vue-studio.js' });
+  const { suivi } = ctx.VUE_STUDIO;
+  const jour = 86400000, il_y_a = n => new Date(Date.now() - n * jour - 60000).toISOString();
+  const dit = x => suivi(x).textContent.replace(/ /g, ' ');
+  const sansDate = { sections: {} };
+  // Une échéance passée prime, dans le ton qui bloque.
+  const retard = suivi({ type: 'livrable', projet: sansDate, objet: { remise: il_y_a(5).slice(0, 10) }, auteur: 'P-da', depuis: il_y_a(2) });
+  assert.match(retard.textContent.replace(/ /g, ' '), /^Sacha Martin · échéance dépassée de [56] j$/);
+  assert.equal(retard.enfants.at(-1).className, 'lb-delai retard');
+  // Sans échéance, l'ancienneté : depuis quand la pièce attend.
+  assert.equal(dit({ type: 'piste', projet: sansDate, objet: {}, auteur: null, depuis: il_y_a(3) }), 'à attribuer · en attente depuis 3 j');
+  assert.equal(dit({ type: 'piste', projet: sansDate, objet: {}, auteur: 'P-da', depuis: new Date().toISOString() }), 'Sacha Martin · déposée aujourd’hui');
+  assert.equal(dit({ type: 'piste', projet: sansDate, objet: {}, auteur: 'P-da' }), 'Sacha Martin');
+});

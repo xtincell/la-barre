@@ -100,7 +100,7 @@ window.VUE_STUDIO = (function () {
       el("div.lb-file-lignes", {}, pieces.map(function (x) {
         return el("button.studio-piece" + (active === x ? ".active":""), {type:"button","aria-pressed":String(active === x),onclick:function () {
           selection = cle(x); rendre(hote); var lien = hote.querySelector(".lb-piece .b.or"); if (lien) lien.focus();
-        }}, apercu(x), el("strong",{},x.titre), el("span",{},x.projet.nom));
+        }}, apercu(x), el("strong",{},x.titre), el("span",{},x.projet.nom), suivi(x));
       }))));
     var reprise = rubriqueRecente(projets);
     var proches = projets.slice().sort(function (a,b) {
@@ -136,6 +136,17 @@ window.VUE_STUDIO = (function () {
         reste ? ["\u00a0· ", el("span.lb-delai" + (reste.retard ? ".retard" : ""), {}, reste.texte)] : null)),
       demande || lireBrief ? el("div.lb-contexte-large", {}, el("dt", {}, "Le brief"), el("dd", {}, demande ? [el("q", {}, demande), " "] : null, lireBrief)) : null,
       critere ? el("div.lb-contexte-large", {}, el("dt", {}, "À vérifier"), el("dd", {}, critere)) : null);
+  }
+
+  /* Sous chaque vignette de la file : qui en répond, et pour quand ; sans
+   * échéance, depuis quand elle attend (constat ia-navigation-5). */
+  function suivi(x) {
+    var qui = x.auteur && DEPOT.trouve("personnes", x.auteur);
+    var reste = delai(echeanceDe(x));
+    var attente = x.depuis ? O.depuis(x.depuis) : null;
+    var quand = reste ? el("span.lb-delai" + (reste.retard ? ".retard" : ""), {}, "échéance " + reste.texte)
+      : attente === null ? null : attente ? "en attente depuis " + attente + "\u00a0j" : "déposée aujourd’hui";
+    return el("span.lb-file-suivi", {}, qui ? qui.nom : "à attribuer", quand ? ["\u00a0· ", quand] : null);
   }
 
   /* La date qui compte pour une pièce : celle du livrable, sinon celle du projet. */
@@ -246,5 +257,5 @@ window.VUE_STUDIO = (function () {
     hote.appendChild(liste);
     filtrer();
   }
-  return { rendre: rendre, projets: projets, navProjets: navProjets, noterRubrique: noterRubrique, extrait: extrait, delai: delai };
+  return { rendre: rendre, projets: projets, navProjets: navProjets, noterRubrique: noterRubrique, extrait: extrait, delai: delai, suivi: suivi };
 })();
