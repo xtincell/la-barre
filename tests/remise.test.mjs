@@ -369,6 +369,15 @@ test('« Marquer comme livré » joint la photo du BAT et le PDF de la remise qu
   assert.match(suivi.textContent, /Fichiers remis.*Fichiers envoyés sur clé USB/);
 });
 
+test('l’intitulé d’une pièce jointe et « (facultatif) » tiennent dans un seul élément, qui coule comme une phrase', async () => {
+  const { s, p, ci, R } = await geste();
+  R.marquerLivre(p, ci, () => {});
+  const labels = noeuds(s.dernier(), n => n.tagName === 'LABEL' && /\bb\b/.test(n.className));
+  assert.deepEqual(labels.map(l => [l.getAttribute('for'), l.childNodes.length, l.textContent]), [
+    ['livre-bat-fichier', 1, 'Photo ou PDF du BAT (facultatif)'],
+    ['livre-remise-fichier', 1, 'Photo ou PDF du justificatif (facultatif)']]);
+});
+
 test('les guillemets citent quelqu’un : la phrase que l’outil tire du moyen d’envoi se lit sans eux', async () => {
   const { s, p, ci, R } = await geste();
   R.marquerLivre(p, ci, () => {});

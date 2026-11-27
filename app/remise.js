@@ -469,7 +469,9 @@ window.REMISE = (function () {
   /* Le sélecteur natif disait « Choisir un fichier · Aucun fichier choisi »,
    * coupé sur téléphone. Le champ reste un vrai champ fichier, hors de la vue
    * mais au clavier ; son étiquette est le bouton qu'on touche, et le nom du
-   * fichier choisi s'écrit à côté. */
+   * fichier choisi s'écrit à côté. L'intitulé et « (facultatif) » tiennent
+   * dans un seul élément : à 320 px, ils coulent comme une phrase au lieu de
+   * former deux colonnes. */
   function fichierJoint(id, cle, titre, options) {
     var nom = el("span.remise-joint-nom", { "aria-live": "polite" }, "");
     var entree = el("input.remise-joint-entree", { id: id, name: cle, type: "file", accept: options.accept || null,
@@ -477,8 +479,8 @@ window.REMISE = (function () {
         var f = entree.files && entree.files[0];
         nom.textContent = f ? f.name : "";
       } });
-    return el("div.champ.remise-joint", {}, entree, el("label.b", { for: id }, titre,
-      options.facultatif ? el("span.remise-facultatif", {}, " (facultatif)") : null), nom);
+    return el("div.champ.remise-joint", {}, entree, el("label.b", { for: id }, el("span", {}, titre,
+      options.facultatif ? el("span.remise-facultatif", {}, " (facultatif)") : null)), nom);
   }
 
   /* Ce qui est facultatif se replie : le panneau ne montre d'abord que ce qui
