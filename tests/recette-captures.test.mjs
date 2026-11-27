@@ -378,13 +378,26 @@ test('une photo identique dont le texte change, ou un changement sous le premier
     /On compare le premier écran seulement, au pixel, et tout le texte de la page, blocs repliés et bulles d’aide compris\u00a0: un changement plus bas qui ne touche pas le texte ne se voit pas\./);
 });
 
-test('deux passes filtrées différemment : la planche prévient', () => {
-  const avant = { quand: '2026-11-26', mesure: MESURE, filtre: '^(bureau|recherche|referentiel/doctrine)$', captures: [capture('bureau', 320)] };
-  const apres = { quand: '2026-11-26', temps: 'apres', mesure: MESURE, largeurs: [320], filtre: '^bureau$', base: { fichier: 'b.json', projets: 1, livrables: 1 }, manquantes: [],
-    resume: { routes: 1, captures: 1, exceptions: 0, debordements: 0, termes: 0, introuvables: 0, imagesCassees: 0 }, captures: [capture('bureau', 320)] };
-  const html = planche({ ...apres, comparaison: { filtres: { avant: avant.filtre, apres: apres.filtre }, ...comparer(avant, apres) } },
+test('deux passes filtrées différemment : la planche prévient, et ce que l’avant n’a pas pris est hors de la comparaison', () => {
+  const avant = { quand: '2026-11-26', mesure: MESURE, filtre: '^(bureau|recherche|referentiel/doctrine)$', captures: [capture('bureau', 320), capture('recherche', 320)] };
+  const apres = { quand: '2026-11-26', temps: 'apres', mesure: MESURE, largeurs: [320], filtre: '^(bureau|plus)$', base: { fichier: 'b.json', projets: 1, livrables: 1 }, manquantes: [],
+    resume: { routes: 2, captures: 2, exceptions: 0, debordements: 0, termes: 0, introuvables: 0, imagesCassees: 0 }, captures: [capture('bureau', 320), capture('plus', 320, { nom: 'Plus' })] };
+  // Comme la ligne de commande : chaque passe restreinte au filtre de l'autre.
+  const cmp = comparer(restreindre(avant, apres.filtre), restreindre(apres, avant.filtre));
+  assert.deepEqual([cmp.routesNouvelles, cmp.routesDisparues, cmp.identiques], [[], [], 1]);
+  const html = planche({ ...apres, comparaison: { filtres: { avant: avant.filtre, apres: apres.filtre }, ...cmp } },
     { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' });
-  assert.match(html, /Comparaison limitée aux routes <code>\^\(bureau\|recherche\|referentiel\/doctrine\)\$<\/code> \(avant\) et <code>\^bureau\$<\/code> \(après\)\. <b>Les deux passes n’ont pas le même filtre<\/b>/);
+  assert.match(html, /Comparaison limitée aux routes <code>\^\(bureau\|recherche\|referentiel\/doctrine\)\$<\/code> \(avant\) et <code>\^\(bureau\|plus\)\$<\/code> \(après\)\. <b>Les deux passes n’ont pas le même filtre<\/b>/);
+  // « Plus », que l'avant n'a pas pris : ni « nouvelle » ni à regarder, et le résumé le compte.
+  assert.match(html, /badge etat hors">hors de la comparaison \(autre filtre\)/);
+  assert.doesNotMatch(html, /badge etat nouvelle/);
+  assert.match(html, /<article id="plus">/);
+  assert.match(html, /Écrans nouveaux\u00a0: aucun\. Écrans disparus\u00a0: aucun\. Écrans hors du filtre de la passe «\u00a0avant\u00a0», donc non comparés\u00a0: <a href="#plus" title="plus">Plus<\/a>\./);
+  // Une route vraiment nouvelle, dans le filtre de l'avant, reste « nouvelle ».
+  const nouvelle = { ...apres, filtre: '^(bureau|referentiel/doctrine)$', captures: [capture('bureau', 320), capture('referentiel/doctrine', 320)] };
+  const html2 = planche(nouvelle, { dossier: '/tmp/r/apres', avant, avantDossier: '/tmp/r/avant' });
+  assert.match(html2, /badge etat nouvelle">nouvelle/);
+  assert.doesNotMatch(html2, /Écrans hors du filtre/);
 });
 
 test('avec --routes, la comparaison ne confronte que les routes filtrées', () => {

@@ -400,8 +400,8 @@ function texteChange(c, a) { return !!(c && a && c.empreinteTexte && a.empreinte
  * l'outil, autre poste, autre horloge) n'est pas « modifiée » : elle n'est pas
  * comparée. Une photo identique dont le texte change (dans un bloc replié, ou
  * hors de la photo) est modifiée. */
-function etat(c, a, memeMesure = true) {
-  if (!a) return 'nouvelle';
+function etat(c, a, memeMesure = true, horsFiltre = false) {
+  if (!a) return horsFiltre ? 'hors' : 'nouvelle';
   if (!a.empreinte || !c.empreinte) return 'inconnue';
   const texte = texteChange(c, a);
   if (a.empreinte === c.empreinte && !texte) return 'identique';
@@ -409,7 +409,10 @@ function etat(c, a, memeMesure = true) {
   if (texte) return 'modifiee';
   return aLOeil(c.ecart) ? 'quasi' : 'modifiee';
 }
-const ETATS = { nouvelle: 'nouvelle', inconnue: 'non comparée', identique: 'identique', quasi: 'identique à l’œil', modifiee: 'modifiée' };
+/* « hors » : une route que la passe « avant », lancée avec un autre --routes,
+ * n'a pas prise. Elle n'est ni nouvelle ni comparée. */
+const ETATS = { nouvelle: 'nouvelle', inconnue: 'non comparée', identique: 'identique', quasi: 'identique à l’œil', modifiee: 'modifiée',
+  hors: 'hors de la comparaison (autre filtre)' };
 
 /* Où le changement se voit, dans une photo de la page entière : le
  * rectangle des pixels changés, rapporté à la hauteur de l'écran. Quand la
@@ -527,7 +530,7 @@ function alerteVersion(cmp) {
  * différer sans que le code ait changé. */
 export function filtresDifferents(cmp) { return !!(cmp && cmp.filtres && (cmp.filtres.avant || null) !== (cmp.filtres.apres || null)); }
 
-function blocComparaison(cmp, noms, captures, pleinePage, avantParCle = new Map()) {
+function blocComparaison(cmp, noms, captures, pleinePage, avantParCle = new Map(), horsFiltre = []) {
   const nom = id => noms.get(id) || id;
   const ecran = id => `<a href="#${echapper(id)}" title="${echapper(id)}">${echapper(nom(id))}</a>`;
   const routes = t => (t.length ? t.map(ecran).join(', ') : 'aucun');
@@ -562,7 +565,7 @@ function blocComparaison(cmp, noms, captures, pleinePage, avantParCle = new Map(
 <li><b>${pluriel(cmp.modifiees.length, 'capture modifiée', 'captures modifiées')}</b>, ${pluriel(cmp.identiques + cmp.identiquesALOeil, 'identique', 'identiques')}${cmp.identiquesALOeil ? ' (dont ' + cmp.identiquesALOeil + ' à l’œil seulement : le lissage d’une image ou le crénelage de quelques bords, listées ci-dessous)' : ''}${cmp.nonComparees ? ', ' + pluriel(cmp.nonComparees, 'non comparée', 'non comparées') : ''}. Écrans touchés : ${comparable ? ecransTouches || 'aucun' : 'non comparés (voir l’avertissement en tête)'}.</li>
 ${nuancees.length ? `<li>Identiques à l’œil, à vérifier d’un regard : ${nuancees.join(', ')}. Seuls sont pardonnés ${seuils} ; tout autre écart rend la capture « modifiée ».</li>` : ''}
 ${textes.length ? `<li>Textes changés : ${textes.join(' ; ')}${(cmp.textes || []).length > textes.length ? ' ; et ' + ((cmp.textes || []).length - textes.length) + ' autres' : ''}.</li>` : ''}
-<li>Écrans nouveaux : ${routes(cmp.routesNouvelles)}. Écrans disparus : ${cmp.routesDisparues.length ? cmp.routesDisparues.map(id => echapper(nom(id))).join(', ') : 'aucun'}.</li>
+<li>Écrans nouveaux : ${routes(cmp.routesNouvelles)}. Écrans disparus : ${cmp.routesDisparues.length ? cmp.routesDisparues.map(id => echapper(nom(id))).join(', ') : 'aucun'}.${horsFiltre.length ? ' Écrans hors du filtre de la passe « avant », donc non comparés : ' + routes(horsFiltre) + '.' : ''}</li>
 <li>Termes interdits visibles : ${avantApres(cmp.termes)} ; dans un bloc replié ou une bulle : ${avantApres(cmp.termesReplies)}${sur}.</li>
 <li>Exceptions nouvelles : ${listeCaptures(cmp.exceptionsNouvelles, 'aucune')}. Débordements nouveaux : ${listeCaptures(cmp.debordementsNouveaux)}.</li>
 <li>Textes coupés nouveaux : ${listeCaptures(cmp.coupesNouvelles)}. Contrôles hors écran nouveaux : ${listeCaptures(cmp.horsEcranNouveaux)}. Valeurs techniques nouvelles : ${listeCaptures(cmp.valeursNouvelles, 'aucune')}.</li>
@@ -591,6 +594,11 @@ export function planche(r, { dossier, avant = null, avantDossier = null, cibles 
   const temps = r.temps ? ' · ' + ({ avant: 'avant', apres: 'après' }[r.temps] || echapper(r.temps)) : '';
   const cmp = avant ? (r.comparaison || comparer(avant, r)) : null;
   const memeMesure = !cmp || !cmp.mesure || cmp.mesure.identique;
+  /* Les routes que la passe « avant », lancée avec un autre --routes, n'a pas
+   * prises : hors de la comparaison, ni nouvelles ni comparées. */
+  let filtreAvant = null;
+  try { filtreAvant = avant && avant.filtre ? new RegExp(avant.filtre) : null; } catch { /* filtre illisible : aucun */ }
+  const horsFiltre = id => !!(filtreAvant && !filtreAvant.test(id));
   const sections = groupes.filter(g => g.routes.length).map(g => {
     const cible = cibles[g.cle] ? `<a class="cible" href="${lien(dossier, cibles[g.cle])}" title="Ouvrir la planche cible en grand"><img loading="lazy" alt="Planche cible" src="${lien(dossier, cibles[g.cle])}"><span>Planche cible</span></a>` : '';
     const lignes = g.routes.map(id => {
@@ -598,8 +606,8 @@ export function planche(r, { dossier, avant = null, avantDossier = null, cibles 
       let aVoir = false;
       const cellules = cs.map(c => {
         const a = parCle.get(c.id + '@' + c.largeur);
-        const e = avant ? etat(c, a, memeMesure) : null;
-        if (e && e !== 'identique') aVoir = true;
+        const e = avant ? etat(c, a, memeMesure, horsFiltre(c.id)) : null;
+        if (e && e !== 'identique' && e !== 'hors') aVoir = true;
         const contenu = avant
           ? `<div class="paire"><div><small>Avant</small>${a ? image('Avant', a.fichier, avantDossier) : '<p class="absent">absente</p>'}</div><div><small>Après</small>${image('Après', c.fichier, dossier)}</div></div>`
           : image(c.nom + ' à ' + c.largeur + ' px', c.fichier, dossier);
@@ -626,7 +634,7 @@ ${r.filtre ? `<p class="meta">Routes limitées à <code>${echapper(r.filtre)}</c
 <p class="meta">${r.pleinePage ? 'Photos de la page entière, de haut en bas : ce qui est fixé à l’écran (barre d’onglets, colonne latérale, panneau ouvert) y est posé sur la page. Les vignettes en montrent le haut ; un clic ouvre la page entière.' : 'Photos du premier écran seulement (--premier-ecran) : ce qui est plus bas n’y est pas.'}</p>
 ${r.manquantes.length ? `<p class="meta">Absentes de cette base, donc non capturées : ${r.manquantes.map(echapper).join(', ')}.</p>` : ''}
 ${avant ? `<p class="meta">Comparaison avec <a href="${echapper(lien(dossier, join(avantDossier, 'index.html')))}">la passe « avant »</a> du ${echapper(dateLisible(avant.quand))}, commit ${echapper(avant.commit || 'inconnu')}.</p>` : ''}
-${cmp ? blocComparaison(cmp, noms, r.captures, !!r.pleinePage, parCle) : ''}
+${cmp ? blocComparaison(cmp, noms, r.captures, !!r.pleinePage, parCle, [...ordre.keys()].filter(id => horsFiltre(id) && !avant.captures.some(c => c.id === id))) : ''}
 ${liste ? `<details><summary>Alertes, écran par écran : ${pluriel(regarder.size, 'écran')} (${enumerer(sortesDAlertes(regarder))})</summary><ul>${liste}</ul></details>` : '<p>Aucune exception, aucun débordement, aucun texte coupé, aucune valeur technique, aucun terme interdit.</p>'}
 ${sections}`;
   return `<!doctype html>
@@ -656,7 +664,7 @@ figure{margin:0;min-width:0}figcaption{display:flex;flex-wrap:wrap;gap:4px;align
 img{display:block;width:100%;height:auto;max-height:640px;object-fit:cover;object-position:top;border:1px solid var(--trait);border-radius:4px;background:#fff}
 .paire{display:grid;grid-template-columns:1fr 1fr;gap:6px}.paire small{color:var(--terne)}.absent{color:var(--terne);font-style:italic}
 .badge{display:inline-block;max-width:100%;border-radius:10px;padding:1px 8px;font-size:11px;border:1px solid currentColor}.exception,.debordement,.image,.introuvable,.hors-ecran,.valeur{color:var(--alerte)}.terme,.replie,.coupe,.vide{color:var(--attente)}
-.etat.modifiee,.etat.nouvelle{color:var(--change);font-weight:600}.etat.identique,.etat.quasi,.etat.inconnue{color:var(--terne)}
+.etat.modifiee,.etat.nouvelle{color:var(--change);font-weight:600}.etat.identique,.etat.quasi,.etat.inconnue,.etat.hors{color:var(--terne)}
 .tech{color:var(--terne);font:11px/1.3 ui-monospace,monospace;overflow-wrap:anywhere}
 ul{padding-left:18px}ul ul{padding-left:14px;margin:2px 0 6px}a{color:inherit}q{color:var(--terne);quotes:"«\\00a0" "\\00a0»"}
 </style></head><body>
