@@ -37,7 +37,9 @@ window.UI = (function () {
     standard: "M4 20h16M6 20V9M11 20V4M16 20v-8M21 20v-5",
     cahier: "M5 3h11l4 4v14H5zM16 3v4h4",
     renvoi: "M9 14L4 9l5-5M4 9h11a5 5 0 015 5v6",
-    capture: "M3 7h4l2-3h6l2 3h4v13H3zM12 17a4 4 0 100-8 4 4 0 000 8z",
+    /* Un crayon, pas un appareil photo : au téléphone, la note rapide n'est
+     * plus qu'une icône, et l'appareil se lisait « photo » ou « capture ». */
+    note: "M4 20l1-4.5L15.5 4a2.1 2.1 0 013 3L8 17.5zM13.5 6l3 3M12 20h8",
     recherche: "M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.3-4.3",
     imprimer: "M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z",
     alerte: "M12 3l9 17H3zM12 9v5M12 17h.01",

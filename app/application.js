@@ -88,7 +88,7 @@ window.APP = (function () {
           el("button.lb-chercher", { type: "button", "aria-label": "Rechercher", "aria-keyshortcuts": "Meta+K Control+K", onclick: function () { ouvrirRecherche(); } },
             UI.icone("recherche", 20), el("span", {}, "Rechercher"), el("kbd", {}, raccourci() + " K")),
           el("button.lb-noter", { type: "button", "aria-label": "Note rapide", title: "Prendre une note", "aria-keyshortcuts": "Alt+N", onclick: CAPTURE.ouvrir },
-            UI.icone("capture", 20), el("span", {}, "Note rapide"), el("kbd", {}, option() + " N")))),
+            UI.icone("note", 20), el("span", {}, "Note rapide"), el("kbd", {}, option() + " N")))),
       el("nav.rail-nav.lb-nav", { "aria-label": "Navigation principale" }, VUES.map(function (v) { return navigation(v, espace); })),
       el("details.lb-commande", {}, el("summary", {}, UI.icone("reglages", 18), "Outils"), outils()),
       el("nav.lb-mobile", { "aria-label": "Navigation mobile" }, VUES.slice(0, 3).map(function (v) { return navigation(v, espace); }),

@@ -279,6 +279,10 @@ try {
   assert.equal(await rechercheGlobale.count(), 0);
   // La note rapide est en accès direct dans la barre, et sur Alt N hors d'un champ.
   const note = page.getByRole('dialog', { name:'Prendre une note' });
+  // Au téléphone, elle n'est qu'une icône : un crayon, pas l'appareil photo
+  // qu'on lisait « photo » ou « capture ».
+  assert.equal(await page.locator('.lb-noter svg path').getAttribute('d'),
+    await page.evaluate(() => UI.icone('note').querySelector('path').getAttribute('d')));
   await page.locator('.lb-rail').getByRole('button', { name:'Note rapide', exact:true }).click();
   await note.waitFor();
   await page.keyboard.press('Escape');
